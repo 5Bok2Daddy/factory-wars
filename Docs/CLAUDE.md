@@ -5,7 +5,7 @@
 ## 프로젝트 요약
 
 - 모바일(가로 화면) 3D 로우폴리 RTS. iOS·Android, 유료 1회 구매.
-- 엔진: Unity 6000.0 LTS + **Photon Quantum 3** (결정론 엔진). 동기화는 Quantum **lockstep 모드**로 시작.
+- 엔진: Unity 6000.0 LTS + **Photon Quantum 3** (결정론 엔진). 동기화는 Quantum **soft lockstep**(`LockstepSimulation` 끔) + 입력 지연 약 200ms(`InputDelayMin` 4틱, 20Hz).
 - 1차 출시(MVP): AI 대전 + 방 코드 온라인 대전 2~4인, 대전 중 동맹 변경, 정해진 문구 쪽지. 자유 입력 채팅 없음.
 - MVP 진영 2개: 자유 연방(free_federation, 고가·고성능·공중) vs 대륙 연방(continental_federation, 물량·저가).
 - 실존 국가명·국기·휘장·실존 무기 상표명을 코드·에셋·문자열 어디에도 쓰지 않는다 (가상 진영 원칙).
