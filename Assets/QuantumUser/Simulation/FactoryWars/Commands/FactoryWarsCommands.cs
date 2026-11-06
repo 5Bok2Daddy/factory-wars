@@ -82,7 +82,7 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       if (IsOwnWorker(f, player, Engineer) == false) {
-        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Invalid);
+        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Invalid, 0);
         return;
       }
       ProductionSystem.TryBuild(f, player, Engineer, Building, Position);
@@ -101,7 +101,7 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       if (f.Has<ResourceNode>(Node) == false) {
-        f.Events.ActionRejected(player, ActionKind.Gather, RejectReason.Invalid);
+        f.Events.ActionRejected(player, ActionKind.Gather, RejectReason.Invalid, 0);
         return;
       }
       for (var i = 0; i < Units.Length; i++) {
@@ -124,12 +124,12 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       if (f.Unsafe.TryGetPointer<Building>(Target, out var building) == false || building->Owner != player) {
-        f.Events.ActionRejected(player, ActionKind.Repair, RejectReason.Invalid);
+        f.Events.ActionRejected(player, ActionKind.Repair, RejectReason.Invalid, 0);
         return;
       }
       for (var i = 0; i < Units.Length; i++) {
         if (IsOwnWorker(f, player, Units[i]) && WorkerSystem.AssignToBuilding(f, Units[i], Target) == false) {
-          f.Events.ActionRejected(player, ActionKind.Repair, RejectReason.Invalid);
+          f.Events.ActionRejected(player, ActionKind.Repair, RejectReason.Invalid, 0);
           return;
         }
       }
@@ -195,7 +195,7 @@ namespace Quantum.FactoryWars {
     public override void Execute(Frame f, PlayerRef player) {
       if (f.Unsafe.TryGetPointer<Building>(Building, out var building) == false || building->Owner != player
           || f.FindAsset(building->Spec).ProcessSeconds <= FP._0) {
-        f.Events.ActionRejected(player, ActionKind.Processor, RejectReason.Invalid);
+        f.Events.ActionRejected(player, ActionKind.Processor, RejectReason.Invalid, 0);
         return;
       }
       building->ProcessorOff = Enabled == false;
@@ -245,16 +245,16 @@ namespace Quantum.FactoryWars {
         }
       }
       if (PhraseId < 0 || PhraseId >= rules.NotePhraseCount || receivers == 0) {
-        f.Events.ActionRejected(player, ActionKind.Note, RejectReason.Invalid);
+        f.Events.ActionRejected(player, ActionKind.Note, RejectReason.Invalid, 0);
         return;
       }
       if (f.Number < state->NextNoteFrame) {
-        f.Events.ActionRejected(player, ActionKind.Note, RejectReason.Cooldown);
+        f.Events.ActionRejected(player, ActionKind.Note, RejectReason.Cooldown, 0);
         return;
       }
       var cost = TargetMode == NoteTarget.Player ? rules.NoteSingleCost : rules.NoteGroupCost;
       if (state->Stock.Iron < cost) {
-        f.Events.ActionRejected(player, ActionKind.Note, RejectReason.InsufficientFunds);
+        f.Events.ActionRejected(player, ActionKind.Note, RejectReason.InsufficientResources, (int)MissingResource.Iron);
         return;
       }
 

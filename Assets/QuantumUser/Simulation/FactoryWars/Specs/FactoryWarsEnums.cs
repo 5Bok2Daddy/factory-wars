@@ -5,6 +5,10 @@ namespace Quantum {
     Headquarters, PowerPlant, Processor, SupplyDepot, Barracks, ResearchLab, VehicleFactory, Airfield, HeavyWorks, DefenseTower, CollectionYard
   }
 
+  /// <summary>ActionRejected.Missing의 비트.</summary>
+  [System.Flags]
+  public enum MissingResource { None = 0, Iron = 1, Wood = 2, Steel = 4, Power = 8, Population = 16 }
+
   /// <summary>건물이 언제 유지비를 내는가. 값이 있으면 정전 때 멈춘다.</summary>
   public enum UpkeepMode { None, WhileProducing, WhileResearching, Always }
 

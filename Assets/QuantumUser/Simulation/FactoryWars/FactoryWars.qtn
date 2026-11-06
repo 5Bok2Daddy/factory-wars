@@ -10,8 +10,8 @@
 
 enum Relation : Byte { Enemy, Allied, BreakPending }
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget }
-enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor }
-enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked }
+enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce }
+enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
 enum ResourceKind : Byte { Iron, Wood }
@@ -142,7 +142,8 @@ singleton component Diplomacy {
 }
 
 // 경기 결과에 영향을 주는 알림은 롤백으로 취소되지 않도록 검증된 프레임에서만 보낸다.
-synced event ActionRejected { player_ref Player; ActionKind Kind; RejectReason Reason; }
+// Missing은 MissingResource 비트의 합이다. 모자란 자원 전부를 담는다.
+synced event ActionRejected { player_ref Player; ActionKind Kind; RejectReason Reason; Int32 Missing; }
 synced event NoteReceived { player_ref Sender; player_ref Receiver; Int32 PhraseId; }
 synced event AllianceChanged { player_ref A; player_ref B; Relation Relation; }
 event UnitDestroyed { entity_ref Unit; player_ref Owner; asset_ref<UnitSpec> Spec; }

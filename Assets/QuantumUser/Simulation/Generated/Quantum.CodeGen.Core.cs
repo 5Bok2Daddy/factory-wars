@@ -59,6 +59,7 @@ namespace Quantum {
     Gather,
     Repair,
     Processor,
+    Produce,
   }
   public enum BotDifficulty : byte {
     Easy,
@@ -69,7 +70,8 @@ namespace Quantum {
     Outage,
   }
   public enum RejectReason : byte {
-    InsufficientFunds,
+    InsufficientResources,
+    PopulationLimit,
     Cooldown,
     ModeDisabled,
     Invalid,

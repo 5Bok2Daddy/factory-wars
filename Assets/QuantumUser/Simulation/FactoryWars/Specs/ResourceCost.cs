@@ -10,6 +10,24 @@ namespace Quantum {
       return Iron >= cost.Iron && Wood >= cost.Wood && Steel >= cost.Steel && Power >= cost.Power;
     }
 
+    /// <summary>이 보유량으로 cost를 낼 때 모자란 자원 전부.</summary>
+    public MissingResource Missing(ResourceCost cost) {
+      var missing = MissingResource.None;
+      if (Iron < cost.Iron) {
+        missing |= MissingResource.Iron;
+      }
+      if (Wood < cost.Wood) {
+        missing |= MissingResource.Wood;
+      }
+      if (Steel < cost.Steel) {
+        missing |= MissingResource.Steel;
+      }
+      if (Power < cost.Power) {
+        missing |= MissingResource.Power;
+      }
+      return missing;
+    }
+
     public static ResourceCost operator +(ResourceCost a, ResourceCost b) {
       return new ResourceCost { Iron = a.Iron + b.Iron, Wood = a.Wood + b.Wood, Steel = a.Steel + b.Steel, Power = a.Power + b.Power };
     }
@@ -20,6 +38,10 @@ namespace Quantum {
 
     public static ResourceCost operator *(ResourceCost a, FP scale) {
       return new ResourceCost { Iron = a.Iron * scale, Wood = a.Wood * scale, Steel = a.Steel * scale, Power = a.Power * scale };
+    }
+
+    public static ResourceCost operator /(ResourceCost a, FP divisor) {
+      return new ResourceCost { Iron = a.Iron / divisor, Wood = a.Wood / divisor, Steel = a.Steel / divisor, Power = a.Power / divisor };
     }
   }
 }

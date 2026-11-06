@@ -180,9 +180,9 @@ namespace FactoryWars.Tests {
 
     static int JointVictoryFrame() => Verified.Unsafe.GetPointerSingleton<Quantum.Diplomacy>()->JointVictoryFrame;
 
-    void AssertRejected(int player, ActionKind kind, RejectReason reason) {
-      Assert.IsTrue(_rejected.Any(e => e.Player == player && e.Kind == kind && e.Reason == reason),
-        $"ActionRejected({player}, {kind}, {reason}) 없음. 받은 이벤트: {string.Join(", ", _rejected.Select(e => $"{e.Player}/{e.Kind}/{e.Reason}"))}");
+    void AssertRejected(int player, ActionKind kind, RejectReason reason, MissingResource missing = MissingResource.None) {
+      Assert.IsTrue(_rejected.Any(e => e.Player == player && e.Kind == kind && e.Reason == reason && e.Missing == (int)missing),
+        $"ActionRejected({player}, {kind}, {reason}, {missing}) 없음. 받은 이벤트: {string.Join(", ", _rejected.Select(e => $"{e.Player}/{e.Kind}/{e.Reason}/{(MissingResource)e.Missing}"))}");
     }
 
     [TearDown]
@@ -336,14 +336,14 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest]
-    public IEnumerator Accept_InsufficientFunds_KeepsProposalPending() {
+    public IEnumerator Accept_InsufficientIron_KeepsProposalPending() {
       yield return StartMatch(players: 3);
       yield return SpendBelow(1, 150);
       var funds = Funds(1);
       yield return Diplomacy(0, DiplomacyAction.Propose, 1);
       yield return Diplomacy(1, DiplomacyAction.Accept, 0);
 
-      AssertRejected(1, ActionKind.Accept, RejectReason.InsufficientFunds);
+      AssertRejected(1, ActionKind.Accept, RejectReason.InsufficientResources, MissingResource.Iron);
       Assert.AreEqual(funds, Funds(1));
       Assert.AreEqual(Relation.Enemy, DiplomacySystem.GetRelation(Verified, 0, 1));
 
@@ -363,13 +363,13 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest]
-    public IEnumerator Break_InsufficientFunds_Fails() {
+    public IEnumerator Break_InsufficientIron_Fails() {
       yield return StartMatch(players: 3, jointVictory: false);
       yield return Ally(0, 1);
       yield return SpendBelow(1, 500);
       var funds = Funds(1);
       yield return Diplomacy(1, DiplomacyAction.Break, 0);
-      AssertRejected(1, ActionKind.Break, RejectReason.InsufficientFunds);
+      AssertRejected(1, ActionKind.Break, RejectReason.InsufficientResources, MissingResource.Iron);
       Assert.AreEqual(Relation.Allied, DiplomacySystem.GetRelation(Verified, 0, 1));
       Assert.AreEqual(funds, Funds(1));
     }

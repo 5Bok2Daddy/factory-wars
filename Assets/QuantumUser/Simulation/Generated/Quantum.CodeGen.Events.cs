@@ -72,12 +72,13 @@ namespace Quantum {
           default: break;
         }
       }
-      public EventActionRejected ActionRejected(PlayerRef Player, ActionKind Kind, RejectReason Reason) {
+      public EventActionRejected ActionRejected(PlayerRef Player, ActionKind Kind, RejectReason Reason, Int32 Missing) {
         if (_f.IsPredicted) return null;
         var ev = _f.Context.AcquireEvent<EventActionRejected>(EventActionRejected.ID);
         ev.Player = Player;
         ev.Kind = Kind;
         ev.Reason = Reason;
+        ev.Missing = Missing;
         _f.AddEvent(ev);
         return ev;
       }
@@ -144,6 +145,7 @@ namespace Quantum {
     public PlayerRef Player;
     public ActionKind Kind;
     public RejectReason Reason;
+    public Int32 Missing;
     protected EventActionRejected(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
@@ -164,6 +166,7 @@ namespace Quantum {
         hash = hash * 31 + Player.GetHashCode();
         hash = hash * 31 + Kind.GetHashCode();
         hash = hash * 31 + Reason.GetHashCode();
+        hash = hash * 31 + Missing.GetHashCode();
         return hash;
       }
     }

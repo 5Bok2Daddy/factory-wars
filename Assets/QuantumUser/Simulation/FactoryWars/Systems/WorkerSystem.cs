@@ -218,13 +218,14 @@ namespace Quantum.FactoryWars {
       }
 
       var heal = FPMath.Min(rules.RepairPerSecond * f.DeltaTime, spec.MaxHealth - building->Health);
-      var cost = heal * spec.Cost.Iron / spec.MaxHealth * rules.RepairCostRatio;
+      // 자원별로 낸다. 곱한 뒤 나눠야 작은 값에서 정밀도를 잃지 않는다.
+      var cost = spec.Cost * (heal * rules.RepairCostRatio) / spec.MaxHealth;
       var state = FactoryWarsUtil.Player(f, unit->Owner);
-      if (state->Stock.Iron < cost) {
+      if (state->Stock.Covers(cost) == false) {
         SetTask(worker, WorkerTask.Idle);
         return;
       }
-      state->Stock.Iron -= cost;
+      state->Stock -= cost;
       building->Health += heal;
     }
 

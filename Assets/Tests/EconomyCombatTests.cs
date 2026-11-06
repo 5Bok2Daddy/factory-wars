@@ -54,6 +54,8 @@ namespace FactoryWars.Tests {
       return new ResourceCost { Iron = iron, Wood = wood, Steel = steel, Power = power };
     }
 
+    static float ExactWood(int player) => Verified.Global->Players.GetPointer(player)->Stock.Wood.AsFloat;
+
     static int Wood(int player) => Verified.Global->Players.GetPointer(player)->Stock.Wood.AsInt;
 
     static float ExactFunds(int player) => Verified.Global->Players.GetPointer(player)->Stock.Iron.AsFloat;
@@ -314,15 +316,37 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest]
-    public IEnumerator Build_InsufficientFundsRejected() {
-      yield return StartMatch();
-      yield return SpendBelow(0, 150);
-      var funds = Funds(0);
+    public IEnumerator Build_RejectsWithEveryMissingResource() {
+      yield return StartMatch(buildings: Plant, stock: Stock(100, 500, 0, 0));
       var count = Verified.ComponentCount<Building>();
-      yield return Build(0, "_power_plant", V(20, 40));
-      AssertRejected(0, ActionKind.Build, RejectReason.InsufficientFunds);
-      Assert.AreEqual(funds, Funds(0));
+      // 연구소: 철 250, 목재 200, 전기 150. 목재만 충분하다.
+      yield return Build(0, "_research_lab", V(-20, 10));
+      AssertRejected(0, ActionKind.Build, RejectReason.InsufficientResources, MissingResource.Iron | MissingResource.Power);
+      Assert.AreEqual(100, Funds(0));
+      Assert.AreEqual(500, Wood(0));
       Assert.AreEqual(count, Verified.ComponentCount<Building>());
+    }
+
+    [UnityTest]
+    public IEnumerator Produce_PopulationLimitCountsQueue() {
+      // 시작 유닛 인구 6, 한도 10. 전차는 인구 3이라 대기열까지 합해 한 대만 들어간다.
+      yield return StartMatch(buildings: new[] { (0, "ff_vehicle_factory", -42, 12) });
+      var factory = BuildingAt(V(-42, 12));
+      yield return Send(0, new ProduceCommand { Building = factory, Unit = UnitOf(0, "ff_eagle_tank"), Count = 2 });
+      Assert.AreEqual(1, BuildingState(factory).QueueCount);
+      Assert.AreEqual(4750, Funds(0), "한 대만 비용을 낸다");
+      AssertRejected(0, ActionKind.Produce, RejectReason.PopulationLimit, MissingResource.Population);
+    }
+
+    [UnityTest]
+    public IEnumerator Produce_RejectsWithResourcesAndPopulationTogether() {
+      var extra = Enumerable.Range(0, 2).Select(i => (0, "ff_eagle_tank", -48 + i * 4, -30)).ToArray();
+      yield return StartMatch(units: extra, buildings: new[] { (0, "ff_vehicle_factory", -42, 12) }, stock: Stock(100, 0, 500, 200));
+      yield return WaitFrames(2);
+      var factory = BuildingAt(V(-42, 12));
+      yield return Send(0, new ProduceCommand { Building = factory, Unit = UnitOf(0, "ff_eagle_tank"), Count = 1 });
+      AssertRejected(0, ActionKind.Produce, RejectReason.InsufficientResources, MissingResource.Iron | MissingResource.Population);
+      Assert.AreEqual(0, BuildingState(factory).QueueCount);
     }
 
     [UnityTest]
@@ -629,7 +653,7 @@ namespace FactoryWars.Tests {
     // 수리
 
     [UnityTest]
-    public IEnumerator Repair_RestoresHealthForFunds() {
+    public IEnumerator Repair_ChargesEveryResource() {
       yield return StartMatch(units: new[] { (1, "cf_dragonscale_tank", -8, 10), (1, "cf_dragonscale_tank", -8, 13), (1, "cf_dragonscale_tank", -8, 7) });
       var position = V(-20, 10);
       yield return BuildAndFinish(0, "_power_plant", position);
@@ -645,14 +669,38 @@ namespace FactoryWars.Tests {
       var damaged = BuildingState(plant).Health.AsFloat;
       Assert.Less(damaged, 600f);
       var funds = Funds(0);
+      var wood = ExactWood(0);
       yield return Send(0, new RepairCommand { Units = new[] { engineer }, Target = plant });
       yield return WaitFor(() => BuildingState(plant).Health.AsFloat >= 600f, 60f, "수리 완료");
       yield return WaitFrames(CommandFrames);
 
       Assert.AreEqual(WorkerTask.Idle, WorkerOf(engineer).Task, "다 고치면 멈춤");
-      // 회복 비율 x 건물 철 비용 150 x 0.5
+      // 회복 비율 x 건물 비용(철 150, 목재 150) x 0.5
       var expected = (600f - damaged) / 600f * 150f * 0.5f;
-      Assert.AreEqual(expected, funds - ExactFunds(0), 2f, "수리비");
+      Assert.AreEqual(expected, funds - ExactFunds(0), 2f, "철 수리비");
+      Assert.AreEqual(expected, wood - ExactWood(0), 2f, "목재 수리비");
+    }
+
+    [UnityTest]
+    public IEnumerator Repair_StopsWhenOneResourceRunsOut() {
+      var tanks = new[] { (1, "cf_dragonscale_tank", -8, 10), (1, "cf_dragonscale_tank", -8, 13), (1, "cf_dragonscale_tank", -8, 7) };
+      // 발전소 목재 150을 내면 2가 남는다. 철은 충분하다.
+      yield return StartMatch(units: tanks, stock: Stock(3000, 152, 0, 0));
+      var position = V(-20, 10);
+      yield return BuildAndFinish(0, "_power_plant", position);
+      var plant = BuildingAt(position);
+      var engineer = Engineers(0)[0];
+      var attackers = UnitsNamed(1, "cf_dragonscale_tank").Where(e => Verified.Get<Transform3D>(e).Position.Z > 5).ToArray();
+      Game.SendCommand(1, new AttackTargetCommand { Units = attackers, Target = plant });
+      yield return WaitFor(() => BuildingState(plant).Health < 400, 60f, "건물 피해");
+      yield return Send(1, new MoveUnitsCommand { Units = attackers, Target = V(30, 20) });
+      yield return WaitFrames(3 * Fps);
+
+      yield return Send(0, new RepairCommand { Units = new[] { engineer }, Target = plant });
+      yield return WaitFor(() => WorkerOf(engineer).Task == WorkerTask.Idle, 60f, "수리 중단");
+      Assert.Less(BuildingState(plant).Health.AsFloat, 600f, "다 고치지 못함");
+      Assert.Less(ExactWood(0), 0.5f, "목재가 떨어짐");
+      Assert.Greater(Funds(0), 2000, "철은 남아 있음");
     }
 
     [UnityTest]

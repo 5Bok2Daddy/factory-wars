@@ -193,19 +193,21 @@ namespace Quantum.FactoryWars {
       var rules = FactoryWarsUtil.Rules(f);
       var kind = Kind(action);
       if (DiplomacyAllowed(f, d, rules) == false) {
-        f.Events.ActionRejected(sender, kind, RejectReason.ModeDisabled);
+        f.Events.ActionRejected(sender, kind, RejectReason.ModeDisabled, 0);
         return;
       }
       var state = FactoryWarsUtil.Player(f, sender);
       var targetState = FactoryWarsUtil.Player(f, target);
       if (target == sender || state == null || state->Defeated || targetState == null || targetState->Active == false || targetState->Defeated) {
-        f.Events.ActionRejected(sender, kind, RejectReason.Invalid);
+        f.Events.ActionRejected(sender, kind, RejectReason.Invalid, 0);
         return;
       }
 
       var reason = Apply(f, d, rules, state, sender, target, action);
       if (reason.HasValue) {
-        f.Events.ActionRejected(sender, kind, reason.Value);
+        // 외교 비용은 철뿐이다.
+        var missing = reason.Value == RejectReason.InsufficientResources ? MissingResource.Iron : MissingResource.None;
+        f.Events.ActionRejected(sender, kind, reason.Value, (int)missing);
       }
     }
 
@@ -224,7 +226,7 @@ namespace Quantum.FactoryWars {
             return RejectReason.Cooldown;
           }
           if (state->Stock.Iron < rules.ProposalCost) {
-            return RejectReason.InsufficientFunds;
+            return RejectReason.InsufficientResources;
           }
           state->Stock.Iron -= rules.ProposalCost;
           AddProposal(d, sender, target, f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.ProposalSeconds));
@@ -237,7 +239,7 @@ namespace Quantum.FactoryWars {
           }
           // 철이 모자라면 제안은 그대로 대기한다.
           if (state->Stock.Iron < rules.AcceptCost) {
-            return RejectReason.InsufficientFunds;
+            return RejectReason.InsufficientResources;
           }
           state->Stock.Iron -= rules.AcceptCost;
           ClearProposal(d, index);
@@ -259,7 +261,7 @@ namespace Quantum.FactoryWars {
             return RejectReason.Invalid;
           }
           if (state->Stock.Iron < rules.BreakCost) {
-            return RejectReason.InsufficientFunds;
+            return RejectReason.InsufficientResources;
           }
           state->Stock.Iron -= rules.BreakCost;
           var grace = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.BreakGraceSeconds);

@@ -71,20 +71,21 @@ namespace Quantum.FactoryWars {
       var state = FactoryWarsUtil.Player(f, player);
       var spec = f.FindAsset(specRef);
       if (state == null || spec == null || Contains(f.FindAsset(state->Faction).Buildings, specRef) == false) {
-        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Invalid);
+        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Invalid, 0);
         return;
       }
       position.Y = FP._0;
       if (CanPlace(f, spec, position) == false) {
-        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.BlockedLocation);
+        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.BlockedLocation, 0);
         return;
       }
       if (IsUnlocked(f, player, spec) == false) {
-        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Locked);
+        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Locked, 0);
         return;
       }
-      if (state->Stock.Covers(spec.Cost) == false) {
-        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.InsufficientFunds);
+      var missing = state->Stock.Missing(spec.Cost);
+      if (missing != MissingResource.None) {
+        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.InsufficientResources, (int)missing);
         return;
       }
       state->Stock -= spec.Cost;
@@ -162,12 +163,39 @@ namespace Quantum.FactoryWars {
       }
 
       var cost = unit.Cost + PresetCost(f, building, unit);
-      for (var i = 0; i < count && building->QueueCount < building->Queue.Length && state->Stock.Covers(cost); i++) {
+      var population = unit.Population * unit.SpawnCount;
+      for (var i = 0; i < count && building->QueueCount < building->Queue.Length; i++) {
+        var missing = state->Stock.Missing(cost);
+        // 대기열에 든 유닛의 인구도 이미 쓴 것으로 본다.
+        if (state->PopulationUsed + QueuedPopulation(f, player) + population > state->PopulationCap) {
+          missing |= MissingResource.Population;
+        }
+        if (missing != MissingResource.None) {
+          var reason = missing == MissingResource.Population ? RejectReason.PopulationLimit : RejectReason.InsufficientResources;
+          f.Events.ActionRejected(player, ActionKind.Produce, reason, (int)missing);
+          return;
+        }
         state->Stock -= cost;
         var order = building->Queue.GetPointer(building->QueueCount++);
         order->Unit = unitRef;
         order->PaidCost = cost;
       }
+    }
+
+    /// <summary>대기열에 있어 아직 태어나지 않은 유닛의 인구 합.</summary>
+    public static FP QueuedPopulation(Frame f, PlayerRef player) {
+      var total = FP._0;
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var building)) {
+        if (building->Owner != player) {
+          continue;
+        }
+        for (var i = 0; i < building->QueueCount; i++) {
+          var unit = f.FindAsset(building->Queue[i].Unit);
+          total += unit.Population * unit.SpawnCount;
+        }
+      }
+      return total;
     }
 
     public static void CancelOrders(Frame f, PlayerRef player, EntityRef entity, AssetRef<UnitSpec> unitRef, int count) {
