@@ -158,27 +158,47 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       var rules = FactoryWarsUtil.Rules(f);
-      if (PhraseId < 0 || PhraseId >= rules.NotePhraseCount) {
-        return;
-      }
       var state = FactoryWarsUtil.Player(f, player);
-      if (state == null || f.Number < state->NextNoteFrame) {
+      if (state == null) {
         return;
       }
-      state->NextNoteFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.NoteCooldownSeconds);
 
+      var receivers = 0;
       for (var i = 0; i < f.PlayerCount; i++) {
-        PlayerRef other = i;
-        if (other == player || f.Global->Players.GetPointer(i)->Active == false) {
-          continue;
-        }
-        var send = TargetMode == NoteTarget.Everyone
-          || (TargetMode == NoteTarget.Player && other == Receiver)
-          || (TargetMode == NoteTarget.Allies && DiplomacySystem.GetRelation(f, player, other) == Relation.Allied);
-        if (send) {
-          f.Events.NoteReceived(player, other, PhraseId);
+        if (IsReceiver(f, player, i)) {
+          receivers |= 1 << i;
         }
       }
+      if (PhraseId < 0 || PhraseId >= rules.NotePhraseCount || receivers == 0) {
+        f.Events.ActionRejected(player, ActionKind.Note, RejectReason.Invalid);
+        return;
+      }
+      if (f.Number < state->NextNoteFrame) {
+        f.Events.ActionRejected(player, ActionKind.Note, RejectReason.Cooldown);
+        return;
+      }
+      var cost = TargetMode == NoteTarget.Player ? rules.NoteSingleCost : rules.NoteGroupCost;
+      if (state->Funds < cost) {
+        f.Events.ActionRejected(player, ActionKind.Note, RejectReason.InsufficientFunds);
+        return;
+      }
+
+      state->Funds -= cost;
+      state->NextNoteFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.NoteCooldownSeconds);
+      for (var i = 0; i < f.PlayerCount; i++) {
+        if ((receivers & (1 << i)) != 0) {
+          f.Events.NoteReceived(player, i, PhraseId);
+        }
+      }
+    }
+
+    bool IsReceiver(Frame f, PlayerRef player, PlayerRef other) {
+      if (other == player || f.Global->Players.GetPointer(other)->Active == false) {
+        return false;
+      }
+      return TargetMode == NoteTarget.Everyone
+        || (TargetMode == NoteTarget.Player && other == Receiver)
+        || (TargetMode == NoteTarget.Allies && DiplomacySystem.GetRelation(f, player, other) == Relation.Allied);
     }
   }
 }

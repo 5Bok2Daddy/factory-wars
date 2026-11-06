@@ -113,6 +113,7 @@ namespace Quantum.Prototypes {
     public Int32[] RealliableFrames = new Int32[16];
     public QBoolean JointVictory;
     public QBoolean TeamMode;
+    public Int32 JointVictoryFrame;
     partial void MaterializeUser(Frame frame, ref Quantum.Diplomacy result, in PrototypeMaterializationContext context);
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Diplomacy component = default;
@@ -134,6 +135,7 @@ namespace Quantum.Prototypes {
         }
         result.JointVictory = this.JointVictory;
         result.TeamMode = this.TeamMode;
+        result.JointVictoryFrame = this.JointVictoryFrame;
         MaterializeUser(frame, ref result, in context);
     }
   }

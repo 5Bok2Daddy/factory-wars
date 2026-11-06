@@ -52,7 +52,7 @@ namespace Quantum {
   public unsafe partial class Frame {
     public unsafe partial struct FrameEvents {
       static partial void GetEventTypeCountCodeGen(ref Int32 eventCount) {
-        eventCount = 6;
+        eventCount = 7;
       }
       static partial void GetParentEventIDCodeGen(Int32 eventID, ref Int32 parentEventID) {
         switch (eventID) {
@@ -61,6 +61,7 @@ namespace Quantum {
       }
       static partial void GetEventTypeCodeGen(Int32 eventID, ref System.Type result) {
         switch (eventID) {
+          case EventActionRejected.ID: result = typeof(EventActionRejected); return;
           case EventNoteReceived.ID: result = typeof(EventNoteReceived); return;
           case EventAllianceChanged.ID: result = typeof(EventAllianceChanged); return;
           case EventUnitDestroyed.ID: result = typeof(EventUnitDestroyed); return;
@@ -69,7 +70,17 @@ namespace Quantum {
           default: break;
         }
       }
+      public EventActionRejected ActionRejected(PlayerRef Player, ActionKind Kind, RejectReason Reason) {
+        if (_f.IsPredicted) return null;
+        var ev = _f.Context.AcquireEvent<EventActionRejected>(EventActionRejected.ID);
+        ev.Player = Player;
+        ev.Kind = Kind;
+        ev.Reason = Reason;
+        _f.AddEvent(ev);
+        return ev;
+      }
       public EventNoteReceived NoteReceived(PlayerRef Sender, PlayerRef Receiver, Int32 PhraseId) {
+        if (_f.IsPredicted) return null;
         var ev = _f.Context.AcquireEvent<EventNoteReceived>(EventNoteReceived.ID);
         ev.Sender = Sender;
         ev.Receiver = Receiver;
@@ -78,6 +89,7 @@ namespace Quantum {
         return ev;
       }
       public EventAllianceChanged AllianceChanged(PlayerRef A, PlayerRef B, Relation Relation) {
+        if (_f.IsPredicted) return null;
         var ev = _f.Context.AcquireEvent<EventAllianceChanged>(EventAllianceChanged.ID);
         ev.A = A;
         ev.B = B;
@@ -94,12 +106,14 @@ namespace Quantum {
         return ev;
       }
       public EventPlayerDefeated PlayerDefeated(PlayerRef Player) {
+        if (_f.IsPredicted) return null;
         var ev = _f.Context.AcquireEvent<EventPlayerDefeated>(EventPlayerDefeated.ID);
         ev.Player = Player;
         _f.AddEvent(ev);
         return ev;
       }
       public EventGameOver GameOver(Int32 WinnerMask) {
+        if (_f.IsPredicted) return null;
         var ev = _f.Context.AcquireEvent<EventGameOver>(EventGameOver.ID);
         ev.WinnerMask = WinnerMask;
         _f.AddEvent(ev);
@@ -107,16 +121,16 @@ namespace Quantum {
       }
     }
   }
-  public unsafe partial class EventNoteReceived : EventBase {
+  public unsafe partial class EventActionRejected : EventBase {
     public new const Int32 ID = 1;
-    public PlayerRef Sender;
-    public PlayerRef Receiver;
-    public Int32 PhraseId;
-    protected EventNoteReceived(Int32 id, EventFlags flags) : 
+    public PlayerRef Player;
+    public ActionKind Kind;
+    public RejectReason Reason;
+    protected EventActionRejected(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventNoteReceived() : 
-        base(1, EventFlags.Server|EventFlags.Client) {
+    public EventActionRejected() : 
+        base(1, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
     }
     public new QuantumGame Game {
       get {
@@ -129,23 +143,23 @@ namespace Quantum {
     public override Int32 GetHashCode() {
       unchecked {
         var hash = 41;
-        hash = hash * 31 + Sender.GetHashCode();
-        hash = hash * 31 + Receiver.GetHashCode();
-        hash = hash * 31 + PhraseId.GetHashCode();
+        hash = hash * 31 + Player.GetHashCode();
+        hash = hash * 31 + Kind.GetHashCode();
+        hash = hash * 31 + Reason.GetHashCode();
         return hash;
       }
     }
   }
-  public unsafe partial class EventAllianceChanged : EventBase {
+  public unsafe partial class EventNoteReceived : EventBase {
     public new const Int32 ID = 2;
-    public PlayerRef A;
-    public PlayerRef B;
-    public Relation Relation;
-    protected EventAllianceChanged(Int32 id, EventFlags flags) : 
+    public PlayerRef Sender;
+    public PlayerRef Receiver;
+    public Int32 PhraseId;
+    protected EventNoteReceived(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventAllianceChanged() : 
-        base(2, EventFlags.Server|EventFlags.Client) {
+    public EventNoteReceived() : 
+        base(2, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
     }
     public new QuantumGame Game {
       get {
@@ -158,23 +172,23 @@ namespace Quantum {
     public override Int32 GetHashCode() {
       unchecked {
         var hash = 43;
-        hash = hash * 31 + A.GetHashCode();
-        hash = hash * 31 + B.GetHashCode();
-        hash = hash * 31 + Relation.GetHashCode();
+        hash = hash * 31 + Sender.GetHashCode();
+        hash = hash * 31 + Receiver.GetHashCode();
+        hash = hash * 31 + PhraseId.GetHashCode();
         return hash;
       }
     }
   }
-  public unsafe partial class EventUnitDestroyed : EventBase {
+  public unsafe partial class EventAllianceChanged : EventBase {
     public new const Int32 ID = 3;
-    public EntityRef Unit;
-    public PlayerRef Owner;
-    public AssetRef<UnitSpec> Spec;
-    protected EventUnitDestroyed(Int32 id, EventFlags flags) : 
+    public PlayerRef A;
+    public PlayerRef B;
+    public Relation Relation;
+    protected EventAllianceChanged(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventUnitDestroyed() : 
-        base(3, EventFlags.Server|EventFlags.Client) {
+    public EventAllianceChanged() : 
+        base(3, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
     }
     public new QuantumGame Game {
       get {
@@ -187,20 +201,22 @@ namespace Quantum {
     public override Int32 GetHashCode() {
       unchecked {
         var hash = 47;
-        hash = hash * 31 + Unit.GetHashCode();
-        hash = hash * 31 + Owner.GetHashCode();
-        hash = hash * 31 + Spec.GetHashCode();
+        hash = hash * 31 + A.GetHashCode();
+        hash = hash * 31 + B.GetHashCode();
+        hash = hash * 31 + Relation.GetHashCode();
         return hash;
       }
     }
   }
-  public unsafe partial class EventPlayerDefeated : EventBase {
+  public unsafe partial class EventUnitDestroyed : EventBase {
     public new const Int32 ID = 4;
-    public PlayerRef Player;
-    protected EventPlayerDefeated(Int32 id, EventFlags flags) : 
+    public EntityRef Unit;
+    public PlayerRef Owner;
+    public AssetRef<UnitSpec> Spec;
+    protected EventUnitDestroyed(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventPlayerDefeated() : 
+    public EventUnitDestroyed() : 
         base(4, EventFlags.Server|EventFlags.Client) {
     }
     public new QuantumGame Game {
@@ -214,19 +230,21 @@ namespace Quantum {
     public override Int32 GetHashCode() {
       unchecked {
         var hash = 53;
-        hash = hash * 31 + Player.GetHashCode();
+        hash = hash * 31 + Unit.GetHashCode();
+        hash = hash * 31 + Owner.GetHashCode();
+        hash = hash * 31 + Spec.GetHashCode();
         return hash;
       }
     }
   }
-  public unsafe partial class EventGameOver : EventBase {
+  public unsafe partial class EventPlayerDefeated : EventBase {
     public new const Int32 ID = 5;
-    public Int32 WinnerMask;
-    protected EventGameOver(Int32 id, EventFlags flags) : 
+    public PlayerRef Player;
+    protected EventPlayerDefeated(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventGameOver() : 
-        base(5, EventFlags.Server|EventFlags.Client) {
+    public EventPlayerDefeated() : 
+        base(5, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
     }
     public new QuantumGame Game {
       get {
@@ -239,6 +257,31 @@ namespace Quantum {
     public override Int32 GetHashCode() {
       unchecked {
         var hash = 59;
+        hash = hash * 31 + Player.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventGameOver : EventBase {
+    public new const Int32 ID = 6;
+    public Int32 WinnerMask;
+    protected EventGameOver(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventGameOver() : 
+        base(6, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 61;
         hash = hash * 31 + WinnerMask.GetHashCode();
         return hash;
       }

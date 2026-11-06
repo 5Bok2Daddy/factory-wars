@@ -4,6 +4,8 @@ namespace Quantum.FactoryWars {
   public static unsafe class FactoryWarsUtil {
     public static GameRulesSpec Rules(Frame f) => f.FindAsset(f.RuntimeConfig.Rules);
 
+    public static MapSpec MapInfo(Frame f) => f.FindAsset<MapSpec>(f.Map.UserAsset);
+
     public static int SecondsToFrames(Frame f, FP seconds) => FPMath.CeilToInt(seconds * f.SessionConfig.UpdateFPS);
 
     public static PlayerState* Player(Frame f, PlayerRef player) {
@@ -22,6 +24,13 @@ namespace Quantum.FactoryWars {
       var diplomacy = f.Unsafe.GetPointer<Diplomacy>(entity);
       diplomacy->JointVictory = f.RuntimeConfig.JointVictory;
       diplomacy->TeamMode = f.RuntimeConfig.TeamMode;
+
+      var nodes = FactoryWarsUtil.MapInfo(f).ResourceNodes;
+      for (var i = 0; nodes != null && i < nodes.Length; i++) {
+        var node = f.Create();
+        f.Add(node, Transform3D.Create(nodes[i].Position));
+        f.Add(node, new ResourceNode { RemainingFunds = nodes[i].Funds });
+      }
     }
 
     public void OnPlayerAdded(Frame f, PlayerRef player, bool firstTime) {
@@ -45,7 +54,8 @@ namespace Quantum.FactoryWars {
         DiplomacySystem.ApplyTeam(f, player);
       }
 
-      var start = rules.StartPositions[(int)player % rules.StartPositions.Length];
+      var starts = FactoryWarsUtil.MapInfo(f).StartPositions;
+      var start = starts[(int)player % starts.Length];
       var headquarters = ProductionSystem.CreateBuilding(f, player, faction.Headquarters, start);
       f.Unsafe.GetPointer<Building>(headquarters)->ConstructionRemaining = FP._0;
       for (var i = 0; i < rules.StartingEngineers; i++) {
@@ -106,52 +116,119 @@ namespace Quantum.FactoryWars {
       }
     }
 
+    /// <summary>자유 대전(3인 이상)에서만 외교가 가능하다. 패배한 플레이어도 인원에 포함한다.</summary>
+    static bool DiplomacyAllowed(Frame f, Diplomacy* d, GameRulesSpec rules) {
+      if (d->TeamMode) {
+        return false;
+      }
+      var players = 0;
+      for (var i = 0; i < f.PlayerCount; i++) {
+        if (f.Global->Players.GetPointer(i)->Active) {
+          players++;
+        }
+      }
+      return players >= rules.MinDiplomacyPlayers;
+    }
+
+    static ActionKind Kind(DiplomacyAction action) {
+      switch (action) {
+        case DiplomacyAction.Propose: return ActionKind.Propose;
+        case DiplomacyAction.Accept: return ActionKind.Accept;
+        case DiplomacyAction.Reject: return ActionKind.Reject;
+        default: return ActionKind.Break;
+      }
+    }
+
     public static void Handle(Frame f, PlayerRef sender, PlayerRef target, DiplomacyAction action) {
       var d = f.Unsafe.GetPointerSingleton<Diplomacy>();
-      var targetState = FactoryWarsUtil.Player(f, target);
-      if (d->TeamMode || target == sender || targetState == null || targetState->Active == false || targetState->Defeated) {
+      var rules = FactoryWarsUtil.Rules(f);
+      var kind = Kind(action);
+      if (DiplomacyAllowed(f, d, rules) == false) {
+        f.Events.ActionRejected(sender, kind, RejectReason.ModeDisabled);
         return;
       }
+      var state = FactoryWarsUtil.Player(f, sender);
+      var targetState = FactoryWarsUtil.Player(f, target);
+      if (target == sender || state == null || state->Defeated || targetState == null || targetState->Active == false || targetState->Defeated) {
+        f.Events.ActionRejected(sender, kind, RejectReason.Invalid);
+        return;
+      }
+
+      var reason = Apply(f, d, rules, state, sender, target, action);
+      if (reason.HasValue) {
+        f.Events.ActionRejected(sender, kind, reason.Value);
+      }
+    }
+
+    /// <summary>외교 행동을 실행한다. 실행하지 못하면 사유를 돌려주고 상태를 바꾸지 않는다.</summary>
+    static RejectReason? Apply(Frame f, Diplomacy* d, GameRulesSpec rules, PlayerState* state, PlayerRef sender, PlayerRef target, DiplomacyAction action) {
       var cell = Cell(sender, target);
       var relation = d->Relations[cell];
-      var rules = FactoryWarsUtil.Rules(f);
 
       switch (action) {
         case DiplomacyAction.Propose:
-          if (relation == Relation.Enemy && f.Number >= d->RealliableFrames[cell] && FindProposal(d, sender, target) < 0) {
-            AddProposal(d, sender, target, f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.ProposalSeconds));
+          // 서로에게 동시에 제안하지 못한다. 상대 제안이 있으면 수락하면 된다.
+          if (relation != Relation.Enemy || FindProposal(d, sender, target) >= 0 || FindProposal(d, target, sender) >= 0) {
+            return RejectReason.Invalid;
           }
-          break;
+          if (f.Number < d->RealliableFrames[cell]) {
+            return RejectReason.Cooldown;
+          }
+          if (state->Funds < rules.ProposalCost) {
+            return RejectReason.InsufficientFunds;
+          }
+          state->Funds -= rules.ProposalCost;
+          AddProposal(d, sender, target, f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.ProposalSeconds));
+          return null;
 
         case DiplomacyAction.Accept: {
           var index = FindProposal(d, target, sender);
-          if (index >= 0 && relation == Relation.Enemy) {
-            ClearProposal(d, index);
-            SetRelation(f, d, sender, target, Relation.Allied);
+          if (index < 0 || relation != Relation.Enemy) {
+            return RejectReason.Invalid;
           }
-          break;
+          // 자금이 모자라면 제안은 그대로 대기한다.
+          if (state->Funds < rules.AcceptCost) {
+            return RejectReason.InsufficientFunds;
+          }
+          state->Funds -= rules.AcceptCost;
+          ClearProposal(d, index);
+          SetRelation(f, d, sender, target, Relation.Allied);
+          return null;
         }
 
         case DiplomacyAction.Reject: {
           var index = FindProposal(d, target, sender);
-          if (index >= 0) {
-            ClearProposal(d, index);
+          if (index < 0) {
+            return RejectReason.Invalid;
           }
-          break;
+          RefundProposal(f, d, rules, index);
+          return null;
         }
 
-        case DiplomacyAction.Break:
-          if (relation == Relation.Allied) {
-            var grace = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.BreakGraceSeconds);
-            var ban = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.RealliableSeconds);
-            d->BreakExpireFrames[cell] = grace;
-            d->BreakExpireFrames[Cell(target, sender)] = grace;
-            d->RealliableFrames[cell] = ban;
-            d->RealliableFrames[Cell(target, sender)] = ban;
-            SetRelation(f, d, sender, target, Relation.BreakPending);
+        case DiplomacyAction.Break: {
+          if (relation != Relation.Allied) {
+            return RejectReason.Invalid;
           }
-          break;
+          if (state->Funds < rules.BreakCost) {
+            return RejectReason.InsufficientFunds;
+          }
+          state->Funds -= rules.BreakCost;
+          var grace = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.BreakGraceSeconds);
+          var ban = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.RealliableSeconds);
+          d->BreakExpireFrames[cell] = grace;
+          d->BreakExpireFrames[Cell(target, sender)] = grace;
+          d->RealliableFrames[cell] = ban;
+          d->RealliableFrames[Cell(target, sender)] = ban;
+          SetRelation(f, d, sender, target, Relation.BreakPending);
+          return null;
+        }
       }
+      return RejectReason.Invalid;
+    }
+
+    static void RefundProposal(Frame f, Diplomacy* d, GameRulesSpec rules, int index) {
+      FactoryWarsUtil.Player(f, d->Proposals.GetPointer(index)->From)->Funds += rules.ProposalRefund;
+      ClearProposal(d, index);
     }
 
     static int FindProposal(Diplomacy* d, PlayerRef from, PlayerRef to) {
@@ -183,11 +260,18 @@ namespace Quantum.FactoryWars {
     public override void Update(Frame f) {
       var d = f.Unsafe.GetPointerSingleton<Diplomacy>();
 
-      // 무응답 제안은 자동 거절.
+      var rules = FactoryWarsUtil.Rules(f);
+
+      // 무응답이거나 대상이 패배한 제안은 일부 환급하고, 제안자가 패배했으면 그냥 지운다.
       for (var i = 0; i < d->Proposals.Length; i++) {
-        var expire = d->Proposals.GetPointer(i)->ExpireFrame;
-        if (expire > 0 && f.Number >= expire) {
+        var proposal = d->Proposals.GetPointer(i);
+        if (proposal->ExpireFrame == 0) {
+          continue;
+        }
+        if (FactoryWarsUtil.Player(f, proposal->From)->Defeated) {
           ClearProposal(d, i);
+        } else if (f.Number >= proposal->ExpireFrame || FactoryWarsUtil.Player(f, proposal->To)->Defeated) {
+          RefundProposal(f, d, rules, i);
         }
       }
 
@@ -242,25 +326,49 @@ namespace Quantum.FactoryWars {
         return;
       }
 
-      if (aliveMask == 0 || IsWinningGroup(f, aliveMask)) {
-        f.Global->GameEnded = true;
-        f.Events.GameOver(aliveMask);
-      }
-    }
-
-    static bool IsWinningGroup(Frame f, int aliveMask) {
       var alive = 0;
       for (var i = 0; i < f.PlayerCount; i++) {
         if ((aliveMask & (1 << i)) != 0) {
           alive++;
         }
       }
-      if (alive == 1) {
-        return true;
+
+      if (alive <= 1) {
+        End(f, aliveMask);
+        return;
       }
-      if (f.Unsafe.GetPointerSingleton<Diplomacy>()->JointVictory == false) {
-        return false;
+
+      var d = f.Unsafe.GetPointerSingleton<Diplomacy>();
+      if (AllAllied(f, aliveMask) == false) {
+        d->JointVictoryFrame = 0;
+        return;
       }
+
+      // 팀전은 상대 팀이 전멸하면 바로 끝난다. 시작 시 같은 팀만 합류한 상태는 승리가 아니다.
+      if (d->TeamMode) {
+        if (alive < activeCount) {
+          End(f, aliveMask);
+        }
+        return;
+      }
+
+      if (d->JointVictory == false) {
+        return;
+      }
+      if (d->JointVictoryFrame == 0) {
+        d->JointVictoryFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, FactoryWarsUtil.Rules(f).JointVictorySeconds);
+      }
+      if (f.Number >= d->JointVictoryFrame) {
+        End(f, aliveMask);
+      }
+    }
+
+    static void End(Frame f, int aliveMask) {
+      f.Global->GameEnded = true;
+      f.Events.GameOver(aliveMask);
+    }
+
+    static bool AllAllied(Frame f, int aliveMask) {
       for (var a = 0; a < f.PlayerCount; a++) {
         for (var b = a + 1; b < f.PlayerCount; b++) {
           var bothAlive = (aliveMask & (1 << a)) != 0 && (aliveMask & (1 << b)) != 0;

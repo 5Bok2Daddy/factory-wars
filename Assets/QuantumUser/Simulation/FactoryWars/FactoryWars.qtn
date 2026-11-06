@@ -10,6 +10,8 @@
 
 enum Relation : Byte { Enemy, Allied, BreakPending }
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget }
+enum ActionKind : Byte { Propose, Accept, Reject, Break, Note }
+enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid }
 
 struct PlayerState {
     asset_ref<FactionSpec> Faction;
@@ -76,10 +78,13 @@ singleton component Diplomacy {
     array<Int32>[RELATION_CELLS] RealliableFrames;
     QBoolean JointVictory;
     QBoolean TeamMode;
+    Int32 JointVictoryFrame;
 }
 
-event NoteReceived { player_ref Sender; player_ref Receiver; Int32 PhraseId; }
-event AllianceChanged { player_ref A; player_ref B; Relation Relation; }
+// 경기 결과에 영향을 주는 알림은 롤백으로 취소되지 않도록 검증된 프레임에서만 보낸다.
+synced event ActionRejected { player_ref Player; ActionKind Kind; RejectReason Reason; }
+synced event NoteReceived { player_ref Sender; player_ref Receiver; Int32 PhraseId; }
+synced event AllianceChanged { player_ref A; player_ref B; Relation Relation; }
 event UnitDestroyed { entity_ref Unit; player_ref Owner; asset_ref<UnitSpec> Spec; }
-event PlayerDefeated { player_ref Player; }
-event GameOver { Int32 WinnerMask; }
+synced event PlayerDefeated { player_ref Player; }
+synced event GameOver { Int32 WinnerMask; }

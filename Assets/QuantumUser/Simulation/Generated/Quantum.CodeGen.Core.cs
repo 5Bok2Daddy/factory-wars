@@ -49,6 +49,19 @@ namespace Quantum {
   using RuntimeInitializeOnLoadMethodAttribute = UnityEngine.RuntimeInitializeOnLoadMethodAttribute;
   #endif //;
   
+  public enum ActionKind : byte {
+    Propose,
+    Accept,
+    Reject,
+    Break,
+    Note,
+  }
+  public enum RejectReason : byte {
+    InsufficientFunds,
+    Cooldown,
+    ModeDisabled,
+    Invalid,
+  }
   public enum Relation : byte {
     Enemy,
     Allied,
@@ -801,22 +814,24 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Diplomacy : Quantum.IComponentSingleton {
-    public const Int32 SIZE = 296;
+    public const Int32 SIZE = 300;
     public const Int32 ALIGNMENT = 4;
     [FieldOffset(0)]
     [FramePrinter.FixedArrayAttribute(typeof(Relation), 16)]
     private fixed Byte _Relations_[16];
-    [FieldOffset(152)]
+    [FieldOffset(156)]
     [FramePrinter.FixedArrayAttribute(typeof(AllianceProposal), 12)]
     private fixed Byte _Proposals_[144];
     [FieldOffset(16)]
     public fixed Int32 BreakExpireFrames[16];
-    [FieldOffset(80)]
+    [FieldOffset(84)]
     public fixed Int32 RealliableFrames[16];
-    [FieldOffset(144)]
-    public QBoolean JointVictory;
     [FieldOffset(148)]
+    public QBoolean JointVictory;
+    [FieldOffset(152)]
     public QBoolean TeamMode;
+    [FieldOffset(80)]
+    public Int32 JointVictoryFrame;
     public readonly FixedArray<Relation> Relations {
       get {
         fixed (byte* p = _Relations_) { return new FixedArray<Relation>(p, 1, 16); }
@@ -836,6 +851,7 @@ namespace Quantum {
         fixed (Int32* p = RealliableFrames) hash = hash * 31 + HashCodeUtils.GetArrayHashCode(p, 16);
         hash = hash * 31 + JointVictory.GetHashCode();
         hash = hash * 31 + TeamMode.GetHashCode();
+        hash = hash * 31 + JointVictoryFrame.GetHashCode();
         return hash;
       }
     }
@@ -843,6 +859,7 @@ namespace Quantum {
         var p = (Diplomacy*)ptr;
         FixedArray.Serialize(p->Relations, serializer, Statics.SerializeRelation);
         serializer.Stream.SerializeBuffer(&p->BreakExpireFrames[0], 16);
+        serializer.Stream.Serialize(&p->JointVictoryFrame);
         serializer.Stream.SerializeBuffer(&p->RealliableFrames[0], 16);
         QBoolean.Serialize(&p->JointVictory, serializer);
         QBoolean.Serialize(&p->TeamMode, serializer);
@@ -1025,6 +1042,7 @@ namespace Quantum {
       SerializeInput = Quantum.Input.Serialize;
     }
     static partial void RegisterSimulationTypesGen(TypeRegistry typeRegistry) {
+      typeRegistry.Register(typeof(Quantum.ActionKind), 1);
       typeRegistry.Register(typeof(Quantum.AllianceProposal), Quantum.AllianceProposal.SIZE);
       typeRegistry.Register(typeof(AssetGuid), AssetGuid.SIZE);
       typeRegistry.Register(typeof(AssetRef), AssetRef.SIZE);
@@ -1103,6 +1121,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(Quantum.Ptr), Quantum.Ptr.SIZE);
       typeRegistry.Register(typeof(QueryOptions), 2);
       typeRegistry.Register(typeof(RNGSession), RNGSession.SIZE);
+      typeRegistry.Register(typeof(Quantum.RejectReason), 1);
       typeRegistry.Register(typeof(Quantum.Relation), 1);
       typeRegistry.Register(typeof(Quantum.ResourceNode), Quantum.ResourceNode.SIZE);
       typeRegistry.Register(typeof(Shape2D), Shape2D.SIZE);
@@ -1129,9 +1148,11 @@ namespace Quantum {
     [Preserve()]
     public static void EnsureNotStrippedGen() {
       FramePrinter.EnsureNotStripped();
+      FramePrinter.EnsurePrimitiveNotStripped<Quantum.ActionKind>();
       FramePrinter.EnsurePrimitiveNotStripped<CallbackFlags>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.InputButtons>();
       FramePrinter.EnsurePrimitiveNotStripped<QueryOptions>();
+      FramePrinter.EnsurePrimitiveNotStripped<Quantum.RejectReason>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.Relation>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.UnitOrder>();
     }

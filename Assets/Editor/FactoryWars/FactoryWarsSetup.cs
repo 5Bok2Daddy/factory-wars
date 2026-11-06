@@ -20,7 +20,9 @@ namespace FactoryWars.EditorTools {
     const string AppId = "b0a33dd2-3c99-455f-ad7e-9c82b8a4cd40";
     const string DataRoot = "Assets/QuantumUser/Resources/FactoryWars";
     const string RenderRoot = "Assets/Settings";
-    const string ScenePath = "Assets/QuantumUser/Scenes/QuantumGameScene.unity";
+    const string ScenesRoot = "Assets/QuantumUser/Scenes";
+    const string ScenePath = ScenesRoot + "/QuantumGameScene.unity";
+    const string MapRoot = "Assets/QuantumUser/Resources";
 
     [MenuItem("Tools/Factory Wars/Run All Setup")]
     public static void RunAll() {
@@ -29,6 +31,8 @@ namespace FactoryWars.EditorTools {
       ConfigureQuantum();
       BuildData();
       BuildTestScene();
+      BuildMapScene(TwoPlayerMap);
+      BuildMapScene(FourPlayerMap);
       AssetDatabase.SaveAssets();
       Debug.Log("FactoryWarsSetup: 완료");
     }
@@ -70,9 +74,10 @@ namespace FactoryWars.EditorTools {
       EditorUtility.SetDirty(photon);
 
       var session = QuantumDeterministicSessionConfigAsset.Global;
-      session.Config.LockstepSimulation = true;
+      session.Config.LockstepSimulation = false;
       session.Config.UpdateFPS = 20;
-      session.Config.InputDelayMin = 10;
+      // 단위는 틱. 20Hz에서 4틱 = 200ms.
+      session.Config.InputDelayMin = 4;
       EditorUtility.SetDirty(session);
 
       var simulation = QuantumDefaultConfigs.Global.SimulationConfig;
@@ -229,48 +234,179 @@ namespace FactoryWars.EditorTools {
       var rules = Asset<GameRulesSpec>("game_rules");
       rules.StartingFunds = 5000;
       rules.StartingEngineers = 1;
-      rules.StartPositions = new[] {
-        new FPVector3(-30, 0, 0), new FPVector3(30, 0, 0), new FPVector3(0, 0, 30), new FPVector3(0, 0, -30),
-      };
       rules.NavMeshName = "NavMesh";
+      rules.MinDiplomacyPlayers = 3;
       rules.ProposalSeconds = 30;
+      rules.ProposalCost = 300;
+      rules.ProposalRefund = 150;
+      rules.AcceptCost = 150;
+      rules.BreakCost = 500;
+      rules.JointVictorySeconds = 60;
       rules.BreakGraceSeconds = 10;
       rules.RealliableSeconds = 60;
       rules.NoteCooldownSeconds = 5;
       rules.NotePhraseCount = 12;
+      rules.NoteSingleCost = 50;
+      rules.NoteGroupCost = 100;
       rules.LowPowerProductionMultiplier = N(0.5);
       rules.LowPowerTowerMultiplier = N(0.5);
       rules.SpawnOffset = 6;
       rules.AirAltitude = 6;
       EditorUtility.SetDirty(rules);
 
+      var testMap = Asset<MapSpec>("map_test");
+      testMap.MaxPlayers = 4;
+      testMap.BoundsMin = new FPVector2(-50, -50);
+      testMap.BoundsMax = new FPVector2(50, 50);
+      testMap.StartPositions = new[] {
+        new FPVector3(-30, 0, 0), new FPVector3(30, 0, 0), new FPVector3(0, 0, 30), new FPVector3(0, 0, -30),
+      };
+      testMap.ResourceNodes = new ResourceNodePlacement[0];
+      EditorUtility.SetDirty(testMap);
+
+      BuildMapSpec(TwoPlayerMap);
+      BuildMapSpec(FourPlayerMap);
+
       AssetDatabase.SaveAssets();
       QuantumUnityDBUtilities.RefreshGlobalDB(true);
+    }
+
+    struct Obstacle {
+      public Vector2Int Position;
+      public Vector3 Size;
+      public float Yaw;
+    }
+
+    /// <summary>
+    /// 한 플레이어 몫의 배치만 적고 맵 중심 회전으로 나머지를 만든다. 정수 좌표라 회전해도 대칭이 정확하다.
+    /// </summary>
+    class MapDef {
+      public string Id;
+      public int Players;
+      public int HalfSize;
+      public Vector2Int Start;
+      public Vector2Int[] BaseNodes;
+      public Vector2Int[] ExpansionNodes;
+      public int BaseFunds, ExpansionFunds, CenterFunds;
+      public Obstacle[] Obstacles;
+      public Vector3 CameraPosition;
+    }
+
+    static readonly MapDef TwoPlayerMap = new MapDef {
+      Id = "Map2P", Players = 2, HalfSize = 80, Start = new Vector2Int(-55, -55),
+      BaseNodes = new[] { new Vector2Int(-43, -55), new Vector2Int(-55, -43) },
+      ExpansionNodes = new[] { new Vector2Int(-54, 50), new Vector2Int(-46, 50) },
+      BaseFunds = 5000, ExpansionFunds = 4000, CenterFunds = 8000,
+      Obstacles = new[] {
+        new Obstacle { Position = new Vector2Int(-26, -26), Size = new Vector3(44, 6, 8), Yaw = 45 },
+        new Obstacle { Position = new Vector2Int(-24, 24), Size = new Vector3(10, 6, 10) },
+      },
+      CameraPosition = new Vector3(0, 130, -105),
+    };
+
+    static readonly MapDef FourPlayerMap = new MapDef {
+      Id = "Map4P", Players = 4, HalfSize = 120, Start = new Vector2Int(-90, -90),
+      BaseNodes = new[] { new Vector2Int(-78, -90), new Vector2Int(-90, -78) },
+      ExpansionNodes = new[] { new Vector2Int(-4, -90), new Vector2Int(4, -90) },
+      BaseFunds = 5000, ExpansionFunds = 4000, CenterFunds = 12000,
+      Obstacles = new[] {
+        new Obstacle { Position = new Vector2Int(-45, -90), Size = new Vector3(6, 6, 34) },
+        new Obstacle { Position = new Vector2Int(45, -90), Size = new Vector3(6, 6, 34) },
+        new Obstacle { Position = new Vector2Int(-40, -40), Size = new Vector3(44, 6, 8), Yaw = 45 },
+      },
+      CameraPosition = new Vector3(0, 190, -155),
+    };
+
+    /// <summary>맵 중심 기준으로 90도씩 quarterTurns번 돌린다.</summary>
+    static Vector2Int Turn(Vector2Int p, int quarterTurns) {
+      for (var i = 0; i < quarterTurns; i++) {
+        p = new Vector2Int(-p.y, p.x);
+      }
+      return p;
+    }
+
+    /// <summary>플레이어 수만큼 회전 대칭 복사본을 돌려준다. 2인은 180도, 4인은 90도 간격.</summary>
+    static IEnumerable<(Vector2Int Position, int QuarterTurns)> Orbit(MapDef def, Vector2Int p) {
+      var step = 4 / def.Players;
+      for (var i = 0; i < def.Players; i++) {
+        yield return (Turn(p, i * step), i * step);
+      }
+    }
+
+    static FPVector3 Position(Vector2Int p) => new FPVector3(p.x, 0, p.y);
+
+    static void BuildMapSpec(MapDef def) {
+      var spec = Asset<MapSpec>($"map_{def.Id}");
+      spec.MaxPlayers = def.Players;
+      spec.BoundsMin = new FPVector2(-def.HalfSize, -def.HalfSize);
+      spec.BoundsMax = new FPVector2(def.HalfSize, def.HalfSize);
+      spec.StartPositions = Orbit(def, def.Start).Select(o => Position(o.Position)).ToArray();
+
+      var nodes = new List<ResourceNodePlacement>();
+      void Add(Vector2Int[] template, int funds) {
+        foreach (var p in template) {
+          nodes.AddRange(Orbit(def, p).Select(o => new ResourceNodePlacement { Position = Position(o.Position), Funds = funds }));
+        }
+      }
+      Add(def.BaseNodes, def.BaseFunds);
+      Add(def.ExpansionNodes, def.ExpansionFunds);
+      nodes.Add(new ResourceNodePlacement { Position = FPVector3.Zero, Funds = def.CenterFunds });
+      spec.ResourceNodes = nodes.ToArray();
+      EditorUtility.SetDirty(spec);
+    }
+
+    static void BuildMapScene(MapDef def) {
+      var scenePath = $"{ScenesRoot}/{def.Id}.unity";
+      if (File.Exists(scenePath)) {
+        EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+      } else {
+        QuantumEditorMenuCreateScene.CreateNewQuantumScene(scenePath, $"{MapRoot}/{def.Id}.asset", true, true, false);
+      }
+      var scene = EditorSceneManager.GetActiveScene();
+      var map = Object.FindFirstObjectByType<QuantumMapData>();
+
+      var ground = EnsureGround();
+      ground.transform.localScale = new Vector3(def.HalfSize / 5f, 1, def.HalfSize / 5f);
+      EnsureNavMesh(map);
+      EnsureDebugView();
+
+      var old = GameObject.Find("Obstacles");
+      if (old != null) {
+        Object.DestroyImmediate(old);
+      }
+      var root = new GameObject("Obstacles");
+      foreach (var obstacle in def.Obstacles) {
+        foreach (var (position, quarterTurns) in Orbit(def, obstacle.Position)) {
+          var block = GameObject.CreatePrimitive(PrimitiveType.Cube);
+          block.name = "Rock";
+          block.transform.SetParent(root.transform, false);
+          block.transform.position = new Vector3(position.x, obstacle.Size.y / 2, position.y);
+          block.transform.rotation = Quaternion.Euler(0, obstacle.Yaw - 90 * quarterTurns, 0);
+          block.transform.localScale = obstacle.Size;
+          var modifier = block.AddComponent<NavMeshModifier>();
+          modifier.overrideArea = true;
+          modifier.area = 1; // Not Walkable
+        }
+      }
+
+      var camera = Camera.main;
+      camera.transform.position = def.CameraPosition;
+      camera.transform.rotation = Quaternion.Euler(50, 0, 0);
+
+      ConfigureRunner(def.Players);
+
+      var spec = AssetDatabase.LoadAssetAtPath<MapSpec>($"{DataRoot}/map_{def.Id}.asset");
+      Bake(map, spec, scene);
     }
 
     public static void BuildTestScene() {
       var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
       var map = Object.FindFirstObjectByType<QuantumMapData>();
 
-      var ground = GameObject.Find("Ground");
-      if (ground == null) {
-        ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        ground.name = "Ground";
-        ground.transform.localScale = new Vector3(10, 1, 10);
-      }
-
-      var navObject = GameObject.Find("NavMesh");
-      if (navObject == null) {
-        navObject = new GameObject("NavMesh");
-        navObject.transform.SetParent(map.transform, false);
-        navObject.AddComponent<NavMeshSurface>();
-        var navUnity = navObject.AddComponent<QuantumMapNavMeshUnity>();
-        navUnity.NavMeshSurfaces = new[] { navObject };
-      }
-
-      if (Object.FindFirstObjectByType<FactoryWarsDebugView>() == null) {
-        new GameObject("FactoryWarsDebugView").AddComponent<FactoryWarsDebugView>();
-      }
+      var ground = EnsureGround();
+      ground.transform.localScale = new Vector3(10, 1, 10);
+      EnsureNavMesh(map);
+      EnsureDebugView();
 
       var camera = Camera.main;
       if (camera != null) {
@@ -278,20 +414,57 @@ namespace FactoryWars.EditorTools {
         camera.transform.rotation = Quaternion.Euler(50, 0, 0);
       }
 
+      ConfigureRunner(2);
+      Bake(map, AssetDatabase.LoadAssetAtPath<MapSpec>($"{DataRoot}/map_test.asset"), scene);
+    }
+
+    static GameObject EnsureGround() {
+      var ground = GameObject.Find("Ground");
+      if (ground == null) {
+        ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        ground.name = "Ground";
+      }
+      return ground;
+    }
+
+    static void EnsureNavMesh(QuantumMapData map) {
+      if (GameObject.Find("NavMesh") != null) {
+        return;
+      }
+      var navObject = new GameObject("NavMesh");
+      navObject.transform.SetParent(map.transform, false);
+      navObject.AddComponent<NavMeshSurface>();
+      navObject.AddComponent<QuantumMapNavMeshUnity>().NavMeshSurfaces = new[] { navObject };
+    }
+
+    static void EnsureDebugView() {
+      if (Object.FindFirstObjectByType<FactoryWarsDebugView>() == null) {
+        new GameObject("FactoryWarsDebugView").AddComponent<FactoryWarsDebugView>();
+      }
+    }
+
+    static void ConfigureRunner(int players) {
       var rules = AssetDatabase.LoadAssetAtPath<GameRulesSpec>($"{DataRoot}/game_rules.asset");
-      var free = AssetDatabase.LoadAssetAtPath<FactionSpec>($"{DataRoot}/faction_free_federation.asset");
-      var continental = AssetDatabase.LoadAssetAtPath<FactionSpec>($"{DataRoot}/faction_continental_federation.asset");
+      var factions = new[] {
+        AssetDatabase.LoadAssetAtPath<FactionSpec>($"{DataRoot}/faction_free_federation.asset"),
+        AssetDatabase.LoadAssetAtPath<FactionSpec>($"{DataRoot}/faction_continental_federation.asset"),
+      };
+      var names = new[] { "Free", "Continental" };
 
       var runner = Object.FindFirstObjectByType<QuantumRunnerLocalDebug>();
       runner.RuntimeConfig.Rules = Ref(rules);
       runner.RuntimeConfig.JointVictory = true;
-      runner.MaxPlayerCount = 2;
-      runner.LocalPlayers = new[] {
-        new RuntimePlayer { PlayerNickname = "Free", Faction = Ref(free), Team = 0 },
-        new RuntimePlayer { PlayerNickname = "Continental", Faction = Ref(continental), Team = 1 },
-      };
+      runner.MaxPlayerCount = players;
+      runner.LocalPlayers = Enumerable.Range(0, players)
+        .Select(i => new RuntimePlayer { PlayerNickname = $"{names[i % 2]}{i}", Faction = Ref(factions[i % 2]), Team = i })
+        .ToArray();
       EditorUtility.SetDirty(runner);
+    }
 
+    static void Bake(QuantumMapData map, MapSpec spec, UnityEngine.SceneManagement.Scene scene) {
+      var mapAsset = map.GetAsset(true);
+      mapAsset.UserAsset = new AssetRef(Ref(spec).Id);
+      EditorUtility.SetDirty(mapAsset);
       EditorSceneManager.MarkSceneDirty(scene);
       EditorSceneManager.SaveScene(scene);
 
