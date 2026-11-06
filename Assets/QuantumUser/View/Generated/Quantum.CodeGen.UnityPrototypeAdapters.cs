@@ -122,17 +122,21 @@ namespace Quantum.Prototypes.Unity {
   public unsafe partial class WorkerPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.WorkerPrototype> {
     public Quantum.QEnum8<WorkerTask> Task;
     public Quantum.QuantumEntityPrototype Target;
+    public Quantum.QEnum8<ResourceKind> CarriedKind;
     public FP Carried;
     public FP WorkTimer;
     public Int32 NextPathFrame;
+    public Int32 Spot;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.WorkerPrototype prototype);
     public override Quantum.Prototypes.WorkerPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.WorkerPrototype();
       converter.Convert(this.Task, out result.Task);
       converter.Convert(this.Target, out result.Target);
+      converter.Convert(this.CarriedKind, out result.CarriedKind);
       converter.Convert(this.Carried, out result.Carried);
       converter.Convert(this.WorkTimer, out result.WorkTimer);
       converter.Convert(this.NextPathFrame, out result.NextPathFrame);
+      converter.Convert(this.Spot, out result.Spot);
       ConvertUser(converter, ref result);
       return result;
     }

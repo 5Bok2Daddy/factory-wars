@@ -64,21 +64,60 @@ MonoBehaviour:
   StartingEngineers: 1
   SpawnFactionUnits: 1
   ResourceNodes:
-  - Position:
-      X:
-        RawValue: -1966080
-      Y:
-        RawValue: 0
-      Z:
-        RawValue: 917504
-    Funds:
+  - Kind: 0
+    Amount:
       RawValue: 327680000
-  - Position:
-      X:
-        RawValue: -1966080
-      Y:
+    Shape:
+      Center:
+        X:
+          RawValue: -1966080
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 917504
+      Radius:
+        RawValue: 196608
+      HalfLength:
         RawValue: 0
-      Z:
-        RawValue: -917504
-    Funds:
+      HalfWidth:
+        RawValue: 0
+      Yaw:
+        RawValue: 0
+  - Kind: 0
+    Amount:
       RawValue: 6553600
+    Shape:
+      Center:
+        X:
+          RawValue: -1966080
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -917504
+      Radius:
+        RawValue: 196608
+      HalfLength:
+        RawValue: 0
+      HalfWidth:
+        RawValue: 0
+      Yaw:
+        RawValue: 0
+  - Kind: 1
+    Amount:
+      RawValue: 196608000
+    Shape:
+      Center:
+        X:
+          RawValue: -2490368
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 1966080
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 524288
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: 0

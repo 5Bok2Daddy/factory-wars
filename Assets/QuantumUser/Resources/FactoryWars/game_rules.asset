@@ -51,8 +51,17 @@ MonoBehaviour:
     RawValue: 393216
   CarryCapacity:
     RawValue: 3276800
-  GatherSeconds:
+  IronGatherSeconds:
     RawValue: 131072
+  WoodGatherSeconds:
+    RawValue: 196608
+  MineSpots: 6
+  ForestSpotSpacing:
+    RawValue: 262144
+  SpotOffset:
+    RawValue: 98304
+  SpotArrival:
+    RawValue: 98304
   WorkRange:
     RawValue: 131072
   NodeSearchRadius:

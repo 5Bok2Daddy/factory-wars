@@ -92,7 +92,7 @@ namespace Quantum.FactoryWars {
           continue;
         }
         var position = f.Unsafe.GetPointer<Transform3D>(entity)->Position;
-        var node = WorkerSystem.NearestNode(f, position, FP.UseableMax);
+        var node = WorkerSystem.NearestNode(f, position, FP.UseableMax, ResourceKind.Iron);
         if (node != EntityRef.None) {
           WorkerSystem.Assign(f, entity, WorkerTask.Gather, node);
         }
@@ -141,16 +141,11 @@ namespace Quantum.FactoryWars {
       var center = bot->Home;
       var hasRole = NextRole(state, bot, ai, counts, f, faction, out var role);
 
-      if (hasRole == false || role == BuildingRole.Processor) {
-        // 확장: 멀리 일하러 간 공병 옆에 정제소를 둔다.
-        if (counts[(int)BuildingRole.Processor] > 0 && counts[(int)BuildingRole.Processor] < ai.MaxRefineries
-            && FindDistantNode(f, player, ai, out var distant)) {
-          role = BuildingRole.Processor;
-          hasRole = true;
-          center = distant;
-        } else if (hasRole && NearestNodePosition(f, bot->Home, out var node)) {
-          center = node;
-        }
+      // 확장: 멀리 일하러 간 공병 옆에 집하장을 둔다.
+      if (counts[(int)BuildingRole.CollectionYard] < ai.MaxYards && FindDistantNode(f, player, ai, out var distant)) {
+        role = BuildingRole.CollectionYard;
+        hasRole = true;
+        center = distant;
       }
       if (hasRole == false) {
         return FP._0;
@@ -170,23 +165,13 @@ namespace Quantum.FactoryWars {
       return FP._0;
     }
 
-    static bool NearestNodePosition(Frame f, FPVector3 position, out FPVector3 result) {
-      var node = WorkerSystem.NearestNode(f, position, FP.UseableMax);
-      result = default;
-      if (node == EntityRef.None) {
-        return false;
-      }
-      result = f.Unsafe.GetPointer<Transform3D>(node)->Position;
-      return true;
-    }
-
     static bool FindDistantNode(Frame f, PlayerRef player, AiSpec ai, out FPVector3 position) {
       var limit = ai.ExpandDistance * ai.ExpandDistance;
       var workers = f.Filter<Unit, Worker>();
       while (workers.NextUnsafe(out _, out var unit, out var worker)) {
         if (unit->Owner == player && worker->Task == WorkerTask.Gather && f.Has<ResourceNode>(worker->Target)) {
           position = f.Unsafe.GetPointer<Transform3D>(worker->Target)->Position;
-          if (DistanceToRefinery(f, player, position) > limit) {
+          if (DistanceToDropOff(f, player, position) > limit) {
             return true;
           }
         }
@@ -195,11 +180,11 @@ namespace Quantum.FactoryWars {
       return false;
     }
 
-    static FP DistanceToRefinery(Frame f, PlayerRef player, FPVector3 position) {
+    static FP DistanceToDropOff(Frame f, PlayerRef player, FPVector3 position) {
       var best = FP.UseableMax;
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out _, out var transform, out var building)) {
-        if (building->Owner == player && f.FindAsset(building->Spec).IsRefinery) {
+        if (building->Owner == player && f.FindAsset(building->Spec).IsDropOff) {
           best = FPMath.Min(best, FactoryWarsUtil.FlatDistanceSqr(transform->Position, position));
         }
       }

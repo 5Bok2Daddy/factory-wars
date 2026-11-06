@@ -33,7 +33,16 @@ namespace Quantum {
     public FP SpawnOffset;
     public FP AirAltitude;
     public FP CarryCapacity;
-    public FP GatherSeconds;
+    public FP IronGatherSeconds;
+    public FP WoodGatherSeconds;
+    /// <summary>철광산 둘레의 작업 지점 수.</summary>
+    public int MineSpots;
+    /// <summary>숲 긴 변의 작업 지점 간격.</summary>
+    public FP ForestSpotSpacing;
+    /// <summary>작업 지점이 노드 가장자리에서 떨어진 거리.</summary>
+    public FP SpotOffset;
+    /// <summary>작업 지점에 도착했다고 보는 거리.</summary>
+    public FP SpotArrival;
     public FP WorkRange;
     public FP NodeSearchRadius;
     public FP ResourceNodeRadius;

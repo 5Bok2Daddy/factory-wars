@@ -179,7 +179,7 @@ namespace FactoryWars.EditorTools {
       spec.PopulationCapBonus = population;
       spec.ModuleSlots = slots;
       spec.FootprintRadius = 3;
-      spec.IsRefinery = id.EndsWith("_processor");
+      spec.IsDropOff = id.EndsWith("_headquarters") || id.EndsWith("_collection_yard");
       spec.Producible = producible.Select(Ref).ToArray();
       spec.Attack = AttackType.None;
       EditorUtility.SetDirty(spec);
@@ -253,13 +253,13 @@ namespace FactoryWars.EditorTools {
       return faction;
     }
 
-    static AiSpec BuildAi(string id, double think, int engineers, int variety, int maxRefineries, double firstAttack, double repeat,
+    static AiSpec BuildAi(string id, double think, int engineers, int variety, int maxYards, double firstAttack, double repeat,
         int wave, int growth, int maxWave, bool strategic, BuildingRole[] order) {
       var ai = Asset<AiSpec>(id);
       ai.ThinkSeconds = N(think);
       ai.EngineerTarget = engineers;
       ai.BuildOrder = order;
-      ai.MaxRefineries = maxRefineries;
+      ai.MaxYards = maxYards;
       ai.ExpandDistance = 30;
       ai.ConcurrentBuilds = 1;
       ai.QueueTarget = 2;
@@ -320,7 +320,12 @@ namespace FactoryWars.EditorTools {
       rules.SpawnOffset = 6;
       rules.AirAltitude = 6;
       rules.CarryCapacity = 50;
-      rules.GatherSeconds = 2;
+      rules.IronGatherSeconds = 2;
+      rules.WoodGatherSeconds = 3;
+      rules.MineSpots = 6;
+      rules.ForestSpotSpacing = 4;
+      rules.SpotOffset = N(1.5);
+      rules.SpotArrival = N(1.5);
       rules.WorkRange = 2;
       rules.NodeSearchRadius = 30;
       rules.ResourceNodeRadius = 2;
@@ -355,8 +360,9 @@ namespace FactoryWars.EditorTools {
       testMap.StartingEngineers = 1;
       testMap.SpawnFactionUnits = true;
       testMap.ResourceNodes = new[] {
-        new ResourceNodePlacement { Position = new FPVector3(-30, 0, 14), Funds = 5000 },
-        new ResourceNodePlacement { Position = new FPVector3(-30, 0, -14), Funds = 100 },
+        Mine(new Vector2Int(-30, 14), 5000),
+        Mine(new Vector2Int(-30, -14), 100),
+        Forest(new Vector2Int(-38, 30), 8, 3, 0, 3000),
       };
       EditorUtility.SetDirty(testMap);
 
@@ -431,6 +437,16 @@ namespace FactoryWars.EditorTools {
 
     static FPVector3 Position(Vector2Int p) => new FPVector3(p.x, 0, p.y);
 
+    static ResourceNodePlacement Mine(Vector2Int p, int amount) {
+      return new ResourceNodePlacement { Kind = ResourceKind.Iron, Amount = amount, Shape = new MapShape { Center = Position(p), Radius = 3 } };
+    }
+
+    static ResourceNodePlacement Forest(Vector2Int p, int halfLength, int halfWidth, int yaw, int amount) {
+      return new ResourceNodePlacement {
+        Kind = ResourceKind.Wood, Amount = amount, Shape = new MapShape { Center = Position(p), HalfLength = halfLength, HalfWidth = halfWidth, Yaw = yaw },
+      };
+    }
+
     static void BuildMapSpec(MapDef def) {
       var spec = Asset<MapSpec>($"map_{def.Id}");
       spec.MaxPlayers = def.Players;
@@ -444,12 +460,12 @@ namespace FactoryWars.EditorTools {
       var nodes = new List<ResourceNodePlacement>();
       void Add(Vector2Int[] template, int funds) {
         foreach (var p in template) {
-          nodes.AddRange(Orbit(def, p).Select(o => new ResourceNodePlacement { Position = Position(o.Position), Funds = funds }));
+          nodes.AddRange(Orbit(def, p).Select(o => Mine(o.Position, funds)));
         }
       }
       Add(def.BaseNodes, def.BaseFunds);
       Add(def.ExpansionNodes, def.ExpansionFunds);
-      nodes.Add(new ResourceNodePlacement { Position = FPVector3.Zero, Funds = def.CenterFunds });
+      nodes.Add(Mine(Vector2Int.zero, def.CenterFunds));
       spec.ResourceNodes = nodes.ToArray();
       EditorUtility.SetDirty(spec);
     }

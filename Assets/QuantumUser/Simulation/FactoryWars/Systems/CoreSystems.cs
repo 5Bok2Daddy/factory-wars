@@ -35,8 +35,8 @@ namespace Quantum.FactoryWars {
       var nodes = FactoryWarsUtil.MapInfo(f).ResourceNodes;
       for (var i = 0; nodes != null && i < nodes.Length; i++) {
         var node = f.Create();
-        f.Add(node, Transform3D.Create(nodes[i].Position));
-        f.Add(node, new ResourceNode { RemainingFunds = nodes[i].Funds });
+        f.Add(node, Transform3D.Create(nodes[i].Shape.Center));
+        f.Add(node, new ResourceNode { Kind = nodes[i].Kind, Remaining = nodes[i].Amount, Shape = nodes[i].Shape });
       }
 
       var bots = f.RuntimeConfig.Bots;

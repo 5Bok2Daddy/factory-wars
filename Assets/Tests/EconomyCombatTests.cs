@@ -48,6 +48,8 @@ namespace FactoryWars.Tests {
 
     static int PowerProduced(int player) => Verified.Global->Players.GetPointer(player)->PowerProduced;
 
+    static int Wood(int player) => Verified.Global->Players.GetPointer(player)->Stock.Wood.AsInt;
+
     static float ExactFunds(int player) => Verified.Global->Players.GetPointer(player)->Stock.Iron.AsFloat;
 
     static EntityRef NodeAt(FPVector3 position) {
@@ -59,7 +61,7 @@ namespace FactoryWars.Tests {
       return EntityRef.None;
     }
 
-    static float NodeRemaining(EntityRef node) => Verified.TryGet<ResourceNode>(node, out var value) ? value.RemainingFunds.AsFloat : 0f;
+    static float NodeRemaining(EntityRef node) => Verified.TryGet<ResourceNode>(node, out var value) ? value.Remaining.AsFloat : 0f;
 
     static EntityRef BuildingAt(FPVector3 position) {
       foreach (var pair in Verified.GetComponentIterator<Building>()) {
@@ -93,56 +95,127 @@ namespace FactoryWars.Tests {
     // 채집
 
     [UnityTest]
-    public IEnumerator Gather_CarriesFundsToRefinery() {
-      yield return StartMatch(buildings: Plant);
-      yield return BuildAndFinish(0, "_processor", V(-20, 10));
-      Assert.AreEqual(4750, Funds(0), "가공소 철 250");
-
+    public IEnumerator Gather_CarriesIronToHeadquarters() {
+      yield return StartMatch();
       var engineer = Engineers(0)[0];
       var node = NodeAt(V(-30, 14));
       yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = node });
-      yield return WaitFor(() => Funds(0) > 4750, 60f, "자금 반입");
-      Assert.AreEqual(4800, Funds(0), "한 번에 50");
+      yield return WaitFor(() => Funds(0) > 5000, 60f, "철 반입");
+      Assert.AreEqual(5050, Funds(0), "한 번에 50");
 
-      yield return WaitFor(() => Funds(0) > 4800, 60f, "반복 채집");
+      yield return WaitFor(() => Funds(0) > 5050, 60f, "반복 채집");
       var carried = WorkerOf(engineer).Carried.AsFloat;
-      Assert.AreEqual(5000f, Funds(0) - 4750 + carried + NodeRemaining(node), Tolerance, "자금은 노드에서 옮겨질 뿐이다");
+      Assert.AreEqual(5000f, Funds(0) - 5000 + carried + NodeRemaining(node), Tolerance, "철은 노드에서 옮겨질 뿐이다");
+      Assert.AreEqual(10000, Wood(0), "목재는 그대로");
+    }
+
+    /// <summary>작업 지점에서 일을 시작해 자원을 들 때까지 걸린 초.</summary>
+    IEnumerator MeasureGather(EntityRef engineer, EntityRef node, System.Action<float> result) {
+      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = node });
+      yield return WaitFor(() => WorkerOf(engineer).WorkTimer > FP._0, 60f, "채집 시작");
+      var start = Verified.Number;
+      yield return WaitFor(() => WorkerOf(engineer).Carried > FP._0, 60f, "채집 완료");
+      result((Verified.Number - start) / (float)Fps);
     }
 
     [UnityTest]
-    public IEnumerator Gather_WithoutRefinery_WaitsCarrying() {
-      yield return StartMatch(buildings: Plant);
+    public IEnumerator Gather_IronTwoSecondsWoodThreeSeconds() {
+      yield return StartMatch(units: new[] { (0, "ff_engineer", -30, 20) });
+      var engineers = Engineers(0);
+      var iron = 0f;
+      var wood = 0f;
+      yield return MeasureGather(engineers[0], NodeAt(V(-30, 14)), s => iron = s);
+      yield return MeasureGather(engineers[1], NodeAt(V(-38, 30)), s => wood = s);
+      // 검증 프레임을 폴링하므로 몇 프레임 늦게 볼 수 있다.
+      Assert.AreEqual(2f, iron, 0.4f, "철 2초");
+      Assert.AreEqual(3f, wood, 0.4f, "목재 3초");
+      Assert.AreEqual(ResourceKind.Wood, WorkerOf(engineers[1]).CarriedKind);
+      yield return WaitFor(() => Wood(0) > 10000, 60f, "목재 반입");
+      Assert.AreEqual(10050, Wood(0));
+    }
+
+    [UnityTest]
+    public IEnumerator Gather_SwitchingResourceDeliversFirst() {
+      yield return StartMatch();
       var engineer = Engineers(0)[0];
-      var node = NodeAt(V(-30, 14));
-      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = node });
-      yield return WaitFor(() => WorkerOf(engineer).Carried > FP._0, 60f, "채집");
-      yield return WaitFrames(10 * Fps);
-      Assert.AreEqual(5000, Funds(0));
-      Assert.AreEqual(WorkerTask.Deliver, WorkerOf(engineer).Task);
-      Assert.AreEqual(4950f, NodeRemaining(node), Tolerance, "한 번만 채집");
+      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = NodeAt(V(-30, 14)) });
+      yield return WaitFor(() => WorkerOf(engineer).Carried > FP._0, 60f, "철 채집");
 
-      // 정제소를 지은 뒤 다시 채집을 시키면 들고 있던 자금부터 반입한다.
-      yield return BuildAndFinish(0, "_processor", V(-20, 10));
-      Assert.AreEqual(50f, WorkerOf(engineer).Carried.AsFloat, Tolerance, "건설 중에도 자금을 들고 있음");
-      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = node });
-      yield return WaitFor(() => Funds(0) > 4750, 60f, "자금 반입");
-      Assert.AreEqual(4800, Funds(0));
-      Assert.GreaterOrEqual(NodeRemaining(node), 4900f, "반입 전에 다시 캐지 않음");
+      var forest = NodeAt(V(-38, 30));
+      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = forest });
+      Assert.AreEqual(WorkerTask.Deliver, WorkerOf(engineer).Task, "철을 들고는 숲에서 일하지 않는다");
+      Assert.AreEqual(forest, WorkerOf(engineer).Target, "반입 뒤 갈 곳은 숲");
+      yield return WaitFor(() => Funds(0) > 5000, 60f, "철 반입");
+      Assert.AreEqual(5050, Funds(0));
+      yield return WaitFor(() => Wood(0) > 10000, 60f, "이어서 목재 채집");
+      Assert.AreEqual(5050, Funds(0), "철은 더 늘지 않음");
     }
 
     [UnityTest]
-    public IEnumerator Gather_DepletedNodeIsRemovedAndWorkerMovesOn() {
-      yield return StartMatch(buildings: Plant);
-      yield return BuildAndFinish(0, "_processor", V(-20, -10));
+    public IEnumerator Gather_EngineersSpreadOverSpots() {
+      var extra = Enumerable.Range(0, 6).Select(i => (0, "ff_engineer", -36 + i * 2, 8)).ToArray();
+      yield return StartMatch(units: extra);
+      var engineers = Engineers(0);
+      Assert.AreEqual(7, engineers.Count);
+      var mine = NodeAt(V(-30, 14));
+      var other = NodeAt(V(-30, -14));
+      yield return Send(0, new GatherCommand { Units = engineers.ToArray(), Node = mine });
+
+      var atMine = engineers.Where(e => WorkerOf(e).Target == mine).ToList();
+      Assert.AreEqual(6, atMine.Count, "철광산 지점 6개");
+      Assert.AreEqual(6, atMine.Select(e => WorkerOf(e).Spot).Distinct().Count(), "지점이 겹치지 않음");
+      Assert.AreEqual(1, engineers.Count(e => WorkerOf(e).Target == other), "지점이 차면 가까운 다른 노드로");
+    }
+
+    [UnityTest]
+    public IEnumerator Gather_CollectionYardAcceptsDelivery() {
+      yield return StartMatch();
+      var position = V(-20, 30);
+      yield return BuildAndFinish(0, "_collection_yard", position);
+      Assert.AreEqual(9850, Wood(0), "집하장 목재 150");
+      var engineer = Engineers(0)[0];
+      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = NodeAt(V(-38, 30)) });
+      yield return WaitFor(() => Wood(0) > 9850, 60f, "목재 반입");
+      var distance = (Verified.Get<Transform3D>(engineer).Position - position).Magnitude;
+      Assert.Less(distance.AsFloat, 8f, "사령부보다 가까운 집하장에 반입");
+    }
+
+    [UnityTest]
+    public IEnumerator Gather_WithoutDropOff_WaitsCarrying() {
+      var tanks = Enumerable.Range(0, 10).Select(i => (1, "cf_dragonscale_tank", -44 + i * 3, -24)).ToArray();
+      yield return StartMatch(units: tanks, buildings: new[] { (0, "ff_barracks", -42, -40) });
+      var engineer = Engineers(0)[0];
+      var node = NodeAt(V(-38, 30));
+      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = node });
+
+      var headquarters = Headquarters(0);
+      var attackers = UnitsNamed(1, "cf_dragonscale_tank").Where(e => Verified.Get<Transform3D>(e).Position.Z < -20).ToArray();
+      Game.SendCommand(1, new AttackTargetCommand { Units = attackers, Target = headquarters });
+      yield return WaitFor(() => Verified.Exists(headquarters) == false, 90f, "사령부 파괴");
+      Assert.IsFalse(Defeated(0), "병영이 남아 있음");
+
+      yield return WaitFor(() => WorkerOf(engineer).Carried > FP._0, 60f, "채집");
+      var wood = Wood(0);
+      yield return WaitFrames(8 * Fps);
+      Assert.AreEqual(WorkerTask.Deliver, WorkerOf(engineer).Task, "든 채 대기");
+      Assert.AreEqual(50f, WorkerOf(engineer).Carried.AsFloat, Tolerance);
+      Assert.AreEqual(wood, Wood(0));
+    }
+
+    [UnityTest]
+    public IEnumerator Gather_DepletedNodeStaysAndWorkerMovesOn() {
+      yield return StartMatch();
       var engineer = Engineers(0)[0];
       var small = NodeAt(V(-30, -14));
       var large = NodeAt(V(-30, 14));
+      var count = Verified.ComponentCount<ResourceNode>();
       yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = small });
 
-      yield return WaitFor(() => Verified.Exists(small) == false, 60f, "노드 고갈");
-      Assert.AreEqual(1, Verified.ComponentCount<ResourceNode>());
-      yield return WaitFor(() => Funds(0) >= 4850, 60f, "마지막 자금 반입");
-      Assert.AreEqual(4850, Funds(0), "매장량 100");
+      yield return WaitFor(() => NodeRemaining(small) <= 0f, 60f, "노드 고갈");
+      Assert.IsTrue(Verified.Exists(small), "고갈돼도 남는다");
+      Assert.AreEqual(count, Verified.ComponentCount<ResourceNode>());
+      yield return WaitFor(() => Funds(0) >= 5100, 60f, "마지막 철 반입");
+      Assert.AreEqual(5100, Funds(0), "매장량 100");
       yield return WaitFor(() => NodeRemaining(large) < 5000, 60f, "가까운 노드로 이동");
     }
 

@@ -76,6 +76,10 @@ namespace Quantum {
     Allied,
     BreakPending,
   }
+  public enum ResourceKind : byte {
+    Iron,
+    Wood,
+  }
   public enum UnitOrder : byte {
     Stop,
     Move,
@@ -639,6 +643,40 @@ namespace Quantum {
     }
   }
   [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct MapShape {
+    public const Int32 SIZE = 56;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(32)]
+    public FPVector3 Center;
+    [FieldOffset(16)]
+    public FP Radius;
+    [FieldOffset(0)]
+    public FP HalfLength;
+    [FieldOffset(8)]
+    public FP HalfWidth;
+    [FieldOffset(24)]
+    public FP Yaw;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 19213;
+        hash = hash * 31 + Center.GetHashCode();
+        hash = hash * 31 + Radius.GetHashCode();
+        hash = hash * 31 + HalfLength.GetHashCode();
+        hash = hash * 31 + HalfWidth.GetHashCode();
+        hash = hash * 31 + Yaw.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (MapShape*)ptr;
+        FP.Serialize(&p->HalfLength, serializer);
+        FP.Serialize(&p->HalfWidth, serializer);
+        FP.Serialize(&p->Radius, serializer);
+        FP.Serialize(&p->Yaw, serializer);
+        FPVector3.Serialize(&p->Center, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct PlayerState {
     public const Int32 SIZE = 136;
     public const Int32 ALIGNMENT = 8;
@@ -990,20 +1028,28 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct ResourceNode : Quantum.IComponent {
-    public const Int32 SIZE = 8;
+    public const Int32 SIZE = 72;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(0)]
-    public FP RemainingFunds;
+    public ResourceKind Kind;
+    [FieldOffset(8)]
+    public FP Remaining;
+    [FieldOffset(16)]
+    public MapShape Shape;
     public override readonly Int32 GetHashCode() {
       unchecked { 
         var hash = 16333;
-        hash = hash * 31 + RemainingFunds.GetHashCode();
+        hash = hash * 31 + (Byte)Kind;
+        hash = hash * 31 + Remaining.GetHashCode();
+        hash = hash * 31 + Shape.GetHashCode();
         return hash;
       }
     }
     public static void Serialize(void* ptr, FrameSerializer serializer) {
         var p = (ResourceNode*)ptr;
-        FP.Serialize(&p->RemainingFunds, serializer);
+        serializer.Stream.Serialize((Byte*)&p->Kind);
+        FP.Serialize(&p->Remaining, serializer);
+        Quantum.MapShape.Serialize(&p->Shape, serializer);
     }
   }
   [StructLayout(LayoutKind.Explicit)]
@@ -1084,33 +1130,41 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Worker : Quantum.IComponent {
-    public const Int32 SIZE = 32;
+    public const Int32 SIZE = 40;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(0)]
+    [FieldOffset(1)]
     public WorkerTask Task;
-    [FieldOffset(8)]
-    public EntityRef Target;
     [FieldOffset(16)]
-    public FP Carried;
+    public EntityRef Target;
+    [FieldOffset(0)]
+    public ResourceKind CarriedKind;
     [FieldOffset(24)]
+    public FP Carried;
+    [FieldOffset(32)]
     public FP WorkTimer;
     [FieldOffset(4)]
     public Int32 NextPathFrame;
+    [FieldOffset(8)]
+    public Int32 Spot;
     public override readonly Int32 GetHashCode() {
       unchecked { 
         var hash = 467;
         hash = hash * 31 + (Byte)Task;
         hash = hash * 31 + Target.GetHashCode();
+        hash = hash * 31 + (Byte)CarriedKind;
         hash = hash * 31 + Carried.GetHashCode();
         hash = hash * 31 + WorkTimer.GetHashCode();
         hash = hash * 31 + NextPathFrame.GetHashCode();
+        hash = hash * 31 + Spot.GetHashCode();
         return hash;
       }
     }
     public static void Serialize(void* ptr, FrameSerializer serializer) {
         var p = (Worker*)ptr;
+        serializer.Stream.Serialize((Byte*)&p->CarriedKind);
         serializer.Stream.Serialize((Byte*)&p->Task);
         serializer.Stream.Serialize(&p->NextPathFrame);
+        serializer.Stream.Serialize(&p->Spot);
         EntityRef.Serialize(&p->Target, serializer);
         FP.Serialize(&p->Carried, serializer);
         FP.Serialize(&p->WorkTimer, serializer);
@@ -1275,6 +1329,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(LayerMask), LayerMask.SIZE);
       typeRegistry.Register(typeof(MapEntityId), MapEntityId.SIZE);
       typeRegistry.Register(typeof(MapEntityLink), MapEntityLink.SIZE);
+      typeRegistry.Register(typeof(Quantum.MapShape), Quantum.MapShape.SIZE);
       typeRegistry.Register(typeof(NavMeshAvoidanceAgent), NavMeshAvoidanceAgent.SIZE);
       typeRegistry.Register(typeof(NavMeshAvoidanceObstacle), NavMeshAvoidanceObstacle.SIZE);
       typeRegistry.Register(typeof(NavMeshPathfinder), NavMeshPathfinder.SIZE);
@@ -1306,6 +1361,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(Quantum.RejectReason), 1);
       typeRegistry.Register(typeof(Quantum.Relation), 1);
       typeRegistry.Register(typeof(Quantum.ResourceCost), Quantum.ResourceCost.SIZE);
+      typeRegistry.Register(typeof(Quantum.ResourceKind), 1);
       typeRegistry.Register(typeof(Quantum.ResourceNode), Quantum.ResourceNode.SIZE);
       typeRegistry.Register(typeof(Shape2D), Shape2D.SIZE);
       typeRegistry.Register(typeof(Shape3D), Shape3D.SIZE);
@@ -1341,6 +1397,7 @@ namespace Quantum {
       FramePrinter.EnsurePrimitiveNotStripped<QueryOptions>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.RejectReason>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.Relation>();
+      FramePrinter.EnsurePrimitiveNotStripped<Quantum.ResourceKind>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.UnitOrder>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.WorkerTask>();
     }

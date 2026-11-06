@@ -14,12 +14,22 @@ enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Re
 enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
+enum ResourceKind : Byte { Iron, Wood }
 
 struct ResourceCost {
     FP Iron;
     FP Wood;
     FP Steel;
     FP Power;
+}
+
+// 맵에 놓는 모양. Radius가 0보다 크면 원, 아니면 회전 사각형이다.
+struct MapShape {
+    FPVector3 Center;
+    FP Radius;
+    FP HalfLength;
+    FP HalfWidth;
+    FP Yaw;
 }
 
 struct PlayerState {
@@ -88,9 +98,11 @@ component Unit {
 component Worker {
     WorkerTask Task;
     entity_ref Target;
+    ResourceKind CarriedKind;
     FP Carried;
     FP WorkTimer;
     Int32 NextPathFrame;
+    Int32 Spot;
 }
 
 component Building {
@@ -107,7 +119,9 @@ component Building {
 }
 
 component ResourceNode {
-    FP RemainingFunds;
+    ResourceKind Kind;
+    FP Remaining;
+    MapShape Shape;
 }
 
 singleton component Diplomacy {

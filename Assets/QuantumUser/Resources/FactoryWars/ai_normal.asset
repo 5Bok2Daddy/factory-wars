@@ -20,7 +20,7 @@ MonoBehaviour:
     RawValue: 131072
   EngineerTarget: 6
   BuildOrder: 010000000200000004000000030000000200000006000000010000000500000007000000030000000800000009000000
-  MaxRefineries: 2
+  MaxYards: 2
   ExpandDistance:
     RawValue: 1966080
   ConcurrentBuilds: 1

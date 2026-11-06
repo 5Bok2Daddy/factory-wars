@@ -37,7 +37,7 @@ MonoBehaviour:
   ModuleSlots: 0
   FootprintRadius:
     RawValue: 196608
-  IsRefinery: 1
+  IsDropOff: 0
   Prerequisites:
   - Id:
       Value: 390583282545688127

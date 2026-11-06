@@ -89,7 +89,7 @@ namespace Quantum.FactoryWars {
     }
   }
 
-  /// <summary>공병이 자금 노드에서 채집해 정제소로 나른다.</summary>
+  /// <summary>공병이 철광산이나 숲에서 채집해 반입 지점으로 나른다.</summary>
   public unsafe class GatherCommand : FactoryCommand {
     public EntityRef[] Units = System.Array.Empty<EntityRef>();
     public EntityRef Node;

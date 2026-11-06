@@ -33,3 +33,6 @@ Thumbs.db
 
 # Game 안에 별도로 생긴 Unity 프로젝트. 이 저장소 내용이 아니다.
 /FactoryWars/
+
+# 테스트 실행기가 비정상 종료하면 남기는 임시 씬
+/Assets/InitTestScene*

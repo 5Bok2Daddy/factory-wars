@@ -13,6 +13,7 @@ namespace Quantum.FactoryWars {
       worker->Target = target;
       worker->WorkTimer = FP._0;
       worker->NextPathFrame = 0;
+      worker->Spot = 0;
       MovementSystem.Halt(f, entity);
     }
 
@@ -44,13 +45,14 @@ namespace Quantum.FactoryWars {
       return false;
     }
 
-    public static EntityRef NearestNode(Frame f, FPVector3 position, FP radius) {
+    /// <summary>매장량이 남은 같은 종류 노드 중 가장 가까운 것. exclude는 건너뛴다.</summary>
+    public static EntityRef NearestNode(Frame f, FPVector3 position, FP radius, ResourceKind kind, EntityRef exclude = default) {
       var best = EntityRef.None;
       var bestDistance = radius < FP.UseableMax ? radius * radius : FP.UseableMax;
       var nodes = f.Filter<Transform3D, ResourceNode>();
       while (nodes.NextUnsafe(out var entity, out var transform, out var node)) {
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, position);
-        if (node->RemainingFunds > FP._0 && distance <= bestDistance) {
+        if (entity != exclude && node->Kind == kind && node->Remaining > FP._0 && distance <= bestDistance) {
           best = entity;
           bestDistance = distance;
         }
@@ -58,12 +60,12 @@ namespace Quantum.FactoryWars {
       return best;
     }
 
-    static EntityRef NearestRefinery(Frame f, PlayerRef owner, FPVector3 position) {
+    static EntityRef NearestDropOff(Frame f, PlayerRef owner, FPVector3 position) {
       var best = EntityRef.None;
       var bestDistance = FP.UseableMax;
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out var entity, out var transform, out var building)) {
-        if (building->Owner != owner || building->ConstructionRemaining > FP._0 || f.FindAsset(building->Spec).IsRefinery == false) {
+        if (building->Owner != owner || building->ConstructionRemaining > FP._0 || f.FindAsset(building->Spec).IsDropOff == false) {
           continue;
         }
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, position);
@@ -79,6 +81,32 @@ namespace Quantum.FactoryWars {
       worker->Task = task;
       worker->WorkTimer = FP._0;
       worker->NextPathFrame = 0;
+      worker->Spot = 0;
+    }
+
+    /// <summary>이 노드에서 비어 있는 가장 가까운 작업 지점. 번호는 1부터고 없으면 0이다.</summary>
+    static int FreeSpot(Frame f, EntityRef self, EntityRef nodeEntity, ResourceNode* node, FPVector3 position, GameRulesSpec rules) {
+      var taken = 0L;
+      var others = f.Filter<Worker>();
+      while (others.NextUnsafe(out var entity, out var other)) {
+        if (entity != self && other->Target == nodeEntity && other->Task == WorkerTask.Gather && other->Spot > 0) {
+          taken |= 1L << (other->Spot - 1);
+        }
+      }
+      var best = 0;
+      var bestDistance = FP.UseableMax;
+      var count = node->Shape.SpotCount(rules);
+      for (var i = 0; i < count; i++) {
+        if ((taken & (1L << i)) != 0) {
+          continue;
+        }
+        var distance = FactoryWarsUtil.FlatDistanceSqr(node->Shape.Spot(i, rules), position);
+        if (distance < bestDistance) {
+          best = i + 1;
+          bestDistance = distance;
+        }
+      }
+      return best;
     }
 
     static void Gather(Frame f, EntityRef entity, FPVector3 position, Worker* worker, GameRulesSpec rules) {
@@ -86,45 +114,69 @@ namespace Quantum.FactoryWars {
         SetTask(worker, WorkerTask.Deliver);
         return;
       }
-      if (f.Unsafe.TryGetPointer<ResourceNode>(worker->Target, out var node) == false || node->RemainingFunds <= FP._0) {
-        worker->Target = NearestNode(f, position, rules.NodeSearchRadius);
+      if (f.Unsafe.TryGetPointer<ResourceNode>(worker->Target, out var node) == false) {
+        SetTask(worker, worker->Carried > FP._0 ? WorkerTask.Deliver : WorkerTask.Idle);
+        return;
+      }
+      // 다른 자원을 들고 있으면 먼저 반입한다. 반입이 끝나면 이 노드로 돌아온다.
+      if (worker->Carried > FP._0 && worker->CarriedKind != node->Kind) {
+        SetTask(worker, WorkerTask.Deliver);
+        return;
+      }
+      if (node->Remaining <= FP._0) {
+        worker->Spot = 0;
+        worker->Target = NearestNode(f, position, rules.NodeSearchRadius, node->Kind);
         if (worker->Target == EntityRef.None) {
           SetTask(worker, worker->Carried > FP._0 ? WorkerTask.Deliver : WorkerTask.Idle);
         }
         return;
       }
 
-      var nodePosition = f.Unsafe.GetPointer<Transform3D>(worker->Target)->Position;
-      if (MoveInto(f, entity, worker, position, nodePosition, rules.ResourceNodeRadius + rules.WorkRange) == false) {
+      if (worker->Spot == 0) {
+        worker->Spot = FreeSpot(f, entity, worker->Target, node, position, rules);
+        if (worker->Spot == 0) {
+          // 지점이 다 찼으면 가까운 다른 노드로 가고, 없으면 자리가 날 때까지 기다린다.
+          var other = NearestNode(f, position, rules.NodeSearchRadius, node->Kind, worker->Target);
+          if (other != EntityRef.None) {
+            worker->Target = other;
+          }
+          return;
+        }
+      }
+
+      if (MoveInto(f, entity, worker, position, node->Shape.Spot(worker->Spot - 1, rules), rules.SpotArrival) == false) {
         return;
       }
       worker->WorkTimer += f.DeltaTime;
-      if (worker->WorkTimer < rules.GatherSeconds) {
+      if (worker->WorkTimer < (node->Kind == ResourceKind.Iron ? rules.IronGatherSeconds : rules.WoodGatherSeconds)) {
         return;
       }
 
-      var amount = FPMath.Min(rules.CarryCapacity - worker->Carried, node->RemainingFunds);
-      node->RemainingFunds -= amount;
+      var amount = FPMath.Min(rules.CarryCapacity - worker->Carried, node->Remaining);
+      node->Remaining -= amount;
       worker->Carried += amount;
-      if (node->RemainingFunds <= FP._0) {
-        f.Destroy(worker->Target);
-      }
+      worker->CarriedKind = node->Kind;
       SetTask(worker, WorkerTask.Deliver);
     }
 
     static void Deliver(Frame f, EntityRef entity, FPVector3 position, Unit* unit, Worker* worker, GameRulesSpec rules) {
-      var refinery = NearestRefinery(f, unit->Owner, position);
-      if (refinery == EntityRef.None) {
-        // 정제소가 생길 때까지 자금을 든 채 기다린다.
+      var dropOff = NearestDropOff(f, unit->Owner, position);
+      if (dropOff == EntityRef.None) {
+        // 반입 지점이 생길 때까지 자원을 든 채 기다린다.
         MovementSystem.Halt(f, entity);
         return;
       }
-      var spec = f.FindAsset(f.Unsafe.GetPointer<Building>(refinery)->Spec);
-      var target = f.Unsafe.GetPointer<Transform3D>(refinery)->Position;
+      var spec = f.FindAsset(f.Unsafe.GetPointer<Building>(dropOff)->Spec);
+      var target = f.Unsafe.GetPointer<Transform3D>(dropOff)->Position;
       if (MoveInto(f, entity, worker, position, target, spec.FootprintRadius + rules.WorkRange)) {
         var state = FactoryWarsUtil.Player(f, unit->Owner);
-        state->Stock.Iron += worker->Carried;
-        state->Earned.Iron += worker->Carried;
+        if (worker->CarriedKind == ResourceKind.Iron) {
+          state->Stock.Iron += worker->Carried;
+          state->Earned.Iron += worker->Carried;
+        } else {
+          state->Stock.Wood += worker->Carried;
+          state->Earned.Wood += worker->Carried;
+        }
         worker->Carried = FP._0;
         SetTask(worker, WorkerTask.Gather);
       }

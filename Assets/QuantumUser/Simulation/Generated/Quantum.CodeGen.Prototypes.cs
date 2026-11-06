@@ -168,6 +168,24 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.MapShape))]
+  public unsafe partial class MapShapePrototype : StructPrototype {
+    public FPVector3 Center;
+    public FP Radius;
+    public FP HalfLength;
+    public FP HalfWidth;
+    public FP Yaw;
+    partial void MaterializeUser(Frame frame, ref Quantum.MapShape result, in PrototypeMaterializationContext context);
+    public void Materialize(Frame frame, ref Quantum.MapShape result, in PrototypeMaterializationContext context = default) {
+        result.Center = this.Center;
+        result.Radius = this.Radius;
+        result.HalfLength = this.HalfLength;
+        result.HalfWidth = this.HalfWidth;
+        result.Yaw = this.Yaw;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.PlayerState))]
   public unsafe partial class PlayerStatePrototype : StructPrototype {
     public AssetRef<FactionSpec> Faction;
@@ -238,7 +256,9 @@ namespace Quantum.Prototypes {
   [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.ResourceNode))]
   public unsafe partial class ResourceNodePrototype : ComponentPrototype<Quantum.ResourceNode> {
-    public FP RemainingFunds;
+    public Quantum.QEnum8<ResourceKind> Kind;
+    public FP Remaining;
+    public Quantum.Prototypes.MapShapePrototype Shape;
     partial void MaterializeUser(Frame frame, ref Quantum.ResourceNode result, in PrototypeMaterializationContext context);
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.ResourceNode component = default;
@@ -246,7 +266,9 @@ namespace Quantum.Prototypes {
         return f.Set(entity, component) == SetResult.ComponentAdded;
     }
     public void Materialize(Frame frame, ref Quantum.ResourceNode result, in PrototypeMaterializationContext context = default) {
-        result.RemainingFunds = this.RemainingFunds;
+        result.Kind = this.Kind;
+        result.Remaining = this.Remaining;
+        this.Shape.Materialize(frame, ref result.Shape, in context);
         MaterializeUser(frame, ref result, in context);
     }
   }
@@ -297,9 +319,11 @@ namespace Quantum.Prototypes {
   public unsafe class WorkerPrototype : ComponentPrototype<Quantum.Worker> {
     public Quantum.QEnum8<WorkerTask> Task;
     public MapEntityId Target;
+    public Quantum.QEnum8<ResourceKind> CarriedKind;
     public FP Carried;
     public FP WorkTimer;
     public Int32 NextPathFrame;
+    public Int32 Spot;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Worker component = default;
         Materialize((Frame)f, ref component, in context);
@@ -308,9 +332,11 @@ namespace Quantum.Prototypes {
     public void Materialize(Frame frame, ref Quantum.Worker result, in PrototypeMaterializationContext context = default) {
         result.Task = this.Task;
         PrototypeValidator.FindMapEntity(this.Target, in context, out result.Target);
+        result.CarriedKind = this.CarriedKind;
         result.Carried = this.Carried;
         result.WorkTimer = this.WorkTimer;
         result.NextPathFrame = this.NextPathFrame;
+        result.Spot = this.Spot;
     }
   }
 }

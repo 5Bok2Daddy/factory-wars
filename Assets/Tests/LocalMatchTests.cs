@@ -458,15 +458,15 @@ namespace FactoryWars.Tests {
         Assert.IsTrue(spec.StartPositions.Contains(Turn(start)), $"시작 위치 대칭 {start}");
       }
       foreach (var node in spec.ResourceNodes) {
-        var turned = Turn(node.Position);
-        Assert.IsTrue(spec.ResourceNodes.Any(n => n.Position == turned && n.Funds == node.Funds), $"노드 대칭 {node.Position}");
+        var turned = Turn(node.Shape.Center);
+        Assert.IsTrue(spec.ResourceNodes.Any(n => n.Shape.Center == turned && n.Amount == node.Amount), $"노드 대칭 {node.Shape.Center}");
       }
     }
 
     static FP NodeFunds(FP amount) {
       var total = 0;
       foreach (var pair in Verified.GetComponentIterator<ResourceNode>()) {
-        if (pair.Component.RemainingFunds == amount) {
+        if (pair.Component.Remaining == amount) {
           total++;
         }
       }
@@ -481,7 +481,7 @@ namespace FactoryWars.Tests {
         Assert.IsTrue(navMesh.Contains(start, mask, true), $"시작 위치 NavMesh 위 {start}");
       }
       foreach (var node in spec.ResourceNodes) {
-        Assert.IsTrue(navMesh.Contains(node.Position, mask, true), $"노드 NavMesh 위 {node.Position}");
+        Assert.IsTrue(navMesh.Contains(node.Shape.Center, mask, true), $"노드 NavMesh 위 {node.Shape.Center}");
       }
     }
 

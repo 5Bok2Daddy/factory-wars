@@ -111,7 +111,7 @@ namespace Quantum.FactoryWars {
       return false;
     }
 
-    /// <summary>맵 안, 걸어갈 수 있는 땅, 다른 건물·자금 노드와 겹치지 않는 곳에만 지을 수 있다.</summary>
+    /// <summary>맵 안, 걸어갈 수 있는 땅, 다른 건물·자원 노드와 겹치지 않는 곳에만 지을 수 있다.</summary>
     public static bool CanPlace(Frame f, BuildingSpec spec, FPVector3 position) {
       var map = FactoryWarsUtil.MapInfo(f);
       var rules = FactoryWarsUtil.Rules(f);
