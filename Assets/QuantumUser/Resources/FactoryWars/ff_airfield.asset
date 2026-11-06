@@ -30,6 +30,10 @@ MonoBehaviour:
   FootprintRadius:
     RawValue: 196608
   IsRefinery: 0
+  Prerequisites:
+  - Id:
+      Value: 349535828948866217
+  IsCoreBuilding: 1
   Producible:
   - Id:
       Value: 489920977364748690

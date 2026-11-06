@@ -27,7 +27,7 @@ namespace FactoryWars.Tests {
     static QuantumGame Game => QuantumRunner.Default?.Game;
     static Frame Verified => Game.Frames.Verified;
 
-    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null) {
+    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null) {
       Time.timeScale = TimeScale;
       // 씬 로드 직후, 러너의 Start 전에 규칙을 바꾼다.
       UnityEngine.Events.UnityAction<Scene, LoadSceneMode> onLoaded = (loaded, mode) => {
@@ -45,6 +45,9 @@ namespace FactoryWars.Tests {
         runner.MaxPlayerCount = players;
         runner.RuntimeConfig.ScenarioUnits = units?.Select(u => new ScenarioUnit {
           Player = u.Owner, Unit = FindUnit(runner, u.Unit), Position = new FPVector3(u.X, 0, u.Z),
+        }).ToArray();
+        runner.RuntimeConfig.ScenarioBuildings = buildings?.Select(b => new ScenarioBuilding {
+          Player = b.Owner, Building = FindBuilding(runner, b.Building), Position = new FPVector3(b.X, 0, b.Z),
         }).ToArray();
       };
       SceneManager.sceneLoaded += onLoaded;
@@ -65,6 +68,12 @@ namespace FactoryWars.Tests {
       return runner.LocalPlayers
         .SelectMany(p => QuantumUnityDB.GetGlobalAsset<FactionSpec>(p.Faction.Id).Units)
         .First(u => QuantumUnityDB.GetGlobalAsset<UnitSpec>(u.Id).name == name);
+    }
+
+    static AssetRef<BuildingSpec> FindBuilding(QuantumRunnerLocalDebug runner, string name) {
+      return runner.LocalPlayers
+        .SelectMany(p => QuantumUnityDB.GetGlobalAsset<FactionSpec>(p.Faction.Id).Buildings)
+        .First(b => QuantumUnityDB.GetGlobalAsset<BuildingSpec>(b.Id).name == name);
     }
 
     static IEnumerator WaitFor(System.Func<bool> condition, float realSeconds, string label) {
@@ -102,11 +111,9 @@ namespace FactoryWars.Tests {
       var engineer = Engineers(player)[0];
       var site = 0;
       while (Funds(player) >= limit) {
-        var building = faction.Buildings
-          .Where(b => Verified.FindAsset(b).Cost <= Funds(player))
-          .OrderByDescending(b => Verified.FindAsset(b).Cost)
-          .FirstOrDefault();
-        if (building != default) {
+        // 처음부터 지을 수 있는 건물만 쓴다.
+        var building = faction.Buildings.First(b => Verified.FindAsset(b).name.EndsWith("_power_plant"));
+        if (Verified.FindAsset(building).Cost <= Funds(player)) {
           var position = V(-20 + 8 * (site % 6), -44 + 8 * (site / 6));
           site++;
           yield return Send(player, new BuildCommand { Engineer = engineer, Building = building, Position = position });
@@ -509,7 +516,7 @@ namespace FactoryWars.Tests {
       AssertRotationalSymmetry(spec, 2);
       AssertNodesOnNavMesh(spec);
       AssertBlockedWithDetours(V(-55, -55), V(55, 55), new[] { V(-60, 60) }, new[] { V(60, -60) });
-      yield return CrossMap(0, spec.StartPositions[1], 90f, "2P base to base");
+      yield return CrossMap(0, V(47, 47), 90f, "2P base to base");
     }
 
     [UnityTest]
@@ -533,7 +540,7 @@ namespace FactoryWars.Tests {
       AssertBlockedWithDetours(V(-90, -90), V(90, 90),
         new[] { V(-66, -40), V(-66, -12), V(1, 1), V(66, 12), V(66, 40) },
         new[] { V(-40, -66), V(-12, -66), V(1, 1), V(12, 66), V(40, 66) });
-      yield return CrossMap(0, spec.StartPositions[2], 120f, "4P opposite base");
+      yield return CrossMap(0, V(82, 82), 120f, "4P opposite base");
     }
   }
 }

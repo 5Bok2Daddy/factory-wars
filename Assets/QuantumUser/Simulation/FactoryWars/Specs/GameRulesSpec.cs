@@ -43,6 +43,10 @@ namespace Quantum {
     /// <summary>회복한 체력 비율 x 건물 비용 x 이 값이 수리비다.</summary>
     public FP RepairCostRatio;
     public FP FoundationHealthRatio;
+    /// <summary>건물 회피 원의 반지름 = 부지 반지름 x 이 값.</summary>
+    public FP BuildingAvoidanceScale;
+    /// <summary>유닛이 건물 부지에서 떨어지는 거리.</summary>
+    public FP UnitClearance;
     public DamageMatchup[] Matchups;
   }
 }

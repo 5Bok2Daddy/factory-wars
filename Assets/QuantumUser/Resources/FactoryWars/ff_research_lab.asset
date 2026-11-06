@@ -30,6 +30,10 @@ MonoBehaviour:
   FootprintRadius:
     RawValue: 196608
   IsRefinery: 0
+  Prerequisites:
+  - Id:
+      Value: 430950125761090820
+  IsCoreBuilding: 0
   Producible: []
   Attack: 0
   Damage:

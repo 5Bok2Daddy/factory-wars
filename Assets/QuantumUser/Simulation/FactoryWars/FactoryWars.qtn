@@ -11,7 +11,7 @@
 enum Relation : Byte { Enemy, Allied, BreakPending }
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget }
 enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair }
-enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid, BlockedLocation }
+enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 
 struct PlayerState {

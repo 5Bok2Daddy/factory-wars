@@ -13,6 +13,17 @@ namespace Quantum.FactoryWars {
         Health = spec.BuildTimeSeconds > FP._0 ? spec.MaxHealth * FactoryWarsUtil.Rules(f).FoundationHealthRatio : spec.MaxHealth,
         ConstructionRemaining = spec.BuildTimeSeconds,
       });
+      // NavMesh는 고정이라 건물을 구멍으로 낼 수 없다. 유닛이 피해 가도록 회피 장애물을 둔다.
+      f.Add<NavMeshAvoidanceObstacle>(entity);
+      f.Unsafe.GetPointer<NavMeshAvoidanceObstacle>(entity)->Radius = spec.FootprintRadius * FactoryWarsUtil.Rules(f).BuildingAvoidanceScale;
+      return entity;
+    }
+
+    public static EntityRef CreateFinishedBuilding(Frame f, PlayerRef owner, AssetRef<BuildingSpec> specRef, FPVector3 position) {
+      var entity = CreateBuilding(f, owner, specRef, position);
+      var building = f.Unsafe.GetPointer<Building>(entity);
+      building->ConstructionRemaining = FP._0;
+      building->Health = f.FindAsset(specRef).MaxHealth;
       return entity;
     }
 
@@ -50,6 +61,7 @@ namespace Quantum.FactoryWars {
         var config = f.FindAsset(f.SimulationConfig.Navigation.DefaultNavMeshAgent);
         f.Set(entity, NavMeshPathfinder.Create(f, entity, config));
         f.Add(entity, new NavMeshSteeringAgent());
+        f.Add(entity, new NavMeshAvoidanceAgent());
         f.Unsafe.GetPointer<NavMeshSteeringAgent>(entity)->MaxSpeed = spec.MoveSpeed;
       }
       if (spec.Ability == SpecialAbility.EngineerWork) {
@@ -70,12 +82,36 @@ namespace Quantum.FactoryWars {
         f.Events.ActionRejected(player, ActionKind.Build, RejectReason.BlockedLocation);
         return;
       }
+      if (IsUnlocked(f, player, spec) == false) {
+        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Locked);
+        return;
+      }
       if (state->Funds < spec.Cost) {
         f.Events.ActionRejected(player, ActionKind.Build, RejectReason.InsufficientFunds);
         return;
       }
       state->Funds -= spec.Cost;
       WorkerSystem.Assign(f, engineer, WorkerTask.Build, CreateBuilding(f, player, specRef, position));
+    }
+
+    /// <summary>선행 건물을 모두 완공했으면 true.</summary>
+    public static bool IsUnlocked(Frame f, PlayerRef player, BuildingSpec spec) {
+      for (var i = 0; spec.Prerequisites != null && i < spec.Prerequisites.Length; i++) {
+        if (HasFinished(f, player, spec.Prerequisites[i]) == false) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    static bool HasFinished(Frame f, PlayerRef player, AssetRef<BuildingSpec> specRef) {
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var building)) {
+        if (building->Owner == player && building->Spec == specRef && building->ConstructionRemaining <= FP._0) {
+          return true;
+        }
+      }
+      return false;
     }
 
     /// <summary>맵 안, 걸어갈 수 있는 땅, 다른 건물·자금 노드와 겹치지 않는 곳에만 지을 수 있다.</summary>
@@ -375,15 +411,25 @@ namespace Quantum.FactoryWars {
         return best;
       }
 
+      bestDistance = FP.UseableMax;
       var buildings = f.Filter<Transform3D, Building>();
-      while (buildings.NextUnsafe(out var entity, out var transform, out _)) {
+      while (buildings.NextUnsafe(out var entity, out var transform, out var building)) {
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, position);
-        if (distance <= bestDistance && distance >= minDistance && IsValidTarget(f, weapon, entity)) {
+        var reach = range + f.FindAsset(building->Spec).FootprintRadius;
+        if (distance < bestDistance && distance <= reach * reach && distance >= minDistance && IsValidTarget(f, weapon, entity)) {
           best = entity;
           bestDistance = distance;
         }
       }
       return best;
+    }
+
+    /// <summary>대상을 맞힐 수 있는 중심 간 거리의 제곱. 건물은 부지 가장자리까지 잰다.</summary>
+    public static FP ReachSqr(Frame f, EntityRef target, FP range) {
+      if (f.Unsafe.TryGetPointer<Building>(target, out var building)) {
+        range += f.FindAsset(building->Spec).FootprintRadius;
+      }
+      return range * range;
     }
 
     public static FP EffectiveRange(Frame f, Unit* unit, UnitSpec spec) {
@@ -582,7 +628,7 @@ namespace Quantum.FactoryWars {
 
         var targetPosition = f.Unsafe.GetPointer<Transform3D>(unit->TargetEntity)->Position;
         var distance = FactoryWarsUtil.FlatDistanceSqr(targetPosition, position);
-        if (distance > range * range || distance < spec.MinRange * spec.MinRange) {
+        if (distance > ReachSqr(f, unit->TargetEntity, range) || distance < spec.MinRange * spec.MinRange) {
           // 정지 상태에서 사거리를 벗어난 대상은 쫓지 않는다.
           if (unit->Order == UnitOrder.Stop) {
             unit->TargetEntity = EntityRef.None;
@@ -681,7 +727,7 @@ namespace Quantum.FactoryWars {
         if (unit->TargetEntity != EntityRef.None && unit->Order != UnitOrder.Move
             && f.Unsafe.TryGetPointer<Transform3D>(unit->TargetEntity, out var targetTransform)) {
           var range = CombatSystem.EffectiveRange(f, unit, spec);
-          if (FactoryWarsUtil.FlatDistanceSqr(targetTransform->Position, transform->Position) <= range * range) {
+          if (FactoryWarsUtil.FlatDistanceSqr(targetTransform->Position, transform->Position) <= CombatSystem.ReachSqr(f, unit->TargetEntity, range)) {
             Halt(f, entity);
             continue;
           }
@@ -702,6 +748,34 @@ namespace Quantum.FactoryWars {
 
         if (spec.IsAir && hasDestination) {
           MoveAir(f, transform, unit, spec, destination);
+        }
+      }
+
+      PushOutOfBuildings(f);
+    }
+
+    /// <summary>회피로 다 막지 못한 지상 유닛을 부지 밖으로 밀어낸다. 가까운 변 쪽으로 민다.</summary>
+    static void PushOutOfBuildings(Frame f) {
+      var clearance = FactoryWarsUtil.Rules(f).UnitClearance;
+      var units = f.Filter<Transform3D, NavMeshSteeringAgent>();
+      while (units.NextUnsafe(out _, out var unit, out _)) {
+        var buildings = f.Filter<Transform3D, Building>();
+        while (buildings.NextUnsafe(out _, out var transform, out var building)) {
+          var reach = f.FindAsset(building->Spec).FootprintRadius + clearance;
+          var x = unit->Position.X - transform->Position.X;
+          var z = unit->Position.Z - transform->Position.Z;
+          var overlapX = reach - FPMath.Abs(x);
+          var overlapZ = reach - FPMath.Abs(z);
+          if (overlapX <= FP._0 || overlapZ <= FP._0) {
+            continue;
+          }
+          var position = unit->Position;
+          if (overlapX < overlapZ) {
+            position.X += x < FP._0 ? -overlapX : overlapX;
+          } else {
+            position.Z += z < FP._0 ? -overlapZ : overlapZ;
+          }
+          unit->Position = position;
         }
       }
     }

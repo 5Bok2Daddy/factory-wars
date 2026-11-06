@@ -200,6 +200,26 @@ namespace FactoryWars.EditorTools {
         BuildBuilding($"{prefix}_heavy_works", 1500, 45, 1600, 0, 40, 0, 0, large),
         BuildBuilding($"{prefix}_defense_tower", 450, 20, 700, 0, 15, 0, 1),
       };
+      void Requires(int building, params int[] prerequisites) {
+        buildings[building].Prerequisites = prerequisites.Select(i => Ref(buildings[i])).ToArray();
+      }
+      // 순서: 0 사령부, 1 발전소, 2 정제소, 3 보급창, 4 병영, 5 연구소, 6 군수공장, 7 비행장, 8 중공업 기지, 9 방어탑
+      Requires(1, 0);
+      Requires(2, 1);
+      Requires(3, 0);
+      Requires(4, 1);
+      Requires(5, 4);
+      Requires(6, 4);
+      Requires(7, 6);
+      Requires(8, 6, 5);
+      Requires(9, 4);
+      foreach (var core in new[] { 0, 4, 6, 7, 8 }) {
+        buildings[core].IsCoreBuilding = true;
+      }
+      foreach (var building in buildings) {
+        EditorUtility.SetDirty(building);
+      }
+
       var tower = buildings[buildings.Length - 1];
       tower.Attack = AttackType.AntiArmor;
       tower.Damage = 40;
@@ -269,6 +289,8 @@ namespace FactoryWars.EditorTools {
       rules.RepairPerSecond = 20;
       rules.RepairCostRatio = N(0.5);
       rules.FoundationHealthRatio = N(0.1);
+      rules.BuildingAvoidanceScale = N(1.2);
+      rules.UnitClearance = N(0.5);
       rules.Matchups = new[] {
         new DamageMatchup { Attack = AttackType.AntiInfantry, VsSmall = N(1.5), VsMedium = N(0.6), VsLarge = N(0.4), VsAir = 1, VsBuilding = N(0.5) },
         new DamageMatchup { Attack = AttackType.AntiArmor, VsSmall = N(0.6), VsMedium = N(1.5), VsLarge = N(1.5), VsAir = 1, VsBuilding = 1 },

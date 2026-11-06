@@ -65,6 +65,7 @@ namespace Quantum {
     ModeDisabled,
     Invalid,
     BlockedLocation,
+    Locked,
   }
   public enum Relation : byte {
     Enemy,

@@ -7,6 +7,7 @@ namespace FactoryWars.Tests {
   using Photon.Deterministic;
   using Quantum;
   using Quantum.FactoryWars;
+  using UnityEngine;
   using UnityEngine.TestTools;
 
   /// <summary>공병 작업, 건설 위치 검사, 공격 상성, 유닛 특수 기능.</summary>
@@ -87,11 +88,13 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => Finished(site), 60f, "건설 완료");
     }
 
+    static readonly (int, string, int, int)[] Plant = { (0, "ff_power_plant", -42, 0) };
+
     // 채집
 
     [UnityTest]
     public IEnumerator Gather_CarriesFundsToRefinery() {
-      yield return StartMatch();
+      yield return StartMatch(buildings: Plant);
       yield return BuildAndFinish(0, "_refinery", V(-20, 10));
       Assert.AreEqual(4500, Funds(0), "정제소 500");
 
@@ -108,7 +111,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Gather_WithoutRefinery_WaitsCarrying() {
-      yield return StartMatch();
+      yield return StartMatch(buildings: Plant);
       var engineer = Engineers(0)[0];
       var node = NodeAt(V(-30, 14));
       yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = node });
@@ -129,7 +132,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Gather_DepletedNodeIsRemovedAndWorkerMovesOn() {
-      yield return StartMatch();
+      yield return StartMatch(buildings: Plant);
       yield return BuildAndFinish(0, "_refinery", V(-20, -10));
       var engineer = Engineers(0)[0];
       var small = NodeAt(V(-30, -14));
@@ -235,7 +238,7 @@ namespace FactoryWars.Tests {
       yield return SpendBelow(0, 300);
       var funds = Funds(0);
       var count = Verified.ComponentCount<Building>();
-      yield return Build(0, "_heavy_works", V(20, 40));
+      yield return Build(0, "_power_plant", V(20, 40));
       AssertRejected(0, ActionKind.Build, RejectReason.InsufficientFunds);
       Assert.AreEqual(funds, Funds(0));
       Assert.AreEqual(count, Verified.ComponentCount<Building>());
@@ -249,9 +252,102 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(5000, Funds(0));
       _rejected.Clear();
 
-      yield return Build(0, "_barracks", V(-30, -60));
+      yield return Build(0, "_power_plant", V(-30, -60));
       Assert.AreEqual(0, _rejected.Count, "빈 땅은 허용");
-      Assert.AreEqual(4600, Funds(0));
+      Assert.AreEqual(4700, Funds(0));
+    }
+
+    [UnityTest]
+    public IEnumerator Build_LockedUntilPrerequisitesFinished() {
+      yield return StartMatch();
+      var engineer = Engineers(0)[0];
+      yield return Build(0, "_barracks", V(-20, 10), engineer);
+      AssertRejected(0, ActionKind.Build, RejectReason.Locked);
+      Assert.AreEqual(5000, Funds(0), "잠긴 건물은 비용 없음");
+      _rejected.Clear();
+
+      // 미완성 발전소는 선행 조건이 아니다.
+      yield return Build(0, "_power_plant", V(-20, 25), engineer);
+      yield return Build(0, "_barracks", V(-20, 10), engineer);
+      AssertRejected(0, ActionKind.Build, RejectReason.Locked);
+      _rejected.Clear();
+
+      var plant = BuildingAt(V(-20, 25));
+      yield return Send(0, new RepairCommand { Units = new[] { engineer }, Target = plant });
+      yield return WaitFor(() => Finished(plant), 60f, "발전소 완공");
+      yield return Build(0, "_barracks", V(-20, 10), engineer);
+      Assert.AreEqual(0, _rejected.Count, "발전소가 있으면 병영 가능");
+    }
+
+    [UnityTest]
+    public IEnumerator Build_HeavyWorksNeedsFactoryAndLab() {
+      yield return StartMatch(buildings: new[] { (0, "ff_vehicle_factory", -42, 12) });
+      yield return Build(0, "_heavy_works", V(-20, 10));
+      AssertRejected(0, ActionKind.Build, RejectReason.Locked);
+    }
+
+    [UnityTest]
+    public IEnumerator Build_TechTreeFollowsDesign() {
+      yield return StartMatch();
+      var f = Verified;
+      string Needs(string suffix) => string.Join(",", (f.FindAsset(BuildingOf(0, suffix)).Prerequisites)
+        .Select(b => f.FindAsset(b).name.Substring(3)).OrderBy(n => n));
+      Assert.AreEqual("headquarters", Needs("_power_plant"));
+      Assert.AreEqual("headquarters", Needs("_supply_depot"));
+      Assert.AreEqual("power_plant", Needs("_refinery"));
+      Assert.AreEqual("power_plant", Needs("_barracks"));
+      Assert.AreEqual("barracks", Needs("_research_lab"));
+      Assert.AreEqual("barracks", Needs("_vehicle_factory"));
+      Assert.AreEqual("barracks", Needs("_defense_tower"));
+      Assert.AreEqual("vehicle_factory", Needs("_airfield"));
+      Assert.AreEqual("research_lab,vehicle_factory", Needs("_heavy_works"));
+    }
+
+    // 건물 충돌
+
+    static float DistanceToSquare(FPVector3 unit, FPVector3 center) {
+      return Mathf.Max(Mathf.Abs((unit - center).X.AsFloat), Mathf.Abs((unit - center).Z.AsFloat));
+    }
+
+    [UnityTest]
+    public IEnumerator Units_WalkAroundBuildings() {
+      // 건물 정중앙을 지나는 직선 경로.
+      var center = V(0, 40);
+      yield return StartMatch(units: new[] { (0, "ff_eagle_tank", -15, 40) }, buildings: new[] { (0, "ff_barracks", 0, 40) });
+      var tank = UnitsNamed(0, "ff_eagle_tank").First(e => Verified.Get<Transform3D>(e).Position.Z > 30);
+      var target = V(15, 40);
+      Game.SendCommand(0, new MoveUnitsCommand { Units = new[] { tank }, Target = target });
+
+      var closest = float.MaxValue;
+      yield return WaitFor(() => {
+        closest = Mathf.Min(closest, DistanceToSquare(Verified.Get<Transform3D>(tank).Position, center));
+        return (Verified.Get<Transform3D>(tank).Position - target).Magnitude < 2;
+      }, 30f, "건물을 돌아 도착");
+      Assert.GreaterOrEqual(closest, 3f, "부지 안으로 들어가지 않음");
+    }
+
+    // 패배 조건
+
+    [UnityTest]
+    public IEnumerator Defeat_RequiresLosingHeadquartersAndProductionBuildings() {
+      var tanks = Enumerable.Range(0, 10).Select(i => (1, "cf_dragonscale_tank", -48 + i * 2, -40)).ToArray();
+      yield return StartMatch(units: tanks, buildings: new[] { (0, "ff_barracks", -40, -40), (0, "ff_power_plant", -40, 40) });
+      var attackers = UnitsNamed(1, "cf_dragonscale_tank").Where(e => Verified.Get<Transform3D>(e).Position.Z < -30).ToArray();
+
+      var barracks = BuildingAt(V(-40, -40));
+      Game.SendCommand(1, new AttackTargetCommand { Units = attackers, Target = barracks });
+      yield return WaitFor(() => Verified.Exists(barracks) == false, 60f, "병영 파괴");
+      yield return WaitFrames(CommandFrames);
+      Assert.IsFalse(Defeated(0), "사령부가 남아 있음");
+
+      var headquarters = Headquarters(0);
+      var survivors = attackers.Where(e => Verified.Exists(e)).ToArray();
+      Game.SendCommand(1, new AttackTargetCommand { Units = survivors, Target = headquarters });
+      yield return WaitFor(() => Verified.Exists(headquarters) == false, 90f, "사령부 파괴");
+      yield return WaitFrames(CommandFrames);
+      Assert.IsTrue(Defeated(0), "발전소만 남으면 패배");
+      Assert.IsTrue(Verified.Exists(BuildingAt(V(-40, 40))));
+      Assert.IsTrue(GameEnded());
     }
 
     // 수리
@@ -464,7 +560,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Ability_MilitiaPair_SpawnsTwoFromOneOrder() {
-      yield return StartMatch();
+      yield return StartMatch(buildings: new[] { (1, "cf_power_plant", 42, 0) });
       var barracks = V(20, 12);
       yield return BuildAndFinish(1, "_barracks", barracks);
       var site = BuildingAt(barracks);

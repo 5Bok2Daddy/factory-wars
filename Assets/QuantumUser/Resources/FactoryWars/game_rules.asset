@@ -68,6 +68,10 @@ MonoBehaviour:
     RawValue: 32768
   FoundationHealthRatio:
     RawValue: 6553
+  BuildingAvoidanceScale:
+    RawValue: 78643
+  UnitClearance:
+    RawValue: 32768
   Matchups:
   - Attack: 1
     VsSmall:

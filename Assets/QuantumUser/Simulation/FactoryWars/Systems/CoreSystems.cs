@@ -63,14 +63,20 @@ namespace Quantum.FactoryWars {
 
       var starts = FactoryWarsUtil.MapInfo(f).StartPositions;
       var start = starts[(int)player % starts.Length];
-      var headquarters = ProductionSystem.CreateBuilding(f, player, faction.Headquarters, start);
-      f.Unsafe.GetPointer<Building>(headquarters)->ConstructionRemaining = FP._0;
+      ProductionSystem.CreateFinishedBuilding(f, player, faction.Headquarters, start);
       for (var i = 0; i < rules.StartingEngineers; i++) {
         ProductionSystem.SpawnUnit(f, player, faction.Engineer, start, i, null);
       }
       if (faction.StartingUnits != null) {
         for (var i = 0; i < faction.StartingUnits.Length; i++) {
           ProductionSystem.SpawnUnit(f, player, faction.StartingUnits[i], start, rules.StartingEngineers + i, null);
+        }
+      }
+
+      var buildings = f.RuntimeConfig.ScenarioBuildings;
+      for (var i = 0; buildings != null && i < buildings.Length; i++) {
+        if (buildings[i].Player == (int)player) {
+          ProductionSystem.CreateFinishedBuilding(f, player, buildings[i].Building, buildings[i].Position);
         }
       }
 
@@ -303,7 +309,7 @@ namespace Quantum.FactoryWars {
     }
   }
 
-  /// <summary>패배·승리 판정. 건물이 하나도 없으면 패배.</summary>
+  /// <summary>패배·승리 판정. 사령부와 생산 건물을 모두 잃으면 패배.</summary>
   public unsafe class VictorySystem : SystemMainThread {
     public override void Update(Frame f) {
       if (f.Global->GameEnded) {
@@ -313,7 +319,9 @@ namespace Quantum.FactoryWars {
       var buildingMask = 0;
       var buildings = f.Filter<Building>();
       while (buildings.NextUnsafe(out _, out var building)) {
-        buildingMask |= 1 << (int)building->Owner;
+        if (building->ConstructionRemaining <= FP._0 && f.FindAsset(building->Spec).IsCoreBuilding) {
+          buildingMask |= 1 << (int)building->Owner;
+        }
       }
 
       var activeCount = 0;

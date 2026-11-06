@@ -856,6 +856,7 @@ MonoBehaviour:
     TeamMode: 0
     JointVictory: 1
     ScenarioUnits: []
+    ScenarioBuildings: []
   UseRandomSeed: 0
   SessionConfig: {fileID: 0}
   LocalPlayers:

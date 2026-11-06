@@ -10,11 +10,20 @@ namespace Quantum {
     public FPVector3 Position;
   }
 
+  /// <summary>경기 시작 때 완공 상태로 배치할 건물.</summary>
+  [Serializable]
+  public struct ScenarioBuilding {
+    public int Player;
+    public AssetRef<BuildingSpec> Building;
+    public FPVector3 Position;
+  }
+
   public partial class RuntimeConfig {
     public AssetRef<GameRulesSpec> Rules;
     public bool TeamMode;
     public bool JointVictory = true;
     public ScenarioUnit[] ScenarioUnits;
+    public ScenarioBuilding[] ScenarioBuildings;
   }
 
   public partial class RuntimePlayer {
