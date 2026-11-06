@@ -161,8 +161,8 @@ namespace Quantum.FactoryWars {
       if (spec == null || ProductionSystem.IsUnlocked(f, player, spec) == false) {
         return FP._0;
       }
-      if (state->Funds < spec.Cost) {
-        return spec.Cost;
+      if (state->Stock.Iron < spec.Cost.Iron) {
+        return spec.Cost.Iron;
       }
       if (FindSite(f, ai, spec, center, out var site) && FindBuilder(f, player, site, out var engineer)) {
         ProductionSystem.TryBuild(f, player, engineer, specRef, site);
@@ -264,7 +264,7 @@ namespace Quantum.FactoryWars {
         }
         var choices = System.Math.Min(ai.UnitVariety, spec.Producible.Length);
         var unitRef = spec.Producible[f.RNG->Next(0, choices)];
-        if (state->Funds >= f.FindAsset(unitRef).Cost + reserve) {
+        if (state->Stock.Iron >= f.FindAsset(unitRef).Cost.Iron + reserve) {
           ProductionSystem.Enqueue(f, player, entity, unitRef, 1);
         }
       }
@@ -325,13 +325,13 @@ namespace Quantum.FactoryWars {
       var units = f.Filter<Unit>();
       while (units.NextUnsafe(out _, out var unit)) {
         if (unit->Owner == player) {
-          total += f.FindAsset(unit->Spec).Cost;
+          total += f.FindAsset(unit->Spec).Cost.Iron;
         }
       }
       var buildings = f.Filter<Building>();
       while (buildings.NextUnsafe(out _, out var building)) {
         if (building->Owner == player) {
-          total += f.FindAsset(building->Spec).Cost;
+          total += f.FindAsset(building->Spec).Cost.Iron;
         }
       }
       return total;
@@ -369,14 +369,14 @@ namespace Quantum.FactoryWars {
           continue;
         }
         var accept = ai.StrategicDiplomacy ? other != strongest : f.RNG->Next() < ai.AcceptChance;
-        if (accept && state->Funds < FactoryWarsUtil.Rules(f).AcceptCost) {
+        if (accept && state->Stock.Iron < FactoryWarsUtil.Rules(f).AcceptCost) {
           continue;
         }
         DiplomacySystem.Handle(f, player, other, accept ? DiplomacyAction.Accept : DiplomacyAction.Reject);
       }
 
       // 보통은 가장 강한 상대가 아닌 쪽에 먼저 손을 내민다.
-      if (ai.StrategicDiplomacy == false || f.Number < bot->NextProposalFrame || state->Funds < ai.DiplomacyFundsReserve) {
+      if (ai.StrategicDiplomacy == false || f.Number < bot->NextProposalFrame || state->Stock.Iron < ai.DiplomacyFundsReserve) {
         return;
       }
       bot->NextProposalFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.ProposalIntervalSeconds);

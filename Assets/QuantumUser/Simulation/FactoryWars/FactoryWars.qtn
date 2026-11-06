@@ -15,9 +15,16 @@ enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid, B
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
 
+struct ResourceCost {
+    FP Iron;
+    FP Wood;
+    FP Steel;
+    FP Power;
+}
+
 struct PlayerState {
     asset_ref<FactionSpec> Faction;
-    FP Funds;
+    ResourceCost Stock;
     Int32 PowerProduced;
     Int32 PowerConsumed;
     FP PopulationUsed;
@@ -31,7 +38,7 @@ struct PlayerState {
     Int32 UnitsProduced;
     Int32 UnitsLost;
     Int32 BuildingsLost;
-    FP FundsEarned;
+    ResourceCost Earned;
 }
 
 struct BotState {
@@ -44,7 +51,7 @@ struct BotState {
 
 struct ProductionOrder {
     asset_ref<UnitSpec> Unit;
-    FP PaidCost;
+    ResourceCost PaidCost;
 }
 
 struct AllianceProposal {

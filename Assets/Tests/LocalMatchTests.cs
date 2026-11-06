@@ -128,7 +128,7 @@ namespace FactoryWars.Tests {
       while (Funds(player) >= limit) {
         // 처음부터 지을 수 있는 건물만 쓴다.
         var building = faction.Buildings.First(b => Verified.FindAsset(b).name.EndsWith("_power_plant"));
-        if (Verified.FindAsset(building).Cost <= Funds(player)) {
+        if (Verified.FindAsset(building).Cost.Iron <= Funds(player)) {
           var position = V(-20 + 8 * (site % 6), -44 + 8 * (site / 6));
           site++;
           yield return Send(player, new BuildCommand { Engineer = engineer, Building = building, Position = position });
@@ -172,7 +172,7 @@ namespace FactoryWars.Tests {
       return total;
     }
 
-    static int Funds(int player) => Verified.Global->Players.GetPointer(player)->Funds.AsInt;
+    static int Funds(int player) => Verified.Global->Players.GetPointer(player)->Stock.Iron.AsInt;
 
     static bool GameEnded() => Verified.Global->GameEnded;
 

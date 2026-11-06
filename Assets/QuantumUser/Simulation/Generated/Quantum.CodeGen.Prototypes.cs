@@ -171,7 +171,7 @@ namespace Quantum.Prototypes {
   [Quantum.Prototypes.Prototype(typeof(Quantum.PlayerState))]
   public unsafe partial class PlayerStatePrototype : StructPrototype {
     public AssetRef<FactionSpec> Faction;
-    public FP Funds;
+    public Quantum.Prototypes.ResourceCostPrototype Stock;
     public Int32 PowerProduced;
     public Int32 PowerConsumed;
     public FP PopulationUsed;
@@ -185,11 +185,11 @@ namespace Quantum.Prototypes {
     public Int32 UnitsProduced;
     public Int32 UnitsLost;
     public Int32 BuildingsLost;
-    public FP FundsEarned;
+    public Quantum.Prototypes.ResourceCostPrototype Earned;
     partial void MaterializeUser(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context = default) {
         result.Faction = this.Faction;
-        result.Funds = this.Funds;
+        this.Stock.Materialize(frame, ref result.Stock, in context);
         result.PowerProduced = this.PowerProduced;
         result.PowerConsumed = this.PowerConsumed;
         result.PopulationUsed = this.PopulationUsed;
@@ -203,7 +203,7 @@ namespace Quantum.Prototypes {
         result.UnitsProduced = this.UnitsProduced;
         result.UnitsLost = this.UnitsLost;
         result.BuildingsLost = this.BuildingsLost;
-        result.FundsEarned = this.FundsEarned;
+        this.Earned.Materialize(frame, ref result.Earned, in context);
         MaterializeUser(frame, ref result, in context);
     }
   }
@@ -211,11 +211,27 @@ namespace Quantum.Prototypes {
   [Quantum.Prototypes.Prototype(typeof(Quantum.ProductionOrder))]
   public unsafe partial class ProductionOrderPrototype : StructPrototype {
     public AssetRef<UnitSpec> Unit;
-    public FP PaidCost;
+    public Quantum.Prototypes.ResourceCostPrototype PaidCost;
     partial void MaterializeUser(Frame frame, ref Quantum.ProductionOrder result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.ProductionOrder result, in PrototypeMaterializationContext context = default) {
         result.Unit = this.Unit;
-        result.PaidCost = this.PaidCost;
+        this.PaidCost.Materialize(frame, ref result.PaidCost, in context);
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.ResourceCost))]
+  public unsafe partial class ResourceCostPrototype : StructPrototype {
+    public FP Iron;
+    public FP Wood;
+    public FP Steel;
+    public FP Power;
+    partial void MaterializeUser(Frame frame, ref Quantum.ResourceCost result, in PrototypeMaterializationContext context);
+    public void Materialize(Frame frame, ref Quantum.ResourceCost result, in PrototypeMaterializationContext context = default) {
+        result.Iron = this.Iron;
+        result.Wood = this.Wood;
+        result.Steel = this.Steel;
+        result.Power = this.Power;
         MaterializeUser(frame, ref result, in context);
     }
   }

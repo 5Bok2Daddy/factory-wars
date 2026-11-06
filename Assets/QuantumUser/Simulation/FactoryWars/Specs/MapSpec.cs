@@ -15,6 +15,7 @@ namespace Quantum {
     public FPVector2 BoundsMin;
     public FPVector2 BoundsMax;
     public FPVector3[] StartPositions;
+    public ResourceCost StartingResources;
     public ResourceNodePlacement[] ResourceNodes;
   }
 }

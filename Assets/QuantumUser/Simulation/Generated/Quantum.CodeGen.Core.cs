@@ -640,19 +640,19 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct PlayerState {
-    public const Int32 SIZE = 88;
+    public const Int32 SIZE = 136;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(48)]
     public AssetRef<FactionSpec> Faction;
-    [FieldOffset(56)]
-    public FP Funds;
+    [FieldOffset(104)]
+    public ResourceCost Stock;
     [FieldOffset(16)]
     public Int32 PowerProduced;
     [FieldOffset(12)]
     public Int32 PowerConsumed;
-    [FieldOffset(80)]
+    [FieldOffset(64)]
     public FP PopulationUsed;
-    [FieldOffset(72)]
+    [FieldOffset(56)]
     public FP PopulationCap;
     [FieldOffset(20)]
     public Int32 Team;
@@ -672,13 +672,13 @@ namespace Quantum {
     public Int32 UnitsLost;
     [FieldOffset(4)]
     public Int32 BuildingsLost;
-    [FieldOffset(64)]
-    public FP FundsEarned;
+    [FieldOffset(72)]
+    public ResourceCost Earned;
     public override readonly Int32 GetHashCode() {
       unchecked { 
         var hash = 14699;
         hash = hash * 31 + Faction.GetHashCode();
-        hash = hash * 31 + Funds.GetHashCode();
+        hash = hash * 31 + Stock.GetHashCode();
         hash = hash * 31 + PowerProduced.GetHashCode();
         hash = hash * 31 + PowerConsumed.GetHashCode();
         hash = hash * 31 + PopulationUsed.GetHashCode();
@@ -692,7 +692,7 @@ namespace Quantum {
         hash = hash * 31 + UnitsProduced.GetHashCode();
         hash = hash * 31 + UnitsLost.GetHashCode();
         hash = hash * 31 + BuildingsLost.GetHashCode();
-        hash = hash * 31 + FundsEarned.GetHashCode();
+        hash = hash * 31 + Earned.GetHashCode();
         return hash;
       }
     }
@@ -710,20 +710,20 @@ namespace Quantum {
         QBoolean.Serialize(&p->Defeated, serializer);
         QBoolean.Serialize(&p->IsBot, serializer);
         AssetRef.Serialize(&p->Faction, serializer);
-        FP.Serialize(&p->Funds, serializer);
-        FP.Serialize(&p->FundsEarned, serializer);
         FP.Serialize(&p->PopulationCap, serializer);
         FP.Serialize(&p->PopulationUsed, serializer);
+        Quantum.ResourceCost.Serialize(&p->Earned, serializer);
+        Quantum.ResourceCost.Serialize(&p->Stock, serializer);
     }
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct ProductionOrder {
-    public const Int32 SIZE = 16;
+    public const Int32 SIZE = 40;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(0)]
     public AssetRef<UnitSpec> Unit;
     [FieldOffset(8)]
-    public FP PaidCost;
+    public ResourceCost PaidCost;
     public override readonly Int32 GetHashCode() {
       unchecked { 
         var hash = 20939;
@@ -735,12 +735,42 @@ namespace Quantum {
     public static void Serialize(void* ptr, FrameSerializer serializer) {
         var p = (ProductionOrder*)ptr;
         AssetRef.Serialize(&p->Unit, serializer);
-        FP.Serialize(&p->PaidCost, serializer);
+        Quantum.ResourceCost.Serialize(&p->PaidCost, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct ResourceCost {
+    public const Int32 SIZE = 32;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(0)]
+    public FP Iron;
+    [FieldOffset(24)]
+    public FP Wood;
+    [FieldOffset(16)]
+    public FP Steel;
+    [FieldOffset(8)]
+    public FP Power;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 7393;
+        hash = hash * 31 + Iron.GetHashCode();
+        hash = hash * 31 + Wood.GetHashCode();
+        hash = hash * 31 + Steel.GetHashCode();
+        hash = hash * 31 + Power.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (ResourceCost*)ptr;
+        FP.Serialize(&p->Iron, serializer);
+        FP.Serialize(&p->Power, serializer);
+        FP.Serialize(&p->Steel, serializer);
+        FP.Serialize(&p->Wood, serializer);
     }
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct _globals_ {
-    public const Int32 SIZE = 1176;
+    public const Int32 SIZE = 1368;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(0)]
     public AssetRef<Map> Map;
@@ -769,7 +799,7 @@ namespace Quantum {
     public BitSet4 PlayerLastConnectionState;
     [FieldOffset(824)]
     [FramePrinter.FixedArrayAttribute(typeof(PlayerState), 4)]
-    private fixed Byte _Players_[352];
+    private fixed Byte _Players_[544];
     [FieldOffset(664)]
     [FramePrinter.FixedArrayAttribute(typeof(BotState), 4)]
     private fixed Byte _Bots_[160];
@@ -786,7 +816,7 @@ namespace Quantum {
     }
     public readonly FixedArray<PlayerState> Players {
       get {
-        fixed (byte* p = _Players_) { return new FixedArray<PlayerState>(p, 88, 4); }
+        fixed (byte* p = _Players_) { return new FixedArray<PlayerState>(p, 136, 4); }
       }
     }
     public readonly FixedArray<BotState> Bots {
@@ -840,7 +870,7 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Building : Quantum.IComponent {
-    public const Int32 SIZE = 160;
+    public const Int32 SIZE = 280;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(4)]
     public PlayerRef Owner;
@@ -852,7 +882,7 @@ namespace Quantum {
     public FP ConstructionRemaining;
     [FieldOffset(80)]
     [FramePrinter.FixedArrayAttribute(typeof(ProductionOrder), 5)]
-    private fixed Byte _Queue_[80];
+    private fixed Byte _Queue_[200];
     [FieldOffset(0)]
     public Int32 QueueCount;
     [FieldOffset(72)]
@@ -866,7 +896,7 @@ namespace Quantum {
     public FP AttackCooldown;
     public readonly FixedArray<ProductionOrder> Queue {
       get {
-        fixed (byte* p = _Queue_) { return new FixedArray<ProductionOrder>(p, 16, 5); }
+        fixed (byte* p = _Queue_) { return new FixedArray<ProductionOrder>(p, 40, 5); }
       }
     }
     public readonly FixedArray<AssetRef<ModuleSpec>> Preset {
@@ -1275,6 +1305,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(RNGSession), RNGSession.SIZE);
       typeRegistry.Register(typeof(Quantum.RejectReason), 1);
       typeRegistry.Register(typeof(Quantum.Relation), 1);
+      typeRegistry.Register(typeof(Quantum.ResourceCost), Quantum.ResourceCost.SIZE);
       typeRegistry.Register(typeof(Quantum.ResourceNode), Quantum.ResourceNode.SIZE);
       typeRegistry.Register(typeof(Shape2D), Shape2D.SIZE);
       typeRegistry.Register(typeof(Shape3D), Shape3D.SIZE);

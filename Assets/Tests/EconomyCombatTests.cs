@@ -48,7 +48,7 @@ namespace FactoryWars.Tests {
 
     static int PowerProduced(int player) => Verified.Global->Players.GetPointer(player)->PowerProduced;
 
-    static float ExactFunds(int player) => Verified.Global->Players.GetPointer(player)->Funds.AsFloat;
+    static float ExactFunds(int player) => Verified.Global->Players.GetPointer(player)->Stock.Iron.AsFloat;
 
     static EntityRef NodeAt(FPVector3 position) {
       foreach (var pair in Verified.GetComponentIterator<ResourceNode>()) {

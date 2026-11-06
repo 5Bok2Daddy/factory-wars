@@ -23,7 +23,7 @@ namespace Quantum.FactoryWars {
     }
   }
 
-  /// <summary>플레이어 합류 시 진영·자금 초기화, 사령부와 시작 공병 배치.</summary>
+  /// <summary>플레이어 합류 시 진영·자원 초기화, 사령부와 시작 공병 배치.</summary>
   public unsafe class BootstrapSystem : SystemSignalsOnly, ISignalOnPlayerAdded {
     public override void OnInit(Frame f) {
       var entity = f.Create();
@@ -69,7 +69,7 @@ namespace Quantum.FactoryWars {
       }
       var rules = FactoryWarsUtil.Rules(f);
       state->Faction = factionRef;
-      state->Funds = rules.StartingFunds;
+      state->Stock = FactoryWarsUtil.MapInfo(f).StartingResources;
       state->Team = team;
       state->Active = true;
 
@@ -173,7 +173,7 @@ namespace Quantum.FactoryWars {
       return FindProposal(f.Unsafe.GetPointerSingleton<Diplomacy>(), from, to) >= 0;
     }
 
-    /// <summary>지금 제안해도 거부되지 않으면 true. 자금은 따로 본다.</summary>
+    /// <summary>지금 제안해도 거부되지 않으면 true. 비용은 따로 본다.</summary>
     public static bool CanPropose(Frame f, PlayerRef from, PlayerRef to) {
       var d = f.Unsafe.GetPointerSingleton<Diplomacy>();
       return FindProposal(d, from, to) < 0 && FindProposal(d, to, from) < 0 && f.Number >= d->RealliableFrames[Cell(from, to)];
@@ -223,10 +223,10 @@ namespace Quantum.FactoryWars {
           if (f.Number < d->RealliableFrames[cell]) {
             return RejectReason.Cooldown;
           }
-          if (state->Funds < rules.ProposalCost) {
+          if (state->Stock.Iron < rules.ProposalCost) {
             return RejectReason.InsufficientFunds;
           }
-          state->Funds -= rules.ProposalCost;
+          state->Stock.Iron -= rules.ProposalCost;
           AddProposal(d, sender, target, f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.ProposalSeconds));
           return null;
 
@@ -235,11 +235,11 @@ namespace Quantum.FactoryWars {
           if (index < 0 || relation != Relation.Enemy) {
             return RejectReason.Invalid;
           }
-          // 자금이 모자라면 제안은 그대로 대기한다.
-          if (state->Funds < rules.AcceptCost) {
+          // 철이 모자라면 제안은 그대로 대기한다.
+          if (state->Stock.Iron < rules.AcceptCost) {
             return RejectReason.InsufficientFunds;
           }
-          state->Funds -= rules.AcceptCost;
+          state->Stock.Iron -= rules.AcceptCost;
           ClearProposal(d, index);
           SetRelation(f, d, sender, target, Relation.Allied);
           return null;
@@ -258,10 +258,10 @@ namespace Quantum.FactoryWars {
           if (relation != Relation.Allied) {
             return RejectReason.Invalid;
           }
-          if (state->Funds < rules.BreakCost) {
+          if (state->Stock.Iron < rules.BreakCost) {
             return RejectReason.InsufficientFunds;
           }
-          state->Funds -= rules.BreakCost;
+          state->Stock.Iron -= rules.BreakCost;
           var grace = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.BreakGraceSeconds);
           var ban = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.RealliableSeconds);
           d->BreakExpireFrames[cell] = grace;
@@ -276,7 +276,7 @@ namespace Quantum.FactoryWars {
     }
 
     static void RefundProposal(Frame f, Diplomacy* d, GameRulesSpec rules, int index) {
-      FactoryWarsUtil.Player(f, d->Proposals.GetPointer(index)->From)->Funds += rules.ProposalRefund;
+      FactoryWarsUtil.Player(f, d->Proposals.GetPointer(index)->From)->Stock.Iron += rules.ProposalRefund;
       ClearProposal(d, index);
     }
 

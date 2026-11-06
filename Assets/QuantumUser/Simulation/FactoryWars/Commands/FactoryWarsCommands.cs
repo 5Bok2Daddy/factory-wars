@@ -233,12 +233,12 @@ namespace Quantum.FactoryWars {
         return;
       }
       var cost = TargetMode == NoteTarget.Player ? rules.NoteSingleCost : rules.NoteGroupCost;
-      if (state->Funds < cost) {
+      if (state->Stock.Iron < cost) {
         f.Events.ActionRejected(player, ActionKind.Note, RejectReason.InsufficientFunds);
         return;
       }
 
-      state->Funds -= cost;
+      state->Stock.Iron -= cost;
       state->NextNoteFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.NoteCooldownSeconds);
       for (var i = 0; i < f.PlayerCount; i++) {
         if ((receivers & (1 << i)) != 0) {

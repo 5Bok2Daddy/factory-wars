@@ -135,7 +135,7 @@ namespace FactoryWars.EditorTools {
       var spec = Asset<UnitSpec>(row.Id);
       spec.Size = row.Size;
       spec.IsAir = row.Air;
-      spec.Cost = row.Cost;
+      spec.Cost = new ResourceCost { Iron = row.Cost };
       spec.BuildTimeSeconds = row.Build;
       spec.MaxHealth = row.Health;
       spec.Attack = row.Attack;
@@ -164,7 +164,7 @@ namespace FactoryWars.EditorTools {
 
     static BuildingSpec BuildBuilding(string id, int cost, int seconds, int health, int powerOut, int powerIn, int population, int slots, params UnitSpec[] producible) {
       var spec = Asset<BuildingSpec>(id);
-      spec.Cost = cost;
+      spec.Cost = new ResourceCost { Iron = cost };
       spec.BuildTimeSeconds = seconds;
       spec.MaxHealth = health;
       spec.PowerProduced = powerOut;
@@ -277,13 +277,13 @@ namespace FactoryWars.EditorTools {
 
       var piercing = Asset<ModuleSpec>("module_piercing_rounds");
       piercing.Effect = ModuleEffect.PiercingRounds;
-      piercing.Cost = 100;
+      piercing.Cost = new ResourceCost { Iron = 100 };
       piercing.DamageMultiplier = N(1.25);
       EditorUtility.SetDirty(piercing);
 
       var reactive = Asset<ModuleSpec>("module_reactive_armor");
       reactive.Effect = ModuleEffect.ReactiveArmor;
-      reactive.Cost = 120;
+      reactive.Cost = new ResourceCost { Iron = 120 };
       reactive.DamageMultiplier = N(0.5);
       reactive.CooldownSeconds = 20;
       EditorUtility.SetDirty(reactive);
@@ -292,7 +292,6 @@ namespace FactoryWars.EditorTools {
       BuildFaction("continental_federation", "cf", units, 1, 0.75, 1.2, new[] { "militia", "militia", "dragonscale_tank" });
 
       var rules = Asset<GameRulesSpec>("game_rules");
-      rules.StartingFunds = 5000;
       rules.StartingEngineers = 1;
       rules.NavMeshName = "NavMesh";
       rules.MinDiplomacyPlayers = 3;
@@ -343,6 +342,7 @@ namespace FactoryWars.EditorTools {
       testMap.StartPositions = new[] {
         new FPVector3(-30, 0, 0), new FPVector3(30, 0, 0), new FPVector3(0, 0, 30), new FPVector3(0, 0, -30),
       };
+      testMap.StartingResources = new ResourceCost { Iron = 5000 };
       testMap.ResourceNodes = new[] {
         new ResourceNodePlacement { Position = new FPVector3(-30, 0, 14), Funds = 5000 },
         new ResourceNodePlacement { Position = new FPVector3(-30, 0, -14), Funds = 100 },
@@ -426,6 +426,7 @@ namespace FactoryWars.EditorTools {
       spec.BoundsMin = new FPVector2(-def.HalfSize, -def.HalfSize);
       spec.BoundsMax = new FPVector2(def.HalfSize, def.HalfSize);
       spec.StartPositions = Orbit(def, def.Start).Select(o => Position(o.Position)).ToArray();
+      spec.StartingResources = new ResourceCost { Iron = 5000 };
 
       var nodes = new List<ResourceNodePlacement>();
       void Add(Vector2Int[] template, int funds) {

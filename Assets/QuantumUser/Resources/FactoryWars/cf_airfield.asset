@@ -18,7 +18,14 @@ MonoBehaviour:
       Value: 344771775610767026
   Role: 7
   Cost:
-    RawValue: 72089600
+    Iron:
+      RawValue: 72089600
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
   BuildTimeSeconds:
     RawValue: 2293760
   MaxHealth:

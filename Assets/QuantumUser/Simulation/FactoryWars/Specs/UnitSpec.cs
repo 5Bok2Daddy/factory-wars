@@ -4,7 +4,7 @@ namespace Quantum {
   public partial class UnitSpec : AssetObject {
     public UnitSize Size;
     public bool IsAir;
-    public FP Cost;
+    public ResourceCost Cost;
     public FP BuildTimeSeconds;
     public FP MaxHealth;
     public AttackType Attack;

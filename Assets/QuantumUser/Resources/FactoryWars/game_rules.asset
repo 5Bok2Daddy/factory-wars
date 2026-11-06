@@ -16,8 +16,6 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/game_rules
     Guid:
       Value: 463454056923249890
-  StartingFunds:
-    RawValue: 327680000
   StartingEngineers: 1
   NavMeshName: NavMesh
   MinDiplomacyPlayers: 3

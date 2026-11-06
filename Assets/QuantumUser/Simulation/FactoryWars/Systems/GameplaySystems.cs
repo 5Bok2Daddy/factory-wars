@@ -83,11 +83,11 @@ namespace Quantum.FactoryWars {
         f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Locked);
         return;
       }
-      if (state->Funds < spec.Cost) {
+      if (state->Stock.Covers(spec.Cost) == false) {
         f.Events.ActionRejected(player, ActionKind.Build, RejectReason.InsufficientFunds);
         return;
       }
-      state->Funds -= spec.Cost;
+      state->Stock -= spec.Cost;
       WorkerSystem.Assign(f, engineer, WorkerTask.Build, CreateBuilding(f, player, specRef, position));
     }
 
@@ -162,8 +162,8 @@ namespace Quantum.FactoryWars {
       }
 
       var cost = unit.Cost + PresetCost(f, building, unit);
-      for (var i = 0; i < count && building->QueueCount < building->Queue.Length && state->Funds >= cost; i++) {
-        state->Funds -= cost;
+      for (var i = 0; i < count && building->QueueCount < building->Queue.Length && state->Stock.Covers(cost); i++) {
+        state->Stock -= cost;
         var order = building->Queue.GetPointer(building->QueueCount++);
         order->Unit = unitRef;
         order->PaidCost = cost;
@@ -177,7 +177,7 @@ namespace Quantum.FactoryWars {
       }
       for (var i = building->QueueCount - 1; i >= 0 && count > 0; i--) {
         if (building->Queue[i].Unit == unitRef) {
-          state->Funds += building->Queue[i].PaidCost;
+          state->Stock += building->Queue[i].PaidCost;
           RemoveOrder(building, i);
           count--;
         }
@@ -195,13 +195,13 @@ namespace Quantum.FactoryWars {
       *building->Queue.GetPointer(building->QueueCount) = default;
     }
 
-    static FP PresetCost(Frame f, Building* building, UnitSpec unit) {
-      var total = FP._0;
+    static ResourceCost PresetCost(Frame f, Building* building, UnitSpec unit) {
+      var total = default(ResourceCost);
       var slots = FPMath.Min(unit.ModuleSlots, building->Preset.Length);
       for (var i = 0; i < slots; i++) {
         var module = f.FindAsset(building->Preset[i]);
         if (module != null) {
-          total += module.Cost;
+          total = total + module.Cost;
         }
       }
       return total;

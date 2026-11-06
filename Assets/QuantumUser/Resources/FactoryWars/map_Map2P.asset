@@ -40,6 +40,15 @@ MonoBehaviour:
       RawValue: 0
     Z:
       RawValue: 3604480
+  StartingResources:
+    Iron:
+      RawValue: 327680000
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
   ResourceNodes:
   - Position:
       X:

@@ -19,7 +19,14 @@ MonoBehaviour:
   Size: 2
   IsAir: 1
   Cost:
-    RawValue: 42598400
+    Iron:
+      RawValue: 42598400
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
   BuildTimeSeconds:
     RawValue: 2621440
   MaxHealth:

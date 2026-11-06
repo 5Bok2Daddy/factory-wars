@@ -123,8 +123,8 @@ namespace Quantum.FactoryWars {
       var target = f.Unsafe.GetPointer<Transform3D>(refinery)->Position;
       if (MoveInto(f, entity, worker, position, target, spec.FootprintRadius + rules.WorkRange)) {
         var state = FactoryWarsUtil.Player(f, unit->Owner);
-        state->Funds += worker->Carried;
-        state->FundsEarned += worker->Carried;
+        state->Stock.Iron += worker->Carried;
+        state->Earned.Iron += worker->Carried;
         worker->Carried = FP._0;
         SetTask(worker, WorkerTask.Gather);
       }
@@ -166,13 +166,13 @@ namespace Quantum.FactoryWars {
       }
 
       var heal = FPMath.Min(rules.RepairPerSecond * f.DeltaTime, spec.MaxHealth - building->Health);
-      var cost = heal * spec.Cost / spec.MaxHealth * rules.RepairCostRatio;
+      var cost = heal * spec.Cost.Iron / spec.MaxHealth * rules.RepairCostRatio;
       var state = FactoryWarsUtil.Player(f, unit->Owner);
-      if (state->Funds < cost) {
+      if (state->Stock.Iron < cost) {
         SetTask(worker, WorkerTask.Idle);
         return;
       }
-      state->Funds -= cost;
+      state->Stock.Iron -= cost;
       building->Health += heal;
     }
 

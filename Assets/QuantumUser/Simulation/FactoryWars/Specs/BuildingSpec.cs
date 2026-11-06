@@ -3,7 +3,7 @@ namespace Quantum {
 
   public partial class BuildingSpec : AssetObject {
     public BuildingRole Role;
-    public FP Cost;
+    public ResourceCost Cost;
     public FP BuildTimeSeconds;
     public FP MaxHealth;
     public int PowerProduced;
