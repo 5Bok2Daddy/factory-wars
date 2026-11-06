@@ -223,3 +223,73 @@ MonoBehaviour:
         RawValue: 0
       Yaw:
         RawValue: 0
+  Terrain:
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: -1703936
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -1703936
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 1441792
+      HalfWidth:
+        RawValue: 262144
+      Yaw:
+        RawValue: 2949120
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: 1703936
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 1703936
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 1441792
+      HalfWidth:
+        RawValue: 262144
+      Yaw:
+        RawValue: -8847360
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: -1572864
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 1572864
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 327680
+      HalfWidth:
+        RawValue: 327680
+      Yaw:
+        RawValue: 0
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: 1572864
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -1572864
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 327680
+      HalfWidth:
+        RawValue: 327680
+      Yaw:
+        RawValue: -11796480
+  NoBuildZones: []

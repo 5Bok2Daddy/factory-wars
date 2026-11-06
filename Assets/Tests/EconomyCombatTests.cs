@@ -225,6 +225,10 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => Funds(0) >= 5100, 60f, "마지막 철 반입");
       Assert.AreEqual(5100, Funds(0), "매장량 100");
       yield return WaitFor(() => NodeRemaining(large) < 5000, 60f, "가까운 노드로 이동");
+
+      _rejected.Clear();
+      yield return Build(0, "_power_plant", V(-30, -14), Engineers(0)[0]);
+      AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);
     }
 
     [UnityTest]
@@ -624,6 +628,88 @@ namespace FactoryWars.Tests {
       var target = V(20, 45);
       Game.SendCommand(0, new MoveUnitsCommand { Units = new[] { engineer }, Target = target });
       yield return WaitFor(() => (Verified.Get<Transform3D>(engineer).Position - target).Magnitude < 2, 30f, "구석 탈출");
+    }
+
+    [UnityTest]
+    public IEnumerator Units_FollowRowOfTouchingBuildings() {
+      // 틈 없이 붙은 건물 다섯 채. 경로는 건물을 모르므로 벽을 따라 끝까지 돌아가야 한다.
+      var row = Enumerable.Range(-2, 5).Select(i => (0, "ff_supply_depot", i * 6, 40)).ToArray();
+      yield return StartMatch(units: new[] { (0, "ff_eagle_tank", 1, 30) }, buildings: row);
+      var tank = UnitsNamed(0, "ff_eagle_tank").First(e => Verified.Get<Transform3D>(e).Position.Z > 25);
+      var target = V(1, 48);
+      Game.SendCommand(0, new MoveUnitsCommand { Units = new[] { tank }, Target = target });
+      yield return WaitFor(() => (Verified.Get<Transform3D>(tank).Position - target).Magnitude < 2, 30f, "줄지은 건물을 돌아 도착");
+    }
+
+    // 지형
+
+    [UnityTest]
+    public IEnumerator Terrain_GroundUnitsWalkAroundForest() {
+      yield return StartMatch(units: new[] { (0, "ff_eagle_tank", -38, 20) });
+      var tank = UnitsNamed(0, "ff_eagle_tank").First(e => Verified.Get<Transform3D>(e).Position.Z > 15);
+      var forest = Verified.Get<ResourceNode>(NodeAt(V(-38, 30))).Shape;
+      var target = V(-38, 40);
+      Game.SendCommand(0, new MoveUnitsCommand { Units = new[] { tank }, Target = target });
+      var closest = float.MaxValue;
+      yield return WaitFor(() => {
+        var position = Verified.Get<Transform3D>(tank).Position;
+        closest = Mathf.Min(closest, forest.Distance(position).AsFloat);
+        return (position - target).Magnitude < 2;
+      }, 30f, "숲을 돌아 도착");
+      Assert.Greater(closest, 0f, "숲 안으로 들어가지 않음");
+    }
+
+    [UnityTest]
+    public IEnumerator Terrain_AirUnitsFlyOverForest() {
+      yield return StartMatch(units: new[] { (0, "ff_hawk_gunship", -38, 20) });
+      var hawk = UnitsNamed(0, "ff_hawk_gunship")[0];
+      var forest = Verified.Get<ResourceNode>(NodeAt(V(-38, 30))).Shape;
+      var target = V(-38, 40);
+      Game.SendCommand(0, new MoveUnitsCommand { Units = new[] { hawk }, Target = target });
+      var crossed = false;
+      yield return WaitFor(() => {
+        var position = Verified.Get<Transform3D>(hawk).Position;
+        crossed |= forest.Distance(position) < FP._0;
+        return FactoryWarsUtil.FlatDistanceSqr(position, target) < 1;
+      }, 30f, "직선 비행");
+      Assert.IsTrue(crossed, "숲 위를 지나감");
+    }
+
+    [UnityTest]
+    public IEnumerator Terrain_BuildingKeepsThreeFromResources() {
+      yield return StartMatch();
+      var engineer = Engineers(0)[0];
+      // 철광산 (-30, 14) 반지름 3, 부지 반지름 3: 중심 거리 9가 가장자리 3이다.
+      yield return Build(0, "_supply_depot", V(-22, 14), engineer);
+      AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);
+      _rejected.Clear();
+      yield return Build(0, "_supply_depot", V(-21, 14), engineer);
+      Assert.AreEqual(0, _rejected.Count, "철광산에서 3 떨어지면 허용");
+
+      // 숲 (-38, 30) 긴 변 z = 27: 부지 중심 z = 21이 가장자리 3이다.
+      yield return Build(0, "_supply_depot", V(-38, 22), engineer);
+      AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);
+      _rejected.Clear();
+      yield return Build(0, "_supply_depot", V(-38, 21), engineer);
+      Assert.AreEqual(0, _rejected.Count, "숲에서 3 떨어지면 허용");
+    }
+
+    [UnityTest]
+    public IEnumerator Terrain_RejectsRockAndNoBuildZone() {
+      yield return StartMatch();
+      var engineer = Engineers(0)[0];
+      yield return Build(0, "_supply_depot", V(40, -40), engineer);
+      AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);
+      _rejected.Clear();
+      yield return Build(0, "_supply_depot", V(40, -22), engineer);
+      AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);
+      _rejected.Clear();
+      // 금지 구역 가장자리에 부지 모서리만 걸쳐도 안 된다.
+      yield return Build(0, "_supply_depot", V(32, -22), engineer);
+      AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);
+      _rejected.Clear();
+      yield return Build(0, "_supply_depot", V(30, -22), engineer);
+      Assert.AreEqual(0, _rejected.Count, "구역 밖은 허용");
     }
 
     // 패배 조건

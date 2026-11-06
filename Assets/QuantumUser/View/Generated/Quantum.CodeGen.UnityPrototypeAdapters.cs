@@ -103,6 +103,8 @@ namespace Quantum.Prototypes.Unity {
     public Int32 DesignatedUntilFrame;
     public PlayerRef DesignatedBy;
     public FP DesignatedBonus;
+    public Int32 SlideTurn;
+    public Int32 SlideUntilFrame;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
     public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.UnitPrototype();
@@ -120,6 +122,8 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.DesignatedUntilFrame, out result.DesignatedUntilFrame);
       converter.Convert(this.DesignatedBy, out result.DesignatedBy);
       converter.Convert(this.DesignatedBonus, out result.DesignatedBonus);
+      converter.Convert(this.SlideTurn, out result.SlideTurn);
+      converter.Convert(this.SlideUntilFrame, out result.SlideUntilFrame);
       ConvertUser(converter, ref result);
       return result;
     }

@@ -33,6 +33,9 @@ namespace Quantum {
       return new FPVector2(FPMath.Max(x, FP._0), FPMath.Max(z, FP._0)).Magnitude;
     }
 
+    /// <summary>중심에서 가장 먼 점까지의 거리 이내로 어림잡는다. 정밀 검사를 건너뛰는 데 쓴다.</summary>
+    public FP Reach => IsCircle ? Radius : HalfLength + HalfWidth;
+
     /// <summary>작업 지점 수. 원은 둘레에 고르게, 사각형은 긴 변 양쪽에 간격을 두고 놓는다.</summary>
     public int SpotCount(GameRulesSpec rules) {
       return IsCircle ? rules.MineSpots : 2 * SpotsPerSide(rules);

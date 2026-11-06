@@ -112,7 +112,7 @@ namespace Quantum.FactoryWars {
       return false;
     }
 
-    /// <summary>맵 안, 걸어갈 수 있는 땅, 다른 건물·자원 노드와 겹치지 않는 곳에만 지을 수 있다.</summary>
+    /// <summary>맵 안, 걸어갈 수 있는 땅, 건물·자원·지형에서 떨어진 곳, 건설 금지 구역 밖에만 지을 수 있다.</summary>
     public static bool CanPlace(Frame f, BuildingSpec spec, FPVector3 position) {
       var map = FactoryWarsUtil.MapInfo(f);
       var rules = FactoryWarsUtil.Rules(f);
@@ -138,10 +138,37 @@ namespace Quantum.FactoryWars {
           return false;
         }
       }
-      var nodes = f.Filter<Transform3D, ResourceNode>();
-      while (nodes.NextUnsafe(out _, out var transform, out _)) {
-        if (Overlaps(position, transform->Position, radius + rules.ResourceNodeRadius)) {
+      // 고갈된 노드도 그대로 남아 있어 같은 검사를 받는다.
+      var nodes = f.Filter<ResourceNode>();
+      while (nodes.NextUnsafe(out _, out var node)) {
+        if (IsClear(node->Shape, position, radius, rules.ResourceBuildMargin) == false) {
           return false;
+        }
+      }
+      for (var i = 0; map.Terrain != null && i < map.Terrain.Length; i++) {
+        if (IsClear(map.Terrain[i].Shape, position, radius, rules.TerrainBuildMargin) == false) {
+          return false;
+        }
+      }
+      for (var i = 0; map.NoBuildZones != null && i < map.NoBuildZones.Length; i++) {
+        if (IsClear(map.NoBuildZones[i], position, radius, FP._0) == false) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    /// <summary>정사각형 부지의 가장자리·중심 아홉 점이 모양에서 margin 이상 떨어져 있으면 true.</summary>
+    static bool IsClear(MapShape shape, FPVector3 position, FP radius, FP margin) {
+      var reach = shape.Reach + radius * 2 + margin;
+      if (FPMath.Abs(position.X - shape.Center.X) > reach || FPMath.Abs(position.Z - shape.Center.Z) > reach) {
+        return true;
+      }
+      for (var x = -1; x <= 1; x++) {
+        for (var z = -1; z <= 1; z++) {
+          if (shape.Distance(position + new FPVector3(radius * x, FP._0, radius * z)) < margin) {
+            return false;
+          }
         }
       }
       return true;
@@ -787,13 +814,15 @@ namespace Quantum.FactoryWars {
     }
 
     /// <summary>
-    /// NavMesh는 고정이라 경로가 건물을 지나간다. 지상 유닛을 가까운 변 밖으로 밀어내고,
-    /// 이동 중이면 변을 따라 가까운 모서리로 미끄러뜨려 건물을 돌아가게 한다.
+    /// NavMesh는 고정이라 경로가 건물을 지나간다. 지상 유닛을 가까운 변 밖으로 밀어내고, 이동 중이면 변을 따라
+    /// 미끄러뜨려 돌아가게 한다. 처음 닿을 때 고른 회전 방향을 유지해 붙어 있는 건물들도 한 덩어리처럼 돌아간다.
     /// </summary>
     static void PushOutOfBuildings(Frame f) {
-      var clearance = FactoryWarsUtil.Rules(f).UnitClearance;
-      var units = f.Filter<Transform3D, NavMeshSteeringAgent, NavMeshPathfinder>();
-      while (units.NextUnsafe(out _, out var unit, out var agent, out var pathfinder)) {
+      var rules = FactoryWarsUtil.Rules(f);
+      var clearance = rules.UnitClearance;
+      var memory = FactoryWarsUtil.SecondsToFrames(f, rules.SlideMemorySeconds);
+      var units = f.Filter<Transform3D, Unit, NavMeshSteeringAgent, NavMeshPathfinder>();
+      while (units.NextUnsafe(out _, out var unit, out var owner, out var agent, out var pathfinder)) {
         var buildings = f.Filter<Transform3D, Building>();
         while (buildings.NextUnsafe(out _, out var transform, out var building)) {
           var reach = f.FindAsset(building->Spec).FootprintRadius + clearance;
@@ -808,15 +837,24 @@ namespace Quantum.FactoryWars {
           var position = unit->Position;
           var center = transform->Position;
           var target = pathfinder->Target;
+          var remembered = f.Number < owner->SlideUntilFrame;
           if (overlapX < overlapZ) {
-            var side = x < FP._0 ? -reach : reach;
-            position.X = center.X + side;
-            position.Z += slide * Detour(position.X, position.Z, target.X, target.Z, center.X + side, center.Z, reach);
+            var face = x < FP._0 ? -1 : 1;
+            position.X = center.X + reach * face;
+            // 면의 바깥 방향을 왼쪽으로 돌린 것이 회전 방향 +1의 진행 방향이다.
+            if (remembered == false) {
+              owner->SlideTurn = face * Detour(position.X, position.Z, target.X, target.Z, center.X + reach * face, center.Z, reach);
+            }
+            position.Z += slide * owner->SlideTurn * face;
           } else {
-            var side = z < FP._0 ? -reach : reach;
-            position.Z = center.Z + side;
-            position.X += slide * Detour(position.Z, position.X, target.Z, target.X, center.Z + side, center.X, reach);
+            var face = z < FP._0 ? -1 : 1;
+            position.Z = center.Z + reach * face;
+            if (remembered == false) {
+              owner->SlideTurn = -face * Detour(position.Z, position.X, target.Z, target.X, center.Z + reach * face, center.X, reach);
+            }
+            position.X -= slide * owner->SlideTurn * face;
           }
+          owner->SlideUntilFrame = f.Number + memory;
           unit->Position = position;
         }
       }

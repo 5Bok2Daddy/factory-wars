@@ -342,7 +342,8 @@ namespace FactoryWars.EditorTools {
       rules.SpotArrival = N(1.5);
       rules.WorkRange = 2;
       rules.NodeSearchRadius = 30;
-      rules.ResourceNodeRadius = 2;
+      rules.ResourceBuildMargin = 3;
+      rules.TerrainBuildMargin = 2;
       rules.RepairPerSecond = 20;
       rules.RepairCostRatio = N(0.5);
       rules.FoundationHealthRatio = N(0.1);
@@ -354,6 +355,7 @@ namespace FactoryWars.EditorTools {
         BuildingRole.PowerPlant, BuildingRole.ResearchLab, BuildingRole.Airfield, BuildingRole.SupplyDepot, BuildingRole.HeavyWorks, BuildingRole.DefenseTower,
       }));
       rules.UnitClearance = N(0.5);
+      rules.SlideMemorySeconds = 1;
       rules.Matchups = new[] {
         new DamageMatchup { Attack = AttackType.AntiInfantry, VsSmall = N(1.5), VsMedium = N(0.6), VsLarge = N(0.4), VsAir = 1, VsBuilding = N(0.5) },
         new DamageMatchup { Attack = AttackType.AntiArmor, VsSmall = N(0.6), VsMedium = N(1.5), VsLarge = N(1.5), VsAir = 1, VsBuilding = 1 },
@@ -378,6 +380,10 @@ namespace FactoryWars.EditorTools {
         Mine(new Vector2Int(-30, -14), 100),
         Forest(new Vector2Int(-38, 30), 8, 3, 0, 3000),
       };
+      testMap.Terrain = new[] {
+        new TerrainFeature { Kind = TerrainKind.Rock, Shape = new MapShape { Center = new FPVector3(40, 0, -40), Radius = 3 } },
+      };
+      testMap.NoBuildZones = new[] { new MapShape { Center = new FPVector3(40, 0, -22), HalfLength = 6, HalfWidth = 6 } };
       EditorUtility.SetDirty(testMap);
 
       BuildMapSpec(TwoPlayerMap);
@@ -481,6 +487,10 @@ namespace FactoryWars.EditorTools {
       Add(def.ExpansionNodes, def.ExpansionFunds);
       nodes.Add(Mine(Vector2Int.zero, def.CenterFunds));
       spec.ResourceNodes = nodes.ToArray();
+      spec.Terrain = def.Obstacles.SelectMany(obstacle => Orbit(def, obstacle.Position).Select(o => new TerrainFeature {
+        Kind = TerrainKind.Hill,
+        Shape = new MapShape { Center = Position(o.Position), HalfLength = N(obstacle.Size.x / 2), HalfWidth = N(obstacle.Size.z / 2), Yaw = N(obstacle.Yaw - 90 * o.QuarterTurns) },
+      })).ToArray();
       EditorUtility.SetDirty(spec);
     }
 
@@ -499,24 +509,8 @@ namespace FactoryWars.EditorTools {
       EnsureNavMesh(map);
       EnsureDebugView();
 
-      var old = GameObject.Find("Obstacles");
-      if (old != null) {
-        Object.DestroyImmediate(old);
-      }
-      var root = new GameObject("Obstacles");
-      foreach (var obstacle in def.Obstacles) {
-        foreach (var (position, quarterTurns) in Orbit(def, obstacle.Position)) {
-          var block = GameObject.CreatePrimitive(PrimitiveType.Cube);
-          block.name = "Rock";
-          block.transform.SetParent(root.transform, false);
-          block.transform.position = new Vector3(position.x, obstacle.Size.y / 2, position.y);
-          block.transform.rotation = Quaternion.Euler(0, obstacle.Yaw - 90 * quarterTurns, 0);
-          block.transform.localScale = obstacle.Size;
-          var modifier = block.AddComponent<NavMeshModifier>();
-          modifier.overrideArea = true;
-          modifier.area = 1; // Not Walkable
-        }
-      }
+      var spec = AssetDatabase.LoadAssetAtPath<MapSpec>($"{DataRoot}/map_{def.Id}.asset");
+      BuildTerrain(spec);
 
       var camera = Camera.main;
       camera.transform.position = def.CameraPosition;
@@ -524,8 +518,41 @@ namespace FactoryWars.EditorTools {
 
       ConfigureRunner(def.Players);
 
-      var spec = AssetDatabase.LoadAssetAtPath<MapSpec>($"{DataRoot}/map_{def.Id}.asset");
       Bake(map, spec, scene);
+    }
+
+    /// <summary>MapSpec의 자원과 지형을 도형으로 만든다. NavMesh 굽기·건설 검사·미니맵이 같은 데이터를 쓴다.</summary>
+    static void BuildTerrain(MapSpec spec) {
+      foreach (var name in new[] { "Obstacles", "Terrain" }) {
+        var old = GameObject.Find(name);
+        if (old != null) {
+          Object.DestroyImmediate(old);
+        }
+      }
+      var root = new GameObject("Terrain").transform;
+      foreach (var node in spec.ResourceNodes) {
+        AddBlock(root, node.Kind.ToString(), node.Shape, node.Kind == ResourceKind.Iron ? 3 : 5);
+      }
+      foreach (var feature in spec.Terrain ?? new TerrainFeature[0]) {
+        AddBlock(root, feature.Kind.ToString(), feature.Shape, feature.Kind == TerrainKind.Rock ? 3 : 6);
+      }
+    }
+
+    static void AddBlock(Transform root, string name, MapShape shape, float height) {
+      var block = GameObject.CreatePrimitive(shape.IsCircle ? PrimitiveType.Cylinder : PrimitiveType.Cube);
+      block.name = name;
+      block.transform.SetParent(root, false);
+      block.transform.position = new Vector3(shape.Center.X.AsFloat, height / 2, shape.Center.Z.AsFloat);
+      if (shape.IsCircle) {
+        var diameter = shape.Radius.AsFloat * 2;
+        block.transform.localScale = new Vector3(diameter, height / 2, diameter);
+      } else {
+        block.transform.rotation = Quaternion.Euler(0, shape.Yaw.AsFloat, 0);
+        block.transform.localScale = new Vector3(shape.HalfLength.AsFloat * 2, height, shape.HalfWidth.AsFloat * 2);
+      }
+      var modifier = block.AddComponent<NavMeshModifier>();
+      modifier.overrideArea = true;
+      modifier.area = 1; // Not Walkable
     }
 
     public static void BuildTestScene() {
@@ -543,8 +570,11 @@ namespace FactoryWars.EditorTools {
         camera.transform.rotation = Quaternion.Euler(50, 0, 0);
       }
 
+      var spec = AssetDatabase.LoadAssetAtPath<MapSpec>($"{DataRoot}/map_test.asset");
+      BuildTerrain(spec);
+
       ConfigureRunner(2);
-      Bake(map, AssetDatabase.LoadAssetAtPath<MapSpec>($"{DataRoot}/map_test.asset"), scene);
+      Bake(map, spec, scene);
     }
 
     static GameObject EnsureGround() {

@@ -302,6 +302,8 @@ namespace Quantum.Prototypes {
     public Int32 DesignatedUntilFrame;
     public PlayerRef DesignatedBy;
     public FP DesignatedBonus;
+    public Int32 SlideTurn;
+    public Int32 SlideUntilFrame;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Unit component = default;
         Materialize((Frame)f, ref component, in context);
@@ -324,6 +326,8 @@ namespace Quantum.Prototypes {
         result.DesignatedUntilFrame = this.DesignatedUntilFrame;
         result.DesignatedBy = this.DesignatedBy;
         result.DesignatedBonus = this.DesignatedBonus;
+        result.SlideTurn = this.SlideTurn;
+        result.SlideUntilFrame = this.SlideUntilFrame;
     }
   }
   [System.SerializableAttribute()]

@@ -66,7 +66,9 @@ MonoBehaviour:
     RawValue: 131072
   NodeSearchRadius:
     RawValue: 1966080
-  ResourceNodeRadius:
+  ResourceBuildMargin:
+    RawValue: 196608
+  TerrainBuildMargin:
     RawValue: 131072
   RepairPerSecond:
     RawValue: 1310720
@@ -76,6 +78,8 @@ MonoBehaviour:
     RawValue: 6553
   UnitClearance:
     RawValue: 32768
+  SlideMemorySeconds:
+    RawValue: 65536
   Matchups:
   - Attack: 1
     VsSmall:

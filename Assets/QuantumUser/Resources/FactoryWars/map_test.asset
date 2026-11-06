@@ -121,3 +121,37 @@ MonoBehaviour:
         RawValue: 196608
       Yaw:
         RawValue: 0
+  Terrain:
+  - Kind: 0
+    Shape:
+      Center:
+        X:
+          RawValue: 2621440
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -2621440
+      Radius:
+        RawValue: 196608
+      HalfLength:
+        RawValue: 0
+      HalfWidth:
+        RawValue: 0
+      Yaw:
+        RawValue: 0
+  NoBuildZones:
+  - Center:
+      X:
+        RawValue: 2621440
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -1441792
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 393216
+    HalfWidth:
+      RawValue: 393216
+    Yaw:
+      RawValue: 0

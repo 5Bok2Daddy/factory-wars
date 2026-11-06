@@ -47,13 +47,18 @@ namespace Quantum {
     public FP SpotArrival;
     public FP WorkRange;
     public FP NodeSearchRadius;
-    public FP ResourceNodeRadius;
+    /// <summary>건물이 철광산·숲 가장자리에서 떨어져야 하는 거리.</summary>
+    public FP ResourceBuildMargin;
+    /// <summary>건물이 바위·언덕·협곡 벽에서 떨어져야 하는 거리.</summary>
+    public FP TerrainBuildMargin;
     public FP RepairPerSecond;
     /// <summary>회복한 체력 비율 x 건물 비용 x 이 값이 수리비다.</summary>
     public FP RepairCostRatio;
     public FP FoundationHealthRatio;
     /// <summary>유닛이 건물 부지에서 떨어지는 거리.</summary>
     public FP UnitClearance;
+    /// <summary>건물에서 떨어진 뒤 돌아가던 방향을 기억하는 시간.</summary>
+    public FP SlideMemorySeconds;
     public DamageMatchup[] Matchups;
     public AssetRef<AiSpec> EasyAi;
     public AssetRef<AiSpec> NormalAi;

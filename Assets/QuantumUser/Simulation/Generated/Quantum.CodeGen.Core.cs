@@ -1085,37 +1085,41 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Unit : Quantum.IComponent {
-    public const Int32 SIZE = 128;
+    public const Int32 SIZE = 136;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(16)]
+    [FieldOffset(24)]
     public PlayerRef Owner;
-    [FieldOffset(48)]
+    [FieldOffset(56)]
     public AssetRef<UnitSpec> Spec;
-    [FieldOffset(88)]
+    [FieldOffset(96)]
     public FP Health;
     [FieldOffset(0)]
     public UnitOrder Order;
-    [FieldOffset(104)]
+    [FieldOffset(112)]
     public FPVector3 TargetPosition;
-    [FieldOffset(56)]
+    [FieldOffset(64)]
     public EntityRef TargetEntity;
-    [FieldOffset(72)]
+    [FieldOffset(80)]
     public FP AttackCooldown;
-    [FieldOffset(96)]
+    [FieldOffset(104)]
     public FP ReactiveArmorCooldown;
-    [FieldOffset(24)]
+    [FieldOffset(32)]
     [FramePrinter.FixedArrayAttribute(typeof(AssetRef<ModuleSpec>), 3)]
     private fixed Byte _Modules_[24];
-    [FieldOffset(64)]
+    [FieldOffset(72)]
     public FP AbilityCooldown;
     [FieldOffset(8)]
     public Int32 EngagedUntilFrame;
     [FieldOffset(4)]
     public Int32 DesignatedUntilFrame;
-    [FieldOffset(12)]
+    [FieldOffset(20)]
     public PlayerRef DesignatedBy;
-    [FieldOffset(80)]
+    [FieldOffset(88)]
     public FP DesignatedBonus;
+    [FieldOffset(12)]
+    public Int32 SlideTurn;
+    [FieldOffset(16)]
+    public Int32 SlideUntilFrame;
     public readonly FixedArray<AssetRef<ModuleSpec>> Modules {
       get {
         fixed (byte* p = _Modules_) { return new FixedArray<AssetRef<ModuleSpec>>(p, 8, 3); }
@@ -1138,6 +1142,8 @@ namespace Quantum {
         hash = hash * 31 + DesignatedUntilFrame.GetHashCode();
         hash = hash * 31 + DesignatedBy.GetHashCode();
         hash = hash * 31 + DesignatedBonus.GetHashCode();
+        hash = hash * 31 + SlideTurn.GetHashCode();
+        hash = hash * 31 + SlideUntilFrame.GetHashCode();
         return hash;
       }
     }
@@ -1146,6 +1152,8 @@ namespace Quantum {
         serializer.Stream.Serialize((Byte*)&p->Order);
         serializer.Stream.Serialize(&p->DesignatedUntilFrame);
         serializer.Stream.Serialize(&p->EngagedUntilFrame);
+        serializer.Stream.Serialize(&p->SlideTurn);
+        serializer.Stream.Serialize(&p->SlideUntilFrame);
         PlayerRef.Serialize(&p->DesignatedBy, serializer);
         PlayerRef.Serialize(&p->Owner, serializer);
         FixedArray.Serialize(p->Modules, serializer, Statics.SerializeAssetRef);

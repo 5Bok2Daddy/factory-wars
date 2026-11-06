@@ -97,6 +97,8 @@ component Unit {
     Int32 DesignatedUntilFrame;
     player_ref DesignatedBy;
     FP DesignatedBonus;
+    Int32 SlideTurn;
+    Int32 SlideUntilFrame;
 }
 
 component Worker {

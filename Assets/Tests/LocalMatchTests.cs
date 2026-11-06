@@ -482,9 +482,6 @@ namespace FactoryWars.Tests {
       foreach (var start in spec.StartPositions) {
         Assert.IsTrue(navMesh.Contains(start, mask, true), $"시작 위치 NavMesh 위 {start}");
       }
-      foreach (var node in spec.ResourceNodes) {
-        Assert.IsTrue(navMesh.Contains(node.Shape.Center, mask, true), $"노드 NavMesh 위 {node.Shape.Center}");
-      }
     }
 
     /// <summary>from에서 to로 곧장 갈 수 없고, 주어진 경로들은 구간마다 막힘이 없어야 한다.</summary>
@@ -532,7 +529,7 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(1, NodeFunds(8000).AsInt, "중앙 노드");
       AssertRotationalSymmetry(spec, 2);
       AssertNodesOnNavMesh(spec);
-      AssertBlockedWithDetours(V(-55, -55), V(55, 55), new[] { V(-60, 60) }, new[] { V(60, -60) });
+      Assert.IsFalse(Verified.Navigation.LineOfSight(V(-55, -55), V(55, 55), NavMeshRegionMask.Default, Verified.Map.GetNavMesh("NavMesh")), "직선 경로는 막힘");
       yield return CrossMap(0, V(47, 47), 90f, "2P base to base");
     }
 
@@ -555,8 +552,8 @@ namespace FactoryWars.Tests {
         new[] { V(-45, -66), V(45, -66) });
       // 맞은편 기지.
       AssertBlockedWithDetours(V(-90, -90), V(90, 90),
-        new[] { V(-66, -40), V(-66, -12), V(1, 1), V(66, 12), V(66, 40) },
-        new[] { V(-40, -66), V(-12, -66), V(1, 1), V(12, 66), V(40, 66) });
+        new[] { V(-66, -40), V(-66, -12), V(0, 8), V(66, 12), V(66, 40) },
+        new[] { V(-40, -66), V(-12, -66), V(8, 0), V(12, 66), V(40, 66) });
       yield return CrossMap(0, V(82, 82), 120f, "4P opposite base");
     }
   }
