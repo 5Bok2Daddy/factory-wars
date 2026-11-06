@@ -1,4 +1,4 @@
-﻿namespace Quantum
+namespace Quantum
 {
     using System.Collections.Generic;
     using Photon.Deterministic;
@@ -7,8 +7,13 @@
     {
         static partial void AddCommandFactoriesUser(ICollection<IDeterministicCommandFactory> factories, RuntimeConfig gameConfig, SimulationConfig simulationConfig)
         {
-            // Add or remove commands to the collection.
-            // factories.Add(new NavMeshAgentTestSystem.RunTest());
+            factories.Add(new FactoryWars.MoveUnitsCommand());
+            factories.Add(new FactoryWars.AttackTargetCommand());
+            factories.Add(new FactoryWars.BuildCommand());
+            factories.Add(new FactoryWars.ProduceCommand());
+            factories.Add(new FactoryWars.SetPresetCommand());
+            factories.Add(new FactoryWars.DiplomacyCommand());
+            factories.Add(new FactoryWars.SendNoteCommand());
         }
     }
 }

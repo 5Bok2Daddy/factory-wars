@@ -15,9 +15,9 @@ MonoBehaviour:
   Config:
     PlayerCount: 0
     ChecksumCrossPlatformDeterminism: 0
-    LockstepSimulation: 0
+    LockstepSimulation: 1
     InputDeltaCompression: 1
-    UpdateFPS: 60
+    UpdateFPS: 20
     ChecksumInterval: 60
     RollbackWindow: 60
     InputHardTolerance: 8
@@ -30,7 +30,7 @@ MonoBehaviour:
     TimeScaleMin: 100
     TimeScalePingMin: 100
     TimeScalePingMax: 300
-    InputDelayMin: 0
+    InputDelayMin: 10
     InputDelayMax: 60
     InputDelayPingStart: 100
     InputFixedSize: 0

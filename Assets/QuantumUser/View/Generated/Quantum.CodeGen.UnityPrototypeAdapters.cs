@@ -49,6 +49,65 @@ namespace Quantum.Prototypes.Unity {
   using RuntimeInitializeOnLoadMethodAttribute = UnityEngine.RuntimeInitializeOnLoadMethodAttribute;
   #endif //;
   
+  [System.SerializableAttribute()]
+  public unsafe partial class BuildingPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.BuildingPrototype> {
+    public PlayerRef Owner;
+    public AssetRef<BuildingSpec> Spec;
+    public FP Health;
+    public FP ConstructionRemaining;
+    [ArrayLengthAttribute(5)]
+    public Quantum.Prototypes.ProductionOrderPrototype[] Queue = new Quantum.Prototypes.ProductionOrderPrototype[5];
+    public Int32 QueueCount;
+    public FP QueueProgress;
+    [ArrayLengthAttribute(3)]
+    public AssetRef<ModuleSpec>[] Preset = new AssetRef<ModuleSpec>[3];
+    public Quantum.QuantumEntityPrototype TargetEntity;
+    public FP AttackCooldown;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BuildingPrototype prototype);
+    public override Quantum.Prototypes.BuildingPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.BuildingPrototype();
+      converter.Convert(this.Owner, out result.Owner);
+      converter.Convert(this.Spec, out result.Spec);
+      converter.Convert(this.Health, out result.Health);
+      converter.Convert(this.ConstructionRemaining, out result.ConstructionRemaining);
+      converter.Convert(this.Queue, out result.Queue);
+      converter.Convert(this.QueueCount, out result.QueueCount);
+      converter.Convert(this.QueueProgress, out result.QueueProgress);
+      converter.Convert(this.Preset, out result.Preset);
+      converter.Convert(this.TargetEntity, out result.TargetEntity);
+      converter.Convert(this.AttackCooldown, out result.AttackCooldown);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
+  public unsafe partial class UnitPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.UnitPrototype> {
+    public PlayerRef Owner;
+    public AssetRef<UnitSpec> Spec;
+    public FP Health;
+    public Quantum.QEnum8<UnitOrder> Order;
+    public FPVector3 TargetPosition;
+    public Quantum.QuantumEntityPrototype TargetEntity;
+    public FP AttackCooldown;
+    public FP ReactiveArmorCooldown;
+    [ArrayLengthAttribute(3)]
+    public AssetRef<ModuleSpec>[] Modules = new AssetRef<ModuleSpec>[3];
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
+    public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.UnitPrototype();
+      converter.Convert(this.Owner, out result.Owner);
+      converter.Convert(this.Spec, out result.Spec);
+      converter.Convert(this.Health, out result.Health);
+      converter.Convert(this.Order, out result.Order);
+      converter.Convert(this.TargetPosition, out result.TargetPosition);
+      converter.Convert(this.TargetEntity, out result.TargetEntity);
+      converter.Convert(this.AttackCooldown, out result.AttackCooldown);
+      converter.Convert(this.ReactiveArmorCooldown, out result.ReactiveArmorCooldown);
+      converter.Convert(this.Modules, out result.Modules);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
 }
 #pragma warning restore 0109
 #pragma warning restore 1591

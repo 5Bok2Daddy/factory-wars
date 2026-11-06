@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946fb8225d8a67b488f649875809ea13, type: 3}
+  m_Name: ff_hawk_gunship
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ff_hawk_gunship
+    Guid:
+      Value: 489920977364748690
+  Size: 2
+  IsAir: 1
+  Cost:
+    RawValue: 42598400
+  BuildTimeSeconds:
+    RawValue: 2621440
+  MaxHealth:
+    RawValue: 29491200
+  Attack: 2
+  Damage:
+    RawValue: 3604480
+  Range:
+    RawValue: 524288
+  MinRange:
+    RawValue: 0
+  SplashRadius:
+    RawValue: 0
+  AttackInterval:
+    RawValue: 131072
+  IsRanged: 1
+  MoveSpeed:
+    RawValue: 458752
+  Population:
+    RawValue: 196608
+  ModuleSlots: 2
+  SpawnCount: 1
+  Ability: 5

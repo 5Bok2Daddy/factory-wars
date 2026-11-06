@@ -1,0 +1,85 @@
+// 팩토리 워즈 시뮬레이션 데이터 정의.
+#pragma max_players 4
+
+#define MAX_PLAYERS 4
+#define RELATION_CELLS 16
+#define MAX_PROPOSALS 12
+#define MAX_MODULES 3
+#define MAX_QUEUE 5
+
+
+enum Relation : Byte { Enemy, Allied, BreakPending }
+enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget }
+
+struct PlayerState {
+    asset_ref<FactionSpec> Faction;
+    FP Funds;
+    Int32 PowerProduced;
+    Int32 PowerConsumed;
+    FP PopulationUsed;
+    FP PopulationCap;
+    Int32 Team;
+    Int32 NextNoteFrame;
+    QBoolean Active;
+    QBoolean Defeated;
+}
+
+struct ProductionOrder {
+    asset_ref<UnitSpec> Unit;
+    FP PaidCost;
+}
+
+struct AllianceProposal {
+    player_ref From;
+    player_ref To;
+    Int32 ExpireFrame;
+}
+
+global {
+    array<PlayerState>[MAX_PLAYERS] Players;
+    QBoolean GameEnded;
+}
+
+component Unit {
+    player_ref Owner;
+    asset_ref<UnitSpec> Spec;
+    FP Health;
+    UnitOrder Order;
+    FPVector3 TargetPosition;
+    entity_ref TargetEntity;
+    FP AttackCooldown;
+    FP ReactiveArmorCooldown;
+    array<asset_ref<ModuleSpec>>[MAX_MODULES] Modules;
+}
+
+component Building {
+    player_ref Owner;
+    asset_ref<BuildingSpec> Spec;
+    FP Health;
+    FP ConstructionRemaining;
+    array<ProductionOrder>[MAX_QUEUE] Queue;
+    Int32 QueueCount;
+    FP QueueProgress;
+    array<asset_ref<ModuleSpec>>[MAX_MODULES] Preset;
+    entity_ref TargetEntity;
+    FP AttackCooldown;
+}
+
+component ResourceNode {
+    FP RemainingFunds;
+}
+
+singleton component Diplomacy {
+    array<Relation>[RELATION_CELLS] Relations;
+    array<AllianceProposal>[MAX_PROPOSALS] Proposals;
+    array<Int32>[RELATION_CELLS] BreakExpireFrames;
+    array<Int32>[RELATION_CELLS] RealliableFrames;
+    QBoolean JointVictory;
+    QBoolean TeamMode;
+}
+
+event NoteReceived { player_ref Sender; player_ref Receiver; Int32 PhraseId; }
+event AllianceChanged { player_ref A; player_ref B; Relation Relation; }
+event UnitDestroyed { entity_ref Unit; player_ref Owner; asset_ref<UnitSpec> Spec; }
+event PlayerDefeated { player_ref Player; }
+event GameOver { Int32 WinnerMask; }

@@ -50,6 +50,94 @@ namespace Quantum.Prototypes {
   #endif //;
   
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.AllianceProposal))]
+  public unsafe partial class AllianceProposalPrototype : StructPrototype {
+    public PlayerRef From;
+    public PlayerRef To;
+    public Int32 ExpireFrame;
+    partial void MaterializeUser(Frame frame, ref Quantum.AllianceProposal result, in PrototypeMaterializationContext context);
+    public void Materialize(Frame frame, ref Quantum.AllianceProposal result, in PrototypeMaterializationContext context = default) {
+        result.From = this.From;
+        result.To = this.To;
+        result.ExpireFrame = this.ExpireFrame;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.Building))]
+  public unsafe class BuildingPrototype : ComponentPrototype<Quantum.Building> {
+    public PlayerRef Owner;
+    public AssetRef<BuildingSpec> Spec;
+    public FP Health;
+    public FP ConstructionRemaining;
+    [ArrayLengthAttribute(5)]
+    public Quantum.Prototypes.ProductionOrderPrototype[] Queue = new Quantum.Prototypes.ProductionOrderPrototype[5];
+    public Int32 QueueCount;
+    public FP QueueProgress;
+    [ArrayLengthAttribute(3)]
+    public AssetRef<ModuleSpec>[] Preset = new AssetRef<ModuleSpec>[3];
+    public MapEntityId TargetEntity;
+    public FP AttackCooldown;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.Building component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.Building result, in PrototypeMaterializationContext context = default) {
+        result.Owner = this.Owner;
+        result.Spec = this.Spec;
+        result.Health = this.Health;
+        result.ConstructionRemaining = this.ConstructionRemaining;
+        for (int i = 0, count = PrototypeValidator.CheckLength(Queue, 5, in context); i < count; ++i) {
+          this.Queue[i].Materialize(frame, ref *result.Queue.GetPointer(i), in context);
+        }
+        result.QueueCount = this.QueueCount;
+        result.QueueProgress = this.QueueProgress;
+        for (int i = 0, count = PrototypeValidator.CheckLength(Preset, 3, in context); i < count; ++i) {
+          *result.Preset.GetPointer(i) = this.Preset[i];
+        }
+        PrototypeValidator.FindMapEntity(this.TargetEntity, in context, out result.TargetEntity);
+        result.AttackCooldown = this.AttackCooldown;
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.Diplomacy))]
+  public unsafe partial class DiplomacyPrototype : ComponentPrototype<Quantum.Diplomacy> {
+    [ArrayLengthAttribute(16)]
+    public Quantum.QEnum8<Relation>[] Relations = new Quantum.QEnum8<Relation>[16];
+    [ArrayLengthAttribute(12)]
+    public Quantum.Prototypes.AllianceProposalPrototype[] Proposals = new Quantum.Prototypes.AllianceProposalPrototype[12];
+    [ArrayLengthAttribute(16)]
+    public Int32[] BreakExpireFrames = new Int32[16];
+    [ArrayLengthAttribute(16)]
+    public Int32[] RealliableFrames = new Int32[16];
+    public QBoolean JointVictory;
+    public QBoolean TeamMode;
+    partial void MaterializeUser(Frame frame, ref Quantum.Diplomacy result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.Diplomacy component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.Diplomacy result, in PrototypeMaterializationContext context = default) {
+        for (int i = 0, count = PrototypeValidator.CheckLength(Relations, 16, in context); i < count; ++i) {
+          *result.Relations.GetPointer(i) = this.Relations[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(Proposals, 12, in context); i < count; ++i) {
+          this.Proposals[i].Materialize(frame, ref *result.Proposals.GetPointer(i), in context);
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(BreakExpireFrames, 16, in context); i < count; ++i) {
+          result.BreakExpireFrames[i] = this.BreakExpireFrames[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(RealliableFrames, 16, in context); i < count; ++i) {
+          result.RealliableFrames[i] = this.RealliableFrames[i];
+        }
+        result.JointVictory = this.JointVictory;
+        result.TeamMode = this.TeamMode;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.Input))]
   public unsafe partial class InputPrototype : StructPrototype {
     [HideInInspector()]
@@ -57,6 +145,93 @@ namespace Quantum.Prototypes {
     partial void MaterializeUser(Frame frame, ref Quantum.Input result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.Input result, in PrototypeMaterializationContext context = default) {
         MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.PlayerState))]
+  public unsafe partial class PlayerStatePrototype : StructPrototype {
+    public AssetRef<FactionSpec> Faction;
+    public FP Funds;
+    public Int32 PowerProduced;
+    public Int32 PowerConsumed;
+    public FP PopulationUsed;
+    public FP PopulationCap;
+    public Int32 Team;
+    public Int32 NextNoteFrame;
+    public QBoolean Active;
+    public QBoolean Defeated;
+    partial void MaterializeUser(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context);
+    public void Materialize(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context = default) {
+        result.Faction = this.Faction;
+        result.Funds = this.Funds;
+        result.PowerProduced = this.PowerProduced;
+        result.PowerConsumed = this.PowerConsumed;
+        result.PopulationUsed = this.PopulationUsed;
+        result.PopulationCap = this.PopulationCap;
+        result.Team = this.Team;
+        result.NextNoteFrame = this.NextNoteFrame;
+        result.Active = this.Active;
+        result.Defeated = this.Defeated;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.ProductionOrder))]
+  public unsafe partial class ProductionOrderPrototype : StructPrototype {
+    public AssetRef<UnitSpec> Unit;
+    public FP PaidCost;
+    partial void MaterializeUser(Frame frame, ref Quantum.ProductionOrder result, in PrototypeMaterializationContext context);
+    public void Materialize(Frame frame, ref Quantum.ProductionOrder result, in PrototypeMaterializationContext context = default) {
+        result.Unit = this.Unit;
+        result.PaidCost = this.PaidCost;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.ResourceNode))]
+  public unsafe partial class ResourceNodePrototype : ComponentPrototype<Quantum.ResourceNode> {
+    public FP RemainingFunds;
+    partial void MaterializeUser(Frame frame, ref Quantum.ResourceNode result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.ResourceNode component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.ResourceNode result, in PrototypeMaterializationContext context = default) {
+        result.RemainingFunds = this.RemainingFunds;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.Unit))]
+  public unsafe class UnitPrototype : ComponentPrototype<Quantum.Unit> {
+    public PlayerRef Owner;
+    public AssetRef<UnitSpec> Spec;
+    public FP Health;
+    public Quantum.QEnum8<UnitOrder> Order;
+    public FPVector3 TargetPosition;
+    public MapEntityId TargetEntity;
+    public FP AttackCooldown;
+    public FP ReactiveArmorCooldown;
+    [ArrayLengthAttribute(3)]
+    public AssetRef<ModuleSpec>[] Modules = new AssetRef<ModuleSpec>[3];
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.Unit component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.Unit result, in PrototypeMaterializationContext context = default) {
+        result.Owner = this.Owner;
+        result.Spec = this.Spec;
+        result.Health = this.Health;
+        result.Order = this.Order;
+        result.TargetPosition = this.TargetPosition;
+        PrototypeValidator.FindMapEntity(this.TargetEntity, in context, out result.TargetEntity);
+        result.AttackCooldown = this.AttackCooldown;
+        result.ReactiveArmorCooldown = this.ReactiveArmorCooldown;
+        for (int i = 0, count = PrototypeValidator.CheckLength(Modules, 3, in context); i < count; ++i) {
+          *result.Modules.GetPointer(i) = this.Modules[i];
+        }
     }
   }
 }

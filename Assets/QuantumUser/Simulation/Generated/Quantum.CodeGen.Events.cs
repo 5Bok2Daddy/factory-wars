@@ -52,7 +52,7 @@ namespace Quantum {
   public unsafe partial class Frame {
     public unsafe partial struct FrameEvents {
       static partial void GetEventTypeCountCodeGen(ref Int32 eventCount) {
-        eventCount = 1;
+        eventCount = 6;
       }
       static partial void GetParentEventIDCodeGen(Int32 eventID, ref Int32 parentEventID) {
         switch (eventID) {
@@ -61,8 +61,186 @@ namespace Quantum {
       }
       static partial void GetEventTypeCodeGen(Int32 eventID, ref System.Type result) {
         switch (eventID) {
+          case EventNoteReceived.ID: result = typeof(EventNoteReceived); return;
+          case EventAllianceChanged.ID: result = typeof(EventAllianceChanged); return;
+          case EventUnitDestroyed.ID: result = typeof(EventUnitDestroyed); return;
+          case EventPlayerDefeated.ID: result = typeof(EventPlayerDefeated); return;
+          case EventGameOver.ID: result = typeof(EventGameOver); return;
           default: break;
         }
+      }
+      public EventNoteReceived NoteReceived(PlayerRef Sender, PlayerRef Receiver, Int32 PhraseId) {
+        var ev = _f.Context.AcquireEvent<EventNoteReceived>(EventNoteReceived.ID);
+        ev.Sender = Sender;
+        ev.Receiver = Receiver;
+        ev.PhraseId = PhraseId;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventAllianceChanged AllianceChanged(PlayerRef A, PlayerRef B, Relation Relation) {
+        var ev = _f.Context.AcquireEvent<EventAllianceChanged>(EventAllianceChanged.ID);
+        ev.A = A;
+        ev.B = B;
+        ev.Relation = Relation;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventUnitDestroyed UnitDestroyed(EntityRef Unit, PlayerRef Owner, AssetRef<UnitSpec> Spec) {
+        var ev = _f.Context.AcquireEvent<EventUnitDestroyed>(EventUnitDestroyed.ID);
+        ev.Unit = Unit;
+        ev.Owner = Owner;
+        ev.Spec = Spec;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventPlayerDefeated PlayerDefeated(PlayerRef Player) {
+        var ev = _f.Context.AcquireEvent<EventPlayerDefeated>(EventPlayerDefeated.ID);
+        ev.Player = Player;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventGameOver GameOver(Int32 WinnerMask) {
+        var ev = _f.Context.AcquireEvent<EventGameOver>(EventGameOver.ID);
+        ev.WinnerMask = WinnerMask;
+        _f.AddEvent(ev);
+        return ev;
+      }
+    }
+  }
+  public unsafe partial class EventNoteReceived : EventBase {
+    public new const Int32 ID = 1;
+    public PlayerRef Sender;
+    public PlayerRef Receiver;
+    public Int32 PhraseId;
+    protected EventNoteReceived(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventNoteReceived() : 
+        base(1, EventFlags.Server|EventFlags.Client) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 41;
+        hash = hash * 31 + Sender.GetHashCode();
+        hash = hash * 31 + Receiver.GetHashCode();
+        hash = hash * 31 + PhraseId.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventAllianceChanged : EventBase {
+    public new const Int32 ID = 2;
+    public PlayerRef A;
+    public PlayerRef B;
+    public Relation Relation;
+    protected EventAllianceChanged(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventAllianceChanged() : 
+        base(2, EventFlags.Server|EventFlags.Client) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 43;
+        hash = hash * 31 + A.GetHashCode();
+        hash = hash * 31 + B.GetHashCode();
+        hash = hash * 31 + Relation.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventUnitDestroyed : EventBase {
+    public new const Int32 ID = 3;
+    public EntityRef Unit;
+    public PlayerRef Owner;
+    public AssetRef<UnitSpec> Spec;
+    protected EventUnitDestroyed(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventUnitDestroyed() : 
+        base(3, EventFlags.Server|EventFlags.Client) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 47;
+        hash = hash * 31 + Unit.GetHashCode();
+        hash = hash * 31 + Owner.GetHashCode();
+        hash = hash * 31 + Spec.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventPlayerDefeated : EventBase {
+    public new const Int32 ID = 4;
+    public PlayerRef Player;
+    protected EventPlayerDefeated(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventPlayerDefeated() : 
+        base(4, EventFlags.Server|EventFlags.Client) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 53;
+        hash = hash * 31 + Player.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventGameOver : EventBase {
+    public new const Int32 ID = 5;
+    public Int32 WinnerMask;
+    protected EventGameOver(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventGameOver() : 
+        base(5, EventFlags.Server|EventFlags.Client) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 59;
+        hash = hash * 31 + WinnerMask.GetHashCode();
+        return hash;
       }
     }
   }

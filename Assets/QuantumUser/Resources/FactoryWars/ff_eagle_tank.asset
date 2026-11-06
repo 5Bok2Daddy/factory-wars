@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946fb8225d8a67b488f649875809ea13, type: 3}
+  m_Name: ff_eagle_tank
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ff_eagle_tank
+    Guid:
+      Value: 417303659839164756
+  Size: 2
+  IsAir: 0
+  Cost:
+    RawValue: 36044800
+  BuildTimeSeconds:
+    RawValue: 2293760
+  MaxHealth:
+    RawValue: 45875200
+  Attack: 2
+  Damage:
+    RawValue: 3932160
+  Range:
+    RawValue: 589824
+  MinRange:
+    RawValue: 0
+  SplashRadius:
+    RawValue: 0
+  AttackInterval:
+    RawValue: 131072
+  IsRanged: 1
+  MoveSpeed:
+    RawValue: 327680
+  Population:
+    RawValue: 196608
+  ModuleSlots: 2
+  SpawnCount: 1
+  Ability: 4

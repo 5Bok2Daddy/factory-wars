@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946fb8225d8a67b488f649875809ea13, type: 3}
+  m_Name: cf_thunder_aa
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/cf_thunder_aa
+    Guid:
+      Value: 418627254601920637
+  Size: 2
+  IsAir: 0
+  Cost:
+    RawValue: 24903680
+  BuildTimeSeconds:
+    RawValue: 1835008
+  MaxHealth:
+    RawValue: 29491200
+  Attack: 3
+  Damage:
+    RawValue: 2621440
+  Range:
+    RawValue: 655360
+  MinRange:
+    RawValue: 0
+  SplashRadius:
+    RawValue: 0
+  AttackInterval:
+    RawValue: 98304
+  IsRanged: 1
+  MoveSpeed:
+    RawValue: 327680
+  Population:
+    RawValue: 196608
+  ModuleSlots: 2
+  SpawnCount: 1
+  Ability: 10
