@@ -19,9 +19,9 @@ MonoBehaviour:
   Role: 4
   Cost:
     Iron:
-      RawValue: 26214400
+      RawValue: 13107200
     Wood:
-      RawValue: 0
+      RawValue: 13107200
     Steel:
       RawValue: 0
     Power:
@@ -40,7 +40,7 @@ MonoBehaviour:
   IsRefinery: 0
   Prerequisites:
   - Id:
-      Value: 342299686155455319
+      Value: 532047452687447102
   IsCoreBuilding: 1
   Producible:
   - Id:

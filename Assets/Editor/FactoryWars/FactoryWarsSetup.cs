@@ -93,6 +93,8 @@ namespace FactoryWars.EditorTools {
         asset = ScriptableObject.CreateInstance<T>();
         AssetDatabase.CreateAsset(asset, path);
       }
+      // 파일 이름을 바꾼 에셋은 내부 이름이 옛날 그대로 남는다.
+      asset.name = name;
       return asset;
     }
 
@@ -102,11 +104,16 @@ namespace FactoryWars.EditorTools {
 
     static FP N(double value) => FP.FromFloat_UNSAFE((float)value);
 
+    static ResourceCost R(int iron, int wood = 0, int steel = 0, int power = 0) {
+      return new ResourceCost { Iron = iron, Wood = wood, Steel = steel, Power = power };
+    }
+
     struct UnitRow {
       public string Id;
       public UnitSize Size;
       public bool Air;
-      public int Cost, Build, Health;
+      public ResourceCost Cost;
+      public int Build, Health;
       public AttackType Attack;
       public double Damage, Range, MinRange, Splash, Interval, Speed;
       public int Spawn;
@@ -115,27 +122,27 @@ namespace FactoryWars.EditorTools {
       public int AbilityCount;
     }
 
-    // GDD 값: 비용·생산·체력·공격 유형. 피해·사거리·간격·속도는 임시값(SETUP-REPORT.md 참조).
+    // 비용은 DESIGN-RESOURCE-TERRAIN.md 5장. 생산·체력·공격 유형은 GDD. 피해·사거리·간격·속도는 임시값(SETUP-REPORT.md 참조).
     static readonly UnitRow[] Units = {
-      new UnitRow { Id = "ff_engineer", Size = UnitSize.Engineer, Cost = 100, Build = 10, Health = 80, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
-      new UnitRow { Id = "ff_ranger_squad", Size = UnitSize.Small, Cost = 120, Build = 15, Health = 140, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
-      new UnitRow { Id = "ff_skyguard_squad", Size = UnitSize.Small, Cost = 150, Build = 18, Health = 120, Attack = AttackType.AntiAir, Damage = 20, Range = 8, Interval = 1, Speed = 4, Ability = SpecialAbility.AirPriority },
-      new UnitRow { Id = "ff_eagle_tank", Size = UnitSize.Medium, Cost = 550, Build = 35, Health = 700, Attack = AttackType.AntiArmor, Damage = 60, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble, AbilityMultiplier = 2, AbilitySeconds = 8 },
-      new UnitRow { Id = "ff_hawk_gunship", Size = UnitSize.Medium, Air = true, Cost = 650, Build = 40, Health = 450, Attack = AttackType.AntiArmor, Damage = 55, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
-      new UnitRow { Id = "ff_skyfortress_bomber", Size = UnitSize.Large, Air = true, Cost = 1600, Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, Ability = SpecialAbility.CarpetBomb, AbilityMultiplier = 1.5, AbilityRadius = 8, AbilityCount = 5, AbilityCooldown = 45 },
-      new UnitRow { Id = "cf_engineer", Size = UnitSize.Engineer, Cost = 80, Build = 8, Health = 70, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
-      new UnitRow { Id = "cf_militia", Size = UnitSize.Small, Cost = 90, Build = 12, Health = 80, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
-      new UnitRow { Id = "cf_flame_squad", Size = UnitSize.Small, Cost = 130, Build = 15, Health = 130, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
-      new UnitRow { Id = "cf_dragonscale_tank", Size = UnitSize.Medium, Cost = 400, Build = 28, Health = 520, Attack = AttackType.AntiArmor, Damage = 45, Range = 8, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
-      new UnitRow { Id = "cf_thunder_aa", Size = UnitSize.Medium, Cost = 380, Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
-      new UnitRow { Id = "cf_longwall_mlrs", Size = UnitSize.Large, Cost = 1200, Build = 55, Health = 1000, Attack = AttackType.Area, Damage = 120, Range = 18, MinRange = 6, Splash = 4, Interval = 6, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
+      new UnitRow { Id = "ff_engineer", Size = UnitSize.Engineer, Cost = R(100), Build = 10, Health = 80, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
+      new UnitRow { Id = "ff_ranger_squad", Size = UnitSize.Small, Cost = R(70, 50), Build = 15, Health = 140, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
+      new UnitRow { Id = "ff_skyguard_squad", Size = UnitSize.Small, Cost = R(80, 50, 0, 20), Build = 18, Health = 120, Attack = AttackType.AntiAir, Damage = 20, Range = 8, Interval = 1, Speed = 4, Ability = SpecialAbility.AirPriority },
+      new UnitRow { Id = "ff_eagle_tank", Size = UnitSize.Medium, Cost = R(250, 0, 80, 60), Build = 35, Health = 700, Attack = AttackType.AntiArmor, Damage = 60, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble, AbilityMultiplier = 2, AbilitySeconds = 8 },
+      new UnitRow { Id = "ff_hawk_gunship", Size = UnitSize.Medium, Air = true, Cost = R(250, 0, 100, 100), Build = 40, Health = 450, Attack = AttackType.AntiArmor, Damage = 55, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
+      new UnitRow { Id = "ff_skyfortress_bomber", Size = UnitSize.Large, Air = true, Cost = R(500, 0, 250, 350), Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, Ability = SpecialAbility.CarpetBomb, AbilityMultiplier = 1.5, AbilityRadius = 8, AbilityCount = 5, AbilityCooldown = 45 },
+      new UnitRow { Id = "cf_engineer", Size = UnitSize.Engineer, Cost = R(80), Build = 8, Health = 70, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
+      new UnitRow { Id = "cf_militia", Size = UnitSize.Small, Cost = R(40, 50), Build = 12, Health = 80, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
+      new UnitRow { Id = "cf_flame_squad", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 130, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
+      new UnitRow { Id = "cf_dragonscale_tank", Size = UnitSize.Medium, Cost = R(190, 0, 50, 60), Build = 28, Health = 520, Attack = AttackType.AntiArmor, Damage = 45, Range = 8, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
+      new UnitRow { Id = "cf_thunder_aa", Size = UnitSize.Medium, Cost = R(170, 0, 50, 60), Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
+      new UnitRow { Id = "cf_longwall_mlrs", Size = UnitSize.Large, Cost = R(400, 0, 200, 200), Build = 55, Health = 1000, Attack = AttackType.Area, Damage = 120, Range = 18, MinRange = 6, Splash = 4, Interval = 6, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
     };
 
     static UnitSpec BuildUnit(UnitRow row) {
       var spec = Asset<UnitSpec>(row.Id);
       spec.Size = row.Size;
       spec.IsAir = row.Air;
-      spec.Cost = new ResourceCost { Iron = row.Cost };
+      spec.Cost = row.Cost;
       spec.BuildTimeSeconds = row.Build;
       spec.MaxHealth = row.Health;
       spec.Attack = row.Attack;
@@ -162,9 +169,9 @@ namespace FactoryWars.EditorTools {
       return spec;
     }
 
-    static BuildingSpec BuildBuilding(string id, int cost, int seconds, int health, int powerOut, int powerIn, int population, int slots, params UnitSpec[] producible) {
+    static BuildingSpec BuildBuilding(string id, ResourceCost cost, int seconds, int health, int powerOut, int powerIn, int population, int slots, params UnitSpec[] producible) {
       var spec = Asset<BuildingSpec>(id);
-      spec.Cost = new ResourceCost { Iron = cost };
+      spec.Cost = cost;
       spec.BuildTimeSeconds = seconds;
       spec.MaxHealth = health;
       spec.PowerProduced = powerOut;
@@ -172,7 +179,7 @@ namespace FactoryWars.EditorTools {
       spec.PopulationCapBonus = population;
       spec.ModuleSlots = slots;
       spec.FootprintRadius = 3;
-      spec.IsRefinery = id.EndsWith("_refinery");
+      spec.IsRefinery = id.EndsWith("_processor");
       spec.Producible = producible.Select(Ref).ToArray();
       spec.Attack = AttackType.None;
       EditorUtility.SetDirty(spec);
@@ -189,30 +196,32 @@ namespace FactoryWars.EditorTools {
       var large = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Large && u.IsAir == false).ToArray();
 
       var buildings = new[] {
-        BuildBuilding($"{prefix}_headquarters", 0, 0, 3000, 50, 0, 10, 0, engineer),
-        BuildBuilding($"{prefix}_power_plant", 300, 15, 600, 100, 0, 0, 0),
-        BuildBuilding($"{prefix}_refinery", 500, 20, 800, 0, 20, 0, 0),
-        BuildBuilding($"{prefix}_supply_depot", 300, 15, 500, 0, 5, 20, 0),
-        BuildBuilding($"{prefix}_barracks", 400, 20, 800, 0, 10, 0, 0, small),
-        BuildBuilding($"{prefix}_research_lab", 600, 25, 700, 0, 20, 0, 0),
-        BuildBuilding($"{prefix}_vehicle_factory", 900, 30, 1200, 0, 25, 0, 0, mediumGround),
-        BuildBuilding($"{prefix}_airfield", 1100, 35, 1000, 0, 30, 0, 0, air),
-        BuildBuilding($"{prefix}_heavy_works", 1500, 45, 1600, 0, 40, 0, 0, large),
-        BuildBuilding($"{prefix}_defense_tower", 450, 20, 700, 0, 15, 0, 1),
+        BuildBuilding($"{prefix}_headquarters", R(0), 0, 3000, 50, 0, 10, 0, engineer),
+        BuildBuilding($"{prefix}_power_plant", R(150, 150), 15, 600, 100, 0, 0, 0),
+        BuildBuilding($"{prefix}_processor", R(250, 150, 0, 100), 20, 800, 0, 20, 0, 0),
+        BuildBuilding($"{prefix}_supply_depot", R(100, 200), 15, 500, 0, 5, 20, 0),
+        BuildBuilding($"{prefix}_barracks", R(200, 200), 20, 800, 0, 10, 0, 0, small),
+        BuildBuilding($"{prefix}_research_lab", R(250, 200, 0, 150), 25, 700, 0, 20, 0, 0),
+        BuildBuilding($"{prefix}_vehicle_factory", R(400, 200, 0, 200), 30, 1200, 0, 25, 0, 0, mediumGround),
+        BuildBuilding($"{prefix}_airfield", R(400, 0, 100, 300), 35, 1000, 0, 30, 0, 0, air),
+        BuildBuilding($"{prefix}_heavy_works", R(500, 0, 200, 400), 45, 1600, 0, 40, 0, 0, large),
+        BuildBuilding($"{prefix}_defense_tower", R(250, 100, 0, 100), 20, 700, 0, 15, 0, 1),
+        BuildBuilding($"{prefix}_collection_yard", R(0, 150), 15, 500, 0, 0, 0, 0),
       };
       void Requires(int building, params int[] prerequisites) {
         buildings[building].Prerequisites = prerequisites.Select(i => Ref(buildings[i])).ToArray();
       }
-      // 순서: 0 사령부, 1 발전소, 2 정제소, 3 보급창, 4 병영, 5 연구소, 6 군수공장, 7 비행장, 8 중공업 기지, 9 방어탑
+      // 순서: 0 사령부, 1 발전소, 2 가공소, 3 보급창, 4 병영, 5 연구소, 6 군수공장, 7 비행장, 8 중공업 기지, 9 방어탑, 10 집하장
       Requires(1, 0);
       Requires(2, 1);
       Requires(3, 0);
-      Requires(4, 1);
-      Requires(5, 4);
-      Requires(6, 4);
-      Requires(7, 6);
-      Requires(8, 6, 5);
-      Requires(9, 4);
+      Requires(4, 0);
+      Requires(5, 1);
+      Requires(6, 4, 1);
+      Requires(7, 6, 2);
+      Requires(8, 6, 5, 2);
+      Requires(9, 4, 1);
+      Requires(10, 0);
       for (var i = 0; i < buildings.Length; i++) {
         buildings[i].Role = (BuildingRole)i;
       }
@@ -223,7 +232,7 @@ namespace FactoryWars.EditorTools {
         EditorUtility.SetDirty(building);
       }
 
-      var tower = buildings[buildings.Length - 1];
+      var tower = buildings[9];
       tower.Attack = AttackType.AntiArmor;
       tower.Damage = 40;
       tower.Range = 10;
@@ -277,13 +286,13 @@ namespace FactoryWars.EditorTools {
 
       var piercing = Asset<ModuleSpec>("module_piercing_rounds");
       piercing.Effect = ModuleEffect.PiercingRounds;
-      piercing.Cost = new ResourceCost { Iron = 100 };
+      piercing.Cost = R(0, 0, 30, 10);
       piercing.DamageMultiplier = N(1.25);
       EditorUtility.SetDirty(piercing);
 
       var reactive = Asset<ModuleSpec>("module_reactive_armor");
       reactive.Effect = ModuleEffect.ReactiveArmor;
-      reactive.Cost = new ResourceCost { Iron = 120 };
+      reactive.Cost = R(0, 0, 30, 30);
       reactive.DamageMultiplier = N(0.5);
       reactive.CooldownSeconds = 20;
       EditorUtility.SetDirty(reactive);
@@ -292,7 +301,6 @@ namespace FactoryWars.EditorTools {
       BuildFaction("continental_federation", "cf", units, 1, 0.75, 1.2, new[] { "militia", "militia", "dragonscale_tank" });
 
       var rules = Asset<GameRulesSpec>("game_rules");
-      rules.StartingEngineers = 1;
       rules.NavMeshName = "NavMesh";
       rules.MinDiplomacyPlayers = 3;
       rules.ProposalSeconds = 30;
@@ -320,10 +328,10 @@ namespace FactoryWars.EditorTools {
       rules.RepairCostRatio = N(0.5);
       rules.FoundationHealthRatio = N(0.1);
       rules.EasyAi = Ref(BuildAi("ai_easy", 5, 3, 1, 1, 420, 90, 6, 2, 12, false, new[] {
-        BuildingRole.PowerPlant, BuildingRole.Refinery, BuildingRole.Barracks, BuildingRole.SupplyDepot, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
+        BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.Barracks, BuildingRole.SupplyDepot, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
       }));
       rules.NormalAi = Ref(BuildAi("ai_normal", 2, 6, 3, 2, 270, 60, 8, 3, 24, true, new[] {
-        BuildingRole.PowerPlant, BuildingRole.Refinery, BuildingRole.Barracks, BuildingRole.SupplyDepot, BuildingRole.Refinery, BuildingRole.VehicleFactory,
+        BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.Barracks, BuildingRole.SupplyDepot, BuildingRole.Processor, BuildingRole.VehicleFactory,
         BuildingRole.PowerPlant, BuildingRole.ResearchLab, BuildingRole.Airfield, BuildingRole.SupplyDepot, BuildingRole.HeavyWorks, BuildingRole.DefenseTower,
       }));
       rules.UnitClearance = N(0.5);
@@ -342,7 +350,10 @@ namespace FactoryWars.EditorTools {
       testMap.StartPositions = new[] {
         new FPVector3(-30, 0, 0), new FPVector3(30, 0, 0), new FPVector3(0, 0, 30), new FPVector3(0, 0, -30),
       };
-      testMap.StartingResources = new ResourceCost { Iron = 5000 };
+      // 테스트 맵은 건설·외교 시험을 위해 넉넉히 준다.
+      testMap.StartingResources = R(5000, 10000, 5000, 5000);
+      testMap.StartingEngineers = 1;
+      testMap.SpawnFactionUnits = true;
       testMap.ResourceNodes = new[] {
         new ResourceNodePlacement { Position = new FPVector3(-30, 0, 14), Funds = 5000 },
         new ResourceNodePlacement { Position = new FPVector3(-30, 0, -14), Funds = 100 },
@@ -426,7 +437,9 @@ namespace FactoryWars.EditorTools {
       spec.BoundsMin = new FPVector2(-def.HalfSize, -def.HalfSize);
       spec.BoundsMax = new FPVector2(def.HalfSize, def.HalfSize);
       spec.StartPositions = Orbit(def, def.Start).Select(o => Position(o.Position)).ToArray();
-      spec.StartingResources = new ResourceCost { Iron = 5000 };
+      // 임시: AI가 목재·강철을 다루는 3-0i 전까지 넉넉히 준다. 3-0i에서 설계값(철 500, 목재 300)으로 바꾼다.
+      spec.StartingResources = R(5000, 20000, 20000, 20000);
+      spec.StartingEngineers = 4;
 
       var nodes = new List<ResourceNodePlacement>();
       void Add(Vector2Int[] template, int funds) {

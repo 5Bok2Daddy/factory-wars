@@ -19,9 +19,9 @@ MonoBehaviour:
   Role: 1
   Cost:
     Iron:
-      RawValue: 19660800
+      RawValue: 9830400
     Wood:
-      RawValue: 0
+      RawValue: 9830400
     Steel:
       RawValue: 0
     Power:

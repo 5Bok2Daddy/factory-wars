@@ -14,7 +14,6 @@ namespace Quantum {
   }
 
   public partial class GameRulesSpec : AssetObject {
-    public int StartingEngineers;
     public string NavMeshName;
     public int MinDiplomacyPlayers;
     public FP ProposalSeconds;

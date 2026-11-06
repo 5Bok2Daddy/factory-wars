@@ -95,18 +95,18 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Gather_CarriesFundsToRefinery() {
       yield return StartMatch(buildings: Plant);
-      yield return BuildAndFinish(0, "_refinery", V(-20, 10));
-      Assert.AreEqual(4500, Funds(0), "정제소 500");
+      yield return BuildAndFinish(0, "_processor", V(-20, 10));
+      Assert.AreEqual(4750, Funds(0), "가공소 철 250");
 
       var engineer = Engineers(0)[0];
       var node = NodeAt(V(-30, 14));
       yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = node });
-      yield return WaitFor(() => Funds(0) > 4500, 60f, "자금 반입");
-      Assert.AreEqual(4550, Funds(0), "한 번에 50");
+      yield return WaitFor(() => Funds(0) > 4750, 60f, "자금 반입");
+      Assert.AreEqual(4800, Funds(0), "한 번에 50");
 
-      yield return WaitFor(() => Funds(0) > 4550, 60f, "반복 채집");
+      yield return WaitFor(() => Funds(0) > 4800, 60f, "반복 채집");
       var carried = WorkerOf(engineer).Carried.AsFloat;
-      Assert.AreEqual(5000f, Funds(0) - 4500 + carried + NodeRemaining(node), Tolerance, "자금은 노드에서 옮겨질 뿐이다");
+      Assert.AreEqual(5000f, Funds(0) - 4750 + carried + NodeRemaining(node), Tolerance, "자금은 노드에서 옮겨질 뿐이다");
     }
 
     [UnityTest]
@@ -122,18 +122,18 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(4950f, NodeRemaining(node), Tolerance, "한 번만 채집");
 
       // 정제소를 지은 뒤 다시 채집을 시키면 들고 있던 자금부터 반입한다.
-      yield return BuildAndFinish(0, "_refinery", V(-20, 10));
+      yield return BuildAndFinish(0, "_processor", V(-20, 10));
       Assert.AreEqual(50f, WorkerOf(engineer).Carried.AsFloat, Tolerance, "건설 중에도 자금을 들고 있음");
       yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = node });
-      yield return WaitFor(() => Funds(0) > 4500, 60f, "자금 반입");
-      Assert.AreEqual(4550, Funds(0));
+      yield return WaitFor(() => Funds(0) > 4750, 60f, "자금 반입");
+      Assert.AreEqual(4800, Funds(0));
       Assert.GreaterOrEqual(NodeRemaining(node), 4900f, "반입 전에 다시 캐지 않음");
     }
 
     [UnityTest]
     public IEnumerator Gather_DepletedNodeIsRemovedAndWorkerMovesOn() {
       yield return StartMatch(buildings: Plant);
-      yield return BuildAndFinish(0, "_refinery", V(-20, -10));
+      yield return BuildAndFinish(0, "_processor", V(-20, -10));
       var engineer = Engineers(0)[0];
       var small = NodeAt(V(-30, -14));
       var large = NodeAt(V(-30, 14));
@@ -141,8 +141,8 @@ namespace FactoryWars.Tests {
 
       yield return WaitFor(() => Verified.Exists(small) == false, 60f, "노드 고갈");
       Assert.AreEqual(1, Verified.ComponentCount<ResourceNode>());
-      yield return WaitFor(() => Funds(0) >= 4600, 60f, "마지막 자금 반입");
-      Assert.AreEqual(4600, Funds(0), "매장량 100");
+      yield return WaitFor(() => Funds(0) >= 4850, 60f, "마지막 자금 반입");
+      Assert.AreEqual(4850, Funds(0), "매장량 100");
       yield return WaitFor(() => NodeRemaining(large) < 5000, 60f, "가까운 노드로 이동");
     }
 
@@ -164,7 +164,7 @@ namespace FactoryWars.Tests {
       var engineer = Engineers(0)[0];
       var position = V(-20, 25);
       yield return Build(0, "_power_plant", position, engineer);
-      Assert.AreEqual(4700, Funds(0), "부지를 잡을 때 300 차감");
+      Assert.AreEqual(4850, Funds(0), "부지를 잡을 때 철 150 차감");
       var site = BuildingAt(position);
       Assert.AreEqual(15f, BuildingState(site).ConstructionRemaining.AsFloat, Tolerance, "도착 전에는 진행 안 됨");
       Assert.AreEqual(60f, BuildingState(site).Health.AsFloat, Tolerance, "부지 체력 10%");
@@ -235,7 +235,7 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Build_InsufficientFundsRejected() {
       yield return StartMatch();
-      yield return SpendBelow(0, 300);
+      yield return SpendBelow(0, 150);
       var funds = Funds(0);
       var count = Verified.ComponentCount<Building>();
       yield return Build(0, "_power_plant", V(20, 40));
@@ -254,34 +254,35 @@ namespace FactoryWars.Tests {
 
       yield return Build(0, "_power_plant", V(-30, -60));
       Assert.AreEqual(0, _rejected.Count, "빈 땅은 허용");
-      Assert.AreEqual(4700, Funds(0));
+      Assert.AreEqual(4850, Funds(0));
     }
 
     [UnityTest]
     public IEnumerator Build_LockedUntilPrerequisitesFinished() {
       yield return StartMatch();
       var engineer = Engineers(0)[0];
-      yield return Build(0, "_barracks", V(-20, 10), engineer);
+      yield return Build(0, "_processor", V(-20, 10), engineer);
       AssertRejected(0, ActionKind.Build, RejectReason.Locked);
       Assert.AreEqual(5000, Funds(0), "잠긴 건물은 비용 없음");
       _rejected.Clear();
 
       // 미완성 발전소는 선행 조건이 아니다.
       yield return Build(0, "_power_plant", V(-20, 25), engineer);
-      yield return Build(0, "_barracks", V(-20, 10), engineer);
+      yield return Build(0, "_processor", V(-20, 10), engineer);
       AssertRejected(0, ActionKind.Build, RejectReason.Locked);
       _rejected.Clear();
 
       var plant = BuildingAt(V(-20, 25));
       yield return Send(0, new RepairCommand { Units = new[] { engineer }, Target = plant });
       yield return WaitFor(() => Finished(plant), 60f, "발전소 완공");
-      yield return Build(0, "_barracks", V(-20, 10), engineer);
-      Assert.AreEqual(0, _rejected.Count, "발전소가 있으면 병영 가능");
+      yield return Build(0, "_processor", V(-20, 10), engineer);
+      Assert.AreEqual(0, _rejected.Count, "발전소가 있으면 가공소 가능");
     }
 
     [UnityTest]
     public IEnumerator Build_HeavyWorksNeedsFactoryAndLab() {
-      yield return StartMatch(buildings: new[] { (0, "ff_vehicle_factory", -42, 12) });
+      // 가공소가 빠지면 군수공장과 연구소가 있어도 잠겨 있다.
+      yield return StartMatch(buildings: new[] { (0, "ff_vehicle_factory", -42, 12), (0, "ff_research_lab", -42, -12) });
       yield return Build(0, "_heavy_works", V(-20, 10));
       AssertRejected(0, ActionKind.Build, RejectReason.Locked);
     }
@@ -294,13 +295,14 @@ namespace FactoryWars.Tests {
         .Select(b => f.FindAsset(b).name.Substring(3)).OrderBy(n => n));
       Assert.AreEqual("headquarters", Needs("_power_plant"));
       Assert.AreEqual("headquarters", Needs("_supply_depot"));
-      Assert.AreEqual("power_plant", Needs("_refinery"));
-      Assert.AreEqual("power_plant", Needs("_barracks"));
-      Assert.AreEqual("barracks", Needs("_research_lab"));
-      Assert.AreEqual("barracks", Needs("_vehicle_factory"));
-      Assert.AreEqual("barracks", Needs("_defense_tower"));
-      Assert.AreEqual("vehicle_factory", Needs("_airfield"));
-      Assert.AreEqual("research_lab,vehicle_factory", Needs("_heavy_works"));
+      Assert.AreEqual("headquarters", Needs("_collection_yard"));
+      Assert.AreEqual("headquarters", Needs("_barracks"));
+      Assert.AreEqual("power_plant", Needs("_processor"));
+      Assert.AreEqual("power_plant", Needs("_research_lab"));
+      Assert.AreEqual("barracks,power_plant", Needs("_vehicle_factory"));
+      Assert.AreEqual("barracks,power_plant", Needs("_defense_tower"));
+      Assert.AreEqual("processor,vehicle_factory", Needs("_airfield"));
+      Assert.AreEqual("processor,research_lab,vehicle_factory", Needs("_heavy_works"));
     }
 
     // 건물 충돌
@@ -387,8 +389,8 @@ namespace FactoryWars.Tests {
       yield return WaitFrames(CommandFrames);
 
       Assert.AreEqual(WorkerTask.Idle, WorkerOf(engineer).Task, "다 고치면 멈춤");
-      // 회복 비율 x 건물 비용 300 x 0.5
-      var expected = (600f - damaged) / 600f * 300f * 0.5f;
+      // 회복 비율 x 건물 철 비용 150 x 0.5
+      var expected = (600f - damaged) / 600f * 150f * 0.5f;
       Assert.AreEqual(expected, funds - ExactFunds(0), 2f, "수리비");
     }
 
@@ -573,7 +575,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Ability_MilitiaPair_SpawnsTwoFromOneOrder() {
-      yield return StartMatch(buildings: new[] { (1, "cf_power_plant", 42, 0) });
+      yield return StartMatch();
       var barracks = V(20, 12);
       yield return BuildAndFinish(1, "_barracks", barracks);
       var site = BuildingAt(barracks);

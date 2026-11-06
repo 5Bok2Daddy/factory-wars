@@ -3,7 +3,7 @@ namespace Quantum.FactoryWars {
 
   /// <summary>규칙 기반 AI. 사람과 같은 함수로 행동해 비용과 제한을 그대로 받는다.</summary>
   public unsafe class BotSystem : SystemMainThread {
-    const int RoleCount = 10;
+    const int RoleCount = 11;
     const int MaxOrder = MoveUnitsCommand.MaxUnits;
 
     public static void Init(Frame f, PlayerRef player, BotDifficulty difficulty, FPVector3 home) {
@@ -141,11 +141,11 @@ namespace Quantum.FactoryWars {
       var center = bot->Home;
       var hasRole = NextRole(state, bot, ai, counts, f, faction, out var role);
 
-      if (hasRole == false || role == BuildingRole.Refinery) {
+      if (hasRole == false || role == BuildingRole.Processor) {
         // 확장: 멀리 일하러 간 공병 옆에 정제소를 둔다.
-        if (counts[(int)BuildingRole.Refinery] > 0 && counts[(int)BuildingRole.Refinery] < ai.MaxRefineries
+        if (counts[(int)BuildingRole.Processor] > 0 && counts[(int)BuildingRole.Processor] < ai.MaxRefineries
             && FindDistantNode(f, player, ai, out var distant)) {
-          role = BuildingRole.Refinery;
+          role = BuildingRole.Processor;
           hasRole = true;
           center = distant;
         } else if (hasRole && NearestNodePosition(f, bot->Home, out var node)) {
@@ -161,7 +161,7 @@ namespace Quantum.FactoryWars {
       if (spec == null || ProductionSystem.IsUnlocked(f, player, spec) == false) {
         return FP._0;
       }
-      if (state->Stock.Iron < spec.Cost.Iron) {
+      if (state->Stock.Covers(spec.Cost) == false) {
         return spec.Cost.Iron;
       }
       if (FindSite(f, ai, spec, center, out var site) && FindBuilder(f, player, site, out var engineer)) {

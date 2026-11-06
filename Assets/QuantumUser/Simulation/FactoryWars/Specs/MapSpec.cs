@@ -16,6 +16,9 @@ namespace Quantum {
     public FPVector2 BoundsMax;
     public FPVector3[] StartPositions;
     public ResourceCost StartingResources;
+    public int StartingEngineers;
+    /// <summary>true면 진영의 시작 전투 유닛도 배치한다. 테스트 맵에서만 쓴다.</summary>
+    public bool SpawnFactionUnits;
     public ResourceNodePlacement[] ResourceNodes;
   }
 }

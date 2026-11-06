@@ -67,9 +67,9 @@ namespace Quantum.FactoryWars {
         Log.Error($"FactoryWars: 플레이어 {player} 초기화 실패 (진영 없음)");
         return;
       }
-      var rules = FactoryWarsUtil.Rules(f);
+      var map = FactoryWarsUtil.MapInfo(f);
       state->Faction = factionRef;
-      state->Stock = FactoryWarsUtil.MapInfo(f).StartingResources;
+      state->Stock = map.StartingResources;
       state->Team = team;
       state->Active = true;
 
@@ -79,12 +79,12 @@ namespace Quantum.FactoryWars {
 
       var start = StartPosition(f, player);
       ProductionSystem.CreateFinishedBuilding(f, player, faction.Headquarters, start);
-      for (var i = 0; i < rules.StartingEngineers; i++) {
+      for (var i = 0; i < map.StartingEngineers; i++) {
         ProductionSystem.SpawnUnit(f, player, faction.Engineer, start, i, null);
       }
-      if (faction.StartingUnits != null) {
+      if (map.SpawnFactionUnits && faction.StartingUnits != null) {
         for (var i = 0; i < faction.StartingUnits.Length; i++) {
-          ProductionSystem.SpawnUnit(f, player, faction.StartingUnits[i], start, rules.StartingEngineers + i, null);
+          ProductionSystem.SpawnUnit(f, player, faction.StartingUnits[i], start, map.StartingEngineers + i, null);
         }
       }
 

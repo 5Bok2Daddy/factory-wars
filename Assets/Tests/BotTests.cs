@@ -37,7 +37,7 @@ namespace FactoryWars.Tests {
       yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal });
       yield return Sim(120);
       Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.PowerPlant), 1, "발전소");
-      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.Refinery), 1, "정제소");
+      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.Processor), 1, "가공소");
       Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.Barracks), 1, "병영");
       Assert.Greater(StateOf(1).Earned.Iron.AsFloat, 0f, "채집 수입");
       Assert.GreaterOrEqual(Engineers(1).Count, 3, "공병 생산");

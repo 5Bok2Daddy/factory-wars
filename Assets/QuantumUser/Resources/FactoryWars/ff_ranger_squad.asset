@@ -20,9 +20,9 @@ MonoBehaviour:
   IsAir: 0
   Cost:
     Iron:
-      RawValue: 7864320
+      RawValue: 4587520
     Wood:
-      RawValue: 0
+      RawValue: 3276800
     Steel:
       RawValue: 0
     Power:

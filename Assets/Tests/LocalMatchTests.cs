@@ -520,7 +520,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Map2P_LayoutAndCrossing() {
-      yield return StartMatch(Map2PScene, 2);
+      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -50, -60) });
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       Assert.AreEqual(2, spec.StartPositions.Length);
       Assert.AreEqual(new FPVector2(160, 160), spec.BoundsMax - spec.BoundsMin);
@@ -536,7 +536,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Map4P_LayoutAndCrossing() {
-      yield return StartMatch(Map4PScene, 4);
+      yield return StartMatch(Map4PScene, 4, units: new[] { (0, "ff_eagle_tank", -85, -95) });
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       Assert.AreEqual(4, spec.StartPositions.Length);
       Assert.AreEqual(new FPVector2(240, 240), spec.BoundsMax - spec.BoundsMin);

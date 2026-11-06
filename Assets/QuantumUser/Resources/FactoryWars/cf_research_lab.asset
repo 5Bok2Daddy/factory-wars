@@ -19,13 +19,13 @@ MonoBehaviour:
   Role: 5
   Cost:
     Iron:
-      RawValue: 39321600
+      RawValue: 16384000
     Wood:
-      RawValue: 0
+      RawValue: 13107200
     Steel:
       RawValue: 0
     Power:
-      RawValue: 0
+      RawValue: 9830400
   BuildTimeSeconds:
     RawValue: 1638400
   MaxHealth:
@@ -40,7 +40,7 @@ MonoBehaviour:
   IsRefinery: 0
   Prerequisites:
   - Id:
-      Value: 450344684662698787
+      Value: 390583282545688127
   IsCoreBuilding: 0
   Producible: []
   Attack: 0

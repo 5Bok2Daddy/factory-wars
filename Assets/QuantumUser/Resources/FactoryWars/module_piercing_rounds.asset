@@ -19,13 +19,13 @@ MonoBehaviour:
   Effect: 1
   Cost:
     Iron:
-      RawValue: 6553600
+      RawValue: 0
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 0
+      RawValue: 1966080
     Power:
-      RawValue: 0
+      RawValue: 655360
   DamageMultiplier:
     RawValue: 81920
   CooldownSeconds:

@@ -10,37 +10,37 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2878a441c035e894a9b579e4615c4cf1, type: 3}
-  m_Name: cf_refinery
+  m_Name: cf_collection_yard
   m_EditorClassIdentifier: 
   Identifier:
-    Path: QuantumUser/Resources/FactoryWars/cf_refinery
+    Path: QuantumUser/Resources/FactoryWars/cf_collection_yard
     Guid:
-      Value: 483896174141148256
-  Role: 2
+      Value: 515229378968983265
+  Role: 10
   Cost:
     Iron:
-      RawValue: 32768000
-    Wood:
       RawValue: 0
+    Wood:
+      RawValue: 9830400
     Steel:
       RawValue: 0
     Power:
       RawValue: 0
   BuildTimeSeconds:
-    RawValue: 1310720
+    RawValue: 983040
   MaxHealth:
-    RawValue: 52428800
+    RawValue: 32768000
   PowerProduced: 0
-  PowerConsumed: 20
+  PowerConsumed: 0
   PopulationCapBonus:
     RawValue: 0
   ModuleSlots: 0
   FootprintRadius:
     RawValue: 196608
-  IsRefinery: 1
+  IsRefinery: 0
   Prerequisites:
   - Id:
-      Value: 390583282545688127
+      Value: 313480008183397879
   IsCoreBuilding: 0
   Producible: []
   Attack: 0

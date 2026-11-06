@@ -2,7 +2,7 @@ namespace Quantum {
   public enum UnitSize { Engineer, Small, Medium, Large }
 
   public enum BuildingRole {
-    Headquarters, PowerPlant, Refinery, SupplyDepot, Barracks, ResearchLab, VehicleFactory, Airfield, HeavyWorks, DefenseTower
+    Headquarters, PowerPlant, Processor, SupplyDepot, Barracks, ResearchLab, VehicleFactory, Airfield, HeavyWorks, DefenseTower, CollectionYard
   }
 
   public enum AttackType { None, AntiInfantry, AntiArmor, AntiAir, Area }

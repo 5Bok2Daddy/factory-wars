@@ -56,11 +56,13 @@ MonoBehaviour:
     Iron:
       RawValue: 327680000
     Wood:
-      RawValue: 0
+      RawValue: 655360000
     Steel:
-      RawValue: 0
+      RawValue: 327680000
     Power:
-      RawValue: 0
+      RawValue: 327680000
+  StartingEngineers: 1
+  SpawnFactionUnits: 1
   ResourceNodes:
   - Position:
       X:

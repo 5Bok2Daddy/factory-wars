@@ -10,22 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2878a441c035e894a9b579e4615c4cf1, type: 3}
-  m_Name: ff_refinery
+  m_Name: cf_processor
   m_EditorClassIdentifier: 
   Identifier:
-    Path: QuantumUser/Resources/FactoryWars/ff_refinery
+    Path: QuantumUser/Resources/FactoryWars/cf_processor
     Guid:
-      Value: 470491905758002394
+      Value: 483896174141148256
   Role: 2
   Cost:
     Iron:
-      RawValue: 32768000
+      RawValue: 16384000
     Wood:
-      RawValue: 0
+      RawValue: 9830400
     Steel:
       RawValue: 0
     Power:
-      RawValue: 0
+      RawValue: 6553600
   BuildTimeSeconds:
     RawValue: 1310720
   MaxHealth:
@@ -40,7 +40,7 @@ MonoBehaviour:
   IsRefinery: 1
   Prerequisites:
   - Id:
-      Value: 342299686155455319
+      Value: 390583282545688127
   IsCoreBuilding: 0
   Producible: []
   Attack: 0
