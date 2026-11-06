@@ -226,6 +226,9 @@ namespace FactoryWars.EditorTools {
         buildings[building].PowerUpkeep = N(upkeep);
         buildings[building].Upkeep = mode;
       }
+      buildings[2].ProcessSeconds = 1;
+      buildings[2].ProcessInput = R(2, 0, 0, 1);
+      buildings[2].ProcessSteel = 1;
       Power(0, 0, 200, 0, UpkeepMode.None);
       Power(1, 5, 300, 0, UpkeepMode.None);
       Power(5, 0, 0, 1, UpkeepMode.WhileResearching);

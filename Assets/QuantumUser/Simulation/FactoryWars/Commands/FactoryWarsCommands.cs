@@ -182,6 +182,26 @@ namespace Quantum.FactoryWars {
     }
   }
 
+  /// <summary>가공소를 켜거나 끈다. 끄면 철과 전기를 쓰지 않는다.</summary>
+  public unsafe class SetProcessorCommand : FactoryCommand {
+    public EntityRef Building;
+    public bool Enabled;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Building);
+      stream.Serialize(ref Enabled);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      if (f.Unsafe.TryGetPointer<Building>(Building, out var building) == false || building->Owner != player
+          || f.FindAsset(building->Spec).ProcessSeconds <= FP._0) {
+        f.Events.ActionRejected(player, ActionKind.Processor, RejectReason.Invalid);
+        return;
+      }
+      building->ProcessorOff = Enabled == false;
+    }
+  }
+
   public class DiplomacyCommand : FactoryCommand {
     public DiplomacyAction Action;
     public PlayerRef Target;

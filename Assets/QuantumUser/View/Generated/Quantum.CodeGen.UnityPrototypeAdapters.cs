@@ -64,6 +64,8 @@ namespace Quantum.Prototypes.Unity {
     public Quantum.QuantumEntityPrototype TargetEntity;
     public FP AttackCooldown;
     public Quantum.QEnum8<PauseReason> Paused;
+    public QBoolean ProcessorOff;
+    public FP ProcessTimer;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BuildingPrototype prototype);
     public override Quantum.Prototypes.BuildingPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BuildingPrototype();
@@ -78,6 +80,8 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.TargetEntity, out result.TargetEntity);
       converter.Convert(this.AttackCooldown, out result.AttackCooldown);
       converter.Convert(this.Paused, out result.Paused);
+      converter.Convert(this.ProcessorOff, out result.ProcessorOff);
+      converter.Convert(this.ProcessTimer, out result.ProcessTimer);
       ConvertUser(converter, ref result);
       return result;
     }

@@ -58,6 +58,7 @@ namespace Quantum {
     Build,
     Gather,
     Repair,
+    Processor,
   }
   public enum BotDifficulty : byte {
     Easy,
@@ -924,7 +925,7 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Building : Quantum.IComponent {
-    public const Int32 SIZE = 288;
+    public const Int32 SIZE = 296;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(8)]
     public PlayerRef Owner;
@@ -934,12 +935,12 @@ namespace Quantum {
     public FP Health;
     [FieldOffset(64)]
     public FP ConstructionRemaining;
-    [FieldOffset(88)]
+    [FieldOffset(96)]
     [FramePrinter.FixedArrayAttribute(typeof(ProductionOrder), 5)]
     private fixed Byte _Queue_[200];
     [FieldOffset(4)]
     public Int32 QueueCount;
-    [FieldOffset(80)]
+    [FieldOffset(88)]
     public FP QueueProgress;
     [FieldOffset(24)]
     [FramePrinter.FixedArrayAttribute(typeof(AssetRef<ModuleSpec>), 3)]
@@ -950,6 +951,10 @@ namespace Quantum {
     public FP AttackCooldown;
     [FieldOffset(0)]
     public PauseReason Paused;
+    [FieldOffset(12)]
+    public QBoolean ProcessorOff;
+    [FieldOffset(80)]
+    public FP ProcessTimer;
     public readonly FixedArray<ProductionOrder> Queue {
       get {
         fixed (byte* p = _Queue_) { return new FixedArray<ProductionOrder>(p, 40, 5); }
@@ -974,6 +979,8 @@ namespace Quantum {
         hash = hash * 31 + TargetEntity.GetHashCode();
         hash = hash * 31 + AttackCooldown.GetHashCode();
         hash = hash * 31 + (Byte)Paused;
+        hash = hash * 31 + ProcessorOff.GetHashCode();
+        hash = hash * 31 + ProcessTimer.GetHashCode();
         return hash;
       }
     }
@@ -982,12 +989,14 @@ namespace Quantum {
         serializer.Stream.Serialize((Byte*)&p->Paused);
         serializer.Stream.Serialize(&p->QueueCount);
         PlayerRef.Serialize(&p->Owner, serializer);
+        QBoolean.Serialize(&p->ProcessorOff, serializer);
         AssetRef.Serialize(&p->Spec, serializer);
         FixedArray.Serialize(p->Preset, serializer, Statics.SerializeAssetRef);
         EntityRef.Serialize(&p->TargetEntity, serializer);
         FP.Serialize(&p->AttackCooldown, serializer);
         FP.Serialize(&p->ConstructionRemaining, serializer);
         FP.Serialize(&p->Health, serializer);
+        FP.Serialize(&p->ProcessTimer, serializer);
         FP.Serialize(&p->QueueProgress, serializer);
         FixedArray.Serialize(p->Queue, serializer, Statics.SerializeProductionOrder);
     }

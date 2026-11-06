@@ -498,6 +498,74 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(3f, (Verified.Number - start) / (float)Fps, 0.4f, "간격 1.5초 x 2");
     }
 
+    // 가공소
+
+    static readonly (int, string, int, int)[] Processor = { (0, "ff_processor", -42, 12) };
+
+    static float Steel(int player) => PlayerOf(player).Stock.Steel.AsFloat;
+
+    [UnityTest]
+    public IEnumerator Processor_ConvertsTwoIronAndOnePowerPerSecond() {
+      yield return StartMatch(buildings: Processor, stock: Stock(1000, 0, 0, 100));
+      var start = Verified.Number;
+      var startSteel = Steel(0);
+      yield return WaitFrames(5 * Fps);
+      var seconds = (Verified.Number - start) / (float)Fps;
+      var made = Steel(0) - startSteel;
+      Assert.AreEqual(seconds, made, 1.1f, "1초마다 1");
+      Assert.AreEqual(1000f - 2f * Steel(0), ExactFunds(0), Tolerance, "강철 1당 철 2");
+      Assert.AreEqual(100f - Steel(0), Power(0), Tolerance, "강철 1당 전기 1");
+      Assert.AreEqual(-1f, PlayerOf(0).PowerRate.AsFloat, Tolerance, "순증감에 변환 소모 포함");
+    }
+
+    [UnityTest]
+    public IEnumerator Processor_StopsWithoutIron_NotAnOutage() {
+      yield return StartMatch(buildings: Processor, stock: Stock(3, 0, 0, 100));
+      yield return WaitFrames(4 * Fps);
+      Assert.AreEqual(1f, Steel(0), Tolerance, "철 2가 있을 때 한 번만");
+      Assert.AreEqual(1f, ExactFunds(0), Tolerance, "남은 철 1은 쓰지 않음");
+      Assert.AreEqual(99f, Power(0), Tolerance);
+      Assert.IsFalse((bool)PlayerOf(0).Outage, "철 부족은 정전이 아니다");
+    }
+
+    [UnityTest]
+    public IEnumerator Processor_StopsWithoutPower() {
+      yield return StartMatch(buildings: Processor, stock: Stock(1000, 0, 0, 1));
+      yield return WaitFor(() => PlayerOf(0).Outage, 30f, "전기 소진");
+      Assert.AreEqual(1f, Steel(0), Tolerance);
+      Assert.AreEqual(998f, ExactFunds(0), Tolerance);
+      yield return WaitFrames(3 * Fps);
+      Assert.AreEqual(1f, Steel(0), Tolerance, "정전 중 변환 없음");
+      Assert.AreEqual(PauseReason.Outage, BuildingState(BuildingAt(V(-42, 12))).Paused);
+    }
+
+    [UnityTest]
+    public IEnumerator Processor_SwitchOffStopsSpending() {
+      yield return StartMatch(buildings: Processor, stock: Stock(1000, 0, 0, 100));
+      var processor = BuildingAt(V(-42, 12));
+      yield return Send(0, new SetProcessorCommand { Building = processor, Enabled = false });
+      var steel = Steel(0);
+      var iron = ExactFunds(0);
+      yield return WaitFrames(3 * Fps);
+      Assert.AreEqual(steel, Steel(0), Tolerance, "끄면 변환 없음");
+      Assert.AreEqual(iron, ExactFunds(0), Tolerance);
+      Assert.AreEqual(0f, PlayerOf(0).PowerRate.AsFloat, Tolerance);
+
+      yield return Send(0, new SetProcessorCommand { Building = processor, Enabled = true });
+      yield return WaitFor(() => Steel(0) > steel, 30f, "켜면 재개");
+    }
+
+    [UnityTest]
+    public IEnumerator Processor_SwitchRejectsOtherBuildings() {
+      yield return StartMatch(buildings: Processor);
+      yield return Send(0, new SetProcessorCommand { Building = Headquarters(0), Enabled = false });
+      AssertRejected(0, ActionKind.Processor, RejectReason.Invalid);
+      _rejected.Clear();
+      yield return Send(1, new SetProcessorCommand { Building = BuildingAt(V(-42, 12)), Enabled = false });
+      AssertRejected(1, ActionKind.Processor, RejectReason.Invalid);
+      Assert.IsFalse((bool)BuildingState(BuildingAt(V(-42, 12))).ProcessorOff, "남의 가공소는 못 끈다");
+    }
+
     // 건물 충돌
 
     static float DistanceToSquare(FPVector3 unit, FPVector3 center) {

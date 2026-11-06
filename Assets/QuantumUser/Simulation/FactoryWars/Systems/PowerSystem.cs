@@ -1,7 +1,7 @@
 namespace Quantum.FactoryWars {
   using Photon.Deterministic;
 
-  /// <summary>전기 축적, 저장 한도, 가동 유지비, 정전. 건물은 엔티티 순서대로 처리한다.</summary>
+  /// <summary>전기 축적, 저장 한도, 가동 유지비, 가공소, 정전. 건물은 엔티티 순서대로 처리한다.</summary>
   public unsafe class PowerSystem : SystemMainThread {
     public override void Update(Frame f) {
       if (f.Global->GameEnded) {
@@ -52,6 +52,41 @@ namespace Quantum.FactoryWars {
       }
     }
 
+    /// <summary>재료가 다 있을 때만 한 번에 변환한다. 전기가 모자라 못 바꿨으면 true.</summary>
+    static bool Process(Frame f, EntityRef entity, Building* building, BuildingSpec spec, PlayerState* state) {
+      if (building->ProcessorOff) {
+        SetPaused(f, entity, building, PauseReason.None);
+        return false;
+      }
+      if (state->Outage) {
+        SetPaused(f, entity, building, PauseReason.Outage);
+        return false;
+      }
+      SetPaused(f, entity, building, PauseReason.None);
+
+      if (state->Stock.Iron >= spec.ProcessInput.Iron) {
+        state->PowerRate -= spec.ProcessInput.Power / spec.ProcessSeconds;
+      }
+      building->ProcessTimer += f.DeltaTime;
+      if (building->ProcessTimer < spec.ProcessSeconds) {
+        return false;
+      }
+      if (state->Stock.Covers(spec.ProcessInput) == false) {
+        // 재료가 생기면 바로 변환하도록 다 찬 채로 기다린다.
+        building->ProcessTimer = spec.ProcessSeconds;
+        if (state->Stock.Iron < spec.ProcessInput.Iron) {
+          return false;
+        }
+        SetPaused(f, entity, building, PauseReason.Outage);
+        return true;
+      }
+      building->ProcessTimer -= spec.ProcessSeconds;
+      state->Stock -= spec.ProcessInput;
+      state->Stock.Steel += spec.ProcessSteel;
+      state->Earned.Steel += spec.ProcessSteel;
+      return false;
+    }
+
     /// <summary>유지비를 걷는다. 전기를 못 낸 건물이 있는 플레이어를 비트로 돌려준다.</summary>
     static int PayUpkeep(Frame f) {
       var shortage = 0;
@@ -59,6 +94,12 @@ namespace Quantum.FactoryWars {
       while (buildings.NextUnsafe(out var entity, out var building)) {
         var spec = f.FindAsset(building->Spec);
         var state = FactoryWarsUtil.Player(f, building->Owner);
+        if (building->ConstructionRemaining <= FP._0 && spec.ProcessSeconds > FP._0) {
+          if (Process(f, entity, building, spec, state)) {
+            shortage |= 1 << (int)building->Owner;
+          }
+          continue;
+        }
         if (building->ConstructionRemaining > FP._0 || WantsPower(f, building, spec, state) == false) {
           SetPaused(f, entity, building, PauseReason.None);
           continue;

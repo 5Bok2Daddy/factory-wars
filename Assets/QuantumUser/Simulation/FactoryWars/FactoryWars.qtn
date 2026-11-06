@@ -10,7 +10,7 @@
 
 enum Relation : Byte { Enemy, Allied, BreakPending }
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget }
-enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair }
+enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor }
 enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
@@ -121,6 +121,8 @@ component Building {
     entity_ref TargetEntity;
     FP AttackCooldown;
     PauseReason Paused;
+    QBoolean ProcessorOff;
+    FP ProcessTimer;
 }
 
 component ResourceNode {

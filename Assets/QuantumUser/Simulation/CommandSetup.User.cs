@@ -14,6 +14,7 @@ namespace Quantum
             factories.Add(new FactoryWars.RepairCommand());
             factories.Add(new FactoryWars.ProduceCommand());
             factories.Add(new FactoryWars.SetPresetCommand());
+            factories.Add(new FactoryWars.SetProcessorCommand());
             factories.Add(new FactoryWars.DiplomacyCommand());
             factories.Add(new FactoryWars.SendNoteCommand());
         }

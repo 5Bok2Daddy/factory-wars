@@ -97,6 +97,8 @@ namespace Quantum.Prototypes {
     public MapEntityId TargetEntity;
     public FP AttackCooldown;
     public Quantum.QEnum8<PauseReason> Paused;
+    public QBoolean ProcessorOff;
+    public FP ProcessTimer;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Building component = default;
         Materialize((Frame)f, ref component, in context);
@@ -118,6 +120,8 @@ namespace Quantum.Prototypes {
         PrototypeValidator.FindMapEntity(this.TargetEntity, in context, out result.TargetEntity);
         result.AttackCooldown = this.AttackCooldown;
         result.Paused = this.Paused;
+        result.ProcessorOff = this.ProcessorOff;
+        result.ProcessTimer = this.ProcessTimer;
     }
   }
   [System.SerializableAttribute()]

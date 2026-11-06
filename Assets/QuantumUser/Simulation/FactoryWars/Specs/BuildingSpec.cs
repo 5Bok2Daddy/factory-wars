@@ -13,6 +13,10 @@ namespace Quantum {
     /// <summary>가동 중 초당 전기 소모량.</summary>
     public FP PowerUpkeep;
     public UpkeepMode Upkeep;
+    /// <summary>0보다 크면 가공소다. 이 간격마다 재료를 강철로 바꾼다.</summary>
+    public FP ProcessSeconds;
+    public ResourceCost ProcessInput;
+    public FP ProcessSteel;
     public FP PopulationCapBonus;
     public int ModuleSlots;
     /// <summary>정사각형 부지의 중심에서 변까지 거리.</summary>

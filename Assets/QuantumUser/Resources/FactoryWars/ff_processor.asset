@@ -37,6 +37,19 @@ MonoBehaviour:
   PowerUpkeep:
     RawValue: 0
   Upkeep: 0
+  ProcessSeconds:
+    RawValue: 65536
+  ProcessInput:
+    Iron:
+      RawValue: 131072
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 65536
+  ProcessSteel:
+    RawValue: 65536
   PopulationCapBonus:
     RawValue: 0
   ModuleSlots: 0

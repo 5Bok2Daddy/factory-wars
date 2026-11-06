@@ -51,6 +51,7 @@ namespace FactoryWars.Tests {
       Assert.Greater(StateOf(1).UnitsProduced, 5, "유닛 생산");
       Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.VehicleFactory), 1, "군수공장");
       Debug.Log($"[FW-TEST] normal bot 240s: produced {StateOf(1).UnitsProduced}, army {Army(1, true).Count}, earned {StateOf(1).Earned.Iron}");
+      Debug.Log($"[FW-TEST] normal bot 240s power: stock {StateOf(1).Stock.Power}/{StateOf(1).PowerCap}, rate {StateOf(1).PowerRate}, generated {StateOf(1).Earned.Power}, outages {StateOf(1).OutageCount}, plants {BuildingCount(1, BuildingRole.PowerPlant)}, steel {StateOf(1).Stock.Steel}");
     }
 
     [UnityTest]
