@@ -12,7 +12,7 @@ namespace FactoryWars.Tests {
   using UnityEngine.TestTools;
 
   /// <summary>Quantum 로컬 모드로 씬을 돌려 이동·전투·외교·비용·맵을 확인한다.</summary>
-  public unsafe class LocalMatchTests {
+  public unsafe partial class LocalMatchTests {
     const string TestScene = "Assets/QuantumUser/Scenes/QuantumGameScene.unity";
     const string Map2PScene = "Assets/QuantumUser/Scenes/Map2P.unity";
     const string Map4PScene = "Assets/QuantumUser/Scenes/Map4P.unity";
@@ -27,7 +27,7 @@ namespace FactoryWars.Tests {
     static QuantumGame Game => QuantumRunner.Default?.Game;
     static Frame Verified => Game.Frames.Verified;
 
-    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false) {
+    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null) {
       Time.timeScale = TimeScale;
       // 씬 로드 직후, 러너의 Start 전에 규칙을 바꾼다.
       UnityEngine.Events.UnityAction<Scene, LoadSceneMode> onLoaded = (loaded, mode) => {
@@ -43,6 +43,9 @@ namespace FactoryWars.Tests {
         }
         runner.LocalPlayers = list.ToArray();
         runner.MaxPlayerCount = players;
+        runner.RuntimeConfig.ScenarioUnits = units?.Select(u => new ScenarioUnit {
+          Player = u.Owner, Unit = FindUnit(runner, u.Unit), Position = new FPVector3(u.X, 0, u.Z),
+        }).ToArray();
       };
       SceneManager.sceneLoaded += onLoaded;
 #if UNITY_EDITOR
@@ -56,6 +59,12 @@ namespace FactoryWars.Tests {
       _rejected.Clear();
       _listener = new GameObject("RejectedListener");
       QuantumEvent.Subscribe<EventActionRejected>(_listener, e => _rejected.Add(e));
+    }
+
+    static AssetRef<UnitSpec> FindUnit(QuantumRunnerLocalDebug runner, string name) {
+      return runner.LocalPlayers
+        .SelectMany(p => QuantumUnityDB.GetGlobalAsset<FactionSpec>(p.Faction.Id).Units)
+        .First(u => QuantumUnityDB.GetGlobalAsset<UnitSpec>(u.Id).name == name);
     }
 
     static IEnumerator WaitFor(System.Func<bool> condition, float realSeconds, string label) {
@@ -87,16 +96,20 @@ namespace FactoryWars.Tests {
       yield return Diplomacy(b, DiplomacyAction.Accept, a);
     }
 
-    /// <summary>건물·공병을 사서 자금을 limit 아래로 줄인다.</summary>
+    /// <summary>건물·공병을 사서 자금을 limit 아래로 줄인다. 건물은 부지만 잡아도 비용이 나간다.</summary>
     IEnumerator SpendBelow(int player, int limit) {
       var faction = FactionOf(player);
+      var engineer = Engineers(player)[0];
+      var site = 0;
       while (Funds(player) >= limit) {
         var building = faction.Buildings
           .Where(b => Verified.FindAsset(b).Cost <= Funds(player))
           .OrderByDescending(b => Verified.FindAsset(b).Cost)
           .FirstOrDefault();
         if (building != default) {
-          yield return Send(player, new BuildCommand { Building = building, Position = FPVector3.Zero });
+          var position = V(-20 + 8 * (site % 6), -44 + 8 * (site / 6));
+          site++;
+          yield return Send(player, new BuildCommand { Engineer = engineer, Building = building, Position = position });
         } else {
           yield return Send(player, new ProduceCommand { Building = Headquarters(player), Unit = faction.Engineer, Count = 1 });
         }
@@ -449,8 +462,6 @@ namespace FactoryWars.Tests {
         Assert.IsTrue(navMesh.Contains(node.Position, mask, true), $"노드 NavMesh 위 {node.Position}");
       }
     }
-
-    static FPVector3 V(int x, int z) => new FPVector3(x, 0, z);
 
     /// <summary>from에서 to로 곧장 갈 수 없고, 주어진 경로들은 구간마다 막힘이 없어야 한다.</summary>
     static void AssertBlockedWithDetours(FPVector3 from, FPVector3 to, params FPVector3[][] detours) {
