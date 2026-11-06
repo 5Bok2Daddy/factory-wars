@@ -19,7 +19,8 @@ namespace Quantum {
     public int WaveSize;
     public int WaveGrowth;
     public int MaxWaveSize;
-    public int PowerMargin;
+    /// <summary>전기 순증감이 이보다 낮으면 발전소를 먼저 짓는다.</summary>
+    public FP PowerMargin;
     public int PopulationMargin;
     public FP SiteGrid;
     public int SiteRings;

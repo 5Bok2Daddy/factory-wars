@@ -28,13 +28,15 @@ namespace FactoryWars.Tests {
     static QuantumGame Game => QuantumRunner.Default?.Game;
     static Frame Verified => Game.Frames.Verified;
 
-    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null) {
+    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null, ResourceCost? stock = null) {
       Time.timeScale = TimeScale;
       // 씬 로드 직후, 러너의 Start 전에 규칙을 바꾼다.
       UnityEngine.Events.UnityAction<Scene, LoadSceneMode> onLoaded = (loaded, mode) => {
         var runner = Object.FindAnyObjectByType<QuantumRunnerLocalDebug>();
         runner.RuntimeConfig.JointVictory = jointVictory;
         runner.RuntimeConfig.TeamMode = teamMode;
+        runner.RuntimeConfig.OverrideStartingResources = stock.HasValue;
+        runner.RuntimeConfig.StartingResources = stock ?? default;
         var list = runner.LocalPlayers.ToList();
         while (list.Count < players) {
           list.Add(new RuntimePlayer { PlayerNickname = $"Extra{list.Count}", Faction = list[0].Faction, Team = list.Count });

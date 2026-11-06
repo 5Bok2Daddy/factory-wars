@@ -856,6 +856,16 @@ MonoBehaviour:
     TeamMode: 0
     JointVictory: 1
     Bots: []
+    OverrideStartingResources: 0
+    StartingResources:
+      Iron:
+        RawValue: 0
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 0
     ScenarioUnits: []
     ScenarioBuildings: []
   UseRandomSeed: 0

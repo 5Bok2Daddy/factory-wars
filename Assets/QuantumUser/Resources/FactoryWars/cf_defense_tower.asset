@@ -30,8 +30,13 @@ MonoBehaviour:
     RawValue: 1310720
   MaxHealth:
     RawValue: 45875200
-  PowerProduced: 0
-  PowerConsumed: 15
+  PowerOutput:
+    RawValue: 0
+  PowerStorage:
+    RawValue: 0
+  PowerUpkeep:
+    RawValue: 32768
+  Upkeep: 3
   PopulationCapBonus:
     RawValue: 0
   ModuleSlots: 1

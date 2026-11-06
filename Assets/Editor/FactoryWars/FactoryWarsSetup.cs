@@ -169,13 +169,11 @@ namespace FactoryWars.EditorTools {
       return spec;
     }
 
-    static BuildingSpec BuildBuilding(string id, ResourceCost cost, int seconds, int health, int powerOut, int powerIn, int population, int slots, params UnitSpec[] producible) {
+    static BuildingSpec BuildBuilding(string id, ResourceCost cost, int seconds, int health, int population, int slots, params UnitSpec[] producible) {
       var spec = Asset<BuildingSpec>(id);
       spec.Cost = cost;
       spec.BuildTimeSeconds = seconds;
       spec.MaxHealth = health;
-      spec.PowerProduced = powerOut;
-      spec.PowerConsumed = powerIn;
       spec.PopulationCapBonus = population;
       spec.ModuleSlots = slots;
       spec.FootprintRadius = 3;
@@ -196,17 +194,17 @@ namespace FactoryWars.EditorTools {
       var large = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Large && u.IsAir == false).ToArray();
 
       var buildings = new[] {
-        BuildBuilding($"{prefix}_headquarters", R(0), 0, 3000, 50, 0, 10, 0, engineer),
-        BuildBuilding($"{prefix}_power_plant", R(150, 150), 15, 600, 100, 0, 0, 0),
-        BuildBuilding($"{prefix}_processor", R(250, 150, 0, 100), 20, 800, 0, 20, 0, 0),
-        BuildBuilding($"{prefix}_supply_depot", R(100, 200), 15, 500, 0, 5, 20, 0),
-        BuildBuilding($"{prefix}_barracks", R(200, 200), 20, 800, 0, 10, 0, 0, small),
-        BuildBuilding($"{prefix}_research_lab", R(250, 200, 0, 150), 25, 700, 0, 20, 0, 0),
-        BuildBuilding($"{prefix}_vehicle_factory", R(400, 200, 0, 200), 30, 1200, 0, 25, 0, 0, mediumGround),
-        BuildBuilding($"{prefix}_airfield", R(400, 0, 100, 300), 35, 1000, 0, 30, 0, 0, air),
-        BuildBuilding($"{prefix}_heavy_works", R(500, 0, 200, 400), 45, 1600, 0, 40, 0, 0, large),
-        BuildBuilding($"{prefix}_defense_tower", R(250, 100, 0, 100), 20, 700, 0, 15, 0, 1),
-        BuildBuilding($"{prefix}_collection_yard", R(0, 150), 15, 500, 0, 0, 0, 0),
+        BuildBuilding($"{prefix}_headquarters", R(0), 0, 3000, 10, 0, engineer),
+        BuildBuilding($"{prefix}_power_plant", R(150, 150), 15, 600, 0, 0),
+        BuildBuilding($"{prefix}_processor", R(250, 150, 0, 100), 20, 800, 0, 0),
+        BuildBuilding($"{prefix}_supply_depot", R(100, 200), 15, 500, 20, 0),
+        BuildBuilding($"{prefix}_barracks", R(200, 200), 20, 800, 0, 0, small),
+        BuildBuilding($"{prefix}_research_lab", R(250, 200, 0, 150), 25, 700, 0, 0),
+        BuildBuilding($"{prefix}_vehicle_factory", R(400, 200, 0, 200), 30, 1200, 0, 0, mediumGround),
+        BuildBuilding($"{prefix}_airfield", R(400, 0, 100, 300), 35, 1000, 0, 0, air),
+        BuildBuilding($"{prefix}_heavy_works", R(500, 0, 200, 400), 45, 1600, 0, 0, large),
+        BuildBuilding($"{prefix}_defense_tower", R(250, 100, 0, 100), 20, 700, 0, 1),
+        BuildBuilding($"{prefix}_collection_yard", R(0, 150), 15, 500, 0, 0),
       };
       void Requires(int building, params int[] prerequisites) {
         buildings[building].Prerequisites = prerequisites.Select(i => Ref(buildings[i])).ToArray();
@@ -222,6 +220,19 @@ namespace FactoryWars.EditorTools {
       Requires(8, 6, 5, 2);
       Requires(9, 4, 1);
       Requires(10, 0);
+      void Power(int building, int output, int storage, double upkeep, UpkeepMode mode) {
+        buildings[building].PowerOutput = output;
+        buildings[building].PowerStorage = storage;
+        buildings[building].PowerUpkeep = N(upkeep);
+        buildings[building].Upkeep = mode;
+      }
+      Power(0, 0, 200, 0, UpkeepMode.None);
+      Power(1, 5, 300, 0, UpkeepMode.None);
+      Power(5, 0, 0, 1, UpkeepMode.WhileResearching);
+      Power(6, 0, 0, 1, UpkeepMode.WhileProducing);
+      Power(7, 0, 0, 2, UpkeepMode.WhileProducing);
+      Power(8, 0, 0, 3, UpkeepMode.WhileProducing);
+      Power(9, 0, 0, 0.5, UpkeepMode.Always);
       for (var i = 0; i < buildings.Length; i++) {
         buildings[i].Role = (BuildingRole)i;
       }
@@ -269,7 +280,7 @@ namespace FactoryWars.EditorTools {
       ai.WaveSize = wave;
       ai.WaveGrowth = growth;
       ai.MaxWaveSize = maxWave;
-      ai.PowerMargin = 10;
+      ai.PowerMargin = 1;
       ai.PopulationMargin = 4;
       ai.SiteGrid = 10;
       ai.SiteRings = 5;
@@ -315,8 +326,8 @@ namespace FactoryWars.EditorTools {
       rules.NotePhraseCount = 12;
       rules.NoteSingleCost = 50;
       rules.NoteGroupCost = 100;
-      rules.LowPowerProductionMultiplier = N(0.5);
-      rules.LowPowerTowerMultiplier = N(0.5);
+      rules.PowerResumeLevel = 5;
+      rules.OutageTowerIntervalMultiplier = 2;
       rules.SpawnOffset = 6;
       rules.AirAltitude = 6;
       rules.CarryCapacity = 50;
@@ -356,7 +367,7 @@ namespace FactoryWars.EditorTools {
         new FPVector3(-30, 0, 0), new FPVector3(30, 0, 0), new FPVector3(0, 0, 30), new FPVector3(0, 0, -30),
       };
       // 테스트 맵은 건설·외교 시험을 위해 넉넉히 준다.
-      testMap.StartingResources = R(5000, 10000, 5000, 5000);
+      testMap.StartingResources = R(5000, 10000, 5000, 200);
       testMap.StartingEngineers = 1;
       testMap.SpawnFactionUnits = true;
       testMap.ResourceNodes = new[] {

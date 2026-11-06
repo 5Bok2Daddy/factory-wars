@@ -46,7 +46,13 @@ namespace FactoryWars.Tests {
 
     static Worker WorkerOf(EntityRef entity) => Verified.Get<Worker>(entity);
 
-    static int PowerProduced(int player) => Verified.Global->Players.GetPointer(player)->PowerProduced;
+    static PlayerState PlayerOf(int player) => *Verified.Global->Players.GetPointer(player);
+
+    static float Power(int player) => PlayerOf(player).Stock.Power.AsFloat;
+
+    static ResourceCost Stock(int iron, int wood, int steel, int power) {
+      return new ResourceCost { Iron = iron, Wood = wood, Steel = steel, Power = power };
+    }
 
     static int Wood(int player) => Verified.Global->Players.GetPointer(player)->Stock.Wood.AsInt;
 
@@ -247,14 +253,16 @@ namespace FactoryWars.Tests {
       var paused = BuildingState(site).ConstructionRemaining;
       yield return WaitFrames(2 * Fps);
       Assert.AreEqual(paused, BuildingState(site).ConstructionRemaining, "공병이 떠나면 멈춤");
-      Assert.AreEqual(50, PowerProduced(0), "미완성 건물은 전력 없음");
+      Assert.AreEqual(200f, PlayerOf(0).PowerCap.AsFloat, Tolerance, "미완성 건물은 저장 한도를 늘리지 않음");
+      Assert.AreEqual(0f, PlayerOf(0).PowerRate.AsFloat, Tolerance, "미완성 건물은 전기를 만들지 않음");
 
       yield return Send(0, new RepairCommand { Units = new[] { engineer }, Target = site });
       yield return WaitFor(() => Finished(site), 60f, "건설 재개");
       yield return WaitFrames(CommandFrames);
       Assert.AreEqual(WorkerTask.Idle, WorkerOf(engineer).Task);
       Assert.AreEqual(600f, BuildingState(site).Health.AsFloat, 1f, "완공 체력");
-      Assert.AreEqual(150, PowerProduced(0), "발전소 전력");
+      Assert.AreEqual(500f, PlayerOf(0).PowerCap.AsFloat, Tolerance, "발전소 저장 +300");
+      Assert.AreEqual(5f, PlayerOf(0).PowerRate.AsFloat, Tolerance, "발전소 전기 +5/초");
     }
 
     [UnityTest]
@@ -376,6 +384,118 @@ namespace FactoryWars.Tests {
       Assert.AreEqual("barracks,power_plant", Needs("_defense_tower"));
       Assert.AreEqual("processor,vehicle_factory", Needs("_airfield"));
       Assert.AreEqual("processor,research_lab,vehicle_factory", Needs("_heavy_works"));
+    }
+
+    // 전기
+
+    [UnityTest]
+    public IEnumerator Power_AccumulatesAtFivePerSecondUpToCap() {
+      yield return StartMatch(buildings: Plant, stock: Stock(1000, 1000, 0, 0));
+      var from = Power(0);
+      var start = Verified.Number;
+      yield return WaitFrames(10 * Fps);
+      var seconds = (Verified.Number - start) / (float)Fps;
+      Assert.AreEqual(from + 5f * seconds, Power(0), 0.2f, "초당 5");
+      Assert.AreEqual(500f, PlayerOf(0).PowerCap.AsFloat, Tolerance, "사령부 200 + 발전소 300");
+      Assert.IsFalse((bool)PlayerOf(0).Outage, "수요가 없으면 정전이 아니다");
+    }
+
+    [UnityTest]
+    public IEnumerator Power_ExcessDisappearsWhenPlantDestroyed() {
+      var tanks = Enumerable.Range(0, 8).Select(i => (1, "cf_dragonscale_tank", -44 + i * 3, -42)).ToArray();
+      yield return StartMatch(units: tanks, buildings: new[] { (0, "ff_power_plant", -36, -34) }, stock: Stock(1000, 1000, 0, 500));
+      Assert.AreEqual(500f, Power(0), Tolerance);
+      var plant = BuildingAt(V(-36, -34));
+      var attackers = UnitsNamed(1, "cf_dragonscale_tank").Where(e => Verified.Get<Transform3D>(e).Position.Z < -30).ToArray();
+      Game.SendCommand(1, new AttackTargetCommand { Units = attackers, Target = plant });
+      yield return WaitFor(() => Verified.Exists(plant) == false, 60f, "발전소 파괴");
+      yield return WaitFrames(2);
+      Assert.AreEqual(200f, PlayerOf(0).PowerCap.AsFloat, Tolerance);
+      Assert.AreEqual(200f, Power(0), Tolerance, "한도를 넘는 전기는 삭제");
+    }
+
+    [UnityTest]
+    public IEnumerator Power_RefundStopsAtCap() {
+      yield return StartMatch(buildings: new[] { (0, "ff_power_plant", -42, 0), (0, "ff_barracks", -42, 12) }, stock: Stock(1000, 1000, 0, 500));
+      var barracks = BuildingAt(V(-42, 12));
+      var skyguard = FactionOf(0).Units.First(u => Verified.FindAsset(u).name == "ff_skyguard_squad");
+      yield return Send(0, new ProduceCommand { Building = barracks, Unit = skyguard, Count = 1 });
+      Assert.Less(Power(0), 500f, "스카이가드 전기 20");
+      yield return WaitFor(() => Power(0) >= 500f, 30f, "다시 가득 참");
+      yield return Send(0, new ProduceCommand { Building = barracks, Unit = skyguard, Count = 1, Cancel = true });
+      Assert.AreEqual(500f, Power(0), Tolerance, "한도까지만 환불");
+      Assert.AreEqual(1000, Funds(0), "철은 전부 환불");
+    }
+
+    static AssetRef<UnitSpec> UnitOf(int player, string name) => FactionOf(player).Units.First(u => Verified.FindAsset(u).name == name);
+
+    [UnityTest]
+    public IEnumerator Power_UpkeepOnlyWhileProducing() {
+      yield return StartMatch(buildings: new[] { (0, "ff_vehicle_factory", -42, 12) }, stock: Stock(2000, 2000, 2000, 100));
+      var factory = BuildingAt(V(-42, 12));
+      yield return WaitFrames(2 * Fps);
+      Assert.AreEqual(100f, Power(0), Tolerance, "쉬는 공장은 유지비 없음");
+
+      yield return Send(0, new ProduceCommand { Building = factory, Unit = UnitOf(0, "ff_eagle_tank"), Count = 1 });
+      var from = Power(0);
+      Assert.Less(from, 41f, "전차 전기 60");
+      var start = Verified.Number;
+      yield return WaitFrames(5 * Fps);
+      var seconds = (Verified.Number - start) / (float)Fps;
+      Assert.AreEqual(from - seconds, Power(0), 0.2f, "초당 1");
+      Assert.AreEqual(-1f, PlayerOf(0).PowerRate.AsFloat, Tolerance, "순증감");
+
+      yield return Send(0, new ProduceCommand { Building = factory, Unit = UnitOf(0, "ff_eagle_tank"), Count = 1, Cancel = true });
+      var stopped = Power(0);
+      yield return WaitFrames(2 * Fps);
+      Assert.AreEqual(stopped, Power(0), Tolerance, "취소하면 소모도 멈춤");
+    }
+
+    [UnityTest]
+    public IEnumerator Power_OutagePausesFactoryButNotBarracksThenResumesAtFive() {
+      yield return StartMatch(buildings: new[] { (0, "ff_vehicle_factory", -42, 12), (0, "ff_barracks", -42, -12) }, stock: Stock(3000, 3000, 2000, 61));
+      var outages = new List<bool>();
+      var paused = new List<PauseReason>();
+      QuantumEvent.Subscribe<EventPowerOutage>(_listener, e => outages.Add(e.Started));
+      QuantumEvent.Subscribe<EventBuildingPaused>(_listener, e => paused.Add(e.Reason));
+
+      var factory = BuildingAt(V(-42, 12));
+      var barracks = BuildingAt(V(-42, -12));
+      yield return Send(0, new ProduceCommand { Building = barracks, Unit = UnitOf(0, "ff_ranger_squad"), Count = 1 });
+      Game.SendCommand(0, new ProduceCommand { Building = factory, Unit = UnitOf(0, "ff_eagle_tank"), Count = 1 });
+      yield return WaitFor(() => PlayerOf(0).Outage, 30f, "정전");
+      yield return WaitFrames(CommandFrames);
+      Assert.AreEqual(PauseReason.Outage, BuildingState(factory).Paused);
+      Assert.AreEqual(1, PlayerOf(0).OutageCount);
+      Assert.AreEqual(new List<bool> { true }, outages);
+      Assert.Contains(PauseReason.Outage, paused);
+
+      var factoryProgress = BuildingState(factory).QueueProgress;
+      var barracksProgress = BuildingState(barracks).QueueProgress;
+      yield return WaitFrames(2 * Fps);
+      Assert.AreEqual(factoryProgress.AsFloat, BuildingState(factory).QueueProgress.AsFloat, 0.001f, "공장 타이머 정지");
+      Assert.AreEqual(1, BuildingState(factory).QueueCount, "대기열 유지");
+      Assert.Greater(BuildingState(barracks).QueueProgress.AsFloat, barracksProgress.AsFloat, "병영은 영향 없음");
+
+      yield return BuildAndFinish(0, "_power_plant", V(-20, 10));
+      yield return WaitFor(() => PlayerOf(0).Outage == false, 30f, "전기 5 이상에서 해제");
+      Assert.GreaterOrEqual(Power(0), 4.9f);
+      yield return WaitFor(() => BuildingState(factory).QueueProgress > factoryProgress, 30f, "자동 재개");
+      Assert.AreEqual(PauseReason.None, BuildingState(factory).Paused);
+      Assert.AreEqual(new List<bool> { true, false }, outages);
+      Assert.Greater(PlayerOf(0).OutageSeconds.AsFloat, 2f, "정전 시간 기록");
+    }
+
+    [UnityTest]
+    public IEnumerator Power_OutageDoublesTowerInterval() {
+      yield return StartMatch(units: new[] { (1, "cf_thunder_aa", 6, ArenaZ) }, buildings: new[] { (0, "ff_defense_tower", 0, ArenaZ) }, stock: Stock(1000, 1000, 0, 0));
+      var target = UnitsNamed(1, "cf_thunder_aa")[0];
+      yield return WaitFor(() => Health(target) < 450f, 30f, "첫 사격");
+      Assert.IsTrue((bool)PlayerOf(0).Outage, "방어탑은 상시 유지비");
+      var first = Health(target);
+      var start = Verified.Number;
+      yield return WaitFor(() => Health(target) < first, 30f, "둘째 사격");
+      Assert.AreEqual(3f, (Verified.Number - start) / (float)Fps, 0.4f, "간격 1.5초 x 2");
     }
 
     // 건물 충돌

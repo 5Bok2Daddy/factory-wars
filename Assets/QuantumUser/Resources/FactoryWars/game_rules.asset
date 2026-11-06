@@ -41,10 +41,10 @@ MonoBehaviour:
     RawValue: 3276800
   NoteGroupCost:
     RawValue: 6553600
-  LowPowerProductionMultiplier:
-    RawValue: 32768
-  LowPowerTowerMultiplier:
-    RawValue: 32768
+  PowerResumeLevel:
+    RawValue: 327680
+  OutageTowerIntervalMultiplier:
+    RawValue: 131072
   SpawnOffset:
     RawValue: 393216
   AirAltitude:

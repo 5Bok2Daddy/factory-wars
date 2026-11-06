@@ -96,6 +96,7 @@ namespace Quantum.Prototypes {
     public AssetRef<ModuleSpec>[] Preset = new AssetRef<ModuleSpec>[3];
     public MapEntityId TargetEntity;
     public FP AttackCooldown;
+    public Quantum.QEnum8<PauseReason> Paused;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Building component = default;
         Materialize((Frame)f, ref component, in context);
@@ -116,6 +117,7 @@ namespace Quantum.Prototypes {
         }
         PrototypeValidator.FindMapEntity(this.TargetEntity, in context, out result.TargetEntity);
         result.AttackCooldown = this.AttackCooldown;
+        result.Paused = this.Paused;
     }
   }
   [System.SerializableAttribute()]
@@ -190,8 +192,11 @@ namespace Quantum.Prototypes {
   public unsafe partial class PlayerStatePrototype : StructPrototype {
     public AssetRef<FactionSpec> Faction;
     public Quantum.Prototypes.ResourceCostPrototype Stock;
-    public Int32 PowerProduced;
-    public Int32 PowerConsumed;
+    public FP PowerCap;
+    public FP PowerRate;
+    public QBoolean Outage;
+    public FP OutageSeconds;
+    public Int32 OutageCount;
     public FP PopulationUsed;
     public FP PopulationCap;
     public Int32 Team;
@@ -208,8 +213,11 @@ namespace Quantum.Prototypes {
     public void Materialize(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context = default) {
         result.Faction = this.Faction;
         this.Stock.Materialize(frame, ref result.Stock, in context);
-        result.PowerProduced = this.PowerProduced;
-        result.PowerConsumed = this.PowerConsumed;
+        result.PowerCap = this.PowerCap;
+        result.PowerRate = this.PowerRate;
+        result.Outage = this.Outage;
+        result.OutageSeconds = this.OutageSeconds;
+        result.OutageCount = this.OutageCount;
         result.PopulationUsed = this.PopulationUsed;
         result.PopulationCap = this.PopulationCap;
         result.Team = this.Team;

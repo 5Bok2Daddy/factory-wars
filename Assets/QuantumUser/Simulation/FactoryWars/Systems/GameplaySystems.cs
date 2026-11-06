@@ -1,7 +1,7 @@
 namespace Quantum.FactoryWars {
   using Photon.Deterministic;
 
-  /// <summary>건설·생산 대기열, 전력·인구 집계.</summary>
+  /// <summary>건설·생산 대기열, 인구 집계.</summary>
   public unsafe class ProductionSystem : SystemMainThread {
     public static EntityRef CreateBuilding(Frame f, PlayerRef owner, AssetRef<BuildingSpec> specRef, FPVector3 position) {
       var spec = f.FindAsset(specRef);
@@ -178,6 +178,7 @@ namespace Quantum.FactoryWars {
       for (var i = building->QueueCount - 1; i >= 0 && count > 0; i--) {
         if (building->Queue[i].Unit == unitRef) {
           state->Stock += building->Queue[i].PaidCost;
+          state->Stock.Power = FPMath.Min(state->Stock.Power, state->PowerCap);
           RemoveOrder(building, i);
           count--;
         }
@@ -225,24 +226,18 @@ namespace Quantum.FactoryWars {
       }
       UpdateTotals(f);
 
-      var rules = FactoryWarsUtil.Rules(f);
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out _, out var transform, out var building)) {
-        // 건설은 공병이 진행한다 (WorkerSystem).
-        if (building->ConstructionRemaining > FP._0 || building->QueueCount == 0) {
+        // 건설은 공병이 진행한다 (WorkerSystem). 정전 중에는 진행도를 유지한 채 멈춘다.
+        if (building->ConstructionRemaining > FP._0 || building->QueueCount == 0 || building->Paused != PauseReason.None) {
           continue;
         }
 
         var state = FactoryWarsUtil.Player(f, building->Owner);
-        var faction = f.FindAsset(state->Faction);
         var unit = f.FindAsset(building->Queue[0].Unit);
-        var speed = state->PowerConsumed > state->PowerProduced ? rules.LowPowerProductionMultiplier : FP._1;
-        var buildTime = unit.BuildTimeSeconds;
-        if (unit.Size == UnitSize.Small) {
-          buildTime *= faction.SmallBuildTimeMultiplier;
-        }
+        var buildTime = BuildTime(f, state, unit);
 
-        building->QueueProgress += f.DeltaTime * speed;
+        building->QueueProgress += f.DeltaTime;
         if (building->QueueProgress < buildTime) {
           continue;
         }
@@ -262,11 +257,22 @@ namespace Quantum.FactoryWars {
       }
     }
 
+    static FP BuildTime(Frame f, PlayerState* state, UnitSpec unit) {
+      var buildTime = unit.BuildTimeSeconds;
+      if (unit.Size == UnitSize.Small) {
+        buildTime *= f.FindAsset(state->Faction).SmallBuildTimeMultiplier;
+      }
+      return buildTime;
+    }
+
+    /// <summary>생산 타이머가 도는 중이면 true. 인구가 차서 완성 상태로 대기 중이면 false.</summary>
+    public static bool IsProducing(Frame f, Building* building, PlayerState* state) {
+      return building->QueueCount > 0 && building->QueueProgress < BuildTime(f, state, f.FindAsset(building->Queue[0].Unit));
+    }
+
     static void UpdateTotals(Frame f) {
       for (var i = 0; i < f.PlayerCount; i++) {
         var state = f.Global->Players.GetPointer(i);
-        state->PowerProduced = 0;
-        state->PowerConsumed = 0;
         state->PopulationUsed = FP._0;
         state->PopulationCap = FP._0;
       }
@@ -278,8 +284,6 @@ namespace Quantum.FactoryWars {
         }
         var spec = f.FindAsset(building->Spec);
         var state = FactoryWarsUtil.Player(f, building->Owner);
-        state->PowerProduced += spec.PowerProduced;
-        state->PowerConsumed += spec.PowerConsumed;
         state->PopulationCap += spec.PopulationCapBonus;
       }
 
@@ -651,8 +655,8 @@ namespace Quantum.FactoryWars {
           continue;
         }
         var state = FactoryWarsUtil.Player(f, building->Owner);
-        var speed = state->PowerConsumed > state->PowerProduced ? rules.LowPowerTowerMultiplier : FP._1;
-        building->AttackCooldown = FPMath.Max(FP._0, building->AttackCooldown - f.DeltaTime * speed);
+        var step = state->Outage ? f.DeltaTime / rules.OutageTowerIntervalMultiplier : f.DeltaTime;
+        building->AttackCooldown = FPMath.Max(FP._0, building->AttackCooldown - step);
         if (building->AttackCooldown > FP._0) {
           continue;
         }

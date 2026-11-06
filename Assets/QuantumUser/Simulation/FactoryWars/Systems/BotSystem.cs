@@ -110,8 +110,8 @@ namespace Quantum.FactoryWars {
     }
 
     static bool NextRole(PlayerState* state, BotState* bot, AiSpec ai, int* counts, Frame f, FactionSpec faction, out BuildingRole role) {
-      // 전력·인구가 모자라면 순서보다 먼저 채운다.
-      if (state->PowerProduced - state->PowerConsumed < ai.PowerMargin) {
+      // 전기·인구가 모자라면 순서보다 먼저 채운다.
+      if (state->PowerRate < ai.PowerMargin) {
         role = BuildingRole.PowerPlant;
         return true;
       }

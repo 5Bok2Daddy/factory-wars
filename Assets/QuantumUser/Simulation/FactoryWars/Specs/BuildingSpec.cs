@@ -6,8 +6,13 @@ namespace Quantum {
     public ResourceCost Cost;
     public FP BuildTimeSeconds;
     public FP MaxHealth;
-    public int PowerProduced;
-    public int PowerConsumed;
+    /// <summary>초당 전기 생산량.</summary>
+    public FP PowerOutput;
+    /// <summary>늘어나는 전기 저장 한도.</summary>
+    public FP PowerStorage;
+    /// <summary>가동 중 초당 전기 소모량.</summary>
+    public FP PowerUpkeep;
+    public UpkeepMode Upkeep;
     public FP PopulationCapBonus;
     public int ModuleSlots;
     /// <summary>정사각형 부지의 중심에서 변까지 거리.</summary>

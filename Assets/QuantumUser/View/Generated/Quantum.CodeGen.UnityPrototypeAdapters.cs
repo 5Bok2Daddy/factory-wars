@@ -63,6 +63,7 @@ namespace Quantum.Prototypes.Unity {
     public AssetRef<ModuleSpec>[] Preset = new AssetRef<ModuleSpec>[3];
     public Quantum.QuantumEntityPrototype TargetEntity;
     public FP AttackCooldown;
+    public Quantum.QEnum8<PauseReason> Paused;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BuildingPrototype prototype);
     public override Quantum.Prototypes.BuildingPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BuildingPrototype();
@@ -76,6 +77,7 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Preset, out result.Preset);
       converter.Convert(this.TargetEntity, out result.TargetEntity);
       converter.Convert(this.AttackCooldown, out result.AttackCooldown);
+      converter.Convert(this.Paused, out result.Paused);
       ConvertUser(converter, ref result);
       return result;
     }

@@ -32,6 +32,9 @@ namespace Quantum {
     public bool TeamMode;
     public bool JointVictory = true;
     public BotSlot[] Bots;
+    /// <summary>true면 맵 대신 이 값으로 시작한다. 튜토리얼과 테스트 상황 구성에 쓴다.</summary>
+    public bool OverrideStartingResources;
+    public ResourceCost StartingResources;
     public ScenarioUnit[] ScenarioUnits;
     public ScenarioBuilding[] ScenarioBuildings;
   }

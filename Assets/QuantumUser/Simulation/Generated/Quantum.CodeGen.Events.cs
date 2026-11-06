@@ -52,7 +52,7 @@ namespace Quantum {
   public unsafe partial class Frame {
     public unsafe partial struct FrameEvents {
       static partial void GetEventTypeCountCodeGen(ref Int32 eventCount) {
-        eventCount = 7;
+        eventCount = 9;
       }
       static partial void GetParentEventIDCodeGen(Int32 eventID, ref Int32 parentEventID) {
         switch (eventID) {
@@ -66,6 +66,8 @@ namespace Quantum {
           case EventAllianceChanged.ID: result = typeof(EventAllianceChanged); return;
           case EventUnitDestroyed.ID: result = typeof(EventUnitDestroyed); return;
           case EventPlayerDefeated.ID: result = typeof(EventPlayerDefeated); return;
+          case EventPowerOutage.ID: result = typeof(EventPowerOutage); return;
+          case EventBuildingPaused.ID: result = typeof(EventBuildingPaused); return;
           case EventGameOver.ID: result = typeof(EventGameOver); return;
           default: break;
         }
@@ -109,6 +111,22 @@ namespace Quantum {
         if (_f.IsPredicted) return null;
         var ev = _f.Context.AcquireEvent<EventPlayerDefeated>(EventPlayerDefeated.ID);
         ev.Player = Player;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventPowerOutage PowerOutage(PlayerRef Player, QBoolean Started) {
+        if (_f.IsPredicted) return null;
+        var ev = _f.Context.AcquireEvent<EventPowerOutage>(EventPowerOutage.ID);
+        ev.Player = Player;
+        ev.Started = Started;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventBuildingPaused BuildingPaused(EntityRef Building, PauseReason Reason) {
+        if (_f.IsPredicted) return null;
+        var ev = _f.Context.AcquireEvent<EventBuildingPaused>(EventBuildingPaused.ID);
+        ev.Building = Building;
+        ev.Reason = Reason;
         _f.AddEvent(ev);
         return ev;
       }
@@ -262,13 +280,14 @@ namespace Quantum {
       }
     }
   }
-  public unsafe partial class EventGameOver : EventBase {
+  public unsafe partial class EventPowerOutage : EventBase {
     public new const Int32 ID = 6;
-    public Int32 WinnerMask;
-    protected EventGameOver(Int32 id, EventFlags flags) : 
+    public PlayerRef Player;
+    public QBoolean Started;
+    protected EventPowerOutage(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventGameOver() : 
+    public EventPowerOutage() : 
         base(6, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
     }
     public new QuantumGame Game {
@@ -282,6 +301,59 @@ namespace Quantum {
     public override Int32 GetHashCode() {
       unchecked {
         var hash = 61;
+        hash = hash * 31 + Player.GetHashCode();
+        hash = hash * 31 + Started.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventBuildingPaused : EventBase {
+    public new const Int32 ID = 7;
+    public EntityRef Building;
+    public PauseReason Reason;
+    protected EventBuildingPaused(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventBuildingPaused() : 
+        base(7, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 67;
+        hash = hash * 31 + Building.GetHashCode();
+        hash = hash * 31 + Reason.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventGameOver : EventBase {
+    public new const Int32 ID = 8;
+    public Int32 WinnerMask;
+    protected EventGameOver(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventGameOver() : 
+        base(8, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 71;
         hash = hash * 31 + WinnerMask.GetHashCode();
         return hash;
       }

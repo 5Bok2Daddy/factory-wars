@@ -33,7 +33,8 @@ MonoBehaviour:
   WaveSize: 8
   WaveGrowth: 3
   MaxWaveSize: 24
-  PowerMargin: 10
+  PowerMargin:
+    RawValue: 65536
   PopulationMargin: 4
   SiteGrid:
     RawValue: 655360

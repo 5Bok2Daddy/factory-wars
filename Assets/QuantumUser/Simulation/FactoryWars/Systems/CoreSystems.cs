@@ -69,7 +69,7 @@ namespace Quantum.FactoryWars {
       }
       var map = FactoryWarsUtil.MapInfo(f);
       state->Faction = factionRef;
-      state->Stock = map.StartingResources;
+      state->Stock = f.RuntimeConfig.OverrideStartingResources ? f.RuntimeConfig.StartingResources : map.StartingResources;
       state->Team = team;
       state->Active = true;
 

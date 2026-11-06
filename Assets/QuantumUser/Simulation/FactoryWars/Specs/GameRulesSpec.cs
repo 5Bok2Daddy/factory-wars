@@ -28,8 +28,10 @@ namespace Quantum {
     public int NotePhraseCount;
     public FP NoteSingleCost;
     public FP NoteGroupCost;
-    public FP LowPowerProductionMultiplier;
-    public FP LowPowerTowerMultiplier;
+    /// <summary>정전이 시작되면 전기가 이만큼 쌓여야 풀린다. 0 근처에서 켜고 꺼지기를 막는다.</summary>
+    public FP PowerResumeLevel;
+    /// <summary>정전 중 방어탑 공격 간격 배율.</summary>
+    public FP OutageTowerIntervalMultiplier;
     public FP SpawnOffset;
     public FP AirAltitude;
     public FP CarryCapacity;

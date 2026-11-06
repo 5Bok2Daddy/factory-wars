@@ -15,6 +15,7 @@ enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid, B
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
 enum ResourceKind : Byte { Iron, Wood }
+enum PauseReason : Byte { None, Outage }
 
 struct ResourceCost {
     FP Iron;
@@ -35,8 +36,11 @@ struct MapShape {
 struct PlayerState {
     asset_ref<FactionSpec> Faction;
     ResourceCost Stock;
-    Int32 PowerProduced;
-    Int32 PowerConsumed;
+    FP PowerCap;
+    FP PowerRate;
+    QBoolean Outage;
+    FP OutageSeconds;
+    Int32 OutageCount;
     FP PopulationUsed;
     FP PopulationCap;
     Int32 Team;
@@ -116,6 +120,7 @@ component Building {
     array<asset_ref<ModuleSpec>>[MAX_MODULES] Preset;
     entity_ref TargetEntity;
     FP AttackCooldown;
+    PauseReason Paused;
 }
 
 component ResourceNode {
@@ -140,4 +145,6 @@ synced event NoteReceived { player_ref Sender; player_ref Receiver; Int32 Phrase
 synced event AllianceChanged { player_ref A; player_ref B; Relation Relation; }
 event UnitDestroyed { entity_ref Unit; player_ref Owner; asset_ref<UnitSpec> Spec; }
 synced event PlayerDefeated { player_ref Player; }
+synced event PowerOutage { player_ref Player; QBoolean Started; }
+synced event BuildingPaused { entity_ref Building; PauseReason Reason; }
 synced event GameOver { Int32 WinnerMask; }

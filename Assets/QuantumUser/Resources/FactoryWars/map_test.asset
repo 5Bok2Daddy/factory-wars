@@ -60,7 +60,7 @@ MonoBehaviour:
     Steel:
       RawValue: 327680000
     Power:
-      RawValue: 327680000
+      RawValue: 13107200
   StartingEngineers: 1
   SpawnFactionUnits: 1
   ResourceNodes:
