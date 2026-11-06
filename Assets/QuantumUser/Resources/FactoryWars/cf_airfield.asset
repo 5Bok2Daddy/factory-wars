@@ -16,6 +16,7 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/cf_airfield
     Guid:
       Value: 344771775610767026
+  Role: 7
   Cost:
     RawValue: 72089600
   BuildTimeSeconds:

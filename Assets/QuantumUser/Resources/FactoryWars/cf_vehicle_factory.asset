@@ -16,6 +16,7 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/cf_vehicle_factory
     Guid:
       Value: 419863775431176602
+  Role: 6
   Cost:
     RawValue: 58982400
   BuildTimeSeconds:

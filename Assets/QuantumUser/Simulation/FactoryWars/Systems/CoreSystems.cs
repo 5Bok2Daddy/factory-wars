@@ -38,6 +38,18 @@ namespace Quantum.FactoryWars {
         f.Add(node, Transform3D.Create(nodes[i].Position));
         f.Add(node, new ResourceNode { RemainingFunds = nodes[i].Funds });
       }
+
+      var bots = f.RuntimeConfig.Bots;
+      for (var i = 0; bots != null && i < bots.Length; i++) {
+        PlayerRef player = bots[i].Player;
+        SetUpPlayer(f, player, bots[i].Faction, bots[i].Team);
+        BotSystem.Init(f, player, bots[i].Difficulty, StartPosition(f, player));
+      }
+    }
+
+    static FPVector3 StartPosition(Frame f, PlayerRef player) {
+      var starts = FactoryWarsUtil.MapInfo(f).StartPositions;
+      return starts[(int)player % starts.Length];
     }
 
     public void OnPlayerAdded(Frame f, PlayerRef player, bool firstTime) {
@@ -45,24 +57,27 @@ namespace Quantum.FactoryWars {
         return;
       }
       var data = f.GetPlayerData(player);
+      SetUpPlayer(f, player, data.Faction, data.Team);
+    }
+
+    static void SetUpPlayer(Frame f, PlayerRef player, AssetRef<FactionSpec> factionRef, int team) {
       var state = FactoryWarsUtil.Player(f, player);
-      var faction = f.FindAsset(data.Faction);
+      var faction = f.FindAsset(factionRef);
       if (state == null || faction == null) {
         Log.Error($"FactoryWars: 플레이어 {player} 초기화 실패 (진영 없음)");
         return;
       }
       var rules = FactoryWarsUtil.Rules(f);
-      state->Faction = data.Faction;
+      state->Faction = factionRef;
       state->Funds = rules.StartingFunds;
-      state->Team = data.Team;
+      state->Team = team;
       state->Active = true;
 
       if (f.RuntimeConfig.TeamMode) {
         DiplomacySystem.ApplyTeam(f, player);
       }
 
-      var starts = FactoryWarsUtil.MapInfo(f).StartPositions;
-      var start = starts[(int)player % starts.Length];
+      var start = StartPosition(f, player);
       ProductionSystem.CreateFinishedBuilding(f, player, faction.Headquarters, start);
       for (var i = 0; i < rules.StartingEngineers; i++) {
         ProductionSystem.SpawnUnit(f, player, faction.Engineer, start, i, null);
@@ -148,6 +163,20 @@ namespace Quantum.FactoryWars {
         }
       }
       return players >= rules.MinDiplomacyPlayers;
+    }
+
+    public static bool IsAllowed(Frame f) {
+      return DiplomacyAllowed(f, f.Unsafe.GetPointerSingleton<Diplomacy>(), FactoryWarsUtil.Rules(f));
+    }
+
+    public static bool HasProposal(Frame f, PlayerRef from, PlayerRef to) {
+      return FindProposal(f.Unsafe.GetPointerSingleton<Diplomacy>(), from, to) >= 0;
+    }
+
+    /// <summary>지금 제안해도 거부되지 않으면 true. 자금은 따로 본다.</summary>
+    public static bool CanPropose(Frame f, PlayerRef from, PlayerRef to) {
+      var d = f.Unsafe.GetPointerSingleton<Diplomacy>();
+      return FindProposal(d, from, to) < 0 && FindProposal(d, to, from) < 0 && f.Number >= d->RealliableFrames[Cell(from, to)];
     }
 
     static ActionKind Kind(DiplomacyAction action) {
@@ -387,6 +416,8 @@ namespace Quantum.FactoryWars {
 
     static void End(Frame f, int aliveMask) {
       f.Global->GameEnded = true;
+      f.Global->EndFrame = f.Number;
+      f.Global->WinnerMask = aliveMask;
       f.Events.GameOver(aliveMask);
     }
 

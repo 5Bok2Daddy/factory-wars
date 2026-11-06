@@ -16,6 +16,7 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/ff_refinery
     Guid:
       Value: 470491905758002394
+  Role: 2
   Cost:
     RawValue: 32768000
   BuildTimeSeconds:

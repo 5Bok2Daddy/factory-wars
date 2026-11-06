@@ -18,10 +18,20 @@ namespace Quantum {
     public FPVector3 Position;
   }
 
+  /// <summary>AI가 맡는 플레이어 자리.</summary>
+  [Serializable]
+  public struct BotSlot {
+    public int Player;
+    public AssetRef<FactionSpec> Faction;
+    public int Team;
+    public BotDifficulty Difficulty;
+  }
+
   public partial class RuntimeConfig {
     public AssetRef<GameRulesSpec> Rules;
     public bool TeamMode;
     public bool JointVictory = true;
+    public BotSlot[] Bots;
     public ScenarioUnit[] ScenarioUnits;
     public ScenarioBuilding[] ScenarioBuildings;
   }

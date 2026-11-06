@@ -64,6 +64,24 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.BotState))]
+  public unsafe partial class BotStatePrototype : StructPrototype {
+    public FPVector3 Home;
+    public Int32 NextThinkFrame;
+    public Int32 NextAttackFrame;
+    public Int32 NextProposalFrame;
+    public Int32 WaveSize;
+    partial void MaterializeUser(Frame frame, ref Quantum.BotState result, in PrototypeMaterializationContext context);
+    public void Materialize(Frame frame, ref Quantum.BotState result, in PrototypeMaterializationContext context = default) {
+        result.Home = this.Home;
+        result.NextThinkFrame = this.NextThinkFrame;
+        result.NextAttackFrame = this.NextAttackFrame;
+        result.NextProposalFrame = this.NextProposalFrame;
+        result.WaveSize = this.WaveSize;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.Building))]
   public unsafe class BuildingPrototype : ComponentPrototype<Quantum.Building> {
     public PlayerRef Owner;
@@ -162,6 +180,12 @@ namespace Quantum.Prototypes {
     public Int32 NextNoteFrame;
     public QBoolean Active;
     public QBoolean Defeated;
+    public QBoolean IsBot;
+    public Quantum.QEnum8<BotDifficulty> Difficulty;
+    public Int32 UnitsProduced;
+    public Int32 UnitsLost;
+    public Int32 BuildingsLost;
+    public FP FundsEarned;
     partial void MaterializeUser(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context = default) {
         result.Faction = this.Faction;
@@ -174,6 +198,12 @@ namespace Quantum.Prototypes {
         result.NextNoteFrame = this.NextNoteFrame;
         result.Active = this.Active;
         result.Defeated = this.Defeated;
+        result.IsBot = this.IsBot;
+        result.Difficulty = this.Difficulty;
+        result.UnitsProduced = this.UnitsProduced;
+        result.UnitsLost = this.UnitsLost;
+        result.BuildingsLost = this.BuildingsLost;
+        result.FundsEarned = this.FundsEarned;
         MaterializeUser(frame, ref result, in context);
     }
   }

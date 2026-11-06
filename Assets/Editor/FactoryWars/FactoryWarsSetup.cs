@@ -213,6 +213,9 @@ namespace FactoryWars.EditorTools {
       Requires(7, 6);
       Requires(8, 6, 5);
       Requires(9, 4);
+      for (var i = 0; i < buildings.Length; i++) {
+        buildings[i].Role = (BuildingRole)i;
+      }
       foreach (var core in new[] { 0, 4, 6, 7, 8 }) {
         buildings[core].IsCoreBuilding = true;
       }
@@ -239,6 +242,34 @@ namespace FactoryWars.EditorTools {
       faction.StartingUnits = startingUnits.Select(id => Ref(U(id))).ToArray();
       EditorUtility.SetDirty(faction);
       return faction;
+    }
+
+    static AiSpec BuildAi(string id, double think, int engineers, int variety, int maxRefineries, double firstAttack, double repeat,
+        int wave, int growth, int maxWave, bool strategic, BuildingRole[] order) {
+      var ai = Asset<AiSpec>(id);
+      ai.ThinkSeconds = N(think);
+      ai.EngineerTarget = engineers;
+      ai.BuildOrder = order;
+      ai.MaxRefineries = maxRefineries;
+      ai.ExpandDistance = 30;
+      ai.ConcurrentBuilds = 1;
+      ai.QueueTarget = 2;
+      ai.UnitVariety = variety;
+      ai.FirstAttackSeconds = N(firstAttack);
+      ai.AttackRepeatSeconds = N(repeat);
+      ai.WaveSize = wave;
+      ai.WaveGrowth = growth;
+      ai.MaxWaveSize = maxWave;
+      ai.PowerMargin = 10;
+      ai.PopulationMargin = 4;
+      ai.SiteGrid = 10;
+      ai.SiteRings = 5;
+      ai.StrategicDiplomacy = strategic;
+      ai.AcceptChance = N(0.5);
+      ai.ProposalIntervalSeconds = 90;
+      ai.DiplomacyFundsReserve = 1200;
+      EditorUtility.SetDirty(ai);
+      return ai;
     }
 
     public static void BuildData() {
@@ -289,7 +320,13 @@ namespace FactoryWars.EditorTools {
       rules.RepairPerSecond = 20;
       rules.RepairCostRatio = N(0.5);
       rules.FoundationHealthRatio = N(0.1);
-      rules.BuildingAvoidanceScale = N(1.2);
+      rules.EasyAi = Ref(BuildAi("ai_easy", 5, 3, 1, 1, 420, 90, 6, 2, 12, false, new[] {
+        BuildingRole.PowerPlant, BuildingRole.Refinery, BuildingRole.Barracks, BuildingRole.SupplyDepot, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
+      }));
+      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 6, 3, 2, 270, 60, 8, 3, 24, true, new[] {
+        BuildingRole.PowerPlant, BuildingRole.Refinery, BuildingRole.Barracks, BuildingRole.SupplyDepot, BuildingRole.Refinery, BuildingRole.VehicleFactory,
+        BuildingRole.PowerPlant, BuildingRole.ResearchLab, BuildingRole.Airfield, BuildingRole.SupplyDepot, BuildingRole.HeavyWorks, BuildingRole.DefenseTower,
+      }));
       rules.UnitClearance = N(0.5);
       rules.Matchups = new[] {
         new DamageMatchup { Attack = AttackType.AntiInfantry, VsSmall = N(1.5), VsMedium = N(0.6), VsLarge = N(0.4), VsAir = 1, VsBuilding = N(0.5) },

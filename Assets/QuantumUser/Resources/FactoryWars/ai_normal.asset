@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54d9996a72d3fab40ac3b3ed671891f5, type: 3}
+  m_Name: ai_normal
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ai_normal
+    Guid:
+      Value: 414360037463059834
+  ThinkSeconds:
+    RawValue: 131072
+  EngineerTarget: 6
+  BuildOrder: 010000000200000004000000030000000200000006000000010000000500000007000000030000000800000009000000
+  MaxRefineries: 2
+  ExpandDistance:
+    RawValue: 1966080
+  ConcurrentBuilds: 1
+  QueueTarget: 2
+  UnitVariety: 3
+  FirstAttackSeconds:
+    RawValue: 17694720
+  AttackRepeatSeconds:
+    RawValue: 3932160
+  WaveSize: 8
+  WaveGrowth: 3
+  MaxWaveSize: 24
+  PowerMargin: 10
+  PopulationMargin: 4
+  SiteGrid:
+    RawValue: 655360
+  SiteRings: 5
+  StrategicDiplomacy: 1
+  AcceptChance:
+    RawValue: 32768
+  ProposalIntervalSeconds:
+    RawValue: 5898240
+  DiplomacyFundsReserve:
+    RawValue: 78643200

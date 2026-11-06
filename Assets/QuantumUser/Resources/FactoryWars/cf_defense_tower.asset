@@ -16,6 +16,7 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/cf_defense_tower
     Guid:
       Value: 332065482565463792
+  Role: 9
   Cost:
     RawValue: 29491200
   BuildTimeSeconds:

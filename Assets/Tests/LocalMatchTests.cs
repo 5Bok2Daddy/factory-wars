@@ -22,12 +22,13 @@ namespace FactoryWars.Tests {
     const int CommandFrames = 15;
 
     readonly List<EventActionRejected> _rejected = new List<EventActionRejected>();
+    static AssetRef<FactionSpec>[] _sceneFactions;
     GameObject _listener;
 
     static QuantumGame Game => QuantumRunner.Default?.Game;
     static Frame Verified => Game.Frames.Verified;
 
-    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null) {
+    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null) {
       Time.timeScale = TimeScale;
       // 씬 로드 직후, 러너의 Start 전에 규칙을 바꾼다.
       UnityEngine.Events.UnityAction<Scene, LoadSceneMode> onLoaded = (loaded, mode) => {
@@ -41,7 +42,17 @@ namespace FactoryWars.Tests {
         for (var i = 0; teamMode && i < list.Count; i++) {
           list[i].Team = i / 2;
         }
-        runner.LocalPlayers = list.ToArray();
+        // 뒤쪽 자리를 AI에게 준다.
+        var humans = players - (bots?.Length ?? 0);
+        runner.RuntimeConfig.Bots = bots?.Select((difficulty, i) => new BotSlot {
+          Player = humans + i, Faction = list[humans + i].Faction, Team = humans + i, Difficulty = difficulty,
+        }).ToArray();
+        if (seed.HasValue) {
+          runner.RuntimeConfig.Seed = seed.Value;
+        }
+        var allFactions = list;
+        _sceneFactions = allFactions.Select(p => p.Faction).ToArray();
+        runner.LocalPlayers = list.Take(humans).ToArray();
         runner.MaxPlayerCount = players;
         runner.RuntimeConfig.ScenarioUnits = units?.Select(u => new ScenarioUnit {
           Player = u.Owner, Unit = FindUnit(runner, u.Unit), Position = new FPVector3(u.X, 0, u.Z),
@@ -59,20 +70,24 @@ namespace FactoryWars.Tests {
       SceneManager.sceneLoaded -= onLoaded;
       yield return WaitFor(() => Game?.Frames?.Verified != null && Verified.ComponentCount<Building>() >= players, 30f, "플레이어 사령부 생성");
 
+      // AI 건물이 먼저 있어서 사람 자리가 확정될 때까지 더 기다린다.
+      if (bots != null && players > bots.Length) {
+        yield return WaitFrames(CommandFrames);
+      }
       _rejected.Clear();
       _listener = new GameObject("RejectedListener");
       QuantumEvent.Subscribe<EventActionRejected>(_listener, e => _rejected.Add(e));
     }
 
     static AssetRef<UnitSpec> FindUnit(QuantumRunnerLocalDebug runner, string name) {
-      return runner.LocalPlayers
-        .SelectMany(p => QuantumUnityDB.GetGlobalAsset<FactionSpec>(p.Faction.Id).Units)
+      return _sceneFactions
+        .SelectMany(p => QuantumUnityDB.GetGlobalAsset<FactionSpec>(p.Id).Units)
         .First(u => QuantumUnityDB.GetGlobalAsset<UnitSpec>(u.Id).name == name);
     }
 
     static AssetRef<BuildingSpec> FindBuilding(QuantumRunnerLocalDebug runner, string name) {
-      return runner.LocalPlayers
-        .SelectMany(p => QuantumUnityDB.GetGlobalAsset<FactionSpec>(p.Faction.Id).Buildings)
+      return _sceneFactions
+        .SelectMany(p => QuantumUnityDB.GetGlobalAsset<FactionSpec>(p.Id).Buildings)
         .First(b => QuantumUnityDB.GetGlobalAsset<BuildingSpec>(b.Id).name == name);
     }
 

@@ -13,9 +13,6 @@ namespace Quantum.FactoryWars {
         Health = spec.BuildTimeSeconds > FP._0 ? spec.MaxHealth * FactoryWarsUtil.Rules(f).FoundationHealthRatio : spec.MaxHealth,
         ConstructionRemaining = spec.BuildTimeSeconds,
       });
-      // NavMesh는 고정이라 건물을 구멍으로 낼 수 없다. 유닛이 피해 가도록 회피 장애물을 둔다.
-      f.Add<NavMeshAvoidanceObstacle>(entity);
-      f.Unsafe.GetPointer<NavMeshAvoidanceObstacle>(entity)->Radius = spec.FootprintRadius * FactoryWarsUtil.Rules(f).BuildingAvoidanceScale;
       return entity;
     }
 
@@ -258,6 +255,7 @@ namespace Quantum.FactoryWars {
         }
         for (var i = 0; i < unit.SpawnCount; i++) {
           SpawnUnit(f, building->Owner, building->Queue[0].Unit, transform->Position, i, building);
+          state->UnitsProduced++;
         }
         state->PopulationUsed += population;
         RemoveOrder(building, 0);
@@ -485,6 +483,7 @@ namespace Quantum.FactoryWars {
 
       if (unit->Health <= FP._0) {
         f.Events.UnitDestroyed(target, unit->Owner, unit->Spec);
+        FactoryWarsUtil.Player(f, unit->Owner)->UnitsLost++;
         f.Destroy(target);
       } else if (weapon.Ability == SpecialAbility.TargetDesignator) {
         unit->DesignatedBy = weapon.Owner;
@@ -506,6 +505,7 @@ namespace Quantum.FactoryWars {
         }
         building->Health -= amount;
         if (building->Health <= FP._0) {
+          FactoryWarsUtil.Player(f, building->Owner)->BuildingsLost++;
           f.Destroy(target);
         }
       }
@@ -754,11 +754,14 @@ namespace Quantum.FactoryWars {
       PushOutOfBuildings(f);
     }
 
-    /// <summary>회피로 다 막지 못한 지상 유닛을 부지 밖으로 밀어낸다. 가까운 변 쪽으로 민다.</summary>
+    /// <summary>
+    /// NavMesh는 고정이라 경로가 건물을 지나간다. 지상 유닛을 가까운 변 밖으로 밀어내고,
+    /// 이동 중이면 변을 따라 가까운 모서리로 미끄러뜨려 건물을 돌아가게 한다.
+    /// </summary>
     static void PushOutOfBuildings(Frame f) {
       var clearance = FactoryWarsUtil.Rules(f).UnitClearance;
-      var units = f.Filter<Transform3D, NavMeshSteeringAgent>();
-      while (units.NextUnsafe(out _, out var unit, out _)) {
+      var units = f.Filter<Transform3D, NavMeshSteeringAgent, NavMeshPathfinder>();
+      while (units.NextUnsafe(out _, out var unit, out var agent, out var pathfinder)) {
         var buildings = f.Filter<Transform3D, Building>();
         while (buildings.NextUnsafe(out _, out var transform, out var building)) {
           var reach = f.FindAsset(building->Spec).FootprintRadius + clearance;
@@ -769,11 +772,18 @@ namespace Quantum.FactoryWars {
           if (overlapX <= FP._0 || overlapZ <= FP._0) {
             continue;
           }
+          var slide = pathfinder->IsActive ? agent->MaxSpeed * f.DeltaTime : FP._0;
           var position = unit->Position;
+          var center = transform->Position;
+          var target = pathfinder->Target;
           if (overlapX < overlapZ) {
-            position.X += x < FP._0 ? -overlapX : overlapX;
+            var side = x < FP._0 ? -reach : reach;
+            position.X = center.X + side;
+            position.Z += slide * Detour(position.X, position.Z, target.X, target.Z, center.X + side, center.Z, reach);
           } else {
-            position.Z += z < FP._0 ? -overlapZ : overlapZ;
+            var side = z < FP._0 ? -reach : reach;
+            position.Z = center.Z + side;
+            position.X += slide * Detour(position.Z, position.X, target.Z, target.X, center.Z + side, center.X, reach);
           }
           unit->Position = position;
         }
@@ -797,6 +807,18 @@ namespace Quantum.FactoryWars {
         }
         agent->MaxSpeed = count >= spec.AbilityCount ? spec.MoveSpeed * spec.AbilityMultiplier : spec.MoveSpeed;
       }
+    }
+
+    /// <summary>
+    /// 면을 따라 갈 방향(+1 또는 -1). 면의 양 끝 모서리 중 목표까지 총거리가 짧은 쪽을 고른다.
+    /// 면 위 어디서든 같은 모서리가 나오므로 왕복하지 않는다. n은 면에 수직인 축, t는 면을 따르는 축이다.
+    /// </summary>
+    static int Detour(FP n, FP t, FP targetN, FP targetT, FP faceN, FP centerT, FP reach) {
+      var high = centerT + reach;
+      var low = centerT - reach;
+      var viaHigh = FPMath.Abs(high - t) + new FPVector2(targetN - faceN, targetT - high).Magnitude;
+      var viaLow = FPMath.Abs(t - low) + new FPVector2(targetN - faceN, targetT - low).Magnitude;
+      return viaHigh <= viaLow ? 1 : -1;
     }
 
     static void MoveAir(Frame f, Transform3D* transform, Unit* unit, UnitSpec spec, FPVector3 destination) {

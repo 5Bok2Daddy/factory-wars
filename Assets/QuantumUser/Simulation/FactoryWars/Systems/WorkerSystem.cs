@@ -44,9 +44,9 @@ namespace Quantum.FactoryWars {
       return false;
     }
 
-    static EntityRef NearestNode(Frame f, FPVector3 position, FP radius) {
+    public static EntityRef NearestNode(Frame f, FPVector3 position, FP radius) {
       var best = EntityRef.None;
-      var bestDistance = radius * radius;
+      var bestDistance = radius < FP.UseableMax ? radius * radius : FP.UseableMax;
       var nodes = f.Filter<Transform3D, ResourceNode>();
       while (nodes.NextUnsafe(out var entity, out var transform, out var node)) {
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, position);
@@ -122,7 +122,9 @@ namespace Quantum.FactoryWars {
       var spec = f.FindAsset(f.Unsafe.GetPointer<Building>(refinery)->Spec);
       var target = f.Unsafe.GetPointer<Transform3D>(refinery)->Position;
       if (MoveInto(f, entity, worker, position, target, spec.FootprintRadius + rules.WorkRange)) {
-        FactoryWarsUtil.Player(f, unit->Owner)->Funds += worker->Carried;
+        var state = FactoryWarsUtil.Player(f, unit->Owner);
+        state->Funds += worker->Carried;
+        state->FundsEarned += worker->Carried;
         worker->Carried = FP._0;
         SetTask(worker, WorkerTask.Gather);
       }

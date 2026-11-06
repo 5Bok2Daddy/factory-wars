@@ -16,6 +16,7 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/cf_heavy_works
     Guid:
       Value: 374696742550698711
+  Role: 8
   Cost:
     RawValue: 98304000
   BuildTimeSeconds:

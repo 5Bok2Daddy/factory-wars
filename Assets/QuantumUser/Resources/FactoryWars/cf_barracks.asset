@@ -16,6 +16,7 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/cf_barracks
     Guid:
       Value: 450344684662698787
+  Role: 4
   Cost:
     RawValue: 26214400
   BuildTimeSeconds:

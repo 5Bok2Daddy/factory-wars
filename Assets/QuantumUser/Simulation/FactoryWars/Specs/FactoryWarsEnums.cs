@@ -1,6 +1,10 @@
 namespace Quantum {
   public enum UnitSize { Engineer, Small, Medium, Large }
 
+  public enum BuildingRole {
+    Headquarters, PowerPlant, Refinery, SupplyDepot, Barracks, ResearchLab, VehicleFactory, Airfield, HeavyWorks, DefenseTower
+  }
+
   public enum AttackType { None, AntiInfantry, AntiArmor, AntiAir, Area }
 
   public enum SpecialAbility {

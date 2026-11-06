@@ -16,6 +16,7 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/cf_research_lab
     Guid:
       Value: 431751495118887781
+  Role: 5
   Cost:
     RawValue: 39321600
   BuildTimeSeconds:

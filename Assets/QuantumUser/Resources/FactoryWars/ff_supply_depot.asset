@@ -16,6 +16,7 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/ff_supply_depot
     Guid:
       Value: 502545738306280812
+  Role: 3
   Cost:
     RawValue: 19660800
   BuildTimeSeconds:

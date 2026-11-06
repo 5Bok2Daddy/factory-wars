@@ -16,6 +16,7 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/ff_power_plant
     Guid:
       Value: 342299686155455319
+  Role: 1
   Cost:
     RawValue: 19660800
   BuildTimeSeconds:

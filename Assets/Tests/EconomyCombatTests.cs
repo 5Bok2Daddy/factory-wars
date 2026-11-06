@@ -326,6 +326,19 @@ namespace FactoryWars.Tests {
       Assert.GreaterOrEqual(closest, 3f, "부지 안으로 들어가지 않음");
     }
 
+    [UnityTest]
+    public IEnumerator Units_EscapePocketBetweenBuildings() {
+      // AI 경기에서 공병이 갇혔던 배치: 8칸 간격 건물 세 채가 만든 구석.
+      var inside = (0, "ff_engineer", -8, 36);
+      yield return StartMatch(units: new[] { inside }, buildings: new[] {
+        (0, "ff_barracks", -8, 40), (0, "ff_power_plant", -8, 32), (0, "ff_supply_depot", 0, 32),
+      });
+      var engineer = Engineers(0).First(e => Verified.Get<Transform3D>(e).Position.Z > 30);
+      var target = V(20, 45);
+      Game.SendCommand(0, new MoveUnitsCommand { Units = new[] { engineer }, Target = target });
+      yield return WaitFor(() => (Verified.Get<Transform3D>(engineer).Position - target).Magnitude < 2, 30f, "구석 탈출");
+    }
+
     // 패배 조건
 
     [UnityTest]

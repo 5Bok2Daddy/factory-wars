@@ -68,8 +68,6 @@ MonoBehaviour:
     RawValue: 32768
   FoundationHealthRatio:
     RawValue: 6553
-  BuildingAvoidanceScale:
-    RawValue: 78643
   UnitClearance:
     RawValue: 32768
   Matchups:
@@ -117,3 +115,9 @@ MonoBehaviour:
       RawValue: 65536
     VsBuilding:
       RawValue: 65536
+  EasyAi:
+    Id:
+      Value: 336900429687469725
+  NormalAi:
+    Id:
+      Value: 414360037463059834

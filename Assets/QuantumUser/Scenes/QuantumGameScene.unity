@@ -855,6 +855,7 @@ MonoBehaviour:
         Value: 463454056923249890
     TeamMode: 0
     JointVictory: 1
+    Bots: []
     ScenarioUnits: []
     ScenarioBuildings: []
   UseRandomSeed: 0

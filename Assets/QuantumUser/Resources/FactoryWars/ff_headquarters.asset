@@ -16,6 +16,7 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/ff_headquarters
     Guid:
       Value: 532047452687447102
+  Role: 0
   Cost:
     RawValue: 0
   BuildTimeSeconds:

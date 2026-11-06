@@ -13,6 +13,7 @@ enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget }
 enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair }
 enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
+enum BotDifficulty : Byte { Easy, Normal }
 
 struct PlayerState {
     asset_ref<FactionSpec> Faction;
@@ -25,6 +26,20 @@ struct PlayerState {
     Int32 NextNoteFrame;
     QBoolean Active;
     QBoolean Defeated;
+    QBoolean IsBot;
+    BotDifficulty Difficulty;
+    Int32 UnitsProduced;
+    Int32 UnitsLost;
+    Int32 BuildingsLost;
+    FP FundsEarned;
+}
+
+struct BotState {
+    FPVector3 Home;
+    Int32 NextThinkFrame;
+    Int32 NextAttackFrame;
+    Int32 NextProposalFrame;
+    Int32 WaveSize;
 }
 
 struct ProductionOrder {
@@ -40,7 +55,10 @@ struct AllianceProposal {
 
 global {
     array<PlayerState>[MAX_PLAYERS] Players;
+    array<BotState>[MAX_PLAYERS] Bots;
     QBoolean GameEnded;
+    Int32 EndFrame;
+    Int32 WinnerMask;
 }
 
 component Unit {
