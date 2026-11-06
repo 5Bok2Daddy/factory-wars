@@ -6,6 +6,12 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/QuantumUser/Scenes/Map4P.unity
+    guid: f785351cc2c644d4cb33789c470ac502
+  - enabled: 1
+    path: Assets/QuantumUser/Scenes/Map2P.unity
+    guid: dc6225f1d9f7f584ea381e1ea2b7a304
+  - enabled: 1
     path: Assets/QuantumUser/Scenes/QuantumGameScene.unity
     guid: a06340ca6f0146d4dba347a2911500ec
   m_configObjects: {}

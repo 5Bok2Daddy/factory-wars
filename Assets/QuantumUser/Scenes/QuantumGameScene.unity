@@ -861,7 +861,7 @@ MonoBehaviour:
   - PlayerAvatar:
       Id:
         Value: 0
-    PlayerNickname: Free
+    PlayerNickname: Free0
     Faction:
       Id:
         Value: 447499274210451113
@@ -869,7 +869,7 @@ MonoBehaviour:
   - PlayerAvatar:
       Id:
         Value: 0
-    PlayerNickname: Continental
+    PlayerNickname: Continental1
     Faction:
       Id:
         Value: 353374630485000210

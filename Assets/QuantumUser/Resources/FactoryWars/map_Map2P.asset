@@ -1,0 +1,124 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d95c2c8175276047b6aef3cf8178d30, type: 3}
+  m_Name: map_Map2P
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/map_Map2P
+    Guid:
+      Value: 293311705347466376
+  MaxPlayers: 2
+  BoundsMin:
+    X:
+      RawValue: -5242880
+    Y:
+      RawValue: -5242880
+  BoundsMax:
+    X:
+      RawValue: 5242880
+    Y:
+      RawValue: 5242880
+  StartPositions:
+  - X:
+      RawValue: -3604480
+    Y:
+      RawValue: 0
+    Z:
+      RawValue: -3604480
+  - X:
+      RawValue: 3604480
+    Y:
+      RawValue: 0
+    Z:
+      RawValue: 3604480
+  ResourceNodes:
+  - Position:
+      X:
+        RawValue: -2818048
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -3604480
+    Funds:
+      RawValue: 327680000
+  - Position:
+      X:
+        RawValue: 2818048
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 3604480
+    Funds:
+      RawValue: 327680000
+  - Position:
+      X:
+        RawValue: -3604480
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -2818048
+    Funds:
+      RawValue: 327680000
+  - Position:
+      X:
+        RawValue: 3604480
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 2818048
+    Funds:
+      RawValue: 327680000
+  - Position:
+      X:
+        RawValue: -3538944
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 3276800
+    Funds:
+      RawValue: 262144000
+  - Position:
+      X:
+        RawValue: 3538944
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -3276800
+    Funds:
+      RawValue: 262144000
+  - Position:
+      X:
+        RawValue: -3014656
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 3276800
+    Funds:
+      RawValue: 262144000
+  - Position:
+      X:
+        RawValue: 3014656
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -3276800
+    Funds:
+      RawValue: 262144000
+  - Position:
+      X:
+        RawValue: 0
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 0
+    Funds:
+      RawValue: 524288000

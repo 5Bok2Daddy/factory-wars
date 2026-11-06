@@ -19,34 +19,20 @@ MonoBehaviour:
   StartingFunds:
     RawValue: 327680000
   StartingEngineers: 1
-  StartPositions:
-  - X:
-      RawValue: -1966080
-    Y:
-      RawValue: 0
-    Z:
-      RawValue: 0
-  - X:
-      RawValue: 1966080
-    Y:
-      RawValue: 0
-    Z:
-      RawValue: 0
-  - X:
-      RawValue: 0
-    Y:
-      RawValue: 0
-    Z:
-      RawValue: 1966080
-  - X:
-      RawValue: 0
-    Y:
-      RawValue: 0
-    Z:
-      RawValue: -1966080
   NavMeshName: NavMesh
+  MinDiplomacyPlayers: 3
   ProposalSeconds:
     RawValue: 1966080
+  ProposalCost:
+    RawValue: 19660800
+  ProposalRefund:
+    RawValue: 9830400
+  AcceptCost:
+    RawValue: 9830400
+  BreakCost:
+    RawValue: 32768000
+  JointVictorySeconds:
+    RawValue: 3932160
   BreakGraceSeconds:
     RawValue: 655360
   RealliableSeconds:
@@ -54,6 +40,10 @@ MonoBehaviour:
   NoteCooldownSeconds:
     RawValue: 327680
   NotePhraseCount: 12
+  NoteSingleCost:
+    RawValue: 3276800
+  NoteGroupCost:
+    RawValue: 6553600
   LowPowerProductionMultiplier:
     RawValue: 32768
   LowPowerTowerMultiplier:
