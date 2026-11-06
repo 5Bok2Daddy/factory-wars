@@ -217,6 +217,11 @@ namespace Quantum.Prototypes {
     public FP ReactiveArmorCooldown;
     [ArrayLengthAttribute(3)]
     public AssetRef<ModuleSpec>[] Modules = new AssetRef<ModuleSpec>[3];
+    public FP AbilityCooldown;
+    public Int32 EngagedUntilFrame;
+    public Int32 DesignatedUntilFrame;
+    public PlayerRef DesignatedBy;
+    public FP DesignatedBonus;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Unit component = default;
         Materialize((Frame)f, ref component, in context);
@@ -234,6 +239,32 @@ namespace Quantum.Prototypes {
         for (int i = 0, count = PrototypeValidator.CheckLength(Modules, 3, in context); i < count; ++i) {
           *result.Modules.GetPointer(i) = this.Modules[i];
         }
+        result.AbilityCooldown = this.AbilityCooldown;
+        result.EngagedUntilFrame = this.EngagedUntilFrame;
+        result.DesignatedUntilFrame = this.DesignatedUntilFrame;
+        result.DesignatedBy = this.DesignatedBy;
+        result.DesignatedBonus = this.DesignatedBonus;
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.Worker))]
+  public unsafe class WorkerPrototype : ComponentPrototype<Quantum.Worker> {
+    public Quantum.QEnum8<WorkerTask> Task;
+    public MapEntityId Target;
+    public FP Carried;
+    public FP WorkTimer;
+    public Int32 NextPathFrame;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.Worker component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.Worker result, in PrototypeMaterializationContext context = default) {
+        result.Task = this.Task;
+        PrototypeValidator.FindMapEntity(this.Target, in context, out result.Target);
+        result.Carried = this.Carried;
+        result.WorkTimer = this.WorkTimer;
+        result.NextPathFrame = this.NextPathFrame;
     }
   }
 }

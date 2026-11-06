@@ -52,4 +52,22 @@ MonoBehaviour:
       RawValue: 0
     Z:
       RawValue: -1966080
-  ResourceNodes: []
+  ResourceNodes:
+  - Position:
+      X:
+        RawValue: -1966080
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 917504
+    Funds:
+      RawValue: 327680000
+  - Position:
+      X:
+        RawValue: -1966080
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -917504
+    Funds:
+      RawValue: 6553600

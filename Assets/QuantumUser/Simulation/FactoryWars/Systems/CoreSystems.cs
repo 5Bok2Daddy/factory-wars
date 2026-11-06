@@ -6,6 +6,13 @@ namespace Quantum.FactoryWars {
 
     public static MapSpec MapInfo(Frame f) => f.FindAsset<MapSpec>(f.Map.UserAsset);
 
+    /// <summary>수평 거리의 제곱. 공중 유닛의 고도는 사거리·작업 범위에 넣지 않는다.</summary>
+    public static FP FlatDistanceSqr(FPVector3 a, FPVector3 b) {
+      var x = a.X - b.X;
+      var z = a.Z - b.Z;
+      return x * x + z * z;
+    }
+
     public static int SecondsToFrames(Frame f, FP seconds) => FPMath.CeilToInt(seconds * f.SessionConfig.UpdateFPS);
 
     public static PlayerState* Player(Frame f, PlayerRef player) {
@@ -64,6 +71,13 @@ namespace Quantum.FactoryWars {
       if (faction.StartingUnits != null) {
         for (var i = 0; i < faction.StartingUnits.Length; i++) {
           ProductionSystem.SpawnUnit(f, player, faction.StartingUnits[i], start, rules.StartingEngineers + i, null);
+        }
+      }
+
+      var scenario = f.RuntimeConfig.ScenarioUnits;
+      for (var i = 0; scenario != null && i < scenario.Length; i++) {
+        if (scenario[i].Player == (int)player) {
+          ProductionSystem.SpawnUnitAt(f, player, scenario[i].Unit, scenario[i].Position, null);
         }
       }
     }

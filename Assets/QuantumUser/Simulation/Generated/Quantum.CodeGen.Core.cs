@@ -55,12 +55,16 @@ namespace Quantum {
     Reject,
     Break,
     Note,
+    Build,
+    Gather,
+    Repair,
   }
   public enum RejectReason : byte {
     InsufficientFunds,
     Cooldown,
     ModeDisabled,
     Invalid,
+    BlockedLocation,
   }
   public enum Relation : byte {
     Enemy,
@@ -72,6 +76,13 @@ namespace Quantum {
     Move,
     AttackMove,
     AttackTarget,
+  }
+  public enum WorkerTask : byte {
+    Idle,
+    Gather,
+    Deliver,
+    Build,
+    Repair,
   }
   [System.FlagsAttribute()]
   public enum InputButtons : int {
@@ -886,27 +897,37 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Unit : Quantum.IComponent {
-    public const Int32 SIZE = 96;
+    public const Int32 SIZE = 128;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(4)]
+    [FieldOffset(16)]
     public PlayerRef Owner;
-    [FieldOffset(32)]
+    [FieldOffset(48)]
     public AssetRef<UnitSpec> Spec;
-    [FieldOffset(56)]
+    [FieldOffset(88)]
     public FP Health;
     [FieldOffset(0)]
     public UnitOrder Order;
-    [FieldOffset(72)]
+    [FieldOffset(104)]
     public FPVector3 TargetPosition;
-    [FieldOffset(40)]
+    [FieldOffset(56)]
     public EntityRef TargetEntity;
-    [FieldOffset(48)]
+    [FieldOffset(72)]
     public FP AttackCooldown;
-    [FieldOffset(64)]
+    [FieldOffset(96)]
     public FP ReactiveArmorCooldown;
-    [FieldOffset(8)]
+    [FieldOffset(24)]
     [FramePrinter.FixedArrayAttribute(typeof(AssetRef<ModuleSpec>), 3)]
     private fixed Byte _Modules_[24];
+    [FieldOffset(64)]
+    public FP AbilityCooldown;
+    [FieldOffset(8)]
+    public Int32 EngagedUntilFrame;
+    [FieldOffset(4)]
+    public Int32 DesignatedUntilFrame;
+    [FieldOffset(12)]
+    public PlayerRef DesignatedBy;
+    [FieldOffset(80)]
+    public FP DesignatedBonus;
     public readonly FixedArray<AssetRef<ModuleSpec>> Modules {
       get {
         fixed (byte* p = _Modules_) { return new FixedArray<AssetRef<ModuleSpec>>(p, 8, 3); }
@@ -924,20 +945,64 @@ namespace Quantum {
         hash = hash * 31 + AttackCooldown.GetHashCode();
         hash = hash * 31 + ReactiveArmorCooldown.GetHashCode();
         hash = hash * 31 + HashCodeUtils.GetArrayHashCode(Modules);
+        hash = hash * 31 + AbilityCooldown.GetHashCode();
+        hash = hash * 31 + EngagedUntilFrame.GetHashCode();
+        hash = hash * 31 + DesignatedUntilFrame.GetHashCode();
+        hash = hash * 31 + DesignatedBy.GetHashCode();
+        hash = hash * 31 + DesignatedBonus.GetHashCode();
         return hash;
       }
     }
     public static void Serialize(void* ptr, FrameSerializer serializer) {
         var p = (Unit*)ptr;
         serializer.Stream.Serialize((Byte*)&p->Order);
+        serializer.Stream.Serialize(&p->DesignatedUntilFrame);
+        serializer.Stream.Serialize(&p->EngagedUntilFrame);
+        PlayerRef.Serialize(&p->DesignatedBy, serializer);
         PlayerRef.Serialize(&p->Owner, serializer);
         FixedArray.Serialize(p->Modules, serializer, Statics.SerializeAssetRef);
         AssetRef.Serialize(&p->Spec, serializer);
         EntityRef.Serialize(&p->TargetEntity, serializer);
+        FP.Serialize(&p->AbilityCooldown, serializer);
         FP.Serialize(&p->AttackCooldown, serializer);
+        FP.Serialize(&p->DesignatedBonus, serializer);
         FP.Serialize(&p->Health, serializer);
         FP.Serialize(&p->ReactiveArmorCooldown, serializer);
         FPVector3.Serialize(&p->TargetPosition, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct Worker : Quantum.IComponent {
+    public const Int32 SIZE = 32;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(0)]
+    public WorkerTask Task;
+    [FieldOffset(8)]
+    public EntityRef Target;
+    [FieldOffset(16)]
+    public FP Carried;
+    [FieldOffset(24)]
+    public FP WorkTimer;
+    [FieldOffset(4)]
+    public Int32 NextPathFrame;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 467;
+        hash = hash * 31 + (Byte)Task;
+        hash = hash * 31 + Target.GetHashCode();
+        hash = hash * 31 + Carried.GetHashCode();
+        hash = hash * 31 + WorkTimer.GetHashCode();
+        hash = hash * 31 + NextPathFrame.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (Worker*)ptr;
+        serializer.Stream.Serialize((Byte*)&p->Task);
+        serializer.Stream.Serialize(&p->NextPathFrame);
+        EntityRef.Serialize(&p->Target, serializer);
+        FP.Serialize(&p->Carried, serializer);
+        FP.Serialize(&p->WorkTimer, serializer);
     }
   }
   public static unsafe partial class Constants {
@@ -1007,6 +1072,8 @@ namespace Quantum {
       BuildSignalsArrayOnComponentRemoved<Quantum.Unit>();
       BuildSignalsArrayOnComponentAdded<View>();
       BuildSignalsArrayOnComponentRemoved<View>();
+      BuildSignalsArrayOnComponentAdded<Quantum.Worker>();
+      BuildSignalsArrayOnComponentRemoved<Quantum.Worker>();
     }
     partial void SetPlayerInputCodeGen(PlayerRef player, Input input) {
       if ((int)player >= (int)_globals->input.Length) { throw new System.ArgumentOutOfRangeException("player"); }
@@ -1134,15 +1201,18 @@ namespace Quantum {
       typeRegistry.Register(typeof(Quantum.Unit), Quantum.Unit.SIZE);
       typeRegistry.Register(typeof(Quantum.UnitOrder), 1);
       typeRegistry.Register(typeof(View), View.SIZE);
+      typeRegistry.Register(typeof(Quantum.Worker), Quantum.Worker.SIZE);
+      typeRegistry.Register(typeof(Quantum.WorkerTask), 1);
       typeRegistry.Register(typeof(Quantum._globals_), Quantum._globals_.SIZE);
     }
     static partial void InitComponentTypeIdGen() {
-      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 4)
+      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 5)
         .AddBuiltInComponents()
         .Add<Quantum.Building>(Quantum.Building.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Diplomacy>(Quantum.Diplomacy.Serialize, null, null, ComponentFlags.Singleton)
         .Add<Quantum.ResourceNode>(Quantum.ResourceNode.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Unit>(Quantum.Unit.Serialize, null, null, ComponentFlags.None)
+        .Add<Quantum.Worker>(Quantum.Worker.Serialize, null, null, ComponentFlags.None)
         .Finish();
     }
     [Preserve()]
@@ -1155,6 +1225,7 @@ namespace Quantum {
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.RejectReason>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.Relation>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.UnitOrder>();
+      FramePrinter.EnsurePrimitiveNotStripped<Quantum.WorkerTask>();
     }
   }
 }

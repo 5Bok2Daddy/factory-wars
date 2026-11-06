@@ -1,8 +1,20 @@
 namespace Quantum {
+  using System;
+  using Photon.Deterministic;
+
+  /// <summary>경기 시작 때 추가로 배치할 유닛. 튜토리얼과 테스트 상황 구성에 쓴다.</summary>
+  [Serializable]
+  public struct ScenarioUnit {
+    public int Player;
+    public AssetRef<UnitSpec> Unit;
+    public FPVector3 Position;
+  }
+
   public partial class RuntimeConfig {
     public AssetRef<GameRulesSpec> Rules;
     public bool TeamMode;
     public bool JointVictory = true;
+    public ScenarioUnit[] ScenarioUnits;
   }
 
   public partial class RuntimePlayer {

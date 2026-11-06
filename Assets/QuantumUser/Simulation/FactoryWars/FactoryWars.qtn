@@ -10,8 +10,9 @@
 
 enum Relation : Byte { Enemy, Allied, BreakPending }
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget }
-enum ActionKind : Byte { Propose, Accept, Reject, Break, Note }
-enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid }
+enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair }
+enum RejectReason : Byte { InsufficientFunds, Cooldown, ModeDisabled, Invalid, BlockedLocation }
+enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 
 struct PlayerState {
     asset_ref<FactionSpec> Faction;
@@ -52,6 +53,19 @@ component Unit {
     FP AttackCooldown;
     FP ReactiveArmorCooldown;
     array<asset_ref<ModuleSpec>>[MAX_MODULES] Modules;
+    FP AbilityCooldown;
+    Int32 EngagedUntilFrame;
+    Int32 DesignatedUntilFrame;
+    player_ref DesignatedBy;
+    FP DesignatedBonus;
+}
+
+component Worker {
+    WorkerTask Task;
+    entity_ref Target;
+    FP Carried;
+    FP WorkTimer;
+    Int32 NextPathFrame;
 }
 
 component Building {

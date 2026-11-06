@@ -52,3 +52,64 @@ MonoBehaviour:
     RawValue: 393216
   AirAltitude:
     RawValue: 393216
+  CarryCapacity:
+    RawValue: 3276800
+  GatherSeconds:
+    RawValue: 131072
+  WorkRange:
+    RawValue: 131072
+  NodeSearchRadius:
+    RawValue: 1966080
+  ResourceNodeRadius:
+    RawValue: 131072
+  RepairPerSecond:
+    RawValue: 1310720
+  RepairCostRatio:
+    RawValue: 32768
+  FoundationHealthRatio:
+    RawValue: 6553
+  Matchups:
+  - Attack: 1
+    VsSmall:
+      RawValue: 98304
+    VsMedium:
+      RawValue: 39321
+    VsLarge:
+      RawValue: 26214
+    VsAir:
+      RawValue: 65536
+    VsBuilding:
+      RawValue: 32768
+  - Attack: 2
+    VsSmall:
+      RawValue: 39321
+    VsMedium:
+      RawValue: 98304
+    VsLarge:
+      RawValue: 98304
+    VsAir:
+      RawValue: 65536
+    VsBuilding:
+      RawValue: 65536
+  - Attack: 3
+    VsSmall:
+      RawValue: 32768
+    VsMedium:
+      RawValue: 16384
+    VsLarge:
+      RawValue: 16384
+    VsAir:
+      RawValue: 98304
+    VsBuilding:
+      RawValue: 16384
+  - Attack: 4
+    VsSmall:
+      RawValue: 65536
+    VsMedium:
+      RawValue: 65536
+    VsLarge:
+      RawValue: 65536
+    VsAir:
+      RawValue: 65536
+    VsBuilding:
+      RawValue: 65536

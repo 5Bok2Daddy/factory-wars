@@ -43,3 +43,12 @@ MonoBehaviour:
   ModuleSlots: 2
   SpawnCount: 1
   Ability: 4
+  AbilityMultiplier:
+    RawValue: 131072
+  AbilitySeconds:
+    RawValue: 524288
+  AbilityRadius:
+    RawValue: 0
+  AbilityCount: 0
+  AbilityCooldownSeconds:
+    RawValue: 0

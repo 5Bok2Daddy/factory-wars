@@ -111,21 +111,23 @@ namespace FactoryWars.EditorTools {
       public double Damage, Range, MinRange, Splash, Interval, Speed;
       public int Spawn;
       public SpecialAbility Ability;
+      public double AbilityMultiplier, AbilitySeconds, AbilityRadius, AbilityCooldown;
+      public int AbilityCount;
     }
 
     // GDD 값: 비용·생산·체력·공격 유형. 피해·사거리·간격·속도는 임시값(SETUP-REPORT.md 참조).
     static readonly UnitRow[] Units = {
       new UnitRow { Id = "ff_engineer", Size = UnitSize.Engineer, Cost = 100, Build = 10, Health = 80, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
-      new UnitRow { Id = "ff_ranger_squad", Size = UnitSize.Small, Cost = 120, Build = 15, Health = 140, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator },
+      new UnitRow { Id = "ff_ranger_squad", Size = UnitSize.Small, Cost = 120, Build = 15, Health = 140, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
       new UnitRow { Id = "ff_skyguard_squad", Size = UnitSize.Small, Cost = 150, Build = 18, Health = 120, Attack = AttackType.AntiAir, Damage = 20, Range = 8, Interval = 1, Speed = 4, Ability = SpecialAbility.AirPriority },
-      new UnitRow { Id = "ff_eagle_tank", Size = UnitSize.Medium, Cost = 550, Build = 35, Health = 700, Attack = AttackType.AntiArmor, Damage = 60, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble },
-      new UnitRow { Id = "ff_hawk_gunship", Size = UnitSize.Medium, Air = true, Cost = 650, Build = 40, Health = 450, Attack = AttackType.AntiArmor, Damage = 55, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist },
-      new UnitRow { Id = "ff_skyfortress_bomber", Size = UnitSize.Large, Air = true, Cost = 1600, Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, Ability = SpecialAbility.CarpetBomb },
+      new UnitRow { Id = "ff_eagle_tank", Size = UnitSize.Medium, Cost = 550, Build = 35, Health = 700, Attack = AttackType.AntiArmor, Damage = 60, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble, AbilityMultiplier = 2, AbilitySeconds = 8 },
+      new UnitRow { Id = "ff_hawk_gunship", Size = UnitSize.Medium, Air = true, Cost = 650, Build = 40, Health = 450, Attack = AttackType.AntiArmor, Damage = 55, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
+      new UnitRow { Id = "ff_skyfortress_bomber", Size = UnitSize.Large, Air = true, Cost = 1600, Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, Ability = SpecialAbility.CarpetBomb, AbilityMultiplier = 1.5, AbilityRadius = 8, AbilityCount = 5, AbilityCooldown = 45 },
       new UnitRow { Id = "cf_engineer", Size = UnitSize.Engineer, Cost = 80, Build = 8, Health = 70, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
       new UnitRow { Id = "cf_militia", Size = UnitSize.Small, Cost = 90, Build = 12, Health = 80, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
-      new UnitRow { Id = "cf_flame_squad", Size = UnitSize.Small, Cost = 130, Build = 15, Health = 130, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst },
-      new UnitRow { Id = "cf_dragonscale_tank", Size = UnitSize.Medium, Cost = 400, Build = 28, Health = 520, Attack = AttackType.AntiArmor, Damage = 45, Range = 8, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed },
-      new UnitRow { Id = "cf_thunder_aa", Size = UnitSize.Medium, Cost = 380, Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget },
+      new UnitRow { Id = "cf_flame_squad", Size = UnitSize.Small, Cost = 130, Build = 15, Health = 130, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
+      new UnitRow { Id = "cf_dragonscale_tank", Size = UnitSize.Medium, Cost = 400, Build = 28, Health = 520, Attack = AttackType.AntiArmor, Damage = 45, Range = 8, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
+      new UnitRow { Id = "cf_thunder_aa", Size = UnitSize.Medium, Cost = 380, Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
       new UnitRow { Id = "cf_longwall_mlrs", Size = UnitSize.Large, Cost = 1200, Build = 55, Health = 1000, Attack = AttackType.Area, Damage = 120, Range = 18, MinRange = 6, Splash = 4, Interval = 6, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
     };
 
@@ -151,6 +153,11 @@ namespace FactoryWars.EditorTools {
       // 모듈 슬롯: 소형 1, 중형 2, 대형 3. 공병은 0(임시).
       spec.ModuleSlots = row.Size == UnitSize.Large ? 3 : row.Size == UnitSize.Medium ? 2 : row.Size == UnitSize.Small ? 1 : 0;
       spec.Ability = row.Ability;
+      spec.AbilityMultiplier = row.AbilityMultiplier > 0 ? N(row.AbilityMultiplier) : 1;
+      spec.AbilitySeconds = N(row.AbilitySeconds);
+      spec.AbilityRadius = N(row.AbilityRadius);
+      spec.AbilityCount = row.AbilityCount;
+      spec.AbilityCooldownSeconds = N(row.AbilityCooldown);
       EditorUtility.SetDirty(spec);
       return spec;
     }
@@ -164,6 +171,8 @@ namespace FactoryWars.EditorTools {
       spec.PowerConsumed = powerIn;
       spec.PopulationCapBonus = population;
       spec.ModuleSlots = slots;
+      spec.FootprintRadius = 3;
+      spec.IsRefinery = id.EndsWith("_refinery");
       spec.Producible = producible.Select(Ref).ToArray();
       spec.Attack = AttackType.None;
       EditorUtility.SetDirty(spec);
@@ -252,6 +261,20 @@ namespace FactoryWars.EditorTools {
       rules.LowPowerTowerMultiplier = N(0.5);
       rules.SpawnOffset = 6;
       rules.AirAltitude = 6;
+      rules.CarryCapacity = 50;
+      rules.GatherSeconds = 2;
+      rules.WorkRange = 2;
+      rules.NodeSearchRadius = 30;
+      rules.ResourceNodeRadius = 2;
+      rules.RepairPerSecond = 20;
+      rules.RepairCostRatio = N(0.5);
+      rules.FoundationHealthRatio = N(0.1);
+      rules.Matchups = new[] {
+        new DamageMatchup { Attack = AttackType.AntiInfantry, VsSmall = N(1.5), VsMedium = N(0.6), VsLarge = N(0.4), VsAir = 1, VsBuilding = N(0.5) },
+        new DamageMatchup { Attack = AttackType.AntiArmor, VsSmall = N(0.6), VsMedium = N(1.5), VsLarge = N(1.5), VsAir = 1, VsBuilding = 1 },
+        new DamageMatchup { Attack = AttackType.AntiAir, VsSmall = N(0.5), VsMedium = N(0.25), VsLarge = N(0.25), VsAir = N(1.5), VsBuilding = N(0.25) },
+        new DamageMatchup { Attack = AttackType.Area, VsSmall = 1, VsMedium = 1, VsLarge = 1, VsAir = 1, VsBuilding = 1 },
+      };
       EditorUtility.SetDirty(rules);
 
       var testMap = Asset<MapSpec>("map_test");
@@ -261,7 +284,10 @@ namespace FactoryWars.EditorTools {
       testMap.StartPositions = new[] {
         new FPVector3(-30, 0, 0), new FPVector3(30, 0, 0), new FPVector3(0, 0, 30), new FPVector3(0, 0, -30),
       };
-      testMap.ResourceNodes = new ResourceNodePlacement[0];
+      testMap.ResourceNodes = new[] {
+        new ResourceNodePlacement { Position = new FPVector3(-30, 0, 14), Funds = 5000 },
+        new ResourceNodePlacement { Position = new FPVector3(-30, 0, -14), Funds = 100 },
+      };
       EditorUtility.SetDirty(testMap);
 
       BuildMapSpec(TwoPlayerMap);

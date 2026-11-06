@@ -30,3 +30,6 @@ crashlytics-build.properties
 # OS
 .DS_Store
 Thumbs.db
+
+# Game 안에 별도로 생긴 Unity 프로젝트. 이 저장소 내용이 아니다.
+/FactoryWars/

@@ -92,6 +92,11 @@ namespace Quantum.Prototypes.Unity {
     public FP ReactiveArmorCooldown;
     [ArrayLengthAttribute(3)]
     public AssetRef<ModuleSpec>[] Modules = new AssetRef<ModuleSpec>[3];
+    public FP AbilityCooldown;
+    public Int32 EngagedUntilFrame;
+    public Int32 DesignatedUntilFrame;
+    public PlayerRef DesignatedBy;
+    public FP DesignatedBonus;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
     public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.UnitPrototype();
@@ -104,6 +109,30 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.AttackCooldown, out result.AttackCooldown);
       converter.Convert(this.ReactiveArmorCooldown, out result.ReactiveArmorCooldown);
       converter.Convert(this.Modules, out result.Modules);
+      converter.Convert(this.AbilityCooldown, out result.AbilityCooldown);
+      converter.Convert(this.EngagedUntilFrame, out result.EngagedUntilFrame);
+      converter.Convert(this.DesignatedUntilFrame, out result.DesignatedUntilFrame);
+      converter.Convert(this.DesignatedBy, out result.DesignatedBy);
+      converter.Convert(this.DesignatedBonus, out result.DesignatedBonus);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
+  public unsafe partial class WorkerPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.WorkerPrototype> {
+    public Quantum.QEnum8<WorkerTask> Task;
+    public Quantum.QuantumEntityPrototype Target;
+    public FP Carried;
+    public FP WorkTimer;
+    public Int32 NextPathFrame;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.WorkerPrototype prototype);
+    public override Quantum.Prototypes.WorkerPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.WorkerPrototype();
+      converter.Convert(this.Task, out result.Task);
+      converter.Convert(this.Target, out result.Target);
+      converter.Convert(this.Carried, out result.Carried);
+      converter.Convert(this.WorkTimer, out result.WorkTimer);
+      converter.Convert(this.NextPathFrame, out result.NextPathFrame);
       ConvertUser(converter, ref result);
       return result;
     }

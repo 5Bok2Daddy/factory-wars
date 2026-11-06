@@ -27,6 +27,9 @@ MonoBehaviour:
   PopulationCapBonus:
     RawValue: 0
   ModuleSlots: 0
+  FootprintRadius:
+    RawValue: 196608
+  IsRefinery: 1
   Producible: []
   Attack: 0
   Damage:

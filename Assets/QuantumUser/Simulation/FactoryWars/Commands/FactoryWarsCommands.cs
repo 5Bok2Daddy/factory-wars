@@ -2,8 +2,23 @@ namespace Quantum.FactoryWars {
   using Photon.Deterministic;
 
   /// <summary>플레이어 일회성 행동의 공통 기반. CommandSystem이 Execute를 호출한다.</summary>
-  public abstract class FactoryCommand : DeterministicCommand {
+  public abstract unsafe class FactoryCommand : DeterministicCommand {
     public abstract void Execute(Frame f, PlayerRef player);
+
+    protected static void SerializeUnits(BitStream stream, ref EntityRef[] units) {
+      var count = units.Length;
+      stream.Serialize(ref count);
+      if (stream.Reading) {
+        units = new EntityRef[FPMath.Clamp(count, 0, MoveUnitsCommand.MaxUnits)];
+      }
+      for (var i = 0; i < units.Length; i++) {
+        stream.Serialize(ref units[i]);
+      }
+    }
+
+    protected static bool IsOwnWorker(Frame f, PlayerRef player, EntityRef entity) {
+      return f.Unsafe.TryGetPointer<Unit>(entity, out var unit) && unit->Owner == player && f.Has<Worker>(entity);
+    }
   }
 
   public unsafe class MoveUnitsCommand : FactoryCommand {
@@ -14,14 +29,7 @@ namespace Quantum.FactoryWars {
     public bool AttackMove;
 
     public override void Serialize(BitStream stream) {
-      var count = Units.Length;
-      stream.Serialize(ref count);
-      if (stream.Reading) {
-        Units = new EntityRef[FPMath.Clamp(count, 0, MaxUnits)];
-      }
-      for (var i = 0; i < Units.Length; i++) {
-        stream.Serialize(ref Units[i]);
-      }
+      SerializeUnits(stream, ref Units);
       stream.Serialize(ref Target);
       stream.Serialize(ref AttackMove);
     }
@@ -40,14 +48,7 @@ namespace Quantum.FactoryWars {
     public EntityRef Target;
 
     public override void Serialize(BitStream stream) {
-      var count = Units.Length;
-      stream.Serialize(ref count);
-      if (stream.Reading) {
-        Units = new EntityRef[FPMath.Clamp(count, 0, MoveUnitsCommand.MaxUnits)];
-      }
-      for (var i = 0; i < Units.Length; i++) {
-        stream.Serialize(ref Units[i]);
-      }
+      SerializeUnits(stream, ref Units);
       stream.Serialize(ref Target);
     }
 
@@ -67,17 +68,71 @@ namespace Quantum.FactoryWars {
     }
   }
 
+  /// <summary>공병이 지정 위치에 건물을 짓는다. 비용은 부지를 잡을 때 낸다.</summary>
   public unsafe class BuildCommand : FactoryCommand {
+    public EntityRef Engineer;
     public AssetRef<BuildingSpec> Building;
     public FPVector3 Position;
 
     public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Engineer);
       stream.Serialize(ref Building);
       stream.Serialize(ref Position);
     }
 
     public override void Execute(Frame f, PlayerRef player) {
-      ProductionSystem.TryBuild(f, player, Building, Position);
+      if (IsOwnWorker(f, player, Engineer) == false) {
+        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Invalid);
+        return;
+      }
+      ProductionSystem.TryBuild(f, player, Engineer, Building, Position);
+    }
+  }
+
+  /// <summary>공병이 자금 노드에서 채집해 정제소로 나른다.</summary>
+  public unsafe class GatherCommand : FactoryCommand {
+    public EntityRef[] Units = System.Array.Empty<EntityRef>();
+    public EntityRef Node;
+
+    public override void Serialize(BitStream stream) {
+      SerializeUnits(stream, ref Units);
+      stream.Serialize(ref Node);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      if (f.Has<ResourceNode>(Node) == false) {
+        f.Events.ActionRejected(player, ActionKind.Gather, RejectReason.Invalid);
+        return;
+      }
+      for (var i = 0; i < Units.Length; i++) {
+        if (IsOwnWorker(f, player, Units[i])) {
+          WorkerSystem.Assign(f, Units[i], WorkerTask.Gather, Node);
+        }
+      }
+    }
+  }
+
+  /// <summary>공병이 건물을 수리한다. 짓다 만 건물이면 건설을 이어 간다.</summary>
+  public unsafe class RepairCommand : FactoryCommand {
+    public EntityRef[] Units = System.Array.Empty<EntityRef>();
+    public EntityRef Target;
+
+    public override void Serialize(BitStream stream) {
+      SerializeUnits(stream, ref Units);
+      stream.Serialize(ref Target);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      if (f.Unsafe.TryGetPointer<Building>(Target, out var building) == false || building->Owner != player) {
+        f.Events.ActionRejected(player, ActionKind.Repair, RejectReason.Invalid);
+        return;
+      }
+      for (var i = 0; i < Units.Length; i++) {
+        if (IsOwnWorker(f, player, Units[i]) && WorkerSystem.AssignToBuilding(f, Units[i], Target) == false) {
+          f.Events.ActionRejected(player, ActionKind.Repair, RejectReason.Invalid);
+          return;
+        }
+      }
     }
   }
 
