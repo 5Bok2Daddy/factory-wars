@@ -739,6 +739,15 @@ namespace Quantum.FactoryWars {
       SetDestination(f, entity, target);
     }
 
+    public static void Stop(Frame f, EntityRef entity, Unit* unit) {
+      unit->Order = UnitOrder.Stop;
+      unit->TargetEntity = EntityRef.None;
+      if (f.Unsafe.TryGetPointer<Worker>(entity, out var worker)) {
+        worker->Task = WorkerTask.Idle;
+      }
+      Halt(f, entity);
+    }
+
     public static void SetDestination(Frame f, EntityRef entity, FPVector3 target) {
       if (f.Unsafe.TryGetPointer<NavMeshPathfinder>(entity, out var pathfinder)) {
         var navMesh = f.Map.GetNavMesh(FactoryWarsUtil.Rules(f).NavMeshName);

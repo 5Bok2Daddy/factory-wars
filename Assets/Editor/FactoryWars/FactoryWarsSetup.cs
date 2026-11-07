@@ -184,7 +184,7 @@ namespace FactoryWars.EditorTools {
       return spec;
     }
 
-    static FactionSpec BuildFaction(string factionId, string prefix, Dictionary<string, UnitSpec> units, double ranged, double smallBuild, double populationCap, string[] startingUnits) {
+    static FactionSpec BuildFaction(string factionId, string prefix, Dictionary<string, UnitSpec> units, double ranged, double smallBuild, double populationCap, string[] startingUnits, AssetRef<ModuleSpec>[] modules) {
       UnitSpec U(string id) => units[$"{prefix}_{id}"];
       var ids = units.Keys.Where(k => k.StartsWith(prefix + "_")).ToArray();
       var engineer = units[$"{prefix}_engineer"];
@@ -263,6 +263,7 @@ namespace FactoryWars.EditorTools {
       faction.Buildings = buildings.Skip(1).Select(Ref).ToArray();
       faction.Units = ids.Select(k => Ref(units[k])).ToArray();
       faction.StartingUnits = startingUnits.Select(id => Ref(U(id))).ToArray();
+      faction.Modules = modules;
       EditorUtility.SetDirty(faction);
       return faction;
     }
@@ -319,8 +320,9 @@ namespace FactoryWars.EditorTools {
       reactive.CooldownSeconds = 20;
       EditorUtility.SetDirty(reactive);
 
-      BuildFaction("free_federation", "ff", units, 1.1, 1, 1, new[] { "ranger_squad", "ranger_squad", "eagle_tank" });
-      BuildFaction("continental_federation", "cf", units, 1, 0.75, 1.2, new[] { "militia", "militia", "dragonscale_tank" });
+      var modules = new[] { Ref(piercing), Ref(reactive) };
+      BuildFaction("free_federation", "ff", units, 1.1, 1, 1, new[] { "ranger_squad", "ranger_squad", "eagle_tank" }, modules);
+      BuildFaction("continental_federation", "cf", units, 1, 0.75, 1.2, new[] { "militia", "militia", "dragonscale_tank" }, modules);
 
       var rules = Asset<GameRulesSpec>("game_rules");
       rules.NavMeshName = "NavMesh";
@@ -641,8 +643,12 @@ namespace FactoryWars.EditorTools {
     }
 
     static void EnsureDebugView() {
-      if (Object.FindFirstObjectByType<FactoryWarsDebugView>() == null) {
-        new GameObject("FactoryWarsDebugView").AddComponent<FactoryWarsDebugView>();
+      var view = Object.FindFirstObjectByType<FactoryWarsDebugView>();
+      if (view == null) {
+        view = new GameObject("FactoryWarsDebugView").AddComponent<FactoryWarsDebugView>();
+      }
+      if (view.GetComponent<FactoryWars.View.MatchController>() == null) {
+        view.gameObject.AddComponent<FactoryWars.View.MatchController>();
       }
     }
 

@@ -43,6 +43,23 @@ namespace Quantum.FactoryWars {
     }
   }
 
+  /// <summary>하던 일을 멈춘다. 공병은 작업도 그만둔다.</summary>
+  public unsafe class StopUnitsCommand : FactoryCommand {
+    public EntityRef[] Units = System.Array.Empty<EntityRef>();
+
+    public override void Serialize(BitStream stream) {
+      SerializeUnits(stream, ref Units);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      for (var i = 0; i < Units.Length; i++) {
+        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) && unit->Owner == player) {
+          MovementSystem.Stop(f, Units[i], unit);
+        }
+      }
+    }
+  }
+
   public unsafe class AttackTargetCommand : FactoryCommand {
     public EntityRef[] Units = System.Array.Empty<EntityRef>();
     public EntityRef Target;

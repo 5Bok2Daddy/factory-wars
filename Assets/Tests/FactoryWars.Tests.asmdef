@@ -5,7 +5,9 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "Quantum.Simulation",
-        "Quantum.Unity"
+        "Quantum.Unity",
+        "FactoryWars.View",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

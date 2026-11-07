@@ -63,6 +63,11 @@ MonoBehaviour:
       Value: 489920977364748690
   - Id:
       Value: 491932192956100920
+  Modules:
+  - Id:
+      Value: 315542413765465927
+  - Id:
+      Value: 492040668866549395
   StartingUnits:
   - Id:
       Value: 292130207608506278

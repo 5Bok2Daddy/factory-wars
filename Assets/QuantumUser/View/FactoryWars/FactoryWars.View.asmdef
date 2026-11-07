@@ -1,0 +1,22 @@
+{
+    "name": "FactoryWars.View",
+    "rootNamespace": "FactoryWars.View",
+    "references": [
+        "Quantum.Simulation",
+        "Quantum.Unity",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Quantum.Deterministic.dll",
+        "Quantum.Engine.dll",
+        "Quantum.Log.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -8,6 +8,7 @@ namespace Quantum
         static partial void AddCommandFactoriesUser(ICollection<IDeterministicCommandFactory> factories, RuntimeConfig gameConfig, SimulationConfig simulationConfig)
         {
             factories.Add(new FactoryWars.MoveUnitsCommand());
+            factories.Add(new FactoryWars.StopUnitsCommand());
             factories.Add(new FactoryWars.AttackTargetCommand());
             factories.Add(new FactoryWars.BuildCommand());
             factories.Add(new FactoryWars.GatherCommand());
