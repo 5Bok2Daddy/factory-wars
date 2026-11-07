@@ -23,9 +23,9 @@ namespace FactoryWars.EditorTools {
     const string ScenesRoot = "Assets/QuantumUser/Scenes";
     const string ScenePath = ScenesRoot + "/QuantumGameScene.unity";
     const string MapRoot = "Assets/QuantumUser/Resources";
-    const string BridgeRegion = "Bridges";
+    const string BarrierRegion = "Barrier";
     /// <summary>다리에 칠하는 Unity NavMesh 영역 번호. 0~2는 기본 영역이다.</summary>
-    const int BridgeArea = 3;
+    const int BarrierArea = 3;
 
     [MenuItem("Tools/Factory Wars/Run All Setup")]
     public static void RunAll() {
@@ -451,7 +451,7 @@ namespace FactoryWars.EditorTools {
       rules.NavMeshName = "NavMesh";
       rules.PlayerColorCount = FactoryWars.View.Palette.Count;
       rules.TruceSeconds = 420;
-      rules.BridgeRegion = BridgeRegion;
+      rules.BarrierRegion = BarrierRegion;
       rules.MinDiplomacyPlayers = 3;
       rules.ProposalSeconds = 30;
       rules.ProposalCost = 300;
@@ -549,6 +549,8 @@ namespace FactoryWars.EditorTools {
       public MapShape[] Bridges;
       public MapShape BaseArea;
       public Vector3 CameraPosition;
+      public float RiverAmplitude;
+      public int RiverSeed;
     }
 
     static FPVector3 Position(double x, double z) => new FPVector3(N(x), 0, N(z));
@@ -570,7 +572,7 @@ namespace FactoryWars.EditorTools {
     static TerrainFeature Feature(TerrainKind kind, MapShape shape) => new TerrainFeature { Kind = kind, Shape = shape };
 
     static readonly MapDef TwoPlayerMap = new MapDef {
-      Id = "Map2P", Players = 2, HalfSize = 80, Start = new FPVector3(-55, 0, -55),
+      Id = "Map2P", Players = 2, HalfSize = 80, Start = new FPVector3(-55, 0, -55), RiverAmplitude = 4.5f, RiverSeed = 11,
       Bridges = new[] { Rect(-33, -50, 3.5, 6.5), Rect(-50, -33, 6.5, 3.5) },
       BaseArea = Rect(-58, -58, 22, 22),
       Nodes = new[] {
@@ -584,10 +586,6 @@ namespace FactoryWars.EditorTools {
       },
       CenterNodes = new[] { Mine(0, 0, 6000, 4) },
       Terrain = new[] {
-        Feature(TerrainKind.Hill, Rect(-33, -68, 12, 3, 90)),
-        Feature(TerrainKind.Hill, Rect(-33, -37, 7, 3, 90)),
-        Feature(TerrainKind.Hill, Rect(-68, -33, 12, 3)),
-        Feature(TerrainKind.Hill, Rect(-37, -33, 7, 3)),
         Feature(TerrainKind.Hill, Rect(-33, 56.5, 23.5, 3, 90)),
         Feature(TerrainKind.Hill, Rect(-68, 33, 12, 3)),
         Feature(TerrainKind.Hill, Rect(-37, 33, 7, 3)),
@@ -610,7 +608,7 @@ namespace FactoryWars.EditorTools {
     };
 
     static readonly MapDef FourPlayerMap = new MapDef {
-      Id = "Map4P", Players = 4, HalfSize = 120, Start = new FPVector3(-90, 0, -90),
+      Id = "Map4P", Players = 4, HalfSize = 120, Start = new FPVector3(-90, 0, -90), RiverAmplitude = 5f, RiverSeed = 23,
       Bridges = new[] { Rect(-68, -86, 3.5, 6.5), Rect(-86, -68, 6.5, 3.5) },
       BaseArea = Rect(-95.5, -95.5, 24.5, 24.5),
       Nodes = new[] {
@@ -625,10 +623,6 @@ namespace FactoryWars.EditorTools {
       },
       CenterNodes = new[] { Mine(0, 0, 10000, 5) },
       Terrain = new[] {
-        Feature(TerrainKind.Hill, Rect(-68, -106, 14, 3, 90)),
-        Feature(TerrainKind.Hill, Rect(-68, -72, 8, 3, 90)),
-        Feature(TerrainKind.Hill, Rect(-106, -68, 14, 3)),
-        Feature(TerrainKind.Hill, Rect(-72, -68, 8, 3)),
         Feature(TerrainKind.Hill, Rect(-21, -36, 15, 3)),
         Feature(TerrainKind.Hill, Rect(21, -36, 15, 3)),
         Feature(TerrainKind.Hill, Rect(-40, -111, 9, 3, 90)),
@@ -671,7 +665,18 @@ namespace FactoryWars.EditorTools {
       spec.ResourceNodes = def.Nodes
         .SelectMany(node => Orbit(def, node.Shape).Select(shape => new ResourceNodePlacement { Kind = node.Kind, Amount = node.Amount, Shape = shape }))
         .Concat(def.CenterNodes).ToArray();
-      spec.Terrain = def.Terrain.SelectMany(feature => Orbit(def, feature.Shape).Select(shape => Feature(feature.Kind, shape))).ToArray();
+      // 강은 한 사분면만 만들고 나머지는 회전 복제한다.
+      var area = def.BaseArea;
+      var corner = new Vector2(area.Center.X.AsFloat + area.HalfLength.AsFloat, area.Center.Z.AsFloat + area.HalfWidth.AsFloat);
+      var bridges = def.Bridges.Select(b => new Vector2(b.Center.X.AsFloat, b.Center.Z.AsFloat)).ToArray();
+      var pieces = RiverBuilder.Build(corner, -def.HalfSize, bridges, def.RiverAmplitude, def.RiverSeed);
+      MapShape Shape(RiverBuilder.Piece piece) => Rect(piece.Center.x, piece.Center.y, piece.HalfLength, piece.HalfWidth, piece.Yaw);
+      var step = 4 / def.Players;
+      spec.River = Enumerable.Range(0, def.Players).SelectMany(player => pieces.Select(piece => Turn(Shape(piece), player * step))).ToArray();
+      var edge = def.HalfSize + 2f;
+      var blocks = pieces.Where(p => p.UnderBridge == false && Mathf.Abs(p.Center.x) < edge && Mathf.Abs(p.Center.y) < edge)
+        .SelectMany(p => Orbit(def, Shape(p)).Select(shape => Feature(TerrainKind.River, shape)));
+      spec.Terrain = def.Terrain.SelectMany(feature => Orbit(def, feature.Shape).Select(shape => Feature(feature.Kind, shape))).Concat(blocks).ToArray();
       spec.NoBuildZones = def.NoBuildZones.SelectMany(zone => Orbit(def, zone)).ToArray();
       spec.Bridges = def.Bridges.SelectMany(bridge => Orbit(def, bridge)).ToArray();
       spec.BaseAreas = Orbit(def, def.BaseArea).ToArray();
@@ -742,9 +747,9 @@ namespace FactoryWars.EditorTools {
       var volume = bridge.AddComponent<NavMeshModifierVolume>();
       volume.center = Vector3.zero;
       volume.size = Vector3.one;
-      volume.area = BridgeArea;
+      volume.area = BarrierArea;
       var region = bridge.AddComponent<QuantumNavMeshRegion>();
-      region.Id = BridgeRegion;
+      region.Id = BarrierRegion;
       region.CastRegion = QuantumNavMeshRegion.RegionCastType.CastRegion;
     }
 
@@ -822,7 +827,7 @@ namespace FactoryWars.EditorTools {
       var quantumNavMesh = navObject.GetComponent<QuantumMapNavMeshUnity>();
       var settings = quantumNavMesh.Settings;
       settings.ImportRegionMode = NavmeshRegionImportMode.Advanced;
-      settings.RegionAreaIds = new List<int> { BridgeArea };
+      settings.RegionAreaIds = new List<int> { BarrierArea };
       quantumNavMesh.Settings = settings;
     }
 

@@ -396,10 +396,8 @@ namespace FactoryWars.EditorTools {
       // 숲: 채집 전, 절반 채집
       AddForest(root, Place(20, -1), 1f, "gallery_forest_full");
       AddForest(root, Place(37, -1), 0.5f, "gallery_forest_half");
-      // 다리: 세움, 내림
-      var raised = Spawn(catalog, root, "bridge", Place(0, -2, 0.5f), 0, 180f);
-      raised.Model.transform.Find("Deck").localRotation = Quaternion.Euler(-78, 0, 0);
-      Spawn(catalog, root, "bridge", Place(17, -2, 0.5f), 0, 180f);
+      // 다리는 항상 내려져 있다.
+      Spawn(catalog, root, "bridge", Place(8, -2, 1f), 0, 180f);
       // 건물 줄. 왼쪽부터 BuildingKinds 순서다.
       for (var i = 0; i < BuildingKinds.Length; i++) {
         Spawn(catalog, root, $"ff_{BuildingKinds[i]}", Place(i * BuildingGap, FreeBuildingRow), 0, 180f);
@@ -574,7 +572,7 @@ namespace FactoryWars.EditorTools {
       new WorldView(mapRoot, map2, catalog).Update(null, 0f);
       Vector3 OnMap(float x, float z) => MapPreview + new Vector3(x, 0, z);
       Shot(camera, "20_map2p_overview.png", OnMap(0, -150) + Vector3.up * 190f, OnMap(0, 0), 46f);
-      Game("21_moat_bridge.png", OnMap(-40, -44), 34f);
+      Game("21_river_bridge.png", OnMap(-38, -40), 34f);
       Game("22_canyon.png", OnMap(-50, 30), 40f);
       Game("23_hills_rocks.png", OnMap(-10, -6), 40f);
       Object.DestroyImmediate(mapRoot.gameObject);

@@ -76,9 +76,11 @@ namespace FactoryWars.View {
 
     static string Population(FP value) => Mathf.FloorToInt(value.AsFloat + 0.001f).ToString();
 
+    public const string BarrierAlert = "전쟁 시작 - 방어 울타리가 해제됩니다!";
+
     public static string TruceCountdown(float seconds) {
       var whole = Mathf.CeilToInt(seconds);
-      return $"다리 개방까지 {whole / 60}:{whole % 60:00}";
+      return $"전쟁 시작까지 {whole / 60}:{whole % 60:00}";
     }
 
     public static string Missing(MissingResource missing) {

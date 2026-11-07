@@ -184,10 +184,10 @@ MonoBehaviour:
     DisplayScale: 1
     Altitude: 0
     Center: {x: 0, y: 0}
-    RingRadius: 7.35
-    BarHeight: 2.55
+    RingRadius: 7.2999997
+    BarHeight: 1.45
     MuzzlePart: Model
-    Muzzle: {x: 0, y: 0.8, z: 4.8}
+    Muzzle: {x: 0, y: 0.8, z: 5.2}
     Smoke: []
   - Id: ff_collection_yard
     Prefab: {fileID: 6433190977397813626, guid: 4644fca4b7df0d74aa157c24410d81d0, type: 3}

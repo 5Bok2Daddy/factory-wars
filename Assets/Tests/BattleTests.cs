@@ -69,15 +69,6 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest]
-    public IEnumerator Battle_BridgeDeckLowersWhenTruceEnds() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 5, truce: 25);
-      yield return WaitForBattle();
-      Assert.AreEqual(0f, Battle().World.BridgeOpen, "휴전 중에는 세워져 있음");
-      yield return WaitFor(BridgesOpen, 30f, "다리 개방");
-      yield return WaitFor(() => Battle().World.BridgeOpen >= 1f, 30f, "내려옴");
-    }
-
-    [UnityTest]
     public IEnumerator Battle_OutageSwapsBuildingsButNotUnits() {
       yield return StartMatch(buildings: new[] { (0, "ff_ground_tower", -42, 12) }, stock: Stock(1000, 1000, 0, 0));
       yield return WaitForBattle();
@@ -204,28 +195,15 @@ namespace FactoryWars.Tests {
     // 지형
 
     [Test]
-    public void Terrain_MoatFollowsBridgesInsideBlockedGround() {
-      foreach (var id in new[] { "Map2P", "Map4P" }) {
-        var map = MapAsset(id);
-        var moat = map.Terrain.Where(t => TerrainKit.IsMoat(map, t)).ToArray();
-        Assert.AreEqual(map.Bridges.Length * 2, moat.Length, $"{id}: 다리 양쪽의 언덕");
-        foreach (var feature in moat) {
-          Assert.AreEqual(TerrainKind.Hill, feature.Kind);
-        }
-        Assert.AreEqual(map.Bridges.Length + moat.Length, TerrainKit.MoatRects(map).Count);
-      }
-    }
-
-    [Test]
-    public void Terrain_GroundHasHolesAtTheMoat() {
+    public void Terrain_GroundIsCutAlongTheRiver() {
       var map = MapAsset("Map2P");
       var kit = new MeshKit();
       TerrainKit.Ground(kit, map, 3);
       var mesh = kit.ToMesh("test");
-      var bridge = TerrainKit.Extent(map.Bridges[0]);
-      var inside = mesh.vertices.Where(v => bridge.Contains(new Vector2(v.x, v.z)) && v.x > bridge.xMin + 0.1f && v.x < bridge.xMax - 0.1f && v.z > bridge.yMin + 0.1f && v.z < bridge.yMax - 0.1f);
-      Assert.IsTrue(inside.All(v => v.y < -0.1f), "다리 밑은 파여 있음");
-      Assert.Less(kit.TriangleCount, 20000, "삼각형 예산");
+      var bridge = map.Bridges[0];
+      var center = new Vector2(bridge.Center.X.AsFloat, bridge.Center.Z.AsFloat);
+      Assert.IsFalse(mesh.vertices.Any(v => (new Vector2(v.x, v.z) - center).magnitude < 1.5f), "강 자리에는 바닥이 없음");
+      Assert.Less(kit.TriangleCount, 24000, "삼각형 예산");
     }
 
     [Test]
@@ -243,7 +221,7 @@ namespace FactoryWars.Tests {
       var map = MapAsset("Map2P");
       for (var i = 0; i < map.Terrain.Length; i++) {
         var feature = map.Terrain[i];
-        if (feature.Kind != TerrainKind.Hill || TerrainKit.IsMoat(map, feature)) {
+        if (feature.Kind != TerrainKind.Hill) {
           continue;
         }
         var kit = new MeshKit();
@@ -259,7 +237,7 @@ namespace FactoryWars.Tests {
     [Test]
     public void Terrain_DifferentSeedsChangeHills() {
       var map = MapAsset("Map2P");
-      var shape = map.Terrain.First(t => t.Kind == TerrainKind.Hill && TerrainKit.IsMoat(map, t) == false).Shape;
+      var shape = map.Terrain.First(t => t.Kind == TerrainKind.Hill).Shape;
       var a = new MeshKit();
       var b = new MeshKit();
       TerrainKit.Hill(a, shape, 1);

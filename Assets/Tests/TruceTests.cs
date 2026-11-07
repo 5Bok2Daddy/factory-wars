@@ -13,7 +13,7 @@ namespace FactoryWars.Tests {
 
   /// <summary>초반 휴전과 본진 다리.</summary>
   public unsafe partial class LocalMatchTests {
-    static bool BridgesOpen() => Verified.Global->BridgesOpen;
+    static bool BarrierOpen() => Verified.Global->BarrierOpen;
 
     static int TruceEnd() => Verified.Global->TruceEndFrame;
 
@@ -41,7 +41,7 @@ namespace FactoryWars.Tests {
       yield return StartMatch(scene, players, truce: 600);
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var navMesh = MapNavMesh();
-      Assert.IsTrue(Verified.Map.RegionMap.ContainsKey("Bridges"), "다리 영역이 구워짐");
+      Assert.IsTrue(Verified.Map.RegionMap.ContainsKey("Barrier"), "다리 영역이 구워짐");
       Assert.AreEqual(2, Verified.Map.RegionMap.Count, "기본 영역 + 다리 영역 하나");
       var mask = NavMeshRegionMask.Default;
       var rules = Verified.FindAsset(Verified.RuntimeConfig.Rules);
@@ -80,14 +80,19 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest]
-    public IEnumerator Truce_BridgesOpenOnTimeAndUnitsCross() {
+    public IEnumerator Truce_BarrierOpensOnTimeAndUnitsCross() {
       yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -42, -50) }, truce: 10);
       var opened = new List<int>();
-      QuantumEvent.Subscribe<EventBridgesOpened>(_listener, e => opened.Add(e.Frame));
-      Assert.IsFalse(BridgesOpen());
-      yield return WaitFor(() => BridgesOpen(), 30f, "다리 개방");
+      QuantumEvent.Subscribe<EventBarrierOpened>(_listener, e => opened.Add(e.Frame));
+      Assert.IsFalse(BarrierOpen());
+      var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      var navMesh = MapNavMesh();
+      Assert.IsFalse(ReachableNow(navMesh, spec.StartPositions[0]).Contains(navMesh.FindTriangle2D(spec.StartPositions[1], NavMeshRegionMask.Default, true)), "휴전 중에는 경로가 없음");
+      yield return WaitFor(() => BarrierOpen(), 30f, "울타리 개방");
       yield return WaitFrames(2);
       Assert.AreEqual(new List<int> { 10 * Fps }, opened, "10초에 이벤트 한 번");
+      Assert.AreEqual(10 * Fps, TruceEnd(), "이벤트 프레임이 TruceEndFrame");
+      Assert.IsTrue(ReachableNow(navMesh, spec.StartPositions[0]).Contains(navMesh.FindTriangle2D(spec.StartPositions[1], NavMeshRegionMask.Default, true)), "개방 뒤에는 경로가 있음");
 
       var tank = UnitsNamed(0, "ff_eagle_tank")[0];
       var target = V(-22, -50);
@@ -98,7 +103,7 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Truce_ZeroMeansOpenFromStart() {
       yield return StartMatch(Map2PScene, 2, truce: 0);
-      Assert.IsTrue(BridgesOpen());
+      Assert.IsTrue(BarrierOpen());
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var navMesh = MapNavMesh();
       Assert.IsTrue(ReachableNow(navMesh, spec.StartPositions[0]).Contains(navMesh.FindTriangle2D(spec.StartPositions[1], NavMeshRegionMask.Default, true)));
@@ -108,7 +113,7 @@ namespace FactoryWars.Tests {
     public IEnumerator Truce_DefaultIsSevenMinutes() {
       yield return StartMatch(Map2PScene, 2, truce: -1);
       Assert.AreEqual(420 * Fps, TruceEnd());
-      Assert.IsFalse(BridgesOpen());
+      Assert.IsFalse(BarrierOpen());
     }
 
     [UnityTest]
@@ -195,18 +200,18 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Truce_CountdownFormat() {
-      Assert.AreEqual("다리 개방까지 6:12", Texts.TruceCountdown(371.3f));
-      Assert.AreEqual("다리 개방까지 0:05", Texts.TruceCountdown(5f));
+      Assert.AreEqual("전쟁 시작까지 6:12", Texts.TruceCountdown(371.3f));
+      Assert.AreEqual("전쟁 시작까지 0:05", Texts.TruceCountdown(5f));
     }
 
     [UnityTest]
     public IEnumerator Truce_HudCountsDownAndAnnouncesOpening() {
       yield return StartMatch(truce: 6);
       yield return WaitForHud();
-      Assert.IsTrue(Controller().Hud.TruceText.StartsWith("다리 개방까지 0:0"), Controller().Hud.TruceText);
-      yield return WaitFor(() => BridgesOpen(), 30f, "다리 개방");
+      Assert.IsTrue(Controller().Hud.TruceText.StartsWith("전쟁 시작까지 0:0"), Controller().Hud.TruceText);
+      yield return WaitFor(() => BarrierOpen(), 30f, "울타리 개방");
       yield return WaitFrames(2);
-      Assert.AreEqual("다리 개방", Controller().Hud.AlertText);
+      Assert.AreEqual(Texts.BarrierAlert, Controller().Hud.AlertText);
       Controller().Hud.Refresh(Controller().Frame);
       Assert.AreEqual("", Controller().Hud.TruceText);
     }

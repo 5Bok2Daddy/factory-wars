@@ -370,10 +370,5 @@ namespace FactoryWars.Tests {
       Assert.IsNotNull(mine.transform.Find("Crystals"), "결정은 따로 끌 수 있음");
       Assert.IsNotNull(mine.transform.Find("Body"), "바위는 남음");
     }
-
-    [Test]
-    public void Art_BridgeDeckRotatesFromHinge() {
-      Assert.IsNotNull(Catalog().Find("bridge").transform.Find("Deck"));
-    }
   }
 }

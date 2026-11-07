@@ -83,7 +83,7 @@ global {
     Int32 EndFrame;
     Int32 WinnerMask;
     Int32 TruceEndFrame;
-    QBoolean BridgesOpen;
+    QBoolean BarrierOpen;
 }
 
 component Unit {
@@ -161,7 +161,7 @@ synced event NoteReceived { player_ref Sender; player_ref Receiver; Int32 Phrase
 synced event AllianceChanged { player_ref A; player_ref B; Relation Relation; }
 event UnitDestroyed { entity_ref Unit; player_ref Owner; asset_ref<UnitSpec> Spec; }
 synced event PlayerDefeated { player_ref Player; }
-synced event BridgesOpened { Int32 Frame; }
+synced event BarrierOpened { Int32 Frame; }
 synced event PowerOutage { player_ref Player; QBoolean Started; }
 synced event BuildingPaused { entity_ref Building; PauseReason Reason; }
 synced event GameOver { Int32 WinnerMask; }

@@ -9,7 +9,7 @@ namespace FactoryWars.View {
     Wood, WoodDark, Bark, LeafDark, Leaf, LeafLight, Grass, Rock, RockDark, Ore, OreDark, OreLight, Stone, Water, White,
     GlowCyan, GlowOrange, GlowCrystal, Hazard, Team,
     Dirt, DirtDark, GrassDark, CliffDark, CliffMid, CliffLight, CanyonDark, CanyonMid, CanyonLight,
-    Boulder, BoulderDark, BoulderLight, WaterDeep, StripeYellow,
+    Boulder, BoulderDark, BoulderLight, WaterDeep, StripeYellow, GlowRed, LampDark,
   }
 
   public static class ArtPalette {
@@ -21,6 +21,7 @@ namespace FactoryWars.View {
     static readonly Color32 ElectricLight = new Color32(0x20, 0xD8, 0xD8, 0xFF);
     static readonly Color32 MoltenLight = new Color32(0xFF, 0x34, 0x00, 0xFF);
     static readonly Color32 CrystalLight = new Color32(0x30, 0xB4, 0xC4, 0xFF);
+    static readonly Color32 WarningLight = new Color32(0xFF, 0x14, 0x0C, 0xFF);
 
     readonly struct Cell {
       public readonly Color32 Color;
@@ -50,14 +51,14 @@ namespace FactoryWars.View {
       new Cell(0x54392A, 0f, 0.08f), new Cell(0x7A5638, 0f, 0.08f), new Cell(0x9E7A4C, 0f, 0.08f),
       new Cell(0x33261F, 0f, 0.1f), new Cell(0x4A372C, 0f, 0.1f), new Cell(0x63493A, 0f, 0.1f),
       new Cell(0x7A7670, 0f, 0.14f), new Cell(0x5C5954, 0f, 0.12f), new Cell(0x98948C, 0f, 0.16f),
-      new Cell(0x16303E, 0.1f, 0.86f), new Cell(0xF2C40F, 0f, 0.24f),
+      new Cell(0x16303E, 0.1f, 0.86f), new Cell(0xF2C40F, 0f, 0.24f), new Cell(0xE02018, 0f, 0.5f), new Cell(0x4A1210, 0.2f, 0.5f),
     };
 
     public static int CellCount => Cells.Length;
 
     public static Vector2 Uv(Swatch swatch) => new Vector2(((int)swatch + 0.5f) / Size, 0.5f);
 
-    public static bool IsGlow(Swatch swatch) => swatch == Swatch.GlowCyan || swatch == Swatch.GlowOrange || swatch == Swatch.GlowCrystal;
+    public static bool IsGlow(Swatch swatch) => swatch == Swatch.GlowCyan || swatch == Swatch.GlowOrange || swatch == Swatch.GlowCrystal || swatch == Swatch.GlowRed;
 
     static Color32 Scale(Color32 color, float scale) => new Color32((byte)(color.r * scale), (byte)(color.g * scale), (byte)(color.b * scale), 255);
 
@@ -77,7 +78,9 @@ namespace FactoryWars.View {
       for (var i = 0; i < Size; i++) {
         var swatch = (Swatch)i;
         var color = new Color32(0, 0, 0, 255);
-        if (swatch == Swatch.GlowCrystal) {
+        if (swatch == Swatch.GlowRed) {
+          color = WarningLight;
+        } else if (swatch == Swatch.GlowCrystal) {
           color = CrystalLight;
         } else if (swatch == Swatch.GlowCyan && powered) {
           color = ElectricLight;

@@ -879,7 +879,7 @@ namespace Quantum {
     [FieldOffset(652)]
     public Int32 TruceEndFrame;
     [FieldOffset(660)]
-    public QBoolean BridgesOpen;
+    public QBoolean BarrierOpen;
     public readonly FixedArray<Input> input {
       get {
         fixed (byte* p = _input_) { return new FixedArray<Input>(p, 4, 4); }
@@ -916,7 +916,7 @@ namespace Quantum {
         hash = hash * 31 + EndFrame.GetHashCode();
         hash = hash * 31 + WinnerMask.GetHashCode();
         hash = hash * 31 + TruceEndFrame.GetHashCode();
-        hash = hash * 31 + BridgesOpen.GetHashCode();
+        hash = hash * 31 + BarrierOpen.GetHashCode();
         return hash;
       }
     }
@@ -937,7 +937,7 @@ namespace Quantum {
         serializer.Stream.Serialize(&p->EndFrame);
         serializer.Stream.Serialize(&p->TruceEndFrame);
         serializer.Stream.Serialize(&p->WinnerMask);
-        QBoolean.Serialize(&p->BridgesOpen, serializer);
+        QBoolean.Serialize(&p->BarrierOpen, serializer);
         QBoolean.Serialize(&p->GameEnded, serializer);
         FixedArray.Serialize(p->Bots, serializer, Statics.SerializeBotState);
         FixedArray.Serialize(p->Players, serializer, Statics.SerializePlayerState);

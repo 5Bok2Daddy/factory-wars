@@ -11,14 +11,26 @@ namespace FactoryWars.View {
   /// </summary>
   public static class TerrainKit {
     public const float WaterLevel = -0.8f;
-    const float MoatBottom = -1.1f;
     const float Step = 4f;
     const float OuterStep = 20f;
     const float Margin = 80f;
     const float Patch = 18f;
-    const float MoatHalfWidth = 3.5f;
     const float StripeLength = 1.3f;
     const float StripeWidth = 0.45f;
+    // 강변: 땅 위에 얹는 평평한 모래 띠, 그 안쪽의 경사, 물 순서다. 숫자는 강 가장자리에서 바깥쪽으로 잰 거리다.
+    const float BandOuter = 1.8f;
+    const float BandInner = 0.4f;
+    const float SlopeInner = -0.4f;
+    const float GroundCut = 1f;
+    const float MinCell = 1f;
+    const float BankY = 0.03f;
+
+    /// <summary>강줄기의 한 점. Half는 그 자리의 강폭 절반이다.</summary>
+    public struct RiverPoint {
+      public Vector2 Position;
+      public Vector2 Normal;
+      public float Half;
+    }
 
     /// <summary>축에 나란한 사각형 범위. 회전이 90도 단위인 모양만 받는다.</summary>
     public static Rect Extent(MapShape shape, float grow = 0f) {
@@ -29,78 +41,59 @@ namespace FactoryWars.View {
       return new Rect(center - half, half * 2);
     }
 
-    static bool IsAxisAligned(MapShape shape) => Mathf.Repeat(shape.Yaw.AsFloat + 1f, 90f) < 2f;
-
-    /// <summary>다리와 일직선으로 이어진 언덕은 해자다. 둘 다 시뮬레이션에서 막힌 곳이라 파내도 판정은 같다.</summary>
-    public static bool IsMoat(MapSpec map, TerrainFeature feature) {
-      if (feature.Kind != TerrainKind.Hill || feature.Shape.IsCircle || IsAxisAligned(feature.Shape) == false) {
-        return false;
+    /// <summary>MapSpec.River의 조각을 이어 강줄기마다 점 목록으로 푼다. 조각이 끊기면 다른 강줄기다.</summary>
+    public static List<List<RiverPoint>> RiverPaths(MapSpec map) {
+      var paths = new List<List<RiverPoint>>();
+      var pieces = map.River ?? Array.Empty<MapShape>();
+      List<RiverPoint> path = null;
+      var last = Vector2.zero;
+      foreach (var piece in pieces) {
+        var center = new Vector2(piece.Center.X.AsFloat, piece.Center.Z.AsFloat);
+        if (path == null || (center - last).magnitude > 12f) {
+          path = new List<RiverPoint>();
+          paths.Add(path);
+        }
+        path.Add(new RiverPoint { Position = center, Half = piece.HalfWidth.AsFloat });
+        last = center;
       }
-      var hill = Extent(feature.Shape);
-      foreach (var bridge in map.Bridges ?? Array.Empty<MapShape>()) {
-        var gap = Extent(bridge);
-        var acrossX = gap.width < gap.height;
-        var inLine = acrossX ? Mathf.Abs(gap.center.x - hill.center.x) < 0.6f && hill.height > hill.width
-                             : Mathf.Abs(gap.center.y - hill.center.y) < 0.6f && hill.width > hill.height;
-        var touches = acrossX
-          ? hill.yMax >= gap.yMin - 1.5f && hill.yMin <= gap.yMax + 1.5f
-          : hill.xMax >= gap.xMin - 1.5f && hill.xMin <= gap.xMax + 1.5f;
-        if (inLine && touches) {
-          return true;
+      foreach (var points in paths) {
+        for (var i = 0; i < points.Count; i++) {
+          var from = points[Mathf.Max(i - 1, 0)].Position;
+          var to = points[Mathf.Min(i + 1, points.Count - 1)].Position;
+          var along = (to - from).normalized;
+          var point = points[i];
+          point.Normal = new Vector2(-along.y, along.x);
+          points[i] = point;
         }
       }
-      return false;
+      return paths;
     }
 
-    /// <summary>파낼 사각형들. 언덕은 다리 폭에 맞춰 조금 넓히고, 맵 끝에 닿으면 바깥까지 잇는다.</summary>
-    public static List<Rect> MoatRects(MapSpec map) {
-      var rects = new List<Rect>();
-      foreach (var bridge in map.Bridges ?? Array.Empty<MapShape>()) {
-        rects.Add(Extent(bridge));
+    /// <summary>강 가장자리까지의 거리. 물 위면 음수다.</summary>
+    public static float RiverDistance(List<List<RiverPoint>> paths, Vector2 point) {
+      var best = float.MaxValue;
+      foreach (var path in paths) {
+        for (var i = 0; i + 1 < path.Count; i++) {
+          var a = path[i].Position;
+          var ab = path[i + 1].Position - a;
+          var t = Mathf.Clamp01(Vector2.Dot(point - a, ab) / Mathf.Max(ab.sqrMagnitude, 0.001f));
+          var distance = (point - (a + ab * t)).magnitude - Mathf.Lerp(path[i].Half, path[i + 1].Half, t);
+          best = Mathf.Min(best, distance);
+        }
       }
-      var min = new Vector2(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat);
-      var max = new Vector2(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
-      foreach (var feature in map.Terrain ?? Array.Empty<TerrainFeature>()) {
-        if (IsMoat(map, feature) == false) {
-          continue;
-        }
-        var rect = Extent(feature.Shape);
-        var wide = rect.width > rect.height;
-        var grow = wide ? new Vector2(0, MoatHalfWidth - rect.height / 2) : new Vector2(MoatHalfWidth - rect.width / 2, 0);
-        rect = Rect.MinMaxRect(rect.xMin - grow.x, rect.yMin - grow.y, rect.xMax + grow.x, rect.yMax + grow.y);
-        if (rect.xMin <= min.x + 1f) {
-          rect.xMin = min.x - Margin;
-        }
-        if (rect.yMin <= min.y + 1f) {
-          rect.yMin = min.y - Margin;
-        }
-        if (rect.xMax >= max.x - 1f) {
-          rect.xMax = max.x + Margin;
-        }
-        if (rect.yMax >= max.y - 1f) {
-          rect.yMax = max.y + Margin;
-        }
-        rects.Add(rect);
-      }
-      return rects;
+      return best;
     }
 
-    static List<float> Lines(float min, float max, IEnumerable<float> edges) {
-      var fixedLines = edges.Where(e => e > min - Margin && e < max + Margin).Distinct().OrderBy(e => e).ToList();
-      var lines = new List<float>(fixedLines);
-      void Add(float value) {
-        if (fixedLines.All(e => Mathf.Abs(e - value) > Step * 0.3f)) {
-          lines.Add(value);
-        }
-      }
+    static List<float> Lines(float min, float max) {
+      var lines = new List<float>();
       for (var x = min; x <= max + 0.01f; x += Step) {
-        Add(x);
+        lines.Add(x);
       }
       for (var x = min - Margin; x < min; x += OuterStep) {
-        Add(x);
+        lines.Add(x);
       }
       for (var x = max + Margin; x > max; x -= OuterStep) {
-        Add(x);
+        lines.Add(x);
       }
       lines.Sort();
       return lines;
@@ -149,58 +142,107 @@ namespace FactoryWars.View {
       k.Tri(a, b, c, Vector3.up);
     }
 
-    /// <summary>해자 자리를 뚫은 바닥. 격자선을 해자 경계에 맞춰서 구멍이 곧게 나온다.</summary>
+    static void Cell(MeshKit k, MapSpec map, int seed, float x0, float x1, float z0, float z1, bool flip) {
+      var a = new Vector3(x0, 0, z0);
+      var b = new Vector3(x1, 0, z0);
+      var c = new Vector3(x1, 0, z1);
+      var d = new Vector3(x0, 0, z1);
+      if (flip) {
+        Triangle(k, map, seed, a, b, c);
+        Triangle(k, map, seed, a, c, d);
+      } else {
+        Triangle(k, map, seed, a, b, d);
+        Triangle(k, map, seed, b, c, d);
+      }
+    }
+
+    /// <summary>강 근처 칸만 잘게 나눠 강 자리를 파낸다. 잘린 가장자리는 강변 띠가 덮는다.</summary>
+    static void Carve(MeshKit k, MapSpec map, int seed, List<List<RiverPoint>> paths, float x0, float x1, float z0, float z1, bool flip) {
+      var center = new Vector2((x0 + x1) / 2, (z0 + z1) / 2);
+      var reach = new Vector2(x1 - x0, z1 - z0).magnitude / 2;
+      var distance = RiverDistance(paths, center) - GroundCut;
+      if (distance > reach) {
+        Cell(k, map, seed, x0, x1, z0, z1, flip);
+        return;
+      }
+      if (distance < -reach) {
+        return;
+      }
+      if (x1 - x0 <= MinCell && z1 - z0 <= MinCell) {
+        if (distance > 0f) {
+          Cell(k, map, seed, x0, x1, z0, z1, flip);
+        }
+        return;
+      }
+      var mx = (x0 + x1) / 2;
+      var mz = (z0 + z1) / 2;
+      Carve(k, map, seed, paths, x0, mx, z0, mz, flip);
+      Carve(k, map, seed, paths, mx, x1, z0, mz, flip == false);
+      Carve(k, map, seed, paths, x0, mx, mz, z1, flip == false);
+      Carve(k, map, seed, paths, mx, x1, mz, z1, flip);
+    }
+
+    /// <summary>강 자리를 파낸 바닥.</summary>
     public static void Ground(MeshKit k, MapSpec map, int seed) {
-      var moat = MoatRects(map);
+      var paths = RiverPaths(map);
       var min = new Vector2(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat);
       var max = new Vector2(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
-      var xs = Lines(min.x, max.x, moat.SelectMany(r => new[] { r.xMin, r.xMax })).ToArray();
-      var zs = Lines(min.y, max.y, moat.SelectMany(r => new[] { r.yMin, r.yMax })).ToArray();
-      var hole = new bool[xs.Length - 1, zs.Length - 1];
-      for (var i = 0; i + 1 < xs.Length; i++) {
-        for (var j = 0; j + 1 < zs.Length; j++) {
-          var center = new Vector2((xs[i] + xs[i + 1]) / 2, (zs[j] + zs[j + 1]) / 2);
-          hole[i, j] = moat.Any(r => r.Contains(center));
+      var xs = Lines(min.x, max.x);
+      var zs = Lines(min.y, max.y);
+      for (var i = 0; i + 1 < xs.Count; i++) {
+        for (var j = 0; j + 1 < zs.Count; j++) {
+          Carve(k, map, seed, paths, xs[i], xs[i + 1], zs[j], zs[j + 1], (i + j) % 2 == 0);
         }
       }
-      bool Solid(int i, int j) => i >= 0 && j >= 0 && i < hole.GetLength(0) && j < hole.GetLength(1) && hole[i, j] == false;
+    }
 
-      for (var i = 0; i + 1 < xs.Length; i++) {
-        for (var j = 0; j + 1 < zs.Length; j++) {
-          float x0 = xs[i], x1 = xs[i + 1], z0 = zs[j], z1 = zs[j + 1];
-          if (hole[i, j] == false) {
-            // 삼각형마다 칠해서 얼룩 경계가 대각선으로 꺾인다. 사각 칸이 드러나지 않는다.
-            var a = new Vector3(x0, 0, z0);
-            var b = new Vector3(x1, 0, z0);
-            var c = new Vector3(x1, 0, z1);
-            var d = new Vector3(x0, 0, z1);
-            if ((i + j) % 2 == 0) {
-              Triangle(k, map, seed, a, b, c);
-              Triangle(k, map, seed, a, c, d);
-            } else {
-              Triangle(k, map, seed, a, b, d);
-              Triangle(k, map, seed, b, c, d);
-            }
-            continue;
-          }
-          k.Paint(Swatch.WaterDeep);
-          k.Quad(new Vector3(x0, WaterLevel, z0), new Vector3(x1, WaterLevel, z0), new Vector3(x1, WaterLevel, z1), new Vector3(x0, WaterLevel, z1), Vector3.up);
-          // 땅과 닿는 변마다 둑을 세운다.
-          k.Paint(Swatch.DirtDark);
-          if (Solid(i - 1, j)) {
-            k.Quad(new Vector3(x0, 0, z0), new Vector3(x0, 0, z1), new Vector3(x0, MoatBottom, z1), new Vector3(x0, MoatBottom, z0), Vector3.right);
-          }
-          if (Solid(i + 1, j)) {
-            k.Quad(new Vector3(x1, 0, z0), new Vector3(x1, 0, z1), new Vector3(x1, MoatBottom, z1), new Vector3(x1, MoatBottom, z0), Vector3.left);
-          }
-          if (Solid(i, j - 1)) {
-            k.Quad(new Vector3(x0, 0, z0), new Vector3(x1, 0, z0), new Vector3(x1, MoatBottom, z0), new Vector3(x0, MoatBottom, z0), Vector3.forward);
-          }
-          if (Solid(i, j + 1)) {
-            k.Quad(new Vector3(x0, 0, z1), new Vector3(x1, 0, z1), new Vector3(x1, MoatBottom, z1), new Vector3(x0, MoatBottom, z1), Vector3.back);
-          }
+    static Vector3 Bank(RiverPoint point, float side, float offset, float y) {
+      var position = point.Position + point.Normal * (side * (point.Half + offset));
+      return new Vector3(position.x, y, position.y);
+    }
+
+    /// <summary>물 면, 경사 강변, 땅 위의 모래 띠. 강줄기 하나를 리본으로 잇는다.</summary>
+    public static void River(MeshKit k, List<RiverPoint> path, int seed) {
+      for (var i = 0; i + 1 < path.Count; i++) {
+        var a = path[i];
+        var b = path[i + 1];
+        k.Paint(Swatch.WaterDeep);
+        k.Quad(Bank(a, -1, SlopeInner, WaterLevel), Bank(a, 1, SlopeInner, WaterLevel), Bank(b, 1, SlopeInner, WaterLevel), Bank(b, -1, SlopeInner, WaterLevel), Vector3.up);
+        foreach (var side in new[] { -1f, 1f }) {
+          k.Paint(MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.DirtDark);
+          k.Quad(Bank(a, side, BandInner, BankY), Bank(a, side, SlopeInner, WaterLevel - 0.1f), Bank(b, side, SlopeInner, WaterLevel - 0.1f), Bank(b, side, BandInner, BankY), Vector3.up);
+          k.Paint(MeshKit.Hash(seed, i * 2 + 300 + (side > 0 ? 1 : 0)) < 0.55f ? Swatch.Sand : Swatch.Dirt);
+          k.Quad(Bank(a, side, BandOuter, BankY), Bank(a, side, BandInner, BankY), Bank(b, side, BandInner, BankY), Bank(b, side, BandOuter, BankY), Vector3.up);
         }
       }
+    }
+
+    /// <summary>물가의 작은 바위. 강폭 안쪽, 즉 막힌 영역 안에만 놓는다.</summary>
+    public static void RiverRocks(MeshKit k, List<RiverPoint> path, int seed, MapSpec map) {
+      k.ShadeFaces(seed, Swatch.BoulderDark, Swatch.Boulder, Swatch.BoulderLight);
+      for (var i = 2; i + 2 < path.Count; i++) {
+        if (MeshKit.Hash(seed, i) > 0.32f) {
+          continue;
+        }
+        var side = MeshKit.Hash(seed, i + 500) < 0.5f ? -1f : 1f;
+        var size = 0.35f + 0.4f * MeshKit.Hash(seed, i + 900);
+        var position = Bank(path[i], side, -size - 0.25f, WaterLevel - 0.1f);
+        if (IsNearBridge(map, position)) {
+          continue;
+        }
+        k.Rock(position, size, size * 1.6f, seed + i);
+      }
+      k.EndShade();
+    }
+
+    static bool IsNearBridge(MapSpec map, Vector3 position) {
+      foreach (var bridge in map.Bridges ?? Array.Empty<MapShape>()) {
+        var center = new Vector2(bridge.Center.X.AsFloat, bridge.Center.Z.AsFloat);
+        if ((center - new Vector2(position.x, position.z)).magnitude < 9f) {
+          return true;
+        }
+      }
+      return false;
     }
 
     /// <summary>
@@ -334,8 +376,8 @@ namespace FactoryWars.View {
       k.EndShade();
     }
 
-    /// <summary>건설 금지 구역 둘레의 노랑·검정 줄무늬. 해자 위는 건너뛴다.</summary>
-    public static void NoBuildStripes(MeshKit k, MapShape zone, List<Rect> moat) {
+    /// <summary>건설 금지 구역 둘레의 노랑·검정 줄무늬. 강 위는 건너뛴다.</summary>
+    public static void NoBuildStripes(MeshKit k, MapShape zone, List<List<RiverPoint>> paths) {
       var half = new Vector2(zone.HalfLength.AsFloat, zone.HalfWidth.AsFloat);
       var center = new Vector3(zone.Center.X.AsFloat, 0.04f, zone.Center.Z.AsFloat);
       var turn = Quaternion.Euler(0, zone.Yaw.AsFloat, 0);
@@ -348,7 +390,7 @@ namespace FactoryWars.View {
           var b = Vector3.Lerp(from, to, (i + 1f) / count);
           var middle = center + turn * ((a + b) / 2);
           index++;
-          if (moat.Any(r => r.Contains(new Vector2(middle.x, middle.z)))) {
+          if (RiverDistance(paths, new Vector2(middle.x, middle.z)) < BandOuter) {
             continue;
           }
           k.Paint(index % 2 == 0 ? Swatch.StripeYellow : Swatch.Black);
@@ -367,23 +409,139 @@ namespace FactoryWars.View {
       Edge(c3, c0, Vector3.right);
     }
 
-    /// <summary>언덕·협곡·바위·줄무늬를 메쉬 하나로 모은다. 번호는 MapSpec.Terrain의 순서다.</summary>
+    /// <summary>울타리 한 칸. 두 기둥 사이다.</summary>
+    public struct FencePiece {
+      public Vector3 From;
+      public Vector3 To;
+    }
+
+    const float EntranceGap = 2.4f;
+    const float EntrancePieces = 3f;
+    const float BankStart = 6.5f;
+    const float BankPiece = 4f;
+    const int BankPieces = 3;
+    const float BankOffset = 2f;
+    public const float FenceHeight = 2.7f;
+
+    static RiverPoint Sample(List<RiverPoint> path, float[] lengths, float s) {
+      var i = 0;
+      while (i + 2 < path.Count && lengths[i + 1] < s) {
+        i++;
+      }
+      var t = Mathf.Clamp01((s - lengths[i]) / Mathf.Max(lengths[i + 1] - lengths[i], 0.001f));
+      return new RiverPoint {
+        Position = Vector2.Lerp(path[i].Position, path[i + 1].Position, t),
+        Normal = Vector2.Lerp(path[i].Normal, path[i + 1].Normal, t).normalized,
+        Half = Mathf.Lerp(path[i].Half, path[i + 1].Half, t),
+      };
+    }
+
+    /// <summary>다리 양쪽 입구와, 입구 좌우 강가 12m씩. 강 전체를 두르지 않는다.</summary>
+    public static List<FencePiece> BarrierPieces(MapSpec map, int bridgeIndex) {
+      var pieces = new List<FencePiece>();
+      var bridge = map.Bridges[bridgeIndex];
+      var extent = Extent(bridge);
+      var acrossX = extent.width < extent.height;
+      var span = acrossX ? Vector3.right : Vector3.forward;
+      var lateral = acrossX ? Vector3.forward : Vector3.right;
+      var halfSpan = (acrossX ? extent.width : extent.height) / 2;
+      var halfWidth = (acrossX ? extent.height : extent.width) / 2;
+      var center = new Vector3(extent.center.x, 0, extent.center.y);
+      foreach (var side in new[] { -1f, 1f }) {
+        var entrance = center + span * (side * (halfSpan + EntranceGap));
+        for (var i = 0; i < EntrancePieces; i++) {
+          var from = -halfWidth + halfWidth * 2 * i / EntrancePieces;
+          var to = -halfWidth + halfWidth * 2 * (i + 1) / EntrancePieces;
+          pieces.Add(new FencePiece { From = entrance + lateral * from, To = entrance + lateral * to });
+        }
+      }
+
+      // 다리와 가장 가까운 강줄기를 찾아 강가를 따라 걷는다.
+      var paths = RiverPaths(map);
+      var nearest = float.MaxValue;
+      List<RiverPoint> path = null;
+      var index = 0;
+      foreach (var candidate in paths) {
+        for (var i = 0; i < candidate.Count; i++) {
+          var distance = (candidate[i].Position - extent.center).sqrMagnitude;
+          if (distance < nearest) {
+            nearest = distance;
+            path = candidate;
+            index = i;
+          }
+        }
+      }
+      if (path == null) {
+        return pieces;
+      }
+      var lengths = new float[path.Count];
+      for (var i = 1; i < path.Count; i++) {
+        lengths[i] = lengths[i - 1] + (path[i].Position - path[i - 1].Position).magnitude;
+      }
+      Vector3 Along(float s, float side) {
+        var point = Sample(path, lengths, s);
+        var position = point.Position + point.Normal * (side * (point.Half + BankOffset));
+        return new Vector3(position.x, 0, position.y);
+      }
+      foreach (var direction in new[] { -1f, 1f }) {
+        foreach (var side in new[] { -1f, 1f }) {
+          for (var i = 0; i < BankPieces; i++) {
+            var from = lengths[index] + direction * (BankStart + i * BankPiece);
+            var to = lengths[index] + direction * (BankStart + (i + 1) * BankPiece);
+            pieces.Add(new FencePiece { From = Along(from, side), To = Along(to, side) });
+          }
+        }
+      }
+      return pieces;
+    }
+
+    /// <summary>묵직한 금속 기둥과 가로 패널. 팀 색은 패널 테두리에만 쓴다. 경고등은 따로 모아 깜빡인다.</summary>
+    public static void Fence(MeshKit body, MeshKit lamps, FencePiece piece) {
+      var delta = piece.To - piece.From;
+      var length = delta.magnitude;
+      var yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
+      body.Push(piece.From, new Vector3(0, yaw, 0));
+      lamps.Push(piece.From, new Vector3(0, yaw, 0));
+      foreach (var z in new[] { 0f, length }) {
+        body.Paint(Swatch.MetalDark);
+        body.Taper(new Vector3(0, 0, z), new Vector2(0.6f, 0.6f), new Vector2(0.42f, 0.42f), 2.3f);
+        body.Paint(Swatch.Metal);
+        body.Box(new Vector3(0, 2.34f, z), new Vector3(0.56f, 0.1f, 0.56f));
+        body.Paint(Swatch.LampDark);
+        body.Cylinder(new Vector3(0, 2.39f, z), 0.17f, 0.08f, 6);
+        lamps.Glow(Swatch.GlowRed);
+        lamps.Dome(new Vector3(0, 2.46f, z), 0.2f, 0.24f, 6, 2);
+      }
+      var inner = length - 0.4f;
+      foreach (var y in new[] { 0.72f, 1.62f }) {
+        body.Paint(Swatch.Armor);
+        body.Box(new Vector3(0, y, length / 2), new Vector3(0.16f, 0.62f, inner));
+        body.Team();
+        body.Box(new Vector3(0, y + 0.33f, length / 2), new Vector3(0.2f, 0.08f, inner));
+        body.Box(new Vector3(0, y - 0.33f, length / 2), new Vector3(0.2f, 0.08f, inner));
+      }
+      body.Pop();
+      lamps.Pop();
+    }
+
+    /// <summary>언덕·협곡·바위·강·줄무늬를 메쉬 하나로 모은다. 번호는 MapSpec.Terrain의 순서다.</summary>
     public static void Features(MeshKit k, MapSpec map) {
-      var moat = MoatRects(map);
+      var paths = RiverPaths(map);
       var features = map.Terrain ?? Array.Empty<TerrainFeature>();
       for (var i = 0; i < features.Length; i++) {
         var seed = 100 + i * 17;
-        if (IsMoat(map, features[i])) {
-          continue;
-        }
         switch (features[i].Kind) {
           case TerrainKind.Hill: Hill(k, features[i].Shape, seed); break;
           case TerrainKind.CanyonWall: CanyonWall(k, features[i].Shape, seed); break;
-          default: Boulders(k, features[i].Shape, seed); break;
+          case TerrainKind.Rock: Boulders(k, features[i].Shape, seed); break;
         }
       }
+      for (var i = 0; i < paths.Count; i++) {
+        River(k, paths[i], 40 + i);
+        RiverRocks(k, paths[i], 70 + i, map);
+      }
       foreach (var zone in map.NoBuildZones ?? Array.Empty<MapShape>()) {
-        NoBuildStripes(k, zone, moat);
+        NoBuildStripes(k, zone, paths);
       }
     }
   }

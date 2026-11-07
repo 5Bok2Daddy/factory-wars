@@ -16,6 +16,7 @@ namespace FactoryWars.View {
     static readonly Color32 RockColor = new Color32(0x70, 0x68, 0x62, 0xFF);
     static readonly Color32 HillColor = new Color32(0x80, 0x5E, 0x3C, 0xFF);
     static readonly Color32 WallColor = new Color32(0x42, 0x2E, 0x24, 0xFF);
+    static readonly Color32 RiverColor = new Color32(0x24, 0x4C, 0x66, 0xFF);
 
     const float MarkSize = 34f;
 
@@ -39,7 +40,7 @@ namespace FactoryWars.View {
         _base[i] = Ground;
       }
       foreach (var feature in map.Terrain ?? Array.Empty<TerrainFeature>()) {
-        Paint(feature.Shape, feature.Kind == TerrainKind.Rock ? RockColor : feature.Kind == TerrainKind.Hill ? HillColor : WallColor);
+        Paint(feature.Shape, feature.Kind == TerrainKind.Rock ? RockColor : feature.Kind == TerrainKind.Hill ? HillColor : feature.Kind == TerrainKind.River ? RiverColor : WallColor);
       }
       foreach (var node in map.ResourceNodes) {
         Paint(node.Shape, node.Kind == ResourceKind.Iron ? IronColor : WoodColor);

@@ -42,7 +42,7 @@ MonoBehaviour:
       Value: 343584277016973015
   Regions:
   - MainArea
-  - Bridges
+  - Barrier
   StaticColliders2D: []
   StaticColliders3D: []
   MapEntities: []

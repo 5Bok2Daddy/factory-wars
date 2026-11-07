@@ -9,10 +9,11 @@ namespace FactoryWars.View {
   /// </summary>
   public unsafe class WorldView {
     const int ForestSteps = 10;
-    const float BridgeRaised = -78f;
-    const float BridgeSeconds = 1.8f;
-    const float BridgeY = -0.54f;
     const float MineModelRadius = 3f;
+    const float BarrierSeconds = 1.7f;
+    const float SlowBlink = 1.6f;
+    const float FastBlink = 0.32f;
+    const float FastBlinkFrom = 10f;
 
     class Forest {
       public MapShape Shape;
@@ -22,15 +23,23 @@ namespace FactoryWars.View {
       public MeshFilter Filter;
     }
 
+    class Barrier {
+      public GameObject Root;
+      public MeshRenderer Lamps;
+      public List<Vector3> Dust;
+    }
+
+    readonly List<Barrier> _barriers = new List<Barrier>();
+    float _barrierDrop = -1f;
     readonly Transform _root;
     readonly MapSpec _map;
     readonly ViewCatalog _catalog;
     readonly Dictionary<EntityRef, Forest> _forests = new Dictionary<EntityRef, Forest>();
     readonly Dictionary<EntityRef, GameObject> _crystals = new Dictionary<EntityRef, GameObject>();
-    readonly List<Transform> _decks = new List<Transform>();
-    float _bridgeOpen = -1f;
-
-    public float BridgeOpen => _bridgeOpen;
+    public BattleFx Fx { get; set; }
+    public int BarrierCount => _barriers.Count;
+    public float BarrierDrop => Mathf.Max(_barrierDrop, 0f);
+    public bool BarrierVisible => _barriers.Exists(b => b.Root.activeSelf);
     public int ForestCount => _forests.Count;
     public int MineCount => _crystals.Count;
 
@@ -64,10 +73,9 @@ namespace FactoryWars.View {
       foreach (var shape in _map.Bridges ?? new MapShape[0]) {
         var rect = TerrainKit.Extent(shape);
         var view = ArtView.Create(_catalog, "bridge", _root, 0);
-        view.transform.localPosition = new Vector3(rect.center.x, BridgeY, rect.center.y);
+        view.transform.localPosition = new Vector3(rect.center.x, 0, rect.center.y);
         // 프리팹의 다리는 Z축으로 건넌다. 사각형의 짧은 변이 건너는 방향이다.
         view.SetYaw(rect.width < rect.height ? 90f : 0f);
-        _decks.Add(view.Model.transform.Find("Deck"));
       }
     }
 
@@ -157,6 +165,85 @@ namespace FactoryWars.View {
       forest.Filter.sharedMesh = kit.ToMesh("forest");
     }
 
+    /// <summary>경고등 깜빡임 주기. 남은 시간이 10초 이하면 빠르다.</summary>
+    public static float BlinkPeriod(float remainingSeconds) => remainingSeconds <= FastBlinkFrom ? FastBlink : SlowBlink;
+
+    int NearestBase(Vector3 position) {
+      var best = 0;
+      var bestDistance = float.MaxValue;
+      for (var i = 0; _map.BaseAreas != null && i < _map.BaseAreas.Length; i++) {
+        var center = _map.BaseAreas[i].Center.ToUnityVector3();
+        var distance = (center - position).sqrMagnitude;
+        if (distance < bestDistance) {
+          best = i;
+          bestDistance = distance;
+        }
+      }
+      return best;
+    }
+
+    /// <summary>다리마다 울타리 하나. 몸체 메쉬 하나와 깜빡일 경고등 메쉬 하나다.</summary>
+    void BuildBarriers(Frame frame) {
+      for (var i = 0; _map.Bridges != null && i < _map.Bridges.Length; i++) {
+        var body = new MeshKit();
+        var lamps = new MeshKit();
+        var pieces = TerrainKit.BarrierPieces(_map, i);
+        var dust = new List<Vector3>();
+        foreach (var piece in pieces) {
+          TerrainKit.Fence(body, lamps, piece);
+          dust.Add((piece.From + piece.To) / 2);
+        }
+        var item = MeshObject(_root, "Barrier", body.ToMesh("barrier"), true);
+        var owner = NearestBase(_map.Bridges[i].Center.ToUnityVector3());
+        var state = owner < frame.PlayerCount ? frame.Global->Players.GetPointer(owner) : null;
+        if (state != null && state->Active) {
+          item.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(state->ColorIndex, true);
+        }
+        var light = MeshObject(item.transform, "Lamps", lamps.ToMesh("barrier_lamps"), false);
+        _barriers.Add(new Barrier { Root = item, Lamps = light.GetComponent<MeshRenderer>(), Dust = dust });
+      }
+    }
+
+    void UpdateBarriers(Frame frame, float deltaTime) {
+      var open = (bool)frame.Global->BarrierOpen;
+      if (_barrierDrop < 0f) {
+        BuildBarriers(frame);
+        _barrierDrop = open ? 1f : 0f;
+        if (open) {
+          foreach (var barrier in _barriers) {
+            barrier.Root.SetActive(false);
+          }
+        }
+      }
+      if (open == false) {
+        var remaining = (frame.Global->TruceEndFrame - frame.Number) / (float)frame.SessionConfig.UpdateFPS;
+        var period = BlinkPeriod(remaining);
+        var lit = Mathf.Repeat(Time.time, period) < period / 2;
+        foreach (var barrier in _barriers) {
+          barrier.Lamps.enabled = lit;
+        }
+        return;
+      }
+      if (_barrierDrop >= 1f) {
+        return;
+      }
+      if (_barrierDrop <= 0f) {
+        foreach (var barrier in _barriers) {
+          foreach (var point in barrier.Dust) {
+            Fx?.GroundDust(point);
+          }
+        }
+      }
+      _barrierDrop = Mathf.MoveTowards(_barrierDrop, 1f, deltaTime / BarrierSeconds);
+      var eased = _barrierDrop * _barrierDrop * (3f - 2f * _barrierDrop);
+      foreach (var barrier in _barriers) {
+        barrier.Root.transform.localPosition = Vector3.down * (TerrainKit.FenceHeight * eased);
+        if (_barrierDrop >= 1f) {
+          barrier.Root.SetActive(false);
+        }
+      }
+    }
+
     /// <summary>고갈되면 결정만 사라진다. 바위는 남아 건설 검사와 맞는다.</summary>
     public static void ShowCrystals(GameObject crystals, float remaining) {
       var alive = remaining > 0f;
@@ -169,6 +256,7 @@ namespace FactoryWars.View {
       if (frame == null) {
         return;
       }
+      UpdateBarriers(frame, deltaTime);
       var nodes = frame.Filter<ResourceNode>();
       while (nodes.NextUnsafe(out var entity, out var node)) {
         if (_forests.TryGetValue(entity, out var forest)) {
@@ -178,13 +266,6 @@ namespace FactoryWars.View {
         } else {
           AddNode(entity, node);
         }
-      }
-
-      var open = frame.Global->BridgesOpen ? 1f : 0f;
-      _bridgeOpen = _bridgeOpen < 0f ? open : Mathf.MoveTowards(_bridgeOpen, open, deltaTime / BridgeSeconds);
-      var angle = Mathf.Lerp(BridgeRaised, 0f, _bridgeOpen * _bridgeOpen * (3f - 2f * _bridgeOpen));
-      foreach (var deck in _decks) {
-        deck.localRotation = Quaternion.Euler(angle, 0, 0);
       }
     }
   }

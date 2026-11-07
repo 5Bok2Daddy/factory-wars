@@ -153,7 +153,7 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventActionRejected>(this, OnRejected);
       QuantumEvent.Subscribe<EventNoteReceived>(this, OnNote);
       QuantumEvent.Subscribe<EventPowerOutage>(this, OnOutage);
-      QuantumEvent.Subscribe<EventBridgesOpened>(this, e => ShowAlert("다리 개방"));
+      QuantumEvent.Subscribe<EventBarrierOpened>(this, e => ShowAlert(Texts.BarrierAlert));
     }
 
     void BuildDiplomacy(Frame frame) {

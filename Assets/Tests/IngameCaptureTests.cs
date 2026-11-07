@@ -77,6 +77,11 @@ namespace FactoryWars.Tests {
       var camera = Camera.main;
       var map = MapAsset("Map2P");
 
+      Time.timeScale = 1f;
+      AimCamera(camera, Vector3.zero, 165f);
+      yield return new WaitForSecondsRealtime(0.2f);
+      Capture(camera, "2p_river.png");
+      Time.timeScale = CaptureSpeed;
       yield return WaitGameSeconds(180);
       var home = map.StartPositions[0].ToUnityVector3();
       AimCamera(camera, home + new Vector3(-6, 0, 2), 45f);
@@ -85,12 +90,19 @@ namespace FactoryWars.Tests {
       Capture(camera, "2p_0300_gather.png");
 
       Time.timeScale = CaptureSpeed;
-      yield return WaitGameSeconds(418);
+      yield return WaitGameSeconds(415);
       Time.timeScale = 1f;
       var bridge = map.Bridges[0].Center.ToUnityVector3();
-      AimCamera(camera, bridge, 45f);
-      yield return WaitFor(() => Battle().World.BridgeOpen >= 0.55f, 30f, "다리 내려오는 중");
-      Capture(camera, "2p_0700_bridge.png");
+      System.Func<bool> frameLit = () => Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None).Any(r => r.name == "Lamps" && r.enabled);
+      AimCamera(camera, bridge, 22f);
+      yield return new WaitForSecondsRealtime(0.1f);
+      Capture(camera, "bridge_close.png");
+      AimCamera(camera, bridge, 34f);
+      yield return WaitFor(() => frameLit(), 5f, "경고등 켜짐");
+      Capture(camera, "2p_0655_blink.png");
+      yield return WaitFor(BarrierOpen, 60f, "휴전 종료");
+      yield return new WaitForSecondsRealtime(0.8f);
+      Capture(camera, "2p_0700_barrier.png");
 
       // 교전: 여러 유닛이 동시에 쏘는 순간을 찾는다.
       Time.timeScale = CaptureSpeed;
@@ -139,7 +151,7 @@ namespace FactoryWars.Tests {
       var camera = Camera.main;
       AimCamera(camera, new Vector3(0, 0, 4), 250f);
       yield return new WaitForSecondsRealtime(0.25f);
-      Capture(camera, "4p_overview.png");
+      Capture(camera, "4p_river.png");
     }
 
     [UnityTest, Explicit, Category("Ingame"), Timeout(3000000)]

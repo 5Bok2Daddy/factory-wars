@@ -85,8 +85,7 @@ namespace FactoryWars.EditorTools {
         Moving = new[] { new MovingPart { Name = "Crystals", Pivot = Vector3.zero, Build = k => MineCrystals(k, 7) } },
       };
       yield return new ArtRecipe {
-        Id = "bridge", Kind = "지형", MaxRenderers = 2, MaxTriangles = 800, Body = BridgeBanks,
-        Moving = new[] { new MovingPart { Name = "Deck", Pivot = new Vector3(0, 0.55f, -3.4f), Build = BridgeDeck } },
+        Id = "bridge", Kind = "지형", MaxRenderers = 1, MaxTriangles = 800, Body = Bridge,
       };
       foreach (var building in Buildings()) {
         yield return building;
@@ -842,28 +841,27 @@ namespace FactoryWars.EditorTools {
       }
     }
 
-    static void BridgeBanks(MeshKit k) {
-      // 입구를 가로지르는 해자 한 토막과 양쪽 둑. 앞뒤가 Z다.
-      k.Paint(Swatch.Water);
-      k.Box(new Vector3(0, -0.28f, 0), new Vector3(13f, 0.1f, 7f));
-      foreach (var side in new[] { -1f, 1f }) {
-        k.Paint(Swatch.Earth);
-        k.Taper(new Vector3(0, -0.5f, side * 4.1f), new Vector2(13f, 1.4f), new Vector2(13f, 1.0f), 1.0f, new Vector2(0, side * 0.1f));
-        k.Paint(Swatch.Grass);
-        k.Box(new Vector3(0, 0.53f, side * 4.25f), new Vector3(13f, 0.06f, 1.1f));
-        k.Paint(Swatch.Stone);
-        k.Taper(new Vector3(-6.7f, 0.5f, side * 3.75f), new Vector2(0.8f, 0.8f), new Vector2(0.62f, 0.62f), 1.5f);
-        k.Taper(new Vector3(6.7f, 0.5f, side * 3.75f), new Vector2(0.8f, 0.8f), new Vector2(0.62f, 0.62f), 1.5f);
-      }
-    }
-
-    static void BridgeDeck(MeshKit k) {
+    /// <summary>항상 내려진 나무 다리. Z축으로 건너고 원점이 땅 높이다.</summary>
+    static void Bridge(MeshKit k) {
+      const float Half = 5.2f;
       k.Paint(Swatch.WoodDark);
-      k.Box(new Vector3(-6.2f, 0.06f, 3.4f), new Vector3(0.3f, 0.24f, 6.9f));
-      k.Box(new Vector3(6.2f, 0.06f, 3.4f), new Vector3(0.3f, 0.24f, 6.9f));
-      for (var i = 0; i < 9; i++) {
+      foreach (var x in new[] { -6.2f, -2f, 2f, 6.2f }) {
+        k.Box(new Vector3(x, 0.02f, 0), new Vector3(0.34f, 0.2f, Half * 2));
+      }
+      for (var i = 0; i < 13; i++) {
         k.Paint(i % 2 == 0 ? Swatch.Wood : Swatch.WoodDark);
-        k.Box(new Vector3(0, 0.14f, 0.4f + i * 0.76f), new Vector3(12.4f, 0.1f, 0.7f));
+        k.Box(new Vector3(0, 0.14f, -Half + 0.4f + i * 0.8f), new Vector3(12.6f, 0.08f, 0.74f));
+      }
+      foreach (var side in new[] { -1f, 1f }) {
+        k.Paint(Swatch.Stone);
+        k.Taper(new Vector3(side * 6.6f, -1f, 3.4f), new Vector2(0.9f, 0.9f), new Vector2(0.62f, 0.62f), 1.9f);
+        k.Taper(new Vector3(side * 6.6f, -1f, -3.4f), new Vector2(0.9f, 0.9f), new Vector2(0.62f, 0.62f), 1.9f);
+        k.Paint(Swatch.WoodDark);
+        k.Box(new Vector3(side * 6.4f, 0.55f, 0), new Vector3(0.12f, 0.12f, 6.8f));
+      }
+      k.Paint(Swatch.MetalDark);
+      foreach (var x in new[] { -3f, 3f }) {
+        k.Box(new Vector3(x, -0.5f, 0), new Vector3(0.4f, 0.9f, 0.4f));
       }
     }
   }

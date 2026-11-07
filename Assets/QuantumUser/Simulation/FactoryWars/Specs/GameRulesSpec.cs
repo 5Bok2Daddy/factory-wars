@@ -15,10 +15,10 @@ namespace Quantum {
 
   public partial class GameRulesSpec : AssetObject {
     public string NavMeshName;
-    /// <summary>경기 시작부터 다리가 열릴 때까지의 휴전 시간. 공격할 수 없고 본진 밖으로 나갈 수 없다.</summary>
+    /// <summary>경기 시작부터 울타리가 열릴 때까지의 휴전 시간. 공격할 수 없고 본진 밖으로 나갈 수 없다.</summary>
     public int TruceSeconds;
-    /// <summary>다리를 묶은 NavMesh 영역 이름.</summary>
-    public string BridgeRegion;
+    /// <summary>다리 입구를 막는 울타리의 NavMesh 영역 이름.</summary>
+    public string BarrierRegion;
     public int MinDiplomacyPlayers;
     public FP ProposalSeconds;
     public FP ProposalCost;

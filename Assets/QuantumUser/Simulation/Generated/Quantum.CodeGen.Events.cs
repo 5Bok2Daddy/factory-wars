@@ -66,7 +66,7 @@ namespace Quantum {
           case EventAllianceChanged.ID: result = typeof(EventAllianceChanged); return;
           case EventUnitDestroyed.ID: result = typeof(EventUnitDestroyed); return;
           case EventPlayerDefeated.ID: result = typeof(EventPlayerDefeated); return;
-          case EventBridgesOpened.ID: result = typeof(EventBridgesOpened); return;
+          case EventBarrierOpened.ID: result = typeof(EventBarrierOpened); return;
           case EventPowerOutage.ID: result = typeof(EventPowerOutage); return;
           case EventBuildingPaused.ID: result = typeof(EventBuildingPaused); return;
           case EventGameOver.ID: result = typeof(EventGameOver); return;
@@ -116,9 +116,9 @@ namespace Quantum {
         _f.AddEvent(ev);
         return ev;
       }
-      public EventBridgesOpened BridgesOpened(Int32 Frame) {
+      public EventBarrierOpened BarrierOpened(Int32 Frame) {
         if (_f.IsPredicted) return null;
-        var ev = _f.Context.AcquireEvent<EventBridgesOpened>(EventBridgesOpened.ID);
+        var ev = _f.Context.AcquireEvent<EventBarrierOpened>(EventBarrierOpened.ID);
         ev.Frame = Frame;
         _f.AddEvent(ev);
         return ev;
@@ -291,13 +291,13 @@ namespace Quantum {
       }
     }
   }
-  public unsafe partial class EventBridgesOpened : EventBase {
+  public unsafe partial class EventBarrierOpened : EventBase {
     public new const Int32 ID = 6;
     public Int32 Frame;
-    protected EventBridgesOpened(Int32 id, EventFlags flags) : 
+    protected EventBarrierOpened(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventBridgesOpened() : 
+    public EventBarrierOpened() : 
         base(6, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
     }
     public new QuantumGame Game {

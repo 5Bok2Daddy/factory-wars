@@ -18,6 +18,7 @@ namespace FactoryWars.View {
     static readonly Color Missile = new Color(0.72f, 0.92f, 1f, 1f);
     static readonly Color SmokeGray = new Color(0.52f, 0.52f, 0.52f, 0.5f);
     static readonly Color SmokeDark = new Color(0.16f, 0.15f, 0.14f, 0.62f);
+    static readonly Color DustBrown = new Color(0.62f, 0.54f, 0.4f, 0.45f);
 
     ParticleSystem _glow;
     ParticleSystem _tracer;
@@ -134,6 +135,18 @@ namespace FactoryWars.View {
       var smoke = Scaled(6);
       for (var i = 0; i < smoke; i++) {
         Emit(_smoke, position + Random.insideUnitSphere * size * 0.6f, Vector3.up * Random.Range(1f, 2.4f), size * Random.Range(0.9f, 1.5f), Random.Range(1.2f, 2.2f), SmokeDark);
+      }
+    }
+
+    /// <summary>울타리가 내려갈 때 바닥 먼지. 낮음 품질에서는 끈다.</summary>
+    public void GroundDust(Vector3 position) {
+      if (GraphicsQuality.Current == QualityTier.Low) {
+        return;
+      }
+      var count = Scaled(3);
+      for (var i = 0; i < count; i++) {
+        var velocity = new Vector3(Random.Range(-1f, 1f), Random.Range(0.3f, 0.9f), Random.Range(-1f, 1f));
+        Emit(_smoke, position + Random.insideUnitSphere * 0.6f, velocity, Random.Range(0.8f, 1.4f), Random.Range(0.9f, 1.5f), DustBrown);
       }
     }
 

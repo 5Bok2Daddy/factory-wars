@@ -78,6 +78,7 @@ namespace FactoryWars.View {
       World = new WorldView(transform, frame.FindAsset<MapSpec>(frame.Map.UserAsset), _catalog);
       Fx = new GameObject("Fx").AddComponent<BattleFx>();
       Fx.transform.SetParent(transform, false);
+      World.Fx = Fx;
       _controller = FindAnyObjectByType<MatchController>();
     }
 

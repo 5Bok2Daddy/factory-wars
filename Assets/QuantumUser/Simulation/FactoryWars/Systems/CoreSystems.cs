@@ -15,7 +15,7 @@ namespace Quantum.FactoryWars {
 
     public static int SecondsToFrames(Frame f, FP seconds) => FPMath.CeilToInt(seconds * f.SessionConfig.UpdateFPS);
 
-    public static bool InTruce(Frame f) => f.Global->BridgesOpen == false;
+    public static bool InTruce(Frame f) => f.Global->BarrierOpen == false;
 
     /// <summary>지상으로 갈 수 있는 곳이면 true. 휴전 중에는 자기 본진 안뿐이다.</summary>
     public static bool IsReachable(Frame f, PlayerRef player, FPVector3 position) {
@@ -46,7 +46,7 @@ namespace Quantum.FactoryWars {
       var config = f.RuntimeConfig;
       var truce = config.OverrideTruce ? config.TruceSeconds : FactoryWarsUtil.Rules(f).TruceSeconds;
       f.Global->TruceEndFrame = FactoryWarsUtil.SecondsToFrames(f, truce);
-      TruceSystem.SetBridges(f, truce <= 0);
+      TruceSystem.SetBarrier(f, truce <= 0);
 
       var nodes = FactoryWarsUtil.MapInfo(f).ResourceNodes;
       for (var i = 0; nodes != null && i < nodes.Length; i++) {
@@ -138,20 +138,20 @@ namespace Quantum.FactoryWars {
     }
   }
 
-  /// <summary>초반 휴전. 끝나면 모든 본진 다리를 한 번에 연다.</summary>
+  /// <summary>초반 휴전. 끝나면 모든 다리 입구의 울타리를 한 번에 연다.</summary>
   public unsafe class TruceSystem : SystemMainThread {
     /// <summary>영역 하나만 켜고 끈다. 영역 상태는 프레임 데이터라 롤백에도 안전하다.</summary>
-    public static void SetBridges(Frame f, bool open) {
-      f.Global->BridgesOpen = open;
-      if (f.Map.RegionMap.TryGetValue(FactoryWarsUtil.Rules(f).BridgeRegion, out var region)) {
+    public static void SetBarrier(Frame f, bool open) {
+      f.Global->BarrierOpen = open;
+      if (f.Map.RegionMap.TryGetValue(FactoryWarsUtil.Rules(f).BarrierRegion, out var region)) {
         f.NavMeshRegionMask->ToggleRegion(region, open);
       }
     }
 
     public override void Update(Frame f) {
       if (FactoryWarsUtil.InTruce(f) && f.Number >= f.Global->TruceEndFrame) {
-        SetBridges(f, true);
-        f.Events.BridgesOpened(f.Number);
+        SetBarrier(f, true);
+        f.Events.BarrierOpened(f.Number);
       }
     }
   }
