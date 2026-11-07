@@ -66,6 +66,7 @@ public class FactoryWarsDebugView : MonoBehaviour {
         view.transform.rotation = Quaternion.Euler(0, bridges[i].Yaw.AsFloat, 0);
         view.transform.localScale = new Vector3(bridges[i].HalfLength.AsFloat * 2, 0.3f, bridges[i].HalfWidth.AsFloat * 2);
         _bridges[i] = view.GetComponent<Renderer>();
+        _bridges[i].sharedMaterial = NodeMaterial();
       }
     }
     var color = frame.Global->BridgesOpen ? BridgeOpen : BridgeClosed;

@@ -1260,3 +1260,55 @@ GDD의 컨셉과 대표 유닛 세 종(기동 보병, 번개 전차, 해태 중�
 **새 임시값:** `GameRulesSpec.PlayerColorCount` 8.
 
 **사용자가 할 일:** 없습니다.
+
+
+## 4단계: Android 개발 빌드 (3-7)
+
+**빌드 성공, 기기 실행은 시험 전입니다.** 이 PC에 연결된 Android 기기가 없습니다(`adb devices` 빈 목록).
+
+| 항목 | 결과 |
+| --- | --- |
+| 파일 | `C:\Users\MinGyu\FactoryWars\Builds\FactoryWars-dev.apk` |
+| 크기 | 45MB |
+| 빌드 시간 | 6분 19초, 오류 0 |
+| 스크립팅 | IL2CPP |
+| 아키텍처 | `arm64-v8a`만 (aapt로 확인) |
+| 개발 빌드 | `application-debuggable` 확인 |
+| 방향 | 가로 전용. 좌·우 가로 회전은 허용 |
+| 최소·대상 SDK | 23 / 36 |
+| 씬 | `Menu`, `Map2P`, `Map4P` |
+
+- **그래픽 상태:** 임시 도형입니다. 5단계 결과는 들어 있지 않습니다.
+- **고친 점:** 실행 중 만드는 다리 표시가 빌드에서 기본 머티리얼을 쓰지 않게 공유 머티리얼을 지정했습니다.
+- **다시 빌드:** 에디터 메뉴 Tools > Factory Wars > Build Android (Development), 또는 `AndroidBuild.Run`을 배치 모드로 실행합니다.
+
+### 사용자가 직접 할 일: 폰에 설치
+
+1. **폰에서 개발자 옵션을 켭니다.** 설정 > 휴대전화 정보 > 소프트웨어 정보 > 빌드번호를 7번 누릅니다.
+2. **USB 디버깅을 켭니다.** 설정 > 개발자 옵션 > USB 디버깅.
+3. **폰을 USB로 PC에 연결합니다.** 폰에 뜨는 "USB 디버깅 허용"에서 허용을 누릅니다.
+4. **연결을 확인합니다.** PowerShell에서 아래를 실행합니다. 기기 번호 옆에 `device`가 나오면 됩니다.
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.0.85f2\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe" devices
+```
+
+5. **설치합니다.** 이미 설치돼 있어도 `-r`로 덮어씁니다.
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.0.85f2\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe" install -r "C:\Users\MinGyu\FactoryWars\Builds\FactoryWars-dev.apk"
+```
+
+6. **앱을 엽니다.** 이름은 Factory Wars입니다. 앱 아이콘은 아직 기본입니다.
+
+USB 없이 설치하려면 APK를 폰으로 복사해 파일 앱에서 열고 "출처를 알 수 없는 앱 설치"를 허용합니다.
+
+**확인할 것:** 조작감, 한글 폰트, 버튼 크기, 글자 겹침, 시작 화면부터 대전까지의 흐름.
+
+**문제가 생기면** 아래로 로그를 받아 알려 주세요.
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.0.85f2\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe" logcat -s Unity > C:\Users\MinGyu\FactoryWars\android-log.txt
+```
+
+**테스트:** 일반 테스트 139 통과, 전용 20판 건너뜀, 실패 0. 컴파일 에러 0, 결정론 금지어 0건.
