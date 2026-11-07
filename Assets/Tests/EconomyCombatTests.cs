@@ -358,12 +358,12 @@ namespace FactoryWars.Tests {
       yield return StartMatch(Map2PScene, 2);
       yield return Build(0, "_barracks", V(-33, -68));
       AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);
-      Assert.AreEqual(5000, Funds(0));
+      Assert.AreEqual(500, Funds(0), "실제 맵 시작 철");
       _rejected.Clear();
 
       yield return Build(0, "_power_plant", V(-45, -60));
       Assert.AreEqual(0, _rejected.Count, "빈 땅은 허용");
-      Assert.AreEqual(4850, Funds(0));
+      Assert.AreEqual(350, Funds(0));
     }
 
     [UnityTest]

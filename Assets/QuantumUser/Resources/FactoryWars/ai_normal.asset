@@ -18,8 +18,12 @@ MonoBehaviour:
       Value: 414360037463059834
   ThinkSeconds:
     RawValue: 131072
-  EngineerTarget: 6
-  BuildOrder: 010000000200000004000000030000000200000006000000010000000500000007000000030000000800000009000000
+  EngineerTarget: 10
+  BuildOrder: 030000000400000001000000020000000600000005000000030000000100000007000000080000000900000003000000
+  IronShareEarly:
+    RawValue: 39321
+  IronShareLate:
+    RawValue: 45875
   MaxYards: 2
   ExpandDistance:
     RawValue: 1966080
@@ -27,15 +31,26 @@ MonoBehaviour:
   QueueTarget: 2
   UnitVariety: 3
   FirstAttackSeconds:
-    RawValue: 17694720
+    RawValue: 19660800
   AttackRepeatSeconds:
     RawValue: 3932160
   WaveSize: 8
   WaveGrowth: 3
   MaxWaveSize: 24
   PowerMargin:
-    RawValue: 65536
+    RawValue: 196608
   PopulationMargin: 4
+  PowerReserve:
+    RawValue: 1310720
+  MaxProcessors: 2
+  SteelTarget:
+    RawValue: 19660800
+  IronSurplus:
+    RawValue: 19660800
+  ProcessorIronFloor:
+    RawValue: 9830400
+  SteelCap:
+    RawValue: 39321600
   SiteGrid:
     RawValue: 655360
   SiteRings: 5
@@ -44,5 +59,5 @@ MonoBehaviour:
     RawValue: 32768
   ProposalIntervalSeconds:
     RawValue: 5898240
-  DiplomacyFundsReserve:
-    RawValue: 78643200
+  DiplomacyIronReserve:
+    RawValue: 39321600

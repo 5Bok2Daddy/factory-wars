@@ -35,13 +35,20 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Bot_BuildsEconomyInOrder() {
       yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal });
-      yield return Sim(120);
+      for (var minute = 1; minute <= 5; minute++) {
+        yield return Sim(60);
+        var state = StateOf(1);
+        Debug.Log($"[FW-TEST] normal bot {minute}m: iron {state.Stock.Iron} wood {state.Stock.Wood} steel {state.Stock.Steel} power {state.Stock.Power}/{state.PowerCap} rate {state.PowerRate} pop {state.PopulationUsed}/{state.PopulationCap} eng {Engineers(1).Count} depot {BuildingCount(1, BuildingRole.SupplyDepot)} barracks {BuildingCount(1, BuildingRole.Barracks)} plant {BuildingCount(1, BuildingRole.PowerPlant)} proc {BuildingCount(1, BuildingRole.Processor)} factory {BuildingCount(1, BuildingRole.VehicleFactory)} units {state.UnitsProduced}");
+      }
+      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.SupplyDepot), 1, "보급창");
+      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.Barracks), 1, "병영");
       Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.PowerPlant), 1, "발전소");
       Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.Processor), 1, "가공소");
-      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.Barracks), 1, "병영");
-      Assert.Greater(StateOf(1).Earned.Iron.AsFloat, 0f, "채집 수입");
-      Assert.GreaterOrEqual(Engineers(1).Count, 3, "공병 생산");
-      Debug.Log($"[FW-TEST] normal bot 120s: earned {StateOf(1).Earned.Iron}, funds {StateOf(1).Stock.Iron}, engineers {Engineers(1).Count}");
+      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.VehicleFactory), 1, "군수공장");
+      Assert.Greater(StateOf(1).Earned.Iron.AsFloat, 0f, "철 수입");
+      Assert.Greater(StateOf(1).Earned.Wood.AsFloat, 0f, "목재 수입");
+      Assert.Greater(StateOf(1).Earned.Steel.AsFloat, 0f, "강철 생산");
+      Assert.GreaterOrEqual(Engineers(1).Count, 6, "공병 생산");
     }
 
     [UnityTest]
@@ -59,7 +66,7 @@ namespace FactoryWars.Tests {
       yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Easy, BotDifficulty.Normal });
       yield return Sim(300);
       Debug.Log($"[FW-TEST] 300s easy earned {StateOf(0).Earned.Iron} produced {StateOf(0).UnitsProduced}; normal earned {StateOf(1).Earned.Iron} produced {StateOf(1).UnitsProduced}");
-      Assert.Greater(StateOf(1).Earned.Iron.AsFloat, StateOf(0).Earned.Iron.AsFloat, "보통이 더 번다");
+      Assert.Greater((StateOf(1).Earned.Iron + StateOf(1).Earned.Wood).AsFloat, (StateOf(0).Earned.Iron + StateOf(0).Earned.Wood).AsFloat, "보통이 더 번다");
       Assert.Greater(StateOf(1).UnitsProduced, StateOf(0).UnitsProduced, "보통이 더 만든다");
     }
 
@@ -80,7 +87,7 @@ namespace FactoryWars.Tests {
       var answered = DiplomacySystem.HasProposal(Verified, 0, 1) == false;
       Assert.IsTrue(answered, "쉬움 AI가 제안에 답함");
       var allied = DiplomacySystem.GetRelation(Verified, 0, 1) == Relation.Allied;
-      Assert.AreEqual(allied ? 4700 : 4850, Funds(0), "수락이면 환급 없음, 거절이면 150 환급");
+      Assert.AreEqual(allied ? 200 : 350, Funds(0), "수락이면 환급 없음, 거절이면 150 환급");
     }
 
     [UnityTest]
@@ -120,6 +127,8 @@ namespace FactoryWars.Tests {
       long value = 0;
       for (var i = 0; i < 2; i++) {
         value = value * 31 + StateOf(i).Earned.Iron.RawValue;
+        value = value * 31 + StateOf(i).Earned.Wood.RawValue;
+        value = value * 31 + StateOf(i).Earned.Steel.RawValue;
         value = value * 31 + StateOf(i).UnitsProduced;
       }
       return value;

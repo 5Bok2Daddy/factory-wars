@@ -267,13 +267,21 @@ namespace FactoryWars.EditorTools {
       return faction;
     }
 
-    static AiSpec BuildAi(string id, double think, int engineers, int variety, int maxYards, double firstAttack, double repeat,
+    static AiSpec BuildAi(string id, double think, int engineers, int variety, int maxYards, int maxProcessors, double firstAttack, double repeat,
         int wave, int growth, int maxWave, bool strategic, BuildingRole[] order) {
       var ai = Asset<AiSpec>(id);
       ai.ThinkSeconds = N(think);
       ai.EngineerTarget = engineers;
       ai.BuildOrder = order;
+      ai.IronShareEarly = N(0.6);
+      ai.IronShareLate = N(0.7);
       ai.MaxYards = maxYards;
+      ai.MaxProcessors = maxProcessors;
+      ai.SteelTarget = 300;
+      ai.IronSurplus = 300;
+      ai.ProcessorIronFloor = 150;
+      ai.SteelCap = 600;
+      ai.PowerReserve = 20;
       ai.ExpandDistance = 30;
       ai.ConcurrentBuilds = 1;
       ai.QueueTarget = 2;
@@ -283,14 +291,14 @@ namespace FactoryWars.EditorTools {
       ai.WaveSize = wave;
       ai.WaveGrowth = growth;
       ai.MaxWaveSize = maxWave;
-      ai.PowerMargin = 1;
+      ai.PowerMargin = 3;
       ai.PopulationMargin = 4;
       ai.SiteGrid = 10;
       ai.SiteRings = 5;
       ai.StrategicDiplomacy = strategic;
       ai.AcceptChance = N(0.5);
       ai.ProposalIntervalSeconds = 90;
-      ai.DiplomacyFundsReserve = 1200;
+      ai.DiplomacyIronReserve = 600;
       EditorUtility.SetDirty(ai);
       return ai;
     }
@@ -347,12 +355,12 @@ namespace FactoryWars.EditorTools {
       rules.RepairPerSecond = 20;
       rules.RepairCostRatio = N(0.5);
       rules.FoundationHealthRatio = N(0.1);
-      rules.EasyAi = Ref(BuildAi("ai_easy", 5, 3, 1, 1, 420, 90, 6, 2, 12, false, new[] {
-        BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.Barracks, BuildingRole.SupplyDepot, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
+      rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 1, 420, 90, 6, 2, 12, false, new[] {
+        BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
       }));
-      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 6, 3, 2, 270, 60, 8, 3, 24, true, new[] {
-        BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.Barracks, BuildingRole.SupplyDepot, BuildingRole.Processor, BuildingRole.VehicleFactory,
-        BuildingRole.PowerPlant, BuildingRole.ResearchLab, BuildingRole.Airfield, BuildingRole.SupplyDepot, BuildingRole.HeavyWorks, BuildingRole.DefenseTower,
+      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 2, 2, 300, 60, 8, 3, 24, true, new[] {
+        BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.ResearchLab,
+        BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Airfield, BuildingRole.HeavyWorks, BuildingRole.DefenseTower, BuildingRole.SupplyDepot,
       }));
       rules.UnitClearance = N(0.5);
       rules.SlideMemorySeconds = 1;
@@ -520,8 +528,7 @@ namespace FactoryWars.EditorTools {
       spec.BoundsMin = new FPVector2(-def.HalfSize, -def.HalfSize);
       spec.BoundsMax = new FPVector2(def.HalfSize, def.HalfSize);
       spec.StartPositions = Orbit(def, new MapShape { Center = def.Start }).Select(s => s.Center).ToArray();
-      // 임시: AI가 목재·강철을 다루는 3-0i 전까지 넉넉히 준다. 3-0i에서 설계값(철 500, 목재 300)으로 바꾼다.
-      spec.StartingResources = R(5000, 20000, 20000, 20000);
+      spec.StartingResources = R(500, 300);
       spec.StartingEngineers = 4;
       spec.ResourceNodes = def.Nodes
         .SelectMany(node => Orbit(def, node.Shape).Select(shape => new ResourceNodePlacement { Kind = node.Kind, Amount = node.Amount, Shape = shape }))
