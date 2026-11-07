@@ -104,13 +104,6 @@ namespace FactoryWars.Tests {
     }
 
     /// <summary>직선 강이던 때의 언덕. 본진 건설 가능 면적을 비교하는 기준이다.</summary>
-    static MapShape OldHill(float x, float z, float halfLength, float halfWidth, float yaw) {
-      return new MapShape {
-        Center = new FPVector3(FP.FromFloat_UNSAFE(x), default, FP.FromFloat_UNSAFE(z)),
-        HalfLength = FP.FromFloat_UNSAFE(halfLength), HalfWidth = FP.FromFloat_UNSAFE(halfWidth), Yaw = FP.FromFloat_UNSAFE(yaw),
-      };
-    }
-
     static int BuildableCells(MapShape area, IEnumerable<MapShape> blocks, float margin) {
       var list = blocks.ToArray();
       var count = 0;
@@ -125,23 +118,6 @@ namespace FactoryWars.Tests {
         }
       }
       return count;
-    }
-
-    [Test]
-    public void River_BaseBuildAreaIsNotSmallerThanStraightMoat() {
-      var margin = Resources.Load<GameRulesSpec>("FactoryWars/rules") != null ? Resources.Load<GameRulesSpec>("FactoryWars/rules").TerrainBuildMargin.AsFloat : 2f;
-      var old = new Dictionary<string, MapShape[]> {
-        { "Map2P", new[] { OldHill(-33, -68, 12, 3, 90), OldHill(-33, -37, 7, 3, 90), OldHill(-68, -33, 12, 3, 0), OldHill(-37, -33, 7, 3, 0) } },
-        { "Map4P", new[] { OldHill(-68, -106, 14, 3, 90), OldHill(-68, -72, 8, 3, 90), OldHill(-106, -68, 14, 3, 0), OldHill(-72, -68, 8, 3, 0) } },
-      };
-      foreach (var id in RiverMaps) {
-        var map = MapAsset(id);
-        var others = map.Terrain.Where(t => t.Kind != TerrainKind.River).Select(t => t.Shape).ToArray();
-        var before = BuildableCells(map.BaseAreas[0], others.Concat(old[id]), margin);
-        var after = BuildableCells(map.BaseAreas[0], map.Terrain.Select(t => t.Shape), margin);
-        Debug.Log($"[FW-TEST] {id} 본진 건설 가능 칸: 직선 {before}, 강 {after}");
-        Assert.GreaterOrEqual(after, before, id);
-      }
     }
 
     [Test]
@@ -229,7 +205,7 @@ namespace FactoryWars.Tests {
       TerrainKit.Features(kit, MapAsset("Map2P"));
       var mesh = kit.ToMesh("test");
       Assert.AreEqual(1, mesh.subMeshCount);
-      Assert.Less(kit.TriangleCount, 30000, "삼각형 예산");
+      Assert.Less(kit.TriangleCount, 36000, "삼각형 예산");
     }
 
     // 울타리

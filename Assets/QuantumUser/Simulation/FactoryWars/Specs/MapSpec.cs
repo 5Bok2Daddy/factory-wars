@@ -16,6 +16,37 @@ namespace Quantum {
     public MapShape Shape;
   }
 
+  /// <summary>점령지. 공격 대상이 아니고, 반경 안의 지상 전투 유닛으로 점령한다.</summary>
+  [Serializable]
+  public struct CaptureSitePlacement {
+    public CaptureKind Kind;
+    public FPVector3 Center;
+    public FP Radius;
+  }
+
+  /// <summary>뒷길 틈을 막는 바리케이드. 틈은 NavMesh 영역 Region으로 구워져 있고 경기 시작 때 닫힌다.</summary>
+  [Serializable]
+  public struct BarricadePlacement {
+    public MapShape Shape;
+    public string Region;
+  }
+
+  /// <summary>보급 상자 자리. Seat가 0 이상이면 그 자리의 본진 상자, -1이면 투하 후보지다. Group이 같은 투하 후보지는 대칭 쌍이다.</summary>
+  [Serializable]
+  public struct CrateSpot {
+    public FPVector3 Position;
+    public int Seat;
+    public int Group;
+  }
+
+  /// <summary>AI가 확장을 고르는 자리. SeatMask는 이 자리에 인접한 플레이어 자리의 비트다.</summary>
+  [Serializable]
+  public struct ExpansionSite {
+    public ExpansionKind Kind;
+    public FPVector3 Position;
+    public int SeatMask;
+  }
+
   /// <summary>맵 하나의 크기·시작 위치·자원 노드. Map.UserAsset으로 맵과 연결한다.</summary>
   public partial class MapSpec : AssetObject {
     public int MaxPlayers;
@@ -37,5 +68,17 @@ namespace Quantum {
     public MapShape[] River;
     /// <summary>자리별 본진 안쪽. 휴전 중에는 여기서만 채집·건설한다. 비어 있으면 제한이 없다.</summary>
     public MapShape[] BaseAreas;
+    public CaptureSitePlacement[] CaptureSites;
+    public BarricadePlacement[] Barricades;
+    public CrateSpot[] CrateSpots;
+    /// <summary>절벽에 둘러싸인 평지. 위에 있는지는 이 원 안인지로 판정한다.</summary>
+    public MapShape[] HighGrounds;
+    /// <summary>고지대로 오르는 비탈. 통과할 수 있다.</summary>
+    public MapShape[] Ramps;
+    /// <summary>도로의 짧은 조각들. 모양의 합집합이 도로다.</summary>
+    public MapShape[] Roads;
+    /// <summary>얕은 개울. 통과할 수 있다.</summary>
+    public MapShape[] Fords;
+    public ExpansionSite[] Expansions;
   }
 }

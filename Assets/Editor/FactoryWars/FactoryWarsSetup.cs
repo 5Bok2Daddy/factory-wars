@@ -16,7 +16,7 @@ namespace FactoryWars.EditorTools {
   /// 프로젝트 설정·밸런스 데이터·테스트 씬 생성. 배치 모드에서
   /// -executeMethod FactoryWars.EditorTools.FactoryWarsSetup.RunAll 로 실행한다. 다시 실행해도 안전하다.
   /// </summary>
-  public static class FactoryWarsSetup {
+  public static partial class FactoryWarsSetup {
     const string AppId = "b0a33dd2-3c99-455f-ad7e-9c82b8a4cd40";
     const string DataRoot = "Assets/QuantumUser/Resources/FactoryWars";
     const string RenderRoot = "Assets/Settings";
@@ -24,8 +24,11 @@ namespace FactoryWars.EditorTools {
     const string ScenePath = ScenesRoot + "/QuantumGameScene.unity";
     const string MapRoot = "Assets/QuantumUser/Resources";
     const string BarrierRegion = "Barrier";
+    const string BarricadeRegionPrefix = "Barricade";
     /// <summary>다리에 칠하는 Unity NavMesh 영역 번호. 0~2는 기본 영역이다.</summary>
     const int BarrierArea = 3;
+    const int BarricadeArea = 4;
+    const int WorldMargin = 32;
 
     [MenuItem("Tools/Factory Wars/Run All Setup")]
     public static void RunAll() {
@@ -533,112 +536,6 @@ namespace FactoryWars.EditorTools {
       QuantumUnityDBUtilities.RefreshGlobalDB(true);
     }
 
-    /// <summary>
-    /// 한 플레이어 몫의 배치만 적고 맵 중심 회전으로 나머지를 만든다. 좌표는 맵 중심이 원점이다.
-    /// 배치의 근거와 검증은 SETUP-REPORT.md의 맵 항목에 있다.
-    /// </summary>
-    class MapDef {
-      public string Id;
-      public int Players;
-      public int HalfSize;
-      public FPVector3 Start;
-      public ResourceNodePlacement[] Nodes;
-      public ResourceNodePlacement[] CenterNodes;
-      public TerrainFeature[] Terrain;
-      public MapShape[] NoBuildZones;
-      public MapShape[] Bridges;
-      public MapShape BaseArea;
-      public Vector3 CameraPosition;
-      public float RiverAmplitude;
-      public int RiverSeed;
-    }
-
-    static FPVector3 Position(double x, double z) => new FPVector3(N(x), 0, N(z));
-
-    static MapShape Circle(double x, double z, double radius) => new MapShape { Center = Position(x, z), Radius = N(radius) };
-
-    static MapShape Rect(double x, double z, double halfLength, double halfWidth, double yaw = 0) {
-      return new MapShape { Center = Position(x, z), HalfLength = N(halfLength), HalfWidth = N(halfWidth), Yaw = N(yaw) };
-    }
-
-    static ResourceNodePlacement Mine(double x, double z, int amount, double radius = 3) {
-      return new ResourceNodePlacement { Kind = ResourceKind.Iron, Amount = amount, Shape = Circle(x, z, radius) };
-    }
-
-    static ResourceNodePlacement Forest(double x, double z, double halfLength, double halfWidth, double yaw, int amount) {
-      return new ResourceNodePlacement { Kind = ResourceKind.Wood, Amount = amount, Shape = Rect(x, z, halfLength, halfWidth, yaw) };
-    }
-
-    static TerrainFeature Feature(TerrainKind kind, MapShape shape) => new TerrainFeature { Kind = kind, Shape = shape };
-
-    static readonly MapDef TwoPlayerMap = new MapDef {
-      Id = "Map2P", Players = 2, HalfSize = 80, Start = new FPVector3(-55, 0, -55), RiverAmplitude = 4.5f, RiverSeed = 11,
-      Bridges = new[] { Rect(-33, -50, 3.5, 6.5), Rect(-50, -33, 6.5, 3.5) },
-      BaseArea = Rect(-58, -58, 22, 22),
-      Nodes = new[] {
-        Mine(-72, -52, 4000),
-        Mine(-52, -72, 4000),
-        Mine(-23, -23, 3000),
-        Mine(-46, 58, 2000),
-        Forest(-68, -68, 9, 3, 45, 6000),
-        Forest(-14, -14, 10, 3, 45, 4000),
-        Forest(-66, 66, 14, 4, 45, 8000),
-      },
-      CenterNodes = new[] { Mine(0, 0, 6000, 4) },
-      Terrain = new[] {
-        Feature(TerrainKind.Hill, Rect(-33, 56.5, 23.5, 3, 90)),
-        Feature(TerrainKind.Hill, Rect(-68, 33, 12, 3)),
-        Feature(TerrainKind.Hill, Rect(-37, 33, 7, 3)),
-        Feature(TerrainKind.Hill, Rect(-27, 27, 5, 3, 45)),
-        Feature(TerrainKind.Hill, Rect(-13, 13, 4, 3, 45)),
-        Feature(TerrainKind.CanyonWall, Rect(-56, 34, 12, 1, 90)),
-        Feature(TerrainKind.CanyonWall, Rect(-44, 34, 12, 1, 90)),
-        Feature(TerrainKind.CanyonWall, Rect(-24.25, 24.25, 12, 1, -45)),
-        Feature(TerrainKind.CanyonWall, Rect(-15.75, 15.75, 12, 1, -45)),
-        Feature(TerrainKind.Rock, Circle(-9, -3, 3)),
-        Feature(TerrainKind.Rock, Circle(-3, -9, 3)),
-      },
-      NoBuildZones = new[] {
-        Rect(-33, -50, 9, 8),
-        Rect(-50, -33, 8, 9),
-        Rect(-50, 34, 8, 14),
-        Rect(-20, 20, 14, 8, -45),
-      },
-      CameraPosition = new Vector3(0, 130, -105),
-    };
-
-    static readonly MapDef FourPlayerMap = new MapDef {
-      Id = "Map4P", Players = 4, HalfSize = 120, Start = new FPVector3(-90, 0, -90), RiverAmplitude = 5f, RiverSeed = 23,
-      Bridges = new[] { Rect(-68, -86, 3.5, 6.5), Rect(-86, -68, 6.5, 3.5) },
-      BaseArea = Rect(-95.5, -95.5, 24.5, 24.5),
-      Nodes = new[] {
-        Mine(-107, -87, 4000),
-        Mine(-87, -107, 4000),
-        Mine(-60, -60, 3000),
-        Mine(10, -100, 3000),
-        Forest(-106, -106, 10, 3, 45, 6000),
-        Forest(-50, -50, 10, 3, 45, 4000),
-        Forest(-8, -106, 10, 3, 0, 4000),
-        Forest(-18, -18, 8, 3, 45, 2000),
-      },
-      CenterNodes = new[] { Mine(0, 0, 10000, 5) },
-      Terrain = new[] {
-        Feature(TerrainKind.Hill, Rect(-21, -36, 15, 3)),
-        Feature(TerrainKind.Hill, Rect(21, -36, 15, 3)),
-        Feature(TerrainKind.Hill, Rect(-40, -111, 9, 3, 90)),
-        Feature(TerrainKind.Hill, Rect(-40, -80, 10, 3, 90)),
-        Feature(TerrainKind.CanyonWall, Rect(-40, -102, 12, 1)),
-        Feature(TerrainKind.CanyonWall, Rect(-40, -90, 12, 1)),
-      },
-      NoBuildZones = new[] {
-        Rect(-68, -86, 9, 8),
-        Rect(-86, -68, 8, 9),
-        Rect(-40, -96, 14, 8),
-        Rect(0, -36, 8, 8),
-      },
-      CameraPosition = new Vector3(0, 190, -155),
-    };
-
     /// <summary>맵 중심 기준으로 90도씩 quarterTurns번 돌린다.</summary>
     static MapShape Turn(MapShape shape, int quarterTurns) {
       for (var i = 0; i < quarterTurns; i++) {
@@ -680,7 +577,48 @@ namespace FactoryWars.EditorTools {
       spec.NoBuildZones = def.NoBuildZones.SelectMany(zone => Orbit(def, zone)).ToArray();
       spec.Bridges = def.Bridges.SelectMany(bridge => Orbit(def, bridge)).ToArray();
       spec.BaseAreas = Orbit(def, def.BaseArea).ToArray();
+      FillBattlefield(def, spec);
       EditorUtility.SetDirty(spec);
+    }
+
+    /// <summary>점령지·바리케이드·상자·고지대·도로·여울·확장 후보. 규칙은 항목 20의 시스템이 읽는다.</summary>
+    static void FillBattlefield(MapDef def, MapSpec spec) {
+      var step = 4 / def.Players;
+      FPVector3 Turned(FPVector3 position, int seat) => Turn(new MapShape { Center = position }, seat * step).Center;
+
+      spec.CaptureSites = def.CaptureSites
+        .SelectMany(site => Enumerable.Range(0, def.Players).Select(seat => new CaptureSitePlacement { Kind = site.Kind, Center = Turned(site.Center, seat), Radius = site.Radius }))
+        .Concat(def.CenterSites).ToArray();
+      spec.Barricades = def.Barricades.SelectMany(shape => Orbit(def, shape))
+        .Select((shape, index) => new BarricadePlacement { Shape = shape, Region = $"{BarricadeRegionPrefix}{index}" }).ToArray();
+
+      var crates = new List<CrateSpot>();
+      for (var seat = 0; seat < def.Players; seat++) {
+        crates.AddRange(def.BaseCrates.Select((position, index) => new CrateSpot { Position = Turned(position, seat), Seat = seat, Group = index }));
+      }
+      for (var group = 0; group < def.DropCrates.Length; group++) {
+        for (var seat = 0; seat < def.Players; seat++) {
+          crates.Add(new CrateSpot { Position = Turned(def.DropCrates[group], seat), Seat = -1, Group = group });
+        }
+      }
+      spec.CrateSpots = crates.ToArray();
+
+      spec.HighGrounds = def.HighGrounds.SelectMany(shape => Orbit(def, shape)).ToArray();
+      spec.Ramps = def.Ramps.SelectMany(shape => Orbit(def, shape)).ToArray();
+      spec.Roads = def.Roads.SelectMany(shape => Orbit(def, shape)).ToArray();
+      spec.Fords = def.Fords.SelectMany(shape => Orbit(def, shape)).ToArray();
+
+      var sites = new List<ExpansionSite>();
+      for (var seat = 0; seat < def.Players; seat++) {
+        sites.AddRange(def.Expansions.Select(site => new ExpansionSite { Kind = site.Kind, Position = Turned(site.Position, seat), SeatMask = 1 << seat }));
+        foreach (var site in def.SharedExpansions) {
+          var mask = def.SharedSeatOffsets.Aggregate(0, (bits, offset) => bits | 1 << (seat + offset) % def.Players);
+          sites.Add(new ExpansionSite { Kind = site.Kind, Position = Turned(site.Position, seat), SeatMask = mask });
+        }
+      }
+      var everyone = (1 << def.Players) - 1;
+      sites.AddRange(def.CenterExpansions.Select(site => new ExpansionSite { Kind = site.Kind, Position = site.Position, SeatMask = everyone }));
+      spec.Expansions = sites.ToArray();
     }
 
     static void BuildMapScene(MapDef def) {
@@ -707,6 +645,12 @@ namespace FactoryWars.EditorTools {
 
       ConfigureRunner(def.Players);
 
+      // NavMesh 격자와 맵 크기가 경계를 덮어야 한다. 기본값 256은 4인 맵보다 작다.
+      var size = def.HalfSize * 2 + WorldMargin;
+      var asset = map.GetAsset(true);
+      asset.WorldSize = size;
+      asset.GridSizeX = size / asset.GridNodeSize;
+      asset.GridSizeY = size / asset.GridNodeSize;
       Bake(map, spec, scene);
     }
 
@@ -728,15 +672,20 @@ namespace FactoryWars.EditorTools {
       foreach (var bridge in spec.Bridges ?? new MapShape[0]) {
         AddBridge(root, bridge);
       }
+      foreach (var barricade in spec.Barricades ?? new BarricadePlacement[0]) {
+        AddRegion(root, "Barricade", barricade.Shape, BarricadeArea, barricade.Region);
+      }
     }
 
     /// <summary>
     /// 다리 하나를 NavMesh 영역으로 칠한다. Quantum은 같은 Unity 영역의 삼각형 덩어리가 렌더러 경계 안에 다 들어올 때
     /// 그 영역 이름을 붙이므로, 렌더러는 꺼 둔 채 경계로만 쓴다. 모든 다리가 같은 이름이라 영역은 하나다.
     /// </summary>
-    static void AddBridge(Transform root, MapShape shape) {
+    static void AddBridge(Transform root, MapShape shape) => AddRegion(root, "Bridge", shape, BarrierArea, BarrierRegion);
+
+    static void AddRegion(Transform root, string name, MapShape shape, int area, string regionId) {
       var bridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
-      bridge.name = "Bridge";
+      bridge.name = name;
       Object.DestroyImmediate(bridge.GetComponent<Collider>());
       bridge.transform.SetParent(root, false);
       bridge.transform.position = new Vector3(shape.Center.X.AsFloat, 0, shape.Center.Z.AsFloat);
@@ -747,9 +696,9 @@ namespace FactoryWars.EditorTools {
       var volume = bridge.AddComponent<NavMeshModifierVolume>();
       volume.center = Vector3.zero;
       volume.size = Vector3.one;
-      volume.area = BarrierArea;
+      volume.area = area;
       var region = bridge.AddComponent<QuantumNavMeshRegion>();
-      region.Id = BarrierRegion;
+      region.Id = regionId;
       region.CastRegion = QuantumNavMeshRegion.RegionCastType.CastRegion;
     }
 
@@ -827,7 +776,7 @@ namespace FactoryWars.EditorTools {
       var quantumNavMesh = navObject.GetComponent<QuantumMapNavMeshUnity>();
       var settings = quantumNavMesh.Settings;
       settings.ImportRegionMode = NavmeshRegionImportMode.Advanced;
-      settings.RegionAreaIds = new List<int> { BarrierArea };
+      settings.RegionAreaIds = new List<int> { BarrierArea, BarricadeArea };
       quantumNavMesh.Settings = settings;
     }
 

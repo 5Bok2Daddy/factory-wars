@@ -1839,3 +1839,13 @@ AI 행동도 함께 넣었습니다.
 ### 이미지
 
 `screenshots/ingame`의 `2p_river.png`, `4p_river.png`, `bridge_close.png`, `2p_0655_blink.png`, `2p_0700_barrier.png`입니다.
+
+## 현재 단계 (재개 기준)
+
+지시 순서: 항목 17(`NEXT-TASK-17-MAP.md`) → 항목 20(`NEXT-TASK-20-FUN.md`) → 항목 19(`NEXT-TASK-19.md`). 19가 끝나면 push하고 멈춘다. 항목 18은 `2a446e9`로 끝났다.
+
+| 항목 | 상태 |
+| --- | --- |
+| 17 맵 재설계 | 진행 중 |
+| 20 재미 요소 | 대기 |
+| 19 그래픽 | 대기 |

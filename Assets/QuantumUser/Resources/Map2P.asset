@@ -22,7 +22,7 @@ MonoBehaviour:
   Scene: Map2P
   ScenePath: Assets/QuantumUser/Scenes/Map2P.unity
   SceneGuid: dc6225f1d9f7f584ea381e1ea2b7a304
-  WorldSize: 256
+  WorldSize: 272
   BucketsCount: 16
   BucketsSubdivisions: 8
   BucketingAxis: 0
@@ -34,14 +34,16 @@ MonoBehaviour:
     Id:
       Value: 320718478250656121
   SerializeTrianglesMetadata: 0
-  GridSizeX: 64
-  GridSizeY: 64
+  GridSizeX: 68
+  GridSizeY: 68
   GridNodeSize: 4
   NavMeshLinks:
   - Id:
       Value: 343584277016973015
   Regions:
   - MainArea
+  - Barricade0
+  - Barricade1
   - Barrier
   StaticColliders2D: []
   StaticColliders3D: []

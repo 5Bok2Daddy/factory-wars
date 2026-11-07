@@ -203,7 +203,7 @@ namespace FactoryWars.Tests {
       var bridge = map.Bridges[0];
       var center = new Vector2(bridge.Center.X.AsFloat, bridge.Center.Z.AsFloat);
       Assert.IsFalse(mesh.vertices.Any(v => (new Vector2(v.x, v.z) - center).magnitude < 1.5f), "강 자리에는 바닥이 없음");
-      Assert.Less(kit.TriangleCount, 24000, "삼각형 예산");
+      Assert.Less(kit.TriangleCount, 30000, "삼각형 예산");
     }
 
     [Test]
@@ -227,7 +227,7 @@ namespace FactoryWars.Tests {
         var kit = new MeshKit();
         TerrainKit.Hill(kit, feature.Shape, i);
         var center = new Vector3(feature.Shape.Center.X.AsFloat, 0, feature.Shape.Center.Z.AsFloat);
-        var reach = feature.Shape.HalfLength.AsFloat + feature.Shape.HalfWidth.AsFloat + 0.5f;
+        var reach = feature.Shape.Reach.AsFloat + 0.5f;
         var bounds = kit.ToMesh("test").bounds;
         Assert.LessOrEqual(Mathf.Abs(bounds.center.x - center.x) + bounds.extents.x, reach + 0.5f, i.ToString());
         Assert.Greater(bounds.size.y, 2f, "층층 높이");

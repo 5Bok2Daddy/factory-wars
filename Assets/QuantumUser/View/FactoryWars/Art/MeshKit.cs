@@ -498,6 +498,31 @@ namespace FactoryWars.View {
           id++;
         }
       }
+      Plant(kit, spots, seed, remaining);
+    }
+
+    /// <summary>원형 군락. 나무 배치만 다르고 바깥부터 벌목되는 규칙은 같다.</summary>
+    public static void Grove(MeshKit kit, float radius, int seed, float remaining) {
+      kit.Paint(Swatch.Grass);
+      kit.Cylinder(new Vector3(0, 0, 0), radius, 0.16f, 12);
+      kit.Paint(Swatch.Earth);
+      var spots = new List<(Vector3 Position, float Edge, int Id)>();
+      const float Spacing = 2.3f;
+      var id = 0;
+      for (var x = -radius + Spacing / 2; x < radius; x += Spacing) {
+        for (var z = -radius + Spacing / 2; z < radius; z += Spacing) {
+          var jitter = new Vector3(MeshKit.Hash(seed, id * 2) - 0.5f, 0, MeshKit.Hash(seed, id * 2 + 1) - 0.5f) * 0.9f;
+          var edge = radius - new Vector2(x, z).magnitude;
+          if (edge > 0.4f) {
+            spots.Add((new Vector3(x, 0.16f, z) + jitter, edge, id));
+          }
+          id++;
+        }
+      }
+      Plant(kit, spots, seed, remaining);
+    }
+
+    static void Plant(MeshKit kit, List<(Vector3 Position, float Edge, int Id)> spots, int seed, float remaining) {
       spots.Sort((a, b) => a.Edge != b.Edge ? a.Edge.CompareTo(b.Edge) : a.Id.CompareTo(b.Id));
       var cut = Mathf.RoundToInt(spots.Count * (1f - Mathf.Clamp01(remaining)));
       for (var i = 0; i < spots.Count; i++) {

@@ -22,13 +22,13 @@ MonoBehaviour:
   DataAsset:
     Id:
       Value: 415338958848573225
-  GridSizeX: 64
-  GridSizeY: 64
+  GridSizeX: 88
+  GridSizeY: 88
   GridNodeSize: 4
   WorldOffset:
     X:
-      RawValue: -8388608
+      RawValue: -11534336
     Y:
-      RawValue: -8388608
+      RawValue: -11534336
   MinAgentRadius:
     RawValue: 32768

@@ -12,7 +12,11 @@ namespace Quantum {
   /// <summary>건물이 언제 유지비를 내는가. 값이 있으면 정전 때 멈춘다.</summary>
   public enum UpkeepMode { None, WhileProducing, WhileResearching, Always }
 
-  public enum TerrainKind { Rock, Hill, CanyonWall, River }
+  public enum CaptureKind { Comms, Relay }
+
+  public enum ExpansionKind { IronForecourt, WoodForecourt, Shared, Center }
+
+  public enum TerrainKind { Rock, Hill, CanyonWall, Cliff, River }
 
   public enum AttackType { None, AntiInfantry, AntiArmor, AntiAir, Area }
 

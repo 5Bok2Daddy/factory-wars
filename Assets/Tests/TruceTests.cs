@@ -42,7 +42,7 @@ namespace FactoryWars.Tests {
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var navMesh = MapNavMesh();
       Assert.IsTrue(Verified.Map.RegionMap.ContainsKey("Barrier"), "다리 영역이 구워짐");
-      Assert.AreEqual(2, Verified.Map.RegionMap.Count, "기본 영역 + 다리 영역 하나");
+      Assert.AreEqual(2 + spec.Barricades.Length, Verified.Map.RegionMap.Count, "기본 영역 + 다리 영역 + 바리케이드");
       var mask = NavMeshRegionMask.Default;
       var rules = Verified.FindAsset(Verified.RuntimeConfig.Rules);
       for (var seat = 0; seat < players; seat++) {
@@ -72,16 +72,16 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Truce_ClosedBridgeStopsGroundUnits() {
-      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -42, -50) }, truce: 120);
+      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -68, -100) }, truce: 120);
       var tank = UnitsNamed(0, "ff_eagle_tank")[0];
-      yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = V(-22, -50) });
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = V(-44, -100) });
       yield return WaitFrames(8 * Fps);
-      Assert.Less(Verified.Get<Transform3D>(tank).Position.X.AsFloat, -35f, "다리를 건너지 못함");
+      Assert.Less(Verified.Get<Transform3D>(tank).Position.X.AsFloat, -59f, "다리를 건너지 못함");
     }
 
     [UnityTest]
     public IEnumerator Truce_BarrierOpensOnTimeAndUnitsCross() {
-      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -42, -50) }, truce: 10);
+      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -68, -100) }, truce: 10);
       var opened = new List<int>();
       QuantumEvent.Subscribe<EventBarrierOpened>(_listener, e => opened.Add(e.Frame));
       Assert.IsFalse(BarrierOpen());
@@ -95,7 +95,7 @@ namespace FactoryWars.Tests {
       Assert.IsTrue(ReachableNow(navMesh, spec.StartPositions[0]).Contains(navMesh.FindTriangle2D(spec.StartPositions[1], NavMeshRegionMask.Default, true)), "개방 뒤에는 경로가 있음");
 
       var tank = UnitsNamed(0, "ff_eagle_tank")[0];
-      var target = V(-22, -50);
+      var target = V(-44, -100);
       yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = target });
       yield return WaitFor(() => (Verified.Get<Transform3D>(tank).Position - target).Magnitude < 2, 30f, "다리 통과");
     }
@@ -154,18 +154,18 @@ namespace FactoryWars.Tests {
     public IEnumerator Truce_LimitsGatherAndBuildToOwnBase() {
       yield return StartMatch(Map2PScene, 2, truce: 300);
       var engineer = Engineers(0)[0];
-      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = NodeAt(V(-23, -23)) });
+      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = NodeAt(V(-108, -28)) });
       AssertRejected(0, ActionKind.Gather, RejectReason.Truce);
       Assert.AreEqual(WorkerTask.Idle, WorkerOf(engineer).Task);
       _rejected.Clear();
 
-      yield return Build(0, "_supply_depot", V(-10, -50), engineer);
+      yield return Build(0, "_supply_depot", V(-40, -40), engineer);
       AssertRejected(0, ActionKind.Build, RejectReason.Truce);
       _rejected.Clear();
 
-      yield return Build(0, "_supply_depot", V(-45, -60), engineer);
+      yield return Build(0, "_supply_depot", V(-80, -80), engineer);
       Assert.AreEqual(0, _rejected.Count, "본진 안은 허용");
-      yield return Send(0, new GatherCommand { Units = new[] { Engineers(0)[1] }, Node = NodeAt(V(-72, -52)) });
+      yield return Send(0, new GatherCommand { Units = new[] { Engineers(0)[1] }, Node = NodeAt(V(-105, -78)) });
       Assert.AreEqual(0, _rejected.Count, "본진 철광산은 허용");
     }
 
@@ -173,7 +173,7 @@ namespace FactoryWars.Tests {
     public IEnumerator Truce_NoBuildOnBridgesOrTheirEnds() {
       yield return StartMatch(Map2PScene, 2, truce: 0);
       var engineer = Engineers(0)[0];
-      foreach (var site in new[] { V(-33, -50), V(-38, -50), V(-28, -50) }) {
+      foreach (var site in new[] { V(-57, -100), V(-62, -100), V(-52, -100) }) {
         _rejected.Clear();
         yield return Build(0, "_supply_depot", site, engineer);
         AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);

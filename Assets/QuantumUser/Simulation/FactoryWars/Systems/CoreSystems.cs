@@ -47,6 +47,7 @@ namespace Quantum.FactoryWars {
       var truce = config.OverrideTruce ? config.TruceSeconds : FactoryWarsUtil.Rules(f).TruceSeconds;
       f.Global->TruceEndFrame = FactoryWarsUtil.SecondsToFrames(f, truce);
       TruceSystem.SetBarrier(f, truce <= 0);
+      CloseBarricades(f);
 
       var nodes = FactoryWarsUtil.MapInfo(f).ResourceNodes;
       for (var i = 0; nodes != null && i < nodes.Length; i++) {
@@ -60,6 +61,16 @@ namespace Quantum.FactoryWars {
         PlayerRef player = bots[i].Player;
         SetUpPlayer(f, player, bots[i].Faction, bots[i].Team, bots[i].ColorIndex);
         BotSystem.Init(f, player, bots[i].Difficulty, StartPosition(f, player));
+      }
+    }
+
+    /// <summary>뒷길 틈은 영역으로 구워 두고 시작할 때 닫는다. 영역 상태는 프레임 데이터다.</summary>
+    static void CloseBarricades(Frame f) {
+      var barricades = FactoryWarsUtil.MapInfo(f).Barricades;
+      for (var i = 0; barricades != null && i < barricades.Length; i++) {
+        if (f.Map.RegionMap.TryGetValue(barricades[i].Region, out var region)) {
+          f.NavMeshRegionMask->ToggleRegion(region, false);
+        }
       }
     }
 

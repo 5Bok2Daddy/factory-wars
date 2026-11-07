@@ -158,7 +158,11 @@ namespace FactoryWars.View {
       }
       forest.Step = step;
       var kit = new MeshKit();
-      ForestKit.Forest(kit, forest.Shape.HalfLength.AsFloat, forest.Shape.HalfWidth.AsFloat, forest.Seed, step / (float)ForestSteps);
+      if (forest.Shape.IsCircle) {
+        ForestKit.Grove(kit, forest.Shape.Radius.AsFloat, forest.Seed, step / (float)ForestSteps);
+      } else {
+        ForestKit.Forest(kit, forest.Shape.HalfLength.AsFloat, forest.Shape.HalfWidth.AsFloat, forest.Seed, step / (float)ForestSteps);
+      }
       if (forest.Filter.sharedMesh != null) {
         Object.Destroy(forest.Filter.sharedMesh);
       }

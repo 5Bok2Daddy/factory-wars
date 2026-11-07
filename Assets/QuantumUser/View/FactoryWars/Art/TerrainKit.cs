@@ -210,6 +210,12 @@ namespace FactoryWars.View {
 
     static Vector3 Clip(Vector3 point, Rect land) => new Vector3(Mathf.Clamp(point.x, land.xMin, land.xMax), point.y, Mathf.Clamp(point.z, land.yMin, land.yMax));
 
+    /// <summary>안쪽 굽이에서 띠 바깥선이 곡률 반경을 넘어 물 쪽으로 접혔는지 본다.</summary>
+    static bool Folded(List<RiverPoint> path, RiverPoint point, float side) {
+      var outer = Bank(point, side, BandOuter, 0f);
+      return RiverDistance(new List<List<RiverPoint>> { path }, new Vector2(outer.x, outer.z)) < BandOuter - 0.5f;
+    }
+
     /// <summary>물 면, 경사 강변, 땅 위의 모래 띠. 강줄기 하나를 리본으로 잇는다.</summary>
     public static void River(MeshKit k, List<RiverPoint> path, int seed, Rect land) {
       Vector3 Edge(RiverPoint point, float side, float offset, float y) => Clip(Bank(point, side, offset, y), land);
@@ -224,6 +230,9 @@ namespace FactoryWars.View {
         foreach (var side in new[] { -1f, 1f }) {
           k.Paint(MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.DirtDark);
           k.Quad(Edge(a, side, BandInner, BankY), Edge(a, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, BandInner, BankY), Vector3.up);
+          if (Folded(path, a, side) || Folded(path, b, side)) {
+            continue;
+          }
           k.Paint(MeshKit.Hash(seed, i * 2 + 300 + (side > 0 ? 1 : 0)) < 0.55f ? Swatch.Sand : Swatch.Dirt);
           k.Quad(Edge(a, side, BandOuter, BankY), Edge(a, side, BandInner, BankY), Edge(b, side, BandInner, BankY), Edge(b, side, BandOuter, BankY), Vector3.up);
         }
@@ -307,8 +316,9 @@ namespace FactoryWars.View {
 
     /// <summary>층층 절벽. 층마다 옆면은 어둡고 윗면은 밝다. 위로 갈수록 좁아지고 끝은 낮아진다.</summary>
     public static void Hill(MeshKit k, MapShape shape, int seed) {
-      var length = shape.HalfLength.AsFloat;
-      var width = shape.HalfWidth.AsFloat;
+      // 원은 안에 들어가는 사각형으로 그린다. 항목 19의 지형 메쉬가 이 자리를 대체한다.
+      var length = shape.IsCircle ? shape.Radius.AsFloat * 0.7f : shape.HalfLength.AsFloat;
+      var width = shape.IsCircle ? shape.Radius.AsFloat * 0.7f : shape.HalfWidth.AsFloat;
       Swatch[] sides = { Swatch.CliffDark, Swatch.CliffMid, Swatch.CliffMid };
       Swatch[] tops = { Swatch.CliffMid, Swatch.CliffLight, Swatch.Grass };
       float[] heights = { 1.0f, 1.0f, 0.9f };
@@ -556,6 +566,7 @@ namespace FactoryWars.View {
         var seed = 100 + i * 17;
         switch (features[i].Kind) {
           case TerrainKind.Hill: Hill(k, features[i].Shape, seed); break;
+          case TerrainKind.Cliff: Hill(k, features[i].Shape, seed); break;
           case TerrainKind.CanyonWall: CanyonWall(k, features[i].Shape, seed); break;
           case TerrainKind.Rock: Boulders(k, features[i].Shape, seed); break;
         }

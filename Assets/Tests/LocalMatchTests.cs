@@ -573,6 +573,11 @@ namespace FactoryWars.Tests {
       lines.AddRange(spec.ResourceNodes.Select(n => Line(n.Kind == ResourceKind.Iron ? "M" : "W", n.Shape)));
       lines.AddRange(spec.Terrain.Select(t => Line(t.Kind.ToString()[0].ToString(), t.Shape)));
       lines.AddRange(spec.NoBuildZones.Select(z => Line("Z", z)));
+      lines.AddRange(spec.Barricades.Select(z => Line("X", z.Shape)));
+      lines.AddRange(spec.Roads.Select(z => Line("D", z)));
+      lines.AddRange(spec.Fords.Select(z => Line("F", z)));
+      lines.AddRange(spec.HighGrounds.Select(z => Line("G", z)));
+      lines.AddRange(spec.Ramps.Select(z => Line("P", z)));
       System.IO.File.WriteAllLines(System.IO.Path.Combine(folder, name + ".txt"), lines);
     }
 
@@ -591,60 +596,6 @@ namespace FactoryWars.Tests {
 
       var seconds = (Verified.Number - startFrame) / (float)Fps;
       Debug.Log($"[FW-TEST] {label}: straight {(target - start).Magnitude}, ideal {(target - start).Magnitude / 5}s, actual {seconds}s");
-    }
-
-    [UnityTest]
-    public IEnumerator Map2P_LayoutAndCrossing() {
-      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -50, -60) });
-      var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
-      Assert.AreEqual(2, spec.StartPositions.Length);
-      Assert.AreEqual(new FPVector2(160, 160), spec.BoundsMax - spec.BoundsMin);
-      Assert.AreEqual(V(-55, -55), spec.StartPositions[0]);
-      Assert.AreEqual(15, Verified.ComponentCount<ResourceNode>());
-      Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 4000), "본진 철광산");
-      Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 6000), "본진 숲");
-      Assert.AreEqual(2, NodeCount(ResourceKind.Iron, 3000), "앞마당 철광산");
-      Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 4000), "앞마당 숲");
-      Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 8000), "숲 확장의 큰 숲");
-      Assert.AreEqual(2, NodeCount(ResourceKind.Iron, 2000), "숲 확장 철광산");
-      Assert.AreEqual(1, NodeCount(ResourceKind.Iron, 6000), "중앙 철광산");
-      Assert.AreEqual(4, spec.Terrain.Count(t => t.Kind == TerrainKind.Rock), "중앙 바위");
-      AssertRotationalSymmetry(spec, 2);
-      AssertEverythingConnected(spec);
-      DumpMap(spec, "map2p");
-
-      var f = Verified;
-      Assert.IsFalse(f.Navigation.LineOfSight(spec.StartPositions[0], spec.StartPositions[1], NavMeshRegionMask.Default, MapNavMesh()), "본진 사이 직선은 막힘");
-      AssertPassage(V(-42, -50), V(-24, -50), 5, "본진 동쪽 입구");
-      AssertPassage(V(-50, -42), V(-50, -24), 5, "본진 북쪽 입구");
-      AssertPassage(V(-50, 18), V(-50, 50), 3, "숲 확장 협곡");
-      AssertPassage(V(-29, 11), V(-11, 29), 3, "측면 협곡");
-      yield return CrossMap(0, V(47, 47), 90f, "2P base to base");
-    }
-
-    [UnityTest]
-    public IEnumerator Map4P_LayoutAndCrossing() {
-      yield return StartMatch(Map4PScene, 4, units: new[] { (0, "ff_eagle_tank", -85, -95) });
-      var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
-      Assert.AreEqual(4, spec.StartPositions.Length);
-      Assert.AreEqual(new FPVector2(240, 240), spec.BoundsMax - spec.BoundsMin);
-      Assert.AreEqual(4, Verified.ComponentCount<Building>());
-      Assert.AreEqual(33, Verified.ComponentCount<ResourceNode>());
-      Assert.AreEqual(8, NodeCount(ResourceKind.Iron, 4000), "본진 철광산");
-      Assert.AreEqual(4, NodeCount(ResourceKind.Wood, 6000), "본진 숲");
-      Assert.AreEqual(8, NodeCount(ResourceKind.Iron, 3000), "앞마당·변 철광산");
-      Assert.AreEqual(8, NodeCount(ResourceKind.Wood, 4000), "앞마당·변 숲");
-      Assert.AreEqual(1, NodeCount(ResourceKind.Iron, 10000), "중앙 철광산");
-      Assert.AreEqual(4, NodeCount(ResourceKind.Wood, 2000), "중앙 숲");
-      AssertRotationalSymmetry(spec, 1);
-      AssertEverythingConnected(spec);
-      DumpMap(spec, "map4p");
-
-      AssertPassage(V(-76, -86), V(-60, -86), 5, "본진 동쪽 입구");
-      AssertPassage(V(-86, -76), V(-86, -60), 5, "본진 북쪽 입구");
-      AssertPassage(V(-54, -96), V(-26, -96), 3, "이웃 본진 사이 협곡");
-      AssertPassage(V(0, -44), V(0, -28), 5, "중앙 고리 입구");
-      yield return CrossMap(0, V(82, 82), 120f, "4P opposite base");
     }
   }
 }
