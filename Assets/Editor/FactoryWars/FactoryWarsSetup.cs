@@ -824,9 +824,13 @@ namespace FactoryWars.EditorTools {
     }
 
     static void EnsureDebugView() {
-      var view = Object.FindFirstObjectByType<FactoryWarsDebugView>();
+      var old = GameObject.Find("FactoryWarsDebugView");
+      if (old != null) {
+        Object.DestroyImmediate(old);
+      }
+      var view = Object.FindFirstObjectByType<FactoryWars.View.BattleView>();
       if (view == null) {
-        view = new GameObject("FactoryWarsDebugView").AddComponent<FactoryWarsDebugView>();
+        view = new GameObject("BattleView").AddComponent<FactoryWars.View.BattleView>();
       }
       if (view.GetComponent<FactoryWars.View.MatchController>() == null) {
         view.gameObject.AddComponent<FactoryWars.View.MatchController>();

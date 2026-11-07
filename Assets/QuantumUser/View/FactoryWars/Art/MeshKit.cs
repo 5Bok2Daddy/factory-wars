@@ -8,10 +8,12 @@ namespace FactoryWars.View {
     Metal, MetalDark, MetalLight, Armor, ArmorDark, Olive, OliveDark, Sand, Earth, Rubber, Glass, Black,
     Wood, WoodDark, Bark, LeafDark, Leaf, LeafLight, Grass, Rock, RockDark, Ore, OreDark, OreLight, Stone, Water, White,
     GlowCyan, GlowOrange, GlowCrystal, Hazard, Team,
+    Dirt, DirtDark, GrassDark, CliffDark, CliffMid, CliffLight, CanyonDark, CanyonMid, CanyonLight,
+    Boulder, BoulderDark, BoulderLight, WaterDeep, StripeYellow,
   }
 
   public static class ArtPalette {
-    public const int Size = 32;
+    public const int Size = 64;
     const float GlowBase = 0.3f;
     const float MoltenOutage = 0.2f;
 
@@ -38,13 +40,20 @@ namespace FactoryWars.View {
       new Cell(0x7C766A, 0.4f, 0.46f), new Cell(0x56524A, 0.35f, 0.38f), new Cell(0x6E6A50, 0.04f, 0.2f), new Cell(0x4C4C3A, 0.04f, 0.16f),
       new Cell(0xA89878, 0f, 0.12f), new Cell(0x7A5C3E, 0f, 0.06f), new Cell(0x262628, 0f, 0.1f), new Cell(0x303C46, 0.2f, 0.92f), new Cell(0x141416, 0f, 0.18f),
       new Cell(0x745A42, 0f, 0.12f), new Cell(0x4A382A, 0f, 0.1f), new Cell(0x4E3424, 0f, 0.06f),
-      new Cell(0x2C5A2A, 0f, 0.1f), new Cell(0x467E30, 0f, 0.1f), new Cell(0x6A9A3A, 0f, 0.1f), new Cell(0x5C7434, 0f, 0.06f),
+      new Cell(0x2C5A2A, 0f, 0.1f), new Cell(0x467E30, 0f, 0.1f), new Cell(0x6A9A3A, 0f, 0.1f), new Cell(0x5C7038, 0f, 0.06f),
       new Cell(0x7C746A, 0f, 0.12f), new Cell(0x4A3E36, 0f, 0.1f),
       new Cell(0x4E5056, 0.3f, 0.36f), new Cell(0x3C3E44, 0.3f, 0.3f), new Cell(0x666970, 0.3f, 0.42f),
       new Cell(0x9C9C96, 0f, 0.16f), new Cell(0x1C3040, 0.1f, 0.8f), new Cell(0xE8E6E0, 0f, 0.3f),
       new Cell(0x40E8E0, 0f, 0.5f), new Cell(0xFF7A14, 0f, 0.5f), new Cell(0xA8F0E8, 0f, 0.7f),
       new Cell(0xC89A2C, 0.1f, 0.4f), new Cell(0x808080, 0.2f, 0.56f),
+      new Cell(0x98835E, 0f, 0.06f), new Cell(0x857150, 0f, 0.06f), new Cell(0x526632, 0f, 0.06f),
+      new Cell(0x54392A, 0f, 0.08f), new Cell(0x7A5638, 0f, 0.08f), new Cell(0x9E7A4C, 0f, 0.08f),
+      new Cell(0x33261F, 0f, 0.1f), new Cell(0x4A372C, 0f, 0.1f), new Cell(0x63493A, 0f, 0.1f),
+      new Cell(0x7A7670, 0f, 0.14f), new Cell(0x5C5954, 0f, 0.12f), new Cell(0x98948C, 0f, 0.16f),
+      new Cell(0x16303E, 0.1f, 0.86f), new Cell(0xF2C40F, 0f, 0.24f),
     };
+
+    public static int CellCount => Cells.Length;
 
     public static Vector2 Uv(Swatch swatch) => new Vector2(((int)swatch + 0.5f) / Size, 0.5f);
 
@@ -55,7 +64,7 @@ namespace FactoryWars.View {
     /// <summary>플레이어마다 팀 칸만 다르다. 발광 칸의 바탕색은 어둡고 빛은 발광 맵이 낸다. 그래서 정전에는 맵만 바꾸면 된다.</summary>
     public static Color32[] BasePixels(Color32 team) {
       var pixels = new Color32[Size];
-      for (var i = 0; i < Size; i++) {
+      for (var i = 0; i < Cells.Length; i++) {
         var swatch = (Swatch)i;
         pixels[i] = swatch == Swatch.Team ? team : IsGlow(swatch) ? Scale(Cells[i].Color, GlowBase) : Cells[i].Color;
       }
@@ -83,7 +92,7 @@ namespace FactoryWars.View {
     /// <summary>URP Lit의 금속 맵 규칙: R이 금속, A가 매끈함이다.</summary>
     public static Color32[] SurfacePixels() {
       var pixels = new Color32[Size];
-      for (var i = 0; i < Size; i++) {
+      for (var i = 0; i < Cells.Length; i++) {
         var metallic = (byte)(Cells[i].Metallic * 255f);
         pixels[i] = new Color32(metallic, metallic, metallic, (byte)(Cells[i].Smoothness * 255f));
       }

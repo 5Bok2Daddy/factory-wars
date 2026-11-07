@@ -64,6 +64,16 @@ namespace FactoryWars.View {
       return $"철 {stock.Iron.AsInt}  |  목재 {stock.Wood.AsInt}  |  강철 {stock.Steel.AsInt}  |  {power}  |  인구 {Population(state.PopulationUsed)}/{Population(state.PopulationCap)}";
     }
 
+    /// <summary>상단 바의 아이콘 옆 숫자. 철, 목재, 강철, 전기, 인구 순서다.</summary>
+    public static string[] TopBarValues(PlayerState state) {
+      var stock = state.Stock;
+      var power = $"{stock.Power.AsInt}/{state.PowerCap.AsInt} ({state.PowerRate.AsFloat:+0.0;-0.0;0}/초)";
+      if (state.Outage) {
+        power = $"<color={Red}>{power} 정전</color>";
+      }
+      return new[] { stock.Iron.AsInt.ToString(), stock.Wood.AsInt.ToString(), stock.Steel.AsInt.ToString(), power, $"{Population(state.PopulationUsed)}/{Population(state.PopulationCap)}" };
+    }
+
     static string Population(FP value) => Mathf.FloorToInt(value.AsFloat + 0.001f).ToString();
 
     public static string TruceCountdown(float seconds) {

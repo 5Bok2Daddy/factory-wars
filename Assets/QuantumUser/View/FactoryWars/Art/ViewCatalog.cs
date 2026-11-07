@@ -17,6 +17,11 @@ namespace FactoryWars.View {
       public Vector2 Center;
       public float RingRadius;
       public float BarHeight;
+      /// <summary>사격 효과가 나오는 파츠 이름과 그 파츠 기준의 포구 위치.</summary>
+      public string MuzzlePart;
+      public Vector3 Muzzle;
+      /// <summary>굴뚝 위치. 모델 기준이다.</summary>
+      public Vector3[] Smoke;
     }
 
     public Entry[] Entries;

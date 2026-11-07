@@ -43,7 +43,7 @@ namespace FactoryWars.Tests {
       var bots = Enumerable.Repeat(BotDifficulty.Normal, players).ToArray();
       yield return StartMatch(scene, players, bots: bots, seed: 7000 + run, swapFactions: run % 2 == 1, truce: -1);
       Time.timeScale = AiTimeScale;
-      var view = Object.FindAnyObjectByType<FactoryWarsDebugView>();
+      var view = Object.FindAnyObjectByType<FactoryWars.View.BattleView>();
       if (view != null) {
         view.enabled = false;
       }

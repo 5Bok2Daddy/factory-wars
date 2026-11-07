@@ -15,10 +15,10 @@ namespace FactoryWars.EditorTools {
       yield return Building("ff_collection_yard", FreeYard, new MovingPart { Name = "Forklift", Pivot = new Vector3(-0.3f, Floor, 1.5f), Build = Forklift });
       yield return Building("ff_supply_depot", FreeDepot, new MovingPart { Name = "Door", Pivot = new Vector3(-1.45f, Floor, 1.72f), Build = FreeDepotDoor });
       yield return Building("ff_barracks", FreeBarracks, new MovingPart { Name = "Antenna", Pivot = new Vector3(-1.05f, 1.56f, -1.15f), Build = SmallDish });
-      yield return Building("ff_power_plant", FreePower, new MovingPart { Name = "CoreRing", Pivot = new Vector3(0.5f, 1.05f, 1.6f), Build = CoreRing });
-      yield return Building("ff_processor", FreeProcessor, new MovingPart { Name = "Ingot", Pivot = new Vector3(0.9f, 0.72f, 1.5f), Build = BeltIngot });
+      yield return Building("ff_power_plant", FreePower, new MovingPart { Name = "CoreRing", Pivot = new Vector3(0.5f, 1.05f, 1.6f), Build = CoreRing }).Smoking(new Vector3(1.55f, 4.2f, -1.7f));
+      yield return Building("ff_processor", FreeProcessor, new MovingPart { Name = "Ingot", Pivot = new Vector3(0.9f, 0.72f, 1.5f), Build = BeltIngot }).Smoking(new Vector3(0.45f, 3.6f, -0.95f));
       yield return Building("ff_research_lab", FreeLab, new MovingPart { Name = "Dish", Pivot = new Vector3(0.5f, 3.2f, -0.4f), Build = LargeDish });
-      yield return Building("ff_vehicle_factory", FreeFactory, new MovingPart { Name = "Crane", Pivot = new Vector3(0, 3.2f, -0.6f), Build = RoofCrane });
+      yield return Building("ff_vehicle_factory", FreeFactory, new MovingPart { Name = "Crane", Pivot = new Vector3(0, 3.2f, -0.6f), Build = RoofCrane }).Smoking(new Vector3(-2.62f, 2.7f, 2.68f));
       yield return Building("ff_ground_tower", FreeTower,
         new MovingPart { Name = "Turret", Pivot = new Vector3(0, 2.5f, 0), Build = FreeTowerTurret },
         new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.5f, 0.55f), Build = FreeTowerBarrel });
@@ -31,10 +31,10 @@ namespace FactoryWars.EditorTools {
       yield return Building("cf_collection_yard", ContinentalYard, new MovingPart { Name = "Forklift", Pivot = new Vector3(0.5f, Floor, 0.9f), Build = Forklift });
       yield return Building("cf_supply_depot", ContinentalDepot, new MovingPart { Name = "Door", Pivot = new Vector3(-0.5f, Floor, 1.16f), Build = ContinentalDepotDoor });
       yield return Building("cf_barracks", ContinentalBarracks, new MovingPart { Name = "Flag", Pivot = new Vector3(-1.75f, 3.1f, -2.05f), Build = SmallFlag });
-      yield return Building("cf_power_plant", ContinentalPower, new MovingPart { Name = "Coil", Pivot = new Vector3(0.6f, 1.75f, 1.0f), Build = CoreRing });
-      yield return Building("cf_processor", ContinentalProcessor, new MovingPart { Name = "Ingot", Pivot = new Vector3(1.3f, 0.72f, 1.3f), Build = BeltIngot });
+      yield return Building("cf_power_plant", ContinentalPower, new MovingPart { Name = "Coil", Pivot = new Vector3(0.6f, 1.75f, 1.0f), Build = CoreRing }).Smoking(new Vector3(1.55f, 4.1f, -1.7f));
+      yield return Building("cf_processor", ContinentalProcessor, new MovingPart { Name = "Ingot", Pivot = new Vector3(1.3f, 0.72f, 1.3f), Build = BeltIngot }).Smoking(new Vector3(-0.5f, 3.7f, -0.5f));
       yield return Building("cf_research_lab", ContinentalLab, new MovingPart { Name = "Dish", Pivot = new Vector3(-0.9f, 3.0f, -1.2f), Build = LargeDish });
-      yield return Building("cf_vehicle_factory", ContinentalFactory, new MovingPart { Name = "Crane", Pivot = new Vector3(2.35f, 3.6f, 1.9f), Build = TowerCrane });
+      yield return Building("cf_vehicle_factory", ContinentalFactory, new MovingPart { Name = "Crane", Pivot = new Vector3(2.35f, 3.6f, 1.9f), Build = TowerCrane }).Smoking(new Vector3(-1.8f, 4.25f, -2.3f), new Vector3(-0.9f, 4.25f, -2.3f));
       yield return Building("cf_ground_tower", ContinentalTower,
         new MovingPart { Name = "Turret", Pivot = new Vector3(0, 2.3f, 0), Build = ContinentalTowerTurret },
         new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.42f, 0.6f), Build = ContinentalTowerBarrel });

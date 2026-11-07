@@ -134,7 +134,8 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Art_PaletteMapsTeamGlowAndSurface() {
-      Assert.AreEqual(ArtPalette.Size, System.Enum.GetValues(typeof(Swatch)).Length, "칸 수");
+      Assert.AreEqual(ArtPalette.CellCount, System.Enum.GetValues(typeof(Swatch)).Length, "칸 수");
+      Assert.LessOrEqual(ArtPalette.CellCount, ArtPalette.Size);
       var team = new Color32(10, 20, 30, 255);
       Assert.AreEqual(team, ArtPalette.BasePixels(team)[(int)Swatch.Team], "팀 칸은 플레이어 색");
       var on = ArtPalette.EmissionPixels(true);

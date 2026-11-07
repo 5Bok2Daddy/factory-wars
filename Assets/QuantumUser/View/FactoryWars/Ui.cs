@@ -1,4 +1,5 @@
 namespace FactoryWars.View {
+  using System.Collections.Generic;
   using UnityEngine;
   using UnityEngine.Events;
   using UnityEngine.EventSystems;
@@ -15,6 +16,8 @@ namespace FactoryWars.View {
     public static readonly Color DisabledColor = new Color(0.14f, 0.15f, 0.17f, 0.9f);
 
     static Font _font;
+
+    static readonly Dictionary<string, Sprite> Icons = new Dictionary<string, Sprite>();
 
     public static Font Font => _font != null ? _font : _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
@@ -105,6 +108,52 @@ namespace FactoryWars.View {
 
     public static void SetLabel(Button button, string value) {
       button.GetComponentInChildren<Text>().text = value;
+    }
+
+    /// <summary>스프라이트 아이콘. 이름은 Resources/FactoryWars/Icons의 파일 이름이다.</summary>
+    public static Sprite IconSprite(string name) {
+      if (Icons.TryGetValue(name, out var sprite) == false) {
+        sprite = Resources.Load<Sprite>($"FactoryWars/Icons/{name}");
+        Icons[name] = sprite;
+      }
+      return sprite;
+    }
+
+    public static Image Icon(string name, Transform parent, string icon, Vector2 anchor, Vector2 position, Vector2 size) {
+      var rect = Rect(name, parent);
+      Place(rect, anchor, position, size);
+      var image = rect.gameObject.AddComponent<Image>();
+      image.sprite = IconSprite(icon);
+      image.raycastTarget = false;
+      image.preserveAspect = true;
+      return image;
+    }
+
+    /// <summary>버튼 위쪽에 아이콘을 놓고 글자를 아래로 내린다. null이면 글자만 가운데에 둔다.</summary>
+    public static void SetIcon(Button button, Sprite sprite) {
+      var label = button.GetComponentInChildren<Text>();
+      var slot = button.transform.Find("Icon");
+      if (sprite == null) {
+        if (slot != null) {
+          slot.gameObject.SetActive(false);
+        }
+        Stretch(label.rectTransform, 6f);
+        return;
+      }
+      Image image;
+      if (slot == null) {
+        image = Icon("Icon", button.transform, "", new Vector2(0.5f, 1), new Vector2(0, -4), new Vector2(68, 68));
+        ((RectTransform)image.transform).pivot = new Vector2(0.5f, 1);
+        ((RectTransform)image.transform).anchoredPosition = new Vector2(0, -4);
+      } else {
+        image = slot.GetComponent<Image>();
+        slot.gameObject.SetActive(true);
+      }
+      image.sprite = sprite;
+      label.rectTransform.anchorMin = Vector2.zero;
+      label.rectTransform.anchorMax = Vector2.one;
+      label.rectTransform.offsetMin = new Vector2(2, 2);
+      label.rectTransform.offsetMax = new Vector2(-2, -70);
     }
 
     public static void SetEnabled(Button button, bool enabled) {

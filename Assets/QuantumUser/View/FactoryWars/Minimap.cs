@@ -17,7 +17,12 @@ namespace FactoryWars.View {
     static readonly Color32 HillColor = new Color32(0x80, 0x5E, 0x3C, 0xFF);
     static readonly Color32 WallColor = new Color32(0x42, 0x2E, 0x24, 0xFF);
 
+    const float MarkSize = 34f;
+
     public Action<Vector2> OnPick;
+    public int MarkCount => _marks.Count;
+
+    readonly System.Collections.Generic.Dictionary<int, Image> _marks = new System.Collections.Generic.Dictionary<int, Image>();
 
     Texture2D _texture;
     Color32[] _base;
@@ -90,6 +95,34 @@ namespace FactoryWars.View {
       }
       _texture.SetPixels32(_pixels);
       _texture.Apply(false);
+      RefreshMarks(frame);
+    }
+
+    /// <summary>플레이어마다 첫 사령부 자리에 진영 마크를 놓는다. 사령부를 다 잃으면 숨긴다.</summary>
+    unsafe void RefreshMarks(Frame frame) {
+      foreach (var mark in _marks.Values) {
+        mark.enabled = false;
+      }
+      var rect = ((RectTransform)transform).rect;
+      var buildings = frame.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out _, out var position, out var building)) {
+        var player = (int)building->Owner;
+        if (frame.FindAsset(building->Spec).Role != BuildingRole.Headquarters || (_marks.TryGetValue(player, out var mark) && mark.enabled)) {
+          continue;
+        }
+        if (mark == null) {
+          var state = frame.Global->Players.GetPointer(building->Owner);
+          var faction = frame.FindAsset(state->Faction).FactionId;
+          mark = Ui.Icon($"Mark{player}", transform, $"mark_{faction}", Vector2.zero, Vector2.zero, new Vector2(MarkSize, MarkSize));
+          ((RectTransform)mark.transform).pivot = new Vector2(0.5f, 0.5f);
+          mark.color = Palette.Of(frame, building->Owner);
+          _marks[player] = mark;
+        }
+        mark.enabled = true;
+        var world = position->Position.ToUnityVector3();
+        ((RectTransform)mark.transform).anchoredPosition = new Vector2(
+          Mathf.InverseLerp(_min.x, _max.x, world.x) * rect.width, Mathf.InverseLerp(_min.y, _max.y, world.z) * rect.height);
+      }
     }
 
     void Pick(PointerEventData data) {

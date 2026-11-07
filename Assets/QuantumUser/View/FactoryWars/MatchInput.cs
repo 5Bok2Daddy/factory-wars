@@ -9,6 +9,21 @@ namespace FactoryWars.View {
   /// <summary>화면 입력을 선택 변경이나 커맨드로 해석한다. 시뮬레이션은 읽기만 한다.</summary>
   public unsafe class MatchInput {
     public const float UnitPickRadius = 2f;
+    const float CameraPitch = 50f;
+
+    static ViewCatalog _catalog;
+
+    static ViewCatalog Catalog => _catalog != null ? _catalog : _catalog = Resources.Load<ViewCatalog>(ViewCatalog.ResourcePath);
+
+    /// <summary>표시 크기에 맞춘 터치 반경. 선택 링과 같고, 작은 유닛도 손가락으로 누를 수 있는 크기는 보장한다.</summary>
+    public static float PickRadius(string unitId) {
+      return Catalog != null && Catalog.TryGet(unitId, out var entry) ? Mathf.Max(UnitPickRadius, entry.RingRadius) : UnitPickRadius;
+    }
+
+    /// <summary>공중 유닛은 화면에서 땅 위치보다 앞쪽 위에 보인다. 그 자리를 눌렀을 때 맞는 땅 좌표로 옮긴다.</summary>
+    public static float AirTapOffset(string unitId) {
+      return Catalog != null && Catalog.TryGet(unitId, out var entry) ? entry.Altitude / Mathf.Tan(CameraPitch * Mathf.Deg2Rad) : 0f;
+    }
 
     public readonly SelectionModel Selection = new SelectionModel();
     /// <summary>값이 있으면 다음 탭 위치에 이 건물을 짓는다.</summary>
@@ -19,14 +34,17 @@ namespace FactoryWars.View {
     static FPVector3 ToFP(Vector3 world) => new FPVector3(FP.FromFloat_UNSAFE(world.x), FP._0, FP.FromFloat_UNSAFE(world.z));
 
     public static EntityRef PickUnit(Frame frame, Vector3 world) {
+      // 큰 유닛이 작은 유닛을 덮지 않도록 반경에 대한 비율이 가장 작은 유닛을 고른다.
       var best = EntityRef.None;
-      var bestDistance = UnitPickRadius * UnitPickRadius;
+      var bestScore = 1f;
       foreach (var pair in frame.GetComponentIterator<Unit>()) {
+        var id = frame.FindAsset(pair.Component.Spec).name;
         var position = frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3();
-        var distance = new Vector2(position.x - world.x, position.z - world.z).sqrMagnitude;
-        if (distance < bestDistance) {
+        var distance = new Vector2(position.x - world.x, position.z + AirTapOffset(id) - world.z).magnitude;
+        var score = distance / PickRadius(id);
+        if (score < bestScore) {
           best = pair.Entity;
-          bestDistance = distance;
+          bestScore = score;
         }
       }
       return best;

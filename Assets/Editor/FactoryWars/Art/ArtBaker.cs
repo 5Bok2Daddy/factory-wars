@@ -125,6 +125,46 @@ namespace FactoryWars.EditorTools {
       EditorUtility.SetDirty(profile);
     }
 
+    /// <summary>파티클용 부드러운 점 텍스처와 머티리얼 둘. 더하기는 불꽃, 알파는 연기다.</summary>
+    static void BuildFxMaterials() {
+      const int Size = 64;
+      var path = $"{ResourceRoot}/FxDot.png";
+      var texture = new Texture2D(Size, Size, TextureFormat.RGBA32, false);
+      var pixels = new Color32[Size * Size];
+      for (var y = 0; y < Size; y++) {
+        for (var x = 0; x < Size; x++) {
+          var distance = new Vector2(x + 0.5f - Size / 2f, y + 0.5f - Size / 2f).magnitude / (Size / 2f);
+          var alpha = Mathf.Clamp01(1f - distance);
+          pixels[y * Size + x] = new Color(1, 1, 1, alpha * alpha * (3f - 2f * alpha));
+        }
+      }
+      texture.SetPixels32(pixels);
+      texture.Apply();
+      File.WriteAllBytes(path, texture.EncodeToPNG());
+      Object.DestroyImmediate(texture);
+      AssetDatabase.ImportAsset(path);
+      var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+      importer.alphaIsTransparency = true;
+      importer.textureCompression = TextureImporterCompression.Uncompressed;
+      importer.SaveAndReimport();
+      var dot = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+      var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+      foreach (var (name, additive) in new[] { ("FxGlow", true), ("FxSmoke", false) }) {
+        var material = new Material(shader) { name = name };
+        material.SetTexture("_BaseMap", dot);
+        material.SetColor("_BaseColor", Color.white);
+        material.SetFloat("_Surface", 1f);
+        material.SetFloat("_Blend", additive ? 2f : 0f);
+        material.SetFloat("_ZWrite", 0f);
+        material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        material.SetFloat("_DstBlend", additive ? (float)UnityEngine.Rendering.BlendMode.One : (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        material.SetOverrideTag("RenderType", "Transparent");
+        SaveMaterial($"{ResourceRoot}/{name}.mat", material);
+      }
+    }
+
     static void BuildArtMaterials() {
       Directory.CreateDirectory(ResourceRoot);
       var surface = SaveTexture("PaletteSurface", ArtPalette.SurfacePixels(), true);
@@ -163,6 +203,7 @@ namespace FactoryWars.EditorTools {
       floor.SetFloat("_Smoothness", 0.1f);
       SaveMaterial($"{ResourceRoot}/GalleryGround.mat", floor);
 
+      BuildFxMaterials();
       BuildReflection();
       BuildProfile(QualityTier.Medium, BloomDownscaleMode.Quarter, false, 4);
       BuildProfile(QualityTier.High, BloomDownscaleMode.Half, true, 6);
@@ -198,8 +239,24 @@ namespace FactoryWars.EditorTools {
       foreach (var renderer in renderers) {
         bounds.Encapsulate(renderer.bounds);
       }
+      // 포구: 포신이 있으면 포신 끝, 없으면 몸체 앞쪽 가슴 높이다.
+      Transform muzzle = null;
+      foreach (var name in new[] { "Barrel", "Guns", "Tubes" }) {
+        muzzle = root.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == name);
+        if (muzzle != null) {
+          break;
+        }
+      }
+      var muzzlePoint = new Vector3(0, 0.8f, bounds.max.z);
+      var muzzlePart = "Model";
+      if (muzzle != null) {
+        var local = muzzle.GetComponent<MeshFilter>().sharedMesh.bounds;
+        muzzlePoint = new Vector3(local.center.x, local.center.y, local.max.z);
+        muzzlePart = muzzle.name;
+      }
       return new ViewCatalog.Entry {
         Id = recipe.Id, Prefab = prefab, Unit = recipe.Kind == "유닛", DisplayScale = recipe.DisplayScale, Altitude = recipe.Altitude,
+        MuzzlePart = muzzlePart, Muzzle = muzzlePoint, Smoke = recipe.Smoke,
         // 건물은 칸에 맞춘 바닥판이 기준이라 옮기지 않는다.
         Center = recipe.Kind == "유닛" ? new Vector2(bounds.center.x, bounds.center.z) : Vector2.zero,
         RingRadius = Mathf.Max(bounds.extents.x, bounds.extents.z) * recipe.DisplayScale + RingMargin,
@@ -212,6 +269,7 @@ namespace FactoryWars.EditorTools {
       Directory.CreateDirectory($"{ArtRoot}/Meshes");
       Directory.CreateDirectory($"{ArtRoot}/Prefabs");
       BuildArtMaterials();
+      IconBaker.BakeAll();
       var entries = new List<ViewCatalog.Entry>();
       foreach (var recipe in ArtRecipes.All()) {
         var root = new GameObject(recipe.Id);
@@ -271,6 +329,8 @@ namespace FactoryWars.EditorTools {
       "research_lab", "vehicle_factory", "ground_tower", "air_defense", "airfield", "heavy_works",
     };
 
+    const string DataRoot = "Assets/QuantumUser/Resources/FactoryWars";
+    static readonly Vector3 MapPreview = new Vector3(900, 0, 0);
     const float BuildingGap = 8f;
     const float FreeBuildingRow = -3f;
     const float ContinentalBuildingRow = -4f;
@@ -505,6 +565,19 @@ namespace FactoryWars.EditorTools {
       Buildings("17_continental_buildings", ContinentalBuildingRow);
       Game("18_buildings_game_view.png", Place(BuildingGap * 2.5f, FreeBuildingRow - 0.5f), RtsCamera.DefaultHeight);
       Tele("19_outage_buildings.png", Place(BuildingGap * 2.5f, OutageRow, 1.5f), 90f, 11.5f);
+
+      // 지형: 실제 맵 데이터로 만든다. 갤러리에서 멀리 떨어뜨려 놓는다.
+      var mapRoot = new GameObject("MapPreview").transform;
+      mapRoot.position = MapPreview;
+      var map2 = AssetDatabase.LoadAssetAtPath<Quantum.MapSpec>($"{DataRoot}/map_Map2P.asset");
+      var catalog = AssetDatabase.LoadAssetAtPath<ViewCatalog>($"{ResourceRoot}/ViewCatalog.asset");
+      new WorldView(mapRoot, map2, catalog).Update(null, 0f);
+      Vector3 OnMap(float x, float z) => MapPreview + new Vector3(x, 0, z);
+      Shot(camera, "20_map2p_overview.png", OnMap(0, -150) + Vector3.up * 190f, OnMap(0, 0), 46f);
+      Game("21_moat_bridge.png", OnMap(-40, -44), 34f);
+      Game("22_canyon.png", OnMap(-50, 30), 40f);
+      Game("23_hills_rocks.png", OnMap(-10, -6), 40f);
+      Object.DestroyImmediate(mapRoot.gameObject);
 
       // 품질 단계: 같은 게임 시점으로 비교한다.
       ShowMarkers(true);

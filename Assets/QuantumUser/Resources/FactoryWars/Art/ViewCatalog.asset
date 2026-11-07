@@ -21,6 +21,9 @@ MonoBehaviour:
     Center: {x: 0, y: -0.22000003}
     RingRadius: 2.59
     BarHeight: 2.587277
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 1.5799999}
+    Smoke: []
   - Id: ff_ranger_squad
     Prefab: {fileID: 3720922609153631358, guid: 74f693d7cd6bb5d4a9eb916a1014e1ce, type: 3}
     Unit: 1
@@ -29,6 +32,9 @@ MonoBehaviour:
     Center: {x: 0.019147158, y: 0.27462387}
     RingRadius: 1.8801469
     BarHeight: 2.65
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 1.3613884}
+    Smoke: []
   - Id: ff_skyguard_squad
     Prefab: {fileID: 2618897111907406236, guid: 73c7ecb0eb3b5644d8fcfef73fd5ba4f, type: 3}
     Unit: 1
@@ -37,6 +43,9 @@ MonoBehaviour:
     Center: {x: 0.04517871, y: 0.13007104}
     RingRadius: 2.0628016
     BarHeight: 2.65
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 1.3386054}
+    Smoke: []
   - Id: ff_eagle_tank
     Prefab: {fileID: 1499682770403946210, guid: d4df325f3de4abe45b9c3b5d04e713a2, type: 3}
     Unit: 1
@@ -45,6 +54,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0.17500007}
     RingRadius: 2.6355
     BarHeight: 2.5779998
+    MuzzlePart: Barrel
+    Muzzle: {x: 0, y: 0, z: 1.71}
+    Smoke: []
   - Id: ff_hawk_gunship
     Prefab: {fileID: 5671953476353120758, guid: 636b7372715384940be4ef06781aa5fe, type: 3}
     Unit: 1
@@ -53,6 +65,9 @@ MonoBehaviour:
     Center: {x: -0.00000023841858, y: 0.18499994}
     RingRadius: 3.7144997
     BarHeight: 4.7929997
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.85}
+    Smoke: []
   - Id: ff_skyfortress_bomber
     Prefab: {fileID: 3223084302935163626, guid: 54aa4956392315248b327454d97bde8b, type: 3}
     Unit: 1
@@ -61,6 +76,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0.09499979}
     RingRadius: 6.9059997
     BarHeight: 4.322
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.6}
+    Smoke: []
   - Id: cf_engineer
     Prefab: {fileID: 6103229151435959058, guid: c6e5d38355d5dba4d868bc9b4e07f431, type: 3}
     Unit: 1
@@ -69,6 +87,9 @@ MonoBehaviour:
     Center: {x: 0, y: -0.089999914}
     RingRadius: 2.5379999
     BarHeight: 3.0349164
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 1.6700001}
+    Smoke: []
   - Id: cf_militia
     Prefab: {fileID: 2954798274133523145, guid: 73cffd42e8862864d859f76886715a88, type: 3}
     Unit: 1
@@ -77,6 +98,9 @@ MonoBehaviour:
     Center: {x: 0.0026298761, y: 0.3058568}
     RingRadius: 1.4089925
     BarHeight: 2.5900002
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 0.8916954}
+    Smoke: []
   - Id: cf_flame_squad
     Prefab: {fileID: 7089656255757670898, guid: 6a06c230b6ef25243b3b5ef7cdbfca8e, type: 3}
     Unit: 1
@@ -85,6 +109,9 @@ MonoBehaviour:
     Center: {x: 0.049791753, y: 0.3500954}
     RingRadius: 1.8347281
     BarHeight: 2.98
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 1.4065808}
+    Smoke: []
   - Id: cf_dragonscale_tank
     Prefab: {fileID: 8412046235710270282, guid: 35cc8a0840cfe3b45ba02a60e696f334, type: 3}
     Unit: 1
@@ -93,6 +120,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0.19159997}
     RingRadius: 2.7179196
     BarHeight: 2.3309999
+    MuzzlePart: Barrel
+    Muzzle: {x: 0, y: 0, z: 1.51}
+    Smoke: []
   - Id: cf_thunder_aa
     Prefab: {fileID: 6544895880247913981, guid: 0b74a9dd7c1f2a4428e8d6dceb2aa193, type: 3}
     Unit: 1
@@ -101,6 +131,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0.055000067}
     RingRadius: 2.3365
     BarHeight: 3.6032321
+    MuzzlePart: Guns
+    Muzzle: {x: 0, y: 0, z: 1.4599999}
+    Smoke: []
   - Id: cf_longwall_mlrs
     Prefab: {fileID: 5461917723488525202, guid: 796362d0d9566ef4889a658dda623d62, type: 3}
     Unit: 1
@@ -109,6 +142,9 @@ MonoBehaviour:
     Center: {x: 0, y: -0.10249996}
     RingRadius: 3.30175
     BarHeight: 3.8855767
+    MuzzlePart: Tubes
+    Muzzle: {x: 0, y: 0.5664156, z: 1.7502246}
+    Smoke: []
   - Id: ff_headquarters
     Prefab: {fileID: 7211810514476111655, guid: f0500d0f82ace3248b58a0226a2dc68a, type: 3}
     Unit: 0
@@ -117,6 +153,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 5.3020186
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: cf_headquarters
     Prefab: {fileID: 7869610301931235094, guid: 99f7df78922d8e94f95da4eb24abf956, type: 3}
     Unit: 0
@@ -125,6 +164,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 6.3500004
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: iron_mine
     Prefab: {fileID: 3243149854540237152, guid: 44f5db5b05c56424cb745798de93ec7a, type: 3}
     Unit: 0
@@ -133,14 +175,20 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 2.8611352
     BarHeight: 3.303913
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.3884747}
+    Smoke: []
   - Id: bridge
     Prefab: {fileID: 7914401669564694599, guid: a8f1cef667c6ce542a37ddcb775dc3fa, type: 3}
     Unit: 0
     DisplayScale: 1
     Altitude: 0
     Center: {x: 0, y: 0}
-    RingRadius: 6.75
+    RingRadius: 7.35
     BarHeight: 2.55
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 4.8}
+    Smoke: []
   - Id: ff_collection_yard
     Prefab: {fileID: 6433190977397813626, guid: 4644fca4b7df0d74aa157c24410d81d0, type: 3}
     Unit: 0
@@ -149,6 +197,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 2.94
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: ff_supply_depot
     Prefab: {fileID: 6011256317999761544, guid: c18696fe4d951a34ead274ae5e730549, type: 3}
     Unit: 0
@@ -157,6 +208,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 2.29
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: ff_barracks
     Prefab: {fileID: 8314295671451070706, guid: 980c73c9abb04184bb012194006bda98, type: 3}
     Unit: 0
@@ -165,6 +219,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 2.9283714
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: ff_power_plant
     Prefab: {fileID: 4611101417924436599, guid: 59ee2128164616547a15453e26d9db11, type: 3}
     Unit: 0
@@ -173,6 +230,10 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.2350001
     BarHeight: 4.715
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke:
+    - {x: 1.55, y: 4.2, z: -1.7}
   - Id: ff_processor
     Prefab: {fileID: 7086893064665784470, guid: b70a5dcf23edfa440abcf77bdab9e5aa, type: 3}
     Unit: 0
@@ -181,6 +242,10 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.135
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke:
+    - {x: 0.45, y: 3.6, z: -0.95}
   - Id: ff_research_lab
     Prefab: {fileID: 1053819295779338531, guid: 76f73f46b9e3c0240944a70de297f056, type: 3}
     Unit: 0
@@ -189,6 +254,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.9907103
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: ff_vehicle_factory
     Prefab: {fileID: 5004397151304330721, guid: 3cdbd28b8289b6644bb59690b2c809c6, type: 3}
     Unit: 0
@@ -197,6 +265,10 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.4700003
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke:
+    - {x: -2.62, y: 2.7, z: 2.68}
   - Id: ff_ground_tower
     Prefab: {fileID: 5053698645411516820, guid: ff58fa50265167245819a6f04925231d, type: 3}
     Unit: 0
@@ -205,6 +277,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.13
+    MuzzlePart: Barrel
+    Muzzle: {x: 0, y: 0, z: 2.025}
+    Smoke: []
   - Id: ff_air_defense
     Prefab: {fileID: 8728793371278483955, guid: 44fcb9d177c3ddc4380fa050a18a5aaa, type: 3}
     Unit: 0
@@ -213,6 +288,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.049614
+    MuzzlePart: Barrel
+    Muzzle: {x: 0, y: 0.049171925, z: 1.2355666}
+    Smoke: []
   - Id: ff_airfield
     Prefab: {fileID: 1311604342034815586, guid: 573a945da7b4bf84894c453523432076, type: 3}
     Unit: 0
@@ -221,6 +299,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.368372
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: ff_heavy_works
     Prefab: {fileID: 5635455248416973121, guid: 7f4cc57d5d8ee254e80b5073960005fb, type: 3}
     Unit: 0
@@ -229,6 +310,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 5.285
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: cf_collection_yard
     Prefab: {fileID: 9132538957432950280, guid: cc0b90c117d16ff4a971ccd1a681f32f, type: 3}
     Unit: 0
@@ -237,6 +321,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 1.69
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: cf_supply_depot
     Prefab: {fileID: 4345666633483066778, guid: 2b5155f73a8e6af4aa39f0c1fee6478d, type: 3}
     Unit: 0
@@ -245,6 +332,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 3.29
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: cf_barracks
     Prefab: {fileID: 757084111335429910, guid: 1a17aef7430b70949a173f018a4f7fd7, type: 3}
     Unit: 0
@@ -253,6 +343,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.11
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: cf_power_plant
     Prefab: {fileID: 8721037098356347243, guid: b87bc98048346b241a54190cb55915bc, type: 3}
     Unit: 0
@@ -261,6 +354,10 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.655
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke:
+    - {x: 1.55, y: 4.1, z: -1.7}
   - Id: cf_processor
     Prefab: {fileID: 1233659786263341060, guid: 0129ffbe49e2e474b98aa2782008a30a, type: 3}
     Unit: 0
@@ -269,6 +366,10 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.235
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke:
+    - {x: -0.5, y: 3.7, z: -0.5}
   - Id: cf_research_lab
     Prefab: {fileID: 9207792122584839781, guid: 7e12a7634ef0769429fe7c78e7a11fa7, type: 3}
     Unit: 0
@@ -277,6 +378,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 5.04
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: cf_vehicle_factory
     Prefab: {fileID: 5340849050517048276, guid: 3d45a97b712611c4ca5f70f34a566359, type: 3}
     Unit: 0
@@ -285,6 +389,11 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.755
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke:
+    - {x: -1.8, y: 4.25, z: -2.3}
+    - {x: -0.9, y: 4.25, z: -2.3}
   - Id: cf_ground_tower
     Prefab: {fileID: 2265525257645197682, guid: 680a7d9aba6704542b8150839ccf9352, type: 3}
     Unit: 0
@@ -293,6 +402,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 3.73
+    MuzzlePart: Barrel
+    Muzzle: {x: 0, y: 0, z: 1.825}
+    Smoke: []
   - Id: cf_air_defense
     Prefab: {fileID: 2035836393187996034, guid: 3939f533837d482458dda52677c31c18, type: 3}
     Unit: 0
@@ -301,6 +413,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 3.997481
+    MuzzlePart: Barrel
+    Muzzle: {x: 0, y: 0.27773196, z: 1.8281585}
+    Smoke: []
   - Id: cf_airfield
     Prefab: {fileID: 8882865681088981580, guid: 5a57fd9c53ef6524c8d5601e5ae4f6c2, type: 3}
     Unit: 0
@@ -309,6 +424,9 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.468372
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: cf_heavy_works
     Prefab: {fileID: 7568436453730661384, guid: e092e6f83e23deb46b112d2e44dbe006, type: 3}
     Unit: 0
@@ -317,3 +435,6 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 5.2300005
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []

@@ -14,6 +14,7 @@ namespace FactoryWars.View {
     public string Label;
     public bool Enabled;
     public Action Action;
+    public string Icon;
   }
 
   /// <summary>대전 화면의 HUD. 시뮬레이션은 읽기만 하고 행동은 커맨드로 보낸다.</summary>
@@ -32,14 +33,19 @@ namespace FactoryWars.View {
     public int ContextPage { get; private set; }
     /// <summary>10개까지는 한 쪽에 다 보인다. 넘치면 마지막 칸이 다음 쪽 버튼이 된다.</summary>
     public int ContextPages => Entries.Count <= ContextSlots ? 1 : (Entries.Count + PagedSlots - 1) / PagedSlots;
-    public string TopBarText => _topBar.text;
+    public string TopBarText { get; private set; } = "";
+    public int ResourceIcons => _resources.Count(r => r.Icon.sprite != null);
     public string AlertText => _alert.text;
     public string NoteText => _note.text;
     public string TruceText => _truce.text;
     public bool DiplomacyOpen => _diplomacy.gameObject.activeSelf;
     public RectTransform Root { get; private set; }
 
-    Text _topBar;
+    static readonly (string Icon, float X, float Width)[] ResourceSlots = {
+      ("res_iron", 12, 200), ("res_wood", 220, 200), ("res_steel", 428, 200), ("res_power", 636, 500), ("res_population", 1144, 220),
+    };
+
+    readonly List<(Image Icon, Text Value)> _resources = new List<(Image, Text)>();
     Text _alert;
     Text _note;
     Text _status;
@@ -69,9 +75,17 @@ namespace FactoryWars.View {
       top.anchorMax = Vector2.one;
       top.pivot = new Vector2(0.5f, 1);
       top.sizeDelta = new Vector2(0, 76);
-      _topBar = Ui.Label("Resources", top, "", 34);
-      Ui.Stretch(_topBar.rectTransform, 12f);
-      _topBar.rectTransform.offsetMax = new Vector2(-340, -8);
+      foreach (var (icon, x, width) in ResourceSlots) {
+        var image = Ui.Icon(icon, top, icon, new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(60, 60));
+        var rect = (RectTransform)image.transform;
+        rect.pivot = new Vector2(0, 0.5f);
+        rect.anchoredPosition = new Vector2(x, 0);
+        var value = Ui.Label($"{icon}_value", top, "", 34);
+        Ui.Place(value.rectTransform, new Vector2(0, 0.5f), new Vector2(x + 66, 0), new Vector2(width - 66, 60));
+        value.rectTransform.pivot = new Vector2(0, 0.5f);
+        value.rectTransform.anchoredPosition = new Vector2(x + 66, 0);
+        _resources.Add((image, value));
+      }
 
       var diplomacyButton = Ui.Button("DiplomacyButton", top, "외교", ToggleDiplomacy);
       Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-170, 0), new Vector2(160, 76));
@@ -258,7 +272,7 @@ namespace FactoryWars.View {
     }
 
     void Update() {
-      if (_topBar == null) {
+      if (_resources.Count == 0) {
         return;
       }
       if (_alert.text.Length > 0 && Time.unscaledTime >= _alertUntil) {
@@ -279,7 +293,11 @@ namespace FactoryWars.View {
 
     public void Refresh(Frame frame) {
       var state = frame.Global->Players.GetPointer(Controller.Player);
-      _topBar.text = Texts.TopBar(*state);
+      TopBarText = Texts.TopBar(*state);
+      var values = Texts.TopBarValues(*state);
+      for (var i = 0; i < _resources.Count; i++) {
+        _resources[i].Value.text = values[i];
+      }
       _truce.text = FactoryWarsUtil.InTruce(frame)
         ? Texts.TruceCountdown((frame.Global->TruceEndFrame - frame.Number) / (float)frame.SessionConfig.UpdateFPS)
         : "";
@@ -325,6 +343,7 @@ namespace FactoryWars.View {
         if (paged && i == PagedSlots) {
           _context[i].gameObject.SetActive(true);
           Ui.SetLabel(_context[i], $"다음\n{ContextPage + 1}/{ContextPages}");
+          Ui.SetIcon(_context[i], null);
           Ui.SetEnabled(_context[i], true);
           continue;
         }
@@ -333,6 +352,7 @@ namespace FactoryWars.View {
         _context[i].gameObject.SetActive(used);
         if (used) {
           Ui.SetLabel(_context[i], Entries[index].Label);
+          Ui.SetIcon(_context[i], Entries[index].Icon != null ? Ui.IconSprite(Entries[index].Icon) : null);
           Ui.SetEnabled(_context[i], Entries[index].Enabled);
         }
       }
@@ -347,6 +367,7 @@ namespace FactoryWars.View {
         var target = buildingRef;
         Entries.Add(new ContextEntry {
           Label = $"{Texts.NameOf(spec.name)}\n{(unlocked ? Texts.Cost(spec.Cost, stock) : "잠김")}",
+          Icon = $"building_{spec.name.Substring(3)}",
           Enabled = unlocked,
           Action = () => Controller.Input.Placing = target,
         });
@@ -370,6 +391,7 @@ namespace FactoryWars.View {
         var target = unitRef;
         Entries.Add(new ContextEntry {
           Label = $"{Texts.NameOf(unit.name)}\n{Texts.Cost(unit.Cost, stock)}",
+          Icon = unit.name,
           Enabled = true,
           Action = () => Controller.Send(new ProduceCommand { Building = entity, Unit = target, Count = 1 }),
         });

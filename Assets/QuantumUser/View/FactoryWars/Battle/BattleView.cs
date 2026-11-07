@@ -1,0 +1,419 @@
+namespace FactoryWars.View {
+  using System.Collections.Generic;
+  using Photon.Deterministic;
+  using Quantum;
+  using Quantum.FactoryWars;
+  using UnityEngine;
+
+  /// <summary>
+  /// 대전 화면. 시뮬레이션 상태를 읽어 프리팹을 놓고 움직인다. 시뮬레이션은 바꾸지 않는다.
+  /// 사격은 공격 쿨다운이 다시 차는 것으로, 파괴는 엔티티가 사라지는 것으로 알아낸다.
+  /// </summary>
+  public unsafe class BattleView : MonoBehaviour {
+    const float FollowRate = 16f;
+    const float TurnRate = 300f;
+    const float TurretRate = 220f;
+    const float RecoilDistance = 0.32f;
+    const float RecoilRecover = 3.2f;
+    const float SmokeSeconds = 0.42f;
+    const float ShellSpeed = 90f;
+    const float BulletSpeed = 120f;
+    const float MissileSpeed = 42f;
+
+    /// <summary>화면에 놓인 유닛·건물 하나의 연출 상태.</summary>
+    public class Actor {
+      public ArtView View;
+      public EntityRef Entity;
+      public bool IsBuilding;
+      public bool IsAir;
+      public Vector3 Position;
+      public float HullYaw;
+      public float TurretYaw;
+      public float Recoil;
+      public float Cooldown;
+      public float Phase;
+      public int Color = -1;
+      public bool Powered = true;
+      public bool Active;
+      public float SmokeAt;
+      public float Radius;
+      public Transform Turret;
+      public Transform Barrel;
+      public Vector3 BarrelHome;
+      public Transform Muzzle;
+      public readonly List<(Transform Part, Vector3 Axis, float Speed, bool NeedsPower)> Spinners = new List<(Transform, Vector3, float, bool)>();
+      public readonly List<(Transform Part, Vector3 Home, Vector3 Reach, float Speed)> Sliders = new List<(Transform, Vector3, Vector3, float)>();
+      public readonly List<(Transform Part, Quaternion Home, float Swing, float Speed)> Swingers = new List<(Transform, Quaternion, float, float)>();
+      public GameObject Scaffold;
+      public float Height;
+    }
+
+    static Mesh _scaffold;
+
+    readonly Dictionary<EntityRef, Actor> _actors = new Dictionary<EntityRef, Actor>();
+    readonly HashSet<EntityRef> _seen = new HashSet<EntityRef>();
+    readonly List<EntityRef> _gone = new List<EntityRef>();
+    readonly List<Actor> _marked = new List<Actor>();
+    ViewCatalog _catalog;
+    MatchController _controller;
+
+    public WorldView World { get; private set; }
+    public BattleFx Fx { get; private set; }
+    public IReadOnlyDictionary<EntityRef, Actor> Actors => _actors;
+
+    static Transform FindDeep(Transform root, string name) {
+      foreach (var child in root.GetComponentsInChildren<Transform>(true)) {
+        if (child.name == name) {
+          return child;
+        }
+      }
+      return null;
+    }
+
+    void Init(Frame frame) {
+      _catalog = Resources.Load<ViewCatalog>(ViewCatalog.ResourcePath);
+      WorldView.HideBakedScene();
+      WorldView.ApplyLighting(Camera.main);
+      GraphicsQuality.Bind(Camera.main);
+      World = new WorldView(transform, frame.FindAsset<MapSpec>(frame.Map.UserAsset), _catalog);
+      Fx = new GameObject("Fx").AddComponent<BattleFx>();
+      Fx.transform.SetParent(transform, false);
+      _controller = FindAnyObjectByType<MatchController>();
+    }
+
+    void LateUpdate() {
+      var frame = QuantumRunner.Default?.Game?.Frames?.Predicted;
+      if (frame == null) {
+        return;
+      }
+      if (World == null) {
+        Init(frame);
+      }
+      var dt = Time.deltaTime;
+      World.Update(frame, dt);
+
+      _seen.Clear();
+      var units = frame.Filter<Transform3D, Unit>();
+      while (units.NextUnsafe(out var entity, out var transform3D, out var unit)) {
+        _seen.Add(entity);
+        UpdateUnit(frame, entity, transform3D, unit, dt);
+      }
+      var buildings = frame.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out var entity, out var transform3D, out var building)) {
+        _seen.Add(entity);
+        UpdateBuilding(frame, entity, transform3D, building, dt);
+      }
+
+      _gone.Clear();
+      foreach (var pair in _actors) {
+        if (_seen.Contains(pair.Key) == false) {
+          _gone.Add(pair.Key);
+        }
+      }
+      foreach (var entity in _gone) {
+        Remove(entity);
+      }
+      UpdateSelection(frame);
+    }
+
+    void Remove(EntityRef entity) {
+      var actor = _actors[entity];
+      var center = actor.View.transform.position + Vector3.up * (actor.IsAir ? actor.View.Entry.Altitude : actor.Height * 0.4f);
+      Fx.Explosion(center, actor.IsBuilding ? 2.2f : Mathf.Clamp(actor.Radius * 0.5f, 0.5f, 1.5f));
+      if (actor.IsAir == false && (actor.IsBuilding || actor.Radius > 1.8f)) {
+        Fx.Wreck(actor.View.transform.position, actor.IsBuilding ? 3.2f : actor.Radius * 0.8f);
+      }
+      _marked.Remove(actor);
+      Destroy(actor.View.gameObject);
+      _actors.Remove(entity);
+    }
+
+    Actor Create(EntityRef entity, string id, bool isBuilding, bool isAir) {
+      var view = ArtView.Create(_catalog, id, transform, 0);
+      if (view == null) {
+        return null;
+      }
+      var actor = new Actor { View = view, Entity = entity, IsBuilding = isBuilding, IsAir = isAir, Radius = view.Entry.RingRadius, Height = view.Entry.BarHeight, Phase = Random.value * 10f };
+      var model = view.Model.transform;
+      actor.Turret = FindDeep(model, "Turret") ?? FindDeep(model, "Launcher");
+      actor.Barrel = FindDeep(model, "Barrel") ?? FindDeep(model, "Guns") ?? FindDeep(model, "Tubes");
+      if (actor.Barrel != null) {
+        actor.BarrelHome = actor.Barrel.localPosition;
+      }
+      actor.Muzzle = FindDeep(model, view.Entry.MuzzlePart) ?? model;
+
+      void Spin(string name, Vector3 axis, float speed, bool needsPower) {
+        var part = FindDeep(model, name);
+        if (part != null) {
+          actor.Spinners.Add((part, axis, speed, needsPower));
+        }
+      }
+      void Slide(string name, Vector3 reach, float speed) {
+        var part = FindDeep(model, name);
+        if (part != null) {
+          actor.Sliders.Add((part, part.localPosition, reach, speed));
+        }
+      }
+      void Swing(string name, float degrees, float speed) {
+        var part = FindDeep(model, name);
+        if (part != null) {
+          actor.Swingers.Add((part, part.localRotation, degrees, speed));
+        }
+      }
+      Spin("Rotor", Vector3.up, 1100f, false);
+      Spin("TailFan", Vector3.forward, 1500f, false);
+      Spin("CoreRing", Vector3.up, 70f, true);
+      Spin("Coil", Vector3.up, 90f, true);
+      if (isBuilding) {
+        Spin("Radar", Vector3.up, 42f, true);
+        Spin("Dish", Vector3.up, 16f, true);
+        Spin("Antenna", Vector3.up, 26f, true);
+      } else {
+        Spin("Radar", Vector3.up, 80f, false);
+      }
+      Swing("Flag", 12f, 2.4f);
+      Swing("Crane", 34f, 0.5f);
+      Swing("Arm", 16f, 2.6f);
+      Slide("Ingot", new Vector3(0, 0, -1.4f), 0.5f);
+      Slide("Forklift", new Vector3(1.3f, 0, 0), 0.32f);
+      Slide("Hoist", new Vector3(1.9f, 0, 0), 0.22f);
+      Slide("Door", new Vector3(0, 0.9f, 0), 0.4f);
+      _actors[entity] = actor;
+      return actor;
+    }
+
+    static float Wave(float time, float speed, float phase) => 0.5f + 0.5f * Mathf.Sin(time * speed * Mathf.PI * 2f + phase);
+
+    static void Animate(Actor actor, float dt, bool powered, bool busy) {
+      foreach (var (part, axis, speed, needsPower) in actor.Spinners) {
+        if (needsPower == false || powered) {
+          part.Rotate(axis, speed * dt, Space.Self);
+        }
+      }
+      if (busy) {
+        var time = Time.time;
+        foreach (var (part, home, reach, speed) in actor.Sliders) {
+          part.localPosition = home + reach * Wave(time, speed, actor.Phase);
+        }
+        foreach (var (part, home, swing, speed) in actor.Swingers) {
+          part.localRotation = home * Quaternion.Euler(0, (Wave(time, speed, actor.Phase) - 0.5f) * 2f * swing, 0);
+        }
+      }
+    }
+
+    static float YawTo(Vector3 from, Vector3 to) => Mathf.Atan2(to.x - from.x, to.z - from.z) * Mathf.Rad2Deg;
+
+    static bool TryTarget(Frame frame, EntityRef target, out Vector3 position, out bool air) {
+      air = false;
+      position = default;
+      if (target == EntityRef.None || frame.Exists(target) == false || frame.Has<Transform3D>(target) == false) {
+        return false;
+      }
+      position = frame.Get<Transform3D>(target).Position.ToUnityVector3();
+      if (frame.Unsafe.TryGetPointer<Unit>(target, out var unit) && frame.FindAsset(unit->Spec).IsAir) {
+        air = true;
+      }
+      position.y = air ? 3f : 0.8f;
+      return true;
+    }
+
+    void Aim(Actor actor, bool hasTarget, Vector3 target, bool air, float dt) {
+      if (actor.Turret != null) {
+        var want = hasTarget ? Mathf.DeltaAngle(actor.HullYaw, YawTo(actor.Position, target)) : 0f;
+        actor.TurretYaw = Mathf.MoveTowardsAngle(actor.TurretYaw, want, TurretRate * dt);
+        actor.Turret.localRotation = Quaternion.Euler(0, actor.TurretYaw, 0);
+      }
+      if (actor.Barrel != null) {
+        actor.Recoil = Mathf.MoveTowards(actor.Recoil, 0f, RecoilRecover * dt);
+        actor.Barrel.localPosition = actor.BarrelHome + Vector3.back * actor.Recoil;
+      }
+    }
+
+    void Fire(Actor actor, AttackType attack, float range, bool hasTarget, Vector3 target, bool flame) {
+      actor.Recoil = RecoilDistance;
+      var muzzle = actor.Muzzle.TransformPoint(actor.View.Entry.Muzzle);
+      var forward = hasTarget ? (target - muzzle).normalized : actor.Muzzle.forward;
+      if (flame) {
+        Fx.FlameJet(muzzle, forward, range);
+        return;
+      }
+      Fx.MuzzleFlash(muzzle, forward, attack == AttackType.AntiInfantry ? 0.8f : 1.5f);
+      if (hasTarget == false) {
+        return;
+      }
+      var missile = attack == AttackType.AntiAir || attack == AttackType.Area;
+      var speed = attack == AttackType.AntiInfantry ? BulletSpeed : missile ? MissileSpeed : ShellSpeed;
+      Fx.Tracer(muzzle, target, speed, attack == AttackType.AntiInfantry ? 0.18f : 0.34f, missile);
+      Fx.Impact(target, attack == AttackType.AntiInfantry ? 0.8f : 1.6f);
+    }
+
+    void UpdateUnit(Frame frame, EntityRef entity, Transform3D* transform3D, Unit* unit, float dt) {
+      var spec = frame.FindAsset(unit->Spec);
+      if (_actors.TryGetValue(entity, out var actor) == false) {
+        actor = Create(entity, spec.name, false, spec.IsAir);
+        if (actor == null) {
+          return;
+        }
+        var start = transform3D->Position.ToUnityVector3();
+        start.y = 0f;
+        actor.Position = start;
+        actor.View.transform.position = start;
+      }
+      var color = frame.Global->Players.GetPointer(unit->Owner)->ColorIndex;
+      if (color != actor.Color) {
+        actor.Color = color;
+        ArtLook.Apply(actor.View.Model, color);
+      }
+
+      var goal = transform3D->Position.ToUnityVector3();
+      goal.y = 0f;
+      var moved = goal - actor.Position;
+      actor.Position += moved * (1f - Mathf.Exp(-FollowRate * dt));
+      var hover = spec.IsAir ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.12f : 0f;
+      actor.View.transform.position = actor.Position;
+      actor.View.Turn.localPosition = Vector3.up * (actor.View.Entry.Altitude + hover);
+
+      var hasTarget = TryTarget(frame, unit->TargetEntity, out var target, out var air);
+      if (moved.sqrMagnitude > 0.002f) {
+        actor.HullYaw = Mathf.MoveTowardsAngle(actor.HullYaw, Mathf.Atan2(moved.x, moved.z) * Mathf.Rad2Deg, TurnRate * dt);
+      } else if (hasTarget && actor.Turret == null) {
+        actor.HullYaw = Mathf.MoveTowardsAngle(actor.HullYaw, YawTo(actor.Position, target), TurnRate * dt);
+      }
+      actor.View.SetYaw(actor.HullYaw);
+      Aim(actor, hasTarget, target, air, dt);
+
+      var cooldown = unit->AttackCooldown.AsFloat;
+      if (cooldown > actor.Cooldown + 0.05f && spec.Attack != AttackType.None) {
+        Fire(actor, spec.Attack, spec.Range.AsFloat, hasTarget, target, spec.Ability == SpecialAbility.FlameBurst);
+      }
+      actor.Cooldown = cooldown;
+
+      var working = frame.Unsafe.TryGetPointer<Worker>(entity, out var worker) && worker->Task != WorkerTask.Idle && worker->Task != WorkerTask.Deliver;
+      Animate(actor, dt, true, working);
+    }
+
+    static Mesh ScaffoldMesh() {
+      if (_scaffold == null) {
+        var kit = new MeshKit().Paint(Swatch.ArmorDark);
+        kit.Taper(Vector3.zero, new Vector2(5.96f, 5.96f), new Vector2(5.7f, 5.7f), 0.14f);
+        kit.Paint(Swatch.Wood);
+        foreach (var x in new[] { -2.7f, 2.7f }) {
+          foreach (var z in new[] { -2.7f, 2.7f }) {
+            kit.Beam(new Vector3(x, 0.1f, z), new Vector3(x, 3.2f, z), 0.12f);
+          }
+        }
+        foreach (var y in new[] { 1.1f, 2.2f, 3.2f }) {
+          kit.Beam(new Vector3(-2.7f, y, -2.7f), new Vector3(2.7f, y, -2.7f), 0.09f);
+          kit.Beam(new Vector3(-2.7f, y, 2.7f), new Vector3(2.7f, y, 2.7f), 0.09f);
+          kit.Beam(new Vector3(-2.7f, y, -2.7f), new Vector3(-2.7f, y, 2.7f), 0.09f);
+          kit.Beam(new Vector3(2.7f, y, -2.7f), new Vector3(2.7f, y, 2.7f), 0.09f);
+        }
+        kit.Paint(Swatch.Hazard);
+        kit.Box(new Vector3(0, 0.16f, -2.7f), new Vector3(5.4f, 0.05f, 0.14f));
+        _scaffold = kit.ToMesh("scaffold");
+      }
+      return _scaffold;
+    }
+
+    static void ShowConstruction(Actor actor, float progress) {
+      var building = progress < 1f;
+      if (building && actor.Scaffold == null) {
+        var item = new GameObject("Scaffold", typeof(MeshFilter), typeof(MeshRenderer));
+        item.transform.SetParent(actor.View.transform, false);
+        item.GetComponent<MeshFilter>().sharedMesh = ScaffoldMesh();
+        item.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+        actor.Scaffold = item;
+      }
+      if (actor.Scaffold != null) {
+        actor.Scaffold.SetActive(building);
+      }
+      // 땅 밑에서 올라온다. 바닥이 불투명해서 아래쪽은 가려진다.
+      var position = actor.View.Model.transform.localPosition;
+      position.y = building ? -(1f - progress) * actor.Height : 0f;
+      actor.View.Model.transform.localPosition = position;
+    }
+
+    void UpdateBuilding(Frame frame, EntityRef entity, Transform3D* transform3D, Building* building, float dt) {
+      var spec = frame.FindAsset(building->Spec);
+      if (_actors.TryGetValue(entity, out var actor) == false) {
+        actor = Create(entity, spec.name, true, false);
+        if (actor == null) {
+          return;
+        }
+        var position = transform3D->Position.ToUnityVector3();
+        position.y = 0f;
+        actor.Position = position;
+        actor.View.transform.position = position;
+        actor.HullYaw = 180f;
+        actor.View.SetYaw(180f);
+      }
+
+      var state = frame.Global->Players.GetPointer(building->Owner);
+      var powered = state->Outage == false;
+      if (state->ColorIndex != actor.Color || powered != actor.Powered) {
+        actor.Color = state->ColorIndex;
+        actor.Powered = powered;
+        ArtLook.Apply(actor.View.Model, actor.Color, powered);
+      }
+
+      var total = spec.BuildTimeSeconds.AsFloat;
+      var remaining = building->ConstructionRemaining.AsFloat;
+      var finished = remaining <= 0f;
+      ShowConstruction(actor, finished || total <= 0f ? 1f : 1f - remaining / total);
+      if (finished == false) {
+        return;
+      }
+
+      var hasTarget = TryTarget(frame, building->TargetEntity, out var target, out var air);
+      Aim(actor, hasTarget, target, air, dt);
+      var cooldown = building->AttackCooldown.AsFloat;
+      if (cooldown > actor.Cooldown + 0.05f && spec.Attack != AttackType.None) {
+        Fire(actor, spec.Attack, spec.Range.AsFloat, hasTarget, target, false);
+      }
+      actor.Cooldown = cooldown;
+
+      var processing = spec.ProcessSeconds > FP._0 && building->ProcessorOff == false;
+      var producing = building->QueueCount > 0;
+      var yard = spec.IsDropOff && spec.Role == BuildingRole.CollectionYard;
+      var busy = powered && (processing || producing || yard || spec.Role == BuildingRole.Headquarters || spec.Role == BuildingRole.Barracks);
+      Animate(actor, dt, powered, busy);
+
+      var smoke = actor.View.Entry.Smoke;
+      if (smoke != null && smoke.Length > 0 && Time.time >= actor.SmokeAt && (powered && (processing || producing || spec.Role == BuildingRole.PowerPlant))) {
+        actor.SmokeAt = Time.time + SmokeSeconds / Mathf.Max(GraphicsQuality.FxScale, 0.1f);
+        foreach (var point in smoke) {
+          Fx.ChimneySmoke(actor.View.Model.transform.TransformPoint(point));
+        }
+      }
+    }
+
+    void UpdateSelection(Frame frame) {
+      foreach (var actor in _marked) {
+        actor.View.SetSelected(false);
+      }
+      _marked.Clear();
+      if (_controller == null) {
+        _controller = FindAnyObjectByType<MatchController>();
+      }
+      if (_controller == null || _controller.IsReady == false) {
+        return;
+      }
+      var selection = _controller.Input.Selection;
+      foreach (var entity in selection.Units) {
+        if (_actors.TryGetValue(entity, out var actor) && frame.Unsafe.TryGetPointer<Unit>(entity, out var unit)) {
+          Mark(actor, unit->Health.AsFloat / frame.FindAsset(unit->Spec).MaxHealth.AsFloat);
+        }
+      }
+      if (selection.Building != EntityRef.None && _actors.TryGetValue(selection.Building, out var selected)
+          && frame.Unsafe.TryGetPointer<Building>(selection.Building, out var building)) {
+        Mark(selected, building->Health.AsFloat / frame.FindAsset(building->Spec).MaxHealth.AsFloat);
+      }
+    }
+
+    void Mark(Actor actor, float health) {
+      actor.View.SetSelected(true);
+      actor.View.SetHealth(health);
+      _marked.Add(actor);
+    }
+  }
+}

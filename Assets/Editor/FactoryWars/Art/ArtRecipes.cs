@@ -19,8 +19,14 @@ namespace FactoryWars.EditorTools {
     public int MaxTriangles;
     public float DisplayScale = 1f;
     public float Altitude;
+    public Vector3[] Smoke = Array.Empty<Vector3>();
     public Action<MeshKit> Body;
     public MovingPart[] Moving = Array.Empty<MovingPart>();
+
+    public ArtRecipe Smoking(params Vector3[] points) {
+      Smoke = points;
+      return this;
+    }
 
     public ArtRecipe Flying(float altitude) {
       Altitude = altitude;
@@ -846,18 +852,18 @@ namespace FactoryWars.EditorTools {
         k.Paint(Swatch.Grass);
         k.Box(new Vector3(0, 0.53f, side * 4.25f), new Vector3(13f, 0.06f, 1.1f));
         k.Paint(Swatch.Stone);
-        k.Taper(new Vector3(-5.7f, 0.5f, side * 3.75f), new Vector2(0.8f, 0.8f), new Vector2(0.62f, 0.62f), 1.5f);
-        k.Taper(new Vector3(5.7f, 0.5f, side * 3.75f), new Vector2(0.8f, 0.8f), new Vector2(0.62f, 0.62f), 1.5f);
+        k.Taper(new Vector3(-6.7f, 0.5f, side * 3.75f), new Vector2(0.8f, 0.8f), new Vector2(0.62f, 0.62f), 1.5f);
+        k.Taper(new Vector3(6.7f, 0.5f, side * 3.75f), new Vector2(0.8f, 0.8f), new Vector2(0.62f, 0.62f), 1.5f);
       }
     }
 
     static void BridgeDeck(MeshKit k) {
       k.Paint(Swatch.WoodDark);
-      k.Box(new Vector3(-5.0f, 0.06f, 3.4f), new Vector3(0.3f, 0.24f, 6.9f));
-      k.Box(new Vector3(5.0f, 0.06f, 3.4f), new Vector3(0.3f, 0.24f, 6.9f));
+      k.Box(new Vector3(-6.2f, 0.06f, 3.4f), new Vector3(0.3f, 0.24f, 6.9f));
+      k.Box(new Vector3(6.2f, 0.06f, 3.4f), new Vector3(0.3f, 0.24f, 6.9f));
       for (var i = 0; i < 9; i++) {
         k.Paint(i % 2 == 0 ? Swatch.Wood : Swatch.WoodDark);
-        k.Box(new Vector3(0, 0.14f, 0.4f + i * 0.76f), new Vector3(10f, 0.1f, 0.7f));
+        k.Box(new Vector3(0, 0.14f, 0.4f + i * 0.76f), new Vector3(12.4f, 0.1f, 0.7f));
       }
     }
   }

@@ -21,6 +21,8 @@ namespace FactoryWars.View {
     public static QualityTier Default => Application.isMobilePlatform ? QualityTier.Low : QualityTier.High;
     public static bool PostProcessing => Current != QualityTier.Low;
     public static bool UnitShadows => Current != QualityTier.Low;
+    /// <summary>파티클 양 배율.</summary>
+    public static float FxScale => Current == QualityTier.Low ? 0.35f : Current == QualityTier.Medium ? 0.7f : 1f;
     public static string Name(QualityTier tier) => Names[(int)tier];
     public static string ProfileName(QualityTier tier) => tier == QualityTier.High ? "PostHigh" : "PostMedium";
 
