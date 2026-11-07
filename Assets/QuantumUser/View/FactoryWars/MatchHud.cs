@@ -22,12 +22,16 @@ namespace FactoryWars.View {
     const float AlertSeconds = 3f;
     const float NoteSeconds = 3f;
     const int ContextSlots = 10;
+    const int PagedSlots = ContextSlots - 1;
 
     public readonly List<ContextEntry> Entries = new List<ContextEntry>();
     public readonly List<string> NoteInbox = new List<string>();
 
     public MatchController Controller;
     public bool BoxMode { get; private set; }
+    public int ContextPage { get; private set; }
+    /// <summary>10개까지는 한 쪽에 다 보인다. 넘치면 마지막 칸이 다음 쪽 버튼이 된다.</summary>
+    public int ContextPages => Entries.Count <= ContextSlots ? 1 : (Entries.Count + PagedSlots - 1) / PagedSlots;
     public string TopBarText => _topBar.text;
     public string AlertText => _alert.text;
     public string NoteText => _note.text;
@@ -209,7 +213,17 @@ namespace FactoryWars.View {
       }
     }
 
-    public void PressContext(int index) {
+    int EntryAt(int slot) => ContextPages > 1 ? ContextPage * PagedSlots + slot : slot;
+
+    /// <summary>패널의 칸 번호로 누른다. 쪽을 나눴으면 마지막 칸은 다음 쪽이다.</summary>
+    public void PressContext(int slot) {
+      if (ContextPages > 1 && slot == PagedSlots) {
+        ContextPage = (ContextPage + 1) % ContextPages;
+        _nextRefresh = 0f;
+        ApplyContextPage();
+        return;
+      }
+      var index = EntryAt(slot);
       if (index < Entries.Count && Entries[index].Enabled) {
         Entries[index].Action?.Invoke();
         _nextRefresh = 0f;
@@ -299,13 +313,27 @@ namespace FactoryWars.View {
         status = "건설할 곳을 누르세요";
       }
       _status.text = status;
+      if (ContextPage >= ContextPages) {
+        ContextPage = 0;
+      }
+      ApplyContextPage();
+    }
 
+    void ApplyContextPage() {
+      var paged = ContextPages > 1;
       for (var i = 0; i < _context.Length; i++) {
-        var used = i < Entries.Count;
+        if (paged && i == PagedSlots) {
+          _context[i].gameObject.SetActive(true);
+          Ui.SetLabel(_context[i], $"다음\n{ContextPage + 1}/{ContextPages}");
+          Ui.SetEnabled(_context[i], true);
+          continue;
+        }
+        var index = EntryAt(i);
+        var used = index < Entries.Count;
         _context[i].gameObject.SetActive(used);
         if (used) {
-          Ui.SetLabel(_context[i], Entries[i].Label);
-          Ui.SetEnabled(_context[i], Entries[i].Enabled);
+          Ui.SetLabel(_context[i], Entries[index].Label);
+          Ui.SetEnabled(_context[i], Entries[index].Enabled);
         }
       }
     }

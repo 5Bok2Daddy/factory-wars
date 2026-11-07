@@ -279,7 +279,7 @@ namespace FactoryWars.EditorTools {
       var large = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Large && u.IsAir == false).ToArray();
 
       var buildings = new[] {
-        BuildBuilding($"{prefix}_headquarters", R(0), 0, 3000, 10, 0, engineer),
+        BuildBuilding($"{prefix}_headquarters", R(400, 300), 60, 3000, 10, 0, engineer),
         BuildBuilding($"{prefix}_power_plant", R(150, 150), 15, 600, 0, 0),
         BuildBuilding($"{prefix}_processor", R(250, 150, 0, 100), 20, 800, 0, 0),
         BuildBuilding($"{prefix}_supply_depot", R(100, 200), 15, 500, 20, 0),
@@ -288,13 +288,15 @@ namespace FactoryWars.EditorTools {
         BuildBuilding($"{prefix}_vehicle_factory", R(400, 200, 0, 200), 30, 1200, 0, 0, mediumGround),
         BuildBuilding($"{prefix}_airfield", R(400, 0, 100, 300), 35, 1000, 0, 0, air),
         BuildBuilding($"{prefix}_heavy_works", R(500, 0, 200, 400), 45, 1600, 0, 0, large),
-        BuildBuilding($"{prefix}_defense_tower", R(250, 100, 0, 100), 20, 700, 0, 1),
+        BuildBuilding($"{prefix}_ground_tower", R(250, 100, 0, 100), 20, 700, 0, 1),
         BuildBuilding($"{prefix}_collection_yard", R(0, 150), 15, 500, 0, 0),
+        BuildBuilding($"{prefix}_air_defense", R(200, 100, 30, 100), 20, 700, 0, 1),
       };
       void Requires(int building, params int[] prerequisites) {
         buildings[building].Prerequisites = prerequisites.Select(i => Ref(buildings[i])).ToArray();
       }
-      // 순서: 0 사령부, 1 발전소, 2 가공소, 3 보급창, 4 병영, 5 연구소, 6 군수공장, 7 비행장, 8 중공업 기지, 9 방어탑, 10 집하장
+      // 순서: 0 사령부, 1 발전소, 2 가공소, 3 보급창, 4 병영, 5 연구소, 6 군수공장, 7 비행장, 8 중공업 기지, 9 지상 방어탑, 10 집하장, 11 방공포대
+      Requires(0, 0);
       Requires(1, 0);
       Requires(2, 1);
       Requires(3, 0);
@@ -305,6 +307,7 @@ namespace FactoryWars.EditorTools {
       Requires(8, 6, 5, 2);
       Requires(9, 4, 1);
       Requires(10, 0);
+      Requires(11, 4, 1);
       void Power(int building, int output, int storage, double upkeep, UpkeepMode mode) {
         buildings[building].PowerOutput = output;
         buildings[building].PowerStorage = storage;
@@ -321,6 +324,7 @@ namespace FactoryWars.EditorTools {
       Power(7, 0, 0, 2, UpkeepMode.WhileProducing);
       Power(8, 0, 0, 3, UpkeepMode.WhileProducing);
       Power(9, 0, 0, 0.5, UpkeepMode.Always);
+      Power(11, 0, 0, 0.5, UpkeepMode.Always);
       for (var i = 0; i < buildings.Length; i++) {
         buildings[i].Role = (BuildingRole)i;
       }
@@ -333,10 +337,19 @@ namespace FactoryWars.EditorTools {
 
       var tower = buildings[9];
       tower.Attack = AttackType.AntiArmor;
+      tower.GroundOnly = true;
       tower.Damage = 40;
       tower.Range = 10;
       tower.AttackInterval = N(1.5);
       EditorUtility.SetDirty(tower);
+
+      // 공중 배율 1.5는 상성표의 대공 VsAir다.
+      var airDefense = buildings[11];
+      airDefense.Attack = AttackType.AntiAir;
+      airDefense.Damage = 30;
+      airDefense.Range = 14;
+      airDefense.AttackInterval = N(1.5);
+      EditorUtility.SetDirty(airDefense);
 
       var faction = Asset<FactionSpec>($"faction_{factionId}");
       faction.FactionId = factionId;
@@ -345,7 +358,8 @@ namespace FactoryWars.EditorTools {
       faction.PopulationCapMultiplier = N(populationCap);
       faction.Headquarters = Ref(buildings[0]);
       faction.Engineer = Ref(engineer);
-      faction.Buildings = buildings.Skip(1).Select(Ref).ToArray();
+      // 사령부는 추가 건설이 드물어 패널 맨 끝에 둔다.
+      faction.Buildings = buildings.Skip(1).Concat(buildings.Take(1)).Select(Ref).ToArray();
       faction.Units = ids.Select(k => Ref(units[k])).ToArray();
       faction.StartingUnits = startingUnits.Select(id => Ref(U(id))).ToArray();
       faction.Modules = modules;
@@ -353,7 +367,7 @@ namespace FactoryWars.EditorTools {
       return faction;
     }
 
-    static AiSpec BuildAi(string id, double think, int engineers, int variety, int maxYards, int maxProcessors, double firstAttack, double repeat,
+    static AiSpec BuildAi(string id, double think, int engineers, int variety, int maxYards, int maxHeadquarters, int maxProcessors, double firstAttack, double repeat,
         int wave, int growth, int maxWave, bool strategic, BuildingRole[] order) {
       var ai = Asset<AiSpec>(id);
       ai.ThinkSeconds = N(think);
@@ -369,6 +383,12 @@ namespace FactoryWars.EditorTools {
       ai.SteelCap = 1500;
       ai.PowerReserve = 20;
       ai.ExpandDistance = 30;
+      ai.MaxHeadquarters = maxHeadquarters;
+      ai.ExpandReserves = 5000;
+      ai.ExpandReserveRadius = 25;
+      ai.ExpandIron = 800;
+      ai.ExpandWood = 500;
+      ai.ExpandPopulationRoom = 4;
       ai.ConcurrentBuilds = 1;
       ai.QueueTarget = 2;
       ai.UnitVariety = variety;
@@ -464,12 +484,12 @@ namespace FactoryWars.EditorTools {
       rules.RepairPerSecond = 20;
       rules.RepairCostRatio = N(0.5);
       rules.FoundationHealthRatio = N(0.1);
-      rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 2, 420, 90, 6, 2, 12, false, new[] {
+      rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 2, 2, 420, 90, 6, 2, 12, false, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
       }));
-      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 2, 5, 300, 60, 8, 3, 24, true, new[] {
+      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 2, 3, 5, 300, 60, 8, 3, 24, true, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.ResearchLab,
-        BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Airfield, BuildingRole.HeavyWorks, BuildingRole.DefenseTower, BuildingRole.SupplyDepot,
+        BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Airfield, BuildingRole.HeavyWorks, BuildingRole.GroundTower, BuildingRole.AirDefense, BuildingRole.SupplyDepot,
       }));
       rules.UnitClearance = N(0.5);
       rules.SlideMemorySeconds = 1;

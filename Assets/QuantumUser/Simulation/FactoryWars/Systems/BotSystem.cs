@@ -3,7 +3,7 @@ namespace Quantum.FactoryWars {
 
   /// <summary>규칙 기반 AI. 사람과 같은 함수로 행동해 비용과 제한을 그대로 받는다.</summary>
   public unsafe class BotSystem : SystemMainThread {
-    const int RoleCount = 11;
+    const int RoleCount = 12;
     const int MaxOrder = MoveUnitsCommand.MaxUnits;
 
     public static void Init(Frame f, PlayerRef player, BotDifficulty difficulty, FPVector3 home) {
@@ -204,11 +204,19 @@ namespace Quantum.FactoryWars {
       var center = bot->Home;
       var hasRole = NextRole(player, state, ai, counts, f, out var role);
 
-      // 확장: 멀리 일하러 간 공병 옆에 집하장을 둔다.
-      if (counts[(int)BuildingRole.CollectionYard] < ai.MaxYards && FindDistantNode(f, player, ai, out var distant)) {
-        role = BuildingRole.CollectionYard;
-        hasRole = true;
-        center = distant;
+      // 확장: 멀리 일하러 간 공병 옆에 사령부나 집하장을 둔다.
+      if (FindDistantNode(f, player, ai, out var distant)) {
+        var room = state->PopulationCap - state->PopulationUsed - ProductionSystem.QueuedPopulation(f, player);
+        var reserves = NearbyReserves(f, distant, ai.ExpandReserveRadius);
+        if (FactoryWarsUtil.InTruce(f) == false && ExpandsWithHeadquarters(ai, state->Stock, reserves, room, counts[(int)BuildingRole.Headquarters])) {
+          role = BuildingRole.Headquarters;
+          hasRole = true;
+          center = distant;
+        } else if (counts[(int)BuildingRole.CollectionYard] < ai.MaxYards) {
+          role = BuildingRole.CollectionYard;
+          hasRole = true;
+          center = distant;
+        }
       }
       if (hasRole == false) {
         return default;
@@ -226,6 +234,26 @@ namespace Quantum.FactoryWars {
         ProductionSystem.TryBuild(f, player, engineer, specRef, site);
       }
       return default;
+    }
+
+    /// <summary>큰 자원이거나 인구가 막혔을 때, 비용을 낼 수 있으면 사령부로 확장한다. 아니면 집하장이다.</summary>
+    public static bool ExpandsWithHeadquarters(AiSpec ai, ResourceCost stock, FP reserves, FP populationRoom, int headquarters) {
+      if (headquarters >= ai.MaxHeadquarters || stock.Iron < ai.ExpandIron || stock.Wood < ai.ExpandWood) {
+        return false;
+      }
+      return reserves >= ai.ExpandReserves || populationRoom < ai.ExpandPopulationRoom;
+    }
+
+    static FP NearbyReserves(Frame f, FPVector3 position, FP radius) {
+      var total = FP._0;
+      var limit = radius * radius;
+      var nodes = f.Filter<Transform3D, ResourceNode>();
+      while (nodes.NextUnsafe(out _, out var transform, out var node)) {
+        if (FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) <= limit) {
+          total += node->Remaining;
+        }
+      }
+      return total;
     }
 
     static bool FindDistantNode(Frame f, PlayerRef player, AiSpec ai, out FPVector3 position) {

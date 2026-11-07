@@ -19,9 +19,12 @@ namespace FactoryWars.EditorTools {
       yield return Building("ff_processor", FreeProcessor, new MovingPart { Name = "Ingot", Pivot = new Vector3(0.9f, 0.72f, 1.5f), Build = BeltIngot });
       yield return Building("ff_research_lab", FreeLab, new MovingPart { Name = "Dish", Pivot = new Vector3(0.5f, 3.2f, -0.4f), Build = LargeDish });
       yield return Building("ff_vehicle_factory", FreeFactory, new MovingPart { Name = "Crane", Pivot = new Vector3(0, 3.2f, -0.6f), Build = RoofCrane });
-      yield return Building("ff_defense_tower", FreeTower,
+      yield return Building("ff_ground_tower", FreeTower,
         new MovingPart { Name = "Turret", Pivot = new Vector3(0, 2.5f, 0), Build = FreeTowerTurret },
         new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.5f, 0.55f), Build = FreeTowerBarrel });
+      yield return Building("ff_air_defense", FreeAirDefense,
+        new MovingPart { Name = "Turret", Pivot = new Vector3(0, 2.2f, 0), Build = FreeAirTurret },
+        new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.62f, 0), Build = FreeAirMissiles });
       yield return Building("ff_airfield", FreeAirfield, new MovingPart { Name = "Radar", Pivot = new Vector3(2.0f, 3.0f, -0.8f), Build = SmallDish });
       yield return Building("ff_heavy_works", FreeHeavy, new MovingPart { Name = "Hoist", Pivot = new Vector3(0.4f, 4.3f, -2.45f), Build = Hoist });
 
@@ -32,9 +35,12 @@ namespace FactoryWars.EditorTools {
       yield return Building("cf_processor", ContinentalProcessor, new MovingPart { Name = "Ingot", Pivot = new Vector3(1.3f, 0.72f, 1.3f), Build = BeltIngot });
       yield return Building("cf_research_lab", ContinentalLab, new MovingPart { Name = "Dish", Pivot = new Vector3(-0.9f, 3.0f, -1.2f), Build = LargeDish });
       yield return Building("cf_vehicle_factory", ContinentalFactory, new MovingPart { Name = "Crane", Pivot = new Vector3(2.35f, 3.6f, 1.9f), Build = TowerCrane });
-      yield return Building("cf_defense_tower", ContinentalTower,
+      yield return Building("cf_ground_tower", ContinentalTower,
         new MovingPart { Name = "Turret", Pivot = new Vector3(0, 2.3f, 0), Build = ContinentalTowerTurret },
         new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.42f, 0.6f), Build = ContinentalTowerBarrel });
+      yield return Building("cf_air_defense", ContinentalAirDefense,
+        new MovingPart { Name = "Turret", Pivot = new Vector3(0, 2.0f, 0), Build = ContinentalAirTurret },
+        new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.5f, 0.3f), Build = ContinentalAirGuns });
       yield return Building("cf_airfield", ContinentalAirfield, new MovingPart { Name = "Radar", Pivot = new Vector3(2.0f, 3.1f, -1.3f), Build = SmallDish });
       yield return Building("cf_heavy_works", ContinentalHeavy, new MovingPart { Name = "Hoist", Pivot = new Vector3(0.6f, 4.35f, 1.6f), Build = Hoist });
     }
@@ -550,6 +556,54 @@ namespace FactoryWars.EditorTools {
       TurnZ(k, new Vector3(0, 0, 2.025f), () => k.Disc(Vector3.zero, 0.11f, 6));
     }
 
+    static void FreeAirDefense(MeshKit k) {
+      BasePlate(k);
+      k.Paint(Swatch.MetalDark);
+      k.Frustum(new Vector3(0, Floor, 0), 2.0f, 1.88f, 0.16f, 12);
+      k.Paint(Swatch.Metal);
+      k.Lathe(new Vector3(0, Floor + 0.14f, 0), new[] { new Vector2(1.8f, 0), new Vector2(1.7f, 0.5f), new Vector2(1.34f, 1.5f), new Vector2(1.28f, 1.78f) }, 12);
+      k.Team();
+      k.Lathe(new Vector3(0, Floor + 0.14f, 0), new[] { new Vector2(1.5f, 1.05f), new Vector2(1.39f, 1.42f) }, 12);
+      k.Paint(Swatch.MetalDark);
+      k.Cylinder(new Vector3(0, 2.05f, 0), 1.34f, 0.15f, 12);
+      k.Push(new Vector3(0, Floor, 0));
+      k.Team();
+      k.Prism(Arch(0.52f, 1.1f), 1.4f, 1.86f);
+      k.Glow();
+      k.Prism(Arch(0.38f, 0.92f), 1.86f, 1.88f);
+      k.Pop();
+    }
+
+    static void FreeAirTurret(MeshKit k) {
+      k.Paint(Swatch.Metal);
+      k.Cylinder(Vector3.zero, 0.92f, 0.86f, 10);
+      k.Paint(Swatch.MetalDark);
+      k.Cylinder(new Vector3(0, 0.86f, 0), 0.96f, 0.08f, 10);
+      k.Paint(Swatch.MetalLight);
+      k.Dome(new Vector3(0, 0.94f, 0), 0.7f, 0.3f, 10, 2);
+      k.Team();
+      k.Cylinder(new Vector3(0, 0.3f, 0), 0.95f, 0.2f, 10);
+    }
+
+    /// <summary>원통 포탑 양옆의 미사일 발사관. 위로 들려 있다.</summary>
+    static void FreeAirMissiles(MeshKit k) {
+      k.Push(Vector3.zero, new Vector3(-28, 0, 0));
+      k.Paint(Swatch.MetalDark);
+      k.Box(Vector3.zero, new Vector3(2.5f, 0.12f, 0.2f));
+      foreach (var side in new[] { -1f, 1f }) {
+        foreach (var offset in new[] { 1.02f, 1.46f }) {
+          var x = side * offset;
+          k.Paint(Swatch.MetalLight);
+          TurnZ(k, new Vector3(x, 0.02f, -0.95f), () => k.Cylinder(Vector3.zero, 0.2f, 1.9f, 6));
+          k.Team();
+          TurnZ(k, new Vector3(x, 0.02f, 0.95f), () => k.Cone(Vector3.zero, 0.2f, 0.46f, 6));
+          k.Paint(Swatch.MetalDark);
+          k.Box(new Vector3(x, 0.02f, -0.8f), new Vector3(0.56f, 0.04f, 0.36f));
+        }
+      }
+      k.Pop();
+    }
+
     static void Runway(MeshKit k, Vector3 center, Vector2 size) {
       k.Paint(Swatch.Rubber);
       k.Box(center, new Vector3(size.x, 0.03f, size.y));
@@ -958,6 +1012,54 @@ namespace FactoryWars.EditorTools {
         k.Paint(Swatch.Black);
         TurnZ(k, new Vector3(x, 0, 1.825f), () => k.Disc(Vector3.zero, 0.08f, 6));
       }
+    }
+
+    static void ContinentalAirDefense(MeshKit k) {
+      BasePlate(k);
+      k.Paint(Swatch.ArmorDark);
+      k.Frustum(new Vector3(0, Floor, 0), 2.55f, 2.3f, 0.3f, 8);
+      k.Paint(Swatch.Armor);
+      k.Lathe(new Vector3(0, Floor + 0.28f, 0), new[] { new Vector2(2.0f, 0), new Vector2(1.42f, 1.34f), new Vector2(1.34f, 1.56f) }, 8);
+      k.Team();
+      k.Lathe(new Vector3(0, Floor + 0.28f, 0), new[] { new Vector2(1.56f, 1.06f), new Vector2(1.44f, 1.34f) }, 8);
+      k.Push(new Vector3(0, Floor + 0.28f, 0), new Vector3(0, -22.5f, 0));
+      k.Push(new Vector3(0, 0.42f, 1.68f), new Vector3(-23, 0, 0));
+      k.Paint(Swatch.ArmorDark);
+      k.Box(Vector3.zero, new Vector3(0.8f, 0.9f, 0.1f));
+      k.Paint(Swatch.Black);
+      k.Box(new Vector3(0, -0.04f, 0.06f), new Vector3(0.56f, 0.74f, 0.03f));
+      k.Pop();
+      k.Pop();
+      k.Paint(Swatch.MetalDark);
+      k.Cylinder(new Vector3(0, 1.94f, 0), 1.16f, 0.08f, 8);
+      Rivets(k, new Vector3(-1.86f, 0.62f, 0.7f), new Vector3(-1.5f, 1.4f, 0.55f), 3, new Vector3(0, 0, 66));
+      Rivets(k, new Vector3(0.7f, 0.62f, 1.86f), new Vector3(0.55f, 1.4f, 1.5f), 3, new Vector3(66, 0, 0));
+    }
+
+    static void ContinentalAirTurret(MeshKit k) {
+      k.Paint(Swatch.Armor);
+      k.Taper(Vector3.zero, new Vector2(1.8f, 1.8f), new Vector2(1.36f, 1.34f), 0.74f, new Vector2(0, -0.06f));
+      k.Paint(Swatch.ArmorDark);
+      k.Box(new Vector3(0, 0.82f, -0.3f), new Vector3(0.9f, 0.14f, 0.7f));
+      k.Team();
+      k.Box(new Vector3(-0.8f, 0.34f, 0), new Vector3(0.05f, 0.24f, 0.9f));
+      k.Box(new Vector3(0.8f, 0.34f, 0), new Vector3(0.05f, 0.24f, 0.9f));
+    }
+
+    /// <summary>각진 포가에 두 줄로 놓은 다연장 기관포.</summary>
+    static void ContinentalAirGuns(MeshKit k) {
+      k.Push(Vector3.zero, new Vector3(-24, 0, 0));
+      k.Paint(Swatch.ArmorDark);
+      k.Taper(new Vector3(0, -0.3f, 0.08f), new Vector2(1.24f, 0.74f), new Vector2(1.1f, 0.6f), 0.6f);
+      k.Paint(Swatch.MetalDark);
+      foreach (var y in new[] { -0.13f, 0.13f }) {
+        foreach (var x in new[] { -0.4f, -0.14f, 0.14f, 0.4f }) {
+          TurnZ(k, new Vector3(x, y, 0.42f), () => k.Cylinder(Vector3.zero, 0.055f, 1.5f, 5));
+        }
+      }
+      k.Paint(Swatch.Armor);
+      k.Box(new Vector3(0, 0, 1.2f), new Vector3(1.06f, 0.46f, 0.1f));
+      k.Pop();
     }
 
     static void ContinentalAirfield(MeshKit k) {

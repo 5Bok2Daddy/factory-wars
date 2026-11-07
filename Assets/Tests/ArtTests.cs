@@ -18,7 +18,7 @@ namespace FactoryWars.Tests {
     static readonly string[] Headquarters2 = { "ff_headquarters", "cf_headquarters" };
     static readonly string[] BuildingKinds = {
       "collection_yard", "supply_depot", "barracks", "power_plant", "processor",
-      "research_lab", "vehicle_factory", "defense_tower", "airfield", "heavy_works",
+      "research_lab", "vehicle_factory", "ground_tower", "air_defense", "airfield", "heavy_works",
     };
 
     static IEnumerable<string> Buildings() => BuildingKinds.SelectMany(kind => new[] { $"ff_{kind}", $"cf_{kind}" });
@@ -88,7 +88,7 @@ namespace FactoryWars.Tests {
     [Test]
     public void Art_EveryBuildingSpecHasAModelInsideItsFootprint() {
       var specs = Resources.LoadAll<Quantum.BuildingSpec>("FactoryWars");
-      Assert.AreEqual(22, specs.Length, "두 진영 사령부와 건물 10종");
+      Assert.AreEqual(24, specs.Length, "두 진영의 건물 12종");
       var problems = new List<string>();
       foreach (var spec in specs) {
         var id = spec.name;
@@ -125,7 +125,7 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Art_TowersHaveTurretAndBarrel() {
-      foreach (var id in new[] { "ff_defense_tower", "cf_defense_tower" }) {
+      foreach (var id in new[] { "ff_ground_tower", "cf_ground_tower", "ff_air_defense", "cf_air_defense" }) {
         var turret = Catalog().Find(id).transform.Find("Turret");
         Assert.IsNotNull(turret, id);
         Assert.IsNotNull(turret.Find("Barrel"), $"{id}: 포신은 포탑을 따라 돈다");

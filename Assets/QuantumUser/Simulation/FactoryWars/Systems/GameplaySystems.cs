@@ -408,6 +408,7 @@ namespace Quantum.FactoryWars {
     public AttackType Attack;
     public bool IsAir;
     public bool IsRanged;
+    public bool GroundOnly;
     public Unit* Unit;
     public UnitSpec Spec;
 
@@ -434,11 +435,14 @@ namespace Quantum.FactoryWars {
     }
 
     /// <summary>
-    /// 대공은 공중만, 나머지는 지상만 맞힌다. 예외는 둘이다. 저공 비행 유닛은 지상 대장갑 무기에 맞고,
+    /// 대공은 공중만, 나머지는 지상만 맞힌다. 예외는 둘이다. 저공 비행 유닛은 지상 대장갑 무기에 맞고(지상 전용 무기는 제외),
     /// 공중 우선 조준 유닛은 공중이 없으면 지상도 쏜다.
     /// </summary>
     static bool CanHit(Frame f, in Weapon weapon, EntityRef target) {
       if (IsAirUnit(f, target)) {
+        if (weapon.GroundOnly) {
+          return false;
+        }
         if (weapon.Attack == AttackType.AntiAir) {
           return true;
         }
@@ -722,7 +726,7 @@ namespace Quantum.FactoryWars {
           continue;
         }
 
-        var weapon = new Weapon { Owner = building->Owner, Attack = spec.Attack, IsRanged = true };
+        var weapon = new Weapon { Owner = building->Owner, Attack = spec.Attack, IsRanged = true, GroundOnly = spec.GroundOnly };
         var target = FindTarget(f, weapon, transform->Position, FP._0, spec.Range);
         if (target != EntityRef.None) {
           building->TargetEntity = target;

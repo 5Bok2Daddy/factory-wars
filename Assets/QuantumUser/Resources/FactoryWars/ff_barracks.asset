@@ -66,6 +66,7 @@ MonoBehaviour:
   - Id:
       Value: 411100767777198158
   Attack: 0
+  GroundOnly: 0
   Damage:
     RawValue: 0
   Range:

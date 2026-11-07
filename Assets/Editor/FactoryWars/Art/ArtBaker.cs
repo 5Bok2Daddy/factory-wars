@@ -268,7 +268,7 @@ namespace FactoryWars.EditorTools {
 
     static readonly string[] BuildingKinds = {
       "collection_yard", "supply_depot", "barracks", "power_plant", "processor",
-      "research_lab", "vehicle_factory", "defense_tower", "airfield", "heavy_works",
+      "research_lab", "vehicle_factory", "ground_tower", "air_defense", "airfield", "heavy_works",
     };
 
     const float BuildingGap = 8f;
@@ -499,7 +499,7 @@ namespace FactoryWars.EditorTools {
         Tele($"{prefix}_1.png", Place(BuildingGap, row, 1.6f), 70f, 7.4f);
         Tele($"{prefix}_2.png", Place(BuildingGap * 4, row, 1.6f), 70f, 7.4f);
         Tele($"{prefix}_3.png", Place(BuildingGap * 7, row, 1.8f), 70f, 7.4f);
-        Tele($"{prefix}_4.png", Place(BuildingGap * 8.5f, row, 2f), 70f, 6f);
+        Tele($"{prefix}_4.png", Place(BuildingGap * 9.5f, row, 2f), 70f, 6f);
       }
       Buildings("16_free_buildings", FreeBuildingRow);
       Buildings("17_continental_buildings", ContinentalBuildingRow);

@@ -19,7 +19,7 @@ MonoBehaviour:
   ThinkSeconds:
     RawValue: 131072
   EngineerTarget: 10
-  BuildOrder: 030000000400000001000000020000000600000005000000030000000100000007000000080000000900000003000000
+  BuildOrder: 03000000040000000100000002000000060000000500000003000000010000000700000008000000090000000b00000003000000
   IronShareEarly:
     RawValue: 39321
   IronShareLate:
@@ -27,6 +27,17 @@ MonoBehaviour:
   MaxYards: 2
   ExpandDistance:
     RawValue: 1966080
+  MaxHeadquarters: 3
+  ExpandReserves:
+    RawValue: 327680000
+  ExpandReserveRadius:
+    RawValue: 1638400
+  ExpandIron:
+    RawValue: 52428800
+  ExpandWood:
+    RawValue: 32768000
+  ExpandPopulationRoom:
+    RawValue: 262144
   ConcurrentBuilds: 1
   QueueTarget: 2
   UnitVariety: 3

@@ -197,14 +197,22 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.4700003
-  - Id: ff_defense_tower
-    Prefab: {fileID: 179325431821371899, guid: 52936f3e1d65ef74ca1e71fa5b7825d4, type: 3}
+  - Id: ff_ground_tower
+    Prefab: {fileID: 5053698645411516820, guid: ff58fa50265167245819a6f04925231d, type: 3}
     Unit: 0
     DisplayScale: 1
     Altitude: 0
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.13
+  - Id: ff_air_defense
+    Prefab: {fileID: 8728793371278483955, guid: 44fcb9d177c3ddc4380fa050a18a5aaa, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.049614
   - Id: ff_airfield
     Prefab: {fileID: 1311604342034815586, guid: 573a945da7b4bf84894c453523432076, type: 3}
     Unit: 0
@@ -277,14 +285,22 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 4.755
-  - Id: cf_defense_tower
-    Prefab: {fileID: 2640793389355080678, guid: 9ec0545332b27aa458ed2bfc42ce97ec, type: 3}
+  - Id: cf_ground_tower
+    Prefab: {fileID: 2265525257645197682, guid: 680a7d9aba6704542b8150839ccf9352, type: 3}
     Unit: 0
     DisplayScale: 1
     Altitude: 0
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 3.73
+  - Id: cf_air_defense
+    Prefab: {fileID: 2035836393187996034, guid: 3939f533837d482458dda52677c31c18, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 3.997481
   - Id: cf_airfield
     Prefab: {fileID: 8882865681088981580, guid: 5a57fd9c53ef6524c8d5601e5ae4f6c2, type: 3}
     Unit: 0

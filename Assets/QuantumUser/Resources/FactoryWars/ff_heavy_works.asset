@@ -66,6 +66,7 @@ MonoBehaviour:
   IsCoreBuilding: 1
   Producible: []
   Attack: 0
+  GroundOnly: 0
   Damage:
     RawValue: 0
   Range:

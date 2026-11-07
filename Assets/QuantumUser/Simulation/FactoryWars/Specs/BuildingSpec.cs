@@ -30,6 +30,8 @@ namespace Quantum {
     /// <summary>이 건물에서 생산할 수 있는 유닛.</summary>
     public AssetRef<UnitSpec>[] Producible;
     public AttackType Attack;
+    /// <summary>true면 지상만 쏜다. 대장갑 무기라도 저공 비행 유닛을 맞히지 않는다.</summary>
+    public bool GroundOnly;
     public FP Damage;
     public FP Range;
     public FP AttackInterval;

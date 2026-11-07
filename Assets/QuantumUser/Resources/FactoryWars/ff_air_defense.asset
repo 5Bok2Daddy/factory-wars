@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2878a441c035e894a9b579e4615c4cf1, type: 3}
-  m_Name: cf_defense_tower
+  m_Name: ff_air_defense
   m_EditorClassIdentifier: 
   Identifier:
-    Path: QuantumUser/Resources/FactoryWars/cf_defense_tower
+    Path: QuantumUser/Resources/FactoryWars/ff_air_defense
     Guid:
-      Value: 332065482565463792
-  Role: 9
+      Value: 368483578983718525
+  Role: 11
   Cost:
     Iron:
-      RawValue: 16384000
+      RawValue: 13107200
     Wood:
       RawValue: 6553600
     Steel:
-      RawValue: 0
+      RawValue: 1966080
     Power:
       RawValue: 6553600
   BuildTimeSeconds:
@@ -58,15 +58,16 @@ MonoBehaviour:
   IsDropOff: 0
   Prerequisites:
   - Id:
-      Value: 450344684662698787
+      Value: 430950125761090820
   - Id:
-      Value: 390583282545688127
+      Value: 342299686155455319
   IsCoreBuilding: 0
   Producible: []
-  Attack: 2
+  Attack: 3
+  GroundOnly: 0
   Damage:
-    RawValue: 2621440
+    RawValue: 1966080
   Range:
-    RawValue: 655360
+    RawValue: 917504
   AttackInterval:
     RawValue: 98304

@@ -19,15 +19,15 @@ MonoBehaviour:
   Role: 0
   Cost:
     Iron:
-      RawValue: 0
+      RawValue: 26214400
     Wood:
-      RawValue: 0
+      RawValue: 19660800
     Steel:
       RawValue: 0
     Power:
       RawValue: 0
   BuildTimeSeconds:
-    RawValue: 0
+    RawValue: 3932160
   MaxHealth:
     RawValue: 196608000
   PowerOutput:
@@ -56,12 +56,15 @@ MonoBehaviour:
   FootprintRadius:
     RawValue: 196608
   IsDropOff: 1
-  Prerequisites: []
+  Prerequisites:
+  - Id:
+      Value: 313480008183397879
   IsCoreBuilding: 1
   Producible:
   - Id:
       Value: 432119338306344411
   Attack: 0
+  GroundOnly: 0
   Damage:
     RawValue: 0
   Range:

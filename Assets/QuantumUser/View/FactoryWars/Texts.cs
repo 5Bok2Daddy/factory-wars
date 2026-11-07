@@ -17,7 +17,7 @@ namespace FactoryWars.View {
     static readonly Dictionary<string, string> Names = new Dictionary<string, string> {
       { "headquarters", "사령부" }, { "power_plant", "발전소" }, { "processor", "가공소" }, { "supply_depot", "보급창" }, { "barracks", "병영" },
       { "research_lab", "연구소" }, { "vehicle_factory", "군수공장" }, { "airfield", "비행장" }, { "heavy_works", "중공업 기지" },
-      { "defense_tower", "방어탑" }, { "collection_yard", "집하장" },
+      { "ground_tower", "지상 방어탑" }, { "air_defense", "방공포대" }, { "collection_yard", "집하장" },
       { "ff_engineer", "공병" }, { "ff_ranger_squad", "레인저 분대" }, { "ff_skyguard_squad", "스카이가드 분대" }, { "ff_eagle_tank", "이글 전차" },
       { "ff_hawk_gunship", "호크 공격헬기" }, { "ff_skyfortress_bomber", "스카이포트리스 폭격기" },
       { "cf_engineer", "공병" }, { "cf_militia", "민병대" }, { "cf_flame_squad", "화염방사 분대" }, { "cf_dragonscale_tank", "용린 전차" },

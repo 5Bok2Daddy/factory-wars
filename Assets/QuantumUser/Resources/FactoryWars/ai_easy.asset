@@ -27,6 +27,17 @@ MonoBehaviour:
   MaxYards: 1
   ExpandDistance:
     RawValue: 1966080
+  MaxHeadquarters: 2
+  ExpandReserves:
+    RawValue: 327680000
+  ExpandReserveRadius:
+    RawValue: 1638400
+  ExpandIron:
+    RawValue: 52428800
+  ExpandWood:
+    RawValue: 32768000
+  ExpandPopulationRoom:
+    RawValue: 262144
   ConcurrentBuilds: 1
   QueueTarget: 2
   UnitVariety: 1

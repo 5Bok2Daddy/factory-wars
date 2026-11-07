@@ -13,6 +13,16 @@ namespace Quantum {
     public int MaxYards;
     /// <summary>일하는 노드가 반입 지점에서 이보다 멀면 노드 옆에 집하장을 짓는다.</summary>
     public FP ExpandDistance;
+    /// <summary>시작 사령부를 포함한 사령부 상한.</summary>
+    public int MaxHeadquarters;
+    /// <summary>노드 주변 ExpandReserveRadius 안의 남은 매장량이 이 이상이면 집하장 대신 사령부를 짓는다.</summary>
+    public FP ExpandReserves;
+    public FP ExpandReserveRadius;
+    /// <summary>사령부로 확장하려면 가지고 있어야 하는 철과 목재.</summary>
+    public FP ExpandIron;
+    public FP ExpandWood;
+    /// <summary>인구 여유가 이보다 적으면 매장량과 상관없이 사령부를 짓는다.</summary>
+    public FP ExpandPopulationRoom;
     public int ConcurrentBuilds;
     public int QueueTarget;
     /// <summary>생산 건물의 유닛 목록에서 앞쪽 몇 종까지 쓸지.</summary>

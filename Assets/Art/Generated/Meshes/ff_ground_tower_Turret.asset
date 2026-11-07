@@ -6,7 +6,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ff_defense_tower_Turret
+  m_Name: ff_ground_tower_Turret
   serializedVersion: 11
   m_SubMeshes:
   - serializedVersion: 2

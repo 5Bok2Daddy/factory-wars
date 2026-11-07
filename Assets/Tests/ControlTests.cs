@@ -216,7 +216,7 @@ namespace FactoryWars.Tests {
       var hud = Controller().Hud;
       Controller().Input.Selection.SelectUnit(Engineers(0)[0]);
       hud.Refresh(Controller().Frame);
-      Assert.AreEqual(10, hud.Entries.Count, "사령부를 뺀 건물 전부");
+      Assert.AreEqual(12, hud.Entries.Count, "사령부를 포함한 건물 전부");
       var depot = hud.Entries.First(e => e.Label.StartsWith("보급창"));
       Assert.IsTrue(depot.Enabled);
       Assert.IsTrue(depot.Label.Contains("철 100"), depot.Label);

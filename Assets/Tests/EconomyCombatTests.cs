@@ -409,7 +409,9 @@ namespace FactoryWars.Tests {
       Assert.AreEqual("power_plant", Needs("_processor"));
       Assert.AreEqual("power_plant", Needs("_research_lab"));
       Assert.AreEqual("barracks,power_plant", Needs("_vehicle_factory"));
-      Assert.AreEqual("barracks,power_plant", Needs("_defense_tower"));
+      Assert.AreEqual("barracks,power_plant", Needs("_ground_tower"));
+      Assert.AreEqual("barracks,power_plant", Needs("_air_defense"));
+      Assert.AreEqual("headquarters", Needs("_headquarters"));
       Assert.AreEqual("processor,vehicle_factory", Needs("_airfield"));
       Assert.AreEqual("processor,research_lab,vehicle_factory", Needs("_heavy_works"));
     }
@@ -516,7 +518,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Power_OutageDoublesTowerInterval() {
-      yield return StartMatch(units: new[] { (1, "cf_thunder_aa", 6, ArenaZ) }, buildings: new[] { (0, "ff_defense_tower", 0, ArenaZ) }, stock: Stock(1000, 1000, 0, 0));
+      yield return StartMatch(units: new[] { (1, "cf_thunder_aa", 6, ArenaZ) }, buildings: new[] { (0, "ff_ground_tower", 0, ArenaZ) }, stock: Stock(1000, 1000, 0, 0));
       var target = UnitsNamed(1, "cf_thunder_aa")[0];
       yield return WaitFor(() => Health(target) < 450f, 30f, "첫 사격");
       Assert.IsTrue((bool)PlayerOf(0).Outage, "방어탑은 상시 유지비");
