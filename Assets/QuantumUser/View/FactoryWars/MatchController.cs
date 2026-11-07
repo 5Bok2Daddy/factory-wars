@@ -14,7 +14,7 @@ namespace FactoryWars.View {
     public PlayerRef Player { get; private set; }
     public bool IsReady => Hud != null;
 
-    public static QuantumGame Game => QuantumRunner.Default?.Game;
+    public QuantumGame Game => QuantumRunner.Default?.Game;
 
     public Frame Frame => Game?.Frames?.Predicted;
 
@@ -189,14 +189,6 @@ namespace FactoryWars.View {
       _boxRect.pivot = new Vector2(0.5f, 0.5f);
       _boxRect.anchoredPosition = (a + b) / 2;
       _boxRect.sizeDelta = new Vector2(Mathf.Abs(a.x - b.x), Mathf.Abs(a.y - b.y));
-    }
-  }
-
-  /// <summary>일시정지와 경기 종료 처리 자리. 3-4에서 채운다.</summary>
-  public class MatchFlow : MonoBehaviour {
-    public static MatchFlow Current;
-
-    public virtual void TogglePause() {
     }
   }
 }

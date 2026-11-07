@@ -33,6 +33,7 @@ namespace FactoryWars.EditorTools {
       BuildTestScene();
       BuildMapScene(TwoPlayerMap);
       BuildMapScene(FourPlayerMap);
+      BuildMenuScene();
       AssetDatabase.SaveAssets();
       Debug.Log("FactoryWarsSetup: 완료");
     }
@@ -623,6 +624,20 @@ namespace FactoryWars.EditorTools {
       Bake(map, spec, scene);
     }
 
+    /// <summary>시작 화면 씬을 만들고 빌드 첫 씬으로 둔다. 테스트 씬은 빌드에 넣지 않는다.</summary>
+    static void BuildMenuScene() {
+      var path = $"{ScenesRoot}/{FactoryWars.View.MenuController.SceneName}.unity";
+      var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+      var camera = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
+      camera.tag = "MainCamera";
+      camera.GetComponent<Camera>().clearFlags = CameraClearFlags.SolidColor;
+      camera.GetComponent<Camera>().backgroundColor = new Color(0.1f, 0.13f, 0.17f);
+      new GameObject("Menu").AddComponent<FactoryWars.View.MenuController>();
+      EditorSceneManager.SaveScene(scene, path);
+      EditorBuildSettings.scenes = new[] { path, $"{ScenesRoot}/{TwoPlayerMap.Id}.unity", $"{ScenesRoot}/{FourPlayerMap.Id}.unity" }
+        .Select(scenePath => new EditorBuildSettingsScene(scenePath, true)).ToArray();
+    }
+
     static GameObject EnsureGround() {
       var ground = GameObject.Find("Ground");
       if (ground == null) {
@@ -649,6 +664,9 @@ namespace FactoryWars.EditorTools {
       }
       if (view.GetComponent<FactoryWars.View.MatchController>() == null) {
         view.gameObject.AddComponent<FactoryWars.View.MatchController>();
+      }
+      if (view.GetComponent<FactoryWars.View.MatchFlow>() == null) {
+        view.gameObject.AddComponent<FactoryWars.View.MatchFlow>();
       }
     }
 
