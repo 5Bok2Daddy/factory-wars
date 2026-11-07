@@ -590,20 +590,30 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct BotState {
-    public const Int32 SIZE = 48;
+    public const Int32 SIZE = 104;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(24)]
+    [FieldOffset(32)]
     public FPVector3 Home;
-    [FieldOffset(12)]
+    [FieldOffset(20)]
     public Int32 NextThinkFrame;
-    [FieldOffset(0)]
-    public Int32 NextAttackFrame;
     [FieldOffset(8)]
-    public Int32 NextProposalFrame;
-    [FieldOffset(4)]
-    public Int32 NextNoteFrame;
+    public Int32 NextAttackFrame;
     [FieldOffset(16)]
+    public Int32 NextProposalFrame;
+    [FieldOffset(12)]
+    public Int32 NextNoteFrame;
+    [FieldOffset(28)]
     public Int32 WaveSize;
+    [FieldOffset(56)]
+    public FPVector3 LanePoint;
+    [FieldOffset(80)]
+    public FPVector3 LaneTarget;
+    [FieldOffset(4)]
+    public Int32 LaneUntilFrame;
+    [FieldOffset(0)]
+    public Int32 CenterWaves;
+    [FieldOffset(24)]
+    public Int32 SideWaves;
     public override readonly Int32 GetHashCode() {
       unchecked { 
         var hash = 4397;
@@ -613,17 +623,27 @@ namespace Quantum {
         hash = hash * 31 + NextProposalFrame.GetHashCode();
         hash = hash * 31 + NextNoteFrame.GetHashCode();
         hash = hash * 31 + WaveSize.GetHashCode();
+        hash = hash * 31 + LanePoint.GetHashCode();
+        hash = hash * 31 + LaneTarget.GetHashCode();
+        hash = hash * 31 + LaneUntilFrame.GetHashCode();
+        hash = hash * 31 + CenterWaves.GetHashCode();
+        hash = hash * 31 + SideWaves.GetHashCode();
         return hash;
       }
     }
     public static void Serialize(void* ptr, FrameSerializer serializer) {
         var p = (BotState*)ptr;
+        serializer.Stream.Serialize(&p->CenterWaves);
+        serializer.Stream.Serialize(&p->LaneUntilFrame);
         serializer.Stream.Serialize(&p->NextAttackFrame);
         serializer.Stream.Serialize(&p->NextNoteFrame);
         serializer.Stream.Serialize(&p->NextProposalFrame);
         serializer.Stream.Serialize(&p->NextThinkFrame);
+        serializer.Stream.Serialize(&p->SideWaves);
         serializer.Stream.Serialize(&p->WaveSize);
         FPVector3.Serialize(&p->Home, serializer);
+        FPVector3.Serialize(&p->LanePoint, serializer);
+        FPVector3.Serialize(&p->LaneTarget, serializer);
     }
   }
   [StructLayout(LayoutKind.Explicit)]
@@ -837,7 +857,7 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct _globals_ {
-    public const Int32 SIZE = 1504;
+    public const Int32 SIZE = 1728;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(0)]
     public AssetRef<Map> Map;
@@ -864,12 +884,12 @@ namespace Quantum {
     private fixed Byte _input_[16];
     [FieldOffset(640)]
     public BitSet4 PlayerLastConnectionState;
-    [FieldOffset(864)]
+    [FieldOffset(1088)]
     [FramePrinter.FixedArrayAttribute(typeof(PlayerState), 4)]
     private fixed Byte _Players_[640];
     [FieldOffset(672)]
     [FramePrinter.FixedArrayAttribute(typeof(BotState), 4)]
-    private fixed Byte _Bots_[192];
+    private fixed Byte _Bots_[416];
     [FieldOffset(664)]
     public QBoolean GameEnded;
     [FieldOffset(648)]
@@ -892,7 +912,7 @@ namespace Quantum {
     }
     public readonly FixedArray<BotState> Bots {
       get {
-        fixed (byte* p = _Bots_) { return new FixedArray<BotState>(p, 48, 4); }
+        fixed (byte* p = _Bots_) { return new FixedArray<BotState>(p, 104, 4); }
       }
     }
     public override readonly Int32 GetHashCode() {

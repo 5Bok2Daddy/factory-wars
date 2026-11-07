@@ -72,6 +72,11 @@ namespace Quantum.Prototypes {
     public Int32 NextProposalFrame;
     public Int32 NextNoteFrame;
     public Int32 WaveSize;
+    public FPVector3 LanePoint;
+    public FPVector3 LaneTarget;
+    public Int32 LaneUntilFrame;
+    public Int32 CenterWaves;
+    public Int32 SideWaves;
     partial void MaterializeUser(Frame frame, ref Quantum.BotState result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.BotState result, in PrototypeMaterializationContext context = default) {
         result.Home = this.Home;
@@ -80,6 +85,11 @@ namespace Quantum.Prototypes {
         result.NextProposalFrame = this.NextProposalFrame;
         result.NextNoteFrame = this.NextNoteFrame;
         result.WaveSize = this.WaveSize;
+        result.LanePoint = this.LanePoint;
+        result.LaneTarget = this.LaneTarget;
+        result.LaneUntilFrame = this.LaneUntilFrame;
+        result.CenterWaves = this.CenterWaves;
+        result.SideWaves = this.SideWaves;
         MaterializeUser(frame, ref result, in context);
     }
   }

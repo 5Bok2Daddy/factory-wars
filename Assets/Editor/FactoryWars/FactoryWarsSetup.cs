@@ -370,7 +370,7 @@ namespace FactoryWars.EditorTools {
       return faction;
     }
 
-    static AiSpec BuildAi(string id, double think, int engineers, int variety, int maxYards, int maxHeadquarters, int maxProcessors, double firstAttack, double repeat,
+    static AiSpec BuildAi(string id, double think, int engineers, int variety, int maxYards, int maxHeadquarters, int maxProcessors, double lateExpansion, double firstAttack, double repeat,
         int wave, int growth, int maxWave, bool strategic, BuildingRole[] order) {
       var ai = Asset<AiSpec>(id);
       ai.ThinkSeconds = N(think);
@@ -379,6 +379,11 @@ namespace FactoryWars.EditorTools {
       ai.IronShareEarly = N(0.6);
       ai.IronShareLate = N(0.7);
       ai.MaxYards = maxYards;
+      ai.YardWorkers = 4;
+      ai.LateExpansionSeconds = N(lateExpansion);
+      ai.SideLaneChance = N(0.4);
+      ai.LaneArrivalDistance = 24;
+      ai.LaneTimeoutSeconds = 70;
       ai.MaxProcessors = maxProcessors;
       ai.SteelTarget = 500;
       ai.IronSurplus = 300;
@@ -400,6 +405,7 @@ namespace FactoryWars.EditorTools {
       ai.WaveSize = wave;
       ai.WaveGrowth = growth;
       ai.MaxWaveSize = maxWave;
+      ai.StaleWaveSeconds = 120;
       ai.SweepArmyRatio = 4;
       ai.SweepSeconds = 20;
       ai.BreakReserveIronLeft = 4000;
@@ -490,10 +496,10 @@ namespace FactoryWars.EditorTools {
       rules.RepairPerSecond = 20;
       rules.RepairCostRatio = N(0.5);
       rules.FoundationHealthRatio = N(0.1);
-      rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 2, 2, 420, 90, 6, 2, 12, false, new[] {
+      rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 2, 2, 0, 420, 90, 6, 2, 12, false, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
       }));
-      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 2, 3, 5, 300, 60, 8, 3, 24, true, new[] {
+      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 4, 3, 5, 600, 300, 60, 8, 3, 24, true, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.ResearchLab,
         BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Airfield, BuildingRole.HeavyWorks, BuildingRole.GroundTower, BuildingRole.AirDefense, BuildingRole.SupplyDepot,
       }));

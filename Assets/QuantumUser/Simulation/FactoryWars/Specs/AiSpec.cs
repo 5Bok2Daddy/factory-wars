@@ -11,6 +11,16 @@ namespace Quantum {
     public FP IronShareEarly;
     public FP IronShareLate;
     public int MaxYards;
+    /// <summary>집하장 하나에 옮겨 둘 공병 수.</summary>
+    public int YardWorkers;
+    /// <summary>공유 확장과 중앙 대형 철을 노리기 시작하는 시각. 0이면 노리지 않는다.</summary>
+    public FP LateExpansionSeconds;
+    /// <summary>측면 길로 공격할 확률.</summary>
+    public FP SideLaneChance;
+    /// <summary>길 경유점에 이만큼 가까워지면 목표로 간다.</summary>
+    public FP LaneArrivalDistance;
+    /// <summary>경유점에 못 닿아도 이 시간이 지나면 목표로 간다.</summary>
+    public FP LaneTimeoutSeconds;
     /// <summary>일하는 노드가 반입 지점에서 이보다 멀면 노드 옆에 집하장을 짓는다.</summary>
     public FP ExpandDistance;
     /// <summary>시작 사령부를 포함한 사령부 상한.</summary>
@@ -32,6 +42,8 @@ namespace Quantum {
     public int WaveSize;
     public int WaveGrowth;
     public int MaxWaveSize;
+    /// <summary>공격 시각이 이만큼 지나도록 웨이브 크기를 못 채우면 남은 병력으로 나간다. 생산이 끊긴 AI끼리 영원히 기다리지 않게 한다.</summary>
+    public FP StaleWaveSeconds;
     /// <summary>내 군대가 적 군대의 이 배수를 넘으면 웨이브를 기다리지 않고 남은 핵심 건물을 소탕한다.</summary>
     public int SweepArmyRatio;
     public FP SweepSeconds;

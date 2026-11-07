@@ -63,6 +63,7 @@ namespace Quantum.FactoryWars {
       }
 
       var engineers = ManageWorkers(f, player, ai, foundation, counts);
+      StaffYards(f, player, ai);
       var breakCost = FactoryWarsUtil.Rules(f).BreakCost;
       var idleAlliance = HasIdleAlliance(f, player);
       ManageProcessors(f, player, ProcessorsOff(ai, state->Stock, breakCost, idleAlliance));
@@ -239,8 +240,15 @@ namespace Quantum.FactoryWars {
       var center = bot->Home;
       var hasRole = NextRole(player, state, ai, counts, f, out var role);
 
+      // 계획된 확장: 앞마당은 모자란 자원 쪽부터, 공유 확장과 중앙은 중반 이후에 잡는다.
+      if (FactoryWarsUtil.InTruce(f) == false && counts[(int)BuildingRole.PowerPlant] > 0 && counts[(int)BuildingRole.CollectionYard] < ai.MaxYards
+          && FindExpansion(f, player, state, bot, ai, out var planned)) {
+        role = BuildingRole.CollectionYard;
+        hasRole = true;
+        center = planned;
+      }
       // 확장: 멀리 일하러 간 공병 옆에 사령부나 집하장을 둔다.
-      if (FindDistantNode(f, player, ai, out var distant)) {
+      else if (FindDistantNode(f, player, ai, out var distant)) {
         var room = state->PopulationCap - state->PopulationUsed - ProductionSystem.QueuedPopulation(f, player);
         var reserves = NearbyReserves(f, distant, ai.ExpandReserveRadius);
         if (FactoryWarsUtil.InTruce(f) == false && ExpandsWithHeadquarters(ai, state->Stock, reserves, room, counts[(int)BuildingRole.Headquarters])) {
@@ -269,6 +277,107 @@ namespace Quantum.FactoryWars {
         ProductionSystem.TryBuild(f, player, engineer, specRef, site);
       }
       return default;
+    }
+
+    /// <summary>철이 목재보다 적으면 철 앞마당, 아니면 숲 앞마당이 먼저다.</summary>
+    public static ExpansionKind PreferredForecourt(ResourceCost stock) {
+      return stock.Iron <= stock.Wood ? ExpansionKind.IronForecourt : ExpansionKind.WoodForecourt;
+    }
+
+    /// <summary>자기 집하장이나 사령부가 이미 있거나, 다른 플레이어의 건물이 있으면 빈자리가 아니다.</summary>
+    static bool IsFreeSite(Frame f, FPVector3 position, FP radius) {
+      var limit = radius * radius;
+      var buildings = f.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out _, out var transform, out _)) {
+        if (FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) <= limit) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    static bool FindExpansion(Frame f, PlayerRef player, PlayerState* state, BotState* bot, AiSpec ai, out FPVector3 site) {
+      site = default;
+      var sites = FactoryWarsUtil.MapInfo(f).Expansions;
+      if (sites == null) {
+        return false;
+      }
+      var seat = 1 << (int)player;
+      var wanted = PreferredForecourt(state->Stock);
+      var late = ai.LateExpansionSeconds > FP._0 && f.Number >= FactoryWarsUtil.SecondsToFrames(f, ai.LateExpansionSeconds);
+      var best = FP.MaxValue;
+      for (var i = 0; i < sites.Length; i++) {
+        var kind = sites[i].Kind;
+        var forecourt = kind == ExpansionKind.IronForecourt || kind == ExpansionKind.WoodForecourt;
+        if ((sites[i].SeatMask & seat) == 0 || (forecourt == false && late == false) || IsFreeSite(f, sites[i].Position, ai.ExpandReserveRadius) == false) {
+          continue;
+        }
+        // 앞마당을 먼저, 그중 원하는 쪽을 먼저, 나머지는 가까운 순서로 고른다.
+        var distance = FactoryWarsUtil.FlatDistanceSqr(sites[i].Position, bot->Home);
+        var score = kind == wanted ? distance / 16 : forecourt ? distance / 4 : distance;
+        if (score < best) {
+          best = score;
+          site = sites[i].Position;
+        }
+      }
+      return best < FP.MaxValue;
+    }
+
+    /// <summary>집하장 옆 자원에 일꾼이 모자라면 본진에서 한 명씩 옮긴다.</summary>
+    static void StaffYards(Frame f, PlayerRef player, AiSpec ai) {
+      var limit = ai.ExpandReserveRadius * ai.ExpandReserveRadius;
+      var buildings = f.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out _, out var yard, out var building)) {
+        if (building->Owner != player || building->ConstructionRemaining > FP._0 || f.FindAsset(building->Spec).Role != BuildingRole.CollectionYard) {
+          continue;
+        }
+        var staffed = 0;
+        var from = EntityRef.None;
+        var workers = f.Filter<Unit, Worker>();
+        while (workers.NextUnsafe(out var entity, out var unit, out var worker)) {
+          if (unit->Owner != player || worker->Task != WorkerTask.Gather && worker->Task != WorkerTask.Deliver || f.Has<ResourceNode>(worker->Target) == false) {
+            continue;
+          }
+          if (FactoryWarsUtil.FlatDistanceSqr(f.Unsafe.GetPointer<Transform3D>(worker->Target)->Position, yard->Position) <= limit) {
+            staffed++;
+          } else if (DistanceToYard(f, player, f.Unsafe.GetPointer<Transform3D>(worker->Target)->Position) > limit) {
+            from = entity;
+          }
+        }
+        if (staffed >= ai.YardWorkers || from == EntityRef.None) {
+          continue;
+        }
+        var node = NearestNodeAround(f, yard->Position, limit);
+        if (node != EntityRef.None) {
+          WorkerSystem.Assign(f, from, WorkerTask.Gather, node);
+          return;
+        }
+      }
+    }
+
+    static FP DistanceToYard(Frame f, PlayerRef player, FPVector3 position) {
+      var best = FP.MaxValue;
+      var buildings = f.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out _, out var transform, out var building)) {
+        if (building->Owner == player && f.FindAsset(building->Spec).Role == BuildingRole.CollectionYard) {
+          best = FPMath.Min(best, FactoryWarsUtil.FlatDistanceSqr(transform->Position, position));
+        }
+      }
+      return best;
+    }
+
+    static EntityRef NearestNodeAround(Frame f, FPVector3 position, FP limit) {
+      var best = limit;
+      var found = EntityRef.None;
+      var nodes = f.Filter<Transform3D, ResourceNode>();
+      while (nodes.NextUnsafe(out var entity, out var transform, out var node)) {
+        var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, position);
+        if (node->Remaining > FP._0 && distance <= best) {
+          best = distance;
+          found = entity;
+        }
+      }
+      return found;
     }
 
     /// <summary>큰 자원이거나 인구가 막혔을 때, 비용을 낼 수 있으면 사령부로 확장한다. 아니면 집하장이다.</summary>
@@ -436,10 +545,13 @@ namespace Quantum.FactoryWars {
       return found;
     }
 
-    public static bool FindEnemyTarget(Frame f, PlayerRef player, FPVector3 home, out FPVector3 target) {
+    public static bool FindEnemyTarget(Frame f, PlayerRef player, FPVector3 home, out FPVector3 target) => FindEnemyTarget(f, player, home, out target, out _);
+
+    static bool FindEnemyTarget(Frame f, PlayerRef player, FPVector3 home, out FPVector3 target, out PlayerRef owner) {
       var best = FP.MaxValue;
       var found = false;
       target = default;
+      owner = default;
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out _, out var transform, out var building)) {
         if (DiplomacySystem.CanAttack(f, player, building->Owner) == false) {
@@ -452,13 +564,76 @@ namespace Quantum.FactoryWars {
         if (distance < best) {
           best = distance;
           target = transform->Position;
+          owner = building->Owner;
           found = true;
         }
       }
       return found;
     }
 
+    /// <summary>
+    /// 이번 웨이브의 경유점. 측면은 두 자리에 모두 닿는 공유 확장이고, 없거나 확률에서 빠지면 중앙이다.
+    /// 대각선 상대에게는 닿는 공유 확장이 없어서 언제나 중앙으로 간다.
+    /// </summary>
+    static bool PickSideLane(Frame f, PlayerRef player, PlayerRef enemy, BotState* bot, AiSpec ai, out FPVector3 point) {
+      point = default;
+      var sites = FactoryWarsUtil.MapInfo(f).Expansions;
+      if (sites == null || f.RNG->Next() >= ai.SideLaneChance) {
+        return false;
+      }
+      var seats = 1 << (int)player | 1 << (int)enemy;
+      var count = 0;
+      for (var i = 0; i < sites.Length; i++) {
+        count += sites[i].Kind == ExpansionKind.Shared && (sites[i].SeatMask & seats) == seats ? 1 : 0;
+      }
+      if (count == 0) {
+        return false;
+      }
+      var pick = f.RNG->Next(0, count);
+      for (var i = 0; i < sites.Length; i++) {
+        if (sites[i].Kind == ExpansionKind.Shared && (sites[i].SeatMask & seats) == seats && pick-- == 0) {
+          point = sites[i].Position;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// <summary>웨이브 크기를 채웠거나, 공격 시각이 오래 지났고 병력이 남아 있으면 나간다.</summary>
+    public static bool ShouldLaunch(int army, int waveSize, int overdueFrames, int staleFrames) {
+      return army >= waveSize || (army > 0 && overdueFrames >= staleFrames);
+    }
+
+    /// <summary>군대가 경유점보다 목표에 가까우면 그 길은 이미 지난 것이다.</summary>
+    public static bool IsPastLane(FPVector3 army, FPVector3 lane, FPVector3 target) {
+      return FactoryWarsUtil.FlatDistanceSqr(army, target) <= FactoryWarsUtil.FlatDistanceSqr(lane, target);
+    }
+
+    static void OrderArmy(Frame f, PlayerRef player, FPVector3 target) {
+      var ordered = 0;
+      var units = f.Filter<Unit>();
+      while (ordered < MaxOrder && units.NextUnsafe(out var entity, out var unit)) {
+        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None) {
+          MovementSystem.Order(f, entity, unit, UnitOrder.AttackMove, target);
+          ordered++;
+        }
+      }
+    }
+
+    /// <summary>경유점에 닿았거나 시간이 지났으면 목표로 보낸다.</summary>
+    static void FollowLane(Frame f, PlayerRef player, BotState* bot, AiSpec ai) {
+      if (bot->LaneUntilFrame == 0) {
+        return;
+      }
+      var center = ArmyCenter(f, player, bot->Home);
+      if (f.Number >= bot->LaneUntilFrame || FactoryWarsUtil.FlatDistanceSqr(center, bot->LanePoint) <= ai.LaneArrivalDistance * ai.LaneArrivalDistance) {
+        bot->LaneUntilFrame = 0;
+        OrderArmy(f, player, bot->LaneTarget);
+      }
+    }
+
     static void Attack(Frame f, PlayerRef player, BotState* bot, AiSpec ai) {
+      FollowLane(f, player, bot, ai);
       if (f.Number < bot->NextAttackFrame || FactoryWarsUtil.InTruce(f)) {
         return;
       }
@@ -477,25 +652,37 @@ namespace Quantum.FactoryWars {
       }
       var sweeping = IsSweeping(army, enemyArmy, ai);
       FPVector3 target;
+      PlayerRef enemy = default;
       if (sweeping) {
         if (FindCoreTarget(f, player, ArmyCenter(f, player, bot->Home), out target) == false) {
           return;
         }
-      } else if (army < bot->WaveSize || FindEnemyTarget(f, player, bot->Home, out target) == false) {
+      } else if (ShouldLaunch(army, bot->WaveSize, f.Number - bot->NextAttackFrame, FactoryWarsUtil.SecondsToFrames(f, ai.StaleWaveSeconds)) == false
+          || FindEnemyTarget(f, player, bot->Home, out target, out enemy) == false) {
         return;
       }
 
-      var ordered = 0;
-      units = f.Filter<Unit>();
-      while (ordered < MaxOrder && units.NextUnsafe(out var entity, out var unit)) {
-        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None) {
-          MovementSystem.Order(f, entity, unit, UnitOrder.AttackMove, target);
-          ordered++;
-        }
-      }
       if (sweeping) {
+        bot->LaneUntilFrame = 0;
+        OrderArmy(f, player, target);
         bot->NextAttackFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SweepSeconds);
         return;
+      }
+      // 이미 나가 있는 군대를 경유점으로 되돌리지 않는다. 공격 주기보다 이동이 긴 맵에서 왕복하게 된다.
+      var center = ArmyCenter(f, player, bot->Home);
+      var hasSide = PickSideLane(f, player, enemy, bot, ai, out var lane);
+      if (IsPastLane(center, lane, target)) {
+        OrderArmy(f, player, target);
+      } else {
+        if (hasSide) {
+          bot->SideWaves++;
+        } else {
+          bot->CenterWaves++;
+        }
+        bot->LanePoint = lane;
+        bot->LaneTarget = target;
+        bot->LaneUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.LaneTimeoutSeconds);
+        OrderArmy(f, player, lane);
       }
       bot->WaveSize = System.Math.Min(bot->WaveSize + ai.WaveGrowth, ai.MaxWaveSize);
       bot->NextAttackFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.AttackRepeatSeconds);

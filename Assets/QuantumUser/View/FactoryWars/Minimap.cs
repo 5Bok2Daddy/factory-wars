@@ -40,7 +40,7 @@ namespace FactoryWars.View {
         _base[i] = Ground;
       }
       foreach (var feature in map.Terrain ?? Array.Empty<TerrainFeature>()) {
-        Paint(feature.Shape, feature.Kind == TerrainKind.Rock ? RockColor : feature.Kind == TerrainKind.Hill ? HillColor : feature.Kind == TerrainKind.River ? RiverColor : WallColor);
+        Paint(feature.Shape, feature.Kind == TerrainKind.Rock ? RockColor : feature.Kind == TerrainKind.Hill || feature.Kind == TerrainKind.Cliff ? HillColor : feature.Kind == TerrainKind.River ? RiverColor : WallColor);
       }
       foreach (var node in map.ResourceNodes) {
         Paint(node.Shape, node.Kind == ResourceKind.Iron ? IronColor : WoodColor);

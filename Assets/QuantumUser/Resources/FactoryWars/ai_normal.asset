@@ -24,7 +24,16 @@ MonoBehaviour:
     RawValue: 39321
   IronShareLate:
     RawValue: 45875
-  MaxYards: 2
+  MaxYards: 4
+  YardWorkers: 4
+  LateExpansionSeconds:
+    RawValue: 39321600
+  SideLaneChance:
+    RawValue: 26214
+  LaneArrivalDistance:
+    RawValue: 1572864
+  LaneTimeoutSeconds:
+    RawValue: 4587520
   ExpandDistance:
     RawValue: 1966080
   MaxHeadquarters: 3
@@ -48,6 +57,8 @@ MonoBehaviour:
   WaveSize: 8
   WaveGrowth: 3
   MaxWaveSize: 24
+  StaleWaveSeconds:
+    RawValue: 7864320
   SweepArmyRatio: 4
   SweepSeconds:
     RawValue: 1310720

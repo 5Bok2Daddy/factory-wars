@@ -87,8 +87,19 @@ namespace FactoryWars.Tests {
       File.AppendAllLines(Path.Combine(AiFolder(), "minutes.csv"), minutes);
       File.AppendAllLines(Path.Combine(AiFolder(), "stuck.csv"), tracker.Rows);
       File.AppendAllLines(Path.Combine(AiFolder(), "crossing.csv"), tracker.Crossings(map, run));
+      File.AppendAllLines(Path.Combine(AiFolder(), "expansions.csv"), tracker.Expansions);
+      File.AppendAllLines(Path.Combine(AiFolder(), "lanes.csv"), LaneRows(map, run, players));
       Debug.Log($"[FW-AI] {row} real {F(Time.realtimeSinceStartup - realStart)}s");
       Assert.Greater(seconds, 0f);
+    }
+
+    static unsafe IEnumerable<string> LaneRows(string map, int run, int players) {
+      var rows = new List<string>();
+      for (var p = 0; p < players; p++) {
+        var bot = Verified.Global->Bots.GetPointer(p);
+        rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{bot->CenterWaves},{bot->SideWaves}");
+      }
+      return rows;
     }
 
     /// <summary>지상 전투 유닛이 강을 건넜는지, 이동 중에 끼였는지 기록한다. 프레임을 읽기만 한다.</summary>
@@ -105,6 +116,8 @@ namespace FactoryWars.Tests {
       readonly Rect[] _homes;
       readonly Vector3[] _bridges;
       public readonly List<string> Rows = new List<string>();
+      public readonly List<string> Expansions = new List<string>();
+      readonly HashSet<EntityRef> _yards = new HashSet<EntityRef>();
 
       public StuckTracker(int players) {
         var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
@@ -118,7 +131,21 @@ namespace FactoryWars.Tests {
         }
       }
 
+      void SampleYards(string map, int run, int frame) {
+        var sites = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset).Expansions;
+        foreach (var pair in Verified.GetComponentIterator<Building>()) {
+          var spec = Verified.FindAsset(pair.Component.Spec);
+          if (spec.Role != BuildingRole.CollectionYard || pair.Component.ConstructionRemaining > 0 || _yards.Add(pair.Entity) == false) {
+            continue;
+          }
+          var position = Verified.Get<Transform3D>(pair.Entity).Position;
+          var site = sites.OrderBy(s => (s.Position - position).SqrMagnitude.AsFloat).First();
+          Expansions.Add($"{map},{run},{(int)pair.Component.Owner},{FactionOf(pair.Component.Owner).FactionId},{site.Kind},{F(frame / (float)Fps)},{F((site.Position - position).Magnitude.AsFloat)}");
+        }
+      }
+
       public void Sample(string map, int run, int frame) {
+        SampleYards(map, run, frame);
         foreach (var pair in Verified.GetComponentIterator<Unit>()) {
           var unit = pair.Component;
           var spec = Verified.FindAsset(unit.Spec);

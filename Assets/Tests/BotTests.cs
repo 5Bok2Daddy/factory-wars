@@ -134,5 +134,37 @@ namespace FactoryWars.Tests {
       }
       return value;
     }
+
+    [Test]
+    public void Ai_PrefersForecourtOfTheScarceResource() {
+      var ironShort = new ResourceCost { Iron = 100, Wood = 300 };
+      var woodShort = new ResourceCost { Iron = 300, Wood = 100 };
+      Assert.AreEqual(ExpansionKind.IronForecourt, BotSystem.PreferredForecourt(ironShort));
+      Assert.AreEqual(ExpansionKind.WoodForecourt, BotSystem.PreferredForecourt(woodShort));
+    }
+
+    [Test]
+    public void Ai_LaunchesLeftoverArmyWhenWaveNeverFills() {
+      Assert.IsTrue(BotSystem.ShouldLaunch(24, 24, 0, 100), "웨이브를 채움");
+      Assert.IsFalse(BotSystem.ShouldLaunch(5, 24, 99, 100), "아직 기다린다");
+      Assert.IsTrue(BotSystem.ShouldLaunch(5, 24, 100, 100), "오래 기다렸으면 나간다");
+      Assert.IsFalse(BotSystem.ShouldLaunch(0, 24, 500, 100), "병력이 없으면 못 나간다");
+    }
+
+    [Test]
+    public void Ai_DoesNotPullAdvancedArmyBackToLane() {
+      var lane = V(0, 0);
+      var target = V(100, 100);
+      Assert.IsFalse(BotSystem.IsPastLane(V(-90, -90), lane, target), "본진의 군대는 경유점을 지난다");
+      Assert.IsTrue(BotSystem.IsPastLane(V(60, 60), lane, target), "전진한 군대는 바로 간다");
+    }
+
+    [UnityTest]
+    public IEnumerator Ai_LateExpansionOnlyForNormal() {
+      yield return StartMatch();
+      var rules = Verified.FindAsset(Verified.RuntimeConfig.Rules);
+      Assert.AreEqual(0f, Verified.FindAsset(rules.EasyAi).LateExpansionSeconds.AsFloat, "쉬움은 공유 확장을 노리지 않음");
+      Assert.Greater(Verified.FindAsset(rules.NormalAi).LateExpansionSeconds.AsFloat, 420f, "보통은 휴전 뒤 중반부터");
+    }
   }
 }

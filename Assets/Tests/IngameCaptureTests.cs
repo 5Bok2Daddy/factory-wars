@@ -49,8 +49,9 @@ namespace FactoryWars.Tests {
         output.SetPixels32(read.GetPixels32());
       }
       output.Apply();
-      Directory.CreateDirectory(IngameFolder());
-      File.WriteAllBytes(Path.Combine(IngameFolder(), name), output.EncodeToPNG());
+      var path = Path.Combine(IngameFolder(), name);
+      Directory.CreateDirectory(Path.GetDirectoryName(path));
+      File.WriteAllBytes(path, output.EncodeToPNG());
       Object.Destroy(read);
       Object.Destroy(output);
       Debug.Log($"[FW-CAPTURE] {name} frame {Verified.Number}");
@@ -152,6 +153,56 @@ namespace FactoryWars.Tests {
       AimCamera(camera, new Vector3(0, 0, 4), 250f);
       yield return new WaitForSecondsRealtime(0.25f);
       Capture(camera, "4p_river.png");
+    }
+
+    /// <summary>미니맵은 UI 전체가 아니라 그 텍스처를 저장한다.</summary>
+    static void SaveMinimap(string name) {
+      var image = Object.FindAnyObjectByType<FactoryWars.View.Minimap>().GetComponent<UnityEngine.UI.RawImage>();
+      var texture = (Texture2D)image.texture;
+      File.WriteAllBytes(Path.Combine(IngameFolder(), name), texture.EncodeToPNG());
+    }
+
+    IEnumerator ShootMap(Vector3[] shots, float[] heights, string[] names) {
+      var camera = Camera.main;
+      for (var i = 0; i < names.Length; i++) {
+        AimCamera(camera, shots[i], heights[i]);
+        yield return new WaitForSecondsRealtime(0.25f);
+        Capture(camera, $"map17/{names[i]}.png");
+      }
+    }
+
+    [UnityTest, Explicit, Category("Ingame"), Timeout(3000000)]
+    public IEnumerator Ingame_Map17() {
+      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 7010, truce: -1);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      GraphicsQuality.Apply(QualityTier.Medium);
+      Time.timeScale = CaptureSpeed;
+      yield return WaitGameSeconds(90);
+      Time.timeScale = 1f;
+      Directory.CreateDirectory(Path.Combine(IngameFolder(), "map17"));
+      SaveMinimap("map17/2p_minimap.png");
+      yield return ShootMap(
+        new[] { new Vector3(0, 0, 8), new Vector3(0, 0, -4), new Vector3(-107, 0, 50), new Vector3(-44, 0, 22) },
+        new[] { 225f, 60f, 45f, 45f },
+        new[] { "2p_overview", "2p_center", "2p_canyon", "2p_backdoor" });
+    }
+
+    [UnityTest, Explicit, Category("Ingame"), Timeout(3000000)]
+    public IEnumerator Ingame_Map17FourPlayer() {
+      yield return StartMatch(Map4PScene, 4, bots: Enumerable.Repeat(BotDifficulty.Normal, 3).ToArray(), seed: 7011, truce: -1);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      GraphicsQuality.Apply(QualityTier.Medium);
+      Time.timeScale = CaptureSpeed;
+      yield return WaitGameSeconds(90);
+      Time.timeScale = 1f;
+      Directory.CreateDirectory(Path.Combine(IngameFolder(), "map17"));
+      SaveMinimap("map17/4p_minimap.png");
+      yield return ShootMap(
+        new[] { new Vector3(0, 0, 8), new Vector3(0, 0, -4), new Vector3(-147, 0, -14), new Vector3(-72, 0, -8) },
+        new[] { 300f, 70f, 45f, 45f },
+        new[] { "4p_overview", "4p_center", "4p_canyon", "4p_backdoor" });
     }
 
     [UnityTest, Explicit, Category("Ingame"), Timeout(3000000)]

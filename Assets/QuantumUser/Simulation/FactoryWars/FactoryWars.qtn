@@ -63,6 +63,11 @@ struct BotState {
     Int32 NextProposalFrame;
     Int32 NextNoteFrame;
     Int32 WaveSize;
+    FPVector3 LanePoint;
+    FPVector3 LaneTarget;
+    Int32 LaneUntilFrame;
+    Int32 CenterWaves;
+    Int32 SideWaves;
 }
 
 struct ProductionOrder {
