@@ -66,6 +66,11 @@ namespace FactoryWars.View {
 
     static string Population(FP value) => Mathf.FloorToInt(value.AsFloat + 0.001f).ToString();
 
+    public static string TruceCountdown(float seconds) {
+      var whole = Mathf.CeilToInt(seconds);
+      return $"다리 개방까지 {whole / 60}:{whole % 60:00}";
+    }
+
     public static string Missing(MissingResource missing) {
       var parts = new List<string>();
       if ((missing & MissingResource.Iron) != 0) {
@@ -95,6 +100,7 @@ namespace FactoryWars.View {
         case RejectReason.ModeDisabled: return "이 모드에서는 할 수 없습니다";
         case RejectReason.BlockedLocation: return "건설 불가 지형";
         case RejectReason.Locked: return "해금되지 않았습니다";
+        case RejectReason.Truce: return "휴전 중입니다";
         default: return "할 수 없습니다";
       }
     }

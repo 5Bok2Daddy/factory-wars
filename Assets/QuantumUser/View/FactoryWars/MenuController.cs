@@ -59,6 +59,7 @@ namespace FactoryWars.View {
     Button _mode;
     Button _bots;
     Button _difficulty;
+    Button _truce;
 
     void Awake() {
       var canvas = Ui.CreateCanvas("Menu");
@@ -82,15 +83,16 @@ namespace FactoryWars.View {
 
       _options = Page("Options");
       var match = Ui.Label("Match", _options, "경기 설정", 60, TextAnchor.MiddleCenter);
-      Ui.Place(match.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 410), new Vector2(1000, 100));
-      _map = Add(_options, "", 280, ToggleMap);
-      _mode = Add(_options, "", 130, NextMode);
-      _bots = Add(_options, "", -20, NextBots);
-      _difficulty = Add(_options, "", -170, NextDifficulty);
+      Ui.Place(match.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 470), new Vector2(1000, 90));
+      _map = Add(_options, "", 340, ToggleMap);
+      _mode = Add(_options, "", 190, NextMode);
+      _bots = Add(_options, "", 40, NextBots);
+      _difficulty = Add(_options, "", -110, NextDifficulty);
+      _truce = Add(_options, "", -260, NextTruce);
       var back = Ui.Button("Back", _options, "뒤로", () => Show(Screen.Faction), 34);
-      Ui.Place((RectTransform)back.transform, new Vector2(0.5f, 0.5f), new Vector2(-220, -340), new Vector2(380, Ui.MinButtonSize));
+      Ui.Place((RectTransform)back.transform, new Vector2(0.5f, 0.5f), new Vector2(-220, -420), new Vector2(380, Ui.MinButtonSize));
       var begin = Ui.Button("Begin", _options, "대전 시작", Begin, 34);
-      Ui.Place((RectTransform)begin.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -340), new Vector2(380, Ui.MinButtonSize));
+      Ui.Place((RectTransform)begin.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -420), new Vector2(380, Ui.MinButtonSize));
 
       _settings = SettingsPanel.Build(_root, () => Show(Screen.Title));
       Show(Screen.Title);
@@ -153,6 +155,12 @@ namespace FactoryWars.View {
       RefreshOptions();
     }
 
+    /// <summary>휴전 시간은 0·5·7·10분 중에 고른다.</summary>
+    public void NextTruce() {
+      Settings.TruceMinutes = Settings.TruceMinutes == 0 ? 5 : Settings.TruceMinutes == 5 ? 7 : Settings.TruceMinutes == 7 ? 10 : 0;
+      RefreshOptions();
+    }
+
     void RefreshOptions() {
       Settings.Normalize();
       Ui.SetLabel(_map, $"맵: {(Settings.FourPlayerMap ? "4인" : "2인")}");
@@ -162,6 +170,7 @@ namespace FactoryWars.View {
       Ui.SetEnabled(_mode, Settings.FourPlayerMap);
       Ui.SetEnabled(_bots, Settings.Mode == MatchMode.FreeForAll);
       Ui.SetLabel(_difficulty, $"난이도: {(Settings.Difficulty == BotDifficulty.Easy ? "쉬움" : "보통")}");
+      Ui.SetLabel(_truce, Settings.TruceMinutes == 0 ? "휴전: 없음" : $"휴전: {Settings.TruceMinutes}분");
     }
 
     public void Begin() {

@@ -23,6 +23,9 @@ namespace FactoryWars.EditorTools {
     const string ScenesRoot = "Assets/QuantumUser/Scenes";
     const string ScenePath = ScenesRoot + "/QuantumGameScene.unity";
     const string MapRoot = "Assets/QuantumUser/Resources";
+    const string BridgeRegion = "Bridges";
+    /// <summary>다리에 칠하는 Unity NavMesh 영역 번호. 0~2는 기본 영역이다.</summary>
+    const int BridgeArea = 3;
 
     [MenuItem("Tools/Factory Wars/Run All Setup")]
     public static void RunAll() {
@@ -295,8 +298,8 @@ namespace FactoryWars.EditorTools {
       ai.MaxWaveSize = maxWave;
       ai.PowerMargin = 3;
       ai.PopulationMargin = 4;
-      ai.SiteGrid = 10;
-      ai.SiteRings = 5;
+      ai.SiteGrid = 7;
+      ai.SiteRings = 7;
       ai.StrategicDiplomacy = strategic;
       ai.AcceptChance = N(0.5);
       ai.ProposalIntervalSeconds = 90;
@@ -327,6 +330,8 @@ namespace FactoryWars.EditorTools {
 
       var rules = Asset<GameRulesSpec>("game_rules");
       rules.NavMeshName = "NavMesh";
+      rules.TruceSeconds = 420;
+      rules.BridgeRegion = BridgeRegion;
       rules.MinDiplomacyPlayers = 3;
       rules.ProposalSeconds = 30;
       rules.ProposalCost = 300;
@@ -417,6 +422,8 @@ namespace FactoryWars.EditorTools {
       public ResourceNodePlacement[] CenterNodes;
       public TerrainFeature[] Terrain;
       public MapShape[] NoBuildZones;
+      public MapShape[] Bridges;
+      public MapShape BaseArea;
       public Vector3 CameraPosition;
     }
 
@@ -440,6 +447,8 @@ namespace FactoryWars.EditorTools {
 
     static readonly MapDef TwoPlayerMap = new MapDef {
       Id = "Map2P", Players = 2, HalfSize = 80, Start = new FPVector3(-55, 0, -55),
+      Bridges = new[] { Rect(-33, -50, 3.5, 6.5), Rect(-50, -33, 6.5, 3.5) },
+      BaseArea = Rect(-58, -58, 22, 22),
       Nodes = new[] {
         Mine(-72, -52, 4000),
         Mine(-52, -72, 4000),
@@ -478,6 +487,8 @@ namespace FactoryWars.EditorTools {
 
     static readonly MapDef FourPlayerMap = new MapDef {
       Id = "Map4P", Players = 4, HalfSize = 120, Start = new FPVector3(-90, 0, -90),
+      Bridges = new[] { Rect(-68, -86, 3.5, 6.5), Rect(-86, -68, 6.5, 3.5) },
+      BaseArea = Rect(-95.5, -95.5, 24.5, 24.5),
       Nodes = new[] {
         Mine(-107, -87, 4000),
         Mine(-87, -107, 4000),
@@ -538,6 +549,8 @@ namespace FactoryWars.EditorTools {
         .Concat(def.CenterNodes).ToArray();
       spec.Terrain = def.Terrain.SelectMany(feature => Orbit(def, feature.Shape).Select(shape => Feature(feature.Kind, shape))).ToArray();
       spec.NoBuildZones = def.NoBuildZones.SelectMany(zone => Orbit(def, zone)).ToArray();
+      spec.Bridges = def.Bridges.SelectMany(bridge => Orbit(def, bridge)).ToArray();
+      spec.BaseAreas = Orbit(def, def.BaseArea).ToArray();
       EditorUtility.SetDirty(spec);
     }
 
@@ -583,6 +596,32 @@ namespace FactoryWars.EditorTools {
       foreach (var feature in spec.Terrain ?? new TerrainFeature[0]) {
         AddBlock(root, feature.Kind.ToString(), feature.Shape, feature.Kind == TerrainKind.Rock ? 3 : 6);
       }
+      foreach (var bridge in spec.Bridges ?? new MapShape[0]) {
+        AddBridge(root, bridge);
+      }
+    }
+
+    /// <summary>
+    /// 다리 하나를 NavMesh 영역으로 칠한다. Quantum은 같은 Unity 영역의 삼각형 덩어리가 렌더러 경계 안에 다 들어올 때
+    /// 그 영역 이름을 붙이므로, 렌더러는 꺼 둔 채 경계로만 쓴다. 모든 다리가 같은 이름이라 영역은 하나다.
+    /// </summary>
+    static void AddBridge(Transform root, MapShape shape) {
+      var bridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      bridge.name = "Bridge";
+      Object.DestroyImmediate(bridge.GetComponent<Collider>());
+      bridge.transform.SetParent(root, false);
+      bridge.transform.position = new Vector3(shape.Center.X.AsFloat, 0, shape.Center.Z.AsFloat);
+      bridge.transform.rotation = Quaternion.Euler(0, shape.Yaw.AsFloat, 0);
+      bridge.transform.localScale = new Vector3(shape.HalfLength.AsFloat * 2, 3, shape.HalfWidth.AsFloat * 2);
+      bridge.GetComponent<MeshRenderer>().enabled = false;
+      bridge.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
+      var volume = bridge.AddComponent<NavMeshModifierVolume>();
+      volume.center = Vector3.zero;
+      volume.size = Vector3.one;
+      volume.area = BridgeArea;
+      var region = bridge.AddComponent<QuantumNavMeshRegion>();
+      region.Id = BridgeRegion;
+      region.CastRegion = QuantumNavMeshRegion.RegionCastType.CastRegion;
     }
 
     static void AddBlock(Transform root, string name, MapShape shape, float height) {
@@ -648,13 +687,19 @@ namespace FactoryWars.EditorTools {
     }
 
     static void EnsureNavMesh(QuantumMapData map) {
-      if (GameObject.Find("NavMesh") != null) {
-        return;
+      var navObject = GameObject.Find("NavMesh");
+      if (navObject == null) {
+        navObject = new GameObject("NavMesh");
+        navObject.transform.SetParent(map.transform, false);
+        navObject.AddComponent<NavMeshSurface>();
+        navObject.AddComponent<QuantumMapNavMeshUnity>().NavMeshSurfaces = new[] { navObject };
       }
-      var navObject = new GameObject("NavMesh");
-      navObject.transform.SetParent(map.transform, false);
-      navObject.AddComponent<NavMeshSurface>();
-      navObject.AddComponent<QuantumMapNavMeshUnity>().NavMeshSurfaces = new[] { navObject };
+      // QuantumNavMeshRegion을 쓰려면 Advanced 모드여야 한다. Simple은 Unity 영역 이름으로 만든다.
+      var quantumNavMesh = navObject.GetComponent<QuantumMapNavMeshUnity>();
+      var settings = quantumNavMesh.Settings;
+      settings.ImportRegionMode = NavmeshRegionImportMode.Advanced;
+      settings.RegionAreaIds = new List<int> { BridgeArea };
+      quantumNavMesh.Settings = settings;
     }
 
     static void EnsureDebugView() {

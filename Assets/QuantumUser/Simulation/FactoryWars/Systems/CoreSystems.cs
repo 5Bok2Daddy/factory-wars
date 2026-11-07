@@ -15,6 +15,17 @@ namespace Quantum.FactoryWars {
 
     public static int SecondsToFrames(Frame f, FP seconds) => FPMath.CeilToInt(seconds * f.SessionConfig.UpdateFPS);
 
+    public static bool InTruce(Frame f) => f.Global->BridgesOpen == false;
+
+    /// <summary>지상으로 갈 수 있는 곳이면 true. 휴전 중에는 자기 본진 안뿐이다.</summary>
+    public static bool IsReachable(Frame f, PlayerRef player, FPVector3 position) {
+      var areas = MapInfo(f).BaseAreas;
+      if (InTruce(f) == false || areas == null || areas.Length == 0) {
+        return true;
+      }
+      return areas[(int)player % areas.Length].Distance(position) <= FP._0;
+    }
+
     public static PlayerState* Player(Frame f, PlayerRef player) {
       if (player.IsValid == false || (int)player >= f.PlayerCount) {
         return null;
@@ -31,6 +42,11 @@ namespace Quantum.FactoryWars {
       var diplomacy = f.Unsafe.GetPointer<Diplomacy>(entity);
       diplomacy->JointVictory = f.RuntimeConfig.JointVictory;
       diplomacy->TeamMode = f.RuntimeConfig.TeamMode;
+
+      var config = f.RuntimeConfig;
+      var truce = config.OverrideTruce ? config.TruceSeconds : FactoryWarsUtil.Rules(f).TruceSeconds;
+      f.Global->TruceEndFrame = FactoryWarsUtil.SecondsToFrames(f, truce);
+      TruceSystem.SetBridges(f, truce <= 0);
 
       var nodes = FactoryWarsUtil.MapInfo(f).ResourceNodes;
       for (var i = 0; nodes != null && i < nodes.Length; i++) {
@@ -104,6 +120,24 @@ namespace Quantum.FactoryWars {
     }
   }
 
+  /// <summary>초반 휴전. 끝나면 모든 본진 다리를 한 번에 연다.</summary>
+  public unsafe class TruceSystem : SystemMainThread {
+    /// <summary>영역 하나만 켜고 끈다. 영역 상태는 프레임 데이터라 롤백에도 안전하다.</summary>
+    public static void SetBridges(Frame f, bool open) {
+      f.Global->BridgesOpen = open;
+      if (f.Map.RegionMap.TryGetValue(FactoryWarsUtil.Rules(f).BridgeRegion, out var region)) {
+        f.NavMeshRegionMask->ToggleRegion(region, open);
+      }
+    }
+
+    public override void Update(Frame f) {
+      if (FactoryWarsUtil.InTruce(f) && f.Number >= f.Global->TruceEndFrame) {
+        SetBridges(f, true);
+        f.Events.BridgesOpened(f.Number);
+      }
+    }
+  }
+
   /// <summary>플레이어 커맨드를 읽어 실행한다.</summary>
   public unsafe class CommandSystem : SystemMainThread {
     public override void Update(Frame f) {
@@ -128,9 +162,9 @@ namespace Quantum.FactoryWars {
       return f.Unsafe.GetPointerSingleton<Diplomacy>()->Relations[Cell(a, b)];
     }
 
-    /// <summary>파기 유예 중(BreakPending)이나 동맹은 공격할 수 없다.</summary>
+    /// <summary>파기 유예 중(BreakPending)이나 동맹은 공격할 수 없다. 휴전 중에는 아무도 공격할 수 없다.</summary>
     public static bool CanAttack(Frame f, PlayerRef a, PlayerRef b) {
-      return a != b && GetRelation(f, a, b) == Relation.Enemy;
+      return a != b && FactoryWarsUtil.InTruce(f) == false && GetRelation(f, a, b) == Relation.Enemy;
     }
 
     static void SetRelation(Frame f, Diplomacy* d, PlayerRef a, PlayerRef b, Relation relation) {

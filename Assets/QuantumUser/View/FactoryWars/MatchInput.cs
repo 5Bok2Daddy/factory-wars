@@ -106,7 +106,11 @@ namespace FactoryWars.View {
 
     DeterministicCommand Attack(Frame frame, PlayerRef player, EntityRef target) {
       var units = SelectedUnits(frame);
-      if (units.Count == 0 || CombatSystem.TryGetOwner(frame, target, out var owner) == false || DiplomacySystem.CanAttack(frame, player, owner) == false) {
+      if (units.Count == 0 || CombatSystem.TryGetOwner(frame, target, out var owner) == false) {
+        return null;
+      }
+      // 휴전 중이면 시뮬레이션이 거부 사유를 돌려주도록 그대로 보낸다.
+      if (FactoryWarsUtil.InTruce(frame) == false && DiplomacySystem.CanAttack(frame, player, owner) == false) {
         return null;
       }
       return new AttackTargetCommand { Units = units.ToArray(), Target = target };

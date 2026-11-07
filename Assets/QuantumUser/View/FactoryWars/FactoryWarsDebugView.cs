@@ -11,6 +11,10 @@ public class FactoryWarsDebugView : MonoBehaviour {
   static readonly Color ContinentalFederation = new Color32(0xA3, 0x22, 0x2B, 0xFF);
   static readonly Color ResourceNodeColor = new Color32(0xE0, 0xB0, 0x30, 0xFF);
 
+  static readonly Color BridgeOpen = new Color32(0x8A, 0x70, 0x50, 0xFF);
+  static readonly Color BridgeClosed = new Color32(0xB0, 0x30, 0x28, 0xFF);
+
+  Renderer[] _bridges;
   readonly Dictionary<EntityRef, GameObject> _views = new Dictionary<EntityRef, GameObject>();
   readonly HashSet<EntityRef> _seen = new HashSet<EntityRef>();
   readonly List<EntityRef> _removed = new List<EntityRef>();
@@ -31,6 +35,7 @@ public class FactoryWarsDebugView : MonoBehaviour {
     foreach (var pair in frame.GetComponentIterator<ResourceNode>()) {
       Draw(frame, pair.Entity, ResourceNodeColor, PrimitiveType.Cylinder, new Vector3(3, 1, 3));
     }
+    DrawBridges(frame);
 
     _removed.Clear();
     foreach (var pair in _views) {
@@ -41,6 +46,31 @@ public class FactoryWarsDebugView : MonoBehaviour {
     foreach (var entity in _removed) {
       Destroy(_views[entity]);
       _views.Remove(entity);
+    }
+  }
+
+  /// <summary>닫힌 다리는 붉게, 열린 다리는 낮게 그린다. 3-5에서 다리 모델로 바뀐다.</summary>
+  unsafe void DrawBridges(Frame frame) {
+    var bridges = frame.FindAsset<MapSpec>(frame.Map.UserAsset).Bridges;
+    if (bridges == null) {
+      return;
+    }
+    if (_bridges == null) {
+      _bridges = new Renderer[bridges.Length];
+      for (var i = 0; i < bridges.Length; i++) {
+        var view = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        Destroy(view.GetComponent<Collider>());
+        view.name = "Bridge";
+        view.transform.SetParent(transform, false);
+        view.transform.position = bridges[i].Center.ToUnityVector3();
+        view.transform.rotation = Quaternion.Euler(0, bridges[i].Yaw.AsFloat, 0);
+        view.transform.localScale = new Vector3(bridges[i].HalfLength.AsFloat * 2, 0.3f, bridges[i].HalfWidth.AsFloat * 2);
+        _bridges[i] = view.GetComponent<Renderer>();
+      }
+    }
+    var color = frame.Global->BridgesOpen ? BridgeOpen : BridgeClosed;
+    foreach (var bridge in _bridges) {
+      bridge.material.color = color;
     }
   }
 

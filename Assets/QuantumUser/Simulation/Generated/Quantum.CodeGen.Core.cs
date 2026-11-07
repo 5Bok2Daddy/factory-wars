@@ -60,6 +60,7 @@ namespace Quantum {
     Repair,
     Processor,
     Produce,
+    Attack,
   }
   public enum BotDifficulty : byte {
     Easy,
@@ -77,6 +78,7 @@ namespace Quantum {
     Invalid,
     BlockedLocation,
     Locked,
+    Truce,
   }
   public enum Relation : byte {
     Enemy,
@@ -827,7 +829,7 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct _globals_ {
-    public const Int32 SIZE = 1464;
+    public const Int32 SIZE = 1472;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(0)]
     public AssetRef<Map> Map;
@@ -854,18 +856,22 @@ namespace Quantum {
     private fixed Byte _input_[16];
     [FieldOffset(640)]
     public BitSet4 PlayerLastConnectionState;
-    [FieldOffset(824)]
+    [FieldOffset(832)]
     [FramePrinter.FixedArrayAttribute(typeof(PlayerState), 4)]
     private fixed Byte _Players_[640];
-    [FieldOffset(664)]
+    [FieldOffset(672)]
     [FramePrinter.FixedArrayAttribute(typeof(BotState), 4)]
     private fixed Byte _Bots_[160];
-    [FieldOffset(656)]
+    [FieldOffset(664)]
     public QBoolean GameEnded;
     [FieldOffset(648)]
     public Int32 EndFrame;
-    [FieldOffset(652)]
+    [FieldOffset(656)]
     public Int32 WinnerMask;
+    [FieldOffset(652)]
+    public Int32 TruceEndFrame;
+    [FieldOffset(660)]
+    public QBoolean BridgesOpen;
     public readonly FixedArray<Input> input {
       get {
         fixed (byte* p = _input_) { return new FixedArray<Input>(p, 4, 4); }
@@ -901,6 +907,8 @@ namespace Quantum {
         hash = hash * 31 + GameEnded.GetHashCode();
         hash = hash * 31 + EndFrame.GetHashCode();
         hash = hash * 31 + WinnerMask.GetHashCode();
+        hash = hash * 31 + TruceEndFrame.GetHashCode();
+        hash = hash * 31 + BridgesOpen.GetHashCode();
         return hash;
       }
     }
@@ -919,7 +927,9 @@ namespace Quantum {
         FixedArray.Serialize(p->input, serializer, Statics.SerializeInput);
         Quantum.BitSet4.Serialize(&p->PlayerLastConnectionState, serializer);
         serializer.Stream.Serialize(&p->EndFrame);
+        serializer.Stream.Serialize(&p->TruceEndFrame);
         serializer.Stream.Serialize(&p->WinnerMask);
+        QBoolean.Serialize(&p->BridgesOpen, serializer);
         QBoolean.Serialize(&p->GameEnded, serializer);
         FixedArray.Serialize(p->Bots, serializer, Statics.SerializeBotState);
         FixedArray.Serialize(p->Players, serializer, Statics.SerializePlayerState);

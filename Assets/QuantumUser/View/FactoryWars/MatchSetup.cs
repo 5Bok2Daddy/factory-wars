@@ -11,6 +11,7 @@ namespace FactoryWars.View {
     public int Bots = 1;
     public BotDifficulty Difficulty = BotDifficulty.Normal;
     public MatchMode Mode = MatchMode.Duel;
+    public int TruceMinutes = 7;
 
     public string Scene => FourPlayerMap ? "Map4P" : "Map2P";
 
@@ -40,6 +41,8 @@ namespace FactoryWars.View {
       config.TeamMode = settings.Mode == MatchMode.Team;
       config.JointVictory = settings.Mode == MatchMode.FreeForAll;
       config.OverrideStartingResources = false;
+      config.OverrideTruce = true;
+      config.TruceSeconds = settings.TruceMinutes * 60;
       config.ScenarioUnits = null;
       config.ScenarioBuildings = null;
 

@@ -31,5 +31,9 @@ namespace Quantum {
     public TerrainFeature[] Terrain;
     /// <summary>길목이 건물로 막히지 않게 건설을 금지하는 구역. 협곡 안과 본진 입구.</summary>
     public MapShape[] NoBuildZones;
+    /// <summary>본진 입구의 다리. 전부 NavMesh 영역 하나로 구워 한 번에 연다.</summary>
+    public MapShape[] Bridges;
+    /// <summary>자리별 본진 안쪽. 휴전 중에는 여기서만 채집·건설한다. 비어 있으면 제한이 없다.</summary>
+    public MapShape[] BaseAreas;
   }
 }

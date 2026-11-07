@@ -17,6 +17,8 @@ MonoBehaviour:
     Guid:
       Value: 463454056923249890
   NavMeshName: NavMesh
+  TruceSeconds: 420
+  BridgeRegion: Bridges
   MinDiplomacyPlayers: 3
   ProposalSeconds:
     RawValue: 1966080

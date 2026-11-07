@@ -41,7 +41,7 @@ namespace FactoryWars.Tests {
 
     IEnumerator PlayAiMatch(string scene, string map, int players, int run) {
       var bots = Enumerable.Repeat(BotDifficulty.Normal, players).ToArray();
-      yield return StartMatch(scene, players, bots: bots, seed: 7000 + run, swapFactions: run % 2 == 1);
+      yield return StartMatch(scene, players, bots: bots, seed: 7000 + run, swapFactions: run % 2 == 1, truce: -1);
       Time.timeScale = AiTimeScale;
       var view = Object.FindAnyObjectByType<FactoryWarsDebugView>();
       if (view != null) {

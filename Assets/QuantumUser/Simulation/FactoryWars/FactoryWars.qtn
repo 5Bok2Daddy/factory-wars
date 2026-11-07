@@ -10,8 +10,8 @@
 
 enum Relation : Byte { Enemy, Allied, BreakPending }
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget }
-enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce }
-enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked }
+enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce, Attack }
+enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
 enum ResourceKind : Byte { Iron, Wood }
@@ -80,6 +80,8 @@ global {
     QBoolean GameEnded;
     Int32 EndFrame;
     Int32 WinnerMask;
+    Int32 TruceEndFrame;
+    QBoolean BridgesOpen;
 }
 
 component Unit {
@@ -150,6 +152,7 @@ synced event NoteReceived { player_ref Sender; player_ref Receiver; Int32 Phrase
 synced event AllianceChanged { player_ref A; player_ref B; Relation Relation; }
 event UnitDestroyed { entity_ref Unit; player_ref Owner; asset_ref<UnitSpec> Spec; }
 synced event PlayerDefeated { player_ref Player; }
+synced event BridgesOpened { Int32 Frame; }
 synced event PowerOutage { player_ref Player; QBoolean Started; }
 synced event BuildingPaused { entity_ref Building; PauseReason Reason; }
 synced event GameOver { Int32 WinnerMask; }

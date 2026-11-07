@@ -46,13 +46,14 @@ namespace Quantum.FactoryWars {
     }
 
     /// <summary>매장량이 남은 같은 종류 노드 중 가장 가까운 것. exclude는 건너뛴다.</summary>
-    public static EntityRef NearestNode(Frame f, FPVector3 position, FP radius, ResourceKind kind, EntityRef exclude = default) {
+    public static EntityRef NearestNode(Frame f, PlayerRef owner, FPVector3 position, FP radius, ResourceKind kind, EntityRef exclude = default) {
       var best = EntityRef.None;
       var bestDistance = radius < FP.UseableMax ? radius * radius : FP.UseableMax;
       var nodes = f.Filter<Transform3D, ResourceNode>();
       while (nodes.NextUnsafe(out var entity, out var transform, out var node)) {
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, position);
-        if (entity != exclude && node->Kind == kind && node->Remaining > FP._0 && distance <= bestDistance) {
+        if (entity != exclude && node->Kind == kind && node->Remaining > FP._0 && distance <= bestDistance
+            && FactoryWarsUtil.IsReachable(f, owner, transform->Position)) {
           best = entity;
           bestDistance = distance;
         }
@@ -125,7 +126,7 @@ namespace Quantum.FactoryWars {
       }
       if (node->Remaining <= FP._0) {
         worker->Spot = 0;
-        worker->Target = NearestNode(f, position, rules.NodeSearchRadius, node->Kind);
+        worker->Target = NearestNode(f, f.Unsafe.GetPointer<Unit>(entity)->Owner, position, rules.NodeSearchRadius, node->Kind);
         if (worker->Target == EntityRef.None) {
           SetTask(worker, worker->Carried > FP._0 ? WorkerTask.Deliver : WorkerTask.Idle);
         }
@@ -136,7 +137,7 @@ namespace Quantum.FactoryWars {
         worker->Spot = FreeSpot(f, entity, worker->Target, node, position, rules);
         if (worker->Spot == 0) {
           // 지점이 다 찼으면 가까운 다른 노드로 가고, 없으면 자리가 날 때까지 기다린다.
-          var other = NearestNode(f, position, rules.NodeSearchRadius, node->Kind, worker->Target);
+          var other = NearestNode(f, f.Unsafe.GetPointer<Unit>(entity)->Owner, position, rules.NodeSearchRadius, node->Kind, worker->Target);
           if (other != EntityRef.None) {
             worker->Target = other;
           }

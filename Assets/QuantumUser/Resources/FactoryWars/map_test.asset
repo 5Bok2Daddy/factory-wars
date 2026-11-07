@@ -155,3 +155,5 @@ MonoBehaviour:
       RawValue: 393216
     Yaw:
       RawValue: 0
+  Bridges: []
+  BaseAreas: []

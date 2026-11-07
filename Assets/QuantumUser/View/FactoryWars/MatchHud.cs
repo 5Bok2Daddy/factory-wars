@@ -31,6 +31,7 @@ namespace FactoryWars.View {
     public string TopBarText => _topBar.text;
     public string AlertText => _alert.text;
     public string NoteText => _note.text;
+    public string TruceText => _truce.text;
     public bool DiplomacyOpen => _diplomacy.gameObject.activeSelf;
     public RectTransform Root { get; private set; }
 
@@ -38,6 +39,7 @@ namespace FactoryWars.View {
     Text _alert;
     Text _note;
     Text _status;
+    Text _truce;
     Minimap _minimap;
     Button[] _context;
     Button _boxButton;
@@ -72,10 +74,12 @@ namespace FactoryWars.View {
       var menuButton = Ui.Button("MenuButton", top, "메뉴", () => Controller.TogglePause());
       Ui.Place((RectTransform)menuButton.transform, Vector2.one, Vector2.zero, new Vector2(160, 76));
 
+      _truce = Ui.Label("Truce", Root, "", 34, TextAnchor.MiddleCenter);
+      Ui.Place(_truce.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -84), new Vector2(1200, 50));
       _alert = Ui.Label("Alert", Root, "", 36, TextAnchor.MiddleCenter);
-      Ui.Place(_alert.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -90), new Vector2(1200, 56));
+      Ui.Place(_alert.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -136), new Vector2(1200, 56));
       _note = Ui.Label("Note", Root, "", 34, TextAnchor.MiddleCenter);
-      Ui.Place(_note.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -150), new Vector2(1200, 56));
+      Ui.Place(_note.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -194), new Vector2(1200, 56));
 
       var map = Ui.Rect("Minimap", Root);
       Ui.Place(map, Vector2.zero, new Vector2(12, 12), new Vector2(300, 300));
@@ -131,6 +135,7 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventActionRejected>(this, OnRejected);
       QuantumEvent.Subscribe<EventNoteReceived>(this, OnNote);
       QuantumEvent.Subscribe<EventPowerOutage>(this, OnOutage);
+      QuantumEvent.Subscribe<EventBridgesOpened>(this, e => ShowAlert("다리 개방"));
     }
 
     void BuildDiplomacy(Frame frame) {
@@ -261,6 +266,9 @@ namespace FactoryWars.View {
     public void Refresh(Frame frame) {
       var state = frame.Global->Players.GetPointer(Controller.Player);
       _topBar.text = Texts.TopBar(*state);
+      _truce.text = FactoryWarsUtil.InTruce(frame)
+        ? Texts.TruceCountdown((frame.Global->TruceEndFrame - frame.Number) / (float)frame.SessionConfig.UpdateFPS)
+        : "";
       _minimap.Refresh(frame);
       var selection = Controller.Input.Selection;
       selection.Prune(frame);

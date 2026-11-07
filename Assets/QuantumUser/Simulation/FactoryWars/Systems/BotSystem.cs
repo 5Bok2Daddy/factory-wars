@@ -104,7 +104,7 @@ namespace Quantum.FactoryWars {
         }
         var kind = iron < share * (iron + wood + 1) ? ResourceKind.Iron : ResourceKind.Wood;
         var position = f.Unsafe.GetPointer<Transform3D>(entity)->Position;
-        var node = WorkerSystem.NearestNode(f, position, FP.UseableMax, kind);
+        var node = WorkerSystem.NearestNode(f, player, position, FP.UseableMax, kind);
         if (node != EntityRef.None) {
           WorkerSystem.Assign(f, entity, WorkerTask.Gather, node);
           iron += kind == ResourceKind.Iron ? 1 : 0;
@@ -118,7 +118,7 @@ namespace Quantum.FactoryWars {
         while (workers.NextUnsafe(out var entity, out var unit, out var worker)) {
           if (unit->Owner == player && IsGathering(f, worker, ResourceKind.Wood)) {
             var position = f.Unsafe.GetPointer<Transform3D>(entity)->Position;
-            var node = WorkerSystem.NearestNode(f, position, FP.UseableMax, ResourceKind.Iron);
+            var node = WorkerSystem.NearestNode(f, player, position, FP.UseableMax, ResourceKind.Iron);
             if (node != EntityRef.None) {
               WorkerSystem.Assign(f, entity, WorkerTask.Gather, node);
             }
@@ -204,7 +204,7 @@ namespace Quantum.FactoryWars {
       if (state->Stock.Covers(spec.Cost) == false) {
         return spec.Cost;
       }
-      if (FindSite(f, ai, spec, center, out var site) && FindBuilder(f, player, site, out var engineer)) {
+      if (FindSite(f, player, ai, spec, center, out var site) && FindBuilder(f, player, site, out var engineer)) {
         ProductionSystem.TryBuild(f, player, engineer, specRef, site);
       }
       return default;
@@ -237,7 +237,7 @@ namespace Quantum.FactoryWars {
     }
 
     /// <summary>중심에서 바깥으로 격자를 돌며 지을 수 있는 첫 칸을 찾는다.</summary>
-    static bool FindSite(Frame f, AiSpec ai, BuildingSpec spec, FPVector3 center, out FPVector3 site) {
+    static bool FindSite(Frame f, PlayerRef player, AiSpec ai, BuildingSpec spec, FPVector3 center, out FPVector3 site) {
       for (var ring = 1; ring <= ai.SiteRings; ring++) {
         for (var x = -ring; x <= ring; x++) {
           for (var z = -ring; z <= ring; z++) {
@@ -245,7 +245,7 @@ namespace Quantum.FactoryWars {
               continue;
             }
             site = center + new FPVector3(ai.SiteGrid * x, FP._0, ai.SiteGrid * z);
-            if (ProductionSystem.CanPlace(f, spec, site)) {
+            if (FactoryWarsUtil.IsReachable(f, player, site) && ProductionSystem.CanPlace(f, spec, site)) {
               return true;
             }
           }
@@ -340,7 +340,7 @@ namespace Quantum.FactoryWars {
     }
 
     static void Attack(Frame f, PlayerRef player, BotState* bot, AiSpec ai) {
-      if (f.Number < bot->NextAttackFrame) {
+      if (f.Number < bot->NextAttackFrame || FactoryWarsUtil.InTruce(f)) {
         return;
       }
       var army = 0;

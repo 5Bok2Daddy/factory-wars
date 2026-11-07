@@ -75,6 +75,10 @@ namespace Quantum.FactoryWars {
         return;
       }
       position.Y = FP._0;
+      if (FactoryWarsUtil.IsReachable(f, player, position) == false) {
+        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Truce, 0);
+        return;
+      }
       if (CanPlace(f, spec, position) == false) {
         f.Events.ActionRejected(player, ActionKind.Build, RejectReason.BlockedLocation, 0);
         return;

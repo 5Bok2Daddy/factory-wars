@@ -73,6 +73,10 @@ namespace Quantum.FactoryWars {
       if (CombatSystem.TryGetOwner(f, Target, out var targetOwner) == false) {
         return;
       }
+      if (FactoryWarsUtil.InTruce(f) && targetOwner != player) {
+        f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.Truce, 0);
+        return;
+      }
       if (DiplomacySystem.CanAttack(f, player, targetOwner) == false) {
         return;
       }
@@ -119,6 +123,10 @@ namespace Quantum.FactoryWars {
     public override void Execute(Frame f, PlayerRef player) {
       if (f.Has<ResourceNode>(Node) == false) {
         f.Events.ActionRejected(player, ActionKind.Gather, RejectReason.Invalid, 0);
+        return;
+      }
+      if (FactoryWarsUtil.IsReachable(f, player, f.Unsafe.GetPointer<Transform3D>(Node)->Position) == false) {
+        f.Events.ActionRejected(player, ActionKind.Gather, RejectReason.Truce, 0);
         return;
       }
       for (var i = 0; i < Units.Length; i++) {
