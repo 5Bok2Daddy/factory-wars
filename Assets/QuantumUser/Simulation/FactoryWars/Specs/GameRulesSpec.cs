@@ -30,6 +30,12 @@ namespace Quantum {
     public FP RealliableSeconds;
     public FP NoteCooldownSeconds;
     public int NotePhraseCount;
+    /// <summary>받으면 AI의 호감이 오르는 쪽지 문구 번호.</summary>
+    public int[] FriendlyPhrases;
+    /// <summary>관계 점수를 다시 계산하는 간격.</summary>
+    public FP OpinionIntervalSeconds;
+    /// <summary>관계 점수의 절댓값 상한.</summary>
+    public int OpinionLimit;
     public FP NoteSingleCost;
     public FP NoteGroupCost;
     /// <summary>정전이 시작되면 전기가 이만큼 쌓여야 풀린다. 0 근처에서 켜고 꺼지기를 막는다.</summary>

@@ -39,6 +39,10 @@ MonoBehaviour:
   NoteCooldownSeconds:
     RawValue: 327680
   NotePhraseCount: 12
+  FriendlyPhrases: 000000000300000005000000090000000b000000
+  OpinionIntervalSeconds:
+    RawValue: 655360
+  OpinionLimit: 100
   NoteSingleCost:
     RawValue: 3276800
   NoteGroupCost:

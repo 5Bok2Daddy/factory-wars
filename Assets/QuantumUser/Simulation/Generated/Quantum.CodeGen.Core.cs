@@ -590,17 +590,19 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct BotState {
-    public const Int32 SIZE = 40;
+    public const Int32 SIZE = 48;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(16)]
+    [FieldOffset(24)]
     public FPVector3 Home;
-    [FieldOffset(8)]
+    [FieldOffset(12)]
     public Int32 NextThinkFrame;
     [FieldOffset(0)]
     public Int32 NextAttackFrame;
-    [FieldOffset(4)]
+    [FieldOffset(8)]
     public Int32 NextProposalFrame;
-    [FieldOffset(12)]
+    [FieldOffset(4)]
+    public Int32 NextNoteFrame;
+    [FieldOffset(16)]
     public Int32 WaveSize;
     public override readonly Int32 GetHashCode() {
       unchecked { 
@@ -609,6 +611,7 @@ namespace Quantum {
         hash = hash * 31 + NextThinkFrame.GetHashCode();
         hash = hash * 31 + NextAttackFrame.GetHashCode();
         hash = hash * 31 + NextProposalFrame.GetHashCode();
+        hash = hash * 31 + NextNoteFrame.GetHashCode();
         hash = hash * 31 + WaveSize.GetHashCode();
         return hash;
       }
@@ -616,6 +619,7 @@ namespace Quantum {
     public static void Serialize(void* ptr, FrameSerializer serializer) {
         var p = (BotState*)ptr;
         serializer.Stream.Serialize(&p->NextAttackFrame);
+        serializer.Stream.Serialize(&p->NextNoteFrame);
         serializer.Stream.Serialize(&p->NextProposalFrame);
         serializer.Stream.Serialize(&p->NextThinkFrame);
         serializer.Stream.Serialize(&p->WaveSize);
@@ -829,7 +833,7 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct _globals_ {
-    public const Int32 SIZE = 1472;
+    public const Int32 SIZE = 1504;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(0)]
     public AssetRef<Map> Map;
@@ -856,12 +860,12 @@ namespace Quantum {
     private fixed Byte _input_[16];
     [FieldOffset(640)]
     public BitSet4 PlayerLastConnectionState;
-    [FieldOffset(832)]
+    [FieldOffset(864)]
     [FramePrinter.FixedArrayAttribute(typeof(PlayerState), 4)]
     private fixed Byte _Players_[640];
     [FieldOffset(672)]
     [FramePrinter.FixedArrayAttribute(typeof(BotState), 4)]
-    private fixed Byte _Bots_[160];
+    private fixed Byte _Bots_[192];
     [FieldOffset(664)]
     public QBoolean GameEnded;
     [FieldOffset(648)]
@@ -884,7 +888,7 @@ namespace Quantum {
     }
     public readonly FixedArray<BotState> Bots {
       get {
-        fixed (byte* p = _Bots_) { return new FixedArray<BotState>(p, 40, 4); }
+        fixed (byte* p = _Bots_) { return new FixedArray<BotState>(p, 48, 4); }
       }
     }
     public override readonly Int32 GetHashCode() {
@@ -1015,21 +1019,29 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Diplomacy : Quantum.IComponentSingleton {
-    public const Int32 SIZE = 300;
+    public const Int32 SIZE = 496;
     public const Int32 ALIGNMENT = 4;
     [FieldOffset(0)]
     [FramePrinter.FixedArrayAttribute(typeof(Relation), 16)]
     private fixed Byte _Relations_[16];
-    [FieldOffset(156)]
+    [FieldOffset(352)]
     [FramePrinter.FixedArrayAttribute(typeof(AllianceProposal), 12)]
     private fixed Byte _Proposals_[144];
     [FieldOffset(16)]
     public fixed Int32 BreakExpireFrames[16];
-    [FieldOffset(84)]
+    [FieldOffset(280)]
     public fixed Int32 RealliableFrames[16];
-    [FieldOffset(148)]
-    public QBoolean JointVictory;
+    [FieldOffset(216)]
+    public fixed Int32 Opinions[16];
+    [FieldOffset(84)]
+    public fixed Int32 LastAttackFrames[16];
     [FieldOffset(152)]
+    public fixed Int32 NoEnemyFrames[16];
+    [FieldOffset(148)]
+    public Int32 NextOpinionFrame;
+    [FieldOffset(344)]
+    public QBoolean JointVictory;
+    [FieldOffset(348)]
     public QBoolean TeamMode;
     [FieldOffset(80)]
     public Int32 JointVictoryFrame;
@@ -1050,6 +1062,10 @@ namespace Quantum {
         hash = hash * 31 + HashCodeUtils.GetArrayHashCode(Proposals);
         fixed (Int32* p = BreakExpireFrames) hash = hash * 31 + HashCodeUtils.GetArrayHashCode(p, 16);
         fixed (Int32* p = RealliableFrames) hash = hash * 31 + HashCodeUtils.GetArrayHashCode(p, 16);
+        fixed (Int32* p = Opinions) hash = hash * 31 + HashCodeUtils.GetArrayHashCode(p, 16);
+        fixed (Int32* p = LastAttackFrames) hash = hash * 31 + HashCodeUtils.GetArrayHashCode(p, 16);
+        fixed (Int32* p = NoEnemyFrames) hash = hash * 31 + HashCodeUtils.GetArrayHashCode(p, 16);
+        hash = hash * 31 + NextOpinionFrame.GetHashCode();
         hash = hash * 31 + JointVictory.GetHashCode();
         hash = hash * 31 + TeamMode.GetHashCode();
         hash = hash * 31 + JointVictoryFrame.GetHashCode();
@@ -1061,6 +1077,10 @@ namespace Quantum {
         FixedArray.Serialize(p->Relations, serializer, Statics.SerializeRelation);
         serializer.Stream.SerializeBuffer(&p->BreakExpireFrames[0], 16);
         serializer.Stream.Serialize(&p->JointVictoryFrame);
+        serializer.Stream.SerializeBuffer(&p->LastAttackFrames[0], 16);
+        serializer.Stream.Serialize(&p->NextOpinionFrame);
+        serializer.Stream.SerializeBuffer(&p->NoEnemyFrames[0], 16);
+        serializer.Stream.SerializeBuffer(&p->Opinions[0], 16);
         serializer.Stream.SerializeBuffer(&p->RealliableFrames[0], 16);
         QBoolean.Serialize(&p->JointVictory, serializer);
         QBoolean.Serialize(&p->TeamMode, serializer);

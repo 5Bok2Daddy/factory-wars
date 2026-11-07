@@ -70,6 +70,7 @@ namespace Quantum.Prototypes {
     public Int32 NextThinkFrame;
     public Int32 NextAttackFrame;
     public Int32 NextProposalFrame;
+    public Int32 NextNoteFrame;
     public Int32 WaveSize;
     partial void MaterializeUser(Frame frame, ref Quantum.BotState result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.BotState result, in PrototypeMaterializationContext context = default) {
@@ -77,6 +78,7 @@ namespace Quantum.Prototypes {
         result.NextThinkFrame = this.NextThinkFrame;
         result.NextAttackFrame = this.NextAttackFrame;
         result.NextProposalFrame = this.NextProposalFrame;
+        result.NextNoteFrame = this.NextNoteFrame;
         result.WaveSize = this.WaveSize;
         MaterializeUser(frame, ref result, in context);
     }
@@ -135,6 +137,13 @@ namespace Quantum.Prototypes {
     public Int32[] BreakExpireFrames = new Int32[16];
     [ArrayLengthAttribute(16)]
     public Int32[] RealliableFrames = new Int32[16];
+    [ArrayLengthAttribute(16)]
+    public Int32[] Opinions = new Int32[16];
+    [ArrayLengthAttribute(16)]
+    public Int32[] LastAttackFrames = new Int32[16];
+    [ArrayLengthAttribute(16)]
+    public Int32[] NoEnemyFrames = new Int32[16];
+    public Int32 NextOpinionFrame;
     public QBoolean JointVictory;
     public QBoolean TeamMode;
     public Int32 JointVictoryFrame;
@@ -157,6 +166,16 @@ namespace Quantum.Prototypes {
         for (int i = 0, count = PrototypeValidator.CheckLength(RealliableFrames, 16, in context); i < count; ++i) {
           result.RealliableFrames[i] = this.RealliableFrames[i];
         }
+        for (int i = 0, count = PrototypeValidator.CheckLength(Opinions, 16, in context); i < count; ++i) {
+          result.Opinions[i] = this.Opinions[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(LastAttackFrames, 16, in context); i < count; ++i) {
+          result.LastAttackFrames[i] = this.LastAttackFrames[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(NoEnemyFrames, 16, in context); i < count; ++i) {
+          result.NoEnemyFrames[i] = this.NoEnemyFrames[i];
+        }
+        result.NextOpinionFrame = this.NextOpinionFrame;
         result.JointVictory = this.JointVictory;
         result.TeamMode = this.TeamMode;
         result.JointVictoryFrame = this.JointVictoryFrame;

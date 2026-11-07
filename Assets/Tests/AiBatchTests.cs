@@ -73,11 +73,22 @@ namespace FactoryWars.Tests {
       var alive = Enumerable.Range(0, players).Count(i => StateOf(i).Defeated == false);
       var seats = string.Join("+", Enumerable.Range(0, players).Select(i => FactionOf(i).FactionId));
       var firstText = string.Join(";", firsts.OrderBy(p => p.Value).Select(p => $"{p.Key}={F(p.Value)}"));
-      var row = $"{map},{run},{F(seconds)},{winners},{alive},{seats},{firstText}";
+      var endText = string.Join(" ", Enumerable.Range(0, players).Select(EndState));
+      var row = $"{map},{run},{F(seconds)},{winners},{alive},{seats},{firstText},{endText}";
       File.AppendAllLines(Path.Combine(AiFolder(), "matches.csv"), new[] { row });
       File.AppendAllLines(Path.Combine(AiFolder(), "minutes.csv"), minutes);
       Debug.Log($"[FW-AI] {row} real {F(Time.realtimeSinceStartup - realStart)}s");
       Assert.Greater(seconds, 0f);
+    }
+
+    /// <summary>끝났을 때 자리별 상태. 안 끝난 경기의 원인을 찾는 데 쓴다.</summary>
+    static string EndState(int player) {
+      var s = StateOf(player);
+      var buildings = 0;
+      foreach (var pair in Verified.GetComponentIterator<Building>()) {
+        buildings += pair.Component.Owner == player ? 1 : 0;
+      }
+      return $"p{player}:hq{(Headquarters(player) != EntityRef.None ? 1 : 0)}/b{buildings}/u{Army(player, true).Count}/e{Engineers(player).Count}/i{s.Stock.Iron.AsInt}/w{s.Stock.Wood.AsInt}/s{s.Stock.Steel.AsInt}";
     }
 
     static string MinuteRow(string map, int run, int minute, int player) {

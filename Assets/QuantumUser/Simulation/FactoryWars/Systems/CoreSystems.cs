@@ -203,6 +203,50 @@ namespace Quantum.FactoryWars {
       return DiplomacyAllowed(f, f.Unsafe.GetPointerSingleton<Diplomacy>(), FactoryWarsUtil.Rules(f));
     }
 
+    public static int GetOpinion(Frame f, PlayerRef of, PlayerRef about) {
+      return f.Unsafe.GetPointerSingleton<Diplomacy>()->Opinions[Cell(of, about)];
+    }
+
+    public static void AddOpinion(Frame f, PlayerRef of, PlayerRef about, int delta) {
+      var d = f.Unsafe.GetPointerSingleton<Diplomacy>();
+      var limit = FactoryWarsUtil.Rules(f).OpinionLimit;
+      var cell = Cell(of, about);
+      d->Opinions[cell] = System.Math.Max(-limit, System.Math.Min(limit, d->Opinions[cell] + delta));
+    }
+
+    public static void NoteAttack(Frame f, PlayerRef attacker, PlayerRef victim) {
+      if (attacker != victim) {
+        f.Unsafe.GetPointerSingleton<Diplomacy>()->LastAttackFrames[Cell(attacker, victim)] = f.Number;
+      }
+    }
+
+    public static int LastAttackFrame(Frame f, PlayerRef attacker, PlayerRef victim) {
+      return f.Unsafe.GetPointerSingleton<Diplomacy>()->LastAttackFrames[Cell(attacker, victim)];
+    }
+
+    public static int NoEnemyFrame(Frame f, PlayerRef a, PlayerRef b) {
+      return f.Unsafe.GetPointerSingleton<Diplomacy>()->NoEnemyFrames[Cell(a, b)];
+    }
+
+    public static void SetNoEnemyFrame(Frame f, PlayerRef a, PlayerRef b, int frame) {
+      var d = f.Unsafe.GetPointerSingleton<Diplomacy>();
+      d->NoEnemyFrames[Cell(a, b)] = frame;
+      d->NoEnemyFrames[Cell(b, a)] = frame;
+    }
+
+    /// <summary>a·b 둘 다의 적으로 남는 생존자가 있으면 true. 동맹을 맺어도 싸울 상대가 남는다는 뜻이다.</summary>
+    public static bool HasCommonEnemy(Frame f, PlayerRef a, PlayerRef b) {
+      for (var i = 0; i < f.PlayerCount; i++) {
+        PlayerRef other = i;
+        var state = f.Global->Players.GetPointer(i);
+        if (other != a && other != b && state->Active && state->Defeated == false
+            && GetRelation(f, a, other) != Relation.Allied && GetRelation(f, b, other) != Relation.Allied) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     public static bool HasProposal(Frame f, PlayerRef from, PlayerRef to) {
       return FindProposal(f.Unsafe.GetPointerSingleton<Diplomacy>(), from, to) >= 0;
     }
@@ -305,6 +349,7 @@ namespace Quantum.FactoryWars {
           d->RealliableFrames[cell] = ban;
           d->RealliableFrames[Cell(target, sender)] = ban;
           SetRelation(f, d, sender, target, Relation.BreakPending);
+          BotSystem.OnAllianceBroken(f, sender, target);
           return null;
         }
       }
@@ -439,7 +484,9 @@ namespace Quantum.FactoryWars {
         return;
       }
 
-      if (d->JointVictory == false) {
+      // 공동 승리는 사람끼리 외교로 만드는 경우에만 나온다. AI가 살아 있으면 끝까지 싸운다.
+      if (d->JointVictory == false || AnyBotAlive(f, aliveMask)) {
+        d->JointVictoryFrame = 0;
         return;
       }
       if (d->JointVictoryFrame == 0) {
@@ -455,6 +502,15 @@ namespace Quantum.FactoryWars {
       f.Global->EndFrame = f.Number;
       f.Global->WinnerMask = aliveMask;
       f.Events.GameOver(aliveMask);
+    }
+
+    static bool AnyBotAlive(Frame f, int aliveMask) {
+      for (var i = 0; i < f.PlayerCount; i++) {
+        if ((aliveMask & (1 << i)) != 0 && f.Global->Players.GetPointer(i)->IsBot) {
+          return true;
+        }
+      }
+      return false;
     }
 
     static bool AllAllied(Frame f, int aliveMask) {

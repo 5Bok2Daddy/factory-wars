@@ -27,6 +27,9 @@ namespace Quantum.FactoryWars {
       if (f.Global->GameEnded) {
         return;
       }
+      if (f.Unsafe.TryGetPointerSingleton<Diplomacy>(out _) && DiplomacySystem.IsAllowed(f)) {
+        UpdateOpinions(f);
+      }
       for (var i = 0; i < f.PlayerCount; i++) {
         var state = f.Global->Players.GetPointer(i);
         var bot = f.Global->Bots.GetPointer(i);
@@ -60,11 +63,24 @@ namespace Quantum.FactoryWars {
       }
 
       var engineers = ManageWorkers(f, player, ai, foundation, counts);
-      var reserve = building < ai.ConcurrentBuilds ? BuildNext(f, player, state, bot, ai, faction, counts) : default;
       ManageProcessors(f, player, state, ai);
-      Produce(f, player, state, ai, faction, engineers, reserve);
+      // 싸울 상대가 없어진 동맹을 끊을 철을 먼저 모은다. 안 그러면 서로 공격하지 못한 채 경기가 끝나지 않는다.
+      if (state->Stock.Iron >= FactoryWarsUtil.Rules(f).BreakCost || HasIdleAlliance(f, player) == false) {
+        var reserve = building < ai.ConcurrentBuilds ? BuildNext(f, player, state, bot, ai, faction, counts) : default;
+        Produce(f, player, state, ai, faction, engineers, reserve);
+      }
       Attack(f, player, bot, ai);
       Negotiate(f, player, state, bot, ai);
+    }
+
+    static bool HasIdleAlliance(Frame f, PlayerRef player) {
+      for (var i = 0; i < f.PlayerCount; i++) {
+        PlayerRef other = i;
+        if (other != player && DiplomacySystem.NoEnemyFrame(f, player, other) > 0) {
+          return true;
+        }
+      }
+      return false;
     }
 
     static bool IsGathering(Frame f, Worker* worker, ResourceKind kind) {
@@ -160,7 +176,9 @@ namespace Quantum.FactoryWars {
         return true;
       }
       var processors = counts[(int)BuildingRole.Processor];
-      if (processors > 0 && processors < ai.MaxProcessors && state->Stock.Steel < ai.SteelTarget && state->Stock.Iron >= ai.IronSurplus) {
+      // 강철을 쓸 군수공장이 생긴 뒤에야 강철이 병목이다.
+      if (processors > 0 && processors < ai.MaxProcessors && counts[(int)BuildingRole.VehicleFactory] > 0
+          && state->Stock.Steel < ai.SteelTarget && state->Stock.Iron >= ai.IronSurplus) {
         role = BuildingRole.Processor;
         return true;
       }
@@ -369,48 +387,149 @@ namespace Quantum.FactoryWars {
     /// <summary>강철은 철 2 + 전기 1로 만들므로 3으로 친다.</summary>
     static FP Worth(ResourceCost cost) => cost.Iron + cost.Wood + cost.Power + cost.Steel * 3;
 
-    /// <summary>유닛과 건물의 비용 합으로 본 세력.</summary>
-    static FP Strength(Frame f, PlayerRef player) {
-      var total = FP._0;
-      var units = f.Filter<Unit>();
-      while (units.NextUnsafe(out _, out var unit)) {
+    /// <summary>유닛·건물 가치와 누적 수입으로 본 세력. 가중치는 AiSpec에 있다.</summary>
+    public static FP Strength(Frame f, PlayerRef player, AiSpec ai) {
+      var units = FP._0;
+      var filter = f.Filter<Unit>();
+      while (filter.NextUnsafe(out _, out var unit)) {
         if (unit->Owner == player) {
-          total += Worth(f.FindAsset(unit->Spec).Cost);
+          units += Worth(f.FindAsset(unit->Spec).Cost);
         }
       }
-      var buildings = f.Filter<Building>();
-      while (buildings.NextUnsafe(out _, out var building)) {
+      var buildings = FP._0;
+      var owned = f.Filter<Building>();
+      while (owned.NextUnsafe(out _, out var building)) {
         if (building->Owner == player) {
-          total += Worth(f.FindAsset(building->Spec).Cost);
+          buildings += Worth(f.FindAsset(building->Spec).Cost);
         }
       }
-      return total;
+      var state = FactoryWarsUtil.Player(f, player);
+      return units * ai.StrengthUnitWeight + buildings * ai.StrengthBuildingWeight + (state->Earned.Iron + state->Earned.Wood) * ai.StrengthIncomeWeight;
     }
 
-    /// <summary>자신을 뺀 생존자 중 가장 강한 상대.</summary>
-    static PlayerRef Strongest(Frame f, PlayerRef player) {
-      PlayerRef best = default;
-      var bestStrength = -FP._1;
+    /// <summary>자신을 뺀 생존자 중 가장 강한 상대와 그다음 상대의 세력.</summary>
+    static PlayerRef Strongest(Frame f, PlayerRef player, AiSpec ai, out FP best, out FP second) {
+      PlayerRef strongest = default;
+      best = -FP._1;
+      second = -FP._1;
       for (var i = 0; i < f.PlayerCount; i++) {
         PlayerRef other = i;
         var state = f.Global->Players.GetPointer(i);
         if (other == player || state->Active == false || state->Defeated) {
           continue;
         }
-        var strength = Strength(f, other);
-        if (strength > bestStrength) {
-          bestStrength = strength;
-          best = other;
+        var strength = Strength(f, other, ai);
+        if (strength > best) {
+          second = best;
+          best = strength;
+          strongest = other;
+        } else if (strength > second) {
+          second = strength;
         }
       }
-      return best;
+      return strongest;
+    }
+
+    static bool IsAlive(Frame f, PlayerRef player) {
+      var state = FactoryWarsUtil.Player(f, player);
+      return state->Active && state->Defeated == false;
+    }
+
+    public static void OnNoteReceived(Frame f, PlayerRef receiver, PlayerRef sender, int phrase) {
+      var state = FactoryWarsUtil.Player(f, receiver);
+      var friendly = FactoryWarsUtil.Rules(f).FriendlyPhrases;
+      if (state->IsBot && friendly != null && System.Array.IndexOf(friendly, phrase) >= 0) {
+        DiplomacySystem.AddOpinion(f, receiver, sender, Spec(f, state->Difficulty).FriendlyNoteOpinion);
+      }
+    }
+
+    public static void OnAllianceBroken(Frame f, PlayerRef breaker, PlayerRef victim) {
+      var state = FactoryWarsUtil.Player(f, victim);
+      if (state->IsBot) {
+        DiplomacySystem.AddOpinion(f, victim, breaker, Spec(f, state->Difficulty).BrokenOpinion);
+      }
+    }
+
+    /// <summary>AI의 점수를 주기마다 갱신하고, 동맹의 공동의 적이 사라진 시각을 기록한다.</summary>
+    static void UpdateOpinions(Frame f) {
+      var d = f.Unsafe.GetPointerSingleton<Diplomacy>();
+      if (f.Number < d->NextOpinionFrame) {
+        return;
+      }
+      d->NextOpinionFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, FactoryWarsUtil.Rules(f).OpinionIntervalSeconds);
+      for (var a = 0; a < f.PlayerCount; a++) {
+        var state = f.Global->Players.GetPointer(a);
+        if (state->IsBot == false || state->Defeated) {
+          continue;
+        }
+        var ai = Spec(f, state->Difficulty);
+        // 공격 기록이 없으면 프레임 0이다. 경기 초반에도 "최근"이 되지 않게 1 이상으로 둔다.
+        var recent = System.Math.Max(1, f.Number - FactoryWarsUtil.SecondsToFrames(f, ai.RecentFightSeconds));
+        var strongest = Strongest(f, a, ai, out _, out _);
+        for (var b = 0; b < f.PlayerCount; b++) {
+          if (a == b || IsAlive(f, b) == false) {
+            continue;
+          }
+          var attacked = DiplomacySystem.LastAttackFrame(f, b, a) >= recent;
+          var delta = attacked ? ai.AttackedOpinion : ai.PeaceOpinion;
+          if (attacked == false && FightSameEnemy(f, a, b, recent)) {
+            delta += ai.CommonEnemyOpinion;
+          }
+          if (b == (int)strongest) {
+            delta += ai.StrongestOpinion;
+          }
+          DiplomacySystem.AddOpinion(f, a, b, delta);
+        }
+      }
+
+      for (var a = 0; a < f.PlayerCount; a++) {
+        for (var b = a + 1; b < f.PlayerCount; b++) {
+          if (DiplomacySystem.GetRelation(f, a, b) != Relation.Allied || DiplomacySystem.HasCommonEnemy(f, a, b)) {
+            DiplomacySystem.SetNoEnemyFrame(f, a, b, 0);
+          } else if (DiplomacySystem.NoEnemyFrame(f, a, b) == 0) {
+            DiplomacySystem.SetNoEnemyFrame(f, a, b, f.Number);
+          }
+        }
+      }
+    }
+
+    static bool FightSameEnemy(Frame f, PlayerRef a, PlayerRef b, int recent) {
+      for (var c = 0; c < f.PlayerCount; c++) {
+        PlayerRef enemy = c;
+        if (enemy != a && enemy != b && DiplomacySystem.LastAttackFrame(f, a, enemy) >= recent && DiplomacySystem.LastAttackFrame(f, b, enemy) >= recent) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// <summary>수락 조건. 점수가 기준 이상이고, 제안자가 최강이 아니고, 맺은 뒤에도 공동의 적이 남아야 한다.</summary>
+    public static bool WouldAccept(Frame f, PlayerRef player, PlayerRef proposer, AiSpec ai) {
+      if (DiplomacySystem.HasCommonEnemy(f, player, proposer) == false || proposer == Strongest(f, player, ai, out _, out _)) {
+        return false;
+      }
+      return DiplomacySystem.GetOpinion(f, player, proposer) >= ai.AcceptOpinion || f.RNG->Next() < ai.AcceptChance;
+    }
+
+    /// <summary>동맹이 다른 누구보다 BreakStrengthRatio배 이상 강하면 true. 2위가 없으면 비교하지 않는다.</summary>
+    public static bool IsOverpowered(FP allyStrength, FP others, AiSpec ai) {
+      return others > FP._0 && allyStrength >= others * ai.BreakStrengthRatio;
+    }
+
+    static bool ShouldBreak(Frame f, PlayerRef player, PlayerRef ally, AiSpec ai) {
+      var strongest = Strongest(f, player, ai, out var best, out var second);
+      if (ally == strongest && IsOverpowered(best, second, ai)) {
+        return true;
+      }
+      var since = DiplomacySystem.NoEnemyFrame(f, player, ally);
+      return since > 0 && f.Number >= since + FactoryWarsUtil.SecondsToFrames(f, ai.BreakAfterEnemySeconds);
     }
 
     static void Negotiate(Frame f, PlayerRef player, PlayerState* state, BotState* bot, AiSpec ai) {
       if (DiplomacySystem.IsAllowed(f) == false) {
         return;
       }
-      var strongest = Strongest(f, player);
+      var rules = FactoryWarsUtil.Rules(f);
 
       // 받은 제안에 답한다.
       for (var i = 0; i < f.PlayerCount; i++) {
@@ -418,26 +537,49 @@ namespace Quantum.FactoryWars {
         if (other == player || DiplomacySystem.HasProposal(f, other, player) == false) {
           continue;
         }
-        var accept = ai.StrategicDiplomacy ? other != strongest : f.RNG->Next() < ai.AcceptChance;
-        if (accept && state->Stock.Iron < FactoryWarsUtil.Rules(f).AcceptCost) {
+        var accept = WouldAccept(f, player, other, ai);
+        if (accept && state->Stock.Iron < rules.AcceptCost) {
           continue;
         }
         DiplomacySystem.Handle(f, player, other, accept ? DiplomacyAction.Accept : DiplomacyAction.Reject);
       }
 
-      // 보통은 가장 강한 상대가 아닌 쪽에 먼저 손을 내민다.
-      if (ai.StrategicDiplomacy == false || f.Number < bot->NextProposalFrame || state->Stock.Iron < ai.DiplomacyIronReserve) {
-        return;
-      }
-      bot->NextProposalFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.ProposalIntervalSeconds);
+      // 동맹이 너무 강해졌거나 싸울 이유가 사라졌으면 파기한다.
       for (var i = 0; i < f.PlayerCount; i++) {
         PlayerRef other = i;
-        var otherState = f.Global->Players.GetPointer(i);
-        if (other != player && other != strongest && otherState->Active && otherState->Defeated == false
-            && DiplomacySystem.GetRelation(f, player, other) == Relation.Enemy && DiplomacySystem.CanPropose(f, player, other)) {
-          DiplomacySystem.Handle(f, player, other, DiplomacyAction.Propose);
+        if (other != player && DiplomacySystem.GetRelation(f, player, other) == Relation.Allied
+            && state->Stock.Iron >= rules.BreakCost && ShouldBreak(f, player, other, ai)) {
+          DiplomacySystem.Handle(f, player, other, DiplomacyAction.Break);
           return;
         }
+      }
+
+      if (ai.StrategicDiplomacy == false || state->Stock.Iron < ai.DiplomacyIronReserve) {
+        return;
+      }
+
+      // 가장 강한 상대를 견제하려고 2·3위를 고른다. 호감이 모자라면 쪽지부터 보낸다.
+      var strongest = Strongest(f, player, ai, out _, out _);
+      for (var i = 0; i < f.PlayerCount; i++) {
+        PlayerRef other = i;
+        if (other == player || other == strongest || IsAlive(f, other) == false
+            || DiplomacySystem.GetRelation(f, player, other) != Relation.Enemy
+            || DiplomacySystem.CanPropose(f, player, other) == false
+            || DiplomacySystem.HasCommonEnemy(f, player, other) == false) {
+          continue;
+        }
+        if (DiplomacySystem.GetOpinion(f, other, player) < ai.AcceptOpinion) {
+          if (f.Number >= bot->NextNoteFrame && rules.FriendlyPhrases != null && rules.FriendlyPhrases.Length > 0) {
+            bot->NextNoteFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.NoteIntervalSeconds);
+            new SendNoteCommand { PhraseId = rules.FriendlyPhrases[0], TargetMode = NoteTarget.Player, Receiver = other }.Execute(f, player);
+          }
+          return;
+        }
+        if (f.Number >= bot->NextProposalFrame) {
+          bot->NextProposalFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.ProposalIntervalSeconds);
+          DiplomacySystem.Handle(f, player, other, DiplomacyAction.Propose);
+        }
+        return;
       }
     }
   }

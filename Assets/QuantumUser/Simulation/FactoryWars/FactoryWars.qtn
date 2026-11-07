@@ -60,6 +60,7 @@ struct BotState {
     Int32 NextThinkFrame;
     Int32 NextAttackFrame;
     Int32 NextProposalFrame;
+    Int32 NextNoteFrame;
     Int32 WaveSize;
 }
 
@@ -140,6 +141,13 @@ singleton component Diplomacy {
     array<AllianceProposal>[MAX_PROPOSALS] Proposals;
     array<Int32>[RELATION_CELLS] BreakExpireFrames;
     array<Int32>[RELATION_CELLS] RealliableFrames;
+    // 칸 [a][b]는 a가 b를 보는 점수다. AI 판단에만 쓴다.
+    array<Int32>[RELATION_CELLS] Opinions;
+    // 칸 [a][b]는 a가 b를 마지막으로 때린 프레임이다.
+    array<Int32>[RELATION_CELLS] LastAttackFrames;
+    // 칸 [a][b]는 동맹 a·b의 공동의 적이 사라진 프레임이다. 0이면 공동의 적이 있다.
+    array<Int32>[RELATION_CELLS] NoEnemyFrames;
+    Int32 NextOpinionFrame;
     QBoolean JointVictory;
     QBoolean TeamMode;
     Int32 JointVictoryFrame;

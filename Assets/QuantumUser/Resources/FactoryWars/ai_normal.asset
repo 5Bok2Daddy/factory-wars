@@ -42,21 +42,42 @@ MonoBehaviour:
   PopulationMargin: 4
   PowerReserve:
     RawValue: 1310720
-  MaxProcessors: 2
+  MaxProcessors: 5
   SteelTarget:
-    RawValue: 19660800
+    RawValue: 32768000
   IronSurplus:
     RawValue: 19660800
   ProcessorIronFloor:
     RawValue: 9830400
   SteelCap:
-    RawValue: 39321600
+    RawValue: 98304000
   SiteGrid:
     RawValue: 458752
   SiteRings: 7
   StrategicDiplomacy: 1
   AcceptChance:
+    RawValue: 0
+  AcceptOpinion: 40
+  StrengthUnitWeight:
+    RawValue: 65536
+  StrengthBuildingWeight:
     RawValue: 32768
+  StrengthIncomeWeight:
+    RawValue: 6553
+  BreakStrengthRatio:
+    RawValue: 98304
+  BreakAfterEnemySeconds:
+    RawValue: 1966080
+  NoteIntervalSeconds:
+    RawValue: 1310720
+  FriendlyNoteOpinion: 15
+  PeaceOpinion: 1
+  CommonEnemyOpinion: 5
+  AttackedOpinion: -15
+  StrongestOpinion: -3
+  BrokenOpinion: -60
+  RecentFightSeconds:
+    RawValue: 1966080
   ProposalIntervalSeconds:
     RawValue: 5898240
   DiplomacyIronReserve:

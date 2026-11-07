@@ -282,10 +282,10 @@ namespace FactoryWars.EditorTools {
       ai.IronShareLate = N(0.7);
       ai.MaxYards = maxYards;
       ai.MaxProcessors = maxProcessors;
-      ai.SteelTarget = 300;
+      ai.SteelTarget = 500;
       ai.IronSurplus = 300;
       ai.ProcessorIronFloor = 150;
-      ai.SteelCap = 600;
+      ai.SteelCap = 1500;
       ai.PowerReserve = 20;
       ai.ExpandDistance = 30;
       ai.ConcurrentBuilds = 1;
@@ -301,7 +301,22 @@ namespace FactoryWars.EditorTools {
       ai.SiteGrid = 7;
       ai.SiteRings = 7;
       ai.StrategicDiplomacy = strategic;
-      ai.AcceptChance = N(0.5);
+      // 보통은 점수로만, 쉬움은 낮은 기준에 무작위를 더해 판단한다.
+      ai.AcceptOpinion = strategic ? 40 : 10;
+      ai.AcceptChance = strategic ? 0 : N(0.3);
+      ai.StrengthUnitWeight = 1;
+      ai.StrengthBuildingWeight = N(0.5);
+      ai.StrengthIncomeWeight = N(0.1);
+      ai.BreakStrengthRatio = N(1.5);
+      ai.BreakAfterEnemySeconds = 30;
+      ai.NoteIntervalSeconds = 20;
+      ai.FriendlyNoteOpinion = 15;
+      ai.PeaceOpinion = 1;
+      ai.CommonEnemyOpinion = 5;
+      ai.AttackedOpinion = -15;
+      ai.StrongestOpinion = -3;
+      ai.BrokenOpinion = -60;
+      ai.RecentFightSeconds = 30;
       ai.ProposalIntervalSeconds = 90;
       ai.DiplomacyIronReserve = 600;
       EditorUtility.SetDirty(ai);
@@ -343,6 +358,10 @@ namespace FactoryWars.EditorTools {
       rules.RealliableSeconds = 60;
       rules.NoteCooldownSeconds = 5;
       rules.NotePhraseCount = 12;
+      // 순서는 Texts.Phrases: 0 동맹 어때요?, 3 고맙습니다, 5 함께 공격합시다, 9 좋은 경기였습니다, 11 알겠습니다
+      rules.FriendlyPhrases = new[] { 0, 3, 5, 9, 11 };
+      rules.OpinionIntervalSeconds = 10;
+      rules.OpinionLimit = 100;
       rules.NoteSingleCost = 50;
       rules.NoteGroupCost = 100;
       rules.PowerResumeLevel = 5;
@@ -363,10 +382,10 @@ namespace FactoryWars.EditorTools {
       rules.RepairPerSecond = 20;
       rules.RepairCostRatio = N(0.5);
       rules.FoundationHealthRatio = N(0.1);
-      rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 1, 420, 90, 6, 2, 12, false, new[] {
+      rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 2, 420, 90, 6, 2, 12, false, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
       }));
-      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 2, 2, 300, 60, 8, 3, 24, true, new[] {
+      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 2, 5, 300, 60, 8, 3, 24, true, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.ResearchLab,
         BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Airfield, BuildingRole.HeavyWorks, BuildingRole.DefenseTower, BuildingRole.SupplyDepot,
       }));

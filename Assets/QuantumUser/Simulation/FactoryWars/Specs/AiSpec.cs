@@ -38,7 +38,29 @@ namespace Quantum {
     public int SiteRings;
     /// <summary>true면 가장 강한 상대를 견제하는 동맹을 고르고, false면 제안을 무작위로 받는다.</summary>
     public bool StrategicDiplomacy;
+    /// <summary>점수가 모자라도 수락할 확률. 쉬움의 무작위성이다.</summary>
     public FP AcceptChance;
+    /// <summary>제안자를 보는 점수가 이 이상이어야 수락한다.</summary>
+    public int AcceptOpinion;
+    /// <summary>세력 = 유닛 가치 x StrengthUnitWeight + 건물 가치 x StrengthBuildingWeight + 누적 수입 x StrengthIncomeWeight.</summary>
+    public FP StrengthUnitWeight;
+    public FP StrengthBuildingWeight;
+    public FP StrengthIncomeWeight;
+    /// <summary>동맹이 2위의 이 배수 이상으로 강해지면 파기한다.</summary>
+    public FP BreakStrengthRatio;
+    /// <summary>공동의 적이 사라지고 이만큼 지나면 파기한다.</summary>
+    public FP BreakAfterEnemySeconds;
+    /// <summary>제안 전에 우호 쪽지를 보내는 간격.</summary>
+    public FP NoteIntervalSeconds;
+    /// <summary>점수 변화 폭. 쪽지 하나, 주기마다 평화·공동 전투·피격·최강 상대, 파기 한 번.</summary>
+    public int FriendlyNoteOpinion;
+    public int PeaceOpinion;
+    public int CommonEnemyOpinion;
+    public int AttackedOpinion;
+    public int StrongestOpinion;
+    public int BrokenOpinion;
+    /// <summary>"공격받음"·"같은 적과 싸움"으로 보는 최근 시간.</summary>
+    public FP RecentFightSeconds;
     public FP ProposalIntervalSeconds;
     public FP DiplomacyIronReserve;
   }

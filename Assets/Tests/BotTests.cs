@@ -82,6 +82,7 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Bot_EasyAnswersProposalWithEitherResult() {
       yield return StartMatch(Map4PScene, 4, bots: new[] { BotDifficulty.Easy, BotDifficulty.Easy, BotDifficulty.Easy });
+      yield return WaitFrames(CommandFrames);
       yield return Diplomacy(0, DiplomacyAction.Propose, 1);
       yield return Sim(10);
       var answered = DiplomacySystem.HasProposal(Verified, 0, 1) == false;

@@ -288,6 +288,7 @@ namespace Quantum.FactoryWars {
       for (var i = 0; i < f.PlayerCount; i++) {
         if ((receivers & (1 << i)) != 0) {
           f.Events.NoteReceived(player, i, PhraseId);
+          BotSystem.OnNoteReceived(f, i, player, PhraseId);
         }
       }
     }

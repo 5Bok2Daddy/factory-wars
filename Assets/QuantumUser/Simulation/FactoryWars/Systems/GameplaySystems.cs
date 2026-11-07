@@ -533,6 +533,7 @@ namespace Quantum.FactoryWars {
         return;
       }
       var spec = f.FindAsset(unit->Spec);
+      DiplomacySystem.NoteAttack(f, weapon.Owner, unit->Owner);
       amount *= UnitMultiplier(FactoryWarsUtil.Rules(f), weapon.Attack, spec);
       if (spec.Ability == SpecialAbility.GroundArmorResist && weapon.Attack == AttackType.AntiArmor && weapon.IsAir == false) {
         amount *= spec.AbilityMultiplier;
@@ -562,6 +563,7 @@ namespace Quantum.FactoryWars {
         if (building->Health <= FP._0) {
           return;
         }
+        DiplomacySystem.NoteAttack(f, weapon.Owner, building->Owner);
         amount *= BuildingMultiplier(FactoryWarsUtil.Rules(f), weapon.Attack);
         if (weapon.Ability == SpecialAbility.FlameBurst) {
           amount *= weapon.Spec.AbilityMultiplier;
