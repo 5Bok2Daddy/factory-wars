@@ -12,6 +12,10 @@ namespace FactoryWars.View {
     public BotDifficulty Difficulty = BotDifficulty.Normal;
     public MatchMode Mode = MatchMode.Duel;
     public int TruceMinutes = 7;
+    /// <summary>고른 색. 음수면 진영 기본 추천색이다.</summary>
+    public int ColorIndex = -1;
+
+    public int Color => ColorIndex >= 0 ? ColorIndex : Palette.Recommended(FactionIndex);
 
     public string Scene => FourPlayerMap ? "Map4P" : "Map2P";
 
@@ -48,10 +52,19 @@ namespace FactoryWars.View {
 
       int Team(int slot) => settings.Mode == MatchMode.Team ? slot / 2 : slot;
       AssetRef<FactionSpec> Faction(int slot) => factions[(settings.FactionIndex + slot) % factions.Length];
+      // AI는 사람이 고른 색을 피해 진영 추천색부터 남은 색을 쓴다.
+      var used = new System.Collections.Generic.HashSet<int> { settings.Color };
+      int BotColor(int slot) {
+        var color = Palette.Recommended((settings.FactionIndex + slot) % factions.Length);
+        while (used.Add(color) == false) {
+          color = (color + 1) % Palette.Count;
+        }
+        return color;
+      }
       config.Bots = Enumerable.Range(1, settings.Bots).Select(slot => new BotSlot {
-        Player = slot, Faction = Faction(slot), Team = Team(slot), Difficulty = settings.Difficulty,
+        Player = slot, Faction = Faction(slot), Team = Team(slot), Difficulty = settings.Difficulty, ColorIndex = BotColor(slot),
       }).ToArray();
-      runner.LocalPlayers = new[] { new RuntimePlayer { PlayerNickname = "지휘관", Faction = Faction(0), Team = Team(0) } };
+      runner.LocalPlayers = new[] { new RuntimePlayer { PlayerNickname = "지휘관", Faction = Faction(0), Team = Team(0), ColorIndex = settings.Color } };
       runner.MaxPlayerCount = settings.Players;
       runner.UseRandomSeed = true;
     }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FactoryWars.View;
 using Quantum;
 using UnityEngine;
 
@@ -7,9 +8,8 @@ using UnityEngine;
 /// 유닛은 캡슐, 건물은 큐브이고 진영 색으로 칠한다.
 /// </summary>
 public class FactoryWarsDebugView : MonoBehaviour {
-  static readonly Color FreeFederation = new Color32(0x1F, 0x3A, 0x6B, 0xFF);
-  static readonly Color ContinentalFederation = new Color32(0xA3, 0x22, 0x2B, 0xFF);
-  static readonly Color ResourceNodeColor = new Color32(0xE0, 0xB0, 0x30, 0xFF);
+  readonly Material[] _playerMaterials = new Material[Palette.Count];
+  Material _nodeMaterial;
 
   static readonly Color BridgeOpen = new Color32(0x8A, 0x70, 0x50, 0xFF);
   static readonly Color BridgeClosed = new Color32(0xB0, 0x30, 0x28, 0xFF);
@@ -27,13 +27,13 @@ public class FactoryWarsDebugView : MonoBehaviour {
 
     _seen.Clear();
     foreach (var pair in frame.GetComponentIterator<Unit>()) {
-      Draw(frame, pair.Entity, FactionColor(frame, pair.Component.Owner), PrimitiveType.Capsule, Vector3.one);
+      Draw(frame, pair.Entity, PlayerMaterial(frame, pair.Component.Owner), PrimitiveType.Capsule, Vector3.one);
     }
     foreach (var pair in frame.GetComponentIterator<Building>()) {
-      Draw(frame, pair.Entity, FactionColor(frame, pair.Component.Owner), PrimitiveType.Cube, new Vector3(5, 3, 5));
+      Draw(frame, pair.Entity, PlayerMaterial(frame, pair.Component.Owner), BuildingShape(frame, pair.Component.Owner), new Vector3(5, 3, 5));
     }
     foreach (var pair in frame.GetComponentIterator<ResourceNode>()) {
-      Draw(frame, pair.Entity, ResourceNodeColor, PrimitiveType.Cylinder, new Vector3(3, 1, 3));
+      Draw(frame, pair.Entity, NodeMaterial(), PrimitiveType.Cylinder, new Vector3(3, 1, 3));
     }
     DrawBridges(frame);
 
@@ -74,7 +74,7 @@ public class FactoryWarsDebugView : MonoBehaviour {
     }
   }
 
-  void Draw(Frame frame, EntityRef entity, Color color, PrimitiveType shape, Vector3 scale) {
+  void Draw(Frame frame, EntityRef entity, Material material, PrimitiveType shape, Vector3 scale) {
     _seen.Add(entity);
     if (_views.TryGetValue(entity, out var view) == false) {
       view = GameObject.CreatePrimitive(shape);
@@ -82,7 +82,7 @@ public class FactoryWarsDebugView : MonoBehaviour {
       view.transform.SetParent(transform, false);
       view.transform.localScale = scale;
       Destroy(view.GetComponent<Collider>());
-      view.GetComponent<Renderer>().material.color = color;
+      view.GetComponent<Renderer>().sharedMaterial = material;
       _views.Add(entity, view);
     }
     var position = frame.Get<Transform3D>(entity).Position.ToUnityVector3();
@@ -90,8 +90,25 @@ public class FactoryWarsDebugView : MonoBehaviour {
     view.transform.position = position;
   }
 
-  static Color FactionColor(Frame frame, PlayerRef owner) {
-    var faction = frame.FindAsset(frame.GetPlayerData(owner)?.Faction ?? default);
-    return faction != null && faction.FactionId == "continental_federation" ? ContinentalFederation : FreeFederation;
+  /// <summary>색은 플레이어가 고른 공유 머티리얼이다. 인스턴스마다 새로 만들지 않는다.</summary>
+  unsafe Material PlayerMaterial(Frame frame, PlayerRef owner) {
+    var index = frame.Global->Players.GetPointer(owner)->ColorIndex % Palette.Count;
+    if (_playerMaterials[index] == null) {
+      _playerMaterials[index] = Resources.Load<Material>($"FactoryWars/Materials/Player{index}");
+    }
+    return _playerMaterials[index];
+  }
+
+  Material NodeMaterial() {
+    if (_nodeMaterial == null) {
+      _nodeMaterial = Resources.Load<Material>("FactoryWars/Materials/Node");
+    }
+    return _nodeMaterial;
+  }
+
+  /// <summary>진영은 색이 아니라 형태로 구분한다. 자유 연방은 돔, 대륙 연방은 각진 상자다.</summary>
+  static unsafe PrimitiveType BuildingShape(Frame frame, PlayerRef owner) {
+    var faction = frame.FindAsset(frame.Global->Players.GetPointer(owner)->Faction);
+    return faction != null && faction.FactionId == "free_federation" ? PrimitiveType.Sphere : PrimitiveType.Cube;
   }
 }

@@ -33,6 +33,7 @@ namespace FactoryWars.EditorTools {
       ConfigureRenderPipeline();
       ConfigureQuantum();
       BuildData();
+      BuildMaterials();
       BuildTestScene();
       BuildMapScene(TwoPlayerMap);
       BuildMapScene(FourPlayerMap);
@@ -87,6 +88,30 @@ namespace FactoryWars.EditorTools {
       var simulation = QuantumDefaultConfigs.Global.SimulationConfig;
       simulation.Navigation.EnableNavigationCallbacks = true;
       EditorUtility.SetDirty(simulation);
+    }
+
+    const string MaterialRoot = DataRoot + "/Materials";
+
+    /// <summary>에셋으로 두어 빌드에 셰이더가 포함되게 한다. 플레이어 색은 8벌을 공유한다.</summary>
+    static Material ColorMaterial(string name, Color color) {
+      Directory.CreateDirectory(MaterialRoot);
+      var path = $"{MaterialRoot}/{name}.mat";
+      var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+      if (material == null) {
+        material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        AssetDatabase.CreateAsset(material, path);
+      }
+      material.color = color;
+      EditorUtility.SetDirty(material);
+      return material;
+    }
+
+    public static void BuildMaterials() {
+      for (var i = 0; i < FactoryWars.View.Palette.Count; i++) {
+        ColorMaterial($"Player{i}", FactoryWars.View.Palette.Colors[i]);
+      }
+      ColorMaterial("Node", new Color32(0xE0, 0xB0, 0x30, 0xFF));
+      AssetDatabase.SaveAssets();
     }
 
     static T Asset<T>(string name) where T : AssetObject {
@@ -345,6 +370,7 @@ namespace FactoryWars.EditorTools {
 
       var rules = Asset<GameRulesSpec>("game_rules");
       rules.NavMeshName = "NavMesh";
+      rules.PlayerColorCount = FactoryWars.View.Palette.Count;
       rules.TruceSeconds = 420;
       rules.BridgeRegion = BridgeRegion;
       rules.MinDiplomacyPlayers = 3;
@@ -747,7 +773,7 @@ namespace FactoryWars.EditorTools {
       runner.RuntimeConfig.JointVictory = true;
       runner.MaxPlayerCount = players;
       runner.LocalPlayers = Enumerable.Range(0, players)
-        .Select(i => new RuntimePlayer { PlayerNickname = $"{names[i % 2]}{i}", Faction = Ref(factions[i % 2]), Team = i })
+        .Select(i => new RuntimePlayer { PlayerNickname = $"{names[i % 2]}{i}", Faction = Ref(factions[i % 2]), Team = i, ColorIndex = i })
         .ToArray();
       EditorUtility.SetDirty(runner);
     }

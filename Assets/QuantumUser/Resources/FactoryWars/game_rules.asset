@@ -51,6 +51,7 @@ MonoBehaviour:
     RawValue: 327680
   OutageTowerIntervalMultiplier:
     RawValue: 131072
+  PlayerColorCount: 8
   SpawnOffset:
     RawValue: 393216
   AirAltitude:

@@ -44,6 +44,7 @@ struct PlayerState {
     FP PopulationUsed;
     FP PopulationCap;
     Int32 Team;
+    Int32 ColorIndex;
     Int32 NextNoteFrame;
     QBoolean Active;
     QBoolean Defeated;

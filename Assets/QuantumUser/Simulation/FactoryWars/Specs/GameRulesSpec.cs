@@ -42,6 +42,8 @@ namespace Quantum {
     public FP PowerResumeLevel;
     /// <summary>정전 중 방어탑 공격 간격 배율.</summary>
     public FP OutageTowerIntervalMultiplier;
+    /// <summary>고를 수 있는 플레이어 색 수.</summary>
+    public int PlayerColorCount;
     public FP SpawnOffset;
     public FP AirAltitude;
     public FP CarryCapacity;

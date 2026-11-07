@@ -223,6 +223,7 @@ namespace Quantum.Prototypes {
     public FP PopulationUsed;
     public FP PopulationCap;
     public Int32 Team;
+    public Int32 ColorIndex;
     public Int32 NextNoteFrame;
     public QBoolean Active;
     public QBoolean Defeated;
@@ -244,6 +245,7 @@ namespace Quantum.Prototypes {
         result.PopulationUsed = this.PopulationUsed;
         result.PopulationCap = this.PopulationCap;
         result.Team = this.Team;
+        result.ColorIndex = this.ColorIndex;
         result.NextNoteFrame = this.NextNoteFrame;
         result.Active = this.Active;
         result.Defeated = this.Defeated;

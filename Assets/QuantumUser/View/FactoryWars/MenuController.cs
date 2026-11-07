@@ -60,6 +60,7 @@ namespace FactoryWars.View {
     Button _bots;
     Button _difficulty;
     Button _truce;
+    Button _color;
 
     void Awake() {
       var canvas = Ui.CreateCanvas("Menu");
@@ -88,7 +89,10 @@ namespace FactoryWars.View {
       _mode = Add(_options, "", 190, NextMode);
       _bots = Add(_options, "", 40, NextBots);
       _difficulty = Add(_options, "", -110, NextDifficulty);
-      _truce = Add(_options, "", -260, NextTruce);
+      _truce = Add(_options, "", -260, NextTruce, 300);
+      ((RectTransform)_truce.transform).anchoredPosition = new Vector2(-160, -260);
+      _color = Add(_options, "", -260, NextColor, 300);
+      ((RectTransform)_color.transform).anchoredPosition = new Vector2(160, -260);
       var back = Ui.Button("Back", _options, "뒤로", () => Show(Screen.Faction), 34);
       Ui.Place((RectTransform)back.transform, new Vector2(0.5f, 0.5f), new Vector2(-220, -420), new Vector2(380, Ui.MinButtonSize));
       var begin = Ui.Button("Begin", _options, "대전 시작", Begin, 34);
@@ -161,6 +165,11 @@ namespace FactoryWars.View {
       RefreshOptions();
     }
 
+    public void NextColor() {
+      Settings.ColorIndex = (Settings.Color + 1) % Palette.Count;
+      RefreshOptions();
+    }
+
     void RefreshOptions() {
       Settings.Normalize();
       Ui.SetLabel(_map, $"맵: {(Settings.FourPlayerMap ? "4인" : "2인")}");
@@ -171,6 +180,10 @@ namespace FactoryWars.View {
       Ui.SetEnabled(_bots, Settings.Mode == MatchMode.FreeForAll);
       Ui.SetLabel(_difficulty, $"난이도: {(Settings.Difficulty == BotDifficulty.Easy ? "쉬움" : "보통")}");
       Ui.SetLabel(_truce, Settings.TruceMinutes == 0 ? "휴전: 없음" : $"휴전: {Settings.TruceMinutes}분");
+      var color = Palette.Colors[Settings.Color];
+      Ui.SetLabel(_color, $"색: {Palette.Names[Settings.Color]}");
+      _color.GetComponent<Image>().color = color;
+      _color.GetComponentInChildren<Text>().color = Palette.IsLight(color) ? Color.black : Color.white;
     }
 
     public void Begin() {

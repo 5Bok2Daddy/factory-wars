@@ -58,7 +58,7 @@ namespace Quantum.FactoryWars {
       var bots = f.RuntimeConfig.Bots;
       for (var i = 0; bots != null && i < bots.Length; i++) {
         PlayerRef player = bots[i].Player;
-        SetUpPlayer(f, player, bots[i].Faction, bots[i].Team);
+        SetUpPlayer(f, player, bots[i].Faction, bots[i].Team, bots[i].ColorIndex);
         BotSystem.Init(f, player, bots[i].Difficulty, StartPosition(f, player));
       }
     }
@@ -73,10 +73,27 @@ namespace Quantum.FactoryWars {
         return;
       }
       var data = f.GetPlayerData(player);
-      SetUpPlayer(f, player, data.Faction, data.Team);
+      SetUpPlayer(f, player, data.Faction, data.Team, data.ColorIndex);
     }
 
-    static void SetUpPlayer(Frame f, PlayerRef player, AssetRef<FactionSpec> factionRef, int team) {
+    /// <summary>원하는 색을 다른 플레이어가 쓰고 있으면 다음 빈 색을 준다. 합류 순서가 같으면 결과도 같다.</summary>
+    static int PickColor(Frame f, int wanted) {
+      var count = FactoryWarsUtil.Rules(f).PlayerColorCount;
+      for (var offset = 0; offset < count; offset++) {
+        var color = (wanted + offset) % count;
+        var taken = false;
+        for (var i = 0; i < f.PlayerCount; i++) {
+          var other = f.Global->Players.GetPointer(i);
+          taken |= other->Active && other->ColorIndex == color;
+        }
+        if (taken == false) {
+          return color;
+        }
+      }
+      return wanted % count;
+    }
+
+    static void SetUpPlayer(Frame f, PlayerRef player, AssetRef<FactionSpec> factionRef, int team, int color) {
       var state = FactoryWarsUtil.Player(f, player);
       var faction = f.FindAsset(factionRef);
       if (state == null || faction == null) {
@@ -87,6 +104,7 @@ namespace Quantum.FactoryWars {
       state->Faction = factionRef;
       state->Stock = f.RuntimeConfig.OverrideStartingResources ? f.RuntimeConfig.StartingResources : map.StartingResources;
       state->Team = team;
+      state->ColorIndex = PickColor(f, color);
       state->Active = true;
 
       if (f.RuntimeConfig.TeamMode) {

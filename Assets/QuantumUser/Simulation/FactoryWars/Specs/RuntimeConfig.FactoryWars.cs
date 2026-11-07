@@ -24,6 +24,7 @@ namespace Quantum {
     public int Player;
     public AssetRef<FactionSpec> Faction;
     public int Team;
+    public int ColorIndex;
     public BotDifficulty Difficulty;
   }
 
@@ -45,5 +46,7 @@ namespace Quantum {
   public partial class RuntimePlayer {
     public AssetRef<FactionSpec> Faction;
     public int Team;
+    /// <summary>고른 색. 화면 전용이지만 모든 기기에서 같아야 해서 플레이어 데이터로 보낸다.</summary>
+    public int ColorIndex;
   }
 }

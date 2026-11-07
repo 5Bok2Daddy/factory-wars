@@ -701,31 +701,33 @@ namespace Quantum {
     public FP PowerCap;
     [FieldOffset(88)]
     public FP PowerRate;
-    [FieldOffset(40)]
+    [FieldOffset(44)]
     public QBoolean Outage;
     [FieldOffset(56)]
     public FP OutageSeconds;
-    [FieldOffset(12)]
+    [FieldOffset(16)]
     public Int32 OutageCount;
     [FieldOffset(72)]
     public FP PopulationUsed;
     [FieldOffset(64)]
     public FP PopulationCap;
-    [FieldOffset(16)]
+    [FieldOffset(20)]
     public Int32 Team;
     [FieldOffset(8)]
+    public Int32 ColorIndex;
+    [FieldOffset(12)]
     public Int32 NextNoteFrame;
-    [FieldOffset(28)]
-    public QBoolean Active;
     [FieldOffset(32)]
-    public QBoolean Defeated;
+    public QBoolean Active;
     [FieldOffset(36)]
+    public QBoolean Defeated;
+    [FieldOffset(40)]
     public QBoolean IsBot;
     [FieldOffset(0)]
     public BotDifficulty Difficulty;
-    [FieldOffset(24)]
+    [FieldOffset(28)]
     public Int32 UnitsProduced;
-    [FieldOffset(20)]
+    [FieldOffset(24)]
     public Int32 UnitsLost;
     [FieldOffset(4)]
     public Int32 BuildingsLost;
@@ -744,6 +746,7 @@ namespace Quantum {
         hash = hash * 31 + PopulationUsed.GetHashCode();
         hash = hash * 31 + PopulationCap.GetHashCode();
         hash = hash * 31 + Team.GetHashCode();
+        hash = hash * 31 + ColorIndex.GetHashCode();
         hash = hash * 31 + NextNoteFrame.GetHashCode();
         hash = hash * 31 + Active.GetHashCode();
         hash = hash * 31 + Defeated.GetHashCode();
@@ -760,6 +763,7 @@ namespace Quantum {
         var p = (PlayerState*)ptr;
         serializer.Stream.Serialize((Byte*)&p->Difficulty);
         serializer.Stream.Serialize(&p->BuildingsLost);
+        serializer.Stream.Serialize(&p->ColorIndex);
         serializer.Stream.Serialize(&p->NextNoteFrame);
         serializer.Stream.Serialize(&p->OutageCount);
         serializer.Stream.Serialize(&p->Team);

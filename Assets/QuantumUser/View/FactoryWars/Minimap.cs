@@ -83,10 +83,10 @@ namespace FactoryWars.View {
       }
       Array.Copy(_base, _pixels, _base.Length);
       foreach (var pair in frame.GetComponentIterator<Building>()) {
-        Dot(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3(), 2, Palette.Player(pair.Component.Owner));
+        Dot(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3(), 2, Palette.Of(frame, pair.Component.Owner));
       }
       foreach (var pair in frame.GetComponentIterator<Unit>()) {
-        Dot(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3(), 1, Palette.Player(pair.Component.Owner));
+        Dot(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3(), 1, Palette.Of(frame, pair.Component.Owner));
       }
       _texture.SetPixels32(_pixels);
       _texture.Apply(false);
@@ -113,20 +113,28 @@ namespace FactoryWars.View {
     }
   }
 
-  public static class Palette {
-    public static readonly Color32 FreeFederation = new Color32(0x1F, 0x3A, 0x6B, 0xFF);
-    public static readonly Color32 ContinentalFederation = new Color32(0xA3, 0x22, 0x2B, 0xFF);
-    public static readonly Color32 ThirdPlayer = new Color32(0x46, 0x8C, 0xD7, 0xFF);
-    public static readonly Color32 FourthPlayer = new Color32(0xE1, 0xAF, 0x32, 0xFF);
+  /// <summary>
+  /// 플레이어 색 8개. 색각 이상 시뮬레이션에서도 어떤 두 색이든 구분된다(LocalMatchTests.Palette_*).
+  /// 앞의 둘은 진영 기본 추천색이다.
+  /// </summary>
+  public static unsafe class Palette {
+    public const int Count = 8;
 
-    /// <summary>자리별 색. 1번은 남색, 2번은 진홍, 3·4번은 별도 색이다.</summary>
-    public static Color32 Player(PlayerRef player) {
-      switch ((int)player) {
-        case 0: return FreeFederation;
-        case 1: return ContinentalFederation;
-        case 2: return ThirdPlayer;
-        default: return FourthPlayer;
-      }
-    }
+    public static readonly Color32[] Colors = {
+      new Color32(0x1F, 0x3A, 0x6B, 0xFF), new Color32(0xA3, 0x22, 0x2B, 0xFF), new Color32(0x56, 0xB4, 0xE9, 0xFF), new Color32(0xE6, 0x9F, 0x00, 0xFF),
+      new Color32(0x00, 0x9E, 0x73, 0xFF), new Color32(0xF0, 0xE4, 0x42, 0xFF), new Color32(0xCC, 0x79, 0xA7, 0xFF), new Color32(0xF2, 0xF2, 0xF2, 0xFF),
+    };
+
+    public static readonly string[] Names = { "남색", "진홍", "하늘", "주황", "청록", "노랑", "분홍", "흰색" };
+
+    /// <summary>진영 기본 추천색. 자유 연방은 남색, 대륙 연방은 진홍이다.</summary>
+    public static int Recommended(int factionIndex) => factionIndex % 2;
+
+    public static Color32 Of(Frame frame, PlayerRef player) => Colors[frame.Global->Players.GetPointer(player)->ColorIndex % Count];
+
+    public static string Hex(Color32 color) => $"#{color.r:X2}{color.g:X2}{color.b:X2}";
+
+    /// <summary>색 위에 쓸 글자가 잘 보이도록 밝은 색이면 true.</summary>
+    public static bool IsLight(Color32 color) => 0.299f * color.r + 0.587f * color.g + 0.114f * color.b > 150f;
   }
 }

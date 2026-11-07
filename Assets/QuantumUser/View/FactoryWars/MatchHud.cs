@@ -395,7 +395,8 @@ namespace FactoryWars.View {
         var relation = DiplomacySystem.GetRelation(frame, Controller.Player, row.Player);
         var other = frame.Global->Players.GetPointer(row.Player);
         var incoming = DiplomacySystem.HasProposal(frame, row.Player, Controller.Player);
-        row.Name.text = $"플레이어 {(int)row.Player + 1}\n{(other->Defeated ? "패배" : Texts.Relation(relation))}";
+        var mark = $"<color={Palette.Hex(Palette.Of(frame, row.Player))}>■</color>";
+        row.Name.text = $"{mark} 플레이어 {(int)row.Player + 1}\n{(other->Defeated ? "패배" : Texts.Relation(relation))}";
         Ui.SetEnabled(row.Propose, allowed && relation == Relation.Enemy && incoming == false && DiplomacySystem.HasProposal(frame, Controller.Player, row.Player) == false);
         Ui.SetEnabled(row.Accept, allowed && incoming);
         Ui.SetEnabled(row.Reject, allowed && incoming);
