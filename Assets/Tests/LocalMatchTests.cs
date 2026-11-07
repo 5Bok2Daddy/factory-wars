@@ -28,7 +28,7 @@ namespace FactoryWars.Tests {
     static QuantumGame Game => QuantumRunner.Default?.Game;
     static Frame Verified => Game.Frames.Verified;
 
-    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null, ResourceCost? stock = null) {
+    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null, ResourceCost? stock = null, bool swapFactions = false) {
       Time.timeScale = TimeScale;
       // 씬 로드 직후, 러너의 Start 전에 규칙을 바꾼다.
       UnityEngine.Events.UnityAction<Scene, LoadSceneMode> onLoaded = (loaded, mode) => {
@@ -43,6 +43,12 @@ namespace FactoryWars.Tests {
         }
         for (var i = 0; teamMode && i < list.Count; i++) {
           list[i].Team = i / 2;
+        }
+        if (swapFactions) {
+          var original = list.Select(p => p.Faction).ToArray();
+          for (var i = 0; i < list.Count; i++) {
+            list[i].Faction = original[(i + 1) % original.Length];
+          }
         }
         // 뒤쪽 자리를 AI에게 준다.
         var humans = players - (bots?.Length ?? 0);
