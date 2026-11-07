@@ -19,6 +19,28 @@ namespace Quantum {
     public int TruceSeconds;
     /// <summary>다리 입구를 막는 울타리의 NavMesh 영역 이름.</summary>
     public string BarrierRegion;
+    /// <summary>점령지를 중립에서 소유로, 또는 소유에서 중립으로 바꾸는 시간.</summary>
+    public FP CaptureSeconds;
+    /// <summary>아무도 없을 때 진행도가 다 빠지는 시간.</summary>
+    public FP CaptureDecaySeconds;
+    public FP CommsSteelPerSecond;
+    public FP RelayPowerPerSecond;
+    public FP BarricadeHealth;
+    public FP CratePickRadius;
+    /// <summary>본진 상자의 보상. 상자 자리의 Group 번호로 고른다.</summary>
+    public ResourceCost[] BaseCrateRewards;
+    public ResourceCost DropReward;
+    public FP DropIntervalSeconds;
+    public FP DropWarningSeconds;
+    /// <summary>고지대 위에서 고지대 밖을 쏠 때의 사거리 배율.</summary>
+    public FP HighGroundRangeMultiplier;
+    public FP HighGroundRevealDistance;
+    public FP HighGroundAirRevealDistance;
+    public FP HighGroundRevealSeconds;
+    public FP RoadSpeedMultiplier;
+    public FP FordSpeedMultiplier;
+    /// <summary>본진 공격 알림의 최소 간격.</summary>
+    public FP BaseAlertSeconds;
     public int MinDiplomacyPlayers;
     public FP ProposalSeconds;
     public FP ProposalCost;

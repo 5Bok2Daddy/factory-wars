@@ -34,6 +34,17 @@ MonoBehaviour:
     RawValue: 1572864
   LaneTimeoutSeconds:
     RawValue: 4587520
+  CaptureSquad: 6
+  SquadSeconds:
+    RawValue: 3932160
+  CenterArmyRatio:
+    RawValue: 98304
+  DropSquad: 5
+  BarricadeChance:
+    RawValue: 19660
+  HighGroundUnits: 3
+  HighGroundMinRange:
+    RawValue: 458752
   ExpandDistance:
     RawValue: 1966080
   MaxHeadquarters: 3

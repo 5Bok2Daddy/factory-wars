@@ -21,6 +21,20 @@ namespace Quantum {
     public FP LaneArrivalDistance;
     /// <summary>경유점에 못 닿아도 이 시간이 지나면 목표로 간다.</summary>
     public FP LaneTimeoutSeconds;
+    /// <summary>중계소나 통신소에 보내는 분대 크기. 0이면 보내지 않는다.</summary>
+    public int CaptureSquad;
+    /// <summary>분대를 묶어 두는 시간이자 다음 분대까지의 간격.</summary>
+    public FP SquadSeconds;
+    /// <summary>군대가 상대의 이 배수 이상이면 중앙 통신소를 노린다.</summary>
+    public FP CenterArmyRatio;
+    /// <summary>보급 투하에 보내는 분대 크기.</summary>
+    public int DropSquad;
+    /// <summary>측면 웨이브가 뒷길 바리케이드를 부술 확률.</summary>
+    public FP BarricadeChance;
+    /// <summary>고지대에 올리는 사거리 긴 유닛 수.</summary>
+    public int HighGroundUnits;
+    /// <summary>고지대에 올릴 유닛의 최소 사거리.</summary>
+    public FP HighGroundMinRange;
     /// <summary>일하는 노드가 반입 지점에서 이보다 멀면 노드 옆에 집하장을 짓는다.</summary>
     public FP ExpandDistance;
     /// <summary>시작 사령부를 포함한 사령부 상한.</summary>

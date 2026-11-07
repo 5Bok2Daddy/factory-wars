@@ -15,6 +15,7 @@ enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, Mod
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
 enum ResourceKind : Byte { Iron, Wood }
+enum CaptureKind : Byte { Comms, Relay }
 enum PauseReason : Byte { None, Outage }
 
 struct ResourceCost {
@@ -54,6 +55,11 @@ struct PlayerState {
     Int32 UnitsLost;
     Int32 BuildingsLost;
     ResourceCost Earned;
+    Int32 NextBaseAlertFrame;
+    Int32 Captures;
+    Int32 CaptureFrames;
+    Int32 CratesPicked;
+    Int32 HighGroundShots;
 }
 
 struct BotState {
@@ -68,6 +74,11 @@ struct BotState {
     Int32 LaneUntilFrame;
     Int32 CenterWaves;
     Int32 SideWaves;
+    entity_ref LaneBarricade;
+    entity_ref CrateRunner;
+    Int32 NextSquadFrame;
+    Int32 NextHighGroundFrame;
+    Int32 RespondedDropFrame;
 }
 
 struct ProductionOrder {
@@ -89,6 +100,9 @@ global {
     Int32 WinnerMask;
     Int32 TruceEndFrame;
     QBoolean BarrierOpen;
+    Int32 NextDropFrame;
+    Int32 DropGroup;
+    QBoolean DropAnnounced;
 }
 
 component Unit {
@@ -109,6 +123,9 @@ component Unit {
     Int32 SlideTurn;
     Int32 SlideFace;
     Int32 SlideUntilFrame;
+    Int32 LastFiredFrame;
+    Int32 ReservedUntilFrame;
+    QBoolean Swarming;
 }
 
 component Worker {
@@ -143,6 +160,30 @@ component ResourceNode {
     MapShape Shape;
 }
 
+// 공격 대상이 아니다. Claimant는 지금 진행도를 쌓는 쪽이다.
+component CaptureSite {
+    CaptureKind Kind;
+    FP Radius;
+    Int32 Index;
+    player_ref Owner;
+    player_ref Claimant;
+    FP Progress;
+    QBoolean Contested;
+}
+
+// 중립이다. 지정 공격과 범위 피해만 받는다.
+component Barricade {
+    Int32 Index;
+    FP Health;
+    MapShape Shape;
+}
+
+// Seat가 0 이상이면 그 자리만 회수한다.
+component SupplyCrate {
+    Int32 Seat;
+    ResourceCost Reward;
+}
+
 singleton component Diplomacy {
     array<Relation>[RELATION_CELLS] Relations;
     array<AllianceProposal>[MAX_PROPOSALS] Proposals;
@@ -168,6 +209,13 @@ synced event AllianceChanged { player_ref A; player_ref B; Relation Relation; }
 event UnitDestroyed { entity_ref Unit; player_ref Owner; asset_ref<UnitSpec> Spec; }
 synced event PlayerDefeated { player_ref Player; }
 synced event BarrierOpened { Int32 Frame; }
+synced event CaptureStarted { entity_ref Site; player_ref Player; }
+synced event CaptureContested { entity_ref Site; }
+synced event CaptureChanged { entity_ref Site; player_ref Previous; player_ref Next; }
+synced event BarricadeDestroyed { Int32 Index; }
+synced event SupplyDropIncoming { Int32 Group; Int32 Frame; }
+synced event CratePicked { player_ref Player; FPVector3 Position; ResourceCost Reward; }
+synced event BaseUnderAttack { player_ref Player; FPVector3 Position; }
 synced event PowerOutage { player_ref Player; QBoolean Started; }
 synced event BuildingPaused { entity_ref Building; PauseReason Reason; }
 synced event GameOver { Int32 WinnerMask; }

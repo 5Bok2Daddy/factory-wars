@@ -80,5 +80,31 @@ namespace Quantum {
     /// <summary>얕은 개울. 통과할 수 있다.</summary>
     public MapShape[] Fords;
     public ExpansionSite[] Expansions;
+    /// <summary>도로·여울 판정 격자. 유닛마다 프레임마다 모양을 검사하지 않도록 맵을 구울 때 칠한다. 0 일반, 1 도로, 2 여울.</summary>
+    public byte[] GroundGrid;
+    public int GroundGridSize;
+    public FP GroundGridCell;
+
+    public const int GroundRoad = 1;
+    public const int GroundFord = 2;
+
+    public int GroundAt(FPVector3 position) {
+      if (GroundGrid == null || GroundGrid.Length == 0) {
+        return 0;
+      }
+      var x = FPMath.FloorToInt((position.X - BoundsMin.X) / GroundGridCell);
+      var z = FPMath.FloorToInt((position.Z - BoundsMin.Y) / GroundGridCell);
+      return x < 0 || z < 0 || x >= GroundGridSize || z >= GroundGridSize ? 0 : GroundGrid[z * GroundGridSize + x];
+    }
+
+    /// <summary>위치가 들어 있는 고지대 번호. 없으면 -1이다.</summary>
+    public int HighGroundAt(FPVector3 position) {
+      for (var i = 0; HighGrounds != null && i < HighGrounds.Length; i++) {
+        if (HighGrounds[i].Distance(position) <= FP._0) {
+          return i;
+        }
+      }
+      return -1;
+    }
   }
 }

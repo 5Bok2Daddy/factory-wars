@@ -77,6 +77,33 @@ namespace FactoryWars.View {
     static string Population(FP value) => Mathf.FloorToInt(value.AsFloat + 0.001f).ToString();
 
     public const string BarrierAlert = "전쟁 시작 - 방어 울타리가 해제됩니다!";
+    public const string DropIncoming = "보급 투하 20초 전";
+    public const string BackdoorOpened = "뒷길이 열렸습니다";
+    public const string BaseAttacked = "본진이 공격받고 있습니다";
+
+    public static string SiteName(CaptureKind kind) => kind == CaptureKind.Comms ? "중앙 통신소" : "발전 중계소";
+
+    public static string Captured(CaptureKind kind) => $"{SiteName(kind)}를 점령했습니다";
+
+    public static string Lost(CaptureKind kind) => $"{SiteName(kind)}를 빼앗겼습니다";
+
+    /// <summary>상자 보상 글자. 0이 아닌 자원만 쓴다.</summary>
+    public static string Reward(ResourceCost reward) {
+      var parts = new System.Collections.Generic.List<string>();
+      if (reward.Iron > 0) {
+        parts.Add($"+{reward.Iron.AsInt} 철");
+      }
+      if (reward.Wood > 0) {
+        parts.Add($"+{reward.Wood.AsInt} 목재");
+      }
+      if (reward.Steel > 0) {
+        parts.Add($"+{reward.Steel.AsInt} 강철");
+      }
+      if (reward.Power > 0) {
+        parts.Add($"+{reward.Power.AsInt} 전기");
+      }
+      return string.Join(" ", parts);
+    }
 
     public static string TruceCountdown(float seconds) {
       var whole = Mathf.CeilToInt(seconds);

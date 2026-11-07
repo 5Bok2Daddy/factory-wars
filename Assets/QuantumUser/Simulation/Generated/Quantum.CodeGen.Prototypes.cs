@@ -64,8 +64,27 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.Barricade))]
+  public unsafe partial class BarricadePrototype : ComponentPrototype<Quantum.Barricade> {
+    public Int32 Index;
+    public FP Health;
+    public Quantum.Prototypes.MapShapePrototype Shape;
+    partial void MaterializeUser(Frame frame, ref Quantum.Barricade result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.Barricade component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.Barricade result, in PrototypeMaterializationContext context = default) {
+        result.Index = this.Index;
+        result.Health = this.Health;
+        this.Shape.Materialize(frame, ref result.Shape, in context);
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.BotState))]
-  public unsafe partial class BotStatePrototype : StructPrototype {
+  public unsafe class BotStatePrototype : StructPrototype {
     public FPVector3 Home;
     public Int32 NextThinkFrame;
     public Int32 NextAttackFrame;
@@ -77,7 +96,11 @@ namespace Quantum.Prototypes {
     public Int32 LaneUntilFrame;
     public Int32 CenterWaves;
     public Int32 SideWaves;
-    partial void MaterializeUser(Frame frame, ref Quantum.BotState result, in PrototypeMaterializationContext context);
+    public MapEntityId LaneBarricade;
+    public MapEntityId CrateRunner;
+    public Int32 NextSquadFrame;
+    public Int32 NextHighGroundFrame;
+    public Int32 RespondedDropFrame;
     public void Materialize(Frame frame, ref Quantum.BotState result, in PrototypeMaterializationContext context = default) {
         result.Home = this.Home;
         result.NextThinkFrame = this.NextThinkFrame;
@@ -90,7 +113,11 @@ namespace Quantum.Prototypes {
         result.LaneUntilFrame = this.LaneUntilFrame;
         result.CenterWaves = this.CenterWaves;
         result.SideWaves = this.SideWaves;
-        MaterializeUser(frame, ref result, in context);
+        PrototypeValidator.FindMapEntity(this.LaneBarricade, in context, out result.LaneBarricade);
+        PrototypeValidator.FindMapEntity(this.CrateRunner, in context, out result.CrateRunner);
+        result.NextSquadFrame = this.NextSquadFrame;
+        result.NextHighGroundFrame = this.NextHighGroundFrame;
+        result.RespondedDropFrame = this.RespondedDropFrame;
     }
   }
   [System.SerializableAttribute()]
@@ -134,6 +161,33 @@ namespace Quantum.Prototypes {
         result.Paused = this.Paused;
         result.ProcessorOff = this.ProcessorOff;
         result.ProcessTimer = this.ProcessTimer;
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.CaptureSite))]
+  public unsafe partial class CaptureSitePrototype : ComponentPrototype<Quantum.CaptureSite> {
+    public Quantum.QEnum8<CaptureKind> Kind;
+    public FP Radius;
+    public Int32 Index;
+    public PlayerRef Owner;
+    public PlayerRef Claimant;
+    public FP Progress;
+    public QBoolean Contested;
+    partial void MaterializeUser(Frame frame, ref Quantum.CaptureSite result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.CaptureSite component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.CaptureSite result, in PrototypeMaterializationContext context = default) {
+        result.Kind = this.Kind;
+        result.Radius = this.Radius;
+        result.Index = this.Index;
+        result.Owner = this.Owner;
+        result.Claimant = this.Claimant;
+        result.Progress = this.Progress;
+        result.Contested = this.Contested;
+        MaterializeUser(frame, ref result, in context);
     }
   }
   [System.SerializableAttribute()]
@@ -243,6 +297,11 @@ namespace Quantum.Prototypes {
     public Int32 UnitsLost;
     public Int32 BuildingsLost;
     public Quantum.Prototypes.ResourceCostPrototype Earned;
+    public Int32 NextBaseAlertFrame;
+    public Int32 Captures;
+    public Int32 CaptureFrames;
+    public Int32 CratesPicked;
+    public Int32 HighGroundShots;
     partial void MaterializeUser(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context = default) {
         result.Faction = this.Faction;
@@ -265,6 +324,11 @@ namespace Quantum.Prototypes {
         result.UnitsLost = this.UnitsLost;
         result.BuildingsLost = this.BuildingsLost;
         this.Earned.Materialize(frame, ref result.Earned, in context);
+        result.NextBaseAlertFrame = this.NextBaseAlertFrame;
+        result.Captures = this.Captures;
+        result.CaptureFrames = this.CaptureFrames;
+        result.CratesPicked = this.CratesPicked;
+        result.HighGroundShots = this.HighGroundShots;
         MaterializeUser(frame, ref result, in context);
     }
   }
@@ -316,6 +380,23 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.SupplyCrate))]
+  public unsafe partial class SupplyCratePrototype : ComponentPrototype<Quantum.SupplyCrate> {
+    public Int32 Seat;
+    public Quantum.Prototypes.ResourceCostPrototype Reward;
+    partial void MaterializeUser(Frame frame, ref Quantum.SupplyCrate result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.SupplyCrate component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.SupplyCrate result, in PrototypeMaterializationContext context = default) {
+        result.Seat = this.Seat;
+        this.Reward.Materialize(frame, ref result.Reward, in context);
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.Unit))]
   public unsafe class UnitPrototype : ComponentPrototype<Quantum.Unit> {
     public PlayerRef Owner;
@@ -336,6 +417,9 @@ namespace Quantum.Prototypes {
     public Int32 SlideTurn;
     public Int32 SlideFace;
     public Int32 SlideUntilFrame;
+    public Int32 LastFiredFrame;
+    public Int32 ReservedUntilFrame;
+    public QBoolean Swarming;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Unit component = default;
         Materialize((Frame)f, ref component, in context);
@@ -361,6 +445,9 @@ namespace Quantum.Prototypes {
         result.SlideTurn = this.SlideTurn;
         result.SlideFace = this.SlideFace;
         result.SlideUntilFrame = this.SlideUntilFrame;
+        result.LastFiredFrame = this.LastFiredFrame;
+        result.ReservedUntilFrame = this.ReservedUntilFrame;
+        result.Swarming = this.Swarming;
     }
   }
   [System.SerializableAttribute()]

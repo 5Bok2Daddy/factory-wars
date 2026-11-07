@@ -1929,3 +1929,22 @@ AI 행동도 함께 넣었습니다.
 | 17 맵 재설계 | 완료 |
 | 20 재미 요소 | 진행 중 |
 | 19 그래픽 | 대기 |
+
+## 항목 20 브리핑
+
+**현재 구조:** 맵은 `FactoryWarsMaps.cs`의 정의에서 `MapSpec`으로 구워진다. 화면은 `TerrainKit`(지형 메쉬)과 `WorldView`(자원·울타리)가 `MapSpec`을 읽어 만든다.
+
+| 요소 | Quantum 구현 |
+| --- | --- |
+| 점령지 | `CaptureSite` 컴포넌트, `BattlefieldSystem`, 이벤트 `CaptureStarted`·`CaptureContested`·`CaptureChanged` |
+| 바리케이드 | `Barricade` 컴포넌트. 피해는 `CombatSystem`, 파괴 시 영역을 열고 `BarricadeDestroyed` |
+| 보급 상자 | `SupplyCrate` 컴포넌트, `BattlefieldSystem`, 이벤트 `SupplyDropIncoming`·`CratePicked` |
+| 고지대 | `FactoryWarsUtil.IsVisibleTo`, `CombatSystem.RangeTo`, `Unit.LastFiredFrame` |
+| 도로·여울 | 맵을 구울 때 2m 격자로 칠한 `MapSpec.GroundGrid`, `MovementSystem.GroundSpeed` |
+| 본진 공격 알림 | 이벤트 `BaseUnderAttack` |
+
+**지시와 다른 곳:**
+
+1. **도로·여울 판정:** 유닛 400기가 프레임마다 도로 조각 130개를 검사하면 무거워서, 모양을 격자로 구워 읽는다. 원본 데이터는 `Roads`, `Fords` 그대로다.
+2. **"자동 조준 대상이 아니다":** 바리케이드는 주인이 없어서 자동 조준 코드에 원래 들어가지 않는다. 지정 공격과 범위 피해 경로만 추가한다.
+3. **지시의 자유 연방 20:0:** 끼임 버그가 있을 때의 수치다. 기준은 항목 17 결과(2인 6:4, 4인 10:0)로 삼는다.

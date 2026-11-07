@@ -384,6 +384,13 @@ namespace FactoryWars.EditorTools {
       ai.SideLaneChance = N(0.4);
       ai.LaneArrivalDistance = 24;
       ai.LaneTimeoutSeconds = 70;
+      ai.CaptureSquad = id == "ai_normal" ? 6 : 0;
+      ai.SquadSeconds = 60;
+      ai.CenterArmyRatio = N(1.5);
+      ai.DropSquad = id == "ai_normal" ? 5 : 0;
+      ai.BarricadeChance = id == "ai_normal" ? N(0.3) : 0;
+      ai.HighGroundUnits = id == "ai_normal" ? 3 : 0;
+      ai.HighGroundMinRange = 7;
       ai.MaxProcessors = maxProcessors;
       ai.SteelTarget = 500;
       ai.IronSurplus = 300;
@@ -461,6 +468,23 @@ namespace FactoryWars.EditorTools {
       rules.PlayerColorCount = FactoryWars.View.Palette.Count;
       rules.TruceSeconds = 420;
       rules.BarrierRegion = BarrierRegion;
+      rules.CaptureSeconds = 10;
+      rules.CaptureDecaySeconds = 30;
+      rules.CommsSteelPerSecond = 1;
+      rules.RelayPowerPerSecond = 3;
+      rules.BarricadeHealth = 1500;
+      rules.CratePickRadius = 2;
+      rules.BaseCrateRewards = new[] { R(100, 0), R(0, 100) };
+      rules.DropReward = R(200, 0, 150, 0);
+      rules.DropIntervalSeconds = 150;
+      rules.DropWarningSeconds = 20;
+      rules.HighGroundRangeMultiplier = N(1.15);
+      rules.HighGroundRevealDistance = 6;
+      rules.HighGroundAirRevealDistance = 12;
+      rules.HighGroundRevealSeconds = 3;
+      rules.RoadSpeedMultiplier = N(1.1);
+      rules.FordSpeedMultiplier = N(0.75);
+      rules.BaseAlertSeconds = 30;
       rules.MinDiplomacyPlayers = 3;
       rules.ProposalSeconds = 30;
       rules.ProposalCost = 300;
@@ -533,6 +557,12 @@ namespace FactoryWars.EditorTools {
         Feature(TerrainKind.Rock, Circle(40, -40, 3)),
       };
       testMap.NoBuildZones = new[] { Rect(40, -22, 6, 6) };
+      // 전장 규칙 시험용. 다른 시험이 지나가지 않는 맵 남쪽에 둔다.
+      testMap.CaptureSites = new[] { Site(CaptureKind.Comms, -35, -38, 6), Site(CaptureKind.Relay, -20, -44, 3) };
+      testMap.HighGrounds = new[] { Circle(42, 24, 6) };
+      testMap.Roads = new[] { Rect(10, -44, 20, 3) };
+      testMap.Fords = new[] { Rect(10, -36, 20, 2) };
+      BakeGroundGrid(testMap);
       EditorUtility.SetDirty(testMap);
 
       BuildMapSpec(TwoPlayerMap);
@@ -625,6 +655,29 @@ namespace FactoryWars.EditorTools {
       var everyone = (1 << def.Players) - 1;
       sites.AddRange(def.CenterExpansions.Select(site => new ExpansionSite { Kind = site.Kind, Position = site.Position, SeatMask = everyone }));
       spec.Expansions = sites.ToArray();
+      BakeGroundGrid(spec);
+    }
+
+    /// <summary>도로와 여울을 격자로 칠한다. 칸 중심이 모양 안이면 그 칸이다. 여울이 도로보다 우선이다.</summary>
+    static void BakeGroundGrid(MapSpec spec) {
+      const int Cell = 2;
+      var size = (int)((spec.BoundsMax.X - spec.BoundsMin.X).AsFloat / Cell);
+      spec.GroundGridSize = size;
+      spec.GroundGridCell = Cell;
+      spec.GroundGrid = new byte[size * size];
+      for (var z = 0; z < size; z++) {
+        for (var x = 0; x < size; x++) {
+          var point = new FPVector3(spec.BoundsMin.X + x * Cell + 1, 0, spec.BoundsMin.Y + z * Cell + 1);
+          var ground = 0;
+          if ((spec.Roads ?? new MapShape[0]).Any(road => road.Distance(point) <= FP._0)) {
+            ground = MapSpec.GroundRoad;
+          }
+          if ((spec.Fords ?? new MapShape[0]).Any(ford => ford.Distance(point) <= FP._0)) {
+            ground = MapSpec.GroundFord;
+          }
+          spec.GroundGrid[z * size + x] = (byte)ground;
+        }
+      }
     }
 
     static void BuildMapScene(MapDef def) {

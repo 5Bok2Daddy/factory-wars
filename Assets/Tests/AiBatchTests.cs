@@ -89,8 +89,22 @@ namespace FactoryWars.Tests {
       File.AppendAllLines(Path.Combine(AiFolder(), "crossing.csv"), tracker.Crossings(map, run));
       File.AppendAllLines(Path.Combine(AiFolder(), "expansions.csv"), tracker.Expansions);
       File.AppendAllLines(Path.Combine(AiFolder(), "lanes.csv"), LaneRows(map, run, players));
+      File.AppendAllLines(Path.Combine(AiFolder(), "battlefield.csv"), BattlefieldRows(map, run, players));
       Debug.Log($"[FW-AI] {row} real {F(Time.realtimeSinceStartup - realStart)}s");
       Assert.Greater(seconds, 0f);
+    }
+
+    /// <summary>자리별 결과와 전장 요소 기록. 승리는 자리 번호로 남긴다.</summary>
+    static unsafe IEnumerable<string> BattlefieldRows(string map, int run, int players) {
+      var rows = new List<string>();
+      var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      var broken = (spec.Barricades?.Length ?? 0) - Verified.ComponentCount<Barricade>();
+      var winners = Verified.Global->GameEnded ? Verified.Global->WinnerMask : 0;
+      for (var p = 0; p < players; p++) {
+        var state = Verified.Global->Players.GetPointer(p);
+        rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{((winners >> p) & 1)},{state->Captures},{F(state->CaptureFrames / (float)Fps)},{state->CratesPicked},{state->HighGroundShots},{broken}");
+      }
+      return rows;
     }
 
     static unsafe IEnumerable<string> LaneRows(string map, int run, int players) {

@@ -453,21 +453,35 @@ namespace Quantum.FactoryWars {
     }
 
     static bool IsValidTarget(Frame f, in Weapon weapon, EntityRef target) {
+      if (f.Has<Barricade>(target)) {
+        return FactoryWarsUtil.InTruce(f) == false && weapon.Attack != AttackType.AntiAir;
+      }
       return TryGetOwner(f, target, out var targetOwner)
         && DiplomacySystem.CanAttack(f, weapon.Owner, targetOwner)
         && CanHit(f, weapon, target);
     }
 
+    /// <summary>고지대 위에서 고지대 밖을 쏘면 사거리가 는다.</summary>
+    public static FP RangeTo(Frame f, FP range, FPVector3 from, FPVector3 to) {
+      var map = FactoryWarsUtil.MapInfo(f);
+      return map.HighGroundAt(from) >= 0 && map.HighGroundAt(to) < 0 ? range * FactoryWarsUtil.Rules(f).HighGroundRangeMultiplier : range;
+    }
+
     static EntityRef FindTarget(Frame f, in Weapon weapon, FPVector3 position, FP minRange, FP range, bool airOnly = false) {
       var best = EntityRef.None;
-      var bestDistance = range * range;
+      var map = FactoryWarsUtil.MapInfo(f);
+      var elevated = map.HighGroundAt(position) >= 0;
+      var longest = elevated ? range * FactoryWarsUtil.Rules(f).HighGroundRangeMultiplier : range;
+      var bestDistance = longest * longest;
       var minDistance = minRange * minRange;
 
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform, out _)) {
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, position);
         if (distance <= bestDistance && distance >= minDistance && IsValidTarget(f, weapon, entity)
-            && (airOnly == false || IsAirUnit(f, entity))) {
+            && (airOnly == false || IsAirUnit(f, entity))
+            && (elevated == false || distance <= RangeSqr(f, range, position, transform->Position))
+            && FactoryWarsUtil.IsVisibleTo(f, weapon.Owner, entity)) {
           best = entity;
           bestDistance = distance;
         }
@@ -489,10 +503,17 @@ namespace Quantum.FactoryWars {
       return best;
     }
 
-    /// <summary>대상을 맞힐 수 있는 중심 간 거리의 제곱. 건물은 부지 가장자리까지 잰다.</summary>
+    static FP RangeSqr(Frame f, FP range, FPVector3 from, FPVector3 to) {
+      var value = RangeTo(f, range, from, to);
+      return value * value;
+    }
+
+    /// <summary>대상을 맞힐 수 있는 중심 간 거리의 제곱. 건물은 부지 가장자리까지, 바리케이드는 앞면까지 잰다.</summary>
     public static FP ReachSqr(Frame f, EntityRef target, FP range) {
       if (f.Unsafe.TryGetPointer<Building>(target, out var building)) {
         range += f.FindAsset(building->Spec).FootprintRadius;
+      } else if (f.Unsafe.TryGetPointer<Barricade>(target, out var barricade)) {
+        range += barricade->Shape.HalfWidth + FP._2 + FP._1;
       }
       return range * range;
     }
@@ -568,6 +589,7 @@ namespace Quantum.FactoryWars {
           return;
         }
         DiplomacySystem.NoteAttack(f, weapon.Owner, building->Owner);
+        WarnBase(f, target, building);
         amount *= BuildingMultiplier(FactoryWarsUtil.Rules(f), weapon.Attack);
         if (weapon.Ability == SpecialAbility.FlameBurst) {
           amount *= weapon.Spec.AbilityMultiplier;
@@ -577,6 +599,22 @@ namespace Quantum.FactoryWars {
           FactoryWarsUtil.Player(f, building->Owner)->BuildingsLost++;
           f.Destroy(target);
         }
+      } else if (f.Unsafe.TryGetPointer<Barricade>(target, out var barricade)) {
+        BattlefieldSystem.HitBarricade(f, target, barricade, amount * BuildingMultiplier(FactoryWarsUtil.Rules(f), weapon.Attack));
+      }
+    }
+
+    /// <summary>본진 안 건물이 맞으면 주인에게 알린다. 자주 울리지 않게 간격을 둔다.</summary>
+    static void WarnBase(Frame f, EntityRef target, Building* building) {
+      var state = FactoryWarsUtil.Player(f, building->Owner);
+      var areas = FactoryWarsUtil.MapInfo(f).BaseAreas;
+      if (areas == null || areas.Length == 0 || f.Number < state->NextBaseAlertFrame) {
+        return;
+      }
+      var position = f.Unsafe.GetPointer<Transform3D>(target)->Position;
+      if (areas[(int)building->Owner % areas.Length].Distance(position) <= FP._0) {
+        state->NextBaseAlertFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, FactoryWarsUtil.Rules(f).BaseAlertSeconds);
+        f.Events.BaseUnderAttack(building->Owner, position);
       }
     }
 
@@ -591,6 +629,12 @@ namespace Quantum.FactoryWars {
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out var entity, out var transform, out _)) {
         if (FactoryWarsUtil.FlatDistanceSqr(transform->Position, center) <= radiusSqr && IsValidTarget(f, weapon, entity)) {
+          Damage(f, weapon, entity, amount);
+        }
+      }
+      var barricades = f.Filter<Barricade>();
+      while (barricades.NextUnsafe(out var entity, out var barricade)) {
+        if (barricade->Shape.Distance(center) <= radius && IsValidTarget(f, weapon, entity)) {
           Damage(f, weapon, entity, amount);
         }
       }
@@ -642,6 +686,10 @@ namespace Quantum.FactoryWars {
       }
 
       unit->AttackCooldown = spec.AttackInterval;
+      unit->LastFiredFrame = f.Number;
+      if (FactoryWarsUtil.MapInfo(f).HighGroundAt(position) >= 0) {
+        FactoryWarsUtil.Player(f, unit->Owner)->HighGroundShots++;
+      }
       if (spec.Ability == SpecialAbility.MultiAirTarget) {
         FireMultiAir(f, weapon, target, position, range, amount);
       } else if (spec.SplashRadius > FP._0) {
@@ -674,7 +722,7 @@ namespace Quantum.FactoryWars {
           TryCarpetBomb(f, weapon, unit, position);
         }
 
-        if (unit->TargetEntity != EntityRef.None && IsValidTarget(f, weapon, unit->TargetEntity) == false) {
+        if (unit->TargetEntity != EntityRef.None && (IsValidTarget(f, weapon, unit->TargetEntity) == false || FactoryWarsUtil.IsVisibleTo(f, unit->Owner, unit->TargetEntity) == false)) {
           unit->TargetEntity = EntityRef.None;
           if (unit->Order == UnitOrder.AttackTarget) {
             unit->Order = UnitOrder.Stop;
@@ -697,7 +745,7 @@ namespace Quantum.FactoryWars {
 
         var targetPosition = f.Unsafe.GetPointer<Transform3D>(unit->TargetEntity)->Position;
         var distance = FactoryWarsUtil.FlatDistanceSqr(targetPosition, position);
-        if (distance > ReachSqr(f, unit->TargetEntity, range) || distance < spec.MinRange * spec.MinRange) {
+        if (distance > ReachSqr(f, unit->TargetEntity, RangeTo(f, range, position, targetPosition)) || distance < spec.MinRange * spec.MinRange) {
           // 정지 상태에서 사거리를 벗어난 대상은 쫓지 않는다.
           if (unit->Order == UnitOrder.Stop) {
             unit->TargetEntity = EntityRef.None;
@@ -796,6 +844,8 @@ namespace Quantum.FactoryWars {
         UpdateSwarmSpeed(f);
       }
 
+      var map = FactoryWarsUtil.MapInfo(f);
+      var rules = FactoryWarsUtil.Rules(f);
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
         var spec = f.FindAsset(unit->Spec);
@@ -804,7 +854,7 @@ namespace Quantum.FactoryWars {
 
         if (unit->TargetEntity != EntityRef.None && unit->Order != UnitOrder.Move
             && f.Unsafe.TryGetPointer<Transform3D>(unit->TargetEntity, out var targetTransform)) {
-          var range = CombatSystem.EffectiveRange(f, unit, spec);
+          var range = CombatSystem.RangeTo(f, CombatSystem.EffectiveRange(f, unit, spec), transform->Position, targetTransform->Position);
           if (FactoryWarsUtil.FlatDistanceSqr(targetTransform->Position, transform->Position) <= CombatSystem.ReachSqr(f, unit->TargetEntity, range)) {
             Halt(f, entity);
             continue;
@@ -814,7 +864,7 @@ namespace Quantum.FactoryWars {
           }
           // 쫓는 경로는 1초마다 갱신한다.
           hasDestination = true;
-          destination = targetTransform->Position;
+          destination = f.Unsafe.TryGetPointer<Barricade>(unit->TargetEntity, out var barricade) ? BattlefieldSystem.FrontOf(barricade, transform->Position) : targetTransform->Position;
           if (spec.IsAir == false && f.Number % repathFrames == 0) {
             SetDestination(f, entity, destination);
           }
@@ -826,6 +876,8 @@ namespace Quantum.FactoryWars {
 
         if (spec.IsAir && hasDestination) {
           MoveAir(f, transform, unit, spec, destination);
+        } else if (spec.IsAir == false && f.Unsafe.TryGetPointer<NavMeshSteeringAgent>(entity, out var agent)) {
+          agent->MaxSpeed = GroundSpeed(map, rules, spec, unit, transform->Position);
         }
       }
 
@@ -899,10 +951,17 @@ namespace Quantum.FactoryWars {
       }
     }
 
+    /// <summary>능력과 도로·여울을 합친 지상 이동 속도.</summary>
+    public static FP GroundSpeed(MapSpec map, GameRulesSpec rules, UnitSpec spec, Unit* unit, FPVector3 position) {
+      var speed = unit->Swarming ? spec.MoveSpeed * spec.AbilityMultiplier : spec.MoveSpeed;
+      var ground = map.GroundAt(position);
+      return ground == MapSpec.GroundRoad ? speed * rules.RoadSpeedMultiplier : ground == MapSpec.GroundFord ? speed * rules.FordSpeedMultiplier : speed;
+    }
+
     /// <summary>같은 유닛이 AbilityCount대 이상이면 이동 속도가 오른다. 1초마다 갱신한다.</summary>
     static void UpdateSwarmSpeed(Frame f) {
-      var units = f.Filter<Unit, NavMeshSteeringAgent>();
-      while (units.NextUnsafe(out _, out var unit, out var agent)) {
+      var units = f.Filter<Unit>();
+      while (units.NextUnsafe(out _, out var unit)) {
         var spec = f.FindAsset(unit->Spec);
         if (spec.Ability != SpecialAbility.SwarmSpeed) {
           continue;
@@ -914,7 +973,7 @@ namespace Quantum.FactoryWars {
             count++;
           }
         }
-        agent->MaxSpeed = count >= spec.AbilityCount ? spec.MoveSpeed * spec.AbilityMultiplier : spec.MoveSpeed;
+        unit->Swarming = count >= spec.AbilityCount;
       }
     }
 

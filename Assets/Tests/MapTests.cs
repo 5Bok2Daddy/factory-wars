@@ -28,8 +28,24 @@ namespace FactoryWars.Tests {
 
     static string T(float value) => value.ToString("0.0", CultureInfo.InvariantCulture);
 
-    /// <summary>전차들을 동시에 보내 각각 도착까지 걸린 시뮬레이션 초를 잰다.</summary>
-    IEnumerator TimeRoutes((EntityRef Unit, int Player, FPVector3 Target)[] routes, float[] seconds) {
+    /// <summary>
+    /// 전차들을 동시에 보내 각각 도착까지 걸린 시뮬레이션 초를 잰다. 항목 17의 기준은 전차 5m/s이므로 도로·여울 효과를 끄고 잰다.
+    /// roads가 true면 도로를 켠 값이다.
+    /// </summary>
+    IEnumerator TimeRoutes((EntityRef Unit, int Player, FPVector3 Target)[] routes, float[] seconds, bool roads = false) {
+      var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      var grid = spec.GroundGrid;
+      if (roads == false) {
+        spec.GroundGrid = null;
+      }
+      try {
+        yield return TimeRoutesOnce(routes, seconds);
+      } finally {
+        spec.GroundGrid = grid;
+      }
+    }
+
+    IEnumerator TimeRoutesOnce((EntityRef Unit, int Player, FPVector3 Target)[] routes, float[] seconds) {
       var startFrame = Verified.Number;
       for (var i = 0; i < routes.Length; i++) {
         Game.SendCommand(routes[i].Player, new MoveUnitsCommand { Units = new[] { routes[i].Unit }, Target = routes[i].Target });
@@ -313,6 +329,14 @@ namespace FactoryWars.Tests {
       Assert.GreaterOrEqual(seconds[3], 10f);
       Assert.LessOrEqual(seconds[3], 15f);
       Assert.LessOrEqual(Mathf.Abs(seconds[4] - seconds[6]), 2f, "공유 확장 거리 차이");
+    }
+
+    [UnityTest]
+    public IEnumerator Map2P_CenterLaneWithRoads() {
+      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -100, -57) }, truce: 0);
+      var seconds = new float[1];
+      yield return TimeRoutes(new[] { (TankNear(0, V(-100, -57)), 0, V(57, 100)) }, seconds, roads: true);
+      Measure("Map2P 중앙 길 초(도로 적용)", T(seconds[0]));
     }
 
     [UnityTest]

@@ -19,6 +19,62 @@ MonoBehaviour:
   NavMeshName: NavMesh
   TruceSeconds: 420
   BarrierRegion: Barrier
+  CaptureSeconds:
+    RawValue: 655360
+  CaptureDecaySeconds:
+    RawValue: 1966080
+  CommsSteelPerSecond:
+    RawValue: 65536
+  RelayPowerPerSecond:
+    RawValue: 196608
+  BarricadeHealth:
+    RawValue: 98304000
+  CratePickRadius:
+    RawValue: 131072
+  BaseCrateRewards:
+  - Iron:
+      RawValue: 6553600
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  - Iron:
+      RawValue: 0
+    Wood:
+      RawValue: 6553600
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  DropReward:
+    Iron:
+      RawValue: 13107200
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 9830400
+    Power:
+      RawValue: 0
+  DropIntervalSeconds:
+    RawValue: 9830400
+  DropWarningSeconds:
+    RawValue: 1310720
+  HighGroundRangeMultiplier:
+    RawValue: 75366
+  HighGroundRevealDistance:
+    RawValue: 393216
+  HighGroundAirRevealDistance:
+    RawValue: 786432
+  HighGroundRevealSeconds:
+    RawValue: 196608
+  RoadSpeedMultiplier:
+    RawValue: 72089
+  FordSpeedMultiplier:
+    RawValue: 49152
+  BaseAlertSeconds:
+    RawValue: 1966080
   MinDiplomacyPlayers: 3
   ProposalSeconds:
     RawValue: 1966080

@@ -108,6 +108,38 @@ namespace FactoryWars.View {
       Turn.localRotation = Quaternion.Euler(0, degrees, 0);
     }
 
+    GameObject _hidden;
+    static Mesh _hiddenRing;
+
+    /// <summary>숨은 상태 표시. 선택 고리 바깥의 점선 고리다.</summary>
+    public void SetHidden(bool hidden) {
+      if (hidden && _hidden == null) {
+        _hidden = Marker("Hidden", transform, HiddenMesh());
+        _hidden.transform.localPosition = Vector3.up * RingLift;
+        _hidden.transform.localScale = new Vector3(Entry.RingRadius * 1.25f, 1, Entry.RingRadius * 1.25f);
+      }
+      if (_hidden != null && _hidden.activeSelf != hidden) {
+        _hidden.SetActive(hidden);
+      }
+    }
+
+    public bool IsHiddenShown => _hidden != null && _hidden.activeSelf;
+
+    static Mesh HiddenMesh() {
+      if (_hiddenRing == null) {
+        var kit = new MeshKit().Paint(Swatch.White);
+        const int Dashes = 12;
+        for (var i = 0; i < Dashes; i++) {
+          var a = Mathf.PI * 2f * i / Dashes;
+          var b = a + Mathf.PI / Dashes;
+          Vector3 P(float angle, float r) => new Vector3(Mathf.Sin(angle) * r, 0, Mathf.Cos(angle) * r);
+          kit.Quad(P(a, 1f - RingWidth), P(a, 1f), P(b, 1f), P(b, 1f - RingWidth), Vector3.up);
+        }
+        _hiddenRing = kit.ToMesh("marker_hidden");
+      }
+      return _hiddenRing;
+    }
+
     public void SetSelected(bool selected) {
       Ring.SetActive(selected);
       Bar.SetActive(selected);

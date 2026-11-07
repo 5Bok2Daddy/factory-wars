@@ -154,6 +154,96 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventNoteReceived>(this, OnNote);
       QuantumEvent.Subscribe<EventPowerOutage>(this, OnOutage);
       QuantumEvent.Subscribe<EventBarrierOpened>(this, e => ShowAlert(Texts.BarrierAlert));
+      QuantumEvent.Subscribe<EventCaptureChanged>(this, OnCapture);
+      QuantumEvent.Subscribe<EventSupplyDropIncoming>(this, OnDropIncoming);
+      QuantumEvent.Subscribe<EventBarricadeDestroyed>(this, OnBarricade);
+      QuantumEvent.Subscribe<EventBaseUnderAttack>(this, OnBaseAttacked);
+      QuantumEvent.Subscribe<EventCratePicked>(this, OnCratePicked);
+    }
+
+    void OnBaseAttacked(EventBaseUnderAttack e) {
+      if (e.Player == Controller.Player) {
+        ShowAlert(Texts.BaseAttacked);
+        _minimap.Ping(e.Position.ToUnityVector3());
+      }
+    }
+
+    void OnCratePicked(EventCratePicked e) {
+      if (e.Player == Controller.Player) {
+        FloatText(e.Position.ToUnityVector3(), Texts.Reward(e.Reward));
+      }
+    }
+
+    unsafe void OnCapture(EventCaptureChanged e) {
+      var frame = e.Game.Frames.Verified;
+      if (frame == null || frame.Exists(e.Site) == false) {
+        return;
+      }
+      var kind = frame.Get<CaptureSite>(e.Site).Kind;
+      var position = frame.Get<Transform3D>(e.Site).Position.ToUnityVector3();
+      if (e.Next == Controller.Player) {
+        ShowAlert(Texts.Captured(kind));
+        _minimap.Ping(position);
+      } else if (e.Previous == Controller.Player) {
+        ShowAlert(Texts.Lost(kind));
+        _minimap.Ping(position);
+      }
+    }
+
+    void OnDropIncoming(EventSupplyDropIncoming e) {
+      ShowAlert(Texts.DropIncoming);
+      var spots = MapOf(e.Game)?.CrateSpots;
+      for (var i = 0; spots != null && i < spots.Length; i++) {
+        if (spots[i].Seat < 0 && spots[i].Group == e.Group) {
+          _minimap.Ping(spots[i].Position.ToUnityVector3());
+        }
+      }
+    }
+
+    void OnBarricade(EventBarricadeDestroyed e) {
+      ShowAlert(Texts.BackdoorOpened);
+      var barricades = MapOf(e.Game)?.Barricades;
+      if (barricades != null && e.Index < barricades.Length) {
+        _minimap.Ping(barricades[e.Index].Shape.Center.ToUnityVector3());
+      }
+    }
+
+    static MapSpec MapOf(QuantumGame game) {
+      var frame = game?.Frames?.Verified;
+      return frame?.FindAsset<MapSpec>(frame.Map.UserAsset);
+    }
+
+    const float FloatSeconds = 1.4f;
+    const float FloatRise = 70f;
+    readonly System.Collections.Generic.List<(Text Label, Vector3 World, float Start)> _floats = new System.Collections.Generic.List<(Text, Vector3, float)>();
+
+    public int FloatCount => _floats.Count;
+
+    /// <summary>월드 위치에서 떠오르는 글자.</summary>
+    public void FloatText(Vector3 world, string text) {
+      var label = Ui.Label("Float", Root, text, 34, TextAnchor.MiddleCenter);
+      label.color = new Color(1f, 0.95f, 0.55f);
+      label.rectTransform.anchorMin = label.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+      label.rectTransform.sizeDelta = new Vector2(420, 48);
+      _floats.Add((label, world, Time.unscaledTime));
+      UpdateFloats();
+    }
+
+    void UpdateFloats() {
+      var camera = Camera.main;
+      for (var i = _floats.Count - 1; i >= 0; i--) {
+        var (label, world, start) = _floats[i];
+        var age = (Time.unscaledTime - start) / FloatSeconds;
+        if (age >= 1f || camera == null) {
+          Destroy(label.gameObject);
+          _floats.RemoveAt(i);
+          continue;
+        }
+        var screen = camera.WorldToScreenPoint(world + Vector3.up * 2f);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)label.rectTransform.parent, screen, null, out var local);
+        label.rectTransform.anchoredPosition = local + Vector2.up * (FloatRise * age);
+        label.color = new Color(label.color.r, label.color.g, label.color.b, 1f - age * age);
+      }
     }
 
     void BuildDiplomacy(Frame frame) {
@@ -277,6 +367,9 @@ namespace FactoryWars.View {
       }
       if (_alert.text.Length > 0 && Time.unscaledTime >= _alertUntil) {
         _alert.text = "";
+      }
+      if (_floats.Count > 0) {
+        UpdateFloats();
       }
       if (_note.text.Length > 0 && Time.unscaledTime >= _noteUntil) {
         _note.text = "";

@@ -50,6 +50,47 @@ namespace Quantum.Prototypes.Unity {
   #endif //;
   
   [System.SerializableAttribute()]
+  public unsafe partial class BotStatePrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.BotStatePrototype> {
+    public FPVector3 Home;
+    public Int32 NextThinkFrame;
+    public Int32 NextAttackFrame;
+    public Int32 NextProposalFrame;
+    public Int32 NextNoteFrame;
+    public Int32 WaveSize;
+    public FPVector3 LanePoint;
+    public FPVector3 LaneTarget;
+    public Int32 LaneUntilFrame;
+    public Int32 CenterWaves;
+    public Int32 SideWaves;
+    public Quantum.QuantumEntityPrototype LaneBarricade;
+    public Quantum.QuantumEntityPrototype CrateRunner;
+    public Int32 NextSquadFrame;
+    public Int32 NextHighGroundFrame;
+    public Int32 RespondedDropFrame;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BotStatePrototype prototype);
+    public override Quantum.Prototypes.BotStatePrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.BotStatePrototype();
+      converter.Convert(this.Home, out result.Home);
+      converter.Convert(this.NextThinkFrame, out result.NextThinkFrame);
+      converter.Convert(this.NextAttackFrame, out result.NextAttackFrame);
+      converter.Convert(this.NextProposalFrame, out result.NextProposalFrame);
+      converter.Convert(this.NextNoteFrame, out result.NextNoteFrame);
+      converter.Convert(this.WaveSize, out result.WaveSize);
+      converter.Convert(this.LanePoint, out result.LanePoint);
+      converter.Convert(this.LaneTarget, out result.LaneTarget);
+      converter.Convert(this.LaneUntilFrame, out result.LaneUntilFrame);
+      converter.Convert(this.CenterWaves, out result.CenterWaves);
+      converter.Convert(this.SideWaves, out result.SideWaves);
+      converter.Convert(this.LaneBarricade, out result.LaneBarricade);
+      converter.Convert(this.CrateRunner, out result.CrateRunner);
+      converter.Convert(this.NextSquadFrame, out result.NextSquadFrame);
+      converter.Convert(this.NextHighGroundFrame, out result.NextHighGroundFrame);
+      converter.Convert(this.RespondedDropFrame, out result.RespondedDropFrame);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
   public unsafe partial class BuildingPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.BuildingPrototype> {
     public PlayerRef Owner;
     public AssetRef<BuildingSpec> Spec;
@@ -106,6 +147,9 @@ namespace Quantum.Prototypes.Unity {
     public Int32 SlideTurn;
     public Int32 SlideFace;
     public Int32 SlideUntilFrame;
+    public Int32 LastFiredFrame;
+    public Int32 ReservedUntilFrame;
+    public QBoolean Swarming;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
     public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.UnitPrototype();
@@ -126,6 +170,9 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.SlideTurn, out result.SlideTurn);
       converter.Convert(this.SlideFace, out result.SlideFace);
       converter.Convert(this.SlideUntilFrame, out result.SlideUntilFrame);
+      converter.Convert(this.LastFiredFrame, out result.LastFiredFrame);
+      converter.Convert(this.ReservedUntilFrame, out result.ReservedUntilFrame);
+      converter.Convert(this.Swarming, out result.Swarming);
       ConvertUser(converter, ref result);
       return result;
     }

@@ -58,6 +58,7 @@ namespace FactoryWars.View {
     MatchController _controller;
 
     public WorldView World { get; private set; }
+    public BattlefieldView Field { get; private set; }
     public BattleFx Fx { get; private set; }
     public IReadOnlyDictionary<EntityRef, Actor> Actors => _actors;
 
@@ -79,6 +80,7 @@ namespace FactoryWars.View {
       Fx = new GameObject("Fx").AddComponent<BattleFx>();
       Fx.transform.SetParent(transform, false);
       World.Fx = Fx;
+      Field = new BattlefieldView(transform);
       _controller = FindAnyObjectByType<MatchController>();
     }
 
@@ -92,6 +94,7 @@ namespace FactoryWars.View {
       }
       var dt = Time.deltaTime;
       World.Update(frame, dt);
+      Field.Update(frame, dt);
 
       _seen.Clear();
       var units = frame.Filter<Transform3D, Unit>();
@@ -265,6 +268,14 @@ namespace FactoryWars.View {
         actor.Color = color;
         ArtLook.Apply(actor.View.Model, color);
       }
+      // 고지대 은폐: 적에게 숨은 유닛은 그리지 않고, 내 숨은 유닛은 점선 고리로 알린다.
+      var viewer = _controller != null ? _controller.Player : PlayerRef.None;
+      var visible = viewer.IsValid == false || FactoryWarsUtil.IsVisibleTo(frame, viewer, entity);
+      if (actor.View.gameObject.activeSelf != visible) {
+        actor.View.gameObject.SetActive(visible);
+      }
+      var hidden = unit->Owner == viewer && FactoryWarsUtil.MapInfo(frame).HighGroundAt(transform3D->Position) >= 0 && OthersCannotSee(frame, entity, unit->Owner);
+      actor.View.SetHidden(hidden);
 
       var goal = transform3D->Position.ToUnityVector3();
       goal.y = 0f;
@@ -291,6 +302,18 @@ namespace FactoryWars.View {
 
       var working = frame.Unsafe.TryGetPointer<Worker>(entity, out var worker) && worker->Task != WorkerTask.Idle && worker->Task != WorkerTask.Deliver;
       Animate(actor, dt, true, working);
+    }
+
+    /// <summary>적 중 누구에게도 보이지 않으면 숨은 것이다.</summary>
+    static bool OthersCannotSee(Frame frame, EntityRef entity, PlayerRef owner) {
+      for (var i = 0; i < frame.PlayerCount; i++) {
+        PlayerRef other = i;
+        if (other != owner && frame.Global->Players.GetPointer(i)->Active && DiplomacySystem.GetRelation(frame, other, owner) != Relation.Allied
+            && FactoryWarsUtil.IsVisibleTo(frame, other, entity)) {
+          return false;
+        }
+      }
+      return true;
     }
 
     static Mesh ScaffoldMesh() {

@@ -94,9 +94,38 @@ namespace FactoryWars.View {
       foreach (var pair in frame.GetComponentIterator<Unit>()) {
         Dot(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3(), 1, Palette.Of(frame, pair.Component.Owner));
       }
+      DrawPings();
       _texture.SetPixels32(_pixels);
       _texture.Apply(false);
       RefreshMarks(frame);
+    }
+
+    const float PingSeconds = 4f;
+    static readonly Color32 PingColor = new Color32(255, 220, 60, 255);
+    readonly System.Collections.Generic.List<(Vector3 World, float Until)> _pings = new System.Collections.Generic.List<(Vector3, float)>();
+
+    public int PingCount => _pings.Count;
+
+    /// <summary>미니맵에 깜빡이는 고리를 잠시 띄운다.</summary>
+    public void Ping(Vector3 world) => _pings.Add((world, Time.unscaledTime + PingSeconds));
+
+    void DrawPings() {
+      _pings.RemoveAll(p => Time.unscaledTime >= p.Until);
+      if (Mathf.Repeat(Time.unscaledTime, 0.5f) > 0.3f) {
+        return;
+      }
+      foreach (var (world, _) in _pings) {
+        var cx = ToPixel(world.x, _min.x, _max.x);
+        var cy = ToPixel(world.z, _min.y, _max.y);
+        for (var a = 0; a < 32; a++) {
+          var angle = a * Mathf.PI / 16f;
+          for (var r = 5; r <= 6; r++) {
+            var x = Mathf.Clamp(cx + Mathf.RoundToInt(Mathf.Cos(angle) * r), 0, Size - 1);
+            var y = Mathf.Clamp(cy + Mathf.RoundToInt(Mathf.Sin(angle) * r), 0, Size - 1);
+            _pixels[y * Size + x] = PingColor;
+          }
+        }
+      }
     }
 
     /// <summary>플레이어마다 첫 사령부 자리에 진영 마크를 놓는다. 사령부를 다 잃으면 숨긴다.</summary>

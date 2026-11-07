@@ -77,6 +77,8 @@ namespace Quantum.FactoryWars {
         Produce(f, player, state, ai, faction, engineers, reserve);
       }
       Attack(f, player, bot, ai);
+      CollectCrates(f, player, bot);
+      PlayBattlefield(f, player, bot, ai);
       Negotiate(f, player, state, bot, ai);
     }
 
@@ -137,8 +139,9 @@ namespace Quantum.FactoryWars {
 
       var share = counts[(int)BuildingRole.PowerPlant] > 0 ? ai.IronShareLate : ai.IronShareEarly;
       workers = f.Filter<Unit, Worker>();
+      var runner = f.Global->Bots.GetPointer(player)->CrateRunner;
       while (workers.NextUnsafe(out var entity, out var unit, out var worker)) {
-        if (unit->Owner != player || worker->Task != WorkerTask.Idle) {
+        if (unit->Owner != player || worker->Task != WorkerTask.Idle || entity == runner) {
           continue;
         }
         if (needsBuilder) {
@@ -517,7 +520,7 @@ namespace Quantum.FactoryWars {
       var count = 0;
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out _, out var transform, out var unit)) {
-        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None) {
+        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None && f.Number >= unit->ReservedUntilFrame) {
           sum += transform->Position;
           count++;
         }
@@ -613,16 +616,53 @@ namespace Quantum.FactoryWars {
       var ordered = 0;
       var units = f.Filter<Unit>();
       while (ordered < MaxOrder && units.NextUnsafe(out var entity, out var unit)) {
-        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None) {
+        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None && f.Number >= unit->ReservedUntilFrame) {
           MovementSystem.Order(f, entity, unit, UnitOrder.AttackMove, target);
           ordered++;
         }
       }
     }
 
+    /// <summary>군대가 바리케이드를 지정 공격한다.</summary>
+    static void OrderBreach(Frame f, PlayerRef player, EntityRef barricade) {
+      var ordered = 0;
+      var units = f.Filter<Unit>();
+      while (ordered < MaxOrder && units.NextUnsafe(out _, out var unit)) {
+        var spec = f.FindAsset(unit->Spec);
+        if (unit->Owner == player && spec.Attack != AttackType.None && spec.Attack != AttackType.AntiAir && f.Number >= unit->ReservedUntilFrame) {
+          unit->TargetEntity = barricade;
+          unit->Order = UnitOrder.AttackTarget;
+          ordered++;
+        }
+      }
+    }
+
+    static EntityRef NearestBarricade(Frame f, FPVector3 from) {
+      var best = FP.MaxValue;
+      var found = EntityRef.None;
+      var barricades = f.Filter<Transform3D, Barricade>();
+      while (barricades.NextUnsafe(out var entity, out var transform, out _)) {
+        var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, from);
+        if (distance < best) {
+          best = distance;
+          found = entity;
+        }
+      }
+      return found;
+    }
+
     /// <summary>경유점에 닿았거나 시간이 지났으면 목표로 보낸다.</summary>
     static void FollowLane(Frame f, PlayerRef player, BotState* bot, AiSpec ai) {
       if (bot->LaneUntilFrame == 0) {
+        return;
+      }
+      if (bot->LaneBarricade != EntityRef.None) {
+        if (f.Exists(bot->LaneBarricade) && f.Number < bot->LaneUntilFrame) {
+          return;
+        }
+        bot->LaneBarricade = EntityRef.None;
+        OrderArmy(f, player, bot->LanePoint);
+        bot->LaneUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.LaneTimeoutSeconds);
         return;
       }
       var center = ArmyCenter(f, player, bot->Home);
@@ -632,24 +672,159 @@ namespace Quantum.FactoryWars {
       }
     }
 
-    static void Attack(Frame f, PlayerRef player, BotState* bot, AiSpec ai) {
-      FollowLane(f, player, bot, ai);
-      if (f.Number < bot->NextAttackFrame || FactoryWarsUtil.InTruce(f)) {
-        return;
-      }
-      var army = 0;
-      var enemyArmy = 0;
+    /// <summary>은폐된 적은 AI도 모른다.</summary>
+    static void CountArmies(Frame f, PlayerRef player, out int army, out int enemyArmy) {
+      army = 0;
+      enemyArmy = 0;
       var units = f.Filter<Unit>();
-      while (units.NextUnsafe(out _, out var unit)) {
+      while (units.NextUnsafe(out var entity, out var unit)) {
         if (f.FindAsset(unit->Spec).Attack == AttackType.None) {
           continue;
         }
         if (unit->Owner == player) {
           army++;
-        } else if (DiplomacySystem.CanAttack(f, player, unit->Owner)) {
+        } else if (DiplomacySystem.CanAttack(f, player, unit->Owner) && FactoryWarsUtil.IsVisibleTo(f, player, entity)) {
           enemyArmy++;
         }
       }
+    }
+
+    /// <summary>본진 상자를 공병 하나가 돌며 줍는다.</summary>
+    static void CollectCrates(Frame f, PlayerRef player, BotState* bot) {
+      var best = FP.MaxValue;
+      var target = default(FPVector3);
+      var crates = f.Filter<Transform3D, SupplyCrate>();
+      while (crates.NextUnsafe(out _, out var transform, out var crate)) {
+        var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, bot->Home);
+        if (crate->Seat == (int)player && distance < best) {
+          best = distance;
+          target = transform->Position;
+        }
+      }
+      if (best == FP.MaxValue) {
+        bot->CrateRunner = EntityRef.None;
+        return;
+      }
+      if (bot->CrateRunner == EntityRef.None || f.Exists(bot->CrateRunner) == false) {
+        if (FindBuilder(f, player, target, out var engineer) == false) {
+          return;
+        }
+        bot->CrateRunner = engineer;
+      }
+      var runner = f.Unsafe.GetPointer<Unit>(bot->CrateRunner);
+      if (runner->Order != UnitOrder.Move || runner->TargetPosition != target) {
+        MovementSystem.Order(f, bot->CrateRunner, runner, UnitOrder.Move, target);
+      }
+    }
+
+    /// <summary>목표에서 가까운 지상 전투 유닛을 골라 분대로 묶는다. 묶인 동안 본대 명령을 받지 않는다.</summary>
+    static void SendSquad(Frame f, PlayerRef player, FPVector3 target, int count, AiSpec ai, FP minRange) {
+      var until = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
+      for (var i = 0; i < count; i++) {
+        var best = FP.MaxValue;
+        var pick = EntityRef.None;
+        var units = f.Filter<Transform3D, Unit>();
+        while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
+          var spec = f.FindAsset(unit->Spec);
+          if (unit->Owner != player || spec.Attack == AttackType.None || spec.IsAir || spec.Range < minRange || f.Number < unit->ReservedUntilFrame) {
+            continue;
+          }
+          var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, target);
+          if (distance < best) {
+            best = distance;
+            pick = entity;
+          }
+        }
+        if (pick == EntityRef.None) {
+          return;
+        }
+        var chosen = f.Unsafe.GetPointer<Unit>(pick);
+        chosen->ReservedUntilFrame = until;
+        MovementSystem.Order(f, pick, chosen, UnitOrder.AttackMove, target);
+      }
+    }
+
+    static bool IsFriendlySite(Frame f, PlayerRef player, CaptureSite* site) {
+      return site->Owner.IsValid && (site->Owner == player || DiplomacySystem.GetRelation(f, player, site->Owner) == Relation.Allied);
+    }
+
+    static bool FindSite(Frame f, PlayerRef player, FPVector3 home, CaptureKind kind, out FPVector3 position) {
+      var best = FP.MaxValue;
+      position = default;
+      var sites = f.Filter<Transform3D, CaptureSite>();
+      while (sites.NextUnsafe(out _, out var transform, out var site)) {
+        var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, home);
+        if (site->Kind == kind && IsFriendlySite(f, player, site) == false && distance < best) {
+          best = distance;
+          position = transform->Position;
+        }
+      }
+      return best < FP.MaxValue;
+    }
+
+    /// <summary>보통 AI의 전장 판단: 중계소, 통신소, 보급 투하, 고지대.</summary>
+    static void PlayBattlefield(Frame f, PlayerRef player, BotState* bot, AiSpec ai) {
+      // 확장 후보가 없는 맵(규칙 시험장)에서는 분대를 빼지 않는다.
+      var sites = FactoryWarsUtil.MapInfo(f).Expansions;
+      if (FactoryWarsUtil.InTruce(f) || sites == null || sites.Length == 0) {
+        return;
+      }
+      if (ai.DropSquad > 0 && f.Global->DropAnnounced && bot->RespondedDropFrame != f.Global->NextDropFrame) {
+        bot->RespondedDropFrame = f.Global->NextDropFrame;
+        if (NearestDrop(f, bot->Home, out var drop)) {
+          SendSquad(f, player, drop, ai.DropSquad, ai, FP._0);
+        }
+      }
+      if (ai.CaptureSquad > 0 && f.Number >= bot->NextSquadFrame) {
+        CountArmies(f, player, out var army, out var enemyArmy);
+        var strong = army >= enemyArmy * ai.CenterArmyRatio;
+        if ((strong && FindSite(f, player, bot->Home, CaptureKind.Comms, out var site)) || FindSite(f, player, bot->Home, CaptureKind.Relay, out site)) {
+          SendSquad(f, player, site, ai.CaptureSquad, ai, FP._0);
+          bot->NextSquadFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
+        }
+      }
+      if (ai.HighGroundUnits > 0 && f.Number >= bot->NextHighGroundFrame) {
+        bot->NextHighGroundFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
+        if (NearestHighGround(f, bot->Home, out var ground)) {
+          SendSquad(f, player, ground, ai.HighGroundUnits, ai, ai.HighGroundMinRange);
+        }
+      }
+    }
+
+    static bool NearestDrop(Frame f, FPVector3 home, out FPVector3 position) {
+      var best = FP.MaxValue;
+      position = default;
+      var spots = FactoryWarsUtil.MapInfo(f).CrateSpots;
+      for (var i = 0; spots != null && i < spots.Length; i++) {
+        var distance = FactoryWarsUtil.FlatDistanceSqr(spots[i].Position, home);
+        if (spots[i].Seat < 0 && spots[i].Group == f.Global->DropGroup && distance < best) {
+          best = distance;
+          position = spots[i].Position;
+        }
+      }
+      return best < FP.MaxValue;
+    }
+
+    static bool NearestHighGround(Frame f, FPVector3 home, out FPVector3 position) {
+      var best = FP.MaxValue;
+      position = default;
+      var grounds = FactoryWarsUtil.MapInfo(f).HighGrounds;
+      for (var i = 0; grounds != null && i < grounds.Length; i++) {
+        var distance = FactoryWarsUtil.FlatDistanceSqr(grounds[i].Center, home);
+        if (distance < best) {
+          best = distance;
+          position = grounds[i].Center;
+        }
+      }
+      return best < FP.MaxValue;
+    }
+
+    static void Attack(Frame f, PlayerRef player, BotState* bot, AiSpec ai) {
+      FollowLane(f, player, bot, ai);
+      if (f.Number < bot->NextAttackFrame || FactoryWarsUtil.InTruce(f)) {
+        return;
+      }
+      CountArmies(f, player, out var army, out var enemyArmy);
       var sweeping = IsSweeping(army, enemyArmy, ai);
       FPVector3 target;
       PlayerRef enemy = default;
@@ -682,7 +857,13 @@ namespace Quantum.FactoryWars {
         bot->LanePoint = lane;
         bot->LaneTarget = target;
         bot->LaneUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.LaneTimeoutSeconds);
-        OrderArmy(f, player, lane);
+        var breach = hasSide && f.RNG->Next() < ai.BarricadeChance ? NearestBarricade(f, center) : EntityRef.None;
+        if (breach != EntityRef.None) {
+          bot->LaneBarricade = breach;
+          OrderBreach(f, player, breach);
+        } else {
+          OrderArmy(f, player, lane);
+        }
       }
       bot->WaveSize = System.Math.Min(bot->WaveSize + ai.WaveGrowth, ai.MaxWaveSize);
       bot->NextAttackFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.AttackRepeatSeconds);

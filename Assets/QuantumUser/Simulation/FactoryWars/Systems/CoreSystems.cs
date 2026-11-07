@@ -26,6 +26,39 @@ namespace Quantum.FactoryWars {
       return areas[(int)player % areas.Length].Distance(position) <= FP._0;
     }
 
+    /// <summary>
+    /// 고지대 은폐 판정. 자동 조준·AI·화면이 모두 이 함수를 쓴다. 고지대 위 지상 유닛은 고지대 밖 플레이어에게 안 보인다.
+    /// 같은 고지대에 유닛이 있거나, 가까이 있거나, 최근에 사격했으면 보인다.
+    /// </summary>
+    public static bool IsVisibleTo(Frame f, PlayerRef player, EntityRef entity) {
+      if (f.Unsafe.TryGetPointer<Unit>(entity, out var unit) == false || unit->Owner == player) {
+        return true;
+      }
+      var map = MapInfo(f);
+      var position = f.Unsafe.GetPointer<Transform3D>(entity)->Position;
+      var ground = map.HighGroundAt(position);
+      if (ground < 0 || f.FindAsset(unit->Spec).IsAir || DiplomacySystem.GetRelation(f, player, unit->Owner) == Relation.Allied) {
+        return true;
+      }
+      var rules = Rules(f);
+      if (unit->LastFiredFrame > 0 && f.Number - unit->LastFiredFrame < SecondsToFrames(f, rules.HighGroundRevealSeconds)) {
+        return true;
+      }
+      var near = rules.HighGroundRevealDistance * rules.HighGroundRevealDistance;
+      var air = rules.HighGroundAirRevealDistance * rules.HighGroundAirRevealDistance;
+      var units = f.Filter<Transform3D, Unit>();
+      while (units.NextUnsafe(out _, out var transform, out var other)) {
+        if (other->Owner != player) {
+          continue;
+        }
+        var distance = FlatDistanceSqr(transform->Position, position);
+        if (distance <= near || (f.FindAsset(other->Spec).IsAir && distance <= air) || map.HighGroundAt(transform->Position) == ground) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     public static PlayerState* Player(Frame f, PlayerRef player) {
       if (player.IsValid == false || (int)player >= f.PlayerCount) {
         return null;
@@ -48,6 +81,7 @@ namespace Quantum.FactoryWars {
       f.Global->TruceEndFrame = FactoryWarsUtil.SecondsToFrames(f, truce);
       TruceSystem.SetBarrier(f, truce <= 0);
       CloseBarricades(f);
+      BattlefieldSystem.Init(f);
 
       var nodes = FactoryWarsUtil.MapInfo(f).ResourceNodes;
       for (var i = 0; nodes != null && i < nodes.Length; i++) {
