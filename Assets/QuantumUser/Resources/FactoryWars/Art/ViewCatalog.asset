@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea3228523ecf13148953116d7ae5d4f7, type: 3}
+  m_Name: ViewCatalog
+  m_EditorClassIdentifier: 
+  Entries:
+  - Id: ff_engineer
+    Prefab: {fileID: 7023767620957133261, guid: c6914c2532df30f47aa40bd96ee36a58, type: 3}
+  - Id: ff_ranger_squad
+    Prefab: {fileID: 3720922609153631358, guid: 74f693d7cd6bb5d4a9eb916a1014e1ce, type: 3}
+  - Id: ff_skyguard_squad
+    Prefab: {fileID: 2618897111907406236, guid: 73c7ecb0eb3b5644d8fcfef73fd5ba4f, type: 3}
+  - Id: ff_eagle_tank
+    Prefab: {fileID: 1499682770403946210, guid: d4df325f3de4abe45b9c3b5d04e713a2, type: 3}
+  - Id: ff_hawk_gunship
+    Prefab: {fileID: 5671953476353120758, guid: 636b7372715384940be4ef06781aa5fe, type: 3}
+  - Id: ff_skyfortress_bomber
+    Prefab: {fileID: 3223084302935163626, guid: 54aa4956392315248b327454d97bde8b, type: 3}
+  - Id: cf_engineer
+    Prefab: {fileID: 6103229151435959058, guid: c6e5d38355d5dba4d868bc9b4e07f431, type: 3}
+  - Id: cf_militia
+    Prefab: {fileID: 2954798274133523145, guid: 73cffd42e8862864d859f76886715a88, type: 3}
+  - Id: cf_flame_squad
+    Prefab: {fileID: 7089656255757670898, guid: 6a06c230b6ef25243b3b5ef7cdbfca8e, type: 3}
+  - Id: cf_dragonscale_tank
+    Prefab: {fileID: 8412046235710270282, guid: 35cc8a0840cfe3b45ba02a60e696f334, type: 3}
+  - Id: cf_thunder_aa
+    Prefab: {fileID: 6544895880247913981, guid: 0b74a9dd7c1f2a4428e8d6dceb2aa193, type: 3}
+  - Id: cf_longwall_mlrs
+    Prefab: {fileID: 5461917723488525202, guid: 796362d0d9566ef4889a658dda623d62, type: 3}
+  - Id: ff_headquarters
+    Prefab: {fileID: 7211810514476111655, guid: f0500d0f82ace3248b58a0226a2dc68a, type: 3}
+  - Id: cf_headquarters
+    Prefab: {fileID: 7869610301931235094, guid: 99f7df78922d8e94f95da4eb24abf956, type: 3}
+  - Id: iron_mine
+    Prefab: {fileID: 3243149854540237152, guid: 44f5db5b05c56424cb745798de93ec7a, type: 3}
+  - Id: bridge
+    Prefab: {fileID: 7914401669564694599, guid: a8f1cef667c6ce542a37ddcb775dc3fa, type: 3}

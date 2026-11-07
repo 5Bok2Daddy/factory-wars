@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- 대륙 연방 깃발 문양: 육각 고리와 사선 막대. 새로 디자인한 가상 문양이다. ArtRecipes.FlagEmblem과 같은 좌표다. -->
+  <polygon fill="#E8E6E0" points="50,10 82,28 72,34 50,22"/>
+  <polygon fill="#E8E6E0" points="82,28 82,72 72,66 72,34"/>
+  <polygon fill="#E8E6E0" points="82,72 50,90 50,78 72,66"/>
+  <polygon fill="#E8E6E0" points="50,90 18,72 28,66 50,78"/>
+  <polygon fill="#E8E6E0" points="18,72 18,28 28,34 28,66"/>
+  <polygon fill="#E8E6E0" points="18,28 50,10 50,22 28,34"/>
+  <polygon fill="#E8E6E0" points="36,62 58,34 66,40 44,68"/>
+</svg>
