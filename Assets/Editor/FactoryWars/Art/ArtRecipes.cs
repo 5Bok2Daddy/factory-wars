@@ -29,10 +29,10 @@ namespace FactoryWars.EditorTools {
   }
 
   /// <summary>
-  /// 사령부 2종, 유닛 12종, 철광산, 다리의 파츠 표. 앞이 +Z, 위가 +Y다. 규칙은 visual-style 스킬을 따른다.
+  /// 사령부 2종, 유닛 12종, 철광산, 다리의 파츠 표. 나머지 건물은 ArtRecipes.Buildings.cs에 있다. 앞이 +Z, 위가 +Y다. 규칙은 visual-style 스킬을 따른다.
   /// 파츠 값은 에디터에서만 쓰는 모양 데이터라 게임 밸런스 에셋이 아니다.
   /// </summary>
-  public static class ArtRecipes {
+  public static partial class ArtRecipes {
     static readonly Vector3 Z90 = new Vector3(90, 0, 0);
 
     // 화면 표시 배율. 시뮬레이션 크기는 그대로다.
@@ -82,6 +82,9 @@ namespace FactoryWars.EditorTools {
         Id = "bridge", Kind = "지형", MaxRenderers = 2, MaxTriangles = 800, Body = BridgeBanks,
         Moving = new[] { new MovingPart { Name = "Deck", Pivot = new Vector3(0, 0.55f, -3.4f), Build = BridgeDeck } },
       };
+      foreach (var building in Buildings()) {
+        yield return building;
+      }
     }
 
     static ArtRecipe Unit(string id, int maxRenderers, int maxTriangles, Action<MeshKit> body, params MovingPart[] moving) {

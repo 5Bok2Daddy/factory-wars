@@ -130,7 +130,7 @@ MonoBehaviour:
     Unit: 0
     DisplayScale: 1
     Altitude: 0
-    Center: {x: -0.09486246, y: -0.22266054}
+    Center: {x: 0, y: 0}
     RingRadius: 2.8611352
     BarHeight: 3.303913
   - Id: bridge
@@ -141,3 +141,163 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 6.75
     BarHeight: 2.55
+  - Id: ff_collection_yard
+    Prefab: {fileID: 6433190977397813626, guid: 4644fca4b7df0d74aa157c24410d81d0, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 2.94
+  - Id: ff_supply_depot
+    Prefab: {fileID: 6011256317999761544, guid: c18696fe4d951a34ead274ae5e730549, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 2.29
+  - Id: ff_barracks
+    Prefab: {fileID: 8314295671451070706, guid: 980c73c9abb04184bb012194006bda98, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 2.9283714
+  - Id: ff_power_plant
+    Prefab: {fileID: 4611101417924436599, guid: 59ee2128164616547a15453e26d9db11, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.2350001
+    BarHeight: 4.715
+  - Id: ff_processor
+    Prefab: {fileID: 7086893064665784470, guid: b70a5dcf23edfa440abcf77bdab9e5aa, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.135
+  - Id: ff_research_lab
+    Prefab: {fileID: 1053819295779338531, guid: 76f73f46b9e3c0240944a70de297f056, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.9907103
+  - Id: ff_vehicle_factory
+    Prefab: {fileID: 5004397151304330721, guid: 3cdbd28b8289b6644bb59690b2c809c6, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.4700003
+  - Id: ff_defense_tower
+    Prefab: {fileID: 179325431821371899, guid: 52936f3e1d65ef74ca1e71fa5b7825d4, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.13
+  - Id: ff_airfield
+    Prefab: {fileID: 1311604342034815586, guid: 573a945da7b4bf84894c453523432076, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.368372
+  - Id: ff_heavy_works
+    Prefab: {fileID: 5635455248416973121, guid: 7f4cc57d5d8ee254e80b5073960005fb, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 5.285
+  - Id: cf_collection_yard
+    Prefab: {fileID: 9132538957432950280, guid: cc0b90c117d16ff4a971ccd1a681f32f, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 1.69
+  - Id: cf_supply_depot
+    Prefab: {fileID: 4345666633483066778, guid: 2b5155f73a8e6af4aa39f0c1fee6478d, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 3.29
+  - Id: cf_barracks
+    Prefab: {fileID: 757084111335429910, guid: 1a17aef7430b70949a173f018a4f7fd7, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.11
+  - Id: cf_power_plant
+    Prefab: {fileID: 8721037098356347243, guid: b87bc98048346b241a54190cb55915bc, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.655
+  - Id: cf_processor
+    Prefab: {fileID: 1233659786263341060, guid: 0129ffbe49e2e474b98aa2782008a30a, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.235
+  - Id: cf_research_lab
+    Prefab: {fileID: 9207792122584839781, guid: 7e12a7634ef0769429fe7c78e7a11fa7, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 5.04
+  - Id: cf_vehicle_factory
+    Prefab: {fileID: 5340849050517048276, guid: 3d45a97b712611c4ca5f70f34a566359, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.755
+  - Id: cf_defense_tower
+    Prefab: {fileID: 2640793389355080678, guid: 9ec0545332b27aa458ed2bfc42ce97ec, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 3.73
+  - Id: cf_airfield
+    Prefab: {fileID: 8882865681088981580, guid: 5a57fd9c53ef6524c8d5601e5ae4f6c2, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.468372
+  - Id: cf_heavy_works
+    Prefab: {fileID: 7568436453730661384, guid: e092e6f83e23deb46b112d2e44dbe006, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 5.2300005

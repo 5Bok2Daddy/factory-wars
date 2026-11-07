@@ -16,10 +16,16 @@ namespace FactoryWars.Tests {
       "cf_engineer", "cf_dragonscale_tank", "cf_thunder_aa", "cf_longwall_mlrs",
     };
     static readonly string[] Headquarters2 = { "ff_headquarters", "cf_headquarters" };
+    static readonly string[] BuildingKinds = {
+      "collection_yard", "supply_depot", "barracks", "power_plant", "processor",
+      "research_lab", "vehicle_factory", "defense_tower", "airfield", "heavy_works",
+    };
+
+    static IEnumerable<string> Buildings() => BuildingKinds.SelectMany(kind => new[] { $"ff_{kind}", $"cf_{kind}" });
 
     static ViewCatalog Catalog() => Resources.Load<ViewCatalog>(ViewCatalog.ResourcePath);
 
-    static IEnumerable<string> AllArt() => Infantry.Concat(Vehicles).Concat(Headquarters2).Concat(new[] { "iron_mine", "bridge" });
+    static IEnumerable<string> AllArt() => Infantry.Concat(Vehicles).Concat(Headquarters2).Concat(Buildings()).Concat(new[] { "iron_mine", "bridge" });
 
     static int Triangles(GameObject prefab) => prefab.GetComponentsInChildren<MeshFilter>(true).Sum(f => f.sharedMesh.triangles.Length / 3);
 
@@ -38,7 +44,7 @@ namespace FactoryWars.Tests {
       foreach (var id in Vehicles) {
         Assert.That(Catalog().Find(id).GetComponentsInChildren<Renderer>(true).Length, Is.InRange(2, 4), id);
       }
-      foreach (var id in Headquarters2) {
+      foreach (var id in Headquarters2.Concat(Buildings())) {
         Assert.That(Catalog().Find(id).GetComponentsInChildren<Renderer>(true).Length, Is.InRange(2, 5), id);
       }
     }
@@ -48,7 +54,7 @@ namespace FactoryWars.Tests {
       foreach (var id in Infantry.Concat(Vehicles)) {
         Assert.LessOrEqual(Triangles(Catalog().Find(id)), 1200, id);
       }
-      foreach (var id in Headquarters2) {
+      foreach (var id in Headquarters2.Concat(Buildings())) {
         Assert.LessOrEqual(Triangles(Catalog().Find(id)), 2600, id);
       }
     }
@@ -74,8 +80,55 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Art_EveryUnitAndHeadquartersHasTeamColor() {
-      foreach (var id in Infantry.Concat(Vehicles).Concat(Headquarters2)) {
+      foreach (var id in Infantry.Concat(Vehicles).Concat(Headquarters2).Concat(Buildings())) {
         Assert.IsTrue(UsesSwatch(Catalog().Find(id), Swatch.Team), id);
+      }
+    }
+
+    [Test]
+    public void Art_EveryBuildingSpecHasAModelInsideItsFootprint() {
+      var specs = Resources.LoadAll<Quantum.BuildingSpec>("FactoryWars");
+      Assert.AreEqual(22, specs.Length, "두 진영 사령부와 건물 10종");
+      var problems = new List<string>();
+      foreach (var spec in specs) {
+        var id = spec.name;
+        Assert.IsNotNull(Catalog().Find(id), $"{id}: 모델 없음");
+        var instance = Object.Instantiate(Catalog().Find(id));
+        var renderers = instance.GetComponentsInChildren<Renderer>(true);
+        var bounds = renderers[0].bounds;
+        foreach (var renderer in renderers) {
+          bounds.Encapsulate(renderer.bounds);
+        }
+        var radius = spec.FootprintRadius.AsFloat + 0.01f;
+        var reach = Mathf.Max(bounds.max.x, -bounds.min.x, bounds.max.z, -bounds.min.z);
+        if (reach > radius) {
+          problems.Add($"{id} 칸 초과 {reach:0.00}");
+        }
+        if (bounds.min.y < -0.01f) {
+          problems.Add($"{id} 땅속 {bounds.min.y:0.00}");
+        }
+        Object.DestroyImmediate(instance);
+      }
+      Assert.IsEmpty(problems, string.Join(", ", problems));
+    }
+
+    [Test]
+    public void Art_ElectricAndMoltenGlowFollowFunctionNotFaction() {
+      foreach (var prefix in new[] { "ff", "cf" }) {
+        Assert.IsTrue(UsesSwatch(Catalog().Find($"{prefix}_power_plant"), Swatch.GlowCyan), $"{prefix}: 발전소 코어는 청록");
+        Assert.IsFalse(UsesSwatch(Catalog().Find($"{prefix}_power_plant"), Swatch.GlowOrange), prefix);
+        Assert.IsTrue(UsesSwatch(Catalog().Find($"{prefix}_processor"), Swatch.GlowOrange), $"{prefix}: 쇳물은 주황");
+        Assert.IsFalse(UsesSwatch(Catalog().Find($"{prefix}_processor"), Swatch.GlowCyan), prefix);
+        Assert.IsTrue(UsesSwatch(Catalog().Find($"{prefix}_research_lab"), Swatch.GlowCyan), $"{prefix}: 연구소 창은 청록");
+      }
+    }
+
+    [Test]
+    public void Art_TowersHaveTurretAndBarrel() {
+      foreach (var id in new[] { "ff_defense_tower", "cf_defense_tower" }) {
+        var turret = Catalog().Find(id).transform.Find("Turret");
+        Assert.IsNotNull(turret, id);
+        Assert.IsNotNull(turret.Find("Barrel"), $"{id}: 포신은 포탑을 따라 돈다");
       }
     }
 

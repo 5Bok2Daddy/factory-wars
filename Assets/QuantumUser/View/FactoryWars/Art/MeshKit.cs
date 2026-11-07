@@ -309,6 +309,36 @@ namespace FactoryWars.View {
       Cap(ring, Vector3.up);
     }
 
+    /// <summary>XY 볼록 단면을 Z축으로 민 기둥. 아치 지붕과 문틀에 쓴다.</summary>
+    public void Prism(Vector2[] profile, float back, float front) {
+      var center = Vector2.zero;
+      foreach (var point in profile) {
+        center += point;
+      }
+      center /= profile.Length;
+      Vector3 Back(Vector2 p) => new Vector3(p.x, p.y, back);
+      Vector3 Front(Vector2 p) => new Vector3(p.x, p.y, front);
+      for (var i = 0; i < profile.Length; i++) {
+        var a = profile[i];
+        var b = profile[(i + 1) % profile.Length];
+        var outward = (a + b) / 2 - center;
+        Quad(Back(a), Back(b), Front(b), Front(a), new Vector3(outward.x, outward.y, 0));
+      }
+      for (var i = 1; i + 1 < profile.Length; i++) {
+        Tri(Front(profile[0]), Front(profile[i]), Front(profile[i + 1]), Vector3.forward);
+        Tri(Back(profile[0]), Back(profile[i]), Back(profile[i + 1]), Vector3.back);
+      }
+    }
+
+    /// <summary>두 점을 잇는 각재. 철탑과 트러스에 쓴다.</summary>
+    public void Beam(Vector3 from, Vector3 to, float size) {
+      var direction = to - from;
+      var up = Mathf.Abs(direction.normalized.y) > 0.99f ? Vector3.forward : Vector3.up;
+      Push(from, Quaternion.LookRotation(direction, up).eulerAngles);
+      Box(new Vector3(0, 0, direction.magnitude / 2), new Vector3(size, size, direction.magnitude));
+      Pop();
+    }
+
     /// <summary>바닥에 눕힌 고리. 선택 링에 쓴다.</summary>
     public void Annulus(Vector3 center, float inner, float outer, int sides) {
       for (var i = 0; i < sides; i++) {

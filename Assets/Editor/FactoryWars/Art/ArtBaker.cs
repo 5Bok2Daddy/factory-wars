@@ -200,7 +200,8 @@ namespace FactoryWars.EditorTools {
       }
       return new ViewCatalog.Entry {
         Id = recipe.Id, Prefab = prefab, Unit = recipe.Kind == "유닛", DisplayScale = recipe.DisplayScale, Altitude = recipe.Altitude,
-        Center = new Vector2(bounds.center.x, bounds.center.z),
+        // 건물은 칸에 맞춘 바닥판이 기준이라 옮기지 않는다.
+        Center = recipe.Kind == "유닛" ? new Vector2(bounds.center.x, bounds.center.z) : Vector2.zero,
         RingRadius = Mathf.Max(bounds.extents.x, bounds.extents.z) * recipe.DisplayScale + RingMargin,
         BarHeight = recipe.Altitude + bounds.max.y * recipe.DisplayScale + BarMargin,
       };
@@ -264,6 +265,16 @@ namespace FactoryWars.EditorTools {
       ("cf_headquarters", 0), ("cf_engineer", 7), ("cf_militia", 11.5f), ("cf_flame_squad", 16),
       ("cf_dragonscale_tank", 21), ("cf_thunder_aa", 28), ("cf_longwall_mlrs", 35),
     };
+
+    static readonly string[] BuildingKinds = {
+      "collection_yard", "supply_depot", "barracks", "power_plant", "processor",
+      "research_lab", "vehicle_factory", "defense_tower", "airfield", "heavy_works",
+    };
+
+    const float BuildingGap = 8f;
+    const float FreeBuildingRow = -3f;
+    const float ContinentalBuildingRow = -4f;
+    const float OutageRow = -5f;
 
     // 줄은 3/4 시점 카메라의 오른쪽 방향으로 놓는다. 그래야 화면에서 가로로 보인다.
     static readonly Vector3 Along = new Vector3(1, 0, 1).normalized;
@@ -329,6 +340,16 @@ namespace FactoryWars.EditorTools {
       var raised = Spawn(catalog, root, "bridge", Place(0, -2, 0.5f), 0, 180f);
       raised.Model.transform.Find("Deck").localRotation = Quaternion.Euler(-78, 0, 0);
       Spawn(catalog, root, "bridge", Place(17, -2, 0.5f), 0, 180f);
+      // 건물 줄. 왼쪽부터 BuildingKinds 순서다.
+      for (var i = 0; i < BuildingKinds.Length; i++) {
+        Spawn(catalog, root, $"ff_{BuildingKinds[i]}", Place(i * BuildingGap, FreeBuildingRow), 0, 180f);
+        Spawn(catalog, root, $"cf_{BuildingKinds[i]}", Place(i * BuildingGap, ContinentalBuildingRow), 1, 180f);
+      }
+      // 정전 줄: 발전소, 가공소, 연구소
+      var outageIds = new[] { "ff_power_plant", "ff_processor", "ff_research_lab", "cf_power_plant", "cf_processor", "cf_research_lab" };
+      for (var i = 0; i < outageIds.Length; i++) {
+        Spawn(catalog, root, outageIds[i], Place(i * BuildingGap, OutageRow), i < 3 ? 0 : 1, 180f, false);
+      }
       // 정전: 같은 사령부를 전기 없이 한 채 더 놓는다.
       Spawn(catalog, root, "ff_headquarters", Place(-12, 0), 0, 180f, false);
 
@@ -472,6 +493,18 @@ namespace FactoryWars.EditorTools {
       Debug.Log($"ArtBaker: 후처리 차이 평균 {total / (float)plain.Length / 3f:0.00}/255, 눈에 띄게 바뀐 픽셀 {changed * 100f / plain.Length:0.0}%");
 
       Close("14_outage.png", -12f, 0, 2.4f, 4.6f);
+
+      // 건물: 진영마다 네 장. 앞 세 채, 다음 세 채, 다음 두 채씩이다.
+      void Buildings(string prefix, float row) {
+        Tele($"{prefix}_1.png", Place(BuildingGap, row, 1.6f), 70f, 7.4f);
+        Tele($"{prefix}_2.png", Place(BuildingGap * 4, row, 1.6f), 70f, 7.4f);
+        Tele($"{prefix}_3.png", Place(BuildingGap * 7, row, 1.8f), 70f, 7.4f);
+        Tele($"{prefix}_4.png", Place(BuildingGap * 8.5f, row, 2f), 70f, 6f);
+      }
+      Buildings("16_free_buildings", FreeBuildingRow);
+      Buildings("17_continental_buildings", ContinentalBuildingRow);
+      Game("18_buildings_game_view.png", Place(BuildingGap * 2.5f, FreeBuildingRow - 0.5f), RtsCamera.DefaultHeight);
+      Tele("19_outage_buildings.png", Place(BuildingGap * 2.5f, OutageRow, 1.5f), 90f, 11.5f);
 
       // 품질 단계: 같은 게임 시점으로 비교한다.
       ShowMarkers(true);
