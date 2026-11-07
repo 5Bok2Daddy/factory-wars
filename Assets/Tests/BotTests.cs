@@ -86,7 +86,7 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Bot_NormalRejectsStrongestAcceptsOthers() {
       // 자리 0이 가장 강하다. 보통 AI는 0의 제안을 거절한다.
-      var army = Enumerable.Range(0, 6).Select(i => (0, "ff_eagle_tank", -80 + i * 3, -100)).ToArray();
+      var army = Enumerable.Range(0, 6).Select(i => (0, "ff_eagle_tank", -86 + i * 2, -100)).ToArray();
       yield return StartMatch(Map4PScene, 4, units: army, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal, BotDifficulty.Normal });
       yield return Diplomacy(0, DiplomacyAction.Propose, 1);
       yield return Sim(5);

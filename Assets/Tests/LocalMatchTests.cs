@@ -449,55 +449,122 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(Relation.Enemy, DiplomacySystem.GetRelation(Verified, 0, 1));
     }
 
-    static void AssertRotationalSymmetry(MapSpec spec, int quarterTurns) {
-      FPVector3 Turn(FPVector3 p) {
-        for (var i = 0; i < quarterTurns; i++) {
-          p = new FPVector3(-p.Z, p.Y, p.X);
-        }
-        return p;
+    static FPVector3 Rotated(FPVector3 p, int quarterTurns) {
+      for (var i = 0; i < quarterTurns; i++) {
+        p = new FPVector3(-p.Z, p.Y, p.X);
       }
+      return p;
+    }
+
+    /// <summary>회전시킨 모양이 목록에 있으면 true. 사각형은 180도 돌려도 같은 모양이다.</summary>
+    static bool HasTurned(IEnumerable<MapShape> shapes, MapShape shape, int quarterTurns) {
+      var center = Rotated(shape.Center, quarterTurns);
+      return shapes.Any(s => s.Center == center && s.Radius == shape.Radius && s.HalfLength == shape.HalfLength && s.HalfWidth == shape.HalfWidth
+        && (s.IsCircle || Mathf.Abs(Mathf.Repeat(shape.Yaw.AsFloat - 90f * quarterTurns - s.Yaw.AsFloat + 1f, 180f) - 1f) < 0.01f));
+    }
+
+    static void AssertRotationalSymmetry(MapSpec spec, int quarterTurns) {
       foreach (var start in spec.StartPositions) {
-        Assert.IsTrue(spec.StartPositions.Contains(Turn(start)), $"시작 위치 대칭 {start}");
+        Assert.IsTrue(spec.StartPositions.Contains(Rotated(start, quarterTurns)), $"시작 위치 대칭 {start}");
       }
       foreach (var node in spec.ResourceNodes) {
-        var turned = Turn(node.Shape.Center);
-        Assert.IsTrue(spec.ResourceNodes.Any(n => n.Shape.Center == turned && n.Amount == node.Amount), $"노드 대칭 {node.Shape.Center}");
+        var same = spec.ResourceNodes.Where(n => n.Kind == node.Kind && n.Amount == node.Amount).Select(n => n.Shape);
+        Assert.IsTrue(HasTurned(same, node.Shape, quarterTurns), $"노드 대칭 {node.Shape.Center}");
+      }
+      foreach (var feature in spec.Terrain) {
+        var same = spec.Terrain.Where(t => t.Kind == feature.Kind).Select(t => t.Shape);
+        Assert.IsTrue(HasTurned(same, feature.Shape, quarterTurns), $"지형 대칭 {feature.Shape.Center}");
+      }
+      foreach (var zone in spec.NoBuildZones) {
+        Assert.IsTrue(HasTurned(spec.NoBuildZones, zone, quarterTurns), $"금지 구역 대칭 {zone.Center}");
       }
     }
 
-    static FP NodeFunds(FP amount) {
+    static int NodeCount(ResourceKind kind, int amount) {
       var total = 0;
       foreach (var pair in Verified.GetComponentIterator<ResourceNode>()) {
-        if (pair.Component.Remaining == amount) {
+        if (pair.Component.Kind == kind && pair.Component.Remaining == amount) {
           total++;
         }
       }
       return total;
     }
 
-    static void AssertNodesOnNavMesh(MapSpec spec) {
-      var f = Verified;
-      var navMesh = f.Map.GetNavMesh(f.FindAsset(f.RuntimeConfig.Rules).NavMeshName);
+    static NavMesh MapNavMesh() => Verified.Map.GetNavMesh(Verified.FindAsset(Verified.RuntimeConfig.Rules).NavMeshName);
+
+    /// <summary>NavMesh 삼각형을 이웃을 따라 훑어 from에서 갈 수 있는 삼각형을 모은다.</summary>
+    static HashSet<int> ReachableTriangles(NavMesh navMesh, FPVector3 from) {
       var mask = NavMeshRegionMask.Default;
+      var start = navMesh.FindTriangle2D(from, mask, true);
+      Assert.GreaterOrEqual(start, 0, $"NavMesh 위 {from}");
+      var seen = new HashSet<int> { start };
+      var open = new Stack<int>();
+      open.Push(start);
+      while (open.Count > 0) {
+        var neighbors = navMesh.Triangles[open.Pop()].Neighbors;
+        for (var i = 0; neighbors != null && i < neighbors.Length; i++) {
+          var next = neighbors[i].Neighbor;
+          if (next >= 0 && seen.Add(next)) {
+            open.Push(next);
+          }
+        }
+      }
+      return seen;
+    }
+
+    /// <summary>모든 본진과 모든 작업 지점이 첫 본진에서 지상으로 이어져 있어야 한다. 부지 앞에서 잰다.</summary>
+    static void AssertEverythingConnected(MapSpec spec) {
+      var f = Verified;
+      var rules = f.FindAsset(f.RuntimeConfig.Rules);
+      var navMesh = MapNavMesh();
+      var mask = NavMeshRegionMask.Default;
+      var reachable = ReachableTriangles(navMesh, spec.StartPositions[0]);
       foreach (var start in spec.StartPositions) {
-        Assert.IsTrue(navMesh.Contains(start, mask, true), $"시작 위치 NavMesh 위 {start}");
+        Assert.IsTrue(reachable.Contains(navMesh.FindTriangle2D(start, mask, true)), $"본진 연결 {start}");
+      }
+      foreach (var node in spec.ResourceNodes) {
+        var count = node.Shape.SpotCount(rules);
+        Assert.LessOrEqual(count, 64, "작업 지점 표시 비트 안");
+        for (var i = 0; i < count; i++) {
+          var spot = node.Shape.Spot(i, rules);
+          Assert.IsTrue(navMesh.Contains(spot, mask, true), $"작업 지점 NavMesh 위 {spot}");
+          Assert.IsTrue(reachable.Contains(navMesh.FindTriangle2D(spot, mask, true)), $"작업 지점 연결 {spot}");
+        }
       }
     }
 
-    /// <summary>from에서 to로 곧장 갈 수 없고, 주어진 경로들은 구간마다 막힘이 없어야 한다.</summary>
-    static void AssertBlockedWithDetours(FPVector3 from, FPVector3 to, params FPVector3[][] detours) {
+    /// <summary>길목을 평행선 세 줄로 지나가 본다. 가운데와 양쪽이 모두 뚫려 있어야 폭이 충분하다.</summary>
+    static void AssertPassage(FPVector3 from, FPVector3 to, FP halfWidth, string label) {
       var f = Verified;
-      var navMesh = f.Map.GetNavMesh(f.FindAsset(f.RuntimeConfig.Rules).NavMeshName);
+      var navMesh = MapNavMesh();
       var mask = NavMeshRegionMask.Default;
-      Assert.IsFalse(f.Navigation.LineOfSight(from, to, mask, navMesh), $"직선 경로가 막혀야 한다 {from} -> {to}");
-      Assert.GreaterOrEqual(detours.Length, 2, "우회로 2개 이상");
-      foreach (var detour in detours) {
-        var previous = from;
-        foreach (var point in detour.Append(to)) {
-          Assert.IsTrue(f.Navigation.LineOfSight(previous, point, mask, navMesh), $"우회로 구간 {previous} -> {point}");
-          previous = point;
-        }
+      var along = (to - from).Normalized;
+      var across = new FPVector3(-along.Z, FP._0, along.X) * halfWidth;
+      foreach (var offset in new[] { -across, FPVector3.Zero, across }) {
+        Assert.IsTrue(f.Navigation.LineOfSight(from + offset, to + offset, mask, navMesh), $"{label} 통과 {from + offset} -> {to + offset}");
       }
+    }
+
+    /// <summary>길목의 벽과 금지 구역을 포함해 맵 데이터를 보고서 그림용 파일로 남긴다.</summary>
+    static void DumpMap(MapSpec spec, string name) {
+      var folder = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "..", "..", "Game-logs", "maps"));
+      System.IO.Directory.CreateDirectory(folder);
+      var navMesh = MapNavMesh();
+      var rules = Verified.FindAsset(Verified.RuntimeConfig.Rules);
+      string F(FP v) => v.AsFloat.ToString(System.Globalization.CultureInfo.InvariantCulture);
+      string Line(string tag, MapShape s) => $"{tag} {F(s.Center.X)} {F(s.Center.Z)} {F(s.Radius)} {F(s.HalfLength)} {F(s.HalfWidth)} {F(s.Yaw)}";
+      var lines = new List<string> { $"B {F(spec.BoundsMin.X)} {F(spec.BoundsMax.X)}" };
+      foreach (var t in navMesh.Triangles) {
+        var a = navMesh.Vertices[t.Vertex0].Point;
+        var b = navMesh.Vertices[t.Vertex1].Point;
+        var c = navMesh.Vertices[t.Vertex2].Point;
+        lines.Add($"T {F(a.X)} {F(a.Z)} {F(b.X)} {F(b.Z)} {F(c.X)} {F(c.Z)}");
+      }
+      lines.AddRange(spec.StartPositions.Select(p => $"S {F(p.X)} {F(p.Z)}"));
+      lines.AddRange(spec.ResourceNodes.Select(n => Line(n.Kind == ResourceKind.Iron ? "M" : "W", n.Shape)));
+      lines.AddRange(spec.Terrain.Select(t => Line(t.Kind.ToString()[0].ToString(), t.Shape)));
+      lines.AddRange(spec.NoBuildZones.Select(z => Line("Z", z)));
+      System.IO.File.WriteAllLines(System.IO.Path.Combine(folder, name + ".txt"), lines);
     }
 
     /// <summary>이동 속도 5 유닛을 보내 도착까지 걸린 시뮬레이션 초를 기록한다.</summary>
@@ -523,13 +590,26 @@ namespace FactoryWars.Tests {
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       Assert.AreEqual(2, spec.StartPositions.Length);
       Assert.AreEqual(new FPVector2(160, 160), spec.BoundsMax - spec.BoundsMin);
-      Assert.AreEqual(9, Verified.ComponentCount<ResourceNode>());
-      Assert.AreEqual(4, NodeFunds(5000).AsInt, "기지 노드");
-      Assert.AreEqual(4, NodeFunds(4000).AsInt, "확장 노드");
-      Assert.AreEqual(1, NodeFunds(8000).AsInt, "중앙 노드");
+      Assert.AreEqual(V(-55, -55), spec.StartPositions[0]);
+      Assert.AreEqual(15, Verified.ComponentCount<ResourceNode>());
+      Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 4000), "본진 철광산");
+      Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 6000), "본진 숲");
+      Assert.AreEqual(2, NodeCount(ResourceKind.Iron, 3000), "앞마당 철광산");
+      Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 4000), "앞마당 숲");
+      Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 8000), "숲 확장의 큰 숲");
+      Assert.AreEqual(2, NodeCount(ResourceKind.Iron, 2000), "숲 확장 철광산");
+      Assert.AreEqual(1, NodeCount(ResourceKind.Iron, 6000), "중앙 철광산");
+      Assert.AreEqual(4, spec.Terrain.Count(t => t.Kind == TerrainKind.Rock), "중앙 바위");
       AssertRotationalSymmetry(spec, 2);
-      AssertNodesOnNavMesh(spec);
-      Assert.IsFalse(Verified.Navigation.LineOfSight(V(-55, -55), V(55, 55), NavMeshRegionMask.Default, Verified.Map.GetNavMesh("NavMesh")), "직선 경로는 막힘");
+      AssertEverythingConnected(spec);
+      DumpMap(spec, "map2p");
+
+      var f = Verified;
+      Assert.IsFalse(f.Navigation.LineOfSight(spec.StartPositions[0], spec.StartPositions[1], NavMeshRegionMask.Default, MapNavMesh()), "본진 사이 직선은 막힘");
+      AssertPassage(V(-42, -50), V(-24, -50), 5, "본진 동쪽 입구");
+      AssertPassage(V(-50, -42), V(-50, -24), 5, "본진 북쪽 입구");
+      AssertPassage(V(-50, 18), V(-50, 50), 3, "숲 확장 협곡");
+      AssertPassage(V(-29, 11), V(-11, 29), 3, "측면 협곡");
       yield return CrossMap(0, V(47, 47), 90f, "2P base to base");
     }
 
@@ -540,20 +620,21 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(4, spec.StartPositions.Length);
       Assert.AreEqual(new FPVector2(240, 240), spec.BoundsMax - spec.BoundsMin);
       Assert.AreEqual(4, Verified.ComponentCount<Building>());
-      Assert.AreEqual(17, Verified.ComponentCount<ResourceNode>());
-      Assert.AreEqual(8, NodeFunds(5000).AsInt, "기지 노드");
-      Assert.AreEqual(8, NodeFunds(4000).AsInt, "확장 노드");
-      Assert.AreEqual(1, NodeFunds(12000).AsInt, "중앙 노드");
+      Assert.AreEqual(33, Verified.ComponentCount<ResourceNode>());
+      Assert.AreEqual(8, NodeCount(ResourceKind.Iron, 4000), "본진 철광산");
+      Assert.AreEqual(4, NodeCount(ResourceKind.Wood, 6000), "본진 숲");
+      Assert.AreEqual(8, NodeCount(ResourceKind.Iron, 3000), "앞마당·변 철광산");
+      Assert.AreEqual(8, NodeCount(ResourceKind.Wood, 4000), "앞마당·변 숲");
+      Assert.AreEqual(1, NodeCount(ResourceKind.Iron, 10000), "중앙 철광산");
+      Assert.AreEqual(4, NodeCount(ResourceKind.Wood, 2000), "중앙 숲");
       AssertRotationalSymmetry(spec, 1);
-      AssertNodesOnNavMesh(spec);
-      // 이웃 기지. 90도 회전 대칭이라 나머지 세 쌍도 같다.
-      AssertBlockedWithDetours(V(-90, -90), V(90, -90),
-        new[] { V(-45, -114), V(45, -114) },
-        new[] { V(-45, -66), V(45, -66) });
-      // 맞은편 기지.
-      AssertBlockedWithDetours(V(-90, -90), V(90, 90),
-        new[] { V(-66, -40), V(-66, -12), V(0, 8), V(66, 12), V(66, 40) },
-        new[] { V(-40, -66), V(-12, -66), V(8, 0), V(12, 66), V(40, 66) });
+      AssertEverythingConnected(spec);
+      DumpMap(spec, "map4p");
+
+      AssertPassage(V(-76, -86), V(-60, -86), 5, "본진 동쪽 입구");
+      AssertPassage(V(-86, -76), V(-86, -60), 5, "본진 북쪽 입구");
+      AssertPassage(V(-54, -96), V(-26, -96), 3, "이웃 본진 사이 협곡");
+      AssertPassage(V(0, -44), V(0, -28), 5, "중앙 고리 입구");
       yield return CrossMap(0, V(82, 82), 120f, "4P opposite base");
     }
   }

@@ -54,72 +54,15 @@ MonoBehaviour:
   ResourceNodes:
   - Kind: 0
     Amount:
-      RawValue: 327680000
+      RawValue: 262144000
     Shape:
       Center:
         X:
-          RawValue: -2818048
+          RawValue: -4718592
         Y:
           RawValue: 0
         Z:
-          RawValue: -3604480
-      Radius:
-        RawValue: 196608
-      HalfLength:
-        RawValue: 0
-      HalfWidth:
-        RawValue: 0
-      Yaw:
-        RawValue: 0
-  - Kind: 0
-    Amount:
-      RawValue: 327680000
-    Shape:
-      Center:
-        X:
-          RawValue: 2818048
-        Y:
-          RawValue: 0
-        Z:
-          RawValue: 3604480
-      Radius:
-        RawValue: 196608
-      HalfLength:
-        RawValue: 0
-      HalfWidth:
-        RawValue: 0
-      Yaw:
-        RawValue: 0
-  - Kind: 0
-    Amount:
-      RawValue: 327680000
-    Shape:
-      Center:
-        X:
-          RawValue: -3604480
-        Y:
-          RawValue: 0
-        Z:
-          RawValue: -2818048
-      Radius:
-        RawValue: 196608
-      HalfLength:
-        RawValue: 0
-      HalfWidth:
-        RawValue: 0
-      Yaw:
-        RawValue: 0
-  - Kind: 0
-    Amount:
-      RawValue: 327680000
-    Shape:
-      Center:
-        X:
-          RawValue: 3604480
-        Y:
-          RawValue: 0
-        Z:
-          RawValue: 2818048
+          RawValue: -3407872
       Radius:
         RawValue: 196608
       HalfLength:
@@ -134,11 +77,30 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: -3538944
+          RawValue: 4718592
         Y:
           RawValue: 0
         Z:
-          RawValue: 3276800
+          RawValue: 3407872
+      Radius:
+        RawValue: 196608
+      HalfLength:
+        RawValue: 0
+      HalfWidth:
+        RawValue: 0
+      Yaw:
+        RawValue: -11796480
+  - Kind: 0
+    Amount:
+      RawValue: 262144000
+    Shape:
+      Center:
+        X:
+          RawValue: -3407872
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -4718592
       Radius:
         RawValue: 196608
       HalfLength:
@@ -153,11 +115,30 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: 3538944
+          RawValue: 3407872
         Y:
           RawValue: 0
         Z:
-          RawValue: -3276800
+          RawValue: 4718592
+      Radius:
+        RawValue: 196608
+      HalfLength:
+        RawValue: 0
+      HalfWidth:
+        RawValue: 0
+      Yaw:
+        RawValue: -11796480
+  - Kind: 0
+    Amount:
+      RawValue: 196608000
+    Shape:
+      Center:
+        X:
+          RawValue: -1507328
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -1507328
       Radius:
         RawValue: 196608
       HalfLength:
@@ -168,7 +149,26 @@ MonoBehaviour:
         RawValue: 0
   - Kind: 0
     Amount:
-      RawValue: 262144000
+      RawValue: 196608000
+    Shape:
+      Center:
+        X:
+          RawValue: 1507328
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 1507328
+      Radius:
+        RawValue: 196608
+      HalfLength:
+        RawValue: 0
+      HalfWidth:
+        RawValue: 0
+      Yaw:
+        RawValue: -11796480
+  - Kind: 0
+    Amount:
+      RawValue: 131072000
     Shape:
       Center:
         X:
@@ -176,7 +176,7 @@ MonoBehaviour:
         Y:
           RawValue: 0
         Z:
-          RawValue: 3276800
+          RawValue: 3801088
       Radius:
         RawValue: 196608
       HalfLength:
@@ -187,7 +187,7 @@ MonoBehaviour:
         RawValue: 0
   - Kind: 0
     Amount:
-      RawValue: 262144000
+      RawValue: 131072000
     Shape:
       Center:
         X:
@@ -195,7 +195,7 @@ MonoBehaviour:
         Y:
           RawValue: 0
         Z:
-          RawValue: -3276800
+          RawValue: -3801088
       Radius:
         RawValue: 196608
       HalfLength:
@@ -203,10 +203,124 @@ MonoBehaviour:
       HalfWidth:
         RawValue: 0
       Yaw:
+        RawValue: -11796480
+  - Kind: 1
+    Amount:
+      RawValue: 393216000
+    Shape:
+      Center:
+        X:
+          RawValue: -4456448
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -4456448
+      Radius:
         RawValue: 0
-  - Kind: 0
+      HalfLength:
+        RawValue: 589824
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: 2949120
+  - Kind: 1
+    Amount:
+      RawValue: 393216000
+    Shape:
+      Center:
+        X:
+          RawValue: 4456448
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 4456448
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 589824
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: -8847360
+  - Kind: 1
+    Amount:
+      RawValue: 262144000
+    Shape:
+      Center:
+        X:
+          RawValue: -917504
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -917504
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 655360
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: 2949120
+  - Kind: 1
+    Amount:
+      RawValue: 262144000
+    Shape:
+      Center:
+        X:
+          RawValue: 917504
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 917504
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 655360
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: -8847360
+  - Kind: 1
     Amount:
       RawValue: 524288000
+    Shape:
+      Center:
+        X:
+          RawValue: -4325376
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 4325376
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 917504
+      HalfWidth:
+        RawValue: 262144
+      Yaw:
+        RawValue: 2949120
+  - Kind: 1
+    Amount:
+      RawValue: 524288000
+    Shape:
+      Center:
+        X:
+          RawValue: 4325376
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -4325376
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 917504
+      HalfWidth:
+        RawValue: 262144
+      Yaw:
+        RawValue: -8847360
+  - Kind: 0
+    Amount:
+      RawValue: 393216000
     Shape:
       Center:
         X:
@@ -216,7 +330,7 @@ MonoBehaviour:
         Z:
           RawValue: 0
       Radius:
-        RawValue: 196608
+        RawValue: 262144
       HalfLength:
         RawValue: 0
       HalfWidth:
@@ -228,68 +342,630 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: -1703936
+          RawValue: -2162688
         Y:
           RawValue: 0
         Z:
-          RawValue: -1703936
+          RawValue: -4456448
       Radius:
         RawValue: 0
       HalfLength:
-        RawValue: 1441792
+        RawValue: 786432
       HalfWidth:
-        RawValue: 262144
+        RawValue: 196608
+      Yaw:
+        RawValue: 5898240
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: 2162688
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 4456448
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: -5898240
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: -2162688
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -2424832
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 458752
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: 5898240
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: 2162688
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 2424832
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 458752
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: -5898240
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: -4456448
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -2162688
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: 0
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: 4456448
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 2162688
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: -11796480
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: -2424832
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -2162688
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 458752
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: 0
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: 2424832
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 2162688
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 458752
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: -11796480
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: -2162688
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 3702784
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 1540096
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: 5898240
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: 2162688
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -3702784
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 1540096
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: -5898240
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: -4456448
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 2162688
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: 0
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: 4456448
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -2162688
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: -11796480
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: -2424832
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 2162688
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 458752
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: 0
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: 2424832
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -2162688
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 458752
+      HalfWidth:
+        RawValue: 196608
+      Yaw:
+        RawValue: -11796480
+  - Kind: 1
+    Shape:
+      Center:
+        X:
+          RawValue: -1769472
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 1769472
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 327680
+      HalfWidth:
+        RawValue: 196608
       Yaw:
         RawValue: 2949120
   - Kind: 1
     Shape:
       Center:
         X:
-          RawValue: 1703936
+          RawValue: 1769472
         Y:
           RawValue: 0
         Z:
-          RawValue: 1703936
+          RawValue: -1769472
       Radius:
         RawValue: 0
       HalfLength:
-        RawValue: 1441792
+        RawValue: 327680
       HalfWidth:
-        RawValue: 262144
+        RawValue: 196608
       Yaw:
         RawValue: -8847360
   - Kind: 1
     Shape:
       Center:
         X:
-          RawValue: -1572864
+          RawValue: -851968
         Y:
           RawValue: 0
         Z:
-          RawValue: 1572864
+          RawValue: 851968
       Radius:
         RawValue: 0
       HalfLength:
-        RawValue: 327680
+        RawValue: 262144
       HalfWidth:
-        RawValue: 327680
+        RawValue: 196608
       Yaw:
-        RawValue: 0
+        RawValue: 2949120
   - Kind: 1
     Shape:
       Center:
         X:
-          RawValue: 1572864
+          RawValue: 851968
         Y:
           RawValue: 0
         Z:
-          RawValue: -1572864
+          RawValue: -851968
       Radius:
         RawValue: 0
       HalfLength:
-        RawValue: 327680
+        RawValue: 262144
       HalfWidth:
-        RawValue: 327680
+        RawValue: 196608
+      Yaw:
+        RawValue: -8847360
+  - Kind: 2
+    Shape:
+      Center:
+        X:
+          RawValue: -3670016
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 2228224
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: 5898240
+  - Kind: 2
+    Shape:
+      Center:
+        X:
+          RawValue: 3670016
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -2228224
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: -5898240
+  - Kind: 2
+    Shape:
+      Center:
+        X:
+          RawValue: -2883584
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 2228224
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: 5898240
+  - Kind: 2
+    Shape:
+      Center:
+        X:
+          RawValue: 2883584
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -2228224
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: -5898240
+  - Kind: 2
+    Shape:
+      Center:
+        X:
+          RawValue: -1589248
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 1589248
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: -2949120
+  - Kind: 2
+    Shape:
+      Center:
+        X:
+          RawValue: 1589248
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -1589248
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: -14745600
+  - Kind: 2
+    Shape:
+      Center:
+        X:
+          RawValue: -1032192
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 1032192
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: -2949120
+  - Kind: 2
+    Shape:
+      Center:
+        X:
+          RawValue: 1032192
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -1032192
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 786432
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: -14745600
+  - Kind: 0
+    Shape:
+      Center:
+        X:
+          RawValue: -589824
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -196608
+      Radius:
+        RawValue: 196608
+      HalfLength:
+        RawValue: 0
+      HalfWidth:
+        RawValue: 0
+      Yaw:
+        RawValue: 0
+  - Kind: 0
+    Shape:
+      Center:
+        X:
+          RawValue: 589824
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 196608
+      Radius:
+        RawValue: 196608
+      HalfLength:
+        RawValue: 0
+      HalfWidth:
+        RawValue: 0
       Yaw:
         RawValue: -11796480
-  NoBuildZones: []
+  - Kind: 0
+    Shape:
+      Center:
+        X:
+          RawValue: -196608
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -589824
+      Radius:
+        RawValue: 196608
+      HalfLength:
+        RawValue: 0
+      HalfWidth:
+        RawValue: 0
+      Yaw:
+        RawValue: 0
+  - Kind: 0
+    Shape:
+      Center:
+        X:
+          RawValue: 196608
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 589824
+      Radius:
+        RawValue: 196608
+      HalfLength:
+        RawValue: 0
+      HalfWidth:
+        RawValue: 0
+      Yaw:
+        RawValue: -11796480
+  NoBuildZones:
+  - Center:
+      X:
+        RawValue: -2162688
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -3276800
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 589824
+    HalfWidth:
+      RawValue: 524288
+    Yaw:
+      RawValue: 0
+  - Center:
+      X:
+        RawValue: 2162688
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 3276800
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 589824
+    HalfWidth:
+      RawValue: 524288
+    Yaw:
+      RawValue: -11796480
+  - Center:
+      X:
+        RawValue: -3276800
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -2162688
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 524288
+    HalfWidth:
+      RawValue: 589824
+    Yaw:
+      RawValue: 0
+  - Center:
+      X:
+        RawValue: 3276800
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 2162688
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 524288
+    HalfWidth:
+      RawValue: 589824
+    Yaw:
+      RawValue: -11796480
+  - Center:
+      X:
+        RawValue: -3276800
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 2228224
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 524288
+    HalfWidth:
+      RawValue: 917504
+    Yaw:
+      RawValue: 0
+  - Center:
+      X:
+        RawValue: 3276800
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -2228224
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 524288
+    HalfWidth:
+      RawValue: 917504
+    Yaw:
+      RawValue: -11796480
+  - Center:
+      X:
+        RawValue: -1310720
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 1310720
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 917504
+    HalfWidth:
+      RawValue: 524288
+    Yaw:
+      RawValue: -2949120
+  - Center:
+      X:
+        RawValue: 1310720
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -1310720
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 917504
+    HalfWidth:
+      RawValue: 524288
+    Yaw:
+      RawValue: -14745600

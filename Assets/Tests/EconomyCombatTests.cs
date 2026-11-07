@@ -356,12 +356,12 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Build_OnObstacleRejected() {
       yield return StartMatch(Map2PScene, 2);
-      yield return Build(0, "_barracks", V(-26, -26));
+      yield return Build(0, "_barracks", V(-33, -68));
       AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);
       Assert.AreEqual(5000, Funds(0));
       _rejected.Clear();
 
-      yield return Build(0, "_power_plant", V(-30, -60));
+      yield return Build(0, "_power_plant", V(-45, -60));
       Assert.AreEqual(0, _rejected.Count, "빈 땅은 허용");
       Assert.AreEqual(4850, Funds(0));
     }

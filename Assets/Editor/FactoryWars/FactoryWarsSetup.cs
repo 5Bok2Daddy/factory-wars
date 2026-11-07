@@ -376,14 +376,14 @@ namespace FactoryWars.EditorTools {
       testMap.StartingEngineers = 1;
       testMap.SpawnFactionUnits = true;
       testMap.ResourceNodes = new[] {
-        Mine(new Vector2Int(-30, 14), 5000),
-        Mine(new Vector2Int(-30, -14), 100),
-        Forest(new Vector2Int(-38, 30), 8, 3, 0, 3000),
+        Mine(-30, 14, 5000),
+        Mine(-30, -14, 100),
+        Forest(-38, 30, 8, 3, 0, 3000),
       };
       testMap.Terrain = new[] {
-        new TerrainFeature { Kind = TerrainKind.Rock, Shape = new MapShape { Center = new FPVector3(40, 0, -40), Radius = 3 } },
+        Feature(TerrainKind.Rock, Circle(40, -40, 3)),
       };
-      testMap.NoBuildZones = new[] { new MapShape { Center = new FPVector3(40, 0, -22), HalfLength = 6, HalfWidth = 6 } };
+      testMap.NoBuildZones = new[] { Rect(40, -22, 6, 6) };
       EditorUtility.SetDirty(testMap);
 
       BuildMapSpec(TwoPlayerMap);
@@ -393,78 +393,125 @@ namespace FactoryWars.EditorTools {
       QuantumUnityDBUtilities.RefreshGlobalDB(true);
     }
 
-    struct Obstacle {
-      public Vector2Int Position;
-      public Vector3 Size;
-      public float Yaw;
-    }
-
     /// <summary>
-    /// 한 플레이어 몫의 배치만 적고 맵 중심 회전으로 나머지를 만든다. 정수 좌표라 회전해도 대칭이 정확하다.
+    /// 한 플레이어 몫의 배치만 적고 맵 중심 회전으로 나머지를 만든다. 좌표는 맵 중심이 원점이다.
+    /// 배치의 근거와 검증은 SETUP-REPORT.md의 맵 항목에 있다.
     /// </summary>
     class MapDef {
       public string Id;
       public int Players;
       public int HalfSize;
-      public Vector2Int Start;
-      public Vector2Int[] BaseNodes;
-      public Vector2Int[] ExpansionNodes;
-      public int BaseFunds, ExpansionFunds, CenterFunds;
-      public Obstacle[] Obstacles;
+      public FPVector3 Start;
+      public ResourceNodePlacement[] Nodes;
+      public ResourceNodePlacement[] CenterNodes;
+      public TerrainFeature[] Terrain;
+      public MapShape[] NoBuildZones;
       public Vector3 CameraPosition;
     }
 
+    static FPVector3 Position(double x, double z) => new FPVector3(N(x), 0, N(z));
+
+    static MapShape Circle(double x, double z, double radius) => new MapShape { Center = Position(x, z), Radius = N(radius) };
+
+    static MapShape Rect(double x, double z, double halfLength, double halfWidth, double yaw = 0) {
+      return new MapShape { Center = Position(x, z), HalfLength = N(halfLength), HalfWidth = N(halfWidth), Yaw = N(yaw) };
+    }
+
+    static ResourceNodePlacement Mine(double x, double z, int amount, double radius = 3) {
+      return new ResourceNodePlacement { Kind = ResourceKind.Iron, Amount = amount, Shape = Circle(x, z, radius) };
+    }
+
+    static ResourceNodePlacement Forest(double x, double z, double halfLength, double halfWidth, double yaw, int amount) {
+      return new ResourceNodePlacement { Kind = ResourceKind.Wood, Amount = amount, Shape = Rect(x, z, halfLength, halfWidth, yaw) };
+    }
+
+    static TerrainFeature Feature(TerrainKind kind, MapShape shape) => new TerrainFeature { Kind = kind, Shape = shape };
+
     static readonly MapDef TwoPlayerMap = new MapDef {
-      Id = "Map2P", Players = 2, HalfSize = 80, Start = new Vector2Int(-55, -55),
-      BaseNodes = new[] { new Vector2Int(-43, -55), new Vector2Int(-55, -43) },
-      ExpansionNodes = new[] { new Vector2Int(-54, 50), new Vector2Int(-46, 50) },
-      BaseFunds = 5000, ExpansionFunds = 4000, CenterFunds = 8000,
-      Obstacles = new[] {
-        new Obstacle { Position = new Vector2Int(-26, -26), Size = new Vector3(44, 6, 8), Yaw = 45 },
-        new Obstacle { Position = new Vector2Int(-24, 24), Size = new Vector3(10, 6, 10) },
+      Id = "Map2P", Players = 2, HalfSize = 80, Start = new FPVector3(-55, 0, -55),
+      Nodes = new[] {
+        Mine(-72, -52, 4000),
+        Mine(-52, -72, 4000),
+        Mine(-23, -23, 3000),
+        Mine(-46, 58, 2000),
+        Forest(-68, -68, 9, 3, 45, 6000),
+        Forest(-14, -14, 10, 3, 45, 4000),
+        Forest(-66, 66, 14, 4, 45, 8000),
+      },
+      CenterNodes = new[] { Mine(0, 0, 6000, 4) },
+      Terrain = new[] {
+        Feature(TerrainKind.Hill, Rect(-33, -68, 12, 3, 90)),
+        Feature(TerrainKind.Hill, Rect(-33, -37, 7, 3, 90)),
+        Feature(TerrainKind.Hill, Rect(-68, -33, 12, 3)),
+        Feature(TerrainKind.Hill, Rect(-37, -33, 7, 3)),
+        Feature(TerrainKind.Hill, Rect(-33, 56.5, 23.5, 3, 90)),
+        Feature(TerrainKind.Hill, Rect(-68, 33, 12, 3)),
+        Feature(TerrainKind.Hill, Rect(-37, 33, 7, 3)),
+        Feature(TerrainKind.Hill, Rect(-27, 27, 5, 3, 45)),
+        Feature(TerrainKind.Hill, Rect(-13, 13, 4, 3, 45)),
+        Feature(TerrainKind.CanyonWall, Rect(-56, 34, 12, 1, 90)),
+        Feature(TerrainKind.CanyonWall, Rect(-44, 34, 12, 1, 90)),
+        Feature(TerrainKind.CanyonWall, Rect(-24.25, 24.25, 12, 1, -45)),
+        Feature(TerrainKind.CanyonWall, Rect(-15.75, 15.75, 12, 1, -45)),
+        Feature(TerrainKind.Rock, Circle(-9, -3, 3)),
+        Feature(TerrainKind.Rock, Circle(-3, -9, 3)),
+      },
+      NoBuildZones = new[] {
+        Rect(-33, -50, 9, 8),
+        Rect(-50, -33, 8, 9),
+        Rect(-50, 34, 8, 14),
+        Rect(-20, 20, 14, 8, -45),
       },
       CameraPosition = new Vector3(0, 130, -105),
     };
 
     static readonly MapDef FourPlayerMap = new MapDef {
-      Id = "Map4P", Players = 4, HalfSize = 120, Start = new Vector2Int(-90, -90),
-      BaseNodes = new[] { new Vector2Int(-78, -90), new Vector2Int(-90, -78) },
-      ExpansionNodes = new[] { new Vector2Int(-4, -90), new Vector2Int(4, -90) },
-      BaseFunds = 5000, ExpansionFunds = 4000, CenterFunds = 12000,
-      Obstacles = new[] {
-        new Obstacle { Position = new Vector2Int(-45, -90), Size = new Vector3(6, 6, 34) },
-        new Obstacle { Position = new Vector2Int(45, -90), Size = new Vector3(6, 6, 34) },
-        new Obstacle { Position = new Vector2Int(-40, -40), Size = new Vector3(44, 6, 8), Yaw = 45 },
+      Id = "Map4P", Players = 4, HalfSize = 120, Start = new FPVector3(-90, 0, -90),
+      Nodes = new[] {
+        Mine(-107, -87, 4000),
+        Mine(-87, -107, 4000),
+        Mine(-60, -60, 3000),
+        Mine(10, -100, 3000),
+        Forest(-106, -106, 10, 3, 45, 6000),
+        Forest(-50, -50, 10, 3, 45, 4000),
+        Forest(-8, -106, 10, 3, 0, 4000),
+        Forest(-18, -18, 8, 3, 45, 2000),
+      },
+      CenterNodes = new[] { Mine(0, 0, 10000, 5) },
+      Terrain = new[] {
+        Feature(TerrainKind.Hill, Rect(-68, -106, 14, 3, 90)),
+        Feature(TerrainKind.Hill, Rect(-68, -72, 8, 3, 90)),
+        Feature(TerrainKind.Hill, Rect(-106, -68, 14, 3)),
+        Feature(TerrainKind.Hill, Rect(-72, -68, 8, 3)),
+        Feature(TerrainKind.Hill, Rect(-21, -36, 15, 3)),
+        Feature(TerrainKind.Hill, Rect(21, -36, 15, 3)),
+        Feature(TerrainKind.Hill, Rect(-40, -111, 9, 3, 90)),
+        Feature(TerrainKind.Hill, Rect(-40, -80, 10, 3, 90)),
+        Feature(TerrainKind.CanyonWall, Rect(-40, -102, 12, 1)),
+        Feature(TerrainKind.CanyonWall, Rect(-40, -90, 12, 1)),
+      },
+      NoBuildZones = new[] {
+        Rect(-68, -86, 9, 8),
+        Rect(-86, -68, 8, 9),
+        Rect(-40, -96, 14, 8),
+        Rect(0, -36, 8, 8),
       },
       CameraPosition = new Vector3(0, 190, -155),
     };
 
     /// <summary>맵 중심 기준으로 90도씩 quarterTurns번 돌린다.</summary>
-    static Vector2Int Turn(Vector2Int p, int quarterTurns) {
+    static MapShape Turn(MapShape shape, int quarterTurns) {
       for (var i = 0; i < quarterTurns; i++) {
-        p = new Vector2Int(-p.y, p.x);
+        shape.Center = new FPVector3(-shape.Center.Z, 0, shape.Center.X);
+        shape.Yaw -= 90;
       }
-      return p;
+      return shape;
     }
 
     /// <summary>플레이어 수만큼 회전 대칭 복사본을 돌려준다. 2인은 180도, 4인은 90도 간격.</summary>
-    static IEnumerable<(Vector2Int Position, int QuarterTurns)> Orbit(MapDef def, Vector2Int p) {
+    static IEnumerable<MapShape> Orbit(MapDef def, MapShape shape) {
       var step = 4 / def.Players;
-      for (var i = 0; i < def.Players; i++) {
-        yield return (Turn(p, i * step), i * step);
-      }
-    }
-
-    static FPVector3 Position(Vector2Int p) => new FPVector3(p.x, 0, p.y);
-
-    static ResourceNodePlacement Mine(Vector2Int p, int amount) {
-      return new ResourceNodePlacement { Kind = ResourceKind.Iron, Amount = amount, Shape = new MapShape { Center = Position(p), Radius = 3 } };
-    }
-
-    static ResourceNodePlacement Forest(Vector2Int p, int halfLength, int halfWidth, int yaw, int amount) {
-      return new ResourceNodePlacement {
-        Kind = ResourceKind.Wood, Amount = amount, Shape = new MapShape { Center = Position(p), HalfLength = halfLength, HalfWidth = halfWidth, Yaw = yaw },
-      };
+      return Enumerable.Range(0, def.Players).Select(i => Turn(shape, i * step));
     }
 
     static void BuildMapSpec(MapDef def) {
@@ -472,25 +519,15 @@ namespace FactoryWars.EditorTools {
       spec.MaxPlayers = def.Players;
       spec.BoundsMin = new FPVector2(-def.HalfSize, -def.HalfSize);
       spec.BoundsMax = new FPVector2(def.HalfSize, def.HalfSize);
-      spec.StartPositions = Orbit(def, def.Start).Select(o => Position(o.Position)).ToArray();
+      spec.StartPositions = Orbit(def, new MapShape { Center = def.Start }).Select(s => s.Center).ToArray();
       // 임시: AI가 목재·강철을 다루는 3-0i 전까지 넉넉히 준다. 3-0i에서 설계값(철 500, 목재 300)으로 바꾼다.
       spec.StartingResources = R(5000, 20000, 20000, 20000);
       spec.StartingEngineers = 4;
-
-      var nodes = new List<ResourceNodePlacement>();
-      void Add(Vector2Int[] template, int funds) {
-        foreach (var p in template) {
-          nodes.AddRange(Orbit(def, p).Select(o => Mine(o.Position, funds)));
-        }
-      }
-      Add(def.BaseNodes, def.BaseFunds);
-      Add(def.ExpansionNodes, def.ExpansionFunds);
-      nodes.Add(Mine(Vector2Int.zero, def.CenterFunds));
-      spec.ResourceNodes = nodes.ToArray();
-      spec.Terrain = def.Obstacles.SelectMany(obstacle => Orbit(def, obstacle.Position).Select(o => new TerrainFeature {
-        Kind = TerrainKind.Hill,
-        Shape = new MapShape { Center = Position(o.Position), HalfLength = N(obstacle.Size.x / 2), HalfWidth = N(obstacle.Size.z / 2), Yaw = N(obstacle.Yaw - 90 * o.QuarterTurns) },
-      })).ToArray();
+      spec.ResourceNodes = def.Nodes
+        .SelectMany(node => Orbit(def, node.Shape).Select(shape => new ResourceNodePlacement { Kind = node.Kind, Amount = node.Amount, Shape = shape }))
+        .Concat(def.CenterNodes).ToArray();
+      spec.Terrain = def.Terrain.SelectMany(feature => Orbit(def, feature.Shape).Select(shape => Feature(feature.Kind, shape))).ToArray();
+      spec.NoBuildZones = def.NoBuildZones.SelectMany(zone => Orbit(def, zone)).ToArray();
       EditorUtility.SetDirty(spec);
     }
 
