@@ -27,6 +27,11 @@ namespace FactoryWars.EditorTools {
 
       var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Builds"));
       Directory.CreateDirectory(folder);
+      // 패키저는 기존 APK를 증분으로 고쳐 쓰면서 안 쓰는 구간을 남긴다. 지우고 만들어야 크기가 내용물과 같다.
+      var output = Path.Combine(folder, FileName);
+      if (File.Exists(output)) {
+        File.Delete(output);
+      }
       var options = new BuildPlayerOptions {
         scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray(),
         locationPathName = Path.Combine(folder, FileName),

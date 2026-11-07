@@ -48,7 +48,8 @@ namespace Quantum.FactoryWars {
     /// <summary>매장량이 남은 같은 종류 노드 중 가장 가까운 것. exclude는 건너뛴다.</summary>
     public static EntityRef NearestNode(Frame f, PlayerRef owner, FPVector3 position, FP radius, ResourceKind kind, EntityRef exclude = default) {
       var best = EntityRef.None;
-      var bestDistance = radius < FP.UseableMax ? radius * radius : FP.UseableMax;
+      // FP.UseableMax는 "반경 없음" 표시다. 거리 제곱의 초기값으로 쓰면 약 181m 밖이 안 보이므로 MaxValue를 쓴다.
+      var bestDistance = radius < FP.UseableMax ? radius * radius : FP.MaxValue;
       var nodes = f.Filter<Transform3D, ResourceNode>();
       while (nodes.NextUnsafe(out var entity, out var transform, out var node)) {
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, position);
@@ -63,7 +64,7 @@ namespace Quantum.FactoryWars {
 
     static EntityRef NearestDropOff(Frame f, PlayerRef owner, FPVector3 position) {
       var best = EntityRef.None;
-      var bestDistance = FP.UseableMax;
+      var bestDistance = FP.MaxValue;
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out var entity, out var transform, out var building)) {
         if (building->Owner != owner || building->ConstructionRemaining > FP._0 || f.FindAsset(building->Spec).IsDropOff == false) {
@@ -95,7 +96,7 @@ namespace Quantum.FactoryWars {
         }
       }
       var best = 0;
-      var bestDistance = FP.UseableMax;
+      var bestDistance = FP.MaxValue;
       var count = node->Shape.SpotCount(rules);
       for (var i = 0; i < count; i++) {
         if ((taken & (1L << i)) != 0) {

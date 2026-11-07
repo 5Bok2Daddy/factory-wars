@@ -7,6 +7,7 @@ namespace FactoryWars.Tests {
   using NUnit.Framework;
   using Assert = NUnit.Framework.Assert;
   using Quantum;
+  using Quantum.FactoryWars;
   using UnityEngine;
   using UnityEngine.TestTools;
 
@@ -73,7 +74,7 @@ namespace FactoryWars.Tests {
       var alive = Enumerable.Range(0, players).Count(i => StateOf(i).Defeated == false);
       var seats = string.Join("+", Enumerable.Range(0, players).Select(i => FactionOf(i).FactionId));
       var firstText = string.Join(";", firsts.OrderBy(p => p.Value).Select(p => $"{p.Key}={F(p.Value)}"));
-      var endText = string.Join(" ", Enumerable.Range(0, players).Select(EndState));
+      var endText = string.Join(" ", Enumerable.Range(0, players).Select(EndState)) + " " + Relations(players);
       var row = $"{map},{run},{F(seconds)},{winners},{alive},{seats},{firstText},{endText}";
       File.AppendAllLines(Path.Combine(AiFolder(), "matches.csv"), new[] { row });
       File.AppendAllLines(Path.Combine(AiFolder(), "minutes.csv"), minutes);
@@ -81,14 +82,67 @@ namespace FactoryWars.Tests {
       Assert.Greater(seconds, 0f);
     }
 
+    /// <summary>군대가 놀고 있는지 본다. 명령별 수, 평균 위치, 다음 공격 시각, 웨이브 크기.</summary>
+    static unsafe string ArmyStates(int players) {
+      var parts = new List<string>();
+      for (var p = 0; p < players; p++) {
+        int stop = 0, move = 0, attackMove = 0, attackTarget = 0, targets = 0;
+        var sum = Vector3.zero;
+        var kinds = new Dictionary<string, int>();
+        foreach (var pair in Verified.GetComponentIterator<Unit>()) {
+          if (pair.Component.Owner != p) {
+            continue;
+          }
+          var spec = Verified.FindAsset(pair.Component.Spec);
+          if (spec.Attack == AttackType.None) {
+            continue;
+          }
+          stop += pair.Component.Order == UnitOrder.Stop ? 1 : 0;
+          move += pair.Component.Order == UnitOrder.Move ? 1 : 0;
+          attackMove += pair.Component.Order == UnitOrder.AttackMove ? 1 : 0;
+          attackTarget += pair.Component.Order == UnitOrder.AttackTarget ? 1 : 0;
+          targets += pair.Component.TargetEntity != EntityRef.None ? 1 : 0;
+          sum += Verified.Get<Transform3D>(pair.Entity).Position.ToUnityVector3();
+          kinds[spec.name] = kinds.TryGetValue(spec.name, out var n) ? n + 1 : 1;
+        }
+        var count = stop + move + attackMove + attackTarget;
+        var center = count > 0 ? sum / count : Vector3.zero;
+        var bot = Verified.Global->Bots.GetPointer(p);
+        parts.Add($"p{p}[s{stop}/m{move}/am{attackMove}/at{attackTarget}/t{targets} c{center.x:0},{center.z:0} next{bot->NextAttackFrame - Verified.Number} wave{bot->WaveSize} {string.Join("+", kinds.Select(k => $"{k.Key.Substring(3)}{k.Value}"))}]");
+      }
+      return string.Join(" ", parts);
+    }
+
+    /// <summary>끝났을 때 동맹 관계와 맵에 남은 철. 안 끝난 경기의 원인을 찾는 데 쓴다.</summary>
+    static string Relations(int players) {
+      var pairs = new List<string>();
+      for (var a = 0; a < players; a++) {
+        for (var b = a + 1; b < players; b++) {
+          var relation = DiplomacySystem.GetRelation(Verified, a, b);
+          if (relation != Relation.Enemy) {
+            pairs.Add($"{a}{relation.ToString()[0]}{b}");
+          }
+        }
+      }
+      var iron = 0f;
+      foreach (var pair in Verified.GetComponentIterator<ResourceNode>()) {
+        iron += pair.Component.Kind == ResourceKind.Iron ? pair.Component.Remaining.AsFloat : 0f;
+      }
+      return $"rel[{string.Join("/", pairs)}] ironleft{iron:0} {ArmyStates(players)}";
+    }
+
     /// <summary>끝났을 때 자리별 상태. 안 끝난 경기의 원인을 찾는 데 쓴다.</summary>
     static string EndState(int player) {
       var s = StateOf(player);
       var buildings = 0;
+      var headquarters = 0;
       foreach (var pair in Verified.GetComponentIterator<Building>()) {
-        buildings += pair.Component.Owner == player ? 1 : 0;
+        if (pair.Component.Owner == player) {
+          buildings++;
+          headquarters += Verified.FindAsset(pair.Component.Spec).Role == BuildingRole.Headquarters ? 1 : 0;
+        }
       }
-      return $"p{player}:hq{(Headquarters(player) != EntityRef.None ? 1 : 0)}/b{buildings}/u{Army(player, true).Count}/e{Engineers(player).Count}/i{s.Stock.Iron.AsInt}/w{s.Stock.Wood.AsInt}/s{s.Stock.Steel.AsInt}";
+      return $"p{player}:hq{headquarters}/b{buildings}/u{Army(player, true).Count}/e{Engineers(player).Count}/i{s.Stock.Iron.AsInt}/w{s.Stock.Wood.AsInt}/s{s.Stock.Steel.AsInt}";
     }
 
     static string MinuteRow(string map, int run, int minute, int player) {

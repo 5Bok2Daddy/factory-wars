@@ -48,6 +48,11 @@ MonoBehaviour:
   WaveSize: 6
   WaveGrowth: 2
   MaxWaveSize: 12
+  SweepArmyRatio: 4
+  SweepSeconds:
+    RawValue: 1310720
+  BreakReserveIronLeft:
+    RawValue: 262144000
   PowerMargin:
     RawValue: 196608
   PopulationMargin: 4

@@ -476,7 +476,7 @@ namespace Quantum.FactoryWars {
         return best;
       }
 
-      bestDistance = FP.UseableMax;
+      bestDistance = FP.MaxValue;
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out var entity, out var transform, out var building)) {
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, position);

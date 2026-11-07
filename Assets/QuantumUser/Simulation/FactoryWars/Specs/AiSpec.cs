@@ -32,6 +32,11 @@ namespace Quantum {
     public int WaveSize;
     public int WaveGrowth;
     public int MaxWaveSize;
+    /// <summary>내 군대가 적 군대의 이 배수를 넘으면 웨이브를 기다리지 않고 남은 핵심 건물을 소탕한다.</summary>
+    public int SweepArmyRatio;
+    public FP SweepSeconds;
+    /// <summary>맵에 남은 철이 이보다 적고 동맹이 있으면 파기 비용을 쓰지 않고 남겨 둔다.</summary>
+    public FP BreakReserveIronLeft;
     /// <summary>전기 순증감이 이보다 낮으면 발전소를 먼저 짓는다.</summary>
     public FP PowerMargin;
     public int PopulationMargin;

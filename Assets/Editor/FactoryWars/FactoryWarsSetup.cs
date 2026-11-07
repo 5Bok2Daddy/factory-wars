@@ -397,6 +397,9 @@ namespace FactoryWars.EditorTools {
       ai.WaveSize = wave;
       ai.WaveGrowth = growth;
       ai.MaxWaveSize = maxWave;
+      ai.SweepArmyRatio = 4;
+      ai.SweepSeconds = 20;
+      ai.BreakReserveIronLeft = 4000;
       ai.PowerMargin = 3;
       ai.PopulationMargin = 4;
       ai.SiteGrid = 7;

@@ -84,6 +84,37 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest]
+    public IEnumerator Ai_SeesEnemiesAcrossTheWholeMap() {
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 3, truce: 0);
+      var far = new FPVector3(-300, 0, -300);
+      Assert.IsTrue(BotSystem.FindEnemyTarget(Verified, 0, far, out _), "제곱 거리가 32768을 넘어도 찾음");
+      var node = WorkerSystem.NearestNode(Verified, 0, far, FP.UseableMax, ResourceKind.Iron);
+      Assert.AreNotEqual(EntityRef.None, node, "먼 철광산도 찾음");
+    }
+
+    [UnityTest]
+    public IEnumerator Ai_ProcessorsStopWhileSavingIron() {
+      yield return StartMatch();
+      var ai = Verified.FindAsset(Verified.FindAsset(Verified.RuntimeConfig.Rules).NormalAi);
+      FP breakCost = 500;
+      Assert.IsFalse(BotSystem.ProcessorsOff(ai, Stock(400, 0, 100, 0), breakCost, false), "평소에는 켬");
+      Assert.IsTrue(BotSystem.ProcessorsOff(ai, Stock(400, 0, 100, 0), breakCost, true), "파기 비용을 모으는 중");
+      Assert.IsFalse(BotSystem.ProcessorsOff(ai, Stock(600, 0, 100, 0), breakCost, true), "다 모았으면 켬");
+      Assert.IsTrue(BotSystem.ProcessorsOff(ai, Stock(200, 0, 900, 0), breakCost, false), "강철이 넉넉하고 철이 적음");
+      Assert.IsFalse(BotSystem.ProcessorsOff(ai, Stock(200, 0, 100, 0), breakCost, false), "강철이 모자라면 계속");
+    }
+
+    [UnityTest]
+    public IEnumerator Ai_SweepsOnlyWhenEnemyArmyIsGone() {
+      yield return StartMatch();
+      var ai = Verified.FindAsset(Verified.FindAsset(Verified.RuntimeConfig.Rules).NormalAi);
+      Assert.IsTrue(BotSystem.IsSweeping(10, 0, ai), "적 군대 없음");
+      Assert.IsTrue(BotSystem.IsSweeping(40, 10, ai), "4배");
+      Assert.IsFalse(BotSystem.IsSweeping(39, 10, ai));
+      Assert.IsFalse(BotSystem.IsSweeping(0, 0, ai), "군대가 없으면 안 감");
+    }
+
+    [UnityTest]
     public IEnumerator Tower_GroundTowerIgnoresHawkAndShootsTanks() {
       yield return StartMatch(units: new[] { (1, "ff_hawk_gunship", 5, ArenaZ), (1, "cf_dragonscale_tank", 8, ArenaZ) },
         buildings: new[] { (0, "ff_ground_tower", 0, ArenaZ), (0, "ff_power_plant", -14, ArenaZ) }, stock: Stock(1000, 1000, 0, 500));
