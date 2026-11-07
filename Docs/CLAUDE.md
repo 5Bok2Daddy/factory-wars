@@ -38,4 +38,5 @@
 - 변경 후에는 Unity 배치 모드로 컴파일해 `Editor.log`에 에러가 없는지 확인한다.
 - 의미 있는 단위마다 Git 커밋하고, 작업 단위마다 `origin main`에 push한다 (원격: https://github.com/5Bok2Daddy/factory-wars.git, Private).
 - 하지 말 것: 결제·구독 변경, Photon 대시보드 설정 변경(특히 무료 100 CCU 활성화), 계정 비밀번호·토큰 입력, 사용자 폴더 밖 파일 삭제.
+- 유닛·건물·자원·지형·UI 그래픽 작업 전에 visual-style 스킬을 따른다.
 - 막히면 우회하지 말고 `SETUP-REPORT.md`에 원인과 사용자가 할 일을 적는다.
