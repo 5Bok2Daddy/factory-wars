@@ -7,7 +7,9 @@
         "Quantum.Simulation",
         "Quantum.Unity",
         "FactoryWars.View",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

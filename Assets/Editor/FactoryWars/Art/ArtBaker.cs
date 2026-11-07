@@ -29,8 +29,15 @@ namespace FactoryWars.EditorTools {
       public int MaxTriangles;
     }
 
-    static Material _base;
-    static Material _glowOn;
+    const float Emission = 2.4f;
+    const float BloomIntensity = 0.8f;
+    const float BloomThreshold = 1.2f;
+    const float BloomScatter = 0.68f;
+    const float RingMargin = 0.25f;
+    const float BarMargin = 0.55f;
+
+    static Material _team;
+    static Material _neutral;
 
     static Material SaveMaterial(string path, Material fresh) {
       var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -45,14 +52,9 @@ namespace FactoryWars.EditorTools {
       return fresh;
     }
 
-    static Texture2D BuildPalette(string name, float scale) {
+    static Texture2D SaveTexture(string name, Color32[] pixels, bool linear = false) {
       var path = $"{ResourceRoot}/{name}.png";
-      var pixels = ArtPalette.Pixels();
       var texture = new Texture2D(ArtPalette.Size, 1, TextureFormat.RGBA32, false);
-      for (var i = 0; i < pixels.Length; i++) {
-        var c = pixels[i];
-        pixels[i] = new Color32((byte)(c.r * scale), (byte)(c.g * scale), (byte)(c.b * scale), 255);
-      }
       texture.SetPixels32(pixels);
       texture.Apply();
       File.WriteAllBytes(path, texture.EncodeToPNG());
@@ -64,70 +66,144 @@ namespace FactoryWars.EditorTools {
       importer.wrapMode = TextureWrapMode.Clamp;
       importer.textureCompression = TextureImporterCompression.Uncompressed;
       importer.npotScale = TextureImporterNPOTScale.None;
+      importer.sRGBTexture = linear == false;
+      importer.alphaIsTransparency = false;
       importer.SaveAndReimport();
       return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }
 
+    /// <summary>금속 반사에 쓰는 하늘 그라데이션. 하늘 큐브맵이 없으면 금속 면이 까맣게 나온다.</summary>
+    static void BuildReflection() {
+      const int Size = 32;
+      var sky = new Color(0.82f, 0.88f, 0.95f);
+      var horizon = new Color(0.62f, 0.62f, 0.6f);
+      var ground = new Color(0.2f, 0.19f, 0.17f);
+      var cube = new Cubemap(Size, TextureFormat.RGBA32, true);
+      var faces = new[] { CubemapFace.PositiveX, CubemapFace.NegativeX, CubemapFace.PositiveZ, CubemapFace.NegativeZ };
+      var pixels = new Color[Size * Size];
+      foreach (var face in faces) {
+        for (var y = 0; y < Size; y++) {
+          var up = 1f - 2f * (y + 0.5f) / Size;
+          var color = up > 0 ? Color.Lerp(horizon, sky, up) : Color.Lerp(horizon, ground, -up);
+          for (var x = 0; x < Size; x++) {
+            pixels[y * Size + x] = color;
+          }
+        }
+        cube.SetPixels(pixels, face);
+      }
+      for (var i = 0; i < pixels.Length; i++) {
+        pixels[i] = sky;
+      }
+      cube.SetPixels(pixels, CubemapFace.PositiveY);
+      for (var i = 0; i < pixels.Length; i++) {
+        pixels[i] = ground;
+      }
+      cube.SetPixels(pixels, CubemapFace.NegativeY);
+      cube.Apply(true, false);
+      var path = $"{ResourceRoot}/SkyReflection.cubemap";
+      AssetDatabase.DeleteAsset(path);
+      AssetDatabase.CreateAsset(cube, path);
+    }
+
+    /// <summary>컴포넌트를 하위 에셋으로 넣어야 다음 실행에도 남는다.</summary>
+    static void BuildProfile(QualityTier tier, BloomDownscaleMode downscale, bool highQuality, int iterations) {
+      var path = $"{ResourceRoot}/{GraphicsQuality.ProfileName(tier)}.asset";
+      AssetDatabase.DeleteAsset(path);
+      var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+      AssetDatabase.CreateAsset(profile, path);
+      var bloom = profile.Add<Bloom>(true);
+      bloom.intensity.Override(BloomIntensity);
+      bloom.threshold.Override(BloomThreshold);
+      bloom.scatter.Override(BloomScatter);
+      bloom.downscale.Override(downscale);
+      bloom.highQualityFiltering.Override(highQuality);
+      bloom.maxIterations.Override(iterations);
+      var tone = profile.Add<Tonemapping>(true);
+      tone.mode.Override(TonemappingMode.Neutral);
+      AssetDatabase.AddObjectToAsset(bloom, profile);
+      AssetDatabase.AddObjectToAsset(tone, profile);
+      EditorUtility.SetDirty(profile);
+    }
+
     static void BuildArtMaterials() {
       Directory.CreateDirectory(ResourceRoot);
-      var palette = BuildPalette("Palette", 1f);
-      var dim = BuildPalette("PaletteDim", 0.3f);
+      var surface = SaveTexture("PaletteSurface", ArtPalette.SurfacePixels(), true);
+      var glowOn = SaveTexture("PaletteGlowOn", ArtPalette.EmissionPixels(true));
+      var glowOff = SaveTexture("PaletteGlowOff", ArtPalette.EmissionPixels(false));
       var lit = Shader.Find("Universal Render Pipeline/Lit");
 
-      var baseMaterial = new Material(lit) { name = "ArtBase" };
-      baseMaterial.SetTexture("_BaseMap", palette);
-      baseMaterial.SetColor("_BaseColor", Color.white);
-      baseMaterial.SetFloat("_Metallic", 0.25f);
-      baseMaterial.SetFloat("_Smoothness", 0.32f);
-      _base = SaveMaterial($"{ResourceRoot}/ArtBase.mat", baseMaterial);
+      // 모든 머티리얼이 같은 셰이더 변형을 쓴다. 그래야 SRP Batcher가 끊기지 않는다.
+      Material Make(string name, Texture2D palette, Texture2D glow) {
+        var material = new Material(lit) { name = name };
+        material.SetTexture("_BaseMap", palette);
+        material.SetColor("_BaseColor", Color.white);
+        material.SetTexture("_MetallicGlossMap", surface);
+        material.SetFloat("_Smoothness", 1f);
+        material.EnableKeyword("_METALLICSPECGLOSSMAP");
+        material.SetTexture("_EmissionMap", glow);
+        material.SetColor("_EmissionColor", Color.white * Emission);
+        material.EnableKeyword("_EMISSION");
+        // URP는 Emissive 플래그가 없으면 머티리얼 후처리에서 _EMISSION을 지운다. 실시간 GI는 쓰지 않아 비용이 없다.
+        material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        return SaveMaterial($"{ResourceRoot}/{name}.mat", material);
+      }
 
-      var on = new Material(lit) { name = ArtLook.GlowOn };
-      on.SetTexture("_BaseMap", palette);
-      on.SetTexture("_EmissionMap", palette);
-      on.SetColor("_EmissionColor", Color.white * 2.2f);
-      on.EnableKeyword("_EMISSION");
-      on.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
-      _glowOn = SaveMaterial($"{ResourceRoot}/{ArtLook.GlowOn}.mat", on);
+      for (var i = 0; i < Palette.Count; i++) {
+        var palette = SaveTexture($"PaletteP{i}", ArtPalette.BasePixels(Palette.Colors[i]));
+        Make(ArtLook.MaterialName(i, false), palette, glowOff);
+        var on = Make(ArtLook.MaterialName(i, true), palette, glowOn);
+        if (i == 0) {
+          _team = on;
+        }
+      }
+      _neutral = Make(ArtLook.Neutral, SaveTexture("PaletteNeutral", ArtPalette.BasePixels(new Color32(0x80, 0x80, 0x80, 0xFF))), glowOn);
 
       var floor = new Material(lit) { name = "GalleryGround" };
       floor.SetColor("_BaseColor", new Color32(0x96, 0x94, 0x8A, 0xFF));
       floor.SetFloat("_Smoothness", 0.1f);
       SaveMaterial($"{ResourceRoot}/GalleryGround.mat", floor);
 
-      var off = new Material(lit) { name = ArtLook.GlowOff };
-      off.SetTexture("_BaseMap", dim);
-      off.SetFloat("_Smoothness", 0.2f);
-      SaveMaterial($"{ResourceRoot}/{ArtLook.GlowOff}.mat", off);
+      BuildReflection();
+      BuildProfile(QualityTier.Medium, BloomDownscaleMode.Quarter, false, 4);
+      BuildProfile(QualityTier.High, BloomDownscaleMode.Half, true, 6);
       AssetDatabase.SaveAssets();
     }
 
-    static Material SlotMaterial(ArtSlot slot) {
-      switch (slot) {
-        case ArtSlot.Team: return AssetDatabase.LoadAssetAtPath<Material>("Assets/QuantumUser/Resources/FactoryWars/Materials/Player0.mat");
-        case ArtSlot.Glow: return _glowOn;
-        default: return _base;
-      }
-    }
-
-    static GameObject AddPart(Transform parent, string id, string name, Vector3 position, System.Action<MeshKit> build) {
-      var kit = new MeshKit();
-      build(kit);
-      var slots = new List<ArtSlot>();
-      var mesh = kit.ToMesh($"{id}_{name}", slots);
-      var path = $"{ArtRoot}/Meshes/{id}_{name}.asset";
+    static Mesh SaveMesh(Mesh mesh, string name) {
+      var path = $"{ArtRoot}/Meshes/{name}.asset";
       var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
       if (existing != null) {
         EditorUtility.CopySerialized(mesh, existing);
-        mesh = existing;
-      } else {
-        AssetDatabase.CreateAsset(mesh, path);
+        return existing;
       }
+      AssetDatabase.CreateAsset(mesh, path);
+      return mesh;
+    }
+
+    static GameObject AddPart(Transform parent, string id, string name, Vector3 position, Material material, System.Action<MeshKit> build) {
+      var kit = new MeshKit();
+      build(kit);
       var item = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
       item.transform.SetParent(parent, false);
       item.transform.localPosition = position;
-      item.GetComponent<MeshFilter>().sharedMesh = mesh;
-      item.GetComponent<MeshRenderer>().sharedMaterials = slots.Select(SlotMaterial).ToArray();
+      item.GetComponent<MeshFilter>().sharedMesh = SaveMesh(kit.ToMesh($"{id}_{name}"), $"{id}_{name}");
+      item.GetComponent<MeshRenderer>().sharedMaterial = material;
       return item;
+    }
+
+    /// <summary>링과 바의 크기는 표시 배율을 곱한 모델에서 정한다. 시뮬레이션 반지름을 쓰지 않아서 모델이 링을 벗어나지 않는다.</summary>
+    static ViewCatalog.Entry Describe(ArtRecipe recipe, GameObject root, GameObject prefab) {
+      var renderers = root.GetComponentsInChildren<Renderer>(true);
+      var bounds = renderers[0].bounds;
+      foreach (var renderer in renderers) {
+        bounds.Encapsulate(renderer.bounds);
+      }
+      return new ViewCatalog.Entry {
+        Id = recipe.Id, Prefab = prefab, Unit = recipe.Kind == "유닛", DisplayScale = recipe.DisplayScale, Altitude = recipe.Altitude,
+        Center = new Vector2(bounds.center.x, bounds.center.z),
+        RingRadius = Mathf.Max(bounds.extents.x, bounds.extents.z) * recipe.DisplayScale + RingMargin,
+        BarHeight = recipe.Altitude + bounds.max.y * recipe.DisplayScale + BarMargin,
+      };
     }
 
     [MenuItem("Tools/Factory Wars/Bake Art")]
@@ -138,15 +214,16 @@ namespace FactoryWars.EditorTools {
       var entries = new List<ViewCatalog.Entry>();
       foreach (var recipe in ArtRecipes.All()) {
         var root = new GameObject(recipe.Id);
-        AddPart(root.transform, recipe.Id, "Body", Vector3.zero, recipe.Body);
+        var material = recipe.Kind == "유닛" || recipe.Kind == "건물" ? _team : _neutral;
+        AddPart(root.transform, recipe.Id, "Body", Vector3.zero, material, recipe.Body);
         var parts = new Dictionary<string, Transform>();
         foreach (var part in recipe.Moving) {
           var parent = part.Parent != null ? parts[part.Parent] : root.transform;
-          parts[part.Name] = AddPart(parent, recipe.Id, part.Name, part.Pivot, part.Build).transform;
+          parts[part.Name] = AddPart(parent, recipe.Id, part.Name, part.Pivot, material, part.Build).transform;
         }
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{ArtRoot}/Prefabs/{recipe.Id}.prefab");
+        entries.Add(Describe(recipe, root, prefab));
         Object.DestroyImmediate(root);
-        entries.Add(new ViewCatalog.Entry { Id = recipe.Id, Prefab = prefab });
       }
 
       var catalogPath = $"{ResourceRoot}/ViewCatalog.asset";
@@ -161,41 +238,31 @@ namespace FactoryWars.EditorTools {
       Debug.Log($"ArtBaker: 프리팹 {entries.Count}개");
     }
 
-    static GameObject Spawn(ViewCatalog catalog, Transform root, string id, Vector3 position, int color, float yaw = 0f) {
-      var instance = (GameObject)PrefabUtility.InstantiatePrefab(catalog.Find(id), root);
-      instance.transform.SetPositionAndRotation(position, Quaternion.Euler(0, yaw, 0));
-      ArtLook.Apply(instance, color);
-      return instance;
+    static ArtView Spawn(ViewCatalog catalog, Transform root, string id, Vector3 position, int color, float yaw = 0f, bool powered = true) {
+      var view = ArtView.Create(catalog, id, root, color, powered);
+      view.transform.position = position;
+      view.SetYaw(yaw);
+      return view;
     }
 
     static void AddForest(Transform root, Vector3 position, float remaining, string name) {
       var kit = new MeshKit();
       ForestKit.Forest(kit, 7f, 4f, 11, remaining);
-      var slots = new List<ArtSlot>();
-      var mesh = kit.ToMesh(name, slots);
-      var path = $"{ArtRoot}/Meshes/{name}.asset";
-      var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
-      if (existing != null) {
-        EditorUtility.CopySerialized(mesh, existing);
-        mesh = existing;
-      } else {
-        AssetDatabase.CreateAsset(mesh, path);
-      }
       var item = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
       item.transform.SetParent(root, false);
       item.transform.position = position;
-      item.GetComponent<MeshFilter>().sharedMesh = mesh;
-      item.GetComponent<MeshRenderer>().sharedMaterials = slots.Select(SlotMaterial).ToArray();
+      item.GetComponent<MeshFilter>().sharedMesh = SaveMesh(kit.ToMesh(name), name);
+      item.GetComponent<MeshRenderer>().sharedMaterial = _neutral;
     }
 
-    static readonly (string Id, float X, float Y)[] FreeRow = {
-      ("ff_headquarters", 0, 0), ("ff_engineer", 7, 0), ("ff_ranger_squad", 11, 0), ("ff_skyguard_squad", 15, 0),
-      ("ff_eagle_tank", 20, 0), ("ff_hawk_gunship", 26, 2.2f), ("ff_skyfortress_bomber", 35, 2.4f),
+    static readonly (string Id, float X)[] FreeRow = {
+      ("ff_headquarters", 0), ("ff_engineer", 7), ("ff_ranger_squad", 11.5f), ("ff_skyguard_squad", 16),
+      ("ff_eagle_tank", 21), ("ff_hawk_gunship", 28), ("ff_skyfortress_bomber", 39),
     };
 
-    static readonly (string Id, float X, float Y)[] ContinentalRow = {
-      ("cf_headquarters", 0, 0), ("cf_engineer", 7, 0), ("cf_militia", 11, 0), ("cf_flame_squad", 15, 0),
-      ("cf_dragonscale_tank", 20, 0), ("cf_thunder_aa", 26, 0), ("cf_longwall_mlrs", 33, 0),
+    static readonly (string Id, float X)[] ContinentalRow = {
+      ("cf_headquarters", 0), ("cf_engineer", 7), ("cf_militia", 11.5f), ("cf_flame_squad", 16),
+      ("cf_dragonscale_tank", 21), ("cf_thunder_aa", 28), ("cf_longwall_mlrs", 35),
     };
 
     // 줄은 3/4 시점 카메라의 오른쪽 방향으로 놓는다. 그래야 화면에서 가로로 보인다.
@@ -231,29 +298,17 @@ namespace FactoryWars.EditorTools {
 
       var camera = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
       camera.tag = "MainCamera";
-      var cameraData = camera.AddComponent<UniversalAdditionalCameraData>();
-      cameraData.renderPostProcessing = true;
+      camera.AddComponent<UniversalAdditionalCameraData>();
+      camera.GetComponent<Camera>().allowHDR = true;
       camera.GetComponent<Camera>().clearFlags = CameraClearFlags.SolidColor;
       camera.GetComponent<Camera>().backgroundColor = new Color(0.58f, 0.6f, 0.56f);
 
-      var volumeObject = new GameObject("Volume", typeof(Volume));
-      var volume = volumeObject.GetComponent<Volume>();
-      volume.isGlobal = true;
-      AssetDatabase.DeleteAsset("Assets/Art/Gallery/GalleryVolume.asset");
-      var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-      AssetDatabase.CreateAsset(profile, "Assets/Art/Gallery/GalleryVolume.asset");
-      var bloom = profile.Add<Bloom>(true);
-      bloom.intensity.Override(0.55f);
-      bloom.threshold.Override(1.05f);
-      var tone = profile.Add<Tonemapping>(true);
-      tone.mode.Override(TonemappingMode.Neutral);
-      AssetDatabase.SaveAssets();
-      volume.sharedProfile = profile;
+      GraphicsQuality.Apply(QualityTier.High);
 
       var root = new GameObject("Gallery").transform;
-      void Row((string Id, float X, float Y)[] row, float index, int color) {
+      void Row((string Id, float X)[] row, float index, int color) {
         foreach (var item in row) {
-          Spawn(catalog, root, item.Id, Place(item.X, index, item.Y), color, 180f);
+          Spawn(catalog, root, item.Id, Place(item.X, index), color, 180f);
         }
       }
       Row(FreeRow, 0, 0);
@@ -266,14 +321,16 @@ namespace FactoryWars.EditorTools {
       // 철광산: 채집 전, 고갈
       Spawn(catalog, root, "iron_mine", Place(0, -1), 0);
       var depleted = Spawn(catalog, root, "iron_mine", Place(8, -1), 0);
-      depleted.transform.Find("Crystals").gameObject.SetActive(false);
+      depleted.Model.transform.Find("Crystals").gameObject.SetActive(false);
       // 숲: 채집 전, 절반 채집
       AddForest(root, Place(20, -1), 1f, "gallery_forest_full");
       AddForest(root, Place(37, -1), 0.5f, "gallery_forest_half");
       // 다리: 세움, 내림
       var raised = Spawn(catalog, root, "bridge", Place(0, -2, 0.5f), 0, 180f);
-      raised.transform.Find("Deck").localRotation = Quaternion.Euler(-78, 0, 0);
+      raised.Model.transform.Find("Deck").localRotation = Quaternion.Euler(-78, 0, 0);
       Spawn(catalog, root, "bridge", Place(17, -2, 0.5f), 0, 180f);
+      // 정전: 같은 사령부를 전기 없이 한 채 더 놓는다.
+      Spawn(catalog, root, "ff_headquarters", Place(-12, 0), 0, 180f, false);
 
       EditorSceneManager.SaveScene(scene, GalleryScene);
       Debug.Log("ArtBaker: 갤러리 씬 저장");
@@ -297,7 +354,10 @@ namespace FactoryWars.EditorTools {
       return result;
     }
 
-    static void Shot(Camera camera, string name, Vector3 position, Vector3 target, float fov, bool orthographic = false, float size = 10f) {
+    /// <summary>
+    /// 내부 색 버퍼 형식은 대상 텍스처를 따른다. 8비트 대상이면 HDR이 꺼져 Bloom 임계값을 넘는 빛이 없어지므로, HDR 단계는 반정밀 대상에 그린다.
+    /// </summary>
+    static Color32[] Shot(Camera camera, string name, Vector3 position, Vector3 target, float fov, bool orthographic = false, float size = 10f) {
       const int Width = 1920;
       const int Height = 1080;
       camera.transform.position = position;
@@ -307,75 +367,120 @@ namespace FactoryWars.EditorTools {
       camera.fieldOfView = fov;
       camera.nearClipPlane = 0.3f;
       camera.farClipPlane = 600f;
-      var target2 = RenderTexture.GetTemporary(new RenderTextureDescriptor(Width, Height, RenderTextureFormat.ARGB32, 24) { sRGB = true, msaaSamples = 4 });
-      camera.targetTexture = target2;
+      var hdr = ((UniversalRenderPipelineAsset)QualitySettings.renderPipeline).supportsHDR;
+      var surface = RenderTexture.GetTemporary(new RenderTextureDescriptor(Width, Height, hdr ? RenderTextureFormat.ARGBHalf : RenderTextureFormat.ARGB32, 24) { sRGB = hdr == false });
+      camera.targetTexture = surface;
       camera.Render();
-      RenderTexture.active = target2;
-      var texture = new Texture2D(Width, Height, TextureFormat.RGB24, false);
-      texture.ReadPixels(new Rect(0, 0, Width, Height), 0, 0);
-      texture.Apply();
+      RenderTexture.active = surface;
+      var read = new Texture2D(Width, Height, hdr ? TextureFormat.RGBAHalf : TextureFormat.RGBA32, false, hdr);
+      read.ReadPixels(new Rect(0, 0, Width, Height), 0, 0);
+      read.Apply();
       RenderTexture.active = null;
       camera.targetTexture = null;
-      RenderTexture.ReleaseTemporary(target2);
+      RenderTexture.ReleaseTemporary(surface);
+      Color32[] pixels;
+      if (hdr) {
+        var values = read.GetPixels();
+        pixels = new Color32[values.Length];
+        for (var i = 0; i < values.Length; i++) {
+          pixels[i] = values[i];
+        }
+      } else {
+        pixels = read.GetPixels32();
+      }
+      Object.DestroyImmediate(read);
+      var output = new Texture2D(Width, Height, TextureFormat.RGB24, false);
+      output.SetPixels32(pixels);
+      output.Apply();
       var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "screenshots"));
       Directory.CreateDirectory(folder);
-      File.WriteAllBytes(Path.Combine(folder, name), texture.EncodeToPNG());
-      Object.DestroyImmediate(texture);
+      File.WriteAllBytes(Path.Combine(folder, name), output.EncodeToPNG());
+      Object.DestroyImmediate(output);
       Debug.Log($"ArtBaker: 저장 {name}");
+      return pixels;
+    }
+
+    static void ShowMarkers(bool shown) {
+      var index = 0;
+      foreach (var view in Object.FindObjectsByType<ArtView>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID)) {
+        view.SetSelected(shown && view.Entry.Unit);
+        view.SetHealth(0.35f + 0.65f * MeshKit.Hash(3, index++));
+      }
     }
 
     /// <summary>GPU가 있는 배치 모드에서 호출한다. 실패하면 로그에 이유가 남고 씬은 그대로 열어 볼 수 있다.</summary>
     public static void RenderGallery() {
+      FactoryWarsSetup.ConfigureRenderPipeline();
       BakeAll();
       BuildGallery();
-      var pipeline = (UniversalRenderPipelineAsset)GraphicsSettings.defaultRenderPipeline;
-      var shadow = pipeline.shadowDistance;
-      pipeline.shadowDistance = 150f;
-      var depthBias = pipeline.shadowDepthBias;
-      var normalBias = pipeline.shadowNormalBias;
-      pipeline.shadowDepthBias = 2f;
-      pipeline.shadowNormalBias = 1.5f;
-      var resolution = pipeline.mainLightShadowmapResolution;
-      pipeline.mainLightShadowmapResolution = 4096;
-      var cascades = pipeline.shadowCascadeCount;
-      pipeline.shadowCascadeCount = 4;
       Debug.Log($"ArtBaker: 그래픽 장치 {SystemInfo.graphicsDeviceType} / {SystemInfo.graphicsDeviceName}");
       var camera = Camera.main;
+      GraphicsQuality.Apply(QualityTier.High);
 
-      // 참고 이미지와 같은 위에서 비스듬한 3/4 시점: 방위 45도, 고각 약 35도, 직교 투영.
+      // 참고 이미지와 같은 위에서 비스듬한 3/4 시점: 방위 45도, 고각 약 35도.
       Vector3 ThreeQuarter(Vector3 target, float distance) {
         var pitch = 35f * Mathf.Deg2Rad;
         return target + (new Vector3(1, 0, -1).normalized * Mathf.Cos(pitch) + Vector3.up * Mathf.Sin(pitch)) * distance;
       }
+      // 직교 투영은 그림자 캐스케이드가 거칠어 계단이 생긴다. 게임처럼 원근으로 찍고, 시야각을 좁혀 3/4 구도를 유지한다.
+      void Tele(string name, Vector3 target, float distance, float size) {
+        Shot(camera, name, ThreeQuarter(target, distance), target, 2f * Mathf.Atan(size / distance) * Mathf.Rad2Deg);
+      }
       void Close(string name, float along, float row, float height, float size) {
-        var target = Place(along, row, height);
-        Shot(camera, name, ThreeQuarter(target, 45f), target, 30f, true, size);
+        Tele(name, Place(along, row, height), 45f, size);
+      }
+      // 실제 게임 카메라와 같다: 피치 50도, 시야각 60도.
+      Color32[] Game(string name, Vector3 focus, float height) {
+        return Shot(camera, name, focus + new Vector3(0, height, -height / Mathf.Tan(50f * Mathf.Deg2Rad)), focus, 60f);
       }
 
-      var middle = Place(18, 1.2f);
+      var middle = Place(20, 1.2f);
       Shot(camera, "01_front_oblique.png", middle + new Vector3(0, 40, -82), middle, 42f);
-      var game = Place(14, 0.5f);
-      Shot(camera, "02a_game_view_height70.png", game + new Vector3(0, 70, -58.7f), game, 60f);
-      var near = Place(14, 0);
-      Shot(camera, "02b_game_view_height45.png", near + new Vector3(0, 45, -37.8f), near, 60f);
-      var pair = Place(18, 0.5f, 1f);
-      Shot(camera, "03_three_quarter.png", ThreeQuarter(pair, 90f), pair, 30f, true, 13f);
-      Close("04_close_free_units.png", 13.5f, 0, 1f, 5.2f);
-      Close("05_close_free_air.png", 31f, 0, 2f, 6.6f);
-      Close("06_close_continental_units.png", 13.5f, 1, 1f, 5.2f);
-      Close("07_close_continental_heavy.png", 29.5f, 1, 1f, 5.2f);
+      var game = Place(17, 0.5f);
+      ShowMarkers(true);
+      Game("02a_game_view_height45.png", game, RtsCamera.DefaultHeight);
+      Game("02b_game_view_height110.png", game, RtsCamera.MaxHeight);
+      ShowMarkers(false);
+      var pair = Place(20, 0.5f, 1f);
+      Tele("03_three_quarter.png", pair, 90f, 15f);
+      Close("04_close_free_units.png", 14f, 0, 1f, 6.4f);
+      Close("05_close_free_air.png", 34f, 0, 3f, 9f);
+      Close("06_close_continental_units.png", 14f, 1, 1f, 6.4f);
+      Close("07_close_continental_heavy.png", 31f, 1, 1f, 7f);
       Close("08_close_hq_free.png", 0f, 0, 2.4f, 4.6f);
       Close("09_close_hq_continental.png", 0f, 1, 2.8f, 4.6f);
       Close("10_resources.png", 18.5f, -1, 2f, 13.5f);
       Close("11_bridges.png", 8.5f, -2, 1f, 9f);
       var colors = Place(20, 2.5f, 1f);
-      Shot(camera, "12_team_colors.png", ThreeQuarter(colors, 120f), colors, 30f, true, 24f);
+      Tele("12_team_colors.png", colors, 120f, 26f);
 
-      pipeline.shadowDistance = shadow;
-      pipeline.shadowDepthBias = depthBias;
-      pipeline.shadowNormalBias = normalBias;
-      pipeline.mainLightShadowmapResolution = resolution;
-      pipeline.shadowCascadeCount = cascades;
+      // 후처리 확인: 같은 구도를 끄고 켜서 픽셀 차이를 잰다.
+      var glow = Place(0, -0.5f, 1.5f);
+      var cameraData = camera.GetUniversalAdditionalCameraData();
+      cameraData.renderPostProcessing = false;
+      var glowFov = 2f * Mathf.Atan(11f / 60f) * Mathf.Rad2Deg;
+      var plain = Shot(camera, "13a_post_off.png", ThreeQuarter(glow, 60f), glow, glowFov);
+      cameraData.renderPostProcessing = true;
+      var post = Shot(camera, "13b_post_on.png", ThreeQuarter(glow, 60f), glow, glowFov);
+      long total = 0;
+      var changed = 0;
+      for (var i = 0; i < plain.Length; i++) {
+        var difference = Mathf.Abs(plain[i].r - post[i].r) + Mathf.Abs(plain[i].g - post[i].g) + Mathf.Abs(plain[i].b - post[i].b);
+        total += difference;
+        changed += difference > 24 ? 1 : 0;
+      }
+      Debug.Log($"ArtBaker: 후처리 차이 평균 {total / (float)plain.Length / 3f:0.00}/255, 눈에 띄게 바뀐 픽셀 {changed * 100f / plain.Length:0.0}%");
+
+      Close("14_outage.png", -12f, 0, 2.4f, 4.6f);
+
+      // 품질 단계: 같은 게임 시점으로 비교한다.
+      ShowMarkers(true);
+      foreach (var tier in new[] { QualityTier.Low, QualityTier.Medium, QualityTier.High }) {
+        GraphicsQuality.Apply(tier);
+        Game($"15_quality_{tier.ToString().ToLowerInvariant()}.png", game, RtsCamera.DefaultHeight);
+      }
+      ShowMarkers(false);
+
       var text = new StringBuilder("id,kind,renderers,draws,triangles,maxRenderers,maxTriangles\n");
       foreach (var stat in Measure()) {
         text.AppendLine($"{stat.Id},{stat.Kind},{stat.Renderers},{stat.Draws},{stat.Triangles},{stat.MaxRenderers},{stat.MaxTriangles}");

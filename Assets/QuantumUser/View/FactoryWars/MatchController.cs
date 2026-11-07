@@ -52,6 +52,7 @@ namespace FactoryWars.View {
       if (Camera == null) {
         Camera = main.gameObject.AddComponent<RtsCamera>();
       }
+      GraphicsQuality.Bind(main);
       Camera.BoundsMin = new Vector2(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat);
       Camera.BoundsMax = new Vector2(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
       var start = map.StartPositions[(int)Player % map.StartPositions.Length];

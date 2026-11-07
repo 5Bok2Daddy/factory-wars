@@ -3,40 +3,95 @@ namespace FactoryWars.View {
   using UnityEngine;
   using UnityEngine.Rendering;
 
-  /// <summary>서브메쉬 칸. 기본은 팔레트 텍스처, 팀은 플레이어 색, 발광은 켜고 끄는 머티리얼이다.</summary>
-  public enum ArtSlot { Base, Team, Glow }
-
-  /// <summary>팔레트 텍스처의 칸. 한 머티리얼로 여러 색을 칠해 SRP Batcher를 유지한다.</summary>
+  /// <summary>팔레트 텍스처의 칸. 색, 금속감, 발광, 팀 색이 모두 칸으로 정해져서 메쉬는 서브메쉬 하나다.</summary>
   public enum Swatch {
     Metal, MetalDark, MetalLight, Armor, ArmorDark, Olive, OliveDark, Sand, Earth, Rubber, Glass, Black,
-    Wood, WoodDark, Bark, LeafDark, Leaf, LeafLight, Grass, Rock, RockDark, Ore, Stone, Water, White,
-    GlowCyan, GlowOrange, GlowCrystal,
+    Wood, WoodDark, Bark, LeafDark, Leaf, LeafLight, Grass, Rock, RockDark, Ore, OreDark, OreLight, Stone, Water, White,
+    GlowCyan, GlowOrange, GlowCrystal, Hazard, Team,
   }
 
   public static class ArtPalette {
     public const int Size = 32;
+    const float GlowBase = 0.3f;
+    const float MoltenOutage = 0.2f;
 
-    static readonly Color32[] Colors = {
-      new Color32(0x7E, 0x80, 0x82, 0xFF), new Color32(0x4C, 0x4E, 0x52, 0xFF), new Color32(0xA6, 0xA4, 0x9E, 0xFF),
-      new Color32(0x7C, 0x76, 0x6A, 0xFF), new Color32(0x56, 0x52, 0x4A, 0xFF), new Color32(0x6E, 0x6A, 0x50, 0xFF), new Color32(0x4C, 0x4C, 0x3A, 0xFF),
-      new Color32(0xA8, 0x98, 0x78, 0xFF), new Color32(0x7A, 0x5C, 0x3E, 0xFF), new Color32(0x26, 0x26, 0x28, 0xFF), new Color32(0x30, 0x3C, 0x46, 0xFF), new Color32(0x14, 0x14, 0x16, 0xFF),
-      new Color32(0x74, 0x5A, 0x42, 0xFF), new Color32(0x4A, 0x38, 0x2A, 0xFF), new Color32(0x4E, 0x34, 0x24, 0xFF),
-      new Color32(0x2C, 0x5A, 0x2A, 0xFF), new Color32(0x46, 0x7E, 0x30, 0xFF), new Color32(0x6A, 0x9A, 0x3A, 0xFF), new Color32(0x5C, 0x74, 0x34, 0xFF),
-      new Color32(0x7C, 0x74, 0x6A, 0xFF), new Color32(0x4A, 0x3E, 0x36, 0xFF), new Color32(0x24, 0x24, 0x28, 0xFF), new Color32(0x9C, 0x9C, 0x96, 0xFF),
-      new Color32(0x1C, 0x30, 0x40, 0xFF), new Color32(0xE8, 0xE6, 0xE0, 0xFF),
-      new Color32(0x40, 0xE8, 0xE0, 0xFF), new Color32(0xFF, 0x8A, 0x20, 0xFF), new Color32(0xA8, 0xF0, 0xE8, 0xFF),
+    // 빛의 색은 바탕색보다 채도가 높다. 세기를 곱했을 때 한 채널만 넘쳐 주황이 노랑으로, 청록이 흰색으로 변하지 않게 한다.
+    static readonly Color32 ElectricLight = new Color32(0x20, 0xD8, 0xD8, 0xFF);
+    static readonly Color32 MoltenLight = new Color32(0xFF, 0x34, 0x00, 0xFF);
+    static readonly Color32 CrystalLight = new Color32(0x30, 0xB4, 0xC4, 0xFF);
+
+    readonly struct Cell {
+      public readonly Color32 Color;
+      public readonly float Metallic;
+      public readonly float Smoothness;
+
+      public Cell(int rgb, float metallic, float smoothness) {
+        Color = new Color32((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb, 255);
+        Metallic = metallic;
+        Smoothness = smoothness;
+      }
+    }
+
+    // Swatch 순서와 같다. 금속 파츠는 매끈하고 흙·고무·나무는 무광이라 재질 대비가 난다.
+    static readonly Cell[] Cells = {
+      new Cell(0x8E9092, 0.56f, 0.56f), new Cell(0x585A5E, 0.5f, 0.46f), new Cell(0xB4B2AC, 0.62f, 0.6f),
+      new Cell(0x7C766A, 0.4f, 0.46f), new Cell(0x56524A, 0.35f, 0.38f), new Cell(0x6E6A50, 0.04f, 0.2f), new Cell(0x4C4C3A, 0.04f, 0.16f),
+      new Cell(0xA89878, 0f, 0.12f), new Cell(0x7A5C3E, 0f, 0.06f), new Cell(0x262628, 0f, 0.1f), new Cell(0x303C46, 0.2f, 0.92f), new Cell(0x141416, 0f, 0.18f),
+      new Cell(0x745A42, 0f, 0.12f), new Cell(0x4A382A, 0f, 0.1f), new Cell(0x4E3424, 0f, 0.06f),
+      new Cell(0x2C5A2A, 0f, 0.1f), new Cell(0x467E30, 0f, 0.1f), new Cell(0x6A9A3A, 0f, 0.1f), new Cell(0x5C7434, 0f, 0.06f),
+      new Cell(0x7C746A, 0f, 0.12f), new Cell(0x4A3E36, 0f, 0.1f),
+      new Cell(0x4E5056, 0.3f, 0.36f), new Cell(0x3C3E44, 0.3f, 0.3f), new Cell(0x666970, 0.3f, 0.42f),
+      new Cell(0x9C9C96, 0f, 0.16f), new Cell(0x1C3040, 0.1f, 0.8f), new Cell(0xE8E6E0, 0f, 0.3f),
+      new Cell(0x40E8E0, 0f, 0.5f), new Cell(0xFF7A14, 0f, 0.5f), new Cell(0xA8F0E8, 0f, 0.7f),
+      new Cell(0xC89A2C, 0.1f, 0.4f), new Cell(0x808080, 0.2f, 0.56f),
     };
 
     public static Vector2 Uv(Swatch swatch) => new Vector2(((int)swatch + 0.5f) / Size, 0.5f);
 
-    /// <summary>한 줄짜리 팔레트 텍스처의 픽셀. 빈 칸은 검정이다.</summary>
-    public static Color32[] Pixels() {
+    public static bool IsGlow(Swatch swatch) => swatch == Swatch.GlowCyan || swatch == Swatch.GlowOrange || swatch == Swatch.GlowCrystal;
+
+    static Color32 Scale(Color32 color, float scale) => new Color32((byte)(color.r * scale), (byte)(color.g * scale), (byte)(color.b * scale), 255);
+
+    /// <summary>플레이어마다 팀 칸만 다르다. 발광 칸의 바탕색은 어둡고 빛은 발광 맵이 낸다. 그래서 정전에는 맵만 바꾸면 된다.</summary>
+    public static Color32[] BasePixels(Color32 team) {
       var pixels = new Color32[Size];
       for (var i = 0; i < Size; i++) {
-        pixels[i] = i < Colors.Length ? Colors[i] : new Color32(0, 0, 0, 255);
+        var swatch = (Swatch)i;
+        pixels[i] = swatch == Swatch.Team ? team : IsGlow(swatch) ? Scale(Cells[i].Color, GlowBase) : Cells[i].Color;
       }
       return pixels;
     }
+
+    /// <summary>발광 칸 외에는 검정이다. 정전이면 전기는 꺼지고 쇳물은 어두워진다. 광석 결정은 전기와 무관하다.</summary>
+    public static Color32[] EmissionPixels(bool powered) {
+      var pixels = new Color32[Size];
+      for (var i = 0; i < Size; i++) {
+        var swatch = (Swatch)i;
+        var color = new Color32(0, 0, 0, 255);
+        if (swatch == Swatch.GlowCrystal) {
+          color = CrystalLight;
+        } else if (swatch == Swatch.GlowCyan && powered) {
+          color = ElectricLight;
+        } else if (swatch == Swatch.GlowOrange) {
+          color = powered ? MoltenLight : Scale(MoltenLight, MoltenOutage);
+        }
+        pixels[i] = color;
+      }
+      return pixels;
+    }
+
+    /// <summary>URP Lit의 금속 맵 규칙: R이 금속, A가 매끈함이다.</summary>
+    public static Color32[] SurfacePixels() {
+      var pixels = new Color32[Size];
+      for (var i = 0; i < Size; i++) {
+        var metallic = (byte)(Cells[i].Metallic * 255f);
+        pixels[i] = new Color32(metallic, metallic, metallic, (byte)(Cells[i].Smoothness * 255f));
+      }
+      return pixels;
+    }
+
+    public static float Smoothness(Swatch swatch) => Cells[(int)swatch].Smoothness;
+    public static float Metallic(Swatch swatch) => Cells[(int)swatch].Metallic;
   }
 
   /// <summary>
@@ -47,29 +102,40 @@ namespace FactoryWars.View {
     readonly List<Vector3> _vertices = new List<Vector3>();
     readonly List<Vector3> _normals = new List<Vector3>();
     readonly List<Vector2> _uvs = new List<Vector2>();
-    readonly List<int>[] _triangles = { new List<int>(), new List<int>(), new List<int>() };
+    readonly List<int> _triangles = new List<int>();
     readonly Stack<Matrix4x4> _stack = new Stack<Matrix4x4>();
     Matrix4x4 _matrix = Matrix4x4.identity;
-    ArtSlot _slot;
     Vector2 _uv = ArtPalette.Uv(Swatch.Metal);
+    Swatch[] _shades;
+    int _shadeSeed;
+    int _shadeIndex;
 
-    public int TriangleCount => (_triangles[0].Count + _triangles[1].Count + _triangles[2].Count) / 3;
+    public int TriangleCount => _triangles.Count / 3;
 
     public MeshKit Paint(Swatch swatch) {
-      _slot = ArtSlot.Base;
       _uv = ArtPalette.Uv(swatch);
       return this;
     }
 
-    public MeshKit Team() {
-      _slot = ArtSlot.Team;
-      return this;
+    public MeshKit Team() => Paint(Swatch.Team);
+
+    public MeshKit Glow(Swatch swatch = Swatch.GlowCyan) => Paint(swatch);
+
+    /// <summary>이후 면마다 주어진 칸 중 하나를 고른다. 같은 시드면 같은 무늬다.</summary>
+    public void ShadeFaces(int seed, params Swatch[] shades) {
+      _shades = shades;
+      _shadeSeed = seed;
+      _shadeIndex = 0;
     }
 
-    public MeshKit Glow(Swatch swatch = Swatch.GlowCyan) {
-      _slot = ArtSlot.Glow;
-      _uv = ArtPalette.Uv(swatch);
-      return this;
+    public void EndShade() {
+      _shades = null;
+    }
+
+    void NextShade() {
+      if (_shades != null) {
+        _uv = ArtPalette.Uv(_shades[(int)(Hash(_shadeSeed, _shadeIndex++) * _shades.Length) % _shades.Length]);
+      }
     }
 
     public void Push(Vector3 position, Vector3 euler = default, Vector3? scale = null) {
@@ -83,6 +149,11 @@ namespace FactoryWars.View {
 
     /// <summary>삼각형 하나. outward 쪽을 앞면으로 맞춘다.</summary>
     public void Tri(Vector3 a, Vector3 b, Vector3 c, Vector3 outward) {
+      NextShade();
+      Face(a, b, c, outward);
+    }
+
+    void Face(Vector3 a, Vector3 b, Vector3 c, Vector3 outward) {
       if (Vector3.Dot(Vector3.Cross(b - a, c - a), outward) < 0f) {
         (b, c) = (c, b);
       }
@@ -98,15 +169,15 @@ namespace FactoryWars.View {
         _normals.Add(normal);
         _uvs.Add(_uv);
       }
-      var list = _triangles[(int)_slot];
-      list.Add(start);
-      list.Add(start + 1);
-      list.Add(start + 2);
+      _triangles.Add(start);
+      _triangles.Add(start + 1);
+      _triangles.Add(start + 2);
     }
 
     public void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 outward) {
-      Tri(a, b, c, outward);
-      Tri(a, c, d, outward);
+      NextShade();
+      Face(a, b, c, outward);
+      Face(a, c, d, outward);
     }
 
     /// <summary>윗면과 밑면 크기가 다른 육면체. 경사 장갑과 쐐기를 만든다. center는 밑면 가운데다.</summary>
@@ -238,6 +309,42 @@ namespace FactoryWars.View {
       Cap(ring, Vector3.up);
     }
 
+    /// <summary>바닥에 눕힌 고리. 선택 링에 쓴다.</summary>
+    public void Annulus(Vector3 center, float inner, float outer, int sides) {
+      for (var i = 0; i < sides; i++) {
+        var a = i * Mathf.PI * 2f / sides;
+        var b = (i + 1) * Mathf.PI * 2f / sides;
+        var from = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
+        var to = new Vector3(Mathf.Cos(b), 0, Mathf.Sin(b));
+        Quad(center + from * inner, center + from * outer, center + to * outer, center + to * inner, Vector3.up);
+      }
+    }
+
+    /// <summary>
+    /// 회전체 곡면을 따라 +Z 쪽에 붙는 갈빗대. profile의 x는 반지름, y는 높이고 아래에서 위로 간다.
+    /// sink만큼 곡면 안으로 파고들어 다각형 면과 뜨지 않는다.
+    /// </summary>
+    public void Rib(Vector2[] profile, float width, float proud, float sink) {
+      var normals = new Vector2[profile.Length];
+      for (var i = 0; i < profile.Length; i++) {
+        var before = profile[Mathf.Max(i - 1, 0)];
+        var after = profile[Mathf.Min(i + 1, profile.Length - 1)];
+        var direction = (after - before).normalized;
+        normals[i] = new Vector2(direction.y, -direction.x);
+      }
+      Vector3 Point(int i, float x, float raise) {
+        var p = profile[i] + normals[i] * raise;
+        return new Vector3(x, p.y, p.x);
+      }
+      var half = width / 2;
+      for (var i = 0; i + 1 < profile.Length; i++) {
+        var outward = new Vector3(0, normals[i].y, normals[i].x);
+        Quad(Point(i, -half, proud), Point(i, half, proud), Point(i + 1, half, proud), Point(i + 1, -half, proud), outward);
+        Quad(Point(i, -half, -sink), Point(i, -half, proud), Point(i + 1, -half, proud), Point(i + 1, -half, -sink), Vector3.left);
+        Quad(Point(i, half, -sink), Point(i, half, proud), Point(i + 1, half, proud), Point(i + 1, half, -sink), Vector3.right);
+      }
+    }
+
     /// <summary>볼록 다각형을 두께만큼 세운 판. 점은 XZ다.</summary>
     public void Slab(Vector2[] points, float bottom, float top) {
       var lower = new Vector3[points.Length];
@@ -294,25 +401,13 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>쓰인 칸만 서브메쉬로 만든다. slots에 서브메쉬 순서대로 칸을 돌려준다.</summary>
-    public Mesh ToMesh(string name, List<ArtSlot> slots) {
-      var mesh = new Mesh { name = name, indexFormat = IndexFormat.UInt16 };
-      if (_vertices.Count > 65000) {
-        mesh.indexFormat = IndexFormat.UInt32;
-      }
+    /// <summary>서브메쉬는 하나다. 색은 UV로 칸을 고른다.</summary>
+    public Mesh ToMesh(string name) {
+      var mesh = new Mesh { name = name, indexFormat = _vertices.Count > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16 };
       mesh.SetVertices(_vertices);
       mesh.SetNormals(_normals);
       mesh.SetUVs(0, _uvs);
-      slots.Clear();
-      for (var i = 0; i < _triangles.Length; i++) {
-        if (_triangles[i].Count > 0) {
-          slots.Add((ArtSlot)i);
-        }
-      }
-      mesh.subMeshCount = slots.Count;
-      for (var i = 0; i < slots.Count; i++) {
-        mesh.SetTriangles(_triangles[(int)slots[i]], i);
-      }
+      mesh.SetTriangles(_triangles, 0);
       mesh.RecalculateBounds();
       return mesh;
     }

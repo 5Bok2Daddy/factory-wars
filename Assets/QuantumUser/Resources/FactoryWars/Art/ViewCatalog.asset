@@ -15,33 +15,129 @@ MonoBehaviour:
   Entries:
   - Id: ff_engineer
     Prefab: {fileID: 7023767620957133261, guid: c6914c2532df30f47aa40bd96ee36a58, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 0
+    Center: {x: 0, y: -0.22000003}
+    RingRadius: 2.59
+    BarHeight: 2.587277
   - Id: ff_ranger_squad
     Prefab: {fileID: 3720922609153631358, guid: 74f693d7cd6bb5d4a9eb916a1014e1ce, type: 3}
+    Unit: 1
+    DisplayScale: 1.5
+    Altitude: 0
+    Center: {x: 0.019147158, y: 0.27462387}
+    RingRadius: 1.8801469
+    BarHeight: 2.65
   - Id: ff_skyguard_squad
     Prefab: {fileID: 2618897111907406236, guid: 73c7ecb0eb3b5644d8fcfef73fd5ba4f, type: 3}
+    Unit: 1
+    DisplayScale: 1.5
+    Altitude: 0
+    Center: {x: 0.04517871, y: 0.13007104}
+    RingRadius: 2.0628016
+    BarHeight: 2.65
   - Id: ff_eagle_tank
     Prefab: {fileID: 1499682770403946210, guid: d4df325f3de4abe45b9c3b5d04e713a2, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 0
+    Center: {x: 0, y: 0.17500007}
+    RingRadius: 2.6355
+    BarHeight: 2.5779998
   - Id: ff_hawk_gunship
     Prefab: {fileID: 5671953476353120758, guid: 636b7372715384940be4ef06781aa5fe, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 2.8
+    Center: {x: -0.00000023841858, y: 0.18499994}
+    RingRadius: 3.7144997
+    BarHeight: 4.7929997
   - Id: ff_skyfortress_bomber
     Prefab: {fileID: 3223084302935163626, guid: 54aa4956392315248b327454d97bde8b, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 3.2
+    Center: {x: 0, y: 0.09499979}
+    RingRadius: 6.9059997
+    BarHeight: 4.322
   - Id: cf_engineer
     Prefab: {fileID: 6103229151435959058, guid: c6e5d38355d5dba4d868bc9b4e07f431, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 0
+    Center: {x: 0, y: -0.089999914}
+    RingRadius: 2.5379999
+    BarHeight: 3.0349164
   - Id: cf_militia
     Prefab: {fileID: 2954798274133523145, guid: 73cffd42e8862864d859f76886715a88, type: 3}
+    Unit: 1
+    DisplayScale: 1.5
+    Altitude: 0
+    Center: {x: 0.0026298761, y: 0.3058568}
+    RingRadius: 1.4089925
+    BarHeight: 2.5900002
   - Id: cf_flame_squad
     Prefab: {fileID: 7089656255757670898, guid: 6a06c230b6ef25243b3b5ef7cdbfca8e, type: 3}
+    Unit: 1
+    DisplayScale: 1.5
+    Altitude: 0
+    Center: {x: 0.049791753, y: 0.3500954}
+    RingRadius: 1.8347281
+    BarHeight: 2.98
   - Id: cf_dragonscale_tank
     Prefab: {fileID: 8412046235710270282, guid: 35cc8a0840cfe3b45ba02a60e696f334, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 0
+    Center: {x: 0, y: 0.19159997}
+    RingRadius: 2.7179196
+    BarHeight: 2.3309999
   - Id: cf_thunder_aa
     Prefab: {fileID: 6544895880247913981, guid: 0b74a9dd7c1f2a4428e8d6dceb2aa193, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 0
+    Center: {x: 0, y: 0.055000067}
+    RingRadius: 2.3365
+    BarHeight: 3.6032321
   - Id: cf_longwall_mlrs
     Prefab: {fileID: 5461917723488525202, guid: 796362d0d9566ef4889a658dda623d62, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 0
+    Center: {x: 0, y: -0.10249996}
+    RingRadius: 3.30175
+    BarHeight: 3.8855767
   - Id: ff_headquarters
     Prefab: {fileID: 7211810514476111655, guid: f0500d0f82ace3248b58a0226a2dc68a, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 5.3020186
   - Id: cf_headquarters
     Prefab: {fileID: 7869610301931235094, guid: 99f7df78922d8e94f95da4eb24abf956, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 6.3500004
   - Id: iron_mine
     Prefab: {fileID: 3243149854540237152, guid: 44f5db5b05c56424cb745798de93ec7a, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: -0.09486246, y: -0.22266054}
+    RingRadius: 2.8611352
+    BarHeight: 3.303913
   - Id: bridge
     Prefab: {fileID: 7914401669564694599, guid: a8f1cef667c6ce542a37ddcb775dc3fa, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 6.75
+    BarHeight: 2.55

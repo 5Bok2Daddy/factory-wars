@@ -54,23 +54,79 @@ namespace FactoryWars.EditorTools {
       PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.iOS, "com.mingyu.factorywars");
     }
 
+    // 낮음은 모바일 기준이다. Bloom·톤매핑은 GraphicsQuality가 카메라에서 끈다.
+    static readonly (string Name, bool Hdr, float Scale, int Msaa, float Shadow, int Resolution, int Cascades, bool Soft)[] Tiers = {
+      ("Low", false, 0.75f, 1, 80f, 1024, 1, false),
+      ("Medium", true, 0.85f, 1, 130f, 1024, 2, true),
+      ("High", true, 1f, 2, 200f, 2048, 4, true),
+    };
+
+    const float ShadowDepthBias = 2f;
+    const float ShadowNormalBias = 1.5f;
+
     public static void ConfigureRenderPipeline() {
       Directory.CreateDirectory(RenderRoot);
       var path = $"{RenderRoot}/FactoryWarsURP.asset";
+      var rendererPath = $"{RenderRoot}/FactoryWarsURP_Renderer.asset";
       var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(path);
       if (pipeline == null) {
-        var renderer = ScriptableObject.CreateInstance<UniversalRendererData>();
-        AssetDatabase.CreateAsset(renderer, $"{RenderRoot}/FactoryWarsURP_Renderer.asset");
-        pipeline = UniversalRenderPipelineAsset.Create(renderer);
+        AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<UniversalRendererData>(), rendererPath);
+        pipeline = UniversalRenderPipelineAsset.Create(AssetDatabase.LoadAssetAtPath<UniversalRendererData>(rendererPath));
         AssetDatabase.CreateAsset(pipeline, path);
       }
+      var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(rendererPath);
+      // 코드로 만든 렌더러는 이 값이 비어 있고, 비어 있으면 Volume을 켜도 후처리가 전혀 돌지 않는다.
+      renderer.postProcessData = AssetDatabase.LoadAssetAtPath<PostProcessData>("Packages/com.unity.render-pipelines.universal/Runtime/Data/PostProcessData.asset");
+      EditorUtility.SetDirty(renderer);
       GraphicsSettings.defaultRenderPipeline = pipeline;
-      var current = QualitySettings.GetQualityLevel();
-      for (var i = 0; i < QualitySettings.names.Length; i++) {
-        QualitySettings.SetQualityLevel(i, false);
-        QualitySettings.renderPipeline = pipeline;
+
+      var assets = new UniversalRenderPipelineAsset[Tiers.Length];
+      for (var i = 0; i < Tiers.Length; i++) {
+        var tier = Tiers[i];
+        var tierPath = $"{RenderRoot}/FactoryWarsURP_{tier.Name}.asset";
+        var asset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(tierPath);
+        if (asset == null) {
+          asset = UniversalRenderPipelineAsset.Create(renderer);
+          AssetDatabase.CreateAsset(asset, tierPath);
+        }
+        asset.supportsHDR = tier.Hdr;
+        asset.colorGradingMode = tier.Hdr ? ColorGradingMode.HighDynamicRange : ColorGradingMode.LowDynamicRange;
+        asset.renderScale = tier.Scale;
+        asset.msaaSampleCount = tier.Msaa;
+        asset.shadowDistance = tier.Shadow;
+        asset.mainLightShadowmapResolution = tier.Resolution;
+        asset.shadowCascadeCount = tier.Cascades;
+        // 게임 카메라의 화면 깊이는 기본 높이에서 약 46~115다. 가까운 분할이 이 구간을 덮게 한다.
+        asset.cascade2Split = 0.4f;
+        asset.cascade4Split = new Vector3(0.2f, 0.35f, 0.6f);
+        asset.shadowDepthBias = ShadowDepthBias;
+        asset.shadowNormalBias = ShadowNormalBias;
+        var serialized = new SerializedObject(asset);
+        serialized.FindProperty("m_SoftShadowsSupported").boolValue = tier.Soft;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(asset);
+        assets[i] = asset;
       }
-      QualitySettings.SetQualityLevel(current, false);
+
+      var quality = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/QualitySettings.asset")[0]);
+      var levels = quality.FindProperty("m_QualitySettings");
+      while (levels.arraySize > Tiers.Length) {
+        levels.DeleteArrayElementAtIndex(levels.arraySize - 1);
+      }
+      for (var i = 0; i < Tiers.Length; i++) {
+        var level = levels.GetArrayElementAtIndex(i);
+        level.FindPropertyRelative("name").stringValue = Tiers[i].Name;
+        level.FindPropertyRelative("customRenderPipeline").objectReferenceValue = assets[i];
+      }
+      quality.FindProperty("m_CurrentQuality").intValue = Tiers.Length - 1;
+      var platforms = quality.FindProperty("m_PerPlatformDefaultQuality");
+      for (var i = 0; i < platforms.arraySize; i++) {
+        var platform = platforms.GetArrayElementAtIndex(i);
+        var mobile = platform.FindPropertyRelative("first").stringValue == "Android";
+        platform.FindPropertyRelative("second").intValue = mobile ? 0 : Tiers.Length - 1;
+      }
+      quality.ApplyModifiedPropertiesWithoutUndo();
+      AssetDatabase.SaveAssets();
     }
 
     public static void ConfigureQuantum() {

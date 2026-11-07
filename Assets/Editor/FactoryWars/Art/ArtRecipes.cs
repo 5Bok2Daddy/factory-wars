@@ -17,8 +17,15 @@ namespace FactoryWars.EditorTools {
     public string Kind;
     public int MaxRenderers;
     public int MaxTriangles;
+    public float DisplayScale = 1f;
+    public float Altitude;
     public Action<MeshKit> Body;
     public MovingPart[] Moving = Array.Empty<MovingPart>();
+
+    public ArtRecipe Flying(float altitude) {
+      Altitude = altitude;
+      return this;
+    }
   }
 
   /// <summary>
@@ -28,22 +35,26 @@ namespace FactoryWars.EditorTools {
   public static class ArtRecipes {
     static readonly Vector3 Z90 = new Vector3(90, 0, 0);
 
+    // 화면 표시 배율. 시뮬레이션 크기는 그대로다.
+    const float VehicleScale = 1.3f;
+    const float InfantryScale = 1.5f;
+
     public static IEnumerable<ArtRecipe> All() {
       yield return Unit("ff_engineer", 3, 800, FreeEngineer, new MovingPart { Name = "Arm", Pivot = new Vector3(0.42f, 0.95f, 0.35f), Build = FreeEngineerArm });
-      yield return Unit("ff_ranger_squad", 2, 900, k => Squad(k, Rangers, Ranger));
-      yield return Unit("ff_skyguard_squad", 2, 800, k => Squad(k, Trio, Skyguard));
+      yield return Infantry("ff_ranger_squad", 900, k => Squad(k, Rangers, Ranger));
+      yield return Infantry("ff_skyguard_squad", 800, k => Squad(k, Trio, Skyguard));
       yield return Unit("ff_eagle_tank", 3, 900, EagleHull,
-        new MovingPart { Name = "Turret", Pivot = new Vector3(0, 0.82f, -0.15f), Build = EagleTurret },
+        new MovingPart { Name = "Turret", Pivot = new Vector3(0, 1.06f, -0.42f), Build = EagleTurret },
         new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.22f, 0.72f), Build = EagleBarrel });
       yield return Unit("ff_hawk_gunship", 3, 900, HawkBody,
         new MovingPart { Name = "Rotor", Pivot = new Vector3(0, 0.95f, 0.05f), Build = HawkRotor },
-        new MovingPart { Name = "TailFan", Pivot = new Vector3(0, 0.3f, -2.2f), Build = HawkFan });
+        new MovingPart { Name = "TailFan", Pivot = new Vector3(0, 0.3f, -2.2f), Build = HawkFan }).Flying(2.8f);
       yield return Unit("ff_skyfortress_bomber", 2, 900, BomberBody,
-        new MovingPart { Name = "BombDoors", Pivot = new Vector3(0, -0.28f, 0.1f), Build = BomberDoors });
+        new MovingPart { Name = "BombDoors", Pivot = new Vector3(0, -0.28f, 0.1f), Build = BomberDoors }).Flying(3.2f);
 
       yield return Unit("cf_engineer", 3, 800, ContinentalEngineer, new MovingPart { Name = "Crane", Pivot = new Vector3(0, 1.0f, -0.65f), Build = ContinentalCrane });
-      yield return Unit("cf_militia", 2, 600, k => Squad(k, Pair, Militia));
-      yield return Unit("cf_flame_squad", 2, 700, k => Squad(k, Pair, Flamer));
+      yield return Infantry("cf_militia", 600, k => Squad(k, Pair, Militia));
+      yield return Infantry("cf_flame_squad", 700, k => Squad(k, Pair, Flamer));
       yield return Unit("cf_dragonscale_tank", 3, 1000, DragonHull,
         new MovingPart { Name = "Turret", Pivot = new Vector3(0, 0.82f, -0.1f), Build = DragonTurret },
         new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.25f, 0.68f), Build = DragonBarrel });
@@ -74,7 +85,12 @@ namespace FactoryWars.EditorTools {
     }
 
     static ArtRecipe Unit(string id, int maxRenderers, int maxTriangles, Action<MeshKit> body, params MovingPart[] moving) {
-      return new ArtRecipe { Id = id, Kind = "유닛", MaxRenderers = maxRenderers, MaxTriangles = maxTriangles, Body = body, Moving = moving };
+      return new ArtRecipe { Id = id, Kind = "유닛", MaxRenderers = maxRenderers, MaxTriangles = maxTriangles, DisplayScale = VehicleScale, Body = body, Moving = moving };
+    }
+
+    /// <summary>분대는 메쉬 하나다.</summary>
+    static ArtRecipe Infantry(string id, int maxTriangles, Action<MeshKit> body) {
+      return new ArtRecipe { Id = id, Kind = "유닛", MaxRenderers = 1, MaxTriangles = maxTriangles, DisplayScale = InfantryScale, Body = body };
     }
 
     // 공통
@@ -139,8 +155,6 @@ namespace FactoryWars.EditorTools {
       k.Pop();
       k.Paint(Swatch.MetalLight);
       k.Lathe(new Vector3(0, 1.1f, 0), new[] { new Vector2(0.15f, 0), new Vector2(0.18f, 0.1f), new Vector2(0.15f, 0.22f), new Vector2(0, 0.3f) }, 6);
-      k.Glow();
-      k.Box(new Vector3(0, 1.22f, 0.16f), new Vector3(0.2f, 0.05f, 0.05f));
       k.Team();
       k.Dome(new Vector3(0.28f, 0.97f, 0), 0.15f, 0.13f, 5, 1);
       k.Dome(new Vector3(-0.28f, 0.97f, 0), 0.15f, 0.13f, 5, 1);
@@ -166,30 +180,30 @@ namespace FactoryWars.EditorTools {
     }
 
     /// <summary>대륙 연방 군복: 각진 철모와 조끼.</summary>
-    static void Fatigues(MeshKit k) {
-      k.Paint(Swatch.OliveDark);
+    static void Fatigues(MeshKit k, Swatch main, Swatch dark) {
+      k.Paint(dark);
       k.Box(new Vector3(-0.13f, 0.31f, 0.03f), new Vector3(0.15f, 0.62f, 0.18f));
       k.Box(new Vector3(0.13f, 0.31f, -0.03f), new Vector3(0.15f, 0.62f, 0.18f));
       k.Paint(Swatch.Black);
       k.Box(new Vector3(-0.13f, 0.05f, 0.07f), new Vector3(0.17f, 0.1f, 0.3f));
       k.Box(new Vector3(0.13f, 0.05f, 0.01f), new Vector3(0.17f, 0.1f, 0.3f));
-      k.Paint(Swatch.Olive);
+      k.Paint(main);
       k.Taper(new Vector3(0, 0.6f, 0), new Vector2(0.36f, 0.22f), new Vector2(0.48f, 0.28f), 0.46f);
-      k.Paint(Swatch.OliveDark);
+      k.Paint(dark);
       k.Taper(new Vector3(0, 0.7f, 0), new Vector2(0.4f, 0.3f), new Vector2(0.46f, 0.32f), 0.3f);
-      k.Paint(Swatch.Olive);
+      k.Paint(main);
       k.Push(new Vector3(0.28f, 1.0f, 0), new Vector3(58, 0, 0));
       k.Box(new Vector3(0, 0, 0.2f), new Vector3(0.12f, 0.12f, 0.46f));
       k.Team();
       k.Box(new Vector3(0, 0, 0.02f), new Vector3(0.14f, 0.14f, 0.14f));
       k.Pop();
-      k.Paint(Swatch.Olive);
+      k.Paint(main);
       k.Push(new Vector3(-0.28f, 1.0f, 0), new Vector3(58, 24, 0));
       k.Box(new Vector3(0, 0, 0.2f), new Vector3(0.12f, 0.12f, 0.46f));
       k.Pop();
       k.Paint(Swatch.Sand);
       k.Box(new Vector3(0, 1.17f, 0), new Vector3(0.17f, 0.18f, 0.17f));
-      k.Paint(Swatch.OliveDark);
+      k.Paint(dark);
       k.Frustum(new Vector3(0, 1.2f, 0), 0.2f, 0.18f, 0.03f, 6);
       k.Frustum(new Vector3(0, 1.23f, 0), 0.17f, 0.09f, 0.13f, 6);
       k.Team();
@@ -197,22 +211,29 @@ namespace FactoryWars.EditorTools {
     }
 
     static void Militia(MeshKit k, int index) {
-      Fatigues(k);
+      Fatigues(k, Swatch.Olive, Swatch.OliveDark);
       k.Paint(Swatch.Black);
       k.Box(new Vector3(0.1f, 0.76f, 0.44f), new Vector3(0.08f, 0.1f, 0.78f));
       k.Paint(Swatch.WoodDark);
       k.Box(new Vector3(0.1f, 0.72f, 0.06f), new Vector3(0.08f, 0.13f, 0.22f));
     }
 
+    /// <summary>민병대와 게임 시점에서 구분되게, 머리 위까지 오는 큰 연료통 2개와 넓은 주황 포구를 단다.</summary>
     static void Flamer(MeshKit k, int index) {
-      Fatigues(k);
-      k.Paint(Swatch.MetalDark);
-      k.Cylinder(new Vector3(-0.13f, 0.62f, -0.27f), 0.13f, 0.52f, 6);
-      k.Cylinder(new Vector3(0.13f, 0.62f, -0.27f), 0.13f, 0.52f, 6);
+      Fatigues(k, Swatch.ArmorDark, Swatch.MetalDark);
+      foreach (var x in new[] { -0.22f, 0.22f }) {
+        k.Paint(Swatch.MetalLight);
+        k.Cylinder(new Vector3(x, 0.44f, -0.38f), 0.22f, 1.02f, 6);
+        k.Dome(new Vector3(x, 1.46f, -0.38f), 0.22f, 0.16f, 6, 1);
+        k.Paint(Swatch.Hazard);
+        k.Cylinder(new Vector3(x, 1.0f, -0.38f), 0.235f, 0.16f, 6);
+      }
       k.Paint(Swatch.Metal);
-      k.Box(new Vector3(0.1f, 0.74f, 0.46f), new Vector3(0.09f, 0.09f, 0.86f));
+      k.Box(new Vector3(0.1f, 0.74f, 0.46f), new Vector3(0.12f, 0.12f, 0.86f));
+      k.Paint(Swatch.MetalDark);
+      TurnZ(k, new Vector3(0.1f, 0.74f, 0.82f), () => k.Frustum(Vector3.zero, 0.09f, 0.17f, 0.14f, 6));
       k.Glow(Swatch.GlowOrange);
-      TurnZ(k, new Vector3(0.1f, 0.74f, 0.88f), () => k.Cone(Vector3.zero, 0.09f, 0.22f, 5));
+      TurnZ(k, new Vector3(0.1f, 0.74f, 0.96f), () => k.Cone(Vector3.zero, 0.19f, 0.4f, 6));
     }
 
     // 자유 연방 차량
@@ -258,20 +279,38 @@ namespace FactoryWars.EditorTools {
     static void EagleHull(MeshKit k) {
       Track(k, 0.98f, 3.2f, 0.46f, 0.4f, 4);
       Track(k, -0.98f, 3.2f, 0.46f, 0.4f, 4);
-      k.Paint(Swatch.Armor);
-      k.Taper(new Vector3(0, 0.26f, -0.02f), new Vector2(2.1f, 3.25f), new Vector2(1.56f, 2.5f), 0.54f, new Vector2(0, -0.1f));
+      // 궤도 사이를 채우는 아랫배
       k.Paint(Swatch.ArmorDark);
-      k.Chamfer(new Vector3(0, 0.84f, -0.42f), new Vector3(1.24f, 0.08f, 1.5f), 0.03f);
-      k.Team();
+      k.Taper(new Vector3(0, 0.16f, 0), new Vector2(1.46f, 2.7f), new Vector2(1.72f, 3.3f), 0.34f);
+      // 궤도를 덮는 두꺼운 측면 장갑
       foreach (var side in new[] { -1f, 1f }) {
-        k.Push(new Vector3(side * 0.93f, 0.53f, -0.06f), new Vector3(0, 0, side * 26.6f));
-        k.Box(Vector3.zero, new Vector3(0.03f, 0.1f, 2.9f));
+        k.Paint(Swatch.Armor);
+        k.Taper(new Vector3(side * 0.98f, 0.5f, 0), new Vector2(0.56f, 3.28f), new Vector2(0.44f, 2.96f), 0.16f);
+        k.Paint(Swatch.ArmorDark);
+        k.Push(new Vector3(side * 1.22f, 0.4f, 0), new Vector3(0, 0, side * 14f));
+        k.Box(Vector3.zero, new Vector3(0.08f, 0.34f, 2.9f));
         k.Pop();
       }
+      // 윗차체: 앞은 눕고 뒤는 가파른 경사 장갑. 높이가 있어야 판처럼 보이지 않는다.
+      k.Paint(Swatch.Armor);
+      k.Taper(new Vector3(0, 0.5f, -0.04f), new Vector2(1.7f, 3.24f), new Vector2(1.3f, 1.66f), 0.54f, new Vector2(0, -0.42f));
+      // 앞 경사판과 조종수 해치
+      k.Paint(Swatch.ArmorDark);
+      k.Push(new Vector3(0, 0.77f, 0.98f), new Vector3(24, 0, 0));
+      k.Box(Vector3.zero, new Vector3(1.16f, 0.05f, 1.0f));
       k.Paint(Swatch.MetalDark);
-      k.Box(new Vector3(0.4f, 0.82f, 1.02f), new Vector3(0.28f, 0.04f, 0.16f));
+      k.Box(new Vector3(0.3f, 0.04f, -0.1f), new Vector3(0.3f, 0.05f, 0.26f));
+      k.Pop();
+      k.Paint(Swatch.MetalDark);
+      k.Frustum(new Vector3(0, 1.02f, -0.42f), 0.74f, 0.68f, 0.05f, 10);
+      k.Team();
+      foreach (var side in new[] { -1f, 1f }) {
+        k.Push(new Vector3(side * 0.77f, 0.76f, -0.28f), new Vector3(0, 0, side * 20.3f));
+        k.Box(Vector3.zero, new Vector3(0.03f, 0.16f, 1.6f));
+        k.Pop();
+      }
       k.Glow();
-      k.Box(new Vector3(0, 0.885f, -1.08f), new Vector3(0.8f, 0.02f, 0.06f));
+      k.Box(new Vector3(0, 0.76f, -1.5f), new Vector3(0.9f, 0.07f, 0.05f));
     }
 
     static void EagleTurret(MeshKit k) {
@@ -602,29 +641,18 @@ namespace FactoryWars.EditorTools {
       k.Taper(Vector3.zero, new Vector2(5.96f, 5.96f), new Vector2(5.7f, 5.7f), 0.14f);
     }
 
+    static readonly Vector2[] HqBody = { new Vector2(2.62f, 0), new Vector2(2.6f, 0.5f), new Vector2(2.28f, 1.2f), new Vector2(1.9f, 1.55f) };
+    static readonly Vector2[] HqDome = { new Vector2(1.72f, 0), new Vector2(1.49f, 0.56f), new Vector2(0.86f, 0.97f), new Vector2(0.46f, 1.04f) };
+
     static void FreeHeadquarters(MeshKit k) {
       BasePlate(k);
       // 낮은 돔 몸체: 납작한 곡면을 층으로 쌓는다.
       k.Paint(Swatch.Metal);
-      k.Lathe(new Vector3(0, 0.14f, 0), new[] { new Vector2(2.62f, 0), new Vector2(2.6f, 0.5f), new Vector2(2.28f, 1.2f), new Vector2(1.9f, 1.55f) }, 12, 0.5f);
-      // 곡면 갈빗대
-      k.Paint(Swatch.MetalLight);
-      for (var i = 0; i < 8; i++) {
-        var yaw = 22.5f + i * 45f;
-        if (i == 0 || i == 7 || i == 6) {
-          continue;
-        }
-        k.Push(new Vector3(0, 0.14f, 0), new Vector3(0, yaw, 0));
-        k.Taper(new Vector3(0, 0, 2.66f), new Vector2(0.5f, 0.3f), new Vector2(0.42f, 0.24f), 1.08f, new Vector2(0, -0.5f));
-        k.Pop();
-      }
-      // 팀 띠
+      k.Lathe(new Vector3(0, 0.14f, 0), HqBody, 12, 0.5f);
+      // 멀리서도 보이는 팀 띠 2줄: 몸체와 윗돔을 한 바퀴 두른다.
       k.Team();
-      foreach (var yaw in new[] { 90f, 270f, 315f }) {
-        k.Push(new Vector3(0, 0.14f, 0), new Vector3(0, yaw, 0));
-        k.Taper(new Vector3(0, 0, 2.78f), new Vector2(1.1f, 0.3f), new Vector2(0.96f, 0.24f), 1.16f, new Vector2(0, -0.56f));
-        k.Pop();
-      }
+      k.Lathe(new Vector3(0, 0.14f, 0), new[] { new Vector2(2.61f, 0.58f), new Vector2(2.395f, 1.06f) }, 12, 0.5f);
+      k.Lathe(new Vector3(0, 1.97f, 0), new[] { new Vector2(1.47f, 0.6f), new Vector2(1.07f, 0.86f) }, 12);
       // 앞문
       k.Paint(Swatch.MetalDark);
       k.Chamfer(new Vector3(0, 0.82f, 2.5f), new Vector3(1.3f, 1.36f, 0.7f), 0.2f);
@@ -634,11 +662,12 @@ namespace FactoryWars.EditorTools {
       k.Box(new Vector3(-0.48f, 0.72f, 2.86f), new Vector3(0.07f, 1.1f, 0.05f));
       k.Box(new Vector3(0.48f, 0.72f, 2.86f), new Vector3(0.07f, 1.1f, 0.05f));
       k.Box(new Vector3(0, 1.3f, 2.86f), new Vector3(0.96f, 0.07f, 0.05f));
-      // 낮은 창
-      k.Glow();
-      k.Push(new Vector3(0, 0.4f, 0), new Vector3(0, 40, 0));
-      k.Taper(new Vector3(0, 0, 2.58f), new Vector2(1.0f, 0.06f), new Vector2(0.96f, 0.06f), 0.18f, new Vector2(0, -0.03f));
-      k.Pop();
+      // 갈빗대 사이의 낮은 창
+      foreach (var yaw in new[] { 45f, 135f, 225f, 315f }) {
+        k.Push(new Vector3(0, 0.34f, 0), new Vector3(0, yaw, 0));
+        k.Taper(new Vector3(0, 0, 2.58f), new Vector2(1.0f, 0.06f), new Vector2(0.96f, 0.06f), 0.18f, new Vector2(0, -0.03f));
+        k.Pop();
+      }
       // 발광 고리와 윗돔
       k.Paint(Swatch.MetalDark);
       k.Cylinder(new Vector3(0, 1.69f, 0), 1.95f, 0.14f, 12);
@@ -646,10 +675,17 @@ namespace FactoryWars.EditorTools {
       k.Cylinder(new Vector3(0, 1.83f, 0), 1.74f, 0.14f, 12);
       k.Paint(Swatch.Metal);
       k.Dome(new Vector3(0, 1.97f, 0), 1.72f, 1.12f, 12, 3);
-      k.Team();
-      k.Push(new Vector3(0, 2.4f, 0), new Vector3(0, 40, 0));
-      k.Taper(new Vector3(0, 0, 1.28f), new Vector2(0.62f, 0.2f), new Vector2(0.54f, 0.16f), 0.34f, new Vector2(0, -0.24f));
-      k.Pop();
+      // 곡면 갈빗대: 몸체에서 윗돔까지 이어진다. 팀 띠를 칸으로 나눠 표면이 입체로 보인다.
+      k.Paint(Swatch.MetalLight);
+      for (var i = 0; i < 8; i++) {
+        var yaw = 22.5f + i * 45f;
+        k.Push(new Vector3(0, 0.14f, 0), new Vector3(0, yaw, 0));
+        k.Rib(HqBody, 0.26f, 0.12f, 0.16f);
+        k.Pop();
+        k.Push(new Vector3(0, 1.97f, 0), new Vector3(0, yaw, 0));
+        k.Rib(HqDome, 0.2f, 0.1f, 0.14f);
+        k.Pop();
+      }
       // 안테나
       k.Paint(Swatch.MetalDark);
       k.Taper(new Vector3(0, 3.0f, 0), new Vector2(0.9f, 0.9f), new Vector2(0.7f, 0.7f), 0.14f);
@@ -771,15 +807,16 @@ namespace FactoryWars.EditorTools {
     // 철광산, 다리
 
     static void MineRocks(MeshKit k, int seed) {
-      k.Paint(Swatch.Ore);
+      // 검정이 아니라 어두운 회색이다. 면마다 명도를 달리해 덩어리가 읽힌다.
+      k.ShadeFaces(seed, Swatch.OreDark, Swatch.Ore, Swatch.OreLight);
       k.Rock(Vector3.zero, 1.25f, 2.7f, seed);
       for (var i = 0; i < 6; i++) {
         var angle = i * 1.05f + MeshKit.Hash(seed, i) * 0.5f;
         var distance = 1.45f + MeshKit.Hash(seed, i + 10) * 0.75f;
         var size = 0.42f + MeshKit.Hash(seed, i + 20) * 0.5f;
-        k.Paint(i % 2 == 0 ? Swatch.Ore : Swatch.Black);
         k.Rock(new Vector3(Mathf.Cos(angle) * distance, 0, Mathf.Sin(angle) * distance), size, size * 1.35f, seed + i + 1);
       }
+      k.EndShade();
     }
 
     static void MineCrystals(MeshKit k, int seed) {

@@ -33,8 +33,13 @@ namespace FactoryWars.View {
       Ui.Place((RectTransform)down.transform, new Vector2(0.5f, 0.5f), new Vector2(-260, 90), new Vector2(Ui.MinButtonSize, Ui.MinButtonSize));
       var up = Ui.Button("VolumeUp", panel, "+", () => Change(0.1f), 44);
       Ui.Place((RectTransform)up.transform, new Vector2(0.5f, 0.5f), new Vector2(260, 90), new Vector2(Ui.MinButtonSize, Ui.MinButtonSize));
+      Button quality = null;
+      quality = Ui.Button("Quality", panel, $"그래픽: {GraphicsQuality.Name(GraphicsQuality.Current)}", () => {
+        Ui.SetLabel(quality, $"그래픽: {GraphicsQuality.Name(GraphicsQuality.Cycle())}");
+      }, 34);
+      Ui.Place((RectTransform)quality.transform, new Vector2(0.5f, 0.5f), new Vector2(0, -20), new Vector2(420, Ui.MinButtonSize));
       var language = Ui.Label("Language", panel, "언어: 한국어", 34, TextAnchor.MiddleCenter);
-      Ui.Place(language.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, -50), new Vector2(600, 70));
+      Ui.Place(language.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, -130), new Vector2(600, 70));
       var close = Ui.Button("Close", panel, "닫기", onClose, 32);
       Ui.Place((RectTransform)close.transform, new Vector2(0.5f, 0), new Vector2(0, 30), new Vector2(260, Ui.MinButtonSize));
       return panel;

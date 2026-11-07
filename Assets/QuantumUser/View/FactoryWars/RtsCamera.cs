@@ -4,13 +4,14 @@ namespace FactoryWars.View {
   /// <summary>고정 각도로 땅의 한 점을 내려다보는 카메라. 초점은 맵 경계 안에 묶는다.</summary>
   public class RtsCamera : MonoBehaviour {
     public const float MinHeight = 30f;
-    public const float MaxHeight = 170f;
+    public const float MaxHeight = 110f;
+    public const float DefaultHeight = 45f;
     const float Pitch = 50f;
 
     public Vector2 BoundsMin = new Vector2(-50, -50);
     public Vector2 BoundsMax = new Vector2(50, 50);
     public Vector2 Focus;
-    public float Height = 70f;
+    public float Height = DefaultHeight;
 
     public static Vector2 ClampFocus(Vector2 focus, Vector2 min, Vector2 max) {
       return new Vector2(Mathf.Clamp(focus.x, min.x, max.x), Mathf.Clamp(focus.y, min.y, max.y));
