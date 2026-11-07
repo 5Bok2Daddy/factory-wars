@@ -835,6 +835,7 @@ namespace Quantum.FactoryWars {
     /// <summary>
     /// NavMesh는 고정이라 경로가 건물을 지나간다. 지상 유닛을 가까운 변 밖으로 밀어내고, 이동 중이면 변을 따라
     /// 미끄러뜨려 돌아가게 한다. 처음 닿을 때 고른 회전 방향을 유지해 붙어 있는 건물들도 한 덩어리처럼 돌아간다.
+    /// 면에 닿은 동안 면을 따른 순 이동은 조종과 상관없이 최고 속도다. 조종을 빼지 않으면 반대로 당길 때 정확히 상쇄되어 멈춘다.
     /// </summary>
     static void PushOutOfBuildings(Frame f) {
       var rules = FactoryWarsUtil.Rules(f);
@@ -852,7 +853,9 @@ namespace Quantum.FactoryWars {
           if (overlapX <= FP._0 || overlapZ <= FP._0) {
             continue;
           }
-          var slide = pathfinder->IsActive ? agent->MaxSpeed * f.DeltaTime : FP._0;
+          var moving = pathfinder->IsActive;
+          var slide = agent->MaxSpeed * f.DeltaTime;
+          var steered = agent->Velocity * f.DeltaTime;
           var position = unit->Position;
           var center = transform->Position;
           var target = pathfinder->Target;
@@ -863,19 +866,36 @@ namespace Quantum.FactoryWars {
             // 면의 바깥 방향을 왼쪽으로 돌린 것이 회전 방향 +1의 진행 방향이다.
             if (remembered == false) {
               owner->SlideTurn = face * Detour(position.X, position.Z, target.X, target.Z, center.X + reach * face, center.Z, reach);
+            } else {
+              KeepDirection(owner, face);
             }
-            position.Z += slide * owner->SlideTurn * face;
+            owner->SlideFace = face;
+            if (moving) {
+              position.Z += slide * owner->SlideTurn * face - steered.Y;
+            }
           } else {
             var face = z < FP._0 ? -1 : 1;
             position.Z = center.Z + reach * face;
             if (remembered == false) {
               owner->SlideTurn = -face * Detour(position.Z, position.X, target.Z, target.X, center.Z + reach * face, center.X, reach);
+            } else {
+              KeepDirection(owner, face * 2);
             }
-            position.X -= slide * owner->SlideTurn * face;
+            owner->SlideFace = face * 2;
+            if (moving) {
+              position.X -= slide * owner->SlideTurn * face + steered.X;
+            }
           }
           owner->SlideUntilFrame = f.Number + memory;
           unit->Position = position;
         }
+      }
+    }
+
+    /// <summary>마주 보는 면으로 넘어가면 같은 회전 방향이 반대로 간다. 부호를 뒤집어 가던 쪽을 유지한다. face는 x면 ±1, z면 ±2다.</summary>
+    static void KeepDirection(Unit* owner, int face) {
+      if (owner->SlideFace == -face) {
+        owner->SlideTurn = -owner->SlideTurn;
       }
     }
 

@@ -240,11 +240,45 @@ namespace FactoryWars.Tests {
         var map = MapAsset(id);
         for (var i = 0; i < map.Bridges.Length; i++) {
           var pieces = TerrainKit.BarrierPieces(map, i);
-          Assert.AreEqual(18, pieces.Count, id);
+          Assert.LessOrEqual(pieces.Count, 18, id);
+          Assert.GreaterOrEqual(pieces.Count, 14, $"{id}: 입구 6칸과 바깥쪽 강가는 남음");
           var center = map.Bridges[i].Center.ToUnityVector3();
           foreach (var piece in pieces) {
             Assert.Less((piece.From - center).magnitude, 26f, $"{id}: 강 전체를 두르지 않음");
           }
+        }
+      }
+    }
+
+    [Test]
+    public void Barrier_BankFenceNeverStandsInWater() {
+      foreach (var id in RiverMaps) {
+        var map = MapAsset(id);
+        var paths = TerrainKit.RiverPaths(map);
+        for (var i = 0; i < map.Bridges.Length; i++) {
+          // 앞 6칸은 다리 입구라 다리 위를 지난다.
+          foreach (var piece in TerrainKit.BarrierPieces(map, i).Skip(6)) {
+            foreach (var t in new[] { 0f, 0.5f, 1f }) {
+              var point = Vector3.Lerp(piece.From, piece.To, t);
+              Assert.GreaterOrEqual(TerrainKit.RiverDistance(paths, new Vector2(point.x, point.z)), TerrainKit.BankClearance, $"{id} 다리 {i}: {point}");
+            }
+          }
+        }
+      }
+    }
+
+    [Test]
+    public void River_MeshStopsAtTheLandEdge() {
+      foreach (var id in RiverMaps) {
+        var map = MapAsset(id);
+        var land = TerrainKit.Land(map);
+        var kit = new MeshKit();
+        TerrainKit.Features(kit, map);
+        foreach (var vertex in kit.ToMesh("test").vertices) {
+          Assert.GreaterOrEqual(vertex.x, land.xMin - 0.01f, id);
+          Assert.LessOrEqual(vertex.x, land.xMax + 0.01f, id);
+          Assert.GreaterOrEqual(vertex.z, land.yMin - 0.01f, id);
+          Assert.LessOrEqual(vertex.z, land.yMax + 0.01f, id);
         }
       }
     }

@@ -643,6 +643,16 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => (Verified.Get<Transform3D>(tank).Position - target).Magnitude < 2, 30f, "줄지은 건물을 돌아 도착");
     }
 
+    [UnityTest]
+    public IEnumerator Units_PassBetweenBuildingsFacingEachOther() {
+      // 4인 맵 AI 경기에서 유닛이 끼였던 배치: 7칸 간격 건물 둘의 면이 마주 본다. 위쪽 면에서 기억한 회전 방향이 아래쪽 면에서는 반대가 된다.
+      yield return StartMatch(units: new[] { (0, "ff_eagle_tank", -8, 37) }, buildings: new[] { (0, "ff_barracks", 0, 40), (0, "ff_barracks", 0, 33) });
+      var tank = UnitsNamed(0, "ff_eagle_tank").First(e => Verified.Get<Transform3D>(e).Position.Z > 30);
+      var target = V(15, 36);
+      Game.SendCommand(0, new MoveUnitsCommand { Units = new[] { tank }, Target = target });
+      yield return WaitFor(() => (Verified.Get<Transform3D>(tank).Position - target).Magnitude < 2, 30f, "마주 본 건물 사이를 지나 도착");
+    }
+
     // 지형
 
     [UnityTest]

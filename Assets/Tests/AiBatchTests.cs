@@ -19,6 +19,11 @@ namespace FactoryWars.Tests {
     const float AiTimeScale = 40f;
     const int AiMaxSeconds = 30 * 60;
     const int AiCheckSeconds = 5;
+    // 이동 명령을 받고 교전도 없이 이만큼 제자리면 끼인 것으로 센다.
+    const int StuckSeconds = 20;
+    const float StuckMove = 1f;
+    const float ArrivedDistance = 8f;
+    const float RiverReach = 15f;
 
     static readonly int[] AiRuns = Enumerable.Range(0, 10).ToArray();
 
@@ -53,12 +58,14 @@ namespace FactoryWars.Tests {
       var minutes = new List<string>();
       var nextCheck = 0;
       var nextMinute = 60 * Fps;
+      var tracker = new StuckTracker(players);
       var realStart = Time.realtimeSinceStartup;
       while (GameEnded() == false && Verified.Number < AiMaxSeconds * Fps) {
         var frame = Verified.Number;
         if (frame >= nextCheck) {
           nextCheck = frame + AiCheckSeconds * Fps;
           RecordFirsts(firsts, players, frame / (float)Fps);
+          tracker.Sample(map, run, frame);
         }
         if (frame >= nextMinute) {
           nextMinute += 60 * Fps;
@@ -78,8 +85,92 @@ namespace FactoryWars.Tests {
       var row = $"{map},{run},{F(seconds)},{winners},{alive},{seats},{firstText},{endText}";
       File.AppendAllLines(Path.Combine(AiFolder(), "matches.csv"), new[] { row });
       File.AppendAllLines(Path.Combine(AiFolder(), "minutes.csv"), minutes);
+      File.AppendAllLines(Path.Combine(AiFolder(), "stuck.csv"), tracker.Rows);
+      File.AppendAllLines(Path.Combine(AiFolder(), "crossing.csv"), tracker.Crossings(map, run));
       Debug.Log($"[FW-AI] {row} real {F(Time.realtimeSinceStartup - realStart)}s");
       Assert.Greater(seconds, 0f);
+    }
+
+    /// <summary>지상 전투 유닛이 강을 건넜는지, 이동 중에 끼였는지 기록한다. 프레임을 읽기만 한다.</summary>
+    sealed class StuckTracker {
+      struct Seen {
+        public Vector3 Position;
+        public int Since;
+        public bool Reported;
+      }
+
+      readonly Dictionary<EntityRef, Seen> _seen = new Dictionary<EntityRef, Seen>();
+      readonly HashSet<EntityRef>[] _ground;
+      readonly HashSet<EntityRef>[] _crossed;
+      readonly Rect[] _homes;
+      readonly Vector3[] _bridges;
+      public readonly List<string> Rows = new List<string>();
+
+      public StuckTracker(int players) {
+        var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+        _bridges = spec.Bridges.Select(b => b.Center.ToUnityVector3()).ToArray();
+        _ground = Enumerable.Range(0, players).Select(_ => new HashSet<EntityRef>()).ToArray();
+        _crossed = Enumerable.Range(0, players).Select(_ => new HashSet<EntityRef>()).ToArray();
+        _homes = new Rect[players];
+        for (var p = 0; p < players; p++) {
+          var start = spec.StartPositions[p].ToUnityVector3();
+          _homes[p] = spec.BaseAreas.Select(a => FactoryWars.View.TerrainKit.Extent(a, RiverReach)).First(r => r.Contains(new Vector2(start.x, start.z)));
+        }
+      }
+
+      public void Sample(string map, int run, int frame) {
+        foreach (var pair in Verified.GetComponentIterator<Unit>()) {
+          var unit = pair.Component;
+          var spec = Verified.FindAsset(unit.Spec);
+          if (spec.IsAir || spec.Attack == AttackType.None || unit.Owner >= _ground.Length) {
+            continue;
+          }
+          var position = Verified.Get<Transform3D>(pair.Entity).Position.ToUnityVector3();
+          _ground[unit.Owner].Add(pair.Entity);
+          if (_homes[unit.Owner].Contains(new Vector2(position.x, position.z)) == false) {
+            _crossed[unit.Owner].Add(pair.Entity);
+          }
+
+          var goal = unit.TargetPosition.ToUnityVector3();
+          var travelling = (unit.Order == UnitOrder.Move || unit.Order == UnitOrder.AttackMove)
+            && unit.TargetEntity == EntityRef.None
+            && unit.EngagedUntilFrame <= frame
+            && (goal - position).magnitude > ArrivedDistance;
+          if (travelling == false || _seen.TryGetValue(pair.Entity, out var last) == false || (position - last.Position).magnitude >= StuckMove) {
+            _seen[pair.Entity] = new Seen { Position = position, Since = frame };
+            continue;
+          }
+          var seconds = (frame - last.Since) / Fps;
+          if (seconds >= StuckSeconds && last.Reported == false) {
+            last.Reported = true;
+            _seen[pair.Entity] = last;
+            var bridge = _bridges.Min(b => (b - position).magnitude);
+            Rows.Add($"{map},{run},{F(frame / (float)Fps)},{FactionOf(unit.Owner).FactionId},{spec.name},{unit.Order},{F(position.x)},{F(position.z)},{F(bridge)},{Detail(pair.Entity, unit, position)}");
+          }
+        }
+      }
+
+      /// <summary>목적지, 다음 경유점, 미끄러지는 방향, 맞닿은 건물. 끼인 원인을 가른다.</summary>
+      static string Detail(EntityRef entity, Unit unit, Vector3 position) {
+        var path = Verified.Get<NavMeshPathfinder>(entity);
+        var goal = unit.TargetPosition.ToUnityVector3();
+        var waypoint = path.IsActive && path.WaypointCount > 0 ? path.GetWaypoint(Verified, path.WaypointIndex).ToUnityVector3() : Vector3.zero;
+        var nearest = "none";
+        var best = float.MaxValue;
+        foreach (var pair in Verified.GetComponentIterator<Building>()) {
+          var center = Verified.Get<Transform3D>(pair.Entity).Position.ToUnityVector3();
+          var spec = Verified.FindAsset(pair.Component.Spec);
+          var gap = Mathf.Max(Mathf.Abs(center.x - position.x), Mathf.Abs(center.z - position.z)) - spec.FootprintRadius.AsFloat;
+          if (gap < best) {
+            best = gap;
+            nearest = $"{spec.name}@{F(center.x)}/{F(center.z)} r{F(spec.FootprintRadius.AsFloat)} gap{F(gap)}";
+          }
+        }
+        return $"goal{F(goal.x)}/{F(goal.z)} way{path.WaypointIndex}of{path.WaypointCount}:{F(waypoint.x)}/{F(waypoint.z)} active{path.IsActive} turn{unit.SlideTurn} {nearest}";
+      }
+
+      public IEnumerable<string> Crossings(string map, int run) => Enumerable.Range(0, _ground.Length)
+        .Select(p => $"{map},{run},{p},{FactionOf(p).FactionId},{_ground[p].Count},{_crossed[p].Count}");
     }
 
     /// <summary>군대가 놀고 있는지 본다. 명령별 수, 평균 위치, 다음 공격 시각, 웨이브 크기.</summary>

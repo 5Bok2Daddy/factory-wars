@@ -102,6 +102,7 @@ component Unit {
     player_ref DesignatedBy;
     FP DesignatedBonus;
     Int32 SlideTurn;
+    Int32 SlideFace;
     Int32 SlideUntilFrame;
 }
 

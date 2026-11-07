@@ -201,18 +201,31 @@ namespace FactoryWars.View {
       return new Vector3(position.x, y, position.y);
     }
 
+    /// <summary>바닥 메쉬가 덮는 범위. 강은 이 밖으로 나가지 않는다.</summary>
+    public static Rect Land(MapSpec map) {
+      var min = new Vector2(map.BoundsMin.X.AsFloat - Margin, map.BoundsMin.Y.AsFloat - Margin);
+      var max = new Vector2(map.BoundsMax.X.AsFloat + Margin, map.BoundsMax.Y.AsFloat + Margin);
+      return new Rect(min, max - min);
+    }
+
+    static Vector3 Clip(Vector3 point, Rect land) => new Vector3(Mathf.Clamp(point.x, land.xMin, land.xMax), point.y, Mathf.Clamp(point.z, land.yMin, land.yMax));
+
     /// <summary>물 면, 경사 강변, 땅 위의 모래 띠. 강줄기 하나를 리본으로 잇는다.</summary>
-    public static void River(MeshKit k, List<RiverPoint> path, int seed) {
+    public static void River(MeshKit k, List<RiverPoint> path, int seed, Rect land) {
+      Vector3 Edge(RiverPoint point, float side, float offset, float y) => Clip(Bank(point, side, offset, y), land);
       for (var i = 0; i + 1 < path.Count; i++) {
         var a = path[i];
         var b = path[i + 1];
+        if (land.Contains(a.Position) == false && land.Contains(b.Position) == false) {
+          continue;
+        }
         k.Paint(Swatch.WaterDeep);
-        k.Quad(Bank(a, -1, SlopeInner, WaterLevel), Bank(a, 1, SlopeInner, WaterLevel), Bank(b, 1, SlopeInner, WaterLevel), Bank(b, -1, SlopeInner, WaterLevel), Vector3.up);
+        k.Quad(Edge(a, -1, SlopeInner, WaterLevel), Edge(a, 1, SlopeInner, WaterLevel), Edge(b, 1, SlopeInner, WaterLevel), Edge(b, -1, SlopeInner, WaterLevel), Vector3.up);
         foreach (var side in new[] { -1f, 1f }) {
           k.Paint(MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.DirtDark);
-          k.Quad(Bank(a, side, BandInner, BankY), Bank(a, side, SlopeInner, WaterLevel - 0.1f), Bank(b, side, SlopeInner, WaterLevel - 0.1f), Bank(b, side, BandInner, BankY), Vector3.up);
+          k.Quad(Edge(a, side, BandInner, BankY), Edge(a, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, BandInner, BankY), Vector3.up);
           k.Paint(MeshKit.Hash(seed, i * 2 + 300 + (side > 0 ? 1 : 0)) < 0.55f ? Swatch.Sand : Swatch.Dirt);
-          k.Quad(Bank(a, side, BandOuter, BankY), Bank(a, side, BandInner, BankY), Bank(b, side, BandInner, BankY), Bank(b, side, BandOuter, BankY), Vector3.up);
+          k.Quad(Edge(a, side, BandOuter, BankY), Edge(a, side, BandInner, BankY), Edge(b, side, BandInner, BankY), Edge(b, side, BandOuter, BankY), Vector3.up);
         }
       }
     }
@@ -220,8 +233,11 @@ namespace FactoryWars.View {
     /// <summary>물가의 작은 바위. 강폭 안쪽, 즉 막힌 영역 안에만 놓는다.</summary>
     public static void RiverRocks(MeshKit k, List<RiverPoint> path, int seed, MapSpec map) {
       k.ShadeFaces(seed, Swatch.BoulderDark, Swatch.Boulder, Swatch.BoulderLight);
+      // 바위 크기만큼 땅 끝에서 물러난다.
+      var land = Land(map);
+      land = new Rect(land.xMin + 2f, land.yMin + 2f, land.width - 4f, land.height - 4f);
       for (var i = 2; i + 2 < path.Count; i++) {
-        if (MeshKit.Hash(seed, i) > 0.32f) {
+        if (MeshKit.Hash(seed, i) > 0.32f || land.Contains(path[i].Position) == false) {
           continue;
         }
         var side = MeshKit.Hash(seed, i + 500) < 0.5f ? -1f : 1f;
@@ -421,6 +437,8 @@ namespace FactoryWars.View {
     const float BankPiece = 4f;
     const int BankPieces = 3;
     const float BankOffset = 2f;
+    // 기둥이 강가에서 이보다 가까우면 안쪽 굽이에서 오프셋이 접힌 것이다.
+    public const float BankClearance = 1.2f;
     public const float FenceHeight = 2.7f;
 
     static RiverPoint Sample(List<RiverPoint> path, float[] lengths, float s) {
@@ -436,7 +454,9 @@ namespace FactoryWars.View {
       };
     }
 
-    /// <summary>다리 양쪽 입구와, 입구 좌우 강가 12m씩. 강 전체를 두르지 않는다.</summary>
+    static bool OnBank(List<List<RiverPoint>> paths, Vector3 point) => RiverDistance(paths, new Vector2(point.x, point.z)) >= BankClearance;
+
+    /// <summary>다리 양쪽 입구와, 입구 좌우 강가 12m씩. 안쪽 굽이는 물에 닿기 전까지만 간다. 강 전체를 두르지 않는다.</summary>
     public static List<FencePiece> BarrierPieces(MapSpec map, int bridgeIndex) {
       var pieces = new List<FencePiece>();
       var bridge = map.Bridges[bridgeIndex];
@@ -486,9 +506,13 @@ namespace FactoryWars.View {
       foreach (var direction in new[] { -1f, 1f }) {
         foreach (var side in new[] { -1f, 1f }) {
           for (var i = 0; i < BankPieces; i++) {
-            var from = lengths[index] + direction * (BankStart + i * BankPiece);
-            var to = lengths[index] + direction * (BankStart + (i + 1) * BankPiece);
-            pieces.Add(new FencePiece { From = Along(from, side), To = Along(to, side) });
+            var from = Along(lengths[index] + direction * (BankStart + i * BankPiece), side);
+            var to = Along(lengths[index] + direction * (BankStart + (i + 1) * BankPiece), side);
+            // 안쪽 굽이에서는 여기서 끊는다. 더 걸으면 물을 건너간다.
+            if (OnBank(paths, from) == false || OnBank(paths, (from + to) / 2) == false || OnBank(paths, to) == false) {
+              break;
+            }
+            pieces.Add(new FencePiece { From = from, To = to });
           }
         }
       }
@@ -537,7 +561,7 @@ namespace FactoryWars.View {
         }
       }
       for (var i = 0; i < paths.Count; i++) {
-        River(k, paths[i], 40 + i);
+        River(k, paths[i], 40 + i, Land(map));
         RiverRocks(k, paths[i], 70 + i, map);
       }
       foreach (var zone in map.NoBuildZones ?? Array.Empty<MapShape>()) {

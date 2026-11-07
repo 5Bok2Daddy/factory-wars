@@ -324,6 +324,7 @@ namespace Quantum.Prototypes {
     public PlayerRef DesignatedBy;
     public FP DesignatedBonus;
     public Int32 SlideTurn;
+    public Int32 SlideFace;
     public Int32 SlideUntilFrame;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Unit component = default;
@@ -348,6 +349,7 @@ namespace Quantum.Prototypes {
         result.DesignatedBy = this.DesignatedBy;
         result.DesignatedBonus = this.DesignatedBonus;
         result.SlideTurn = this.SlideTurn;
+        result.SlideFace = this.SlideFace;
         result.SlideUntilFrame = this.SlideUntilFrame;
     }
   }

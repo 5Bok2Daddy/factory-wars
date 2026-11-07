@@ -1121,7 +1121,7 @@ namespace Quantum {
   public unsafe partial struct Unit : Quantum.IComponent {
     public const Int32 SIZE = 136;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(24)]
+    [FieldOffset(28)]
     public PlayerRef Owner;
     [FieldOffset(56)]
     public AssetRef<UnitSpec> Spec;
@@ -1146,13 +1146,15 @@ namespace Quantum {
     public Int32 EngagedUntilFrame;
     [FieldOffset(4)]
     public Int32 DesignatedUntilFrame;
-    [FieldOffset(20)]
+    [FieldOffset(24)]
     public PlayerRef DesignatedBy;
     [FieldOffset(88)]
     public FP DesignatedBonus;
-    [FieldOffset(12)]
-    public Int32 SlideTurn;
     [FieldOffset(16)]
+    public Int32 SlideTurn;
+    [FieldOffset(12)]
+    public Int32 SlideFace;
+    [FieldOffset(20)]
     public Int32 SlideUntilFrame;
     public readonly FixedArray<AssetRef<ModuleSpec>> Modules {
       get {
@@ -1177,6 +1179,7 @@ namespace Quantum {
         hash = hash * 31 + DesignatedBy.GetHashCode();
         hash = hash * 31 + DesignatedBonus.GetHashCode();
         hash = hash * 31 + SlideTurn.GetHashCode();
+        hash = hash * 31 + SlideFace.GetHashCode();
         hash = hash * 31 + SlideUntilFrame.GetHashCode();
         return hash;
       }
@@ -1186,6 +1189,7 @@ namespace Quantum {
         serializer.Stream.Serialize((Byte*)&p->Order);
         serializer.Stream.Serialize(&p->DesignatedUntilFrame);
         serializer.Stream.Serialize(&p->EngagedUntilFrame);
+        serializer.Stream.Serialize(&p->SlideFace);
         serializer.Stream.Serialize(&p->SlideTurn);
         serializer.Stream.Serialize(&p->SlideUntilFrame);
         PlayerRef.Serialize(&p->DesignatedBy, serializer);
