@@ -3,6 +3,13 @@
 작성: 2026-11-06 22:40 KST. `C:\Users\MinGyu\FactoryWars\ROADMAP.md`에 두고, 챕터 순서대로 진행한다.
 규칙은 `CLAUDE.md`를 따른다. 설계 기준은 GDD(https://claude.ai/artifact/LC9EQCZJwiBSiDmWktM7kg)와 멀티플레이 아키텍처(https://claude.ai/artifact/Voe6UNf5PiFPrLcizcSvNZ) — 열 수 없으면 이 파일과 기존 TASK 파일, 코드가 기준.
 
+## 진행 상황 (2026-11-07)
+
+- 챕터 3 완료: 규칙, 조작, AI, 화면 흐름, 절차적 그래픽 전체, 대전 연결, Android 개발 빌드
+- 기능 추가 1·2번 완료: 사령부 추가 건설, 지상 방어탑·방공포대. 3·4·5번은 미결정
+- 테스트: PlayMode 197개 통과. AI 대 AI 20판 시간 초과 0
+- 다음: 실기기 확인, 챕터 4 온라인 대전
+
 ## 현재 상태 (2026-11-06)
 
 - Unity 6000.0.85f2 + Quantum 3.0.14, URP, uGUI, AI Navigation. 프로젝트 `FactoryWars\Game`
@@ -69,7 +76,7 @@
 - 먼저 `PlaybackEngines\AndroidPlayer`의 SDK·NDK·OpenJDK 실제 설치를 확인한다. 비어 있으면 빌드는 건너뛰고 보고서에 "Hub에서 SDK & NDK Tools 제거 후 재설치"를 적는다.
 - 정상이면 Development Build APK를 `FactoryWars\Builds\`에 만든다 (IL2CPP, ARM64, 가로 고정). 빌드 폴더는 Git 제외.
 
-3-5. **절차적 로우폴리 그래픽** (구현은 사용자 승인 후. 규칙은 visual-style 스킬, 설계는 보고서 "3-5 그래픽 설계")
+3-5. **절차적 로우폴리 그래픽** (완료. 구현은 사용자 승인 후. 규칙은 visual-style 스킬, 설계는 보고서 "3-5 그래픽 설계")
 - 단순 도형이 아니라 기본 도형 여러 개를 코드로 조립해, 실루엣만 봐도 무엇인지 알 수 있게 한다
 - 유닛 12종: 몸체 + 이동부 + 무기부(조준 회전, 사격 반동) + 진영 색 파츠
 - 건물 11종: 기초 바닥판 + 본체 + 역할 상징물. 전기 시설의 발광 파츠는 정전이면 꺼진다

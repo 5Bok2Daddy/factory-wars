@@ -27,7 +27,12 @@ namespace FactoryWars.EditorTools {
 
       var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Builds"));
       Directory.CreateDirectory(folder);
-      // 패키저는 기존 APK를 증분으로 고쳐 쓰면서 안 쓰는 구간을 남긴다. 지우고 만들어야 크기가 내용물과 같다.
+      // Gradle 패키저는 중간 APK를 증분으로 고쳐 쓰면서 빈 구간을 남기고, 그 구간이 빌드마다 쌓인다.
+      // 지우고 시작해야 파일 크기가 내용물과 같다. 2회 빌드 뒤 30MB가 비어 있었다.
+      var gradleOutput = Path.Combine(Application.dataPath, "..", "Library", "Bee", "Android", "Prj", "IL2CPP", "Gradle", "launcher", "build", "outputs");
+      if (Directory.Exists(gradleOutput)) {
+        Directory.Delete(gradleOutput, true);
+      }
       var output = Path.Combine(folder, FileName);
       if (File.Exists(output)) {
         File.Delete(output);
