@@ -132,10 +132,10 @@ namespace FactoryWars.View {
             continue;
           }
           var pick = MeshKit.Hash(index, 4);
-          var kind = pick < 0.6f ? DressKind.Grass : pick < 0.85f ? DressKind.RockSmall : DressKind.Bush;
-          // 도시 건물 둘레(폐허 주변)는 차량 부품·타이어 같은 잔해를 섞는다. 작아서 통과해도 어색하지 않다.
+          var kind = pick < 0.48f ? DressKind.Grass : pick < 0.6f && Dressing.Has(DressKind.GroundPatch) ? DressKind.GroundPatch : pick < 0.85f ? DressKind.RockSmall : DressKind.Bush;
+          // 도시 건물 둘레(폐허 주변)는 차량 부품·타이어 같은 잔해와 길가 버려진 가구(high 전용)를 섞는다. 작아서 통과해도 어색하지 않다.
           if (Near(city, spot, 5f) && pick < 0.6f) {
-            kind = DressKind.Debris;
+            kind = pick < 0.45f || Dressing.Has(DressKind.Furniture) == false ? DressKind.Debris : DressKind.Furniture;
           }
           spot.y = TerrainKit.SurfaceHeight(map, spot.x, spot.z);
           count += Dressing.Add(kind, spot, 9000 + index) ? 1 : 0;
@@ -190,7 +190,7 @@ namespace FactoryWars.View {
       wrapper.localScale = Vector3.one * scale;
       var model = Object.Instantiate(variant.Prefab, wrapper);
       model.transform.localPosition += variant.Offset;
-      foreach (var renderer in model.GetComponentsInChildren<MeshRenderer>()) {
+      foreach (var renderer in model.GetComponentsInChildren<Renderer>()) {
         renderer.shadowCastingMode = entry.Shadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
       }
       return wrapper.gameObject;
@@ -201,7 +201,7 @@ namespace FactoryWars.View {
     /// <summary>손상 단계의 그을음(공용 셰이더 _Soot). 0이면 블록을 지워 SRP Batcher로 돌아간다.</summary>
     public static void Soot(GameObject root, float amount) {
       _block ??= new MaterialPropertyBlock();
-      foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>()) {
+      foreach (var renderer in root.GetComponentsInChildren<Renderer>()) {
         if (amount <= 0f) {
           renderer.SetPropertyBlock(null);
           continue;
@@ -280,6 +280,8 @@ namespace FactoryWars.View {
       _instancedDirty = true;
     }
 
+    public IEnumerable<string> GroupNames => _groups.Keys;
+
     public IReadOnlyList<Dressing.Item> Group(string group) => _groups.TryGetValue(group, out var list) ? list : System.Array.Empty<Dressing.Item>();
 
     /// <summary>품질이 바뀌면(낮음은 나무 수를 줄인다) 모두 다시 만든다.</summary>
@@ -308,8 +310,9 @@ namespace FactoryWars.View {
       return parts;
     }
 
-    static bool Skip(Dressing.Item item) => item.Prefab == null || (GraphicsQuality.Current == QualityTier.Low && item.Keep > item.LowKeep)
-      || (GraphicsQuality.Current == QualityTier.Medium && item.Keep > item.MediumKeep);
+    static bool Skip(Dressing.Item item) => item.Prefab == null
+      || (GraphicsQuality.Current == QualityTier.Low && (item.LowKeep <= 0f || item.Keep > item.LowKeep))
+      || (GraphicsQuality.Current == QualityTier.Medium && (item.MediumKeep <= 0f || item.Keep > item.MediumKeep));
 
     /// <summary>합친 메쉬용 머티리얼: 공용 셰이더, 흰 바탕, 정점 색 사용. 다른 값은 원본 머티리얼에서 가져온다.</summary>
     Material VertexColorMaterial(Material source) {

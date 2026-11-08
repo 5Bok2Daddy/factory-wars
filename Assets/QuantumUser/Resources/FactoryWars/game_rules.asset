@@ -19,6 +19,8 @@ MonoBehaviour:
   NavMeshName: NavMesh
   BuildingGap:
     RawValue: 131072
+  EmptyBaseResourceRatio:
+    RawValue: 45875
   TruceSeconds: 420
   BarrierRegion: Barrier
   CaptureSeconds:

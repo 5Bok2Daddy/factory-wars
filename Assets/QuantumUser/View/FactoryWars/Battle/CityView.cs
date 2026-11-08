@@ -34,6 +34,7 @@ namespace FactoryWars.View {
       public GameObject Dressed;
       public Vector3 BaseScale = Vector3.one;
       public GameObject Ruins;
+      public GameObject InteriorFurniture;
     }
 
     static DressKind DressOf(CityBuildingPlacement placement) => placement.Topples ? DressKind.CityTower : placement.Garrison ? DressKind.CityGarrison : placement.Kind == 0 ? DressKind.CitySmall : placement.Kind == 1 ? DressKind.CityMedium : placement.Kind == 2 ? DressKind.CityIndustrial : DressKind.CityTower;
@@ -42,6 +43,9 @@ namespace FactoryWars.View {
     static void ShowDressed(Block block, CityBuildingPlacement placement, int stage) {
       if (block.Ruins != null) {
         block.Ruins.SetActive(stage >= 2 || block.Rubble);
+      }
+      if (block.InteriorFurniture != null) {
+        block.InteriorFurniture.SetActive((stage >= 2 || block.Rubble) && GraphicsQuality.Current == QualityTier.High);
       }
       if (block.Dressed == null) {
         return;
@@ -71,9 +75,11 @@ namespace FactoryWars.View {
       _root = new GameObject("City").transform;
       _root.SetParent(parent, false);
       _map = map;
+      Dressing.Begin();
       for (var i = 0; map.CityBuildings != null && i < map.CityBuildings.Length; i++) {
         _blocks.Add(Create(i, map.CityBuildings[i]));
       }
+      Dressing.End("city_props");
       BuildBoundary();
     }
 
@@ -199,6 +205,28 @@ namespace FactoryWars.View {
         }
       }
       block.Ruins = ruins.gameObject;
+      // 무너진 건물 내부 가구 잔해(furniture-kit, high 품질에서만 활성 — 항목 19D).
+      var interior = new GameObject("InteriorFurniture").transform;
+      interior.SetParent(root, false);
+      for (var f = 0; f < 2; f++) {
+        var fx = (f == 0 ? -0.32f : 0.32f) * shape.HalfLength.AsFloat;
+        var fz = (f == 0 ? 0.25f : -0.25f) * shape.HalfWidth.AsFloat;
+        var item = DressingSpawn.Place(DressKind.Furniture, interior, new Vector3(fx, 0.12f, fz), index * 37f + f * 115f, 7401 + index * 19 + f);
+        if (item != null) {
+          item.name = "FurniturePart";
+          DressingSpawn.Soot(item, 0.65f);
+        }
+      }
+      block.InteriorFurniture = interior.gameObject;
+      var worldRot = Quaternion.Euler(0, shape.Yaw.AsFloat, 0);
+      var worldPos = shape.Center.ToUnityVector3();
+      if (placement.Kind == 0 && Dressing.Collecting) {
+        var spot = worldPos + worldRot * new Vector3(shape.HalfLength.AsFloat * 0.68f, 0.02f, -shape.HalfWidth.AsFloat * 0.68f);
+        Dressing.Add(DressKind.SuburbanProp, spot, 7601 + index * 11, null, shape.Yaw.AsFloat + 90f);
+      } else if (placement.Kind == 1 && (index == 2 || index == 11) && Dressing.Collecting) {
+        var spot = worldPos + worldRot * new Vector3(-shape.HalfLength.AsFloat * 0.7f, 0.04f, -shape.HalfWidth.AsFloat * 0.72f);
+        Dressing.Add(DressKind.StreetMachine, spot, 7801 + index, null, shape.Yaw.AsFloat);
+      }
       ShowDressed(block, placement, 0);
       if (placement.Garrison) {
         // 들어갈 수 있다는 표시: 문 앞 모래주머니와 창·문 판자(building-kit).

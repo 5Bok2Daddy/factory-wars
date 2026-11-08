@@ -912,7 +912,8 @@ namespace Quantum.FactoryWars {
     /// <summary>앞마당 근처에 적 지상군이 있으면, 그 앞마당 가까이 낙하 구역이 있는 쓰러지는 건물을 쓰러뜨린다.</summary>
     static void DefendWithTopple(Frame f, PlayerRef player, AiSpec ai, MapSpec map) {
       var sites = map.Expansions;
-      var seat = 1 << (int)player;
+      // 확장지 SeatMask는 본진 자리 기준이다(항목 25 점검에서 고침).
+      var seat = 1 << FactoryWarsUtil.SeatOf(f, player);
       var watch = ai.LaneArrivalDistance * ai.LaneArrivalDistance * 2;
       for (var i = 0; sites != null && i < sites.Length; i++) {
         var kind = sites[i].Kind;

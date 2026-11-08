@@ -1,4 +1,4 @@
-﻿# 항목 19B: Kenney CC0 키트 설치.
+# 항목 19B: Kenney CC0 키트 설치.
 # temp-assets\kenney_<kit>*.zip(버전 표기 허용)을 풀어 FBX와 텍스처(png), License.txt만 Assets\ExternalAssets\Kenney\<kit>\로 복사한다.
 # glb·obj·mtl·미리보기는 저장소 크기를 줄이려고 빼고, 받은 zip은 그대로 둔다.
 # zip이 없으면 kenney.nl 페이지에서 zip 링크를 찾아 본다. 페이지에 링크가 없으면(자바스크립트 버튼) 우회하지 않고 경고만 낸다.
@@ -10,7 +10,8 @@ $temp = "$root\temp-assets"
 New-Item -ItemType Directory -Force -Path $dest,$temp | Out-Null
 
 $kits = @("nature-kit", "city-kit-commercial", "city-kit-industrial", "city-kit-roads", "factory-kit", "tower-defense-kit", "train-kit",
-          "car-kit", "modular-buildings", "city-kit-suburban", "building-kit", "modular-space-kit", "space-station-kit", "mini-characters")
+          "car-kit", "modular-buildings", "city-kit-suburban", "building-kit", "modular-space-kit", "space-station-kit", "mini-characters",
+          "furniture-kit", "prototype-kit", "mini-forest", "blaster-kit", "mini-arcade", "animated-characters-protagonists", "watercraft-pack")
 foreach ($kit in $kits) {
     try {
         $found   = Get-ChildItem $temp -Filter "kenney_$kit*.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -30,12 +31,20 @@ foreach ($kit in $kits) {
         $out = "$dest\$kit"
         New-Item -ItemType Directory -Force -Path $out | Out-Null
         $fbxDir = Get-ChildItem $exDir -Recurse -Directory | Where-Object { $_.Name -eq "FBX format" } | Select-Object -First 1
-        if (-not $fbxDir) { Write-Warning "$kit : FBX format 폴더 없음"; continue }
-        Get-ChildItem $fbxDir.FullName -Filter *.fbx | Copy-Item -Destination $out -Force
-        $textures = Join-Path $fbxDir.FullName "Textures"
-        if (Test-Path $textures) {
-            New-Item -ItemType Directory -Force -Path "$out\Textures" | Out-Null
-            Get-ChildItem $textures -Filter *.png | Copy-Item -Destination "$out\Textures" -Force
+        if ($fbxDir) {
+            Get-ChildItem $fbxDir.FullName -Filter *.fbx | Copy-Item -Destination $out -Force
+            $textures = Join-Path $fbxDir.FullName "Textures"
+            if (Test-Path $textures) {
+                New-Item -ItemType Directory -Force -Path "$out\Textures" | Out-Null
+                Get-ChildItem $textures -Filter *.png | Copy-Item -Destination "$out\Textures" -Force
+            }
+        } else {
+            Get-ChildItem $exDir -Recurse -Filter *.fbx | Copy-Item -Destination $out -Force
+            $skin = Get-ChildItem $exDir -Recurse -Filter "cyborgFemaleA.png" | Select-Object -First 1
+            if ($skin) {
+                New-Item -ItemType Directory -Force -Path "$out\Textures" | Out-Null
+                Copy-Item $skin.FullName -Destination "$out\Textures\colormap.png" -Force
+            }
         }
         Get-ChildItem $exDir -Recurse -Include "License*.txt" | Select-Object -First 1 | Copy-Item -Destination "$out\License.txt" -Force
 

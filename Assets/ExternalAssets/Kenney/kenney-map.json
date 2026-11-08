@@ -84,6 +84,48 @@
    "Desaturate": 0.0,
    "Brightness": 1.0,
    "Tint": "#FFFFFF"
+  },
+  {
+   "Kit": "furniture-kit",
+   "Desaturate": 0.0,
+   "Brightness": 1.0,
+   "Tint": "#FFFFFF"
+  },
+  {
+   "Kit": "prototype-kit",
+   "Desaturate": 0.0,
+   "Brightness": 1.0,
+   "Tint": "#FFFFFF"
+  },
+  {
+   "Kit": "mini-forest",
+   "Desaturate": 0.0,
+   "Brightness": 1.0,
+   "Tint": "#FFFFFF"
+  },
+  {
+   "Kit": "blaster-kit",
+   "Desaturate": 0.0,
+   "Brightness": 1.0,
+   "Tint": "#FFFFFF"
+  },
+  {
+   "Kit": "mini-arcade",
+   "Desaturate": 0.0,
+   "Brightness": 1.0,
+   "Tint": "#FFFFFF"
+  },
+  {
+   "Kit": "animated-characters-protagonists",
+   "Desaturate": 0.0,
+   "Brightness": 1.0,
+   "Tint": "#FFFFFF"
+  },
+  {
+   "Kit": "watercraft-pack",
+   "Desaturate": 0.0,
+   "Brightness": 1.0,
+   "Tint": "#FFFFFF"
   }
  ],
  "Colors": [
@@ -278,8 +320,10 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "nature-kit/tree_pineSmallC:1",
-    "nature-kit/tree_pineSmallD:1"
+    "nature-kit/tree_pineSmallC:2",
+    "nature-kit/tree_pineSmallD:2",
+    "city-kit-suburban/tree-large:1",
+    "city-kit-suburban/tree-small:1"
    ]
   },
   {
@@ -339,9 +383,11 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "nature-kit/rock_largeA:1",
-    "nature-kit/rock_largeD:1",
-    "nature-kit/rock_tallG:1"
+    "nature-kit/rock_largeA:2",
+    "nature-kit/rock_largeD:2",
+    "nature-kit/rock_tallG:2",
+    "mini-forest/rocks-high:1",
+    "mini-forest/rocks-ramp:1"
    ]
   },
   {
@@ -355,8 +401,10 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "nature-kit/rock_smallD:1",
-    "nature-kit/rock_smallG:1"
+    "nature-kit/rock_smallD:2",
+    "nature-kit/rock_smallG:2",
+    "mini-forest/rocks-low:1",
+    "mini-forest/stones:1"
    ]
   },
   {
@@ -426,7 +474,9 @@
     "city-kit-industrial/building-g:1",
     "city-kit-industrial/building-h:1",
     "city-kit-industrial/building-i:1",
-    "city-kit-industrial/building-j:1"
+    "city-kit-industrial/building-j:1",
+    "modular-buildings/building-sample-house-b:1",
+    "modular-buildings/building-sample-house-c:1"
    ]
   },
   {
@@ -513,7 +563,11 @@
    "Models": [
     "factory-kit/box-large:2",
     "factory-kit/box-long:1",
-    "car-kit/box:1"
+    "car-kit/box:1",
+    "blaster-kit/crate-medium:1",
+    "blaster-kit/crate-small:1",
+    "blaster-kit/crate-wide:1",
+    "prototype-kit/crate:1"
    ]
   },
   {
@@ -533,7 +587,7 @@
   },
   {
    "Kind": "Wreck",
-   "Scale": 4.2,
+   "Scale": 2.8,
    "JitterMin": 0.95,
    "JitterMax": 1.05,
    "LowKeep": 0.8,
@@ -545,6 +599,8 @@
     "car-kit/truck:1",
     "car-kit/truck-flat:1",
     "car-kit/delivery:1",
+    "car-kit/delivery-flat:1",
+    "car-kit/garbage-truck:1",
     "car-kit/van:1",
     "car-kit/sedan:1",
     "car-kit/suv:1",
@@ -616,6 +672,14 @@
    "Models": [
     "building-kit/wall-half:2",
     "building-kit/wall-low:2",
+    "building-kit/plating:2",
+    "building-kit/plating-wide:1",
+    "building-kit/plating-detailed:1",
+    "building-kit/roof-flat-patch:2",
+    "building-kit/roof-flat-patch-large:1",
+    "building-kit/stairs-open-short:1",
+    "modular-buildings/building-corner-window:1",
+    "modular-buildings/building-window-sill:1",
     "car-kit/debris-plate-a:1",
     "car-kit/debris-door:1"
    ]
@@ -633,8 +697,10 @@
    "Models": [
     "building-kit/barricade-window-a:2",
     "building-kit/barricade-window-b:2",
+    "building-kit/barricade-window-c:1",
     "building-kit/barricade-doorway-a:1",
-    "building-kit/barricade-doorway-b:1"
+    "building-kit/barricade-doorway-b:1",
+    "building-kit/barricade-doorway-c:1"
    ]
   },
   {
@@ -697,9 +763,12 @@
    "Fit": false,
    "Models": [
     "modular-space-kit/cables:2",
-    "space-station-kit/computer-system:2",
+    "space-station-kit/structure:2",
     "space-station-kit/structure-panel:2",
+    "space-station-kit/structure-barrier:2",
+    "space-station-kit/rail:1",
     "space-station-kit/container-tall:1",
+    "space-station-kit/pipe:1",
     "space-station-kit/pipe-ring:1"
    ]
   },
@@ -714,8 +783,297 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "mini-characters/character-worker:3",
-    "mini-characters/character-male-a:1"
+    "mini-characters/character-worker:1"
+   ]
+  },
+  {
+   "Kind": "BaseWall",
+   "Scale": 2.2,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.6,
+   "MediumKeep": 0.85,
+   "Shadows": false,
+   "SnapYaw90": true,
+   "Fit": false,
+   "Models": [
+    "building-kit/border-high:3",
+    "building-kit/border-high-corner:1",
+    "building-kit/border-high-corner-diagonal:1"
+   ]
+  },
+  {
+   "Kind": "SuburbanProp",
+   "Scale": 2.0,
+   "JitterMin": 0.9,
+   "JitterMax": 1.1,
+   "LowKeep": 0.4,
+   "MediumKeep": 0.7,
+   "Shadows": false,
+   "SnapYaw90": true,
+   "Fit": false,
+   "Models": [
+    "city-kit-suburban/fence:2",
+    "city-kit-suburban/fence-low:2",
+    "city-kit-suburban/path-stones-messy:1",
+    "city-kit-suburban/planter:1",
+    "city-kit-suburban/driveway-short:1",
+    "building-kit/gutter-vertical:1"
+   ]
+  },
+  {
+   "Kind": "Furniture",
+   "Scale": 0.25,
+   "JitterMin": 0.85,
+   "JitterMax": 1.15,
+   "LowKeep": 0.0,
+   "MediumKeep": 0.0,
+   "Shadows": false,
+   "SnapYaw90": false,
+   "Fit": false,
+   "Models": [
+    "furniture-kit/cardboardBoxClosed:2",
+    "furniture-kit/cardboardBoxOpen:2",
+    "furniture-kit/desk:1",
+    "furniture-kit/bookcaseOpen:1",
+    "furniture-kit/bookcaseOpenLow:1",
+    "furniture-kit/chair:1",
+    "furniture-kit/chairDesk:1",
+    "furniture-kit/bench:1",
+    "furniture-kit/kitchenFridge:1"
+   ]
+  },
+  {
+   "Kind": "ScrapSkip",
+   "Scale": 1.8,
+   "JitterMin": 0.9,
+   "JitterMax": 1.1,
+   "LowKeep": 0.5,
+   "MediumKeep": 0.85,
+   "Shadows": false,
+   "SnapYaw90": true,
+   "Fit": false,
+   "Models": [
+    "space-station-kit/skip-rocks:3",
+    "space-station-kit/skip:2",
+    "space-station-kit/container:1",
+    "space-station-kit/pipe-bend:1"
+   ]
+  },
+  {
+   "Kind": "SpaceGate",
+   "Scale": 1.6,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.7,
+   "MediumKeep": 1.0,
+   "Shadows": false,
+   "SnapYaw90": true,
+   "Fit": false,
+   "Models": [
+    "modular-space-kit/gate:2",
+    "modular-space-kit/gate-door:1",
+    "modular-space-kit/gate-lasers:1"
+   ]
+  },
+  {
+   "Kind": "SpaceFloor",
+   "Scale": 1.8,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.6,
+   "MediumKeep": 1.0,
+   "Shadows": false,
+   "SnapYaw90": true,
+   "Fit": false,
+   "Models": [
+    "modular-space-kit/template-floor-detail:2",
+    "modular-space-kit/template-floor-detail-a:2",
+    "modular-space-kit/cables:1"
+   ]
+  },
+  {
+   "Kind": "BuildIndicator",
+   "Scale": 2.4,
+   "JitterMin": 1.0,
+   "JitterMax": 1.0,
+   "LowKeep": 1.0,
+   "MediumKeep": 1.0,
+   "Shadows": false,
+   "SnapYaw90": true,
+   "Fit": false,
+   "Models": [
+    "prototype-kit/indicator-special-area:2",
+    "prototype-kit/indicator-round-a:2",
+    "prototype-kit/indicator-round-b:1",
+    "prototype-kit/indicator-special-arrow:1"
+   ]
+  },
+  {
+   "Kind": "RallyFlag",
+   "Scale": 1.8,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.7,
+   "MediumKeep": 1.0,
+   "Shadows": false,
+   "SnapYaw90": false,
+   "Fit": false,
+   "Models": [
+    "prototype-kit/flag:1"
+   ]
+  },
+  {
+   "Kind": "HardHat",
+   "Scale": 0.85,
+   "JitterMin": 1.0,
+   "JitterMax": 1.0,
+   "LowKeep": 0.0,
+   "MediumKeep": 1.0,
+   "Shadows": false,
+   "SnapYaw90": false,
+   "Fit": false,
+   "Models": [
+    "prototype-kit/hat-hard:1"
+   ]
+  },
+  {
+   "Kind": "GarageDoor",
+   "Scale": 1.7,
+   "JitterMin": 1.0,
+   "JitterMax": 1.0,
+   "LowKeep": 0.7,
+   "MediumKeep": 1.0,
+   "Shadows": false,
+   "SnapYaw90": true,
+   "Fit": false,
+   "Models": [
+    "prototype-kit/door-garage:1"
+   ]
+  },
+  {
+   "Kind": "GroundPatch",
+   "Scale": 2.6,
+   "JitterMin": 0.8,
+   "JitterMax": 1.3,
+   "LowKeep": 0.4,
+   "MediumKeep": 0.7,
+   "Shadows": false,
+   "SnapYaw90": false,
+   "Fit": false,
+   "Models": [
+    "mini-forest/patch-dirt:2",
+    "mini-forest/patch-grass:2"
+   ]
+  },
+  {
+   "Kind": "BaseTent",
+   "Scale": 2.2,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.4,
+   "MediumKeep": 0.7,
+   "Shadows": false,
+   "SnapYaw90": true,
+   "Fit": false,
+   "Models": [
+    "mini-forest/tent:1"
+   ]
+  },
+  {
+   "Kind": "SupplyCrate",
+   "Scale": 1.8,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.6,
+   "MediumKeep": 1.0,
+   "Shadows": false,
+   "SnapYaw90": true,
+   "Fit": false,
+   "Models": [
+    "blaster-kit/crate-medium:2",
+    "blaster-kit/crate-wide:2",
+    "blaster-kit/crate-small:1",
+    "prototype-kit/crate:1"
+   ]
+  },
+  {
+   "Kind": "StreetMachine",
+   "Scale": 1.9,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.0,
+   "MediumKeep": 0.7,
+   "Shadows": false,
+   "SnapYaw90": true,
+   "Fit": false,
+   "Models": [
+    "mini-arcade/vending-machine:1"
+   ]
+  },
+  {
+   "Kind": "WorkVehicle",
+   "Scale": 2.2,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.4,
+   "MediumKeep": 0.7,
+   "Shadows": false,
+   "SnapYaw90": false,
+   "Fit": false,
+   "Models": [
+    "car-kit/tractor-shovel:2",
+    "car-kit/garbage-truck:1",
+    "car-kit/delivery-flat:1"
+   ]
+  },
+  {
+   "Kind": "TrainTrack",
+   "Scale": 2.0,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.5,
+   "MediumKeep": 0.8,
+   "Shadows": false,
+   "SnapYaw90": false,
+   "Fit": false,
+   "Models": [
+    "train-kit/railroad-damaged-straight:2",
+    "train-kit/railroad-damaged-straight-bend:1",
+    "train-kit/railroad-damaged-straight-skew-left:1",
+    "train-kit/railroad-damaged-straight-skew-right:1"
+   ]
+  },
+  {
+   "Kind": "TrainWreck",
+   "Scale": 1.8,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.5,
+   "MediumKeep": 0.8,
+   "Shadows": false,
+   "SnapYaw90": false,
+   "Fit": false,
+   "Models": [
+    "train-kit/train-carriage-box:2",
+    "train-kit/train-carriage-flatbed:1",
+    "train-kit/train-carriage-tank:1",
+    "train-kit/train-carriage-coal:1",
+    "train-kit/train-carriage-container-green:1"
+   ]
+  },
+  {
+   "Kind": "AnimatedWorker",
+   "Scale": 0.0048,
+   "JitterMin": 0.95,
+   "JitterMax": 1.05,
+   "LowKeep": 0.0,
+   "MediumKeep": 1.0,
+   "Shadows": false,
+   "SnapYaw90": false,
+   "Fit": false,
+   "Models": [
+    "animated-characters-protagonists/characterMedium:1"
    ]
   }
  ]

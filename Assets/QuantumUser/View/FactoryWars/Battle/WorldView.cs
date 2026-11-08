@@ -91,6 +91,13 @@ namespace FactoryWars.View {
         TerrainKit.NoBuildMarks(marks, _map);
         if (marks.TriangleCount > 0) {
           _noBuild = MeshObject(_root, "NoBuild", marks.ToMesh("world_nobuild"), false);
+          for (var z = 0; _map.NoBuildZones != null && z < _map.NoBuildZones.Length; z++) {
+            var center = _map.NoBuildZones[z].Center.ToUnityVector3();
+            var ind = DressingSpawn.Place(DressKind.BuildIndicator, _noBuild.transform, center + Vector3.up * 0.04f, z * 90f, 8100 + z);
+            if (ind != null) {
+              ind.name = "BuildIndicator";
+            }
+          }
           _noBuild.SetActive(false);
         }
       }
@@ -175,13 +182,13 @@ namespace FactoryWars.View {
         view.Model.transform.localScale = Vector3.one * (node->Shape.Radius.AsFloat / MineModelRadius);
         view.SetYaw(index * 57f);
         _crystals[entity] = view.Model.transform.Find("Crystals").gameObject;
-        // 고철·광산 설비 느낌: 둘레에 호퍼·크레인·컨테이너·상자(Kenney, 판정 없음).
+        // 고철·광산 설비 느낌: 둘레에 호퍼·고철 하치장(skip-rocks)·크레인·작업 차량(Kenney, 판정 없음 — 항목 19C·19D).
         Dressing.Begin();
         var radius = node->Shape.Radius.AsFloat;
-        DressKind[] kinds = { DressKind.Hopper, DressKind.Container, DressKind.Crane, DressKind.Prop };
-        for (var i = 0; i < 4; i++) {
-          var angle = (index * 1.7f + i * 1.57f) % (Mathf.PI * 2f);
-          var spot = center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (radius * 0.85f + MeshKit.Hash(index, 40 + i) * 0.9f);
+        DressKind[] kinds = { DressKind.Hopper, DressKind.ScrapSkip, DressKind.Crane, DressKind.WorkVehicle };
+        for (var i = 0; i < kinds.Length; i++) {
+          var angle = (index * 1.7f + i * (Mathf.PI * 2f / kinds.Length)) % (Mathf.PI * 2f);
+          var spot = center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (radius * 0.88f + MeshKit.Hash(index, 40 + i) * 0.9f);
           Dressing.Add(kinds[i], spot, index * 97 + i);
         }
         Dressing.End($"iron{index}");

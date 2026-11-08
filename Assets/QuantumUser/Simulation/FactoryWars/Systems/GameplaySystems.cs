@@ -630,7 +630,8 @@ namespace Quantum.FactoryWars {
         return;
       }
       var position = f.Unsafe.GetPointer<Transform3D>(target)->Position;
-      if (areas[(int)building->Owner % areas.Length].Distance(position) <= FP._0) {
+      // 플레이어 번호가 아니라 본진 자리 번호다(2인은 대각선 자리, 항목 17B). 항목 25 점검에서 고침.
+      if (areas[FactoryWarsUtil.SeatOf(f, building->Owner) % areas.Length].Distance(position) <= FP._0) {
         state->NextBaseAlertFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, FactoryWarsUtil.Rules(f).BaseAlertSeconds);
         f.Events.BaseUnderAttack(building->Owner, position);
       }

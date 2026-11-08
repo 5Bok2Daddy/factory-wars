@@ -2138,24 +2138,68 @@ AI 행동도 함께 넣었습니다.
 5. **AI 쓰러짐 방어**는 지시대로 임시 규칙입니다. 앞마당 근처에 적 지상군이 보이면, 그 앞마당 가까이 낙하 구역이 있는 쓰러지는 건물을 공격합니다.
 6. **시험 맵에 진지 건물과 쓰러지는 건물을 하나씩 넣었습니다.** 휴전 진지 제한은 시험 맵에 본진 구역이 없어 실제 맵으로 시험합니다.
 
+
+## 항목 25: Gemini 작업 점검 (2026-11-08 21시)
+
+**한 줄 요약:** Gemini가 한 19C·17B(커밋·push됨)와 19D 일부(커밋 안 됨)를 점검했다. 고친 것은 다섯 가지다.
+- 시뮬레이션: 본진 자리 번호 버그 2건, 하드코딩 수치 1건
+- 테스트: 컴파일 에러 1건
+- 화면: 규칙 위반 1건
+
+고친 뒤 전체 테스트 262개 통과. 결정론 금지어 0건.
+
+### Gemini가 바꾼 것
+- **커밋됨**
+  - `54cec48` 19C: 14개 키트 군용 재도색, 고층 제거, 숲·절벽·도로·작업자
+  - `fd9c585` 17B: 4인 맵 하나로 통합, 2인은 대각선, 빈 본진 70%
+- **커밋 안 됨(19D 진행분)**
+  - 코드: `KenneyTools.cs`, `KenneyAssetMap.cs`·`.asset`, `Dressing.cs`, `TerrainKit.cs`, `TerrainLook.cs`, `BattleView.cs`, `CityView.cs`, `BattlefieldView.cs`, `WorldView.cs`
+  - 테스트: `Kenney19CTests.cs`, `LookdevKenneyTests.cs`
+  - 데이터: `kenney-map.json`
+  - 새 키트 7개: animated-characters-protagonists, blaster-kit, furniture-kit, mini-arcade, mini-forest, prototype-kit, watercraft-pack
+- **시뮬레이션 변경(커밋분)**
+  - `CoreSystems.cs`: `SeatOf`·`PlayerAtSeat`·`BaseSeatAt`, 자리별 울타리 영역, 빈 본진 매장량
+  - `BotSystem.cs`: 빈 본진을 확장 후보·측면 경유점으로 씀
+  - `BattlefieldSystem.cs`: 상자 주인을 자리로 찾음, 2인 투하 지점
+  - `.qtn`·Specs 변경 없음
+
+### 한 줄씩 검토한 결과
+- **결정론:** float·Mathf·System.Random·시계 사용 없음. 자리 배정은 `RuntimeConfig.Seed`만 쓰는 정수 계산이고, 측면 경유점 선택은 `frame.RNG`를 쓴다. 문제없다.
+- **휴전·동맹·승리 조건:** 휴전 중 이동 제한(`IsReachable`)은 자리 번호로 바뀌었다. 빈 본진 울타리는 시작부터 열린다. 동맹·승리 판정 코드는 손대지 않았다. 문제없다.
+
+### 발견한 문제와 수정
+
+| # | 위치 | 문제 | 수정 |
+| --- | --- | --- | --- |
+| 1 | `GameplaySystems.WarnBase` | 본진 공격 알림이 플레이어 번호를 본진 자리로 썼다. 2인 대각선(자리 0·2)에서 1번 플레이어는 알림을 받지 못하거나 엉뚱한 본진에서 받는다 | `SeatOf(f, owner)`로 바꿈 |
+| 2 | `BotSystem.DefendWithTopple` | 앞마당 SeatMask를 플레이어 번호로 비교했다. 2인 대각선에서 AI가 남의 앞마당을 지키려 했다 | `SeatOf(f, player)`로 바꿈 |
+| 3 | `CoreSystems` 빈 본진 매장량 | 0.7을 코드에 하드코딩했다(CLAUDE.md 7번 위반) | `GameRulesSpec.EmptyBaseResourceRatio`(설정 0.7)로 옮김 |
+| 4 | `LookdevKenneyTests.cs` 331행 | `Entry?.Id`: 구조체에 `?.`를 써서 **컴파일 에러**가 났다. 보병 스키닝 실험의 id 검사("rifle" 등)도 실제 id와 달라 `skinned_soldiers=0`이 나왔다 | `View.Entry.Id`로 고침, 보병 id는 `*_squad`·`cf_militia` |
+| 5 | `BattleView` 공병 안전모 | 품질 높음에서 공병마다 Kenney 안전모 렌더러를 붙였다. 유닛은 자기 프리팹으로만 그린다는 테스트(`Battle_EveryEntityIsDrawnWithItsPrefab`)가 실패했다. 기본 줌에서 보이지 않고 그리기 호출만 늘린다 | 삭제(본진 장식 작업자의 안전모는 유지) |
+
+- **화면 규칙 확인**
+  - 화면이 시뮬레이션에 쓰는 곳은 없다.
+  - Kenney 파일 이름은 `kenney-map.json`에만 있고 코드에는 없다.
+  - 새로 만드는 머티리얼은 공유 두 개뿐이다: 합친 메쉬용, 바닥용. 인스턴스별 머티리얼은 만들지 않는다.
+  - Kenney 배치는 해시로 정하고 `Random`은 쓰지 않는다.
+- **눈에 띈 점(문제는 아님)**
+  - 보급 투하 지점이 "같은 무리 안 i번째 = 자리 i" 순서에 기댄다. 맵 생성 코드(FactoryWarsSetup 692~695)가 그 순서로 만들어 지금은 맞다.
+  - 작업자 애니메이션은 공유 클립 에셋의 `legacy` 값을 실행 중에 바꾼다.
+
 ## 현재 단계 (재개 기준)
 
-2026-11-08 15시 지시: 19B(0절 우선) → 19 → 22 → 23 순서로 진행하고 23 뒤에 멈춘다. 19B는 끝났다.
-
-지시 순서(2026-11-08 갱신): 21(`NEXT-TASK-21-CITY.md`) → 19A(`NEXT-TASK-19A-LOOKDEV.md`) → 19(`NEXT-TASK-19.md`) → 22(`NEXT-TASK-22-BALANCE.md`) → 23(`NEXT-TASK-23-DEVICE.md`). 23이 끝나면 push하고 멈춘다. 19A·19는 `concept-art/aow3-ref`의 그림체가 목표이고, visual-style 스킬과 VISUAL-REFERENCE.md도 새 그림체로 고친다.
+2026-11-08 21시 지시(`NEXT-TASK-25-RESUME-AFTER-GEMINI.md`): 25-0 상태 점검 → 25-1(19D 마무리) → 24 해군 → 26 UI → 22 밸런스 → 23 실기기. 23이 끝나면 push하고 멈춘다. 다른 도구(Gemini)가 저장소를 만졌을 수 있으니 재개할 때 git status·diff부터 본다.
 
 | 항목 | 상태 |
 | --- | --- |
-| 17 맵 재설계 | 완료 |
-| 20 재미 요소 | 완료 |
-| 21 도시 전장 | 완료 |
-| 19A 룩 개발 | 완료. 기본값 A "AoW3 전장". `LOOKDEV.md`, `screenshots/lookdev/final_compare.png` |
-| 19B Kenney 도입 | 완료. `LOOKDEV.md` 19B, `screenshots/lookdev/19b_compare_*.png` |
-| 19 그래픽 적용 | 완료(일부 남김: 유닛 겹침 오프셋, 울타리 위치, LOD). AI 4인 시간 초과 2/5는 22에서 다룸 |
-| 22 밸런스 | 대기 |
-| 23 실기기 | 대기 |
-
-
+| 17·17B·18·19A·19B·19C·20·21 | 완료 |
+| 19 그래픽 적용 | 완료(일부 남김: 유닛 겹침 오프셋, 울타리 위치, LOD) |
+| 25-0 Gemini 점검 | 완료(이 문서 "항목 25") |
+| 25-1 19D 마무리 | 진행 중: 성능 예산, 바닥 체크무늬·숲 바닥·풀색·중앙 구조물, 19d 비교·19d_vs_ref |
+| 24 해군 | 대기(watercraft zip 두 개는 SHA-256이 같아 하나만 씀) |
+| 26 UI | 대기(ui-pack-sci-fi) |
+| 22 밸런스 | 대기. 진행했던 코드는 `Game/Docs/patches/item22.patch`로 보관(상대 구성 대응 생산, 진영별 빌드 순서, 자리 쏠림 측정) |
+| 23 실기기 | 대기. 미리 만든 코드: 성능 오버레이·기록·자동 품질·빠른 시작·기기 점검 테스트(`Game/Docs/patches/item23/`) |
 
 ## 항목 19 결과 (적용)
 

@@ -37,6 +37,24 @@ namespace FactoryWars.View {
     BridgeDeck,
     SpaceProp,
     GarrisonBoard,
+    BaseWall,
+    SuburbanProp,
+    Furniture,
+    ScrapSkip,
+    SpaceGate,
+    SpaceFloor,
+    BuildIndicator,
+    RallyFlag,
+    HardHat,
+    GarageDoor,
+    GroundPatch,
+    BaseTent,
+    SupplyCrate,
+    StreetMachine,
+    WorkVehicle,
+    TrainTrack,
+    TrainWreck,
+    AnimatedWorker,
   }
 
   /// <summary>
@@ -80,6 +98,8 @@ namespace FactoryWars.View {
     }
 
     public List<Entry> Entries = new List<Entry>();
+    public AnimationClip WorkerIdle;
+    public AnimationClip WorkerRun;
 
     [NonSerialized] Dictionary<DressKind, Entry> _lookup;
 

@@ -136,7 +136,8 @@ namespace FactoryWars.View {
     }
 
     void UpdateBaseWorkers(Frame frame) {
-      var allow = GraphicsQuality.Current != QualityTier.Low && Dressing.Has(DressKind.Worker);
+      var kind = Dressing.Has(DressKind.AnimatedWorker) ? DressKind.AnimatedWorker : DressKind.Worker;
+      var allow = GraphicsQuality.Current != QualityTier.Low && Dressing.Has(kind);
       if (allow && _baseWorkers.Count == 0 && World?.Map?.StartPositions != null) {
         for (var i = 0; i < Mathf.Min(frame.PlayerCount, World.Map.StartPositions.Length) && _baseWorkers.Count < 8; i++) {
           if (frame.Global->Players.GetPointer(i)->Active == false) {
@@ -146,9 +147,29 @@ namespace FactoryWars.View {
           for (var w = 0; w < 2 && _baseWorkers.Count < 8; w++) {
             var from = home + new Vector3(w == 0 ? 4.2f : -4.2f, 0f, 3.2f);
             var to = home + new Vector3(w == 0 ? 8.5f : -8.5f, 0f, -4.5f);
-            var worker = DressingSpawn.Place(DressKind.Worker, _stage, from, 0f, 9500 + i * 11 + w);
+            var worker = DressingSpawn.Place(kind, _stage, from, 0f, 9500 + i * 11 + w);
             if (worker != null) {
               worker.name = "BaseWorker";
+              var ws = Mathf.Max(0.0001f, worker.transform.localScale.y);
+              var hat = DressingSpawn.Place(DressKind.HardHat, worker.transform, new Vector3(0f, 1.72f / ws, 0f), 0f, 9600 + i * 11 + w);
+              if (hat != null) {
+                hat.name = "HardHat";
+                hat.transform.localScale /= ws;
+              }
+              if (Dressing.Map != null && Dressing.Map.WorkerRun != null) {
+                var targetObj = worker.GetComponentInChildren<Animation>()?.gameObject ?? (worker.transform.childCount > 0 ? worker.transform.GetChild(0).gameObject : worker);
+                var anim = targetObj.GetComponent<Animation>() ?? targetObj.AddComponent<Animation>();
+                Dressing.Map.WorkerRun.legacy = true;
+                Dressing.Map.WorkerRun.wrapMode = WrapMode.Loop;
+                anim.AddClip(Dressing.Map.WorkerRun, "run");
+                if (Dressing.Map.WorkerIdle != null) {
+                  Dressing.Map.WorkerIdle.legacy = true;
+                  Dressing.Map.WorkerIdle.wrapMode = WrapMode.Loop;
+                  anim.AddClip(Dressing.Map.WorkerIdle, "idle");
+                }
+                anim.clip = Dressing.Map.WorkerRun;
+                anim.Play("run");
+              }
               _baseWorkers.Add(new BaseWorker { Root = worker, From = from, To = to, Phase = i * 1.7f + w * 2.3f });
             }
           }
@@ -488,8 +509,12 @@ namespace FactoryWars.View {
       var r = spec.FootprintRadius.AsFloat * 0.62f;
       var seed = KenneyAssetMap.Seed(worldPos, 701);
       var useSpace = spec.name.StartsWith("ff_") && (spec.Role == BuildingRole.Headquarters || spec.Role == BuildingRole.ResearchLab);
-      var first = useSpace ? DressKind.SpaceProp : (spec.Role == BuildingRole.CollectionYard || spec.Role == BuildingRole.Processor ? DressKind.Crane : DressKind.Hopper);
-      var second = useSpace ? DressKind.Hopper : DressKind.Prop;
+      var first = spec.Role == BuildingRole.ResearchLab ? DressKind.SpaceGate
+        : spec.Role == BuildingRole.VehicleFactory ? DressKind.GarageDoor
+        : useSpace ? DressKind.SpaceProp
+        : (spec.Role == BuildingRole.CollectionYard || spec.Role == BuildingRole.Processor ? DressKind.ScrapSkip : DressKind.Hopper);
+      var second = (spec.Role == BuildingRole.Barracks || spec.Role == BuildingRole.VehicleFactory || spec.Role == BuildingRole.Headquarters) ? DressKind.RallyFlag
+        : (spec.Role == BuildingRole.CollectionYard ? DressKind.Crane : DressKind.Prop);
       DressingSpawn.Place(first, group, new Vector3(-r, 0f, -r * 0.5f), 90f, seed);
       DressingSpawn.Place(second, group, new Vector3(r, 0f, r * 0.4f), -90f, seed + 1);
       actor.Dressing = group.gameObject;

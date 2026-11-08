@@ -442,6 +442,14 @@ namespace FactoryWars.View {
           var small = MeshKit.Hash(seed, i + 30) < 0.5f;
           Dressing.Add(small ? DressKind.RockSmall : DressKind.RockLarge, spot, seed * 31 + i, Vector3.one * (radius * (small ? 0.18f : 0.2f)));
         }
+        // 중앙 폐허의 대칭 바위 엄폐물에는 손상된 철로와 탈선한 화차 더미를 함께 놓는다(항목 19D, 기존 바위 판정 공유).
+        if (new Vector2(center.x, center.z).magnitude < 62f && Dressing.Has(DressKind.TrainWreck)) {
+          var yaw = Mathf.Atan2(center.z, center.x) * Mathf.Rad2Deg + 90f;
+          if (Dressing.Has(DressKind.TrainTrack)) {
+            Dressing.Add(DressKind.TrainTrack, center + new Vector3(0f, 0.04f, 0f), seed + 701, null, yaw);
+          }
+          Dressing.Add(DressKind.TrainWreck, center + new Vector3(0f, 0.1f, 0f), seed + 709, null, yaw + 18f);
+        }
       }
       k.ShadeFaces(seed, Swatch.BoulderDark, Swatch.Boulder, Swatch.BoulderLight);
       k.Rock(center, radius * 0.72f, radius * (1.05f + 0.4f * MeshKit.Hash(seed, 1)), seed);

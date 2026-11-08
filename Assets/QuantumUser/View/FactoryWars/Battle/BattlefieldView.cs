@@ -185,6 +185,9 @@ namespace FactoryWars.View {
       station.transform.localPosition = new Vector3(0, 0, site->Radius.AsFloat + 2.4f);
       station.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
       var seed = KenneyAssetMap.Seed(position, 601);
+      if (site->Kind == CaptureKind.Comms) {
+        DressingSpawn.Place(DressKind.SpaceFloor, station.transform, new Vector3(0f, 0.02f, 0f), 0f, seed + 10);
+      }
       DressingSpawn.Place(DressKind.SpaceProp, station.transform, new Vector3(-1.3f, 0.15f, 0.2f), 90f, seed);
       DressingSpawn.Place(site->Kind == CaptureKind.Comms ? DressKind.SpaceProp : DressKind.Hopper, station.transform, new Vector3(1.3f, 0.15f, -0.2f), -90f, seed + 1);
       DressingSpawn.Place(DressKind.Prop, station.transform, new Vector3(0f, 0.15f, 1.1f), 0f, seed + 2);
@@ -281,6 +284,10 @@ namespace FactoryWars.View {
           var body = Item(crate.transform, "Body", CrateMesh(), ArtLook.NeutralMaterial);
           body.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
           Item(body.transform, "Parachute", ParachuteMesh(), ArtLook.NeutralMaterial);
+          var dressedCrate = DressingSpawn.Place(DressKind.SupplyCrate, body.transform, Vector3.zero, entity.Index * 90f, 8400 + entity.Index);
+          if (dressedCrate != null) {
+            dressedCrate.name = "KenneyCrate";
+          }
           _crates[entity] = crate;
           _falling[entity] = 0f;
         }

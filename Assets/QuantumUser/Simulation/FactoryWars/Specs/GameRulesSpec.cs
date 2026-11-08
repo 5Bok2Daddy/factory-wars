@@ -25,6 +25,8 @@ namespace Quantum {
     public string NavMeshName;
     /// <summary>건물끼리 떨어져야 하는 최소 간격(m). 바닥판 사이 길이 보이고 유닛이 지나갈 틈이 생긴다(항목 19 5-b).</summary>
     public FP BuildingGap;
+    /// <summary>빈 본진 자리(2·3인 경기)의 자원 노드 매장량 비율. 중립 대형 확장지가 된다(항목 17B).</summary>
+    public FP EmptyBaseResourceRatio;
     /// <summary>경기 시작부터 울타리가 열릴 때까지의 휴전 시간. 공격할 수 없고 본진 밖으로 나갈 수 없다.</summary>
     public int TruceSeconds;
     /// <summary>다리 입구를 막는 울타리의 NavMesh 영역 이름.</summary>

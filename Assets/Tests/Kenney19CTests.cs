@@ -105,5 +105,26 @@ namespace FactoryWars.Tests {
       }
       Assert.Greater(topplers, 0, "쓰러지는 건물이 있음");
     }
+
+    [UnityTest]
+    public IEnumerator Kenney_19DPropsAndFurnitureHighOnly() {
+      yield return StartMatch(Map4PScene, 2, truce: 0);
+      yield return WaitForBattle();
+      yield return null;
+      Assume.That(VisualProfile.Current.Dressing, Is.Not.Null, "Kenney 맵이 있는 프로필");
+      var map = VisualProfile.Current.Dressing;
+      foreach (var kind in new[] {
+        DressKind.BaseWall, DressKind.SuburbanProp, DressKind.Furniture, DressKind.ScrapSkip,
+        DressKind.SpaceGate, DressKind.SpaceFloor, DressKind.BuildIndicator, DressKind.RallyFlag,
+        DressKind.HardHat, DressKind.GarageDoor, DressKind.GroundPatch, DressKind.BaseTent,
+        DressKind.SupplyCrate, DressKind.StreetMachine, DressKind.WorkVehicle, DressKind.TrainTrack,
+        DressKind.TrainWreck, DressKind.AnimatedWorker
+      }) {
+        Assert.IsTrue(map.Has(kind), $"19D 매핑 누락: {kind}");
+      }
+      var furnitureEntry = map.Get(DressKind.Furniture);
+      Assert.AreEqual(0f, furnitureEntry.LowKeep, 1e-4f, "폐허 내부 가구는 low에서 비활성");
+      Assert.AreEqual(0f, furnitureEntry.MediumKeep, 1e-4f, "폐허 내부 가구는 medium에서 비활성");
+    }
   }
 }

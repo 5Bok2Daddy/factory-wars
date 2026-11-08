@@ -170,6 +170,33 @@ namespace FactoryWars.View {
           }
         }
       }
+      // 본진 외곽 방벽·검문소(building-kit border-high*)와 기지 보급 텐트(mini-forest tent). 도로·다리와 겹치지 않는 가장자리에만 둔다(항목 19D).
+      if (Dressing.Collecting && map.BaseAreas != null) {
+        for (var b = 0; b < map.BaseAreas.Length; b++) {
+          var area = map.BaseAreas[b];
+          var center = new Vector3(area.Center.X.AsFloat, 0f, area.Center.Z.AsFloat);
+          var hx = area.HalfLength.AsFloat;
+          var hz = area.HalfWidth.AsFloat;
+          var signX = center.x < 0f ? 1f : -1f;
+          var signZ = center.z < 0f ? 1f : -1f;
+          if (Dressing.Has(DressKind.BaseWall)) {
+            var postA = center + new Vector3(signX * (hx - 2f), 0f, signZ * (hz * 0.45f));
+            var postB = center + new Vector3(signX * (hx * 0.45f), 0f, signZ * (hz - 2f));
+            if (Inside(map.Roads, postA.x, postA.z) == false) {
+              Dressing.Add(DressKind.BaseWall, postA, 9100 + b * 7, null, 0f);
+            }
+            if (Inside(map.Roads, postB.x, postB.z) == false) {
+              Dressing.Add(DressKind.BaseWall, postB, 9101 + b * 7, null, 90f);
+            }
+          }
+          if (Dressing.Has(DressKind.BaseTent)) {
+            var tentSpot = center + new Vector3(-signX * (hx * 0.55f), 0f, signZ * (hz * 0.55f));
+            if (Inside(map.Roads, tentSpot.x, tentSpot.z) == false) {
+              Dressing.Add(DressKind.BaseTent, tentSpot, 9200 + b * 11, null, b * 90f);
+            }
+          }
+        }
+      }
     }
 
     public static float HighGroundHeight => VisualProfile.Current.HighGroundHeight;

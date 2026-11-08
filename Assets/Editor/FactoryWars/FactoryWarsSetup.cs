@@ -573,6 +573,8 @@ namespace FactoryWars.EditorTools {
       rules.FoundationHealthRatio = N(0.1);
       // 본진 사령부 크기 수용이 25채 이상이라 2m를 쓴다(25채 미만이면 1.5m로 줄일 것). MapTests가 잰다.
       rules.BuildingGap = N(2);
+      // 항목 17B: 2·3인 경기의 빈 본진 자원은 70%만 둔다(중립 대형 확장지).
+      rules.EmptyBaseResourceRatio = N(0.7);
       rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 2, 2, 0, 420, 90, 6, 2, 12, false, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
       }));

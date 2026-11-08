@@ -147,7 +147,7 @@ namespace Quantum.FactoryWars {
         var amount = nodes[i].Amount;
         var baseSeat = FactoryWarsUtil.BaseSeatAt(map, nodes[i].Shape.Center);
         if (baseSeat >= 0 && FactoryWarsUtil.PlayerAtSeat(f, baseSeat) < 0) {
-          amount = FPMath.RoundToInt(amount * (FP._7 / 10));
+          amount = FPMath.RoundToInt(amount * FactoryWarsUtil.Rules(f).EmptyBaseResourceRatio);
         }
         var node = f.Create();
         f.Add(node, Transform3D.Create(nodes[i].Shape.Center));

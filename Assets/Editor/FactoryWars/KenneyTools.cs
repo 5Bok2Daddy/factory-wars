@@ -22,10 +22,17 @@ namespace FactoryWars.EditorTools {
 
     public static string[] Models(string kit) => Directory.GetFiles(kit, "*.fbx", SearchOption.AllDirectories).Select(f => f.Replace('\\', '/')).OrderBy(f => f).ToArray();
 
+    static readonly HashSet<string> NewKits = new HashSet<string> {
+      "furniture-kit", "prototype-kit", "mini-forest", "blaster-kit", "mini-arcade", "animated-characters-protagonists", "watercraft-pack",
+    };
+
     /// <summary>스케일 1, 노멀은 파일 값, 애니메이션·카메라·조명 없음. 읽기/쓰기는 nature-kit만 켠다(실행 중 합치기). 나머지는 GPU 인스턴싱.</summary>
     [MenuItem("Tools/Factory Wars/Kenney/Configure Import")]
     public static void ConfigureImport() {
       foreach (var kit in Kits()) {
+        if (NewKits.Contains(Path.GetFileName(kit)) == false) {
+          continue;
+        }
         foreach (var path in Models(kit)) {
           var importer = AssetImporter.GetAtPath(path) as ModelImporter;
           if (importer == null) {
@@ -38,10 +45,12 @@ namespace FactoryWars.EditorTools {
               dirty = true;
             }
           }
-          Set(importer.importAnimation, false, v => importer.importAnimation = v);
+          var isAnimKit = kit.EndsWith("animated-characters-protagonists");
+          var hasClips = isAnimKit && (path.EndsWith("idle.fbx") || path.EndsWith("run.fbx"));
+          Set(importer.importAnimation, hasClips, v => importer.importAnimation = v);
           Set(importer.importCameras, false, v => importer.importCameras = v);
           Set(importer.importLights, false, v => importer.importLights = v);
-          Set(importer.animationType, ModelImporterAnimationType.None, v => importer.animationType = v);
+          Set(importer.animationType, isAnimKit ? ModelImporterAnimationType.Legacy : ModelImporterAnimationType.None, v => importer.animationType = v);
           // nature-kit은 실행 중에 그룹별로 한 메쉬로 합치므로 읽기 가능해야 한다(그리기 호출 절약). 나머지는 끈다.
           Set(importer.isReadable, kit.EndsWith("nature-kit"), v => importer.isReadable = v);
           Set(importer.globalScale, 1f, v => importer.globalScale = v);
@@ -74,6 +83,9 @@ namespace FactoryWars.EditorTools {
         }
       }
       foreach (var kit in Kits()) {
+        if (NewKits.Contains(Path.GetFileName(kit)) == false) {
+          continue;
+        }
         foreach (var path in Models(kit)) {
           var importer = AssetImporter.GetAtPath(path) as ModelImporter;
           if (importer == null) {
@@ -83,6 +95,9 @@ namespace FactoryWars.EditorTools {
           foreach (var source in AssetDatabase.LoadAllAssetsAtPath(path).OfType<Material>()) {
             var color = source.HasProperty("_Color") ? source.GetColor("_Color") : source.HasProperty("_BaseColor") ? source.GetColor("_BaseColor") : Color.white;
             var texture = source.HasProperty("_MainTex") ? source.GetTexture("_MainTex") : source.HasProperty("_BaseMap") ? source.GetTexture("_BaseMap") : null;
+            if (texture == null && kit.EndsWith("animated-characters-protagonists")) {
+              texture = AssetDatabase.LoadAssetAtPath<Texture2D>($"{kit}/Textures/colormap.png");
+            }
             var key = $"{Path.GetFileName(kit)}_{(texture != null ? texture.name : "flat")}_{ColorUtility.ToHtmlStringRGB(color)}";
             if (made.TryGetValue(key, out var material) == false) {
               material = new Material(shader) { name = key, enableInstancing = true };
@@ -131,6 +146,11 @@ namespace FactoryWars.EditorTools {
       camera.targetTexture = target;
       try {
         foreach (var kit in Kits()) {
+          var name = Path.GetFileName(kit);
+          var sheetPath = Path.Combine(ShotFolder(), $"{name}_contact.png");
+          if (File.Exists(sheetPath) && name != "car-kit") {
+            continue;
+          }
           var models = Models(kit);
           var rows = Mathf.Max(1, (models.Length + Columns - 1) / Columns);
           var sheet = new Texture2D(Columns * Cell, rows * Cell, TextureFormat.RGB24, false);
@@ -166,8 +186,7 @@ namespace FactoryWars.EditorTools {
             Object.DestroyImmediate(item);
           }
           sheet.Apply();
-          var name = Path.GetFileName(kit);
-          File.WriteAllBytes(Path.Combine(ShotFolder(), $"{name}_contact.png"), sheet.EncodeToPNG());
+          File.WriteAllBytes(sheetPath, sheet.EncodeToPNG());
           File.WriteAllText(Path.Combine(ShotFolder(), $"{name}_list.csv"), list.ToString());
           Object.DestroyImmediate(sheet);
           Debug.Log($"[FW-KENNEY] {name}: 모델 {models.Length}개 시트 저장");
@@ -244,7 +263,7 @@ namespace FactoryWars.EditorTools {
           continue;
         }
         var military = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/{kit.Kit}/Textures/colormap_military.png");
-        if (military != null && material.GetTexture("_BaseMap") != null) {
+        if (military != null && (material.GetTexture("_BaseMap") != null || kit.Kit == "animated-characters-protagonists")) {
           material.SetTexture("_BaseMap", military);
         }
         material.SetFloat("_Desaturate", kit.Desaturate);
@@ -254,6 +273,8 @@ namespace FactoryWars.EditorTools {
         var swap = data.Colors.FirstOrDefault(c => c.Kit == kit.Kit && string.Equals(c.From, hex, System.StringComparison.OrdinalIgnoreCase));
         if (swap != null) {
           material.SetColor("_BaseColor", Hex(swap.To));
+        } else if (material.GetTexture("_BaseMap") == null) {
+          material.SetColor("_BaseColor", Military(Hex(hex), out _));
         }
         material.enableInstancing = true;
         EditorUtility.SetDirty(material);
@@ -299,6 +320,8 @@ namespace FactoryWars.EditorTools {
         }
         map.Entries.Add(entry);
       }
+      map.WorkerIdle = AssetDatabase.LoadAllAssetsAtPath($"{Root}/animated-characters-protagonists/idle.fbx").OfType<AnimationClip>().FirstOrDefault(c => c.name.StartsWith("__preview__") == false);
+      map.WorkerRun = AssetDatabase.LoadAllAssetsAtPath($"{Root}/animated-characters-protagonists/run.fbx").OfType<AnimationClip>().FirstOrDefault(c => c.name.StartsWith("__preview__") == false);
       EditorUtility.SetDirty(map);
       // 3. 프로필 연결: A(기본)·C는 Kenney, B는 절차 메쉬 비교용.
       foreach (var name in new[] { "VisualProfile", "VisualProfile_C" }) {
@@ -329,7 +352,7 @@ namespace FactoryWars.EditorTools {
       Color target;
       if (s < 0.18f) {
         (target, category) = v > 0.72f ? (Wall, "벽") : v > 0.38f ? (Steel, "금속") : (Roof, "지붕");
-      } else if (isCharacterKit && h >= 12f && h < 48f && s >= 0.35f) {
+      } else if (isCharacterKit && ((h >= 12f && h < 48f && s >= 0.35f) || (h >= 170f && h <= 260f && s >= 0.35f))) {
         (target, category) = (WorkerOrange, "작업복");
       } else if (h >= 170f && h <= 260f) {
         (target, category) = (Glass, "창문");
@@ -362,6 +385,7 @@ namespace FactoryWars.EditorTools {
         var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
         texture.LoadImage(File.ReadAllBytes(source));
         var pixels = texture.GetPixels32();
+        var origPixels = (Color32[])pixels.Clone();
         var counts = new Dictionary<Color32, (Color32 To, string Category, int Count)>();
         for (var i = 0; i < pixels.Length; i++) {
           var from = pixels[i];
@@ -371,6 +395,38 @@ namespace FactoryWars.EditorTools {
           }
           counts[from] = (known.To, known.Category, known.Count + 1);
           pixels[i] = known.To;
+        }
+        // 512x512 아틀라스에서 유색 칸 안의 흰 표식·문자·로고(garbage-truck 재활용 표식 등)를 주변 색으로 지운다(항목 19D).
+        if (isCharacterKit == false && texture.width == 512 && texture.height == 512) {
+          for (var cy = 0; cy < 512; cy += 32) {
+            for (var cx = 0; cx < 512; cx += 32) {
+              int wallCount = 0, colorCount = 0;
+              Color32 dominantColor = default;
+              for (var y = cy; y < cy + 32; y++) {
+                for (var x = cx; x < cx + 32; x++) {
+                  var idx = y * 512 + x;
+                  Color.RGBToHSV(origPixels[idx], out _, out var s, out var v);
+                  if (s < 0.22f && v > 0.65f) {
+                    wallCount++;
+                  } else if (s >= 0.28f) {
+                    colorCount++;
+                    dominantColor = pixels[idx];
+                  }
+                }
+              }
+              if (wallCount > 0 && colorCount >= wallCount * 2) {
+                for (var y = cy; y < cy + 32; y++) {
+                  for (var x = cx; x < cx + 32; x++) {
+                    var idx = y * 512 + x;
+                    Color.RGBToHSV(origPixels[idx], out _, out var s, out var v);
+                    if (s < 0.25f && v > 0.55f) {
+                      pixels[idx] = dominantColor;
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
         texture.SetPixels32(pixels);
         texture.Apply();
@@ -402,6 +458,7 @@ namespace FactoryWars.EditorTools {
       ConfigureImport();
       ConvertMaterials();
       RecolorAtlases();
+      BuildMap();
       ContactSheets();
       BuildMap();
       foreach (var kit in Kits()) {

@@ -260,5 +260,100 @@ namespace FactoryWars.Tests {
         }
       }
     }
+
+    static Texture2D Crop19C(string view, bool low) {
+      var path = Path.Combine(LookdevFolder(), $"19c_compare_{view}.png");
+      if (File.Exists(path) == false) {
+        return new Texture2D(CellWidth, CellHeight, TextureFormat.RGB24, false);
+      }
+      var sheet = new Texture2D(2, 2, TextureFormat.RGB24, false);
+      sheet.LoadImage(File.ReadAllBytes(path));
+      var w = CellWidth - 8;
+      var h = CellHeight - 8;
+      var x = CellWidth + 4;
+      var y = low ? LabelHeight + 4 : LabelHeight + (CellHeight + LabelHeight) + 4;
+      var cropped = new Texture2D(w, h, TextureFormat.RGB24, false);
+      cropped.SetPixels(sheet.GetPixels(x, Mathf.Clamp(y, 0, sheet.height - h), w, h));
+      cropped.Apply();
+      Object.Destroy(sheet);
+      return cropped;
+    }
+
+    [UnityTest, Explicit, Category("Lookdev"), Timeout(6000000)]
+    public IEnumerator Lookdev_19D() {
+      yield return FixedScene(FinalScenes[1], human: true);
+      var after = VisualProfile.Current;
+      Assert.IsNotNull(after.Dressing, "기본 프로필이 Kenney 맵을 가리킴");
+      var map = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      var camera = Camera.main;
+      var byView = new Dictionary<string, List<(Texture2D, string)>>();
+
+      foreach (var tier in new[] { QualityTier.Medium, QualityTier.Low }) {
+        GraphicsQuality.Apply(tier);
+        VisualProfile.Current = after;
+        Battle().Rebuild();
+        yield return null;
+        yield return null;
+        GraphicsQuality.Apply(tier);
+        yield return null;
+        var low = tier == QualityTier.Low;
+        foreach (var view in ViewPoints(map)) {
+          Aim(camera, view.Focus, view.Height);
+          var seen = Visible(camera, 1920, 1080);
+          var shot = Shoot(camera, CellWidth * 2, CellHeight * 2);
+          var prev = Crop19C(view.Name, low);
+          LookdevNote("19d.csv", $"19D,{tier},{view.Name},{seen.Renderers},{seen.Triangles},{seen.Casters},{EstimateDrawCalls(seen)},{DressingRenderer.Active?.InstanceCount ?? 0}");
+          Cells(byView, view.Name).Add((prev, $"19C before ({tier}) [{view.Name}]"));
+          Cells(byView, view.Name).Add((shot, $"19D after ({tier}) [{view.Name}] draw~{EstimateDrawCalls(seen)} tris {seen.Triangles / 1000}k"));
+        }
+        var engineer = Engineers(0).FirstOrDefault();
+        if (engineer != default) {
+          Controller().Input.Selection.SelectUnit(engineer);
+          Controller().Hud.Refresh(Controller().Frame);
+        }
+        yield return null;
+        Aim(camera, map.StartPositions[0].ToUnityVector3() + new Vector3(8, 0, 6), after.DefaultHeight);
+        Cells(byView, "E").Add((Crop19C("E", low), $"19C before ({tier}) [E] HUD"));
+        Cells(byView, "E").Add((ShootHud(camera, CellWidth * 2, CellHeight * 2), $"19D after ({tier}) [E] HUD"));
+      }
+
+      // High 품질 보병 분대 SkinnedMeshRenderer 실험 비용 측정.
+      GraphicsQuality.Apply(QualityTier.High);
+      Battle().Rebuild();
+      yield return null;
+      yield return null;
+      var viewC = ViewPoints(map).First(v => v.Name == "C");
+      Aim(camera, viewC.Focus, viewC.Height);
+      var baseHigh = Visible(camera, 1920, 1080);
+      var baseDraws = EstimateDrawCalls(baseHigh);
+      var tempSkinned = new List<GameObject>();
+      foreach (var pair in Battle().Actors) {
+        // Entry는 구조체라 ?.를 쓸 수 없다. 보병 id는 *_squad·cf_militia다(이전 "rifle" 등은 실제 id와 달라 0기였다, 항목 25 점검).
+        var id = pair.Value.View != null ? pair.Value.View.Entry.Id ?? "" : "";
+        if (pair.Value.IsBuilding == false && (id.Contains("squad") || id.Contains("militia"))) {
+          for (var s = 0; s < 4; s++) {
+            var sw = DressingSpawn.Place(DressKind.AnimatedWorker, pair.Value.View.transform, new Vector3((s - 1.5f) * 0.5f, 0f, 0f), 0f, 9900 + s);
+            if (sw != null) {
+              tempSkinned.Add(sw);
+            }
+          }
+        }
+      }
+      yield return null;
+      var expHigh = Visible(camera, 1920, 1080);
+      var expDraws = EstimateDrawCalls(expHigh) + tempSkinned.Count;
+      var expTris = expHigh.Triangles + tempSkinned.Count * 628;
+      LookdevNote("19d.csv", $"infantry_skinned_exp,High,C,base_draws={baseDraws},exp_draws={expDraws},base_tris={baseHigh.Triangles},exp_tris={expTris},skinned_soldiers={tempSkinned.Count}");
+      foreach (var go in tempSkinned) {
+        Object.Destroy(go);
+      }
+
+      foreach (var pair in byView) {
+        SaveSheet($"19d_compare_{pair.Key}", $"19D 시점 {pair.Key}: 왼쪽 19C / 오른쪽 19D(키트 추가 소품·작업자 애니메이션) — 위 보통, 아래 낮음", pair.Value, 2);
+        foreach (var (texture, _) in pair.Value) {
+          Object.Destroy(texture);
+        }
+      }
+    }
   }
 }
