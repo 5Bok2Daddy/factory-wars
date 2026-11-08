@@ -188,7 +188,10 @@ namespace FactoryWars.View {
       var index = 0;
       for (var t = min - Depth; t < max + Depth; t += step, index++) {
         foreach (var side in new[] { 0, 1, 2, 3 }) {
-          var h = 14f + 10f * MeshKit.Hash(31 + side, index);
+          // side 0은 남쪽(카메라 쪽)이다. 화면 아래를 가리지 않게 낮은 담과 창고 줄로 둔다.
+          var near = side == 0;
+          var far = side == 1;
+          var h = near ? 2.5f + 2f * MeshKit.Hash(31 + side, index) : far ? 12f + 8f * MeshKit.Hash(31 + side, index) : 5f + 6f * MeshKit.Hash(31 + side, index);
           var along = t + step / 2;
           var across = (side % 2 == 0 ? min - Depth / 2 : max + Depth / 2);
           var center = side < 2 ? new Vector3(along, h / 2, across) : new Vector3(across, h / 2, along);

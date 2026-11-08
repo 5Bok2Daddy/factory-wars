@@ -8,6 +8,15 @@
 
 ## 사용자가 직접 할 일
 
+**(2026-11-08, 항목 19B) Kenney 키트 zip 4개를 직접 받아 주세요.** kenney.nl 자산 페이지에 zip 링크가 없습니다. "Download → Continue without donating..." 버튼이 자바스크립트로 내려받기를 시작합니다. 지시대로 우회(스크립트로 버튼 흉내 내기, 다른 미러)하지 않았습니다.
+1. 브라우저에서 아래 네 페이지를 열고 Download → "Continue without donating..."을 눌러 zip을 받습니다.
+   - https://kenney.nl/assets/nature-kit
+   - https://kenney.nl/assets/city-kit-industrial
+   - https://kenney.nl/assets/city-kit-commercial
+   - https://kenney.nl/assets/tower-defense-kit
+2. 받은 zip을 이름 그대로(예: `kenney_nature-kit.zip`) `C:\Users\MinGyu\FactoryWars\temp-assets\`에 넣습니다. 폴더는 만들어 두었습니다.
+3. "이어서 진행해줘"라고 하면 `Game\Tools\kenney-install.ps1`이 zip을 풀어 `Game\Assets\ExternalAssets\Kenney\<kit>\`로 옮기고 다음 단계를 진행합니다.
+
 자세한 내용은 문서 끝 "채집·건설·전투 결과"의 "사용자가 할 일"에 있습니다. `Game\FactoryWars` 폴더 정리입니다.
 
 ## 단계별 상태
@@ -695,11 +704,11 @@ SDK를 확인한 결과는 다음과 같습니다.
 
 **2인 맵 (160 × 160)**
 
-![2인 맵](map2p.png)
+![2인 맵](Game/Docs/map2p.png)
 
 **4인 맵 (240 × 240)**
 
-![4인 맵](map4p.png)
+![4인 맵](Game/Docs/map4p.png)
 
 | 검증 | 2인 | 4인 |
 | --- | --- | --- |
@@ -2138,6 +2147,8 @@ AI 행동도 함께 넣었습니다.
 
 ## 현재 단계 (재개 기준)
 
+2026-11-08 추가 지시: `NEXT-TASK-19B-KENNEY.md`(Kenney CC0 모델 도입)를 진행한다. 다운로드가 막혀 사용자 입력을 기다리는 중이다. 그동안 에셋 없이 할 수 있는 준비를 한다: 설치 스크립트, 공용 셰이더, `KenneyAssetMap`, 접촉 시트 도구.
+
 지시 순서(2026-11-08 갱신): 21(`NEXT-TASK-21-CITY.md`) → 19A(`NEXT-TASK-19A-LOOKDEV.md`) → 19(`NEXT-TASK-19.md`) → 22(`NEXT-TASK-22-BALANCE.md`) → 23(`NEXT-TASK-23-DEVICE.md`). 23이 끝나면 push하고 멈춘다. 19A·19는 `concept-art/aow3-ref`의 그림체가 목표이고, visual-style 스킬과 VISUAL-REFERENCE.md도 새 그림체로 고친다.
 
 | 항목 | 상태 |
@@ -2145,7 +2156,24 @@ AI 행동도 함께 넣었습니다.
 | 17 맵 재설계 | 완료 |
 | 20 재미 요소 | 완료 |
 | 21 도시 전장 | 완료 |
-| 19A 룩 개발 | 진행 중. 준비는 끝남: `VisualProfile` 연결, 비교 도구 `Tests/LookdevTests.cs`, before 화면·수치 |
+| 19A 룩 개발 | 진행 중. 끝난 것: 축별 시트 10장(`screenshots/lookdev/01~10`), 후보 프로필 A·B·C 에셋, `final_compare.png`·`final_tiers.png`. 남은 것: 정점 음영·바위 절벽 경계 적용 후 다시 찍기, LOOKDEV.md, 전체 테스트 |
+| 19B Kenney 도입 | **사용자 대기**: zip 4개를 `temp-assets\`에 넣어 주세요(맨 위 "사용자가 직접 할 일"). 링크가 없어 자동 내려받기는 실패했습니다. |
 | 19 그래픽 적용 | 대기 |
 | 22 밸런스 | 대기 |
 | 23 실기기 | 대기 |
+
+
+## 항목 19B 결과 (진행 중)
+
+**한 줄 요약:** 자동 내려받기가 실패했다(키트 4개 모두 FBX 0개). kenney.nl 페이지에 zip 링크가 없고 자바스크립트 버튼으로만 받을 수 있다. 지시대로 우회하지 않고 사용자에게 직접 내려받기를 요청했다.
+
+| 키트 | FBX 개수 | 원인 |
+| --- | --- | --- |
+| nature-kit | 0 | 페이지 링크에 `.zip`이 없다. 내려받기는 `initiateDownload()` 자바스크립트(`data-download-id`)가 한다 |
+| city-kit-industrial | 0 | 같음 |
+| city-kit-commercial | 0 | 같음 |
+| tower-defense-kit | 0 | 같음 |
+
+- 설치 스크립트: `Game/Tools/kenney-install.ps1`. 지시의 스크립트에서 바꾼 점은 두 가지다.
+  - `temp-assets/`에 `*<kit>*.zip`이 있으면 내려받기를 건너뛰고 풀기만 한다.
+  - 받은 zip은 지우지 않고, 풀어 둔 폴더만 지운다.

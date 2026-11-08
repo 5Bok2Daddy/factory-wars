@@ -1,0 +1,5 @@
+camera,FOV60 피치50,default_height,48.5
+camera,FOV45 피치50,default_height,67.5
+camera,FOV35 피치50,default_height,88.7
+camera,FOV30 피치50,default_height,104.4
+camera,FOV30 피치55,default_height,112

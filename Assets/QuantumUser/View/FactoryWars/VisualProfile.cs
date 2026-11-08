@@ -95,9 +95,25 @@ namespace FactoryWars.View {
 
     static VisualProfile _current;
 
+    /// <summary>개발 빌드에서 고른 후보 이름("A"·"B"·"C"). 설정 화면에서 바꾼다.</summary>
+    public const string ChoiceKey = "fw_visual_profile";
+
+    /// <summary>후보 프로필로 바꾼다. "A"는 기본 프로필, "B"·"C"는 VisualProfile_B·_C 에셋이다. 다음에 만드는 화면부터 적용된다.</summary>
+    public static bool Use(string name) {
+      var profile = Resources.Load<VisualProfile>(name == "A" ? ResourcePath : ResourcePath + "_" + name);
+      if (profile == null) {
+        return false;
+      }
+      _current = profile;
+      return true;
+    }
+
     /// <summary>지금 쓰는 프로필. 비교 도구가 바꿔 끼운다.</summary>
     public static VisualProfile Current {
       get {
+        if (_current == null && Debug.isDebugBuild && Application.isEditor == false && PlayerPrefs.HasKey(ChoiceKey)) {
+          Use(PlayerPrefs.GetString(ChoiceKey));
+        }
         if (_current == null) {
           _current = Resources.Load<VisualProfile>(ResourcePath);
           if (_current == null) {

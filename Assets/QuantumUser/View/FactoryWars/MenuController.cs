@@ -46,6 +46,20 @@ namespace FactoryWars.View {
       Ui.Place((RectTransform)shake.transform, new Vector2(0.5f, 0.5f), new Vector2(0, -110), new Vector2(420, Ui.MinButtonSize));
       var language = Ui.Label("Language", panel, "언어: 한국어", 34, TextAnchor.MiddleCenter);
       Ui.Place(language.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, -200), new Vector2(600, 70));
+      if (Debug.isDebugBuild) {
+        // 개발 빌드 전용: 룩 후보 바꾸기. 다음 경기부터 적용된다.
+        Ui.Place(language.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-220, -200), new Vector2(400, 70));
+        string LookLabel() => "화면: " + VisualPresets.Title(PlayerPrefs.GetString(VisualProfile.ChoiceKey, "A"));
+        Button look = null;
+        look = Ui.Button("Look", panel, LookLabel(), () => {
+          var names = VisualPresets.Names;
+          var next = names[(System.Array.IndexOf(names, PlayerPrefs.GetString(VisualProfile.ChoiceKey, "A")) + 1) % names.Length];
+          PlayerPrefs.SetString(VisualProfile.ChoiceKey, next);
+          VisualProfile.Use(next);
+          Ui.SetLabel(look, LookLabel());
+        }, 28);
+        Ui.Place((RectTransform)look.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -200), new Vector2(400, Ui.MinButtonSize));
+      }
       var close = Ui.Button("Close", panel, "닫기", onClose, 32);
       Ui.Place((RectTransform)close.transform, new Vector2(0.5f, 0), new Vector2(0, 30), new Vector2(260, Ui.MinButtonSize));
       return panel;

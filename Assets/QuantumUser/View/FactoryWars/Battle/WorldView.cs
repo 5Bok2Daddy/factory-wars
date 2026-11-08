@@ -144,7 +144,8 @@ namespace FactoryWars.View {
       RenderSettings.fogColor = new Color(0.22f, 0.24f, 0.26f);
       if (camera != null) {
         camera.clearFlags = CameraClearFlags.SolidColor;
-        camera.backgroundColor = new Color(0.36f, 0.42f, 0.3f);
+        // 맵 밖은 어둡게 끊는다. 안개면 안개 색과 맞춘다.
+        camera.backgroundColor = profile.Outside == OutsideMode.Fog ? RenderSettings.fogColor : new Color(0.11f, 0.12f, 0.13f);
         camera.allowHDR = true;
         camera.farClipPlane = 700f;
       }

@@ -73,16 +73,20 @@ namespace FactoryWars.View {
       return null;
     }
 
+    Transform _stage;
+
     void Init(Frame frame) {
+      _stage = new GameObject("Stage").transform;
+      _stage.SetParent(transform, false);
       _catalog = Resources.Load<ViewCatalog>(ViewCatalog.ResourcePath);
       WorldView.HideBakedScene();
       WorldView.ApplyLighting(Camera.main);
       GraphicsQuality.Bind(Camera.main);
-      World = new WorldView(transform, frame.FindAsset<MapSpec>(frame.Map.UserAsset), _catalog);
+      World = new WorldView(_stage, frame.FindAsset<MapSpec>(frame.Map.UserAsset), _catalog);
       Fx = new GameObject("Fx").AddComponent<BattleFx>();
-      Fx.transform.SetParent(transform, false);
+      Fx.transform.SetParent(_stage, false);
       World.Fx = Fx;
-      Field = new BattlefieldView(transform);
+      Field = new BattlefieldView(_stage);
       QuantumEvent.Subscribe<EventCratePicked>(this, e => Fx.Burst(e.Position.ToUnityVector3(), new Color(1f, 0.85f, 0.3f), 1f));
       QuantumEvent.Subscribe<EventCaptureChanged>(this, e => {
         var frame = e.Game.Frames.Verified;
@@ -90,8 +94,21 @@ namespace FactoryWars.View {
           Fx.Pulse(frame.Get<Transform3D>(e.Site).Position.ToUnityVector3(), Palette.Of(frame, e.Next), frame.Get<CaptureSite>(e.Site).Radius.AsFloat);
         }
       });
-      City = new CityView(transform, frame.FindAsset<MapSpec>(frame.Map.UserAsset)) { Fx = Fx };
+      City = new CityView(_stage, frame.FindAsset<MapSpec>(frame.Map.UserAsset)) { Fx = Fx };
       _controller = FindAnyObjectByType<MatchController>();
+    }
+
+    /// <summary>룩 비교용: 화면을 모두 지우고 다음 LateUpdate에서 지금 프로필로 다시 만든다.</summary>
+    public void Rebuild() {
+      QuantumEvent.UnsubscribeListener(this);
+      // 화면이 만든 것은 모두 Stage 아래에 있다. 같은 물체 아래의 HUD는 그대로 둔다.
+      if (_stage != null) {
+        Destroy(_stage.gameObject);
+        _stage = null;
+      }
+      _actors.Clear();
+      _marked.Clear();
+      World = null;
     }
 
     void LateUpdate() {
@@ -145,7 +162,7 @@ namespace FactoryWars.View {
     }
 
     Actor Create(EntityRef entity, string id, bool isBuilding, bool isAir) {
-      var view = ArtView.Create(_catalog, id, transform, 0);
+      var view = ArtView.Create(_catalog, id, _stage, 0);
       if (view == null) {
         return null;
       }

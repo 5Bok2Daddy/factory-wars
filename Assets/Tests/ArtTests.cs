@@ -220,7 +220,7 @@ namespace FactoryWars.Tests {
             bounds.Encapsulate(renderer.bounds);
           }
           var offset = new Vector2(bounds.center.x - root.position.x, bounds.center.z - root.position.z);
-          var ring = view.Entry.RingRadius;
+          var ring = view.Entry.RingRadius * ArtView.ScaleOf(view.Entry);
           Assert.Less(offset.magnitude, ring * 0.25f, $"{id} {yaw}: 모델이 링 가운데");
           var far = Mathf.Max(bounds.max.x - root.position.x, root.position.x - bounds.min.x, bounds.max.z - root.position.z, root.position.z - bounds.min.z);
           Assert.LessOrEqual(far, ring * 1.45f, $"{id} {yaw}: 대각선을 빼면 링 안");

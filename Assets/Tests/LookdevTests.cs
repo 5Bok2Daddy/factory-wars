@@ -167,7 +167,7 @@ namespace FactoryWars.Tests {
       var surface = RenderTexture.GetTemporary(width, height, 24);
       var previous = camera.targetTexture;
       camera.targetTexture = surface;
-      var best = 0f;
+      var found = new List<float>();
       foreach (var actor in Battle().Actors.Values) {
         if (actor.View == null || actor.View.Entry.Id.Contains("tank") == false || actor.View.gameObject.activeInHierarchy == false) {
           continue;
@@ -178,17 +178,22 @@ namespace FactoryWars.Tests {
         }
         var min = float.MaxValue;
         var max = float.MinValue;
+        var inside = true;
         for (var i = 0; i < 8; i++) {
           var corner = bounds.center + Vector3.Scale(bounds.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
           var screen = camera.WorldToScreenPoint(corner);
+          inside &= screen.z > 0 && screen.x >= 0 && screen.x <= width && screen.y >= 0 && screen.y <= height;
           min = Mathf.Min(min, screen.x);
           max = Mathf.Max(max, screen.x);
         }
-        best = Mathf.Max(best, max - min);
+        if (inside) {
+          found.Add(max - min);
+        }
       }
       camera.targetTexture = previous;
       RenderTexture.ReleaseTemporary(surface);
-      return best;
+      found.Sort();
+      return found.Count == 0 ? 0f : found[found.Count / 2];
     }
 
     /// <summary>화면 가운데 줄에서 보이는 땅의 가로 폭.</summary>

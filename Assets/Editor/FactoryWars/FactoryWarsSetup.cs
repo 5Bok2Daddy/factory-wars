@@ -36,6 +36,7 @@ namespace FactoryWars.EditorTools {
       ConfigureRenderPipeline();
       ConfigureQuantum();
       BuildData();
+      BuildVisualProfiles();
       BuildMaterials();
       BuildTestScene();
       BuildMapScene(TwoPlayerMap);
