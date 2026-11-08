@@ -39,6 +39,8 @@ namespace FactoryWars.EditorTools {
       public ExpansionSite[] CenterExpansions;
       /// <summary>공유 확장 i번에 닿는 자리들. 자리 s의 복사본은 이 자리를 s만큼 돌린 것이다.</summary>
       public int[] SharedSeatOffsets;
+      /// <summary>항목 24: 땅 바깥을 두르는 외곽 수로 너비. 0이면 수로가 없다.</summary>
+      public float ChannelWidth;
     }
 
     const float RoadHalfWidth = 3.5f;
@@ -255,6 +257,7 @@ namespace FactoryWars.EditorTools {
         SharedExpansions = new[] { Expansion(ExpansionKind.Shared, -134, 0) },
         CenterExpansions = new[] { Expansion(ExpansionKind.Center, 0, 0) },
         SharedSeatOffsets = new[] { 0, 3 },
+        ChannelWidth = 18f,
       };
     }
   }

@@ -17,6 +17,11 @@ MonoBehaviour:
     Guid:
       Value: 463454056923249890
   NavMeshName: NavMesh
+  WaterNavMeshName: WaterNavMesh
+  NavalAgent:
+    Id:
+      Value: 413177071183527190
+  WaterGateRegion: WaterGate
   BuildingGap:
     RawValue: 131072
   EmptyBaseResourceRatio:

@@ -102,6 +102,12 @@ namespace Quantum {
     public FP GroundGridCell;
 
     public CityBuildingPlacement[] CityBuildings;
+
+    /// <summary>항목 24 외곽 수로: 땅(Bounds) 바깥을 두르는 물길 띠. 배만 다닌다. 너비는 ChannelWidth다.</summary>
+    public MapShape[] Channel;
+    public FP ChannelWidth;
+    /// <summary>본진 운하와 외곽 수로가 만나는 수문. 자리 s의 수문은 수상 NavMesh 영역 "{WaterGateRegion}{s}"이다. 자리마다 2개, 자리 순서대로다.</summary>
+    public MapShape[] WaterGates;
     /// <summary>GroundGrid와 같은 칸의 도시 건물 번호 + 1. 0이면 건물이 없다. 붕괴한 칸은 잔해라 느리다.</summary>
     public short[] CityGrid;
 

@@ -28,6 +28,10 @@ namespace FactoryWars.EditorTools {
     /// <summary>다리에 칠하는 Unity NavMesh 영역 번호. 0~2는 기본 영역이다.</summary>
     const int BarrierArea = 3;
     const int BarricadeArea = 4;
+    /// <summary>수상 NavMesh에서 수문 영역 번호(항목 24). 물 판은 Unity 레이어 4(Water)에 두어 지상 NavMesh가 모으지 않게 한다.</summary>
+    const int WaterGateArea = 5;
+    const int WaterLayer = 4;
+    const string WaterGateRegion = "WaterGate";
     const int WorldMargin = 32;
 
     [MenuItem("Tools/Factory Wars/Run All Setup")]
@@ -198,6 +202,24 @@ namespace FactoryWars.EditorTools {
       }
       ColorMaterial("Node", new Color32(0xE0, 0xB0, 0x30, 0xFF));
       AssetDatabase.SaveAssets();
+    }
+
+    /// <summary>배 에이전트 설정: 기본 에이전트 값을 그대로 복사하고, 물 밖 목표를 40m 안의 물 위로 보정한다(항목 24).</summary>
+    static NavMeshAgentConfig NavalAgent() {
+      var agent = Asset<NavMeshAgentConfig>("naval_agent");
+      var source = AssetDatabase.LoadAllAssetsAtPath("Assets/QuantumUser/Resources/QuantumDefaultConfigs.asset").OfType<NavMeshAgentConfig>().FirstOrDefault();
+      if (source != null) {
+        foreach (var field in typeof(NavMeshAgentConfig).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)) {
+          if (field.Name != nameof(AssetObject.Identifier)) {
+            field.SetValue(agent, field.GetValue(source));
+          }
+        }
+      }
+      agent.AutomaticTargetCorrection = true;
+      agent.AutomaticTargetCorrectionRadius = N(40);
+      agent.AvoidanceRadius = N(1.4);
+      EditorUtility.SetDirty(agent);
+      return agent;
     }
 
     static T Asset<T>(string name) where T : AssetObject {
@@ -497,6 +519,9 @@ namespace FactoryWars.EditorTools {
 
       var rules = Asset<GameRulesSpec>("game_rules");
       rules.NavMeshName = "NavMesh";
+      rules.WaterNavMeshName = "WaterNavMesh";
+      rules.WaterGateRegion = WaterGateRegion;
+      rules.NavalAgent = Ref(NavalAgent());
       rules.PlayerColorCount = FactoryWars.View.Palette.Count;
       rules.TruceSeconds = 420;
       rules.BarrierRegion = BarrierRegion;
@@ -672,8 +697,39 @@ namespace FactoryWars.EditorTools {
       spec.NoBuildZones = def.NoBuildZones.SelectMany(zone => Orbit(def, zone)).ToArray();
       spec.Bridges = def.Bridges.SelectMany(bridge => Orbit(def, bridge)).ToArray();
       spec.BaseAreas = Orbit(def, def.BaseArea).ToArray();
+      FillChannel(def, spec, pieces);
       FillBattlefield(def, spec);
       EditorUtility.SetDirty(spec);
+    }
+
+    /// <summary>
+    /// 항목 24 외곽 수로: 땅 경계(±HalfSize) 바깥에 너비 ChannelWidth의 띠 네 개. 땅 넓이와 지상 판정은 바뀌지 않는다.
+    /// 수문은 본진 운하가 땅 경계를 넘는 두 곳(남쪽 변·서쪽 변)에 두고 자리마다 돌려 복제한다.
+    /// </summary>
+    static void FillChannel(MapDef def, MapSpec spec, List<RiverBuilder.Piece> pieces) {
+      if (def.ChannelWidth <= 0f) {
+        spec.Channel = new MapShape[0];
+        spec.WaterGates = new MapShape[0];
+        spec.ChannelWidth = 0;
+        return;
+      }
+      var h = def.HalfSize;
+      var w = def.ChannelWidth;
+      var outer = h + w;
+      spec.ChannelWidth = N(w);
+      spec.Channel = new[] {
+        Rect(0, -(h + w / 2), outer, w / 2), Rect(0, h + w / 2, outer, w / 2),
+        Rect(-(h + w / 2), 0, w / 2, outer), Rect(h + w / 2, 0, w / 2, outer),
+      };
+      // 자리 0(남서) 운하가 남쪽 변(z = -h)과 서쪽 변(x = -h)을 넘는 곳.
+      var south = pieces.Where(p => p.Center.x > -h + 4f).OrderBy(p => Mathf.Abs(p.Center.y + h)).First();
+      var west = pieces.Where(p => p.Center.y > -h + 4f).OrderBy(p => Mathf.Abs(p.Center.x + h)).First();
+      var gates = new[] {
+        Rect(south.Center.x, -h - 2.5, south.HalfWidth + 3.5, 3),
+        Rect(-h - 2.5, west.Center.y, 3, west.HalfWidth + 3.5),
+      };
+      var step = 4 / def.Players;
+      spec.WaterGates = Enumerable.Range(0, def.Players).SelectMany(seat => gates.Select(g => Turn(g, seat * step))).ToArray();
     }
 
     /// <summary>점령지·바리케이드·상자·고지대·도로·여울·확장 후보. 규칙은 항목 20의 시스템이 읽는다.</summary>
@@ -771,6 +827,7 @@ namespace FactoryWars.EditorTools {
 
       var spec = AssetDatabase.LoadAssetAtPath<MapSpec>($"{DataRoot}/map_{def.Id}.asset");
       BuildTerrain(spec);
+      BuildWater(map, spec);
 
       var camera = Camera.main;
       camera.transform.position = def.CameraPosition;
@@ -779,7 +836,7 @@ namespace FactoryWars.EditorTools {
       ConfigureRunner(def.Players);
 
       // NavMesh 격자와 맵 크기가 경계를 덮어야 한다. 기본값 256은 4인 맵보다 작다.
-      var size = def.HalfSize * 2 + WorldMargin;
+      var size = Mathf.CeilToInt(def.HalfSize + def.ChannelWidth) * 2 + WorldMargin;
       var asset = map.GetAsset(true);
       asset.WorldSize = size;
       asset.GridSizeX = size / asset.GridNodeSize;
@@ -918,6 +975,71 @@ namespace FactoryWars.EditorTools {
       return ground;
     }
 
+    /// <summary>
+    /// 항목 24: 물 판(운하 조각, 외곽 수로 띠)과 수문 영역을 레이어 4에 만들고, 그 레이어만 모으는 수상 NavMesh("WaterNavMesh")를 둔다.
+    /// 수로가 없는 맵은 수상 NavMesh를 지운다.
+    /// </summary>
+    static void BuildWater(QuantumMapData map, MapSpec spec) {
+      var old = GameObject.Find("Water");
+      if (old != null) {
+        Object.DestroyImmediate(old);
+      }
+      var surfaceObject = GameObject.Find("WaterNavMesh");
+      var channel = spec.Channel ?? new MapShape[0];
+      if (channel.Length == 0) {
+        if (surfaceObject != null) {
+          Object.DestroyImmediate(surfaceObject);
+        }
+        return;
+      }
+      var root = new GameObject("Water").transform;
+      root.gameObject.layer = WaterLayer;
+      var reach = spec.BoundsMax.X.AsFloat + spec.ChannelWidth.AsFloat + 4f;
+      void Plate(string name, MapShape shape) {
+        var plate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        plate.name = name;
+        plate.layer = WaterLayer;
+        Object.DestroyImmediate(plate.GetComponent<Collider>());
+        plate.transform.SetParent(root, false);
+        plate.transform.position = new Vector3(shape.Center.X.AsFloat, -0.1f, shape.Center.Z.AsFloat);
+        plate.transform.rotation = Quaternion.Euler(0, shape.Yaw.AsFloat, 0);
+        plate.transform.localScale = new Vector3(shape.HalfLength.AsFloat * 2, 0.2f, shape.HalfWidth.AsFloat * 2);
+      }
+      foreach (var piece in spec.River ?? new MapShape[0]) {
+        if (Mathf.Abs(piece.Center.X.AsFloat) < reach && Mathf.Abs(piece.Center.Z.AsFloat) < reach) {
+          Plate("Canal", piece);
+        }
+      }
+      foreach (var strip in channel) {
+        Plate("Channel", strip);
+      }
+      var gates = spec.WaterGates ?? new MapShape[0];
+      var perSeat = Mathf.Max(1, gates.Length / Mathf.Max(1, spec.BaseAreas?.Length ?? 1));
+      for (var i = 0; i < gates.Length; i++) {
+        AddRegion(root, "WaterGate", gates[i], WaterGateArea, $"{WaterGateRegion}{i / perSeat}");
+      }
+      foreach (Transform child in root) {
+        child.gameObject.layer = WaterLayer;
+      }
+      if (surfaceObject == null) {
+        surfaceObject = new GameObject("WaterNavMesh");
+        surfaceObject.transform.SetParent(map.transform, false);
+        surfaceObject.AddComponent<NavMeshSurface>();
+        surfaceObject.AddComponent<QuantumMapNavMeshUnity>().NavMeshSurfaces = new[] { surfaceObject };
+      }
+      var surface = surfaceObject.GetComponent<NavMeshSurface>();
+      surface.layerMask = 1 << WaterLayer;
+      surface.collectObjects = CollectObjects.All;
+      var quantumNavMesh = surfaceObject.GetComponent<QuantumMapNavMeshUnity>();
+      // 새로 붙인 컴포넌트는 가져오기 설정이 비어 있다. 지상 NavMesh 설정을 복사해 쓴다.
+      var ground = GameObject.Find("NavMesh")?.GetComponent<QuantumMapNavMeshUnity>();
+      var settings = quantumNavMesh.Settings ?? (ground != null && ground.Settings != null
+        ? JsonUtility.FromJson<QuantumNavMesh.ImportSettings>(JsonUtility.ToJson(ground.Settings)) : new QuantumNavMesh.ImportSettings());
+      settings.ImportRegionMode = NavmeshRegionImportMode.Advanced;
+      settings.RegionAreaIds = new List<int> { WaterGateArea };
+      quantumNavMesh.Settings = settings;
+    }
+
     static void EnsureNavMesh(QuantumMapData map) {
       var navObject = GameObject.Find("NavMesh");
       if (navObject == null) {
@@ -926,6 +1048,8 @@ namespace FactoryWars.EditorTools {
         navObject.AddComponent<NavMeshSurface>();
         navObject.AddComponent<QuantumMapNavMeshUnity>().NavMeshSurfaces = new[] { navObject };
       }
+      // 항목 24: 지상 NavMesh는 물 판(레이어 4)을 모으지 않는다.
+      navObject.GetComponent<NavMeshSurface>().layerMask = ~(1 << WaterLayer);
       // QuantumNavMeshRegion을 쓰려면 Advanced 모드여야 한다. Simple은 Unity 영역 이름으로 만든다.
       var quantumNavMesh = navObject.GetComponent<QuantumMapNavMeshUnity>();
       var settings = quantumNavMesh.Settings;

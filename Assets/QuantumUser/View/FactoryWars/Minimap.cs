@@ -32,8 +32,10 @@ namespace FactoryWars.View {
     Vector2 _max;
 
     public void Init(MapSpec map) {
-      _min = new Vector2(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat);
-      _max = new Vector2(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
+      // 외곽 수로(항목 24)까지 그린다.
+      var channel = TerrainKit.Channel(map);
+      _min = new Vector2(map.BoundsMin.X.AsFloat - channel, map.BoundsMin.Y.AsFloat - channel);
+      _max = new Vector2(map.BoundsMax.X.AsFloat + channel, map.BoundsMax.Y.AsFloat + channel);
       _texture = new Texture2D(Size, Size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
       _base = new Color32[Size * Size];
       for (var i = 0; i < _base.Length; i++) {
@@ -41,6 +43,12 @@ namespace FactoryWars.View {
       }
       foreach (var feature in map.Terrain ?? Array.Empty<TerrainFeature>()) {
         Paint(feature.Shape, feature.Kind == TerrainKind.Rock ? RockColor : feature.Kind == TerrainKind.Hill || feature.Kind == TerrainKind.Cliff ? HillColor : feature.Kind == TerrainKind.River ? RiverColor : WallColor);
+      }
+      foreach (var strip in map.Channel ?? new MapShape[0]) {
+        Paint(strip, RiverColor);
+      }
+      foreach (var piece in map.River ?? new MapShape[0]) {
+        Paint(piece, RiverColor);
       }
       foreach (var city in map.CityBuildings ?? Array.Empty<CityBuildingPlacement>()) {
         Paint(city.Shape, CityColor);

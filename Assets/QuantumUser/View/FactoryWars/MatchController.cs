@@ -53,8 +53,10 @@ namespace FactoryWars.View {
         Camera = main.gameObject.AddComponent<RtsCamera>();
       }
       GraphicsQuality.Bind(main);
-      Camera.BoundsMin = new Vector2(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat);
-      Camera.BoundsMax = new Vector2(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
+      // 외곽 수로(항목 24)까지 카메라가 갈 수 있다.
+      var channel = TerrainKit.Channel(map);
+      Camera.BoundsMin = new Vector2(map.BoundsMin.X.AsFloat - channel, map.BoundsMin.Y.AsFloat - channel);
+      Camera.BoundsMax = new Vector2(map.BoundsMax.X.AsFloat + channel, map.BoundsMax.Y.AsFloat + channel);
       var start = Quantum.FactoryWars.FactoryWarsUtil.StartPosition(frame, Player);
       Camera.MoveTo(new Vector2(start.X.AsFloat, start.Z.AsFloat));
 

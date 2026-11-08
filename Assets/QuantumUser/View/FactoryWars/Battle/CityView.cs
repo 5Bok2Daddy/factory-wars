@@ -316,10 +316,12 @@ namespace FactoryWars.View {
     /// 카메라 쪽(남쪽)은 낮게, 먼 쪽은 높게 둔다. 절벽 위에는 침엽수를 듬성듬성 심는다.
     /// </summary>
     void BuildRockBoundary() {
-      var minX = _map.BoundsMin.X.AsFloat;
-      var maxX = _map.BoundsMax.X.AsFloat;
-      var minZ = _map.BoundsMin.Y.AsFloat;
-      var maxZ = _map.BoundsMax.Y.AsFloat;
+      // 외곽 수로가 있으면 절벽은 수로 바깥에 선다(항목 24).
+      var channel = TerrainKit.Channel(_map) > 0f ? TerrainKit.Channel(_map) + 4f : 0f;
+      var minX = _map.BoundsMin.X.AsFloat - channel;
+      var maxX = _map.BoundsMax.X.AsFloat + channel;
+      var minZ = _map.BoundsMin.Y.AsFloat - channel;
+      var maxZ = _map.BoundsMax.Y.AsFloat + channel;
       const float Depth = 14f;
       const float Segment = 22f;
       var rock = new MeshKit { Shading = MeshKit.ShadeMode.Ground };

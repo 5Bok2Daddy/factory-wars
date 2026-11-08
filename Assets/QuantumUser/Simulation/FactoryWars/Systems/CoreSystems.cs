@@ -17,6 +17,15 @@ namespace Quantum.FactoryWars {
 
     public static bool InTruce(Frame f) => f.Global->BarrierOpen == false;
 
+    /// <summary>유닛이 다니는 NavMesh 이름. 배는 수상 NavMesh, 나머지는 지상 NavMesh다(항목 24).</summary>
+    public static string NavMeshNameOf(Frame f, EntityRef entity) {
+      var rules = Rules(f);
+      if (f.Unsafe.TryGetPointer<Unit>(entity, out var unit) && f.FindAsset(unit->Spec).IsNaval && string.IsNullOrEmpty(rules.WaterNavMeshName) == false) {
+        return rules.WaterNavMeshName;
+      }
+      return rules.NavMeshName;
+    }
+
     /// <summary>
     /// 인원수와 방 시드에 따라 플레이어 번호(0..PlayerCount-1)를 본진 자리 번호(0..seatCount-1)로 바꾼다.
     /// 4인 맵에서 2명이면 대각선(0·2 또는 1·3), 3명이면 시드로 고른 3자리다.
@@ -254,10 +263,15 @@ namespace Quantum.FactoryWars {
         f.NavMeshRegionMask->ToggleRegion(region, open);
       }
       var areas = FactoryWarsUtil.MapInfo(f).BaseAreas;
+      var gates = FactoryWarsUtil.Rules(f).WaterGateRegion;
       for (var seat = 0; areas != null && seat < areas.Length; seat++) {
+        var seatOpen = open || FactoryWarsUtil.PlayerAtSeat(f, seat) < 0;
         if (f.Map.RegionMap.TryGetValue($"{prefix}{seat}", out var seatRegion)) {
-          var seatOpen = open || FactoryWarsUtil.PlayerAtSeat(f, seat) < 0;
           f.NavMeshRegionMask->ToggleRegion(seatRegion, seatOpen);
+        }
+        // 수문(항목 24): 본진 운하와 외곽 수로 사이. 울타리와 같이 열고 닫는다.
+        if (string.IsNullOrEmpty(gates) == false && f.Map.RegionMap.TryGetValue($"{gates}{seat}", out var gateRegion)) {
+          f.NavMeshRegionMask->ToggleRegion(gateRegion, seatOpen);
         }
       }
     }

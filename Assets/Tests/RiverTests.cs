@@ -45,7 +45,7 @@ namespace FactoryWars.Tests {
     [Test]
     public void River_CurvatureGrowsSmoothly() {
       foreach (var id in RiverMaps) {
-        foreach (var path in TerrainKit.RiverPaths(MapAsset(id))) {
+        foreach (var path in TerrainKit.RiverPaths(MapAsset(id), includeChannel: false)) {
           for (var i = 1; i + 1 < path.Count; i++) {
             var a = (path[i].Position - path[i - 1].Position).normalized;
             var b = (path[i + 1].Position - path[i].Position).normalized;
@@ -58,7 +58,7 @@ namespace FactoryWars.Tests {
     [Test]
     public void River_ActuallyMeanders() {
       foreach (var id in RiverMaps) {
-        foreach (var path in TerrainKit.RiverPaths(MapAsset(id))) {
+        foreach (var path in TerrainKit.RiverPaths(MapAsset(id), includeChannel: false)) {
           var turns = 0;
           var last = 0f;
           for (var i = 1; i + 1 < path.Count; i++) {
@@ -90,7 +90,7 @@ namespace FactoryWars.Tests {
     public void River_BanksStayOutsideEveryBase() {
       foreach (var id in RiverMaps) {
         var map = MapAsset(id);
-        foreach (var path in TerrainKit.RiverPaths(map)) {
+        foreach (var path in TerrainKit.RiverPaths(map, includeChannel: false)) {
           foreach (var point in path) {
             foreach (var side in new[] { -1f, 1f }) {
               var bank = Fp(point.Position + point.Normal * (side * point.Half));

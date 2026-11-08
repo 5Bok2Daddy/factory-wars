@@ -4,6 +4,8 @@ namespace Quantum {
   public partial class UnitSpec : AssetObject {
     public UnitSize Size;
     public bool IsAir;
+    /// <summary>배(항목 24). 수상 NavMesh로만 다니고 점령은 못 한다. 대상으로는 지상과 같다(공중이 아니므로 지상 무기에 맞는다).</summary>
+    public bool IsNaval;
     public ResourceCost Cost;
     public FP BuildTimeSeconds;
     public FP MaxHealth;

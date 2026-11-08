@@ -55,7 +55,9 @@ namespace Quantum.FactoryWars {
       f.Add(entity, unit);
 
       if (spec.IsAir == false) {
-        var config = f.FindAsset(f.SimulationConfig.Navigation.DefaultNavMeshAgent);
+        // 배는 수상 전용 에이전트 설정을 쓴다(물 밖 목표를 가까운 물 위로 보정, 항목 24).
+        var naval = spec.IsNaval ? FactoryWarsUtil.Rules(f).NavalAgent : default;
+        var config = f.FindAsset(naval.IsValid ? naval : f.SimulationConfig.Navigation.DefaultNavMeshAgent);
         f.Set(entity, NavMeshPathfinder.Create(f, entity, config));
         f.Add(entity, new NavMeshSteeringAgent());
         f.Add(entity, new NavMeshAvoidanceAgent());
@@ -837,7 +839,7 @@ namespace Quantum.FactoryWars {
 
     public static void SetDestination(Frame f, EntityRef entity, FPVector3 target) {
       if (f.Unsafe.TryGetPointer<NavMeshPathfinder>(entity, out var pathfinder)) {
-        var navMesh = f.Map.GetNavMesh(FactoryWarsUtil.Rules(f).NavMeshName);
+        var navMesh = f.Map.GetNavMesh(FactoryWarsUtil.NavMeshNameOf(f, entity));
         if (navMesh != null) {
           pathfinder->SetTarget(f, target, navMesh);
         }

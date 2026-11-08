@@ -146,7 +146,7 @@ namespace FactoryWars.View {
 
     /// <summary>임시 도형을 끈다. NavMesh를 굽는 데 쓴 물체라 지우지 않는다.</summary>
     public static void HideBakedScene() {
-      foreach (var name in new[] { "Terrain", "Ground" }) {
+      foreach (var name in new[] { "Terrain", "Ground", "Water" }) {
         var item = GameObject.Find(name);
         if (item == null) {
           continue;

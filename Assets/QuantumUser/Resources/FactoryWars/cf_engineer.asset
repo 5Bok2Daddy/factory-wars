@@ -18,6 +18,7 @@ MonoBehaviour:
       Value: 432119338306344411
   Size: 0
   IsAir: 0
+  IsNaval: 0
   Cost:
     Iron:
       RawValue: 5242880

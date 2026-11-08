@@ -23,6 +23,11 @@ namespace Quantum {
 
   public partial class GameRulesSpec : AssetObject {
     public string NavMeshName;
+    /// <summary>배가 쓰는 수상 NavMesh 이름과 에이전트 설정(물 밖을 누르면 가까운 물 위로 보정하는 반경이 넓다). 항목 24.</summary>
+    public string WaterNavMeshName;
+    public AssetRef<NavMeshAgentConfig> NavalAgent;
+    /// <summary>수문 영역 이름 앞부분. 자리 번호를 붙인다. 휴전 중 닫히고 울타리와 함께 열린다.</summary>
+    public string WaterGateRegion;
     /// <summary>건물끼리 떨어져야 하는 최소 간격(m). 바닥판 사이 길이 보이고 유닛이 지나갈 틈이 생긴다(항목 19 5-b).</summary>
     public FP BuildingGap;
     /// <summary>빈 본진 자리(2·3인 경기)의 자원 노드 매장량 비율. 중립 대형 확장지가 된다(항목 17B).</summary>

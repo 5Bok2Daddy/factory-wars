@@ -43,19 +43,40 @@ namespace FactoryWars.View {
     }
 
     /// <summary>MapSpec.River의 조각을 이어 강줄기마다 점 목록으로 푼다. 조각이 끊기면 다른 강줄기다.</summary>
-    public static List<List<RiverPoint>> RiverPaths(MapSpec map) {
+    /// <summary>외곽 수로 너비(항목 24). 없으면 0이다.</summary>
+    public static float Channel(MapSpec map) => map.Channel != null && map.Channel.Length > 0 ? map.ChannelWidth.AsFloat : 0f;
+
+    /// <param name="includeChannel">외곽 수로 네 변(곧은 강)을 넣을지. 운하만 검사하는 테스트는 false를 준다.</param>
+    public static List<List<RiverPoint>> RiverPaths(MapSpec map, bool includeChannel = true) {
       var paths = new List<List<RiverPoint>>();
       var pieces = map.River ?? Array.Empty<MapShape>();
       List<RiverPoint> path = null;
       var last = Vector2.zero;
+      // 외곽 수로가 있으면 운하는 수로 바깥 끝에서 끊고(그 너머로 뻗지 않게), 수로 네 변을 곧은 강으로 더한다.
+      var channel = Channel(map);
+      var reach = map.BoundsMax.X.AsFloat + channel + 2f;
       foreach (var piece in pieces) {
         var center = new Vector2(piece.Center.X.AsFloat, piece.Center.Z.AsFloat);
+        if (channel > 0f && (Mathf.Abs(center.x) > reach || Mathf.Abs(center.y) > reach)) {
+          continue;
+        }
         if (path == null || (center - last).magnitude > 12f) {
           path = new List<RiverPoint>();
           paths.Add(path);
         }
         path.Add(new RiverPoint { Position = center, Half = piece.HalfWidth.AsFloat });
         last = center;
+      }
+      foreach (var strip in channel > 0f && includeChannel ? map.Channel : Array.Empty<MapShape>()) {
+        var center = new Vector2(strip.Center.X.AsFloat, strip.Center.Z.AsFloat);
+        var alongX = strip.HalfLength.AsFloat >= strip.HalfWidth.AsFloat;
+        var length = Mathf.Max(strip.HalfLength.AsFloat, strip.HalfWidth.AsFloat);
+        var half = Mathf.Min(strip.HalfLength.AsFloat, strip.HalfWidth.AsFloat);
+        var line = new List<RiverPoint>();
+        for (var t = -length; t <= length + 0.01f; t += 4f) {
+          line.Add(new RiverPoint { Position = center + (alongX ? new Vector2(t, 0f) : new Vector2(0f, t)), Half = half });
+        }
+        paths.Add(line);
       }
       foreach (var points in paths) {
         for (var i = 0; i < points.Count; i++) {
@@ -239,8 +260,10 @@ namespace FactoryWars.View {
     /// <summary>강 자리를 파낸 바닥.</summary>
     public static void Ground(MeshKit k, MapSpec map, int seed) {
       var paths = RiverPaths(map);
-      var min = new Vector2(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat);
-      var max = new Vector2(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
+      // 외곽 수로가 있으면 바닥을 수로 바깥 둑까지 넓혀 수로를 같은 방식으로 파낸다(항목 24).
+      var extra = Channel(map) > 0f ? Channel(map) + 6f : 0f;
+      var min = new Vector2(map.BoundsMin.X.AsFloat - extra, map.BoundsMin.Y.AsFloat - extra);
+      var max = new Vector2(map.BoundsMax.X.AsFloat + extra, map.BoundsMax.Y.AsFloat + extra);
       var xs = Lines(min.x, max.x);
       var zs = Lines(min.y, max.y);
       for (var i = 0; i + 1 < xs.Count; i++) {
@@ -259,8 +282,9 @@ namespace FactoryWars.View {
     public const float WallDepth = 14f;
 
     public static Rect Land(MapSpec map) {
-      var min = new Vector2(map.BoundsMin.X.AsFloat - WallDepth, map.BoundsMin.Y.AsFloat - WallDepth);
-      var max = new Vector2(map.BoundsMax.X.AsFloat + WallDepth, map.BoundsMax.Y.AsFloat + WallDepth);
+      var depth = WallDepth + Channel(map);
+      var min = new Vector2(map.BoundsMin.X.AsFloat - depth, map.BoundsMin.Y.AsFloat - depth);
+      var max = new Vector2(map.BoundsMax.X.AsFloat + depth, map.BoundsMax.Y.AsFloat + depth);
       return new Rect(min, max - min);
     }
 
