@@ -33,6 +33,36 @@ namespace Quantum {
       return new FPVector2(FPMath.Max(x, FP._0), FPMath.Max(z, FP._0)).Magnitude;
     }
 
+    /// <summary>from 쪽 가장자리에서 margin만큼 바깥의 점. 막힌 모양 앞까지 걸어갈 목적지로 쓴다.</summary>
+    public FPVector3 Approach(FPVector3 from, FP margin) {
+      var offset = new FPVector2(from.X - Center.X, from.Z - Center.Z);
+      if (IsCircle) {
+        var direction = offset.SqrMagnitude > FP._0 ? offset.Normalized : new FPVector2(FP._1, FP._0);
+        return Center + new FPVector3(direction.X, FP._0, direction.Y) * (Radius + margin);
+      }
+      Axes(out var along, out var across);
+      var u = FPVector2.Dot(offset, along);
+      var v = FPVector2.Dot(offset, across);
+      if (FPMath.Abs(u) * HalfWidth >= FPMath.Abs(v) * HalfLength) {
+        u = (u >= FP._0 ? FP._1 : -FP._1) * (HalfLength + margin);
+        v = FPMath.Clamp(v, -HalfWidth, HalfWidth);
+      } else {
+        v = (v >= FP._0 ? FP._1 : -FP._1) * (HalfWidth + margin);
+        u = FPMath.Clamp(u, -HalfLength, HalfLength);
+      }
+      return Center + new FPVector3(along.X * u + across.X * v, FP._0, along.Y * u + across.Y * v);
+    }
+
+    /// <summary>사각형 안의 점을 짧은 축(across) 방향으로 가까운 쪽 밖으로 민다.</summary>
+    public FPVector3 PushOut(FPVector3 point, FP margin) {
+      Axes(out var along, out var across);
+      var offset = new FPVector2(point.X - Center.X, point.Z - Center.Z);
+      var u = FPVector2.Dot(offset, along);
+      var v = FPVector2.Dot(offset, across);
+      v = (v >= FP._0 ? FP._1 : -FP._1) * (HalfWidth + margin);
+      return Center + new FPVector3(along.X * u + across.X * v, point.Y, along.Y * u + across.Y * v);
+    }
+
     /// <summary>중심에서 가장 먼 점까지의 거리 이내로 어림잡는다. 정밀 검사를 건너뛰는 데 쓴다.</summary>
     public FP Reach => IsCircle ? Radius : HalfLength + HalfWidth;
 

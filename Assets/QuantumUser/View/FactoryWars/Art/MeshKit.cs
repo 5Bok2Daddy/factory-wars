@@ -10,6 +10,7 @@ namespace FactoryWars.View {
     GlowCyan, GlowOrange, GlowCrystal, Hazard, Team,
     Dirt, DirtDark, GrassDark, CliffDark, CliffMid, CliffLight, CanyonDark, CanyonMid, CanyonLight,
     Boulder, BoulderDark, BoulderLight, WaterDeep, StripeYellow, GlowRed, LampDark,
+    Concrete, ConcreteDark, Window,
   }
 
   public static class ArtPalette {
@@ -52,6 +53,7 @@ namespace FactoryWars.View {
       new Cell(0x33261F, 0f, 0.1f), new Cell(0x4A372C, 0f, 0.1f), new Cell(0x63493A, 0f, 0.1f),
       new Cell(0x7A7670, 0f, 0.14f), new Cell(0x5C5954, 0f, 0.12f), new Cell(0x98948C, 0f, 0.16f),
       new Cell(0x16303E, 0.1f, 0.86f), new Cell(0xF2C40F, 0f, 0.24f), new Cell(0xE02018, 0f, 0.5f), new Cell(0x4A1210, 0.2f, 0.5f),
+      new Cell(0xA8A39A, 0f, 0.12f), new Cell(0x5E5B57, 0f, 0.1f), new Cell(0x2E3E4C, 0.3f, 0.7f),
     };
 
     public static int CellCount => Cells.Length;

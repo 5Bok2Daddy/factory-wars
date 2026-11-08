@@ -59,6 +59,7 @@ namespace FactoryWars.View {
 
     public WorldView World { get; private set; }
     public BattlefieldView Field { get; private set; }
+    public CityView City { get; private set; }
     public BattleFx Fx { get; private set; }
     public IReadOnlyDictionary<EntityRef, Actor> Actors => _actors;
 
@@ -81,6 +82,7 @@ namespace FactoryWars.View {
       Fx.transform.SetParent(transform, false);
       World.Fx = Fx;
       Field = new BattlefieldView(transform);
+      City = new CityView(transform, frame.FindAsset<MapSpec>(frame.Map.UserAsset)) { Fx = Fx };
       _controller = FindAnyObjectByType<MatchController>();
     }
 
@@ -95,6 +97,7 @@ namespace FactoryWars.View {
       var dt = Time.deltaTime;
       World.Update(frame, dt);
       Field.Update(frame, dt);
+      City.Update(frame, _controller != null ? _controller.Player : PlayerRef.None, dt);
 
       _seen.Clear();
       var units = frame.Filter<Transform3D, Unit>();
@@ -267,6 +270,20 @@ namespace FactoryWars.View {
       if (color != actor.Color) {
         actor.Color = color;
         ArtLook.Apply(actor.View.Model, color);
+      }
+      // 진지 안: 모델은 숨기고 사격은 건물 창문에서 보인다.
+      if (unit->Garrison != EntityRef.None) {
+        if (actor.View.gameObject.activeSelf) {
+          actor.View.gameObject.SetActive(false);
+        }
+        var inside = unit->AttackCooldown.AsFloat;
+        if (inside > actor.Cooldown + 0.05f && frame.Exists(unit->Garrison)) {
+          var window = frame.Get<Transform3D>(unit->Garrison).Position.ToUnityVector3() + Vector3.up * 4f;
+          var aim = TryTarget(frame, unit->TargetEntity, out var shot, out _) ? (shot - window).normalized : Vector3.forward;
+          Fx.MuzzleFlash(window + aim * 2.5f, aim, 0.7f);
+        }
+        actor.Cooldown = inside;
+        return;
       }
       // 고지대 은폐: 적에게 숨은 유닛은 그리지 않고, 내 숨은 유닛은 점선 고리로 알린다.
       var viewer = _controller != null ? _controller.Player : PlayerRef.None;

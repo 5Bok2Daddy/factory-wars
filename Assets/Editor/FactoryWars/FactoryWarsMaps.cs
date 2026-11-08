@@ -203,7 +203,7 @@ namespace FactoryWars.EditorTools {
     static MapDef BuildTwoPlayer() {
       var terrain = new List<TerrainFeature>();
       // 앞마당 벽. 대각선 거울로 숲 앞마당도 같은 모양이다.
-      terrain.AddRange(Features(TerrainKind.Hill, WithMirror(Ridge(1, 6, P(-62, -50), P(-62, -14)).Concat(Ridge(2, 6, P(-96, 18), P(-58, 18))))));
+      terrain.AddRange(Features(TerrainKind.Hill, WithMirror(Ridge(1, 6, P(-62, -50), P(-62, -42)).Concat(Ridge(11, 6, P(-62, -21), P(-62, -16))).Concat(Ridge(2, 6, P(-96, 18), P(-58, 18))))));
       // 공유 모서리 확장을 두르는 벽과 안쪽 돌출부. 측면 길은 이 안을 지나야 한다.
       var box = Ridge(3, 6, P(-96, 62), P(-62, 62));
       terrain.AddRange(Features(TerrainKind.Hill, box.Concat(box.Select(Anti)).Concat(Ridge(4, 6, P(-62, 62), P(-90, 90)))));
@@ -271,7 +271,7 @@ namespace FactoryWars.EditorTools {
       // 상자에서 중앙 고리까지 이어지는 능선. 축 위에 뒷길 틈이 있다.
       terrain.AddRange(Features(TerrainKind.Hill, Ridge(5, 6, P(-96, 0), P(-84, 0)).Concat(Ridge(6, 6, P(-60, 0), P(-50, 0)))));
       // 중앙 고리의 벽. 모서리 네 곳이 입구다.
-      terrain.AddRange(Features(TerrainKind.Hill, Ridge(7, 6, P(-44, -24), P(-44, 24))));
+      terrain.AddRange(Features(TerrainKind.Hill, Ridge(7, 6, P(-44, -24), P(-44, -12)).Concat(Ridge(12, 6, P(-44, 12), P(-44, 24)))));
       terrain.AddRange(Rocks(8, (-74, -46), (-46, -74)));
 
       var grounds = new List<MapShape>();

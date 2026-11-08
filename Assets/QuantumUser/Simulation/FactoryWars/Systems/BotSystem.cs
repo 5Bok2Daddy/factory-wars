@@ -520,7 +520,7 @@ namespace Quantum.FactoryWars {
       var count = 0;
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out _, out var transform, out var unit)) {
-        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None && f.Number >= unit->ReservedUntilFrame) {
+        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None && f.Number >= unit->ReservedUntilFrame && unit->Garrison == EntityRef.None) {
           sum += transform->Position;
           count++;
         }
@@ -616,7 +616,7 @@ namespace Quantum.FactoryWars {
       var ordered = 0;
       var units = f.Filter<Unit>();
       while (ordered < MaxOrder && units.NextUnsafe(out var entity, out var unit)) {
-        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None && f.Number >= unit->ReservedUntilFrame) {
+        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None && f.Number >= unit->ReservedUntilFrame && unit->Garrison == EntityRef.None) {
           MovementSystem.Order(f, entity, unit, UnitOrder.AttackMove, target);
           ordered++;
         }
@@ -629,12 +629,27 @@ namespace Quantum.FactoryWars {
       var units = f.Filter<Unit>();
       while (ordered < MaxOrder && units.NextUnsafe(out _, out var unit)) {
         var spec = f.FindAsset(unit->Spec);
-        if (unit->Owner == player && spec.Attack != AttackType.None && spec.Attack != AttackType.AntiAir && f.Number >= unit->ReservedUntilFrame) {
+        if (unit->Owner == player && spec.Attack != AttackType.None && spec.Attack != AttackType.AntiAir && f.Number >= unit->ReservedUntilFrame && unit->Garrison == EntityRef.None) {
           unit->TargetEntity = barricade;
           unit->Order = UnitOrder.AttackTarget;
           ordered++;
         }
       }
+    }
+
+    static EntityRef NearestShortcut(Frame f, FPVector3 from) {
+      var map = FactoryWarsUtil.MapInfo(f);
+      var best = FP.MaxValue;
+      var found = EntityRef.None;
+      var buildings = f.Filter<Transform3D, CityBuilding>();
+      while (buildings.NextUnsafe(out var entity, out var transform, out var city)) {
+        var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, from);
+        if (map.CityBuildings[city->Index].Shortcut && distance < best) {
+          best = distance;
+          found = entity;
+        }
+      }
+      return found;
     }
 
     static EntityRef NearestBarricade(Frame f, FPVector3 from) {
@@ -726,7 +741,7 @@ namespace Quantum.FactoryWars {
         var units = f.Filter<Transform3D, Unit>();
         while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
           var spec = f.FindAsset(unit->Spec);
-          if (unit->Owner != player || spec.Attack == AttackType.None || spec.IsAir || spec.Range < minRange || f.Number < unit->ReservedUntilFrame) {
+          if (unit->Owner != player || spec.Attack == AttackType.None || spec.IsAir || spec.Range < minRange || f.Number < unit->ReservedUntilFrame || unit->Garrison != EntityRef.None) {
             continue;
           }
           var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, target);
@@ -783,10 +798,134 @@ namespace Quantum.FactoryWars {
           bot->NextSquadFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
         }
       }
+      PlayCity(f, player, bot, ai);
       if (ai.HighGroundUnits > 0 && f.Number >= bot->NextHighGroundFrame) {
         bot->NextHighGroundFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
         if (NearestHighGround(f, bot->Home, out var ground)) {
           SendSquad(f, player, ground, ai.HighGroundUnits, ai, ai.HighGroundMinRange);
+        }
+      }
+    }
+
+    /// <summary>진지에 보병을 넣고, 적 진지는 화염·범위 유닛으로 깨고, 앞마당 근처 쓰러지는 건물로 길을 끊는다.</summary>
+    static void PlayCity(Frame f, PlayerRef player, BotState* bot, AiSpec ai) {
+      var map = FactoryWarsUtil.MapInfo(f);
+      if (map.CityBuildings == null || map.CityBuildings.Length == 0) {
+        return;
+      }
+      if (ai.GarrisonBuildings > 0 && f.Number >= bot->NextGarrisonFrame) {
+        bot->NextGarrisonFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
+        FillGarrisons(f, player, bot, ai, map);
+      }
+      var center = ArmyCenter(f, player, bot->Home);
+      if (ai.BreakGarrisons) {
+        var limit = ai.LaneArrivalDistance * ai.LaneArrivalDistance * 4;
+        var buildings = f.Filter<Transform3D, CityBuilding>();
+        while (buildings.NextUnsafe(out var entity, out var transform, out var city)) {
+          if (city->Occupant.IsValid && DiplomacySystem.CanAttack(f, player, city->Occupant) && FactoryWarsUtil.FlatDistanceSqr(transform->Position, center) <= limit) {
+            OrderSiege(f, player, entity);
+            break;
+          }
+        }
+      }
+      if (ai.ToppleDefense && f.Number >= bot->NextToppleFrame) {
+        bot->NextToppleFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
+        DefendWithTopple(f, player, ai, map);
+      }
+    }
+
+    static void FillGarrisons(Frame f, PlayerRef player, BotState* bot, AiSpec ai, MapSpec map) {
+      for (var n = 0; n < ai.GarrisonBuildings; n++) {
+        var best = FP.MaxValue;
+        var target = EntityRef.None;
+        var buildings = f.Filter<Transform3D, CityBuilding>();
+        while (buildings.NextUnsafe(out var entity, out var transform, out var city)) {
+          var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, bot->Home);
+          if (map.CityBuildings[city->Index].Garrison && city->Occupant.IsValid == false && CitySystem.CanEnter(f, player, entity) && distance < best) {
+            best = distance;
+            target = entity;
+          }
+        }
+        if (target == EntityRef.None) {
+          return;
+        }
+        var capacity = FactoryWarsUtil.Rules(f).GarrisonCapacity;
+        var position = f.Unsafe.GetPointer<Transform3D>(target)->Position;
+        var shape = map.CityBuildings[f.Unsafe.GetPointer<CityBuilding>(target)->Index].Shape;
+        var sent = 0;
+        var units = f.Filter<Transform3D, Unit>();
+        while (sent < capacity && units.NextUnsafe(out var entity, out var transform, out var unit)) {
+          if (unit->Owner != player || unit->Garrison != EntityRef.None || unit->GarrisonTarget != EntityRef.None || f.Number < unit->ReservedUntilFrame
+              || CitySystem.IsInfantry(f.FindAsset(unit->Spec)) == false) {
+            continue;
+          }
+          MovementSystem.Order(f, entity, unit, UnitOrder.Move, shape.Approach(transform->Position, FP._1));
+          unit->GarrisonTarget = target;
+          unit->ReservedUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
+          sent++;
+        }
+        if (sent == 0) {
+          return;
+        }
+      }
+    }
+
+    /// <summary>화염방사와 범위 유닛이 진지 건물을 지정 공격한다.</summary>
+    static void OrderSiege(Frame f, PlayerRef player, EntityRef building) {
+      var units = f.Filter<Unit>();
+      while (units.NextUnsafe(out _, out var unit)) {
+        var spec = f.FindAsset(unit->Spec);
+        if (unit->Owner == player && unit->Garrison == EntityRef.None && unit->TargetEntity != building
+            && (spec.Attack == AttackType.Area || spec.Ability == SpecialAbility.FlameBurst)) {
+          unit->TargetEntity = building;
+          unit->Order = UnitOrder.AttackTarget;
+        }
+      }
+    }
+
+    /// <summary>앞마당 근처에 적 지상군이 있으면, 그 앞마당 가까이 낙하 구역이 있는 쓰러지는 건물을 쓰러뜨린다.</summary>
+    static void DefendWithTopple(Frame f, PlayerRef player, AiSpec ai, MapSpec map) {
+      var sites = map.Expansions;
+      var seat = 1 << (int)player;
+      var watch = ai.LaneArrivalDistance * ai.LaneArrivalDistance * 2;
+      for (var i = 0; sites != null && i < sites.Length; i++) {
+        var kind = sites[i].Kind;
+        if ((sites[i].SeatMask & seat) == 0 || (kind != ExpansionKind.IronForecourt && kind != ExpansionKind.WoodForecourt) || EnemyNear(f, player, sites[i].Position, watch) == false) {
+          continue;
+        }
+        var buildings = f.Filter<Transform3D, CityBuilding>();
+        while (buildings.NextUnsafe(out var entity, out _, out var city)) {
+          var placement = map.CityBuildings[city->Index];
+          if (placement.Topples && placement.FallZone.Distance(sites[i].Position) <= ai.LaneArrivalDistance * 2) {
+            SendSiege(f, player, entity, ai);
+            return;
+          }
+        }
+      }
+    }
+
+    static bool EnemyNear(Frame f, PlayerRef player, FPVector3 position, FP limit) {
+      var units = f.Filter<Transform3D, Unit>();
+      while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
+        if (DiplomacySystem.CanAttack(f, player, unit->Owner) && f.FindAsset(unit->Spec).IsAir == false && FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) <= limit
+            && FactoryWarsUtil.IsVisibleTo(f, player, entity)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    static void SendSiege(Frame f, PlayerRef player, EntityRef building, AiSpec ai) {
+      var until = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
+      var sent = 0;
+      var units = f.Filter<Unit>();
+      while (sent < ai.CaptureSquad && units.NextUnsafe(out _, out var unit)) {
+        var spec = f.FindAsset(unit->Spec);
+        if (unit->Owner == player && unit->Garrison == EntityRef.None && spec.Attack != AttackType.None && spec.Attack != AttackType.AntiAir && f.Number >= unit->ReservedUntilFrame) {
+          unit->TargetEntity = building;
+          unit->Order = UnitOrder.AttackTarget;
+          unit->ReservedUntilFrame = until;
+          sent++;
         }
       }
     }
@@ -857,7 +996,13 @@ namespace Quantum.FactoryWars {
         bot->LanePoint = lane;
         bot->LaneTarget = target;
         bot->LaneUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.LaneTimeoutSeconds);
-        var breach = hasSide && f.RNG->Next() < ai.BarricadeChance ? NearestBarricade(f, center) : EntityRef.None;
+        var breach = EntityRef.None;
+        if (hasSide && f.RNG->Next() < ai.ShortcutChance) {
+          breach = NearestShortcut(f, center);
+        }
+        if (breach == EntityRef.None && hasSide && f.RNG->Next() < ai.BarricadeChance) {
+          breach = NearestBarricade(f, center);
+        }
         if (breach != EntityRef.None) {
           bot->LaneBarricade = breach;
           OrderBreach(f, player, breach);

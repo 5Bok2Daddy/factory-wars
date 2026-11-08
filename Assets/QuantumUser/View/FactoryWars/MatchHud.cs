@@ -411,7 +411,9 @@ namespace FactoryWars.View {
       var input = Controller.Input;
       var selection = input.Selection;
       var status = "";
-      if (selection.Building != EntityRef.None) {
+      if (selection.Building != EntityRef.None && frame.Has<CityBuilding>(selection.Building)) {
+        status = CityEntries(frame, selection.Building);
+      } else if (selection.Building != EntityRef.None) {
         status = BuildingEntries(frame, state, selection.Building);
       } else if (selection.Units.Count > 0) {
         var spec = frame.FindAsset(frame.Get<Unit>(selection.Units[0]).Spec);
@@ -465,6 +467,27 @@ namespace FactoryWars.View {
           Action = () => Controller.Input.Placing = target,
         });
       }
+    }
+
+    /// <summary>도시 건물: 체력과, 내 분대가 들어 있으면 "모두 나가기".</summary>
+    string CityEntries(Frame frame, EntityRef entity) {
+      var city = frame.Get<CityBuilding>(entity);
+      var map = frame.FindAsset<MapSpec>(frame.Map.UserAsset);
+      var placement = map.CityBuildings[city.Index];
+      var mine = 0;
+      foreach (var pair in frame.GetComponentIterator<Unit>()) {
+        mine += pair.Component.Garrison == entity && pair.Component.Owner == Controller.Player ? 1 : 0;
+      }
+      var status = $"{Texts.CityName(placement)}  체력 {city.Health.AsInt}/{city.MaxHealth.AsInt}";
+      if (placement.Garrison) {
+        status += $"  진지 {mine}";
+        Entries.Add(new ContextEntry {
+          Label = Texts.ExitGarrison,
+          Enabled = mine > 0,
+          Action = () => Controller.Send(new ExitGarrisonCommand { Building = entity }),
+        });
+      }
+      return status;
     }
 
     string BuildingEntries(Frame frame, PlayerState* state, EntityRef entity) {

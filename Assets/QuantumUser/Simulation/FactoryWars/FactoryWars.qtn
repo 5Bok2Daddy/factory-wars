@@ -10,7 +10,7 @@
 
 enum Relation : Byte { Enemy, Allied, BreakPending }
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget }
-enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce, Attack }
+enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce, Attack, Garrison }
 enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
@@ -60,6 +60,7 @@ struct PlayerState {
     Int32 CaptureFrames;
     Int32 CratesPicked;
     Int32 HighGroundShots;
+    Int32 GarrisonEntries;
 }
 
 struct BotState {
@@ -79,6 +80,8 @@ struct BotState {
     Int32 NextSquadFrame;
     Int32 NextHighGroundFrame;
     Int32 RespondedDropFrame;
+    Int32 NextGarrisonFrame;
+    Int32 NextToppleFrame;
 }
 
 struct ProductionOrder {
@@ -103,6 +106,8 @@ global {
     Int32 NextDropFrame;
     Int32 DropGroup;
     QBoolean DropAnnounced;
+    // 도시 건물 붕괴 비트. 번호는 MapSpec.CityBuildings의 순서다.
+    array<Int32>[8] CityCollapsed;
 }
 
 component Unit {
@@ -126,6 +131,10 @@ component Unit {
     Int32 LastFiredFrame;
     Int32 ReservedUntilFrame;
     QBoolean Swarming;
+    // 들어가 있는 진지 건물. 안에서는 NavMesh 에이전트가 없다.
+    entity_ref Garrison;
+    // 들어가려고 걸어가는 진지 건물.
+    entity_ref GarrisonTarget;
 }
 
 component Worker {
@@ -178,6 +187,15 @@ component Barricade {
     MapShape Shape;
 }
 
+// 중립 도시 건물. 지정 공격과 범위 피해로만 깎인다. Stage는 0 멀쩡함, 1 금, 2 불, 3 붕괴다.
+component CityBuilding {
+    Int32 Index;
+    FP Health;
+    FP MaxHealth;
+    Int32 Stage;
+    player_ref Occupant;
+}
+
 // Seat가 0 이상이면 그 자리만 회수한다.
 component SupplyCrate {
     Int32 Seat;
@@ -216,6 +234,10 @@ synced event BarricadeDestroyed { Int32 Index; }
 synced event SupplyDropIncoming { Int32 Group; Int32 Frame; }
 synced event CratePicked { player_ref Player; FPVector3 Position; ResourceCost Reward; }
 synced event BaseUnderAttack { player_ref Player; FPVector3 Position; }
+synced event CityBuildingDamaged { entity_ref Building; Int32 Index; Int32 Stage; }
+synced event CityBuildingCollapsed { Int32 Index; }
+synced event CityBuildingToppled { Int32 Index; }
+synced event GarrisonChanged { entity_ref Building; player_ref Occupant; Int32 Count; }
 synced event PowerOutage { player_ref Player; QBoolean Started; }
 synced event BuildingPaused { entity_ref Building; PauseReason Reason; }
 synced event GameOver { Int32 WinnerMask; }

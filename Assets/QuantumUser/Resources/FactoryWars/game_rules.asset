@@ -75,6 +75,48 @@ MonoBehaviour:
     RawValue: 49152
   BaseAlertSeconds:
     RawValue: 1966080
+  CityKinds:
+  - Health:
+      RawValue: 98304000
+    Height:
+      RawValue: 458752
+  - Health:
+      RawValue: 196608000
+    Height:
+      RawValue: 786432
+  - Health:
+      RawValue: 327680000
+    Height:
+      RawValue: 589824
+  - Health:
+      RawValue: 196608000
+    Height:
+      RawValue: 1179648
+  CityAreaMultiplier:
+    RawValue: 98304
+  GarrisonFlameMultiplier:
+    RawValue: 131072
+  RubbleSpeedMultiplier:
+    RawValue: 45875
+  CollapseRadius:
+    RawValue: 393216
+  CollapseDamage:
+    RawValue: 13107200
+  GarrisonEjectFraction:
+    RawValue: 16384
+  ToppleDamage:
+    RawValue: 39321600
+  TopplePushMargin:
+    RawValue: 98304
+  GarrisonCapacity: 3
+  GarrisonRangeBonus:
+    RawValue: 131072
+  GarrisonEnterDistance:
+    RawValue: 131072
+  CityCrackedFraction:
+    RawValue: 39321
+  CityBurningFraction:
+    RawValue: 19660
   MinDiplomacyPlayers: 3
   ProposalSeconds:
     RawValue: 1966080

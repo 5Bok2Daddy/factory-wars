@@ -70,6 +70,17 @@ namespace Quantum.FactoryWars {
     }
 
     public override void Execute(Frame f, PlayerRef player) {
+      if (f.Unsafe.TryGetPointer<CityBuilding>(Target, out var city)) {
+        if (FactoryWarsUtil.InTruce(f)) {
+          f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.Truce, 0);
+          return;
+        }
+        if (city->Occupant.IsValid && DiplomacySystem.CanAttack(f, player, city->Occupant) == false) {
+          return;
+        }
+        Order(f, player);
+        return;
+      }
       if (f.Has<Barricade>(Target)) {
         if (FactoryWarsUtil.InTruce(f)) {
           f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.Truce, 0);
@@ -98,6 +109,52 @@ namespace Quantum.FactoryWars {
           unit->Order = UnitOrder.AttackTarget;
         }
       }
+    }
+  }
+
+  /// <summary>보병 분대를 진지 건물로 보낸다. 닿으면 들어간다. 차량·공병·공중은 못 들어간다.</summary>
+  public unsafe class EnterGarrisonCommand : FactoryCommand {
+    public EntityRef[] Units = System.Array.Empty<EntityRef>();
+    public EntityRef Building;
+
+    public override void Serialize(BitStream stream) {
+      SerializeUnits(stream, ref Units);
+      stream.Serialize(ref Building);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      if (f.Unsafe.TryGetPointer<CityBuilding>(Building, out var city) == false) {
+        f.Events.ActionRejected(player, ActionKind.Garrison, RejectReason.Invalid, 0);
+        return;
+      }
+      if (CitySystem.CanEnter(f, player, Building) == false) {
+        var truce = FactoryWarsUtil.IsReachable(f, player, f.Unsafe.GetPointer<Transform3D>(Building)->Position) == false;
+        f.Events.ActionRejected(player, ActionKind.Garrison, truce ? RejectReason.Truce : RejectReason.Invalid, 0);
+        return;
+      }
+      var shape = FactoryWarsUtil.MapInfo(f).CityBuildings[city->Index].Shape;
+      for (var i = 0; i < Units.Length; i++) {
+        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) == false || unit->Owner != player || unit->Garrison != EntityRef.None
+            || CitySystem.IsInfantry(f.FindAsset(unit->Spec)) == false) {
+          continue;
+        }
+        var from = f.Unsafe.GetPointer<Transform3D>(Units[i])->Position;
+        MovementSystem.Order(f, Units[i], unit, UnitOrder.Move, shape.Approach(from, FP._1));
+        unit->GarrisonTarget = Building;
+      }
+    }
+  }
+
+  /// <summary>진지 건물에서 자기 분대를 모두 꺼낸다.</summary>
+  public unsafe class ExitGarrisonCommand : FactoryCommand {
+    public EntityRef Building;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Building);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      CitySystem.ExitAll(f, player, Building, FP._0);
     }
   }
 

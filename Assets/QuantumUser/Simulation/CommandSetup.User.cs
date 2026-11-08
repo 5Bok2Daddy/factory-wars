@@ -10,6 +10,8 @@ namespace Quantum
             factories.Add(new FactoryWars.MoveUnitsCommand());
             factories.Add(new FactoryWars.StopUnitsCommand());
             factories.Add(new FactoryWars.AttackTargetCommand());
+            factories.Add(new FactoryWars.EnterGarrisonCommand());
+            factories.Add(new FactoryWars.ExitGarrisonCommand());
             factories.Add(new FactoryWars.BuildCommand());
             factories.Add(new FactoryWars.GatherCommand());
             factories.Add(new FactoryWars.RepairCommand());

@@ -67,6 +67,8 @@ namespace Quantum.Prototypes.Unity {
     public Int32 NextSquadFrame;
     public Int32 NextHighGroundFrame;
     public Int32 RespondedDropFrame;
+    public Int32 NextGarrisonFrame;
+    public Int32 NextToppleFrame;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BotStatePrototype prototype);
     public override Quantum.Prototypes.BotStatePrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BotStatePrototype();
@@ -86,6 +88,8 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.NextSquadFrame, out result.NextSquadFrame);
       converter.Convert(this.NextHighGroundFrame, out result.NextHighGroundFrame);
       converter.Convert(this.RespondedDropFrame, out result.RespondedDropFrame);
+      converter.Convert(this.NextGarrisonFrame, out result.NextGarrisonFrame);
+      converter.Convert(this.NextToppleFrame, out result.NextToppleFrame);
       ConvertUser(converter, ref result);
       return result;
     }
@@ -150,6 +154,8 @@ namespace Quantum.Prototypes.Unity {
     public Int32 LastFiredFrame;
     public Int32 ReservedUntilFrame;
     public QBoolean Swarming;
+    public Quantum.QuantumEntityPrototype Garrison;
+    public Quantum.QuantumEntityPrototype GarrisonTarget;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
     public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.UnitPrototype();
@@ -173,6 +179,8 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.LastFiredFrame, out result.LastFiredFrame);
       converter.Convert(this.ReservedUntilFrame, out result.ReservedUntilFrame);
       converter.Convert(this.Swarming, out result.Swarming);
+      converter.Convert(this.Garrison, out result.Garrison);
+      converter.Convert(this.GarrisonTarget, out result.GarrisonTarget);
       ConvertUser(converter, ref result);
       return result;
     }

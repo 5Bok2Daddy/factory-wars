@@ -39,6 +39,22 @@ namespace Quantum {
     public int Group;
   }
 
+  /// <summary>
+  /// 도시 건물 하나. 바닥은 NavMesh 영역 Region으로 구워져 처음에 닫힌다. 쓰러지는 건물은 낙하 구역 FallRegion이 따로 있고 처음에 열려 있다.
+  /// Kind는 GameRulesSpec.CityKinds의 번호다.
+  /// </summary>
+  [Serializable]
+  public struct CityBuildingPlacement {
+    public MapShape Shape;
+    public int Kind;
+    public bool Garrison;
+    public bool Shortcut;
+    public bool Topples;
+    public MapShape FallZone;
+    public string Region;
+    public string FallRegion;
+  }
+
   /// <summary>AI가 확장을 고르는 자리. SeatMask는 이 자리에 인접한 플레이어 자리의 비트다.</summary>
   [Serializable]
   public struct ExpansionSite {
@@ -85,6 +101,10 @@ namespace Quantum {
     public int GroundGridSize;
     public FP GroundGridCell;
 
+    public CityBuildingPlacement[] CityBuildings;
+    /// <summary>GroundGrid와 같은 칸의 도시 건물 번호 + 1. 0이면 건물이 없다. 붕괴한 칸은 잔해라 느리다.</summary>
+    public short[] CityGrid;
+
     public const int GroundRoad = 1;
     public const int GroundFord = 2;
 
@@ -95,6 +115,16 @@ namespace Quantum {
       var x = FPMath.FloorToInt((position.X - BoundsMin.X) / GroundGridCell);
       var z = FPMath.FloorToInt((position.Z - BoundsMin.Y) / GroundGridCell);
       return x < 0 || z < 0 || x >= GroundGridSize || z >= GroundGridSize ? 0 : GroundGrid[z * GroundGridSize + x];
+    }
+
+    /// <summary>위치의 도시 건물 번호. 없으면 -1이다.</summary>
+    public int CityAt(FPVector3 position) {
+      if (CityGrid == null || CityGrid.Length == 0) {
+        return -1;
+      }
+      var x = FPMath.FloorToInt((position.X - BoundsMin.X) / GroundGridCell);
+      var z = FPMath.FloorToInt((position.Z - BoundsMin.Y) / GroundGridCell);
+      return x < 0 || z < 0 || x >= GroundGridSize || z >= GroundGridSize ? -1 : CityGrid[z * GroundGridSize + x] - 1;
     }
 
     /// <summary>위치가 들어 있는 고지대 번호. 없으면 -1이다.</summary>

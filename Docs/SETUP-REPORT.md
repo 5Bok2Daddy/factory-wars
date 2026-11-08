@@ -2033,3 +2033,26 @@ AI 행동도 함께 넣었습니다.
 | 21 도시 전장 | 진행 중 (`NEXT-TASK-21-CITY.md`, 19A보다 먼저) |
 | 19A 룩 개발 | 준비만 함: `VisualProfile` 연결(화면 변화 없음), 비교 도구 `Tests/LookdevTests.cs`, before 화면·수치 |
 | 19 그래픽 적용 | 대기 |
+
+## 항목 21 브리핑
+
+**맵:** 항목 17의 배치와 측정값은 그대로 둔다. 판정이 바뀌는 것은 도시 건물과 낙하 구역뿐이다.
+
+- 능선·언덕·협곡 벽은 파괴 불가 고층 블록(기존 지형 판정)으로, 그 위에 도시 건물을 더한다.
+- 도시 건물은 길과 자원, 점령지, 확장 후보, 고지대에서 여유를 두고 빈 땅에 자동으로 놓는다. 맵을 구울 때 한 번 계산하고, 2인은 점대칭, 4인은 90도 대칭이다.
+- 지름길은 능선 일부를 끊고 그 자리를 도시 건물로 막는다. 부수면 열린다.
+- 맵 밖은 원래 NavMesh가 없어서 지나갈 수 없다. 경계 벽은 화면 데이터로만 두고, 카메라 이동 범위를 줄인다.
+
+**Quantum 구성**
+
+| 요소 | 구성 |
+| --- | --- |
+| 도시 건물 | `CityBuilding` 컴포넌트(체력·손상 단계), 위치·종류는 `MapSpec.CityBuildings`, 수치는 `GameRulesSpec.CityKinds` |
+| 피해 | `CombatSystem`에 지정 공격과 범위 피해 경로를 더한다. 자동 조준 대상이 아니다 |
+| 붕괴 | `CitySystem`이 바닥 영역을 열고, 주변 피해와 진지 퇴출을 처리하고, 경로를 다시 계산한다. 이벤트 `CityBuildingDamaged`, `CityBuildingCollapsed`, `CityBuildingToppled` |
+| 잔해 감속 | 맵을 구울 때 만든 `MapSpec.CityGrid`와 프레임의 붕괴 비트(`CityCollapsed`) |
+| 진지 | `Unit.Garrison`, `Unit.GarrisonTarget`. 명령 `EnterGarrisonCommand`, `ExitGarrisonCommand`. 안에 있는 동안 NavMesh 에이전트를 떼고, 나올 때 다시 붙인다 |
+
+**NavMesh 영역:** 건물 바닥 1개 + 쓰러지는 건물의 낙하 구역 1개씩이다. 2인은 약 60 + 10, 4인은 약 120 + 20이고, 다리·바리케이드를 더해도 한도 512보다 훨씬 적다. 실제 수는 테스트로 기록한다.
+
+**모바일 성능 예산:** 도시 건물 메쉬는 종류·손상 단계별로 한 번 만들어 공유한다. low의 그리기 호출은 항목 17 대비 2배 이내로 잡는다. 기준값은 `Game/Docs/lookdev/measure_before.csv`(첫 교전 장면 본진 시점, low 약 131)다.

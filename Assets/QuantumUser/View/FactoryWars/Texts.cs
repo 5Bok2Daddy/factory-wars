@@ -80,6 +80,15 @@ namespace FactoryWars.View {
     public const string DropIncoming = "보급 투하 20초 전";
     public const string BackdoorOpened = "뒷길이 열렸습니다";
     public const string BaseAttacked = "본진이 공격받고 있습니다";
+    public const string ExitGarrison = "모두\n나가기";
+
+    public static string CityName(CityBuildingPlacement placement) {
+      if (placement.Topples) {
+        return "고층 빌딩";
+      }
+      var name = placement.Kind == 0 ? "상가" : placement.Kind == 1 ? "아파트" : "창고";
+      return placement.Garrison ? name + " (진지)" : name;
+    }
 
     public static string SiteName(CaptureKind kind) => kind == CaptureKind.Comms ? "중앙 통신소" : "발전 중계소";
 

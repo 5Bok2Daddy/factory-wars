@@ -201,7 +201,7 @@ namespace FactoryWars.Tests {
 
     /// <summary>입구를 막으면 from에서 to로 갈 수 없어야 한다. 입구 말고 샛길이 없다는 뜻이다. 격자 칸 1m로 훑는다.</summary>
     static void AssertSealed(MapSpec spec, Vector2 from, Vector2 to, MapShape[] gates, string label) {
-      var shapes = spec.Terrain.Select(t => t.Shape).Concat(spec.ResourceNodes.Select(n => n.Shape)).Concat(gates).ToArray();
+      var shapes = spec.Terrain.Select(t => t.Shape).Concat(spec.ResourceNodes.Select(n => n.Shape)).Concat(gates).Concat((spec.CityBuildings ?? new CityBuildingPlacement[0]).Select(c => c.Shape)).ToArray();
       var half = (int)spec.BoundsMax.X.AsFloat;
       var seen = new HashSet<(int, int)>();
       var open = new Stack<(int X, int Z)>();

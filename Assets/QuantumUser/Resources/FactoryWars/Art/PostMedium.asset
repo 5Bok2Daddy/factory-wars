@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: PostMedium
   m_EditorClassIdentifier: 
   components:
-  - {fileID: 3461725441624210842}
-  - {fileID: 7830028511170301524}
---- !u!114 &3461725441624210842
+  - {fileID: 801919771304234501}
+  - {fileID: 6591472779232991955}
+--- !u!114 &801919771304234501
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -62,7 +62,7 @@ MonoBehaviour:
   dirtIntensity:
     m_OverrideState: 1
     m_Value: 0
---- !u!114 &7830028511170301524
+--- !u!114 &6591472779232991955
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}

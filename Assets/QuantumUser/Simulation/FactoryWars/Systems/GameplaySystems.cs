@@ -159,6 +159,12 @@ namespace Quantum.FactoryWars {
           return false;
         }
       }
+      for (var i = 0; map.CityBuildings != null && i < map.CityBuildings.Length; i++) {
+        if (IsClear(map.CityBuildings[i].Shape, position, radius, rules.TerrainBuildMargin) == false
+            || (map.CityBuildings[i].Topples && IsClear(map.CityBuildings[i].FallZone, position, radius, FP._0) == false)) {
+          return false;
+        }
+      }
       return true;
     }
 
@@ -456,6 +462,13 @@ namespace Quantum.FactoryWars {
       if (f.Has<Barricade>(target)) {
         return FactoryWarsUtil.InTruce(f) == false && weapon.Attack != AttackType.AntiAir;
       }
+      if (f.Unsafe.TryGetPointer<CityBuilding>(target, out var city)) {
+        return FactoryWarsUtil.InTruce(f) == false && weapon.Attack != AttackType.AntiAir
+          && (city->Occupant.IsValid == false || DiplomacySystem.CanAttack(f, weapon.Owner, city->Occupant));
+      }
+      if (f.Unsafe.TryGetPointer<Unit>(target, out var garrisoned) && garrisoned->Garrison != EntityRef.None) {
+        return false;
+      }
       return TryGetOwner(f, target, out var targetOwner)
         && DiplomacySystem.CanAttack(f, weapon.Owner, targetOwner)
         && CanHit(f, weapon, target);
@@ -514,6 +527,9 @@ namespace Quantum.FactoryWars {
         range += f.FindAsset(building->Spec).FootprintRadius;
       } else if (f.Unsafe.TryGetPointer<Barricade>(target, out var barricade)) {
         range += barricade->Shape.HalfWidth + FP._2 + FP._1;
+      } else if (f.Unsafe.TryGetPointer<CityBuilding>(target, out var city)) {
+        var shape = FactoryWarsUtil.MapInfo(f).CityBuildings[city->Index].Shape;
+        range += FPMath.Max(shape.HalfLength, shape.HalfWidth) + FP._1;
       }
       return range * range;
     }
@@ -601,6 +617,8 @@ namespace Quantum.FactoryWars {
         }
       } else if (f.Unsafe.TryGetPointer<Barricade>(target, out var barricade)) {
         BattlefieldSystem.HitBarricade(f, target, barricade, amount * BuildingMultiplier(FactoryWarsUtil.Rules(f), weapon.Attack));
+      } else if (f.Unsafe.TryGetPointer<CityBuilding>(target, out var city)) {
+        CitySystem.Hit(f, target, city, amount * CitySystem.Multiplier(f, city, weapon.Attack, weapon.Spec));
       }
     }
 
@@ -635,6 +653,13 @@ namespace Quantum.FactoryWars {
       var barricades = f.Filter<Barricade>();
       while (barricades.NextUnsafe(out var entity, out var barricade)) {
         if (barricade->Shape.Distance(center) <= radius && IsValidTarget(f, weapon, entity)) {
+          Damage(f, weapon, entity, amount);
+        }
+      }
+      var map = FactoryWarsUtil.MapInfo(f);
+      var cities = f.Filter<CityBuilding>();
+      while (cities.NextUnsafe(out var entity, out var city)) {
+        if (map.CityBuildings[city->Index].Shape.Distance(center) <= radius && IsValidTarget(f, weapon, entity)) {
           Damage(f, weapon, entity, amount);
         }
       }
@@ -716,6 +741,9 @@ namespace Quantum.FactoryWars {
           Owner = unit->Owner, Attack = spec.Attack, IsAir = spec.IsAir, IsRanged = spec.IsRanged, Unit = unit, Spec = spec,
         };
         var range = EffectiveRange(f, unit, spec);
+        if (unit->Garrison != EntityRef.None) {
+          range += FactoryWarsUtil.Rules(f).GarrisonRangeBonus;
+        }
         var position = transform->Position;
 
         if (spec.Ability == SpecialAbility.CarpetBomb) {
@@ -848,6 +876,9 @@ namespace Quantum.FactoryWars {
       var rules = FactoryWarsUtil.Rules(f);
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
+        if (unit->Garrison != EntityRef.None) {
+          continue;
+        }
         var spec = f.FindAsset(unit->Spec);
         var hasDestination = unit->Order == UnitOrder.Move || unit->Order == UnitOrder.AttackMove;
         var destination = unit->TargetPosition;
@@ -864,7 +895,9 @@ namespace Quantum.FactoryWars {
           }
           // 쫓는 경로는 1초마다 갱신한다.
           hasDestination = true;
-          destination = f.Unsafe.TryGetPointer<Barricade>(unit->TargetEntity, out var barricade) ? BattlefieldSystem.FrontOf(barricade, transform->Position) : targetTransform->Position;
+          destination = f.Unsafe.TryGetPointer<Barricade>(unit->TargetEntity, out var barricade) ? BattlefieldSystem.FrontOf(barricade, transform->Position)
+            : f.Unsafe.TryGetPointer<CityBuilding>(unit->TargetEntity, out var city) ? map.CityBuildings[city->Index].Shape.Approach(transform->Position, FP._2)
+            : targetTransform->Position;
           if (spec.IsAir == false && f.Number % repathFrames == 0) {
             SetDestination(f, entity, destination);
           }
@@ -877,7 +910,7 @@ namespace Quantum.FactoryWars {
         if (spec.IsAir && hasDestination) {
           MoveAir(f, transform, unit, spec, destination);
         } else if (spec.IsAir == false && f.Unsafe.TryGetPointer<NavMeshSteeringAgent>(entity, out var agent)) {
-          agent->MaxSpeed = GroundSpeed(map, rules, spec, unit, transform->Position);
+          agent->MaxSpeed = GroundSpeed(f, map, rules, spec, unit, transform->Position);
         }
       }
 
@@ -952,8 +985,12 @@ namespace Quantum.FactoryWars {
     }
 
     /// <summary>능력과 도로·여울을 합친 지상 이동 속도.</summary>
-    public static FP GroundSpeed(MapSpec map, GameRulesSpec rules, UnitSpec spec, Unit* unit, FPVector3 position) {
+    public static FP GroundSpeed(Frame f, MapSpec map, GameRulesSpec rules, UnitSpec spec, Unit* unit, FPVector3 position) {
       var speed = unit->Swarming ? spec.MoveSpeed * spec.AbilityMultiplier : spec.MoveSpeed;
+      var city = map.CityAt(position);
+      if (city >= 0 && CitySystem.IsCollapsed(f, city)) {
+        return speed * rules.RubbleSpeedMultiplier;
+      }
       var ground = map.GroundAt(position);
       return ground == MapSpec.GroundRoad ? speed * rules.RoadSpeedMultiplier : ground == MapSpec.GroundFord ? speed * rules.FordSpeedMultiplier : speed;
     }

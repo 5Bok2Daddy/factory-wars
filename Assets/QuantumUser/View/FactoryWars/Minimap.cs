@@ -42,6 +42,10 @@ namespace FactoryWars.View {
       foreach (var feature in map.Terrain ?? Array.Empty<TerrainFeature>()) {
         Paint(feature.Shape, feature.Kind == TerrainKind.Rock ? RockColor : feature.Kind == TerrainKind.Hill || feature.Kind == TerrainKind.Cliff ? HillColor : feature.Kind == TerrainKind.River ? RiverColor : WallColor);
       }
+      foreach (var city in map.CityBuildings ?? Array.Empty<CityBuildingPlacement>()) {
+        Paint(city.Shape, CityColor);
+      }
+      _map = map;
       foreach (var node in map.ResourceNodes) {
         Paint(node.Shape, node.Kind == ResourceKind.Iron ? IronColor : WoodColor);
       }
@@ -94,10 +98,55 @@ namespace FactoryWars.View {
       foreach (var pair in frame.GetComponentIterator<Unit>()) {
         Dot(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3(), 1, Palette.Of(frame, pair.Component.Owner));
       }
+      DrawCity(frame);
+      DrawBorder();
       DrawPings();
       _texture.SetPixels32(_pixels);
       _texture.Apply(false);
       RefreshMarks(frame);
+    }
+
+    static readonly Color32 CityColor = new Color32(118, 116, 112, 255);
+    static readonly Color32 RubbleColor = new Color32(150, 128, 98, 255);
+    static readonly Color32 BlockedColor = new Color32(140, 40, 34, 255);
+    static readonly Color32 BorderColor = new Color32(24, 22, 20, 255);
+    MapSpec _map;
+
+    /// <summary>무너진 건물은 잔해 색, 쓰러진 건물이 막은 구역은 붉게 칠한다.</summary>
+    void DrawCity(Frame frame) {
+      var cities = _map?.CityBuildings;
+      for (var i = 0; cities != null && i < cities.Length; i++) {
+        if (Quantum.FactoryWars.CitySystem.IsCollapsed(frame, i) == false) {
+          continue;
+        }
+        PaintLive(cities[i].Shape, RubbleColor);
+        if (cities[i].Topples) {
+          PaintLive(cities[i].FallZone, BlockedColor);
+        }
+      }
+    }
+
+    void PaintLive(MapShape shape, Color32 color) {
+      var center = new Vector2(shape.Center.X.AsFloat, shape.Center.Z.AsFloat);
+      var reach = shape.Reach.AsFloat;
+      for (var y = ToPixel(center.y - reach, _min.y, _max.y); y <= ToPixel(center.y + reach, _min.y, _max.y); y++) {
+        for (var x = ToPixel(center.x - reach, _min.x, _max.x); x <= ToPixel(center.x + reach, _min.x, _max.x); x++) {
+          var world = ToWorld(x, y);
+          if (shape.Distance(new FPVector3(FP.FromFloat_UNSAFE(world.x), FP._0, FP.FromFloat_UNSAFE(world.y))) <= FP._0) {
+            _pixels[y * Size + x] = color;
+          }
+        }
+      }
+    }
+
+    /// <summary>맵 경계 테두리.</summary>
+    void DrawBorder() {
+      for (var i = 0; i < Size; i++) {
+        _pixels[i] = BorderColor;
+        _pixels[(Size - 1) * Size + i] = BorderColor;
+        _pixels[i * Size] = BorderColor;
+        _pixels[i * Size + Size - 1] = BorderColor;
+      }
     }
 
     const float PingSeconds = 4f;

@@ -45,6 +45,11 @@ MonoBehaviour:
   HighGroundUnits: 3
   HighGroundMinRange:
     RawValue: 458752
+  GarrisonBuildings: 2
+  ShortcutChance:
+    RawValue: 16384
+  BreakGarrisons: 1
+  ToppleDefense: 1
   ExpandDistance:
     RawValue: 1966080
   MaxHeadquarters: 3

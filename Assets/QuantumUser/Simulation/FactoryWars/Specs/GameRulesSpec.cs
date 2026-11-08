@@ -13,6 +13,14 @@ namespace Quantum {
     public FP VsBuilding;
   }
 
+  /// <summary>도시 건물 종류 하나. 0 소형, 1 중형, 2 대형, 3 쓰러지는 고층.</summary>
+  [Serializable]
+  public struct CityKindSpec {
+    public FP Health;
+    /// <summary>화면 높이이자 쓰러질 때 낙하 구역 길이.</summary>
+    public FP Height;
+  }
+
   public partial class GameRulesSpec : AssetObject {
     public string NavMeshName;
     /// <summary>경기 시작부터 울타리가 열릴 때까지의 휴전 시간. 공격할 수 없고 본진 밖으로 나갈 수 없다.</summary>
@@ -41,6 +49,25 @@ namespace Quantum {
     public FP FordSpeedMultiplier;
     /// <summary>본진 공격 알림의 최소 간격.</summary>
     public FP BaseAlertSeconds;
+    public CityKindSpec[] CityKinds;
+    /// <summary>범위 공격(다연장·폭격)의 도시 건물 피해 배율.</summary>
+    public FP CityAreaMultiplier;
+    /// <summary>화염방사의 진지 건물 피해 배율.</summary>
+    public FP GarrisonFlameMultiplier;
+    public FP RubbleSpeedMultiplier;
+    public FP CollapseRadius;
+    public FP CollapseDamage;
+    /// <summary>붕괴로 튀어나온 진지 병력의 피해. 최대 체력의 비율이다.</summary>
+    public FP GarrisonEjectFraction;
+    public FP ToppleDamage;
+    public FP TopplePushMargin;
+    public int GarrisonCapacity;
+    public FP GarrisonRangeBonus;
+    public FP GarrisonEnterDistance;
+    /// <summary>체력 비율이 이 아래로 내려가면 금 간 단계다.</summary>
+    public FP CityCrackedFraction;
+    /// <summary>체력 비율이 이 아래로 내려가면 불타는 단계이고, 쓰러지는 건물은 예고가 뜬다.</summary>
+    public FP CityBurningFraction;
     public int MinDiplomacyPlayers;
     public FP ProposalSeconds;
     public FP ProposalCost;

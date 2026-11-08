@@ -42,7 +42,7 @@ namespace FactoryWars.Tests {
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var navMesh = MapNavMesh();
       Assert.IsTrue(Verified.Map.RegionMap.ContainsKey("Barrier"), "다리 영역이 구워짐");
-      Assert.AreEqual(2 + spec.Barricades.Length, Verified.Map.RegionMap.Count, "기본 영역 + 다리 영역 + 바리케이드");
+      Assert.AreEqual(2 + spec.Barricades.Length + spec.CityBuildings.Length + spec.CityBuildings.Count(c => c.Topples), Verified.Map.RegionMap.Count, "기본 영역 + 다리 영역 + 바리케이드 + 도시 건물 + 낙하 구역");
       var mask = NavMeshRegionMask.Default;
       var rules = Verified.FindAsset(Verified.RuntimeConfig.Rules);
       for (var seat = 0; seat < players; seat++) {

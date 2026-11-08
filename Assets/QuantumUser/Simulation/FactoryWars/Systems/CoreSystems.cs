@@ -82,6 +82,7 @@ namespace Quantum.FactoryWars {
       TruceSystem.SetBarrier(f, truce <= 0);
       CloseBarricades(f);
       BattlefieldSystem.Init(f);
+      CitySystem.Init(f);
 
       var nodes = FactoryWarsUtil.MapInfo(f).ResourceNodes;
       for (var i = 0; nodes != null && i < nodes.Length; i++) {

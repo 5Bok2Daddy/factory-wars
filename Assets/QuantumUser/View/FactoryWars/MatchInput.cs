@@ -61,6 +61,33 @@ namespace FactoryWars.View {
       return EntityRef.None;
     }
 
+    public static EntityRef PickCity(Frame frame, Vector3 world) {
+      var map = frame.FindAsset<MapSpec>(frame.Map.UserAsset);
+      var point = ToFP(world);
+      foreach (var pair in frame.GetComponentIterator<CityBuilding>()) {
+        if (map.CityBuildings[pair.Component.Index].Shape.Distance(point) <= FP._0) {
+          return pair.Entity;
+        }
+      }
+      return EntityRef.None;
+    }
+
+    /// <summary>보병을 고른 채 진지를 누르면 들어가고, 다른 유닛이면 공격한다. 고른 유닛이 없으면 건물을 고른다.</summary>
+    DeterministicCommand TapCity(Frame frame, EntityRef city) {
+      var map = frame.FindAsset<MapSpec>(frame.Map.UserAsset);
+      var garrison = map.CityBuildings[frame.Get<CityBuilding>(city).Index].Garrison;
+      var units = SelectedUnits(frame);
+      var infantry = units.Where(e => CitySystem.IsInfantry(frame.FindAsset(frame.Get<Unit>(e).Spec))).ToList();
+      if (garrison && infantry.Count > 0) {
+        return new EnterGarrisonCommand { Units = infantry.ToArray(), Building = city };
+      }
+      if (units.Count > 0) {
+        return new AttackTargetCommand { Units = units.ToArray(), Target = city };
+      }
+      Selection.SelectBuilding(city);
+      return null;
+    }
+
     public static EntityRef PickNode(Frame frame, Vector3 world) {
       var point = ToFP(world);
       foreach (var pair in frame.GetComponentIterator<ResourceNode>()) {
@@ -89,6 +116,11 @@ namespace FactoryWars.View {
           return null;
         }
         return Attack(frame, player, unit);
+      }
+
+      var city = PickCity(frame, world);
+      if (city != EntityRef.None) {
+        return TapCity(frame, city);
       }
 
       var building = PickBuilding(frame, world);

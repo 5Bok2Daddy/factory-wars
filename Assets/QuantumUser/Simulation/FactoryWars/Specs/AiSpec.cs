@@ -35,6 +35,14 @@ namespace Quantum {
     public int HighGroundUnits;
     /// <summary>고지대에 올릴 유닛의 최소 사거리.</summary>
     public FP HighGroundMinRange;
+    /// <summary>보병을 넣을 진지 건물 수.</summary>
+    public int GarrisonBuildings;
+    /// <summary>측면 웨이브가 지름길 도시 건물을 부술 확률.</summary>
+    public FP ShortcutChance;
+    /// <summary>적 진지를 화염방사·범위 유닛으로 공격한다.</summary>
+    public bool BreakGarrisons;
+    /// <summary>앞마당이 공격받을 때 근처 쓰러지는 건물을 쓰러뜨린다.</summary>
+    public bool ToppleDefense;
     /// <summary>일하는 노드가 반입 지점에서 이보다 멀면 노드 옆에 집하장을 짓는다.</summary>
     public FP ExpandDistance;
     /// <summary>시작 사령부를 포함한 사령부 상한.</summary>

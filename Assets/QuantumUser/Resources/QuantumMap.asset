@@ -42,6 +42,9 @@ MonoBehaviour:
       Value: 515251468633137141
   Regions:
   - MainArea
+  - City0
+  - City1
+  - Fall1
   StaticColliders2D: []
   StaticColliders3D: []
   MapEntities: []

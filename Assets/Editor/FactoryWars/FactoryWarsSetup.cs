@@ -391,6 +391,10 @@ namespace FactoryWars.EditorTools {
       ai.BarricadeChance = id == "ai_normal" ? N(0.3) : 0;
       ai.HighGroundUnits = id == "ai_normal" ? 3 : 0;
       ai.HighGroundMinRange = 7;
+      ai.GarrisonBuildings = id == "ai_normal" ? 2 : 1;
+      ai.ShortcutChance = id == "ai_normal" ? N(0.25) : 0;
+      ai.BreakGarrisons = id == "ai_normal";
+      ai.ToppleDefense = id == "ai_normal";
       ai.MaxProcessors = maxProcessors;
       ai.SteelTarget = 500;
       ai.IronSurplus = 300;
@@ -485,6 +489,25 @@ namespace FactoryWars.EditorTools {
       rules.RoadSpeedMultiplier = N(1.1);
       rules.FordSpeedMultiplier = N(0.75);
       rules.BaseAlertSeconds = 30;
+      rules.CityKinds = new[] {
+        new CityKindSpec { Health = 1500, Height = 7 },
+        new CityKindSpec { Health = 3000, Height = 12 },
+        new CityKindSpec { Health = 5000, Height = 9 },
+        new CityKindSpec { Health = 3000, Height = 18 },
+      };
+      rules.CityAreaMultiplier = N(1.5);
+      rules.GarrisonFlameMultiplier = 2;
+      rules.RubbleSpeedMultiplier = N(0.7);
+      rules.CollapseRadius = 6;
+      rules.CollapseDamage = 200;
+      rules.GarrisonEjectFraction = N(0.25);
+      rules.ToppleDamage = 600;
+      rules.TopplePushMargin = N(1.5);
+      rules.GarrisonCapacity = 3;
+      rules.GarrisonRangeBonus = 2;
+      rules.GarrisonEnterDistance = 2;
+      rules.CityCrackedFraction = N(0.6);
+      rules.CityBurningFraction = N(0.3);
       rules.MinDiplomacyPlayers = 3;
       rules.ProposalSeconds = 30;
       rules.ProposalCost = 300;
@@ -562,6 +585,11 @@ namespace FactoryWars.EditorTools {
       testMap.HighGrounds = new[] { Circle(42, 24, 6) };
       testMap.Roads = new[] { Rect(10, -44, 20, 3) };
       testMap.Fords = new[] { Rect(10, -36, 20, 2) };
+      // 도시 시험용: 진지 하나와 쓰러지는 건물 하나.
+      testMap.CityBuildings = new[] {
+        new CityBuildingPlacement { Shape = Rect(-10, -24, 4, 4), Kind = 0, Garrison = true, Region = "City0" },
+        new CityBuildingPlacement { Shape = Rect(14, -12, 3.5, 3.5), Kind = 3, Topples = true, FallZone = Rect(14, -25, 9, 3.5, 90), Region = "City1", FallRegion = "Fall1" },
+      };
       BakeGroundGrid(testMap);
       EditorUtility.SetDirty(testMap);
 
@@ -655,6 +683,7 @@ namespace FactoryWars.EditorTools {
       var everyone = (1 << def.Players) - 1;
       sites.AddRange(def.CenterExpansions.Select(site => new ExpansionSite { Kind = site.Kind, Position = site.Position, SeatMask = everyone }));
       spec.Expansions = sites.ToArray();
+      CityLayout(def, spec);
       BakeGroundGrid(spec);
     }
 
@@ -676,6 +705,20 @@ namespace FactoryWars.EditorTools {
             ground = MapSpec.GroundFord;
           }
           spec.GroundGrid[z * size + x] = (byte)ground;
+        }
+      }
+      var cities = spec.CityBuildings ?? new CityBuildingPlacement[0];
+      spec.CityGrid = new short[cities.Length > 0 ? size * size : 0];
+      for (var i = 0; i < cities.Length; i++) {
+        var reach = cities[i].Shape.Reach.AsFloat;
+        var center = cities[i].Shape.Center;
+        for (var z = 0; z < size; z++) {
+          for (var x = 0; x < size; x++) {
+            var point = new FPVector3(spec.BoundsMin.X + x * Cell + 1, 0, spec.BoundsMin.Y + z * Cell + 1);
+            if (Mathf.Abs((point.X - center.X).AsFloat) <= reach && Mathf.Abs((point.Z - center.Z).AsFloat) <= reach && cities[i].Shape.Distance(point) <= FP._0) {
+              spec.CityGrid[z * size + x] = (short)(i + 1);
+            }
+          }
         }
       }
     }
@@ -733,6 +776,12 @@ namespace FactoryWars.EditorTools {
       }
       foreach (var barricade in spec.Barricades ?? new BarricadePlacement[0]) {
         AddRegion(root, "Barricade", barricade.Shape, BarricadeArea, barricade.Region);
+      }
+      foreach (var city in spec.CityBuildings ?? new CityBuildingPlacement[0]) {
+        AddRegion(root, "City", city.Shape, BarricadeArea, city.Region);
+        if (city.Topples) {
+          AddRegion(root, "Fall", city.FallZone, BarricadeArea, city.FallRegion);
+        }
       }
     }
 

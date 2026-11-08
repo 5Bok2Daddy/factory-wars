@@ -23,13 +23,36 @@ namespace FactoryWars.View {
 
     public static float ClampHeight(float height) => Mathf.Clamp(height, MinHeight, MaxHeight);
 
+    /// <summary>경계 밖이 화면 가로의 10%를 넘지 않는 범위. 화면 가로 절반의 80%만큼 경계 안쪽으로 초점을 묶는다.</summary>
+    const float EdgeShare = 0.8f;
+
+    float HalfWidthAt(float height) {
+      var camera = GetComponent<Camera>();
+      var distance = height / Mathf.Sin(Pitch * Mathf.Deg2Rad);
+      return distance * Mathf.Tan(VisualProfile.Current.FieldOfView * 0.5f * Mathf.Deg2Rad) * Mathf.Max(camera.aspect, 1f);
+    }
+
+    /// <summary>맵 가로를 다 보여 주는 높이. 이보다 높이 올라가면 경계 밖이 넓게 보인다.</summary>
+    public float FitHeight() {
+      var width = BoundsMax.x - BoundsMin.x;
+      var perUnit = HalfWidthAt(1f);
+      return width * 0.5f / EdgeShare / Mathf.Max(perUnit, 0.0001f);
+    }
+
+    Vector2 ClampToView(Vector2 focus) {
+      var half = HalfWidthAt(Height) * EdgeShare;
+      var depth = half / Mathf.Max(GetComponent<Camera>().aspect, 1f) / Mathf.Sin(Pitch * Mathf.Deg2Rad);
+      float Axis(float value, float min, float max, float reach) => max - min <= reach * 2 ? (min + max) / 2 : Mathf.Clamp(value, min + reach, max - reach);
+      return new Vector2(Axis(focus.x, BoundsMin.x, BoundsMax.x, half), Axis(focus.y, BoundsMin.y, BoundsMax.y, depth));
+    }
+
     public void MoveTo(Vector2 focus) {
       Focus = ClampFocus(focus, BoundsMin, BoundsMax);
       Apply();
     }
 
     public void Zoom(float scale) {
-      Height = ClampHeight(Height / Mathf.Max(scale, 0.01f));
+      Height = Mathf.Min(ClampHeight(Height / Mathf.Max(scale, 0.01f)), Mathf.Max(MinHeight, FitHeight()));
       Apply();
     }
 
@@ -52,6 +75,7 @@ namespace FactoryWars.View {
 
     public void Apply() {
       GetComponent<Camera>().fieldOfView = VisualProfile.Current.FieldOfView;
+      Focus = ClampToView(ClampFocus(Focus, BoundsMin, BoundsMax));
       var back = Height / Mathf.Tan(Pitch * Mathf.Deg2Rad);
       transform.SetPositionAndRotation(new Vector3(Focus.x, Height, Focus.y - back), Quaternion.Euler(Pitch, 0, 0));
     }
