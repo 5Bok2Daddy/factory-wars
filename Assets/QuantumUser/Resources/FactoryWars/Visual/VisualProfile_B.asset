@@ -15,10 +15,10 @@ MonoBehaviour:
   FieldOfView: 35
   Pitch: 55
   DefaultHeight: 95
-  MinHeight: 57.000004
-  MaxHeight: 228.00002
-  UnitScale: 1.4
-  BuildingBody: 0.75
+  MinHeight: 57
+  MaxHeight: 228
+  UnitScale: 1.2
+  BuildingBody: 0.8
   PlateScale: 1.05
   PlateHeight: 0.15
   SunColor: {r: 1, g: 0.95686275, b: 0.8784314, a: 1}
@@ -28,12 +28,12 @@ MonoBehaviour:
   AmbientSky: {r: 0.52, g: 0.6, b: 0.72, a: 1}
   AmbientEquator: {r: 0.44, g: 0.44, b: 0.42, a: 1}
   AmbientGround: {r: 0.25, g: 0.2, b: 0.16, a: 1}
-  ShadowStrength: 1
-  Tone: 1
-  BloomIntensity: 0.6
+  ShadowStrength: 0.9
+  Tone: 0
+  BloomIntensity: 0.8
   BloomThreshold: 1.2
-  BloomScatter: 0.68
-  Saturation: 20
+  BloomScatter: 0.6
+  Saturation: 12
   Contrast: 10
   Vignette: 0.1
   Ssao: 1
@@ -41,7 +41,7 @@ MonoBehaviour:
   SsaoRadius: 0.4
   GlowBoost: 1
   Outline: 1
-  OutlineWidth: 0.07
+  OutlineWidth: 0.06
   OutlineColor: {r: 0.11764706, g: 0.101960786, b: 0.08627451, a: 1}
   PlateauHeight: 5
   CliffLayers: 3
@@ -55,6 +55,13 @@ MonoBehaviour:
   ZoneColors: 1
   WaterDeep: {r: 0.12, g: 0.27, b: 0.36, a: 1}
   WaterShallow: {r: 0.36, g: 0.62, b: 0.62, a: 1}
+  VertexShade: 0
+  ShadeGradient: 0.16
+  ShadeAo: 0.3
+  ShadeAoHeight: 1.2
+  ShadeNoise: 0.07
+  Dressing: {fileID: 0}
+  Boundary: 0
   TreeDensity: 1
   ConiferRatio: 0.75
   LeafSet: 1

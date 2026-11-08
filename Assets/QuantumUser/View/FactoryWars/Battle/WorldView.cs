@@ -73,10 +73,10 @@ namespace FactoryWars.View {
     }
 
     void BuildStatic() {
-      var ground = new MeshKit();
+      var ground = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
       TerrainKit.Ground(ground, _map, 3);
       MeshObject(_root, "Ground", ground.ToMesh("world_ground"), false);
-      var features = new MeshKit();
+      var features = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
       TerrainKit.Features(features, _map);
       if (features.TriangleCount > 0) {
         MeshObject(_root, "Features", features.ToMesh("world_features"), true);
@@ -184,7 +184,7 @@ namespace FactoryWars.View {
         return;
       }
       forest.Step = step;
-      var kit = new MeshKit();
+      var kit = new MeshKit { Shading = MeshKit.ShadeMode.Object };
       if (forest.Shape.IsCircle) {
         ForestKit.Grove(kit, forest.Shape.Radius.AsFloat, forest.Seed, step / (float)ForestSteps);
       } else {

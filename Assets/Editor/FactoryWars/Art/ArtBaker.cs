@@ -54,14 +54,16 @@ namespace FactoryWars.EditorTools {
 
     static Texture2D SaveTexture(string name, Color32[] pixels, bool linear = false) {
       var path = $"{ResourceRoot}/{name}.png";
-      var texture = new Texture2D(ArtPalette.Size, 1, TextureFormat.RGBA32, false);
-      texture.SetPixels32(pixels);
+      var texture = new Texture2D(ArtPalette.Size, ArtPalette.Rows, TextureFormat.RGBA32, false);
+      var shade = name.StartsWith("PaletteP") || name == "PaletteNeutral";
+      texture.SetPixels32(ArtPalette.Expand(pixels, shade));
       texture.Apply();
       File.WriteAllBytes(path, texture.EncodeToPNG());
       Object.DestroyImmediate(texture);
       AssetDatabase.ImportAsset(path);
       var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-      importer.filterMode = FilterMode.Point;
+      importer.filterMode = FilterMode.Bilinear;
+      importer.anisoLevel = 0;
       importer.mipmapEnabled = false;
       importer.wrapMode = TextureWrapMode.Clamp;
       importer.textureCompression = TextureImporterCompression.Uncompressed;
@@ -222,7 +224,7 @@ namespace FactoryWars.EditorTools {
     }
 
     static GameObject AddPart(Transform parent, string id, string name, Vector3 position, Material material, System.Action<MeshKit> build) {
-      var kit = new MeshKit();
+      var kit = new MeshKit { Shading = MeshKit.ShadeMode.Object };
       build(kit);
       var item = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
       item.transform.SetParent(parent, false);
@@ -305,7 +307,7 @@ namespace FactoryWars.EditorTools {
     }
 
     static void AddForest(Transform root, Vector3 position, float remaining, string name) {
-      var kit = new MeshKit();
+      var kit = new MeshKit { Shading = MeshKit.ShadeMode.Object };
       ForestKit.Forest(kit, 7f, 4f, 11, remaining);
       var item = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
       item.transform.SetParent(root, false);

@@ -2,23 +2,36 @@ namespace FactoryWars.View {
   using UnityEngine;
 
   /// <summary>
-  /// 룩 개발(항목 19A)에서 고른 후보 세 개. 에디터 설정이 이 값으로 프로필 에셋을 만든다.
-  /// 1안이 기본 프로필(Resources/FactoryWars/Visual/VisualProfile)이고, 2안·3안은 VisualProfile_B·_C로 남긴다.
-  /// 바꿔 끼우기: VisualProfile.Use("B") 또는 개발 빌드 설정 메뉴. 값의 근거는 LOOKDEV.md.
+  /// 룩 개발(항목 19A)의 완성 후보 세 개. 에디터 설정(Tools/Factory Wars/Build Visual Profiles)이 이 값으로 프로필 에셋을 다시 쓴다.
+  /// A가 기본 프로필(Resources/FactoryWars/Visual/VisualProfile)이고, B·C는 VisualProfile_B·VisualProfile_C로 남는다.
+  /// 바꿔 끼우기: VisualProfile.Use("B"), 개발 빌드 설정 화면의 "화면" 버튼. 값의 근거는 LOOKDEV.md.
   /// </summary>
   public static class VisualPresets {
     public static readonly string[] Names = { "A", "B", "C" };
 
     public static string Title(string name) {
       switch (name) {
-        case "B": return "2안 근접 강조";
-        case "C": return "3안 넓은 시야";
-        default: return "1안 전술 디오라마";
+        case "B": return "B 스타일라이즈드";
+        case "C": return "C 성능 우선";
+        default: return "A AoW3 전장";
       }
     }
 
-    /// <summary>세 안 모두에 공통인 값. aow3-ref 방향: 따뜻한 해, 진한 그림자, 층진 대지, 외곽선, 단순한 바닥.</summary>
-    static void Common(VisualProfile p) {
+    /// <summary>
+    /// A: aow3-ref 방향. 따뜻한 오후 해, 좁은 시야각, 층진 바위 절벽과 숲 경계, 정점 그라데이션·구운 AO·색 노이즈.
+    /// 외곽선·채도 강화·블룸 강화는 쓰지 않는다(19A 지시).
+    /// </summary>
+    static void Aow3(VisualProfile p) {
+      p.FieldOfView = 30f;
+      p.Pitch = 50f;
+      p.DefaultHeight = 104f;
+      p.MinHeight = 62f;
+      p.MaxHeight = 250f;
+      p.UnitScale = 1.2f;
+      p.BuildingBody = 0.78f;
+      p.PlateScale = 1.05f;
+      p.PlateHeight = 0.15f;
+
       p.SunColor = new Color32(0xFF, 0xF4, 0xE0, 0xFF);
       p.SunIntensity = 1.2f;
       p.SunElevation = 40f;
@@ -26,70 +39,76 @@ namespace FactoryWars.View {
       p.AmbientSky = new Color(0.52f, 0.6f, 0.72f);
       p.AmbientEquator = new Color(0.44f, 0.44f, 0.42f);
       p.AmbientGround = new Color(0.25f, 0.2f, 0.16f);
-      p.ShadowStrength = 1f;
+      p.ShadowStrength = 0.9f;
+
       p.Tone = ToneMode.Neutral;
-      p.Saturation = 12f;
-      p.Contrast = 10f;
+      p.BloomIntensity = 0.5f;
+      p.BloomThreshold = 1.2f;
+      p.BloomScatter = 0.6f;
+      p.Saturation = 0f;
+      p.Contrast = 6f;
       p.Vignette = 0.1f;
       p.Ssao = true;
       p.SsaoIntensity = 0.6f;
       p.SsaoRadius = 0.4f;
-      p.BloomIntensity = 0.6f;
-      p.BloomThreshold = 1.2f;
-      p.Outline = OutlineMode.Hull;
+      p.GlowBoost = 1f;
+
+      p.Outline = OutlineMode.None;
       p.OutlineWidth = 0.05f;
+
+      p.VertexShade = true;
+      p.ShadeGradient = 0.16f;
+      p.ShadeAo = 0.3f;
+      p.ShadeAoHeight = 1.2f;
+      p.ShadeNoise = 0.07f;
+
       p.PlateauHeight = 5f;
       p.CliffLayers = 3;
       p.Jagged = 0.5f;
-      p.WaterDepth = 2.5f;
       p.HighGroundHeight = 2.5f;
+      p.WaterDepth = 2.5f;
       p.Outside = OutsideMode.Dark;
+      p.Boundary = 1;
       p.GroundPalette = 1;
-      p.ZoneColors = true;
       p.PatchSize = 18f;
-      p.LeafSet = 1;
+      p.RoadStyle = 0;
+      p.ZoneColors = true;
+
+      p.TreeDensity = 1f;
       p.ConiferRatio = 0.75f;
+      p.LeafSet = 1;
       p.Bushes = false;
+
       p.NoBuild = NoBuildMode.Stripes;
       p.NoBuildAlways = false;
-      p.UnitScale = 1.2f;
-      p.BuildingBody = 0.78f;
-      p.PlateScale = 1.05f;
-    }
-
-    static void Camera(VisualProfile p, float fov, float pitch, float height) {
-      p.FieldOfView = fov;
-      p.Pitch = pitch;
-      p.DefaultHeight = height;
-      p.MinHeight = height * 0.6f;
-      p.MaxHeight = height * 2.4f;
     }
 
     public static void Apply(VisualProfile p, string name) {
-      Common(p);
+      Aow3(p);
       switch (name) {
         case "B":
-          // 2안: 더 가깝고 높은 각도, 큰 유닛, 굵은 외곽선, ACES.
-          Camera(p, 35f, 55f, 95f);
-          p.UnitScale = 1.4f;
-          p.BuildingBody = 0.75f;
-          p.OutlineWidth = 0.07f;
-          p.Tone = ToneMode.Aces;
-          p.Saturation = 20f;
+          // B: 08_target_style 방향 비교용. 평면 색 + 외곽선, 채도·대비 강화, 조금 더 높은 각도.
+          p.FieldOfView = 35f;
+          p.Pitch = 55f;
+          p.DefaultHeight = 95f;
+          p.MinHeight = 57f;
+          p.MaxHeight = 228f;
+          p.BuildingBody = 0.8f;
+          p.Outline = OutlineMode.Hull;
+          p.OutlineWidth = 0.06f;
+          p.Saturation = 12f;
+          p.Contrast = 10f;
+          p.BloomIntensity = 0.8f;
+          p.VertexShade = false;
+          p.Boundary = 0;
           break;
         case "C":
-          // 3안: 넓게 보는 시야, 외곽선 없음, 안개, 낮은 대지.
-          Camera(p, 45f, 50f, 68f);
-          p.BuildingBody = 0.85f;
-          p.Outline = OutlineMode.None;
-          p.Outside = OutsideMode.Fog;
-          p.PlateauHeight = 3f;
+          // C: 저사양 폰 기준. A에서 SSAO·비네트·블룸을 끄고 그림자를 약하게. 정점 음영은 비용이 없어 유지한다.
+          p.Ssao = false;
+          p.Vignette = 0f;
+          p.BloomIntensity = 0f;
+          p.ShadowStrength = 0.75f;
           p.CliffLayers = 2;
-          p.WaterDepth = 2f;
-          p.HighGroundHeight = 1.5f;
-          break;
-        default:
-          Camera(p, 30f, 50f, 104f);
           break;
       }
     }

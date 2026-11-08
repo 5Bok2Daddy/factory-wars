@@ -62,6 +62,35 @@ namespace FactoryWars.View {
 
     public static int CellCount => Cells.Length;
 
+    /// <summary>밝기 단계 줄 수. 홀수라 가운데 줄 중심이 정확히 V 0.5(원래 색)다.</summary>
+    public const int Rows = 17;
+    public const float DarkestShade = 0.55f;
+    public const float BrightestShade = 1.15f;
+
+    /// <summary>V 좌표 → 밝기 배율. 아래 절반은 어둡게, 위 절반은 밝게.</summary>
+    public static float ShadeAt(float v) => v < 0.5f ? Mathf.Lerp(DarkestShade, 1f, v / 0.5f) : Mathf.Lerp(1f, BrightestShade, (v - 0.5f) / 0.5f);
+
+    /// <summary>밝기 배율 → V 좌표. 끝 줄의 중심을 넘지 않는다.</summary>
+    public static float RowFor(float shade) {
+      shade = Mathf.Clamp(shade, DarkestShade, BrightestShade);
+      var v = shade < 1f ? 0.5f * (shade - DarkestShade) / (1f - DarkestShade) : 0.5f + 0.5f * (shade - 1f) / (BrightestShade - 1f);
+      return Mathf.Clamp(v, 0.5f / Rows, 1f - 0.5f / Rows);
+    }
+
+    /// <summary>한 줄짜리 칸 색을 밝기 단계 줄로 늘린다. shade가 false면(발광·금속 맵) 줄마다 같다. 발광 칸은 어둡게 하지 않는다.</summary>
+    public static Color32[] Expand(Color32[] row, bool shade) {
+      var pixels = new Color32[Size * Rows];
+      for (var r = 0; r < Rows; r++) {
+        var scale = shade ? ShadeAt((r + 0.5f) / Rows) : 1f;
+        for (var i = 0; i < Size; i++) {
+          var c = row[i];
+          var s = shade && i < Cells.Length && IsGlow((Swatch)i) == false ? scale : 1f;
+          pixels[r * Size + i] = new Color32((byte)Mathf.Min(255, c.r * s), (byte)Mathf.Min(255, c.g * s), (byte)Mathf.Min(255, c.b * s), c.a);
+        }
+      }
+      return pixels;
+    }
+
     public static Vector2 Uv(Swatch swatch) => new Vector2(((int)swatch + 0.5f) / Size, 0.5f);
 
     public static bool IsGlow(Swatch swatch) => swatch == Swatch.GlowCyan || swatch == Swatch.GlowOrange || swatch == Swatch.GlowCrystal || swatch == Swatch.GlowRed;
@@ -450,7 +479,58 @@ namespace FactoryWars.View {
     }
 
     /// <summary>서브메쉬는 하나다. 색은 UV로 칸을 고른다.</summary>
+    public enum ShadeMode { None, Object, Ground }
+
+    /// <summary>ToMesh에서 정점 밝기를 굽는 방식. 프로필의 VertexShade가 꺼져 있으면 아무것도 하지 않는다.</summary>
+    public ShadeMode Shading = ShadeMode.None;
+
+    /// <summary>
+    /// 물체: 아래→위 그라데이션, 바닥 접촉부 AO, 아래를 향한 면 어둡게.
+    /// 바닥: 월드 좌표 낮은 주파수 노이즈, 높은 층일수록 조금 밝게, 강바닥 쪽은 어둡게.
+    /// </summary>
+    void BakeShade() {
+      var profile = VisualProfile.Current;
+      if (Shading == ShadeMode.None || profile.VertexShade == false || _vertices.Count == 0) {
+        return;
+      }
+      var min = float.MaxValue;
+      var max = float.MinValue;
+      foreach (var v in _vertices) {
+        min = Mathf.Min(min, v.y);
+        max = Mathf.Max(max, v.y);
+      }
+      var span = Mathf.Max(0.01f, max - min);
+      for (var i = 0; i < _vertices.Count; i++) {
+        var uv = _uvs[i];
+        var cell = Mathf.FloorToInt(uv.x * ArtPalette.Size);
+        if (cell >= 0 && cell < ArtPalette.CellCount && ArtPalette.IsGlow((Swatch)cell)) {
+          continue;
+        }
+        var p = _vertices[i];
+        var shade = 1f;
+        if (Shading == ShadeMode.Object) {
+          shade += profile.ShadeGradient * ((p.y - min) / span - 0.5f);
+          var lift = p.y - min;
+          if (lift < profile.ShadeAoHeight) {
+            shade -= profile.ShadeAo * (1f - lift / profile.ShadeAoHeight);
+          }
+          if (_normals[i].y < -0.5f) {
+            shade -= 0.1f;
+          }
+        } else {
+          var noise = Mathf.PerlinNoise(p.x * 0.031f + 17.3f, p.z * 0.031f + 5.1f) * 0.7f + Mathf.PerlinNoise(p.x * 0.11f + 3.7f, p.z * 0.11f + 41f) * 0.3f;
+          shade += profile.ShadeNoise * (noise * 2f - 1f);
+          shade += 0.035f * Mathf.Clamp(p.y, 0f, 8f);
+          if (p.y < -0.2f) {
+            shade -= 0.06f * Mathf.Min(-p.y, 4f);
+          }
+        }
+        _uvs[i] = new Vector2(uv.x, ArtPalette.RowFor(shade));
+      }
+    }
+
     public Mesh ToMesh(string name) {
+      BakeShade();
       var mesh = new Mesh { name = name, indexFormat = _vertices.Count > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16 };
       mesh.SetVertices(_vertices);
       mesh.SetNormals(_normals);

@@ -75,7 +75,7 @@ namespace FactoryWars.Tests {
       foreach (var name in VisualPresets.Names) {
         yield return ShootCandidate(name, cells, CellWidth * 2, CellHeight * 2, "pc1080");
       }
-      SaveSheet("final_compare", "최종 후보 비교: 1안 전술 디오라마 / 2안 근접 강조 / 3안 넓은 시야 (보통 품질, 7:30)", cells, 5);
+      SaveSheet("final_compare", "최종 후보 비교: A AoW3 전장 / B 스타일라이즈드 / C 성능 우선 (보통 품질, 7:30)", cells, 5);
       foreach (var (texture, _) in cells) {
         Object.Destroy(texture);
       }

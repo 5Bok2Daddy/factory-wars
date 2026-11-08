@@ -81,6 +81,25 @@ namespace FactoryWars.View {
     public Color WaterDeep = new Color(0.12f, 0.27f, 0.36f);
     public Color WaterShallow = new Color(0.36f, 0.62f, 0.62f);
 
+    [Header("정점 음영 (구운 그라데이션·AO·색 노이즈)")]
+    /// <summary>팔레트 텍스처의 세로 줄이 밝기 단계다. 메쉬를 만들 때 정점마다 밝기를 정해 V 좌표로 굽는다.</summary>
+    public bool VertexShade = false;
+    /// <summary>물체 아래→위 밝기 차이(전체 폭).</summary>
+    public float ShadeGradient = 0.16f;
+    /// <summary>바닥 접촉부 어둡게 하는 세기와 높이.</summary>
+    public float ShadeAo = 0.3f;
+    public float ShadeAoHeight = 1.2f;
+    /// <summary>바닥·절벽의 낮은 주파수 밝기 변주.</summary>
+    public float ShadeNoise = 0.07f;
+
+    [Header("외부 모델 (항목 19B)")]
+    /// <summary>비어 있으면 절차 생성 메쉬, 있으면 이 맵의 Kenney 모델로 자연물·도시 구조물을 그린다.</summary>
+    public KenneyAssetMap Dressing;
+
+    [Header("맵 경계")]
+    /// <summary>0 고층 블록 벽, 1 층진 바위 절벽과 숲.</summary>
+    public int Boundary = 0;
+
     [Header("숲·바위")]
     public float TreeDensity = 1f;
     public float ConiferRatio = 1f;

@@ -1,5 +1,6 @@
 namespace FactoryWars.View {
   using System.Collections.Generic;
+  using Photon.Deterministic;
   using Quantum;
   using Quantum.FactoryWars;
   using UnityEngine;
@@ -97,6 +98,7 @@ namespace FactoryWars.View {
         }
         kit.EndShade();
       }
+      kit.Shading = MeshKit.ShadeMode.Object;
       var mesh = kit.ToMesh($"city_{kind}_{stage}");
       Meshes[(kind, stage)] = mesh;
       return mesh;
@@ -180,6 +182,10 @@ namespace FactoryWars.View {
 
     /// <summary>맵 경계 밖을 파괴 불가 고층 건물 벽으로 막는다. 경계 안은 그대로다.</summary>
     void BuildBoundary() {
+      if (VisualProfile.Current.Boundary == 1) {
+        BuildRockBoundary();
+        return;
+      }
       var min = _map.BoundsMin.X.AsFloat;
       var max = _map.BoundsMax.X.AsFloat;
       var kit = new MeshKit();
@@ -202,6 +208,52 @@ namespace FactoryWars.View {
         }
       }
       Item(_root, "Boundary", kit.ToMesh("city_boundary"), false);
+    }
+
+    /// <summary>
+    /// 맵 경계를 층진 바위 절벽과 숲으로 마감한다(aow3-ref 방향). 판정은 그대로 경계 밖이다.
+    /// 카메라 쪽(남쪽)은 낮게, 먼 쪽은 높게 둔다. 절벽 위에는 침엽수를 듬성듬성 심는다.
+    /// </summary>
+    void BuildRockBoundary() {
+      var minX = _map.BoundsMin.X.AsFloat;
+      var maxX = _map.BoundsMax.X.AsFloat;
+      var minZ = _map.BoundsMin.Y.AsFloat;
+      var maxZ = _map.BoundsMax.Y.AsFloat;
+      const float Depth = 14f;
+      const float Segment = 22f;
+      var rock = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
+      var trees = new MeshKit { Shading = MeshKit.ShadeMode.Object };
+      var index = 0;
+      void Side(Vector2 from, Vector2 to, Vector2 outward, float low, float high) {
+        var length = (to - from).magnitude;
+        var count = Mathf.Max(1, Mathf.RoundToInt(length / Segment));
+        var along = (to - from) / count;
+        for (var i = 0; i < count; i++, index++) {
+          var mid = from + along * (i + 0.5f) + outward * (Depth * 0.5f);
+          var yaw = -Mathf.Atan2(along.y, along.x) * Mathf.Rad2Deg;
+          var height = Mathf.Lerp(low, high, MeshKit.Hash(71, index));
+          var shape = new MapShape {
+            Center = new FPVector3(FP.FromFloat_UNSAFE(mid.x), FP._0, FP.FromFloat_UNSAFE(mid.y)),
+            HalfLength = FP.FromFloat_UNSAFE(along.magnitude * 0.5f + 3f),
+            HalfWidth = FP.FromFloat_UNSAFE(Depth * 0.5f + 1f),
+            Yaw = FP.FromFloat_UNSAFE(yaw),
+          };
+          TerrainKit.Plateau(rock, shape, 300 + index, height, 3, 0.9f, false);
+          for (var t = 0; t < 5; t++) {
+            if (MeshKit.Hash(index, 40 + t) < 0.35f) {
+              continue;
+            }
+            var spot = mid + along.normalized * ((MeshKit.Hash(index, 50 + t) - 0.5f) * along.magnitude * 0.8f) + outward * ((MeshKit.Hash(index, 60 + t) - 0.3f) * Depth * 0.5f);
+            ForestKit.Tree(trees, new Vector3(spot.x, height * 0.97f, spot.y), index * 17 + t, ForestKit.TreeState.Full);
+          }
+        }
+      }
+      Side(new Vector2(minX - Depth, minZ), new Vector2(maxX + Depth, minZ), Vector2.down, 2.5f, 4f);
+      Side(new Vector2(minX - Depth, maxZ), new Vector2(maxX + Depth, maxZ), Vector2.up, 9f, 14f);
+      Side(new Vector2(minX, minZ), new Vector2(minX, maxZ), Vector2.left, 5f, 9f);
+      Side(new Vector2(maxX, minZ), new Vector2(maxX, maxZ), Vector2.right, 5f, 9f);
+      Item(_root, "Boundary", rock.ToMesh("city_boundary_rock"), false);
+      Item(_root, "BoundaryTrees", trees.ToMesh("city_boundary_trees"), true);
     }
 
     public void Update(Frame frame, PlayerRef viewer, float deltaTime) {
