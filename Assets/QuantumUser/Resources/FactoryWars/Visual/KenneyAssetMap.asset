@@ -138,7 +138,7 @@ MonoBehaviour:
     Yaw: {x: 0, y: 360}
     SnapYaw90: 0
     Fit: 0
-    Shadows: 1
+    Shadows: 0
     LowKeep: 1
   - Kind: 7
     Variants:
@@ -350,7 +350,7 @@ MonoBehaviour:
     Yaw: {x: 0, y: 360}
     SnapYaw90: 1
     Fit: 0
-    Shadows: 1
+    Shadows: 0
     LowKeep: 0.6
   - Kind: 22
     Variants:

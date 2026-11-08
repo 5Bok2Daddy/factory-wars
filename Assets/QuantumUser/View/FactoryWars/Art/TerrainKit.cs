@@ -485,7 +485,7 @@ namespace FactoryWars.View {
     const float BankOffset = 2f;
     // 기둥이 강가에서 이보다 가까우면 안쪽 굽이에서 오프셋이 접힌 것이다.
     public const float BankClearance = 1.2f;
-    public const float FenceHeight = 2.7f;
+    public const float FenceHeight = 3.7f;
 
     static RiverPoint Sample(List<RiverPoint> path, float[] lengths, float s) {
       var i = 0;
@@ -565,30 +565,31 @@ namespace FactoryWars.View {
       return pieces;
     }
 
-    /// <summary>묵직한 금속 기둥과 가로 패널. 팀 색은 패널 테두리에만 쓴다. 경고등은 따로 모아 깜빡인다.</summary>
+    /// <summary>방벽처럼 두꺼운 금속 기둥(굵기 2배, 높이 약 3.5m)과 가로 패널 3단. 팀 색은 패널 테두리에만 쓴다. 경고등은 따로 모아 깜빡인다.</summary>
     public static void Fence(MeshKit body, MeshKit lamps, FencePiece piece) {
       var delta = piece.To - piece.From;
       var length = delta.magnitude;
       var yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
       body.Push(piece.From, new Vector3(0, yaw, 0));
       lamps.Push(piece.From, new Vector3(0, yaw, 0));
+      const float Post = 3.3f;
       foreach (var z in new[] { 0f, length }) {
         body.Paint(Swatch.MetalDark);
-        body.Taper(new Vector3(0, 0, z), new Vector2(0.6f, 0.6f), new Vector2(0.42f, 0.42f), 2.3f);
+        body.Taper(new Vector3(0, 0, z), new Vector2(1.2f, 1.2f), new Vector2(0.84f, 0.84f), Post);
         body.Paint(Swatch.Metal);
-        body.Box(new Vector3(0, 2.34f, z), new Vector3(0.56f, 0.1f, 0.56f));
+        body.Box(new Vector3(0, Post + 0.06f, z), new Vector3(1f, 0.14f, 1f));
         body.Paint(Swatch.LampDark);
-        body.Cylinder(new Vector3(0, 2.39f, z), 0.17f, 0.08f, 6);
+        body.Cylinder(new Vector3(0, Post + 0.13f, z), 0.2f, 0.1f, 6);
         lamps.Glow(Swatch.GlowRed);
-        lamps.Dome(new Vector3(0, 2.46f, z), 0.2f, 0.24f, 6, 2);
+        lamps.Dome(new Vector3(0, Post + 0.23f, z), 0.24f, 0.28f, 6, 2);
       }
-      var inner = length - 0.4f;
-      foreach (var y in new[] { 0.72f, 1.62f }) {
+      var inner = length - 0.8f;
+      foreach (var y in new[] { 0.75f, 1.75f, 2.75f }) {
         body.Paint(Swatch.Armor);
-        body.Box(new Vector3(0, y, length / 2), new Vector3(0.16f, 0.62f, inner));
+        body.Box(new Vector3(0, y, length / 2), new Vector3(0.32f, 0.82f, inner));
         body.Team();
-        body.Box(new Vector3(0, y + 0.33f, length / 2), new Vector3(0.2f, 0.08f, inner));
-        body.Box(new Vector3(0, y - 0.33f, length / 2), new Vector3(0.2f, 0.08f, inner));
+        body.Box(new Vector3(0, y + 0.43f, length / 2), new Vector3(0.38f, 0.1f, inner));
+        body.Box(new Vector3(0, y - 0.43f, length / 2), new Vector3(0.38f, 0.1f, inner));
       }
       body.Pop();
       lamps.Pop();

@@ -74,6 +74,8 @@ namespace FactoryWars.View {
     }
 
     Transform _stage;
+    readonly List<(Vector3 Position, float Until)> _signals = new List<(Vector3, float)>();
+    float _signalAt;
 
     void Init(Frame frame) {
       _stage = new GameObject("Stage").transform;
@@ -90,6 +92,15 @@ namespace FactoryWars.View {
       Fx.transform.SetParent(_stage, false);
       World.Fx = Fx;
       Field = new BattlefieldView(_stage);
+      QuantumEvent.Subscribe<EventSupplyDropIncoming>(this, e => {
+        var spots = e.Game.Frames.Verified != null ? e.Game.Frames.Verified.FindAsset<MapSpec>(e.Game.Frames.Verified.Map.UserAsset).CrateSpots : null;
+        var until = Time.time + FactoryWarsUtil.Rules(e.Game.Frames.Verified).DropWarningSeconds.AsFloat + 3f;
+        for (var i = 0; spots != null && i < spots.Length; i++) {
+          if (spots[i].Seat < 0 && spots[i].Group == e.Group) {
+            _signals.Add((spots[i].Position.ToUnityVector3(), until));
+          }
+        }
+      });
       QuantumEvent.Subscribe<EventCratePicked>(this, e => Fx.Burst(e.Position.ToUnityVector3(), new Color(1f, 0.85f, 0.3f), 1f));
       QuantumEvent.Subscribe<EventCaptureChanged>(this, e => {
         var frame = e.Game.Frames.Verified;
@@ -126,6 +137,13 @@ namespace FactoryWars.View {
       World.Update(frame, dt);
       Field.Update(frame, dt);
       City.Update(frame, _controller != null ? _controller.Player : PlayerRef.None, dt);
+      if (_signals.Count > 0 && Time.time >= _signalAt) {
+        _signalAt = Time.time + 0.18f / Mathf.Max(0.35f, GraphicsQuality.FxScale);
+        _signals.RemoveAll(s => Time.time > s.Until || Field.CrateNear(s.Position));
+        foreach (var signal in _signals) {
+          Fx.Signal(signal.Position);
+        }
+      }
       World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
 
       _seen.Clear();

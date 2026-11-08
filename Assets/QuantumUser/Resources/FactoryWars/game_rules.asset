@@ -17,6 +17,8 @@ MonoBehaviour:
     Guid:
       Value: 463454056923249890
   NavMeshName: NavMesh
+  BuildingGap:
+    RawValue: 131072
   TruceSeconds: 420
   BarrierRegion: Barrier
   CaptureSeconds:

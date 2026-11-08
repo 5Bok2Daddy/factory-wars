@@ -196,6 +196,24 @@ namespace FactoryWars.View {
       Model.transform.localPosition *= profile.BuildingBody;
     }
 
+    static Mesh _blob;
+    GameObject _blobShadow;
+
+    /// <summary>품질 낮음에서 실시간 그림자 대신 유닛 아래에 까는 어두운 원판. 땅 높이에 붙고 돌지 않는다.</summary>
+    static Mesh BlobMesh() {
+      if (_blob == null) {
+        var kit = new MeshKit().Paint(Swatch.Outline);
+        const int Sides = 14;
+        for (var i = 0; i < Sides; i++) {
+          var a0 = i * Mathf.PI * 2f / Sides;
+          var a1 = (i + 1) * Mathf.PI * 2f / Sides;
+          kit.Tri(Vector3.zero, new Vector3(Mathf.Cos(a1), 0, Mathf.Sin(a1)), new Vector3(Mathf.Cos(a0), 0, Mathf.Sin(a0)), Vector3.up);
+        }
+        _blob = kit.ToMesh("blob_shadow");
+      }
+      return _blob;
+    }
+
     public void ApplyQuality() {
       OutlineKit.Refresh(Model);
       if (Entry.Unit == false) {
@@ -204,6 +222,19 @@ namespace FactoryWars.View {
       var mode = GraphicsQuality.UnitShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
       foreach (var renderer in Model.GetComponentsInChildren<Renderer>(true)) {
         renderer.shadowCastingMode = mode;
+      }
+      var blob = GraphicsQuality.UnitShadows == false;
+      if (blob && _blobShadow == null) {
+        _blobShadow = Marker("BlobShadow", transform, BlobMesh());
+        _blobShadow.transform.localPosition = Vector3.up * 0.03f;
+        var radius = Entry.RingRadius * ScaleOf(Entry) * 0.62f;
+        _blobShadow.transform.localScale = new Vector3(radius, 1f, radius);
+        var renderer = _blobShadow.GetComponent<MeshRenderer>();
+        renderer.sharedMaterial = ArtLook.NeutralMaterial;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+      }
+      if (_blobShadow != null) {
+        _blobShadow.SetActive(blob);
       }
     }
 

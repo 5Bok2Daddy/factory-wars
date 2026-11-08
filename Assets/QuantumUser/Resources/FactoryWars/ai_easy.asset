@@ -95,7 +95,7 @@ MonoBehaviour:
   SteelCap:
     RawValue: 98304000
   SiteGrid:
-    RawValue: 458752
+    RawValue: 524288
   SiteRings: 7
   StrategicDiplomacy: 0
   AcceptChance:

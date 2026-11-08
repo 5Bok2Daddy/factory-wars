@@ -41,6 +41,10 @@ namespace FactoryWars.View {
     readonly HashSet<EntityRef> _seen = new HashSet<EntityRef>();
     readonly List<EntityRef> _gone = new List<EntityRef>();
     static Mesh _crate;
+    static Mesh _parachute;
+    const float DropHeight = 16f;
+    const float DropSeconds = 2.4f;
+    readonly Dictionary<EntityRef, float> _falling = new Dictionary<EntityRef, float>();
     static Mesh _pole;
     static Mesh _flag;
     static Mesh _bar;
@@ -48,6 +52,18 @@ namespace FactoryWars.View {
 
     public int SiteCount => _sites.Count;
     public int CrateCount => _crates.Count;
+
+    /// <summary>낙하 지점 근처에 상자가 이미 내려왔는지. 신호 연기를 멈출 때 쓴다.</summary>
+    public bool CrateNear(Vector3 position) {
+      foreach (var crate in _crates.Values) {
+        var offset = crate.transform.position - position;
+        offset.y = 0f;
+        if (offset.sqrMagnitude < 16f) {
+          return true;
+        }
+      }
+      return false;
+    }
     public int WallCount => _walls.Count;
 
     public BattlefieldView(Transform parent) {
@@ -90,6 +106,46 @@ namespace FactoryWars.View {
       return _crate;
     }
 
+    /// <summary>주황 낙하산 덮개와 줄 네 가닥. 상자 위 4m에 펼친다.</summary>
+    static Mesh ParachuteMesh() {
+      if (_parachute == null) {
+        var kit = new MeshKit();
+        kit.Paint(Swatch.LeafAutumn).Frustum(new Vector3(0, CrateSize + 3.6f, 0), 2.2f, 0.5f, 1.1f, 8);
+        kit.Paint(Swatch.White);
+        foreach (var (x, z) in new[] { (1f, 1f), (-1f, 1f), (1f, -1f), (-1f, -1f) }) {
+          var top = new Vector3(x * 1.9f, CrateSize + 3.6f, z * 1.9f);
+          var bottom = new Vector3(x * 0.5f, CrateSize, z * 0.5f);
+          kit.Box((top + bottom) / 2, new Vector3(0.05f, (top - bottom).magnitude, 0.05f));
+        }
+        _parachute = kit.ToMesh("supply_parachute");
+      }
+      return _parachute;
+    }
+
+    /// <summary>점령지 옆 구조물: 통신소는 둥근 기단과 안테나·접시, 발전 중계소는 송전탑과 변압기. 원 밖에 두어 유닛과 겹치지 않는다.</summary>
+    static Mesh StationMesh(CaptureKind kind) {
+      var kit = new MeshKit();
+      if (kind == CaptureKind.Comms) {
+        kit.Paint(Swatch.ConcreteDark).Cylinder(Vector3.zero, 1.8f, 0.6f, 10);
+        kit.Paint(Swatch.Concrete).Cylinder(new Vector3(0, 0.6f, 0), 1.2f, 1.6f, 10);
+        kit.Paint(Swatch.MetalDark).Frustum(new Vector3(0, 2.2f, 0), 0.25f, 0.08f, 7f, 6);
+        kit.Paint(Swatch.Metal).Frustum(new Vector3(0.9f, 2.6f, 0), 0.9f, 0.2f, 0.5f, 10);
+        kit.Paint(Swatch.GlowRed).Box(new Vector3(0, 9.3f, 0), Vector3.one * 0.25f);
+      } else {
+        kit.Paint(Swatch.Concrete).Box(new Vector3(0, 0.15f, 0), new Vector3(3.2f, 0.3f, 2.4f));
+        kit.Paint(Swatch.MetalDark).Box(new Vector3(-0.6f, 1.1f, 0), new Vector3(1.4f, 1.6f, 1.2f));
+        kit.Paint(Swatch.Metal);
+        for (var i = 0; i < 3; i++) {
+          kit.Cylinder(new Vector3(0.6f + i * 0.35f, 0.3f, 0.5f), 0.1f, 1.4f, 6);
+        }
+        kit.Paint(Swatch.MetalDark).Frustum(new Vector3(1f, 0.3f, -0.4f), 0.5f, 0.12f, 8f, 4);
+        kit.Box(new Vector3(1f, 7.6f, -0.4f), new Vector3(2.6f, 0.15f, 0.15f));
+        kit.Paint(Swatch.GlowCyan).Box(new Vector3(-0.6f, 1.95f, 0), new Vector3(0.9f, 0.08f, 0.7f));
+      }
+      kit.Shading = MeshKit.ShadeMode.Object;
+      return kit.ToMesh($"station_{kind}");
+    }
+
     static Mesh PoleMesh() {
       if (_pole == null) {
         var kit = new MeshKit();
@@ -125,6 +181,9 @@ namespace FactoryWars.View {
       var progress = Item(root, "Progress", null, ArtLook.NeutralMaterial);
       Item(root, "Pole", PoleMesh(), ArtLook.NeutralMaterial);
       var flag = Item(root, "Flag", FlagMesh(), ArtLook.NeutralMaterial);
+      var station = Item(root, "Station", StationMesh(site->Kind), ArtLook.NeutralMaterial);
+      station.transform.localPosition = new Vector3(0, 0, site->Radius.AsFloat + 2.4f);
+      station.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
       return new Site {
         Root = root.gameObject, Progress = progress.GetComponent<MeshFilter>(), ProgressRenderer = progress.GetComponent<MeshRenderer>(),
         Flag = flag.transform, FlagRenderer = flag.GetComponent<MeshRenderer>(),
@@ -171,6 +230,15 @@ namespace FactoryWars.View {
       local.Center = default;
       TerrainKit.Boulders(kit, local, 300 + barricade->Index);
       Item(root, "Rubble", kit.ToMesh("barricade"), ArtLook.NeutralMaterial).GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
+      // 공사 바리케이드·콘을 잔해 앞뒤에 섞는다(Kenney, 판정 없음). 바리케이드가 사라지면 같이 사라진다.
+      var length = local.IsCircle ? local.Radius.AsFloat : local.HalfLength.AsFloat;
+      var width = local.IsCircle ? local.Radius.AsFloat : local.HalfWidth.AsFloat;
+      for (var i = 0; i < 4; i++) {
+        var along = (i - 1.5f) / 1.5f * length * 0.8f;
+        var side = (i % 2 == 0 ? 1f : -1f) * width * 0.9f;
+        var offset = Quaternion.Euler(0, local.Yaw.AsFloat, 0) * new Vector3(along, 0, side);
+        DressingSpawn.Place(DressKind.Barrier, root, offset, local.Yaw.AsFloat + MeshKit.Hash(barricade->Index, i) * 30f - 15f, barricade->Index * 13 + i);
+      }
       _bar ??= BarMesh(Swatch.Black, 0f, "barricade_bar");
       _fill ??= BarMesh(Swatch.LeafLight, 0.06f, "barricade_fill");
       var bar = Item(root, "Bar", _bar, ArtLook.NeutralMaterial).transform;
@@ -198,10 +266,27 @@ namespace FactoryWars.View {
       while (crates.NextUnsafe(out var entity, out var transform, out _)) {
         _seen.Add(entity);
         if (_crates.ContainsKey(entity) == false) {
-          var crate = Item(_root, "Crate", CrateMesh(), ArtLook.NeutralMaterial);
+          var crate = new GameObject("Crate");
+          crate.transform.SetParent(_root, false);
           crate.transform.localPosition = transform->Position.ToUnityVector3();
-          crate.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
+          var body = Item(crate.transform, "Body", CrateMesh(), ArtLook.NeutralMaterial);
+          body.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
+          Item(body.transform, "Parachute", ParachuteMesh(), ArtLook.NeutralMaterial);
           _crates[entity] = crate;
+          _falling[entity] = 0f;
+        }
+        if (_falling.TryGetValue(entity, out var age)) {
+          // 하강 연출: 낙하산을 펴고 내려와 땅에 닿으면 접는다. 판정 위치는 처음부터 땅이다.
+          age += deltaTime;
+          var body = _crates[entity].transform.GetChild(0);
+          var t = Mathf.Clamp01(age / DropSeconds);
+          body.localPosition = Vector3.up * DropHeight * (1f - t) * (1f - t);
+          if (t >= 1f) {
+            body.GetChild(0).gameObject.SetActive(false);
+            _falling.Remove(entity);
+          } else {
+            _falling[entity] = age;
+          }
         }
       }
       var walls = frame.Filter<Transform3D, Barricade>();
@@ -229,6 +314,7 @@ namespace FactoryWars.View {
       foreach (var entity in _gone) {
         Object.Destroy(_crates[entity]);
         _crates.Remove(entity);
+        _falling.Remove(entity);
       }
       _gone.Clear();
       foreach (var pair in _walls) {

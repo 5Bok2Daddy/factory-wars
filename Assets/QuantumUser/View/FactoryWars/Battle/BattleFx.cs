@@ -184,6 +184,13 @@ namespace FactoryWars.View {
       }
     }
 
+    static readonly Color SignalSmoke = new Color(0.95f, 0.45f, 0.18f, 0.7f);
+
+    /// <summary>보급 투하 예고: 낙하 지점에서 피어오르는 주황 신호 연기.</summary>
+    public void Signal(Vector3 position) {
+      Emit(_smoke, position + Random.insideUnitSphere * 0.3f, new Vector3(Random.Range(-0.2f, 0.2f), Random.Range(2.2f, 3f), Random.Range(-0.2f, 0.2f)), Random.Range(0.7f, 1.1f), Random.Range(2.4f, 3.2f), SignalSmoke);
+    }
+
     /// <summary>획득·점령 같은 좋은 소식의 반짝임.</summary>
     public void Burst(Vector3 position, Color color, float size) {
       var count = Scaled(14);

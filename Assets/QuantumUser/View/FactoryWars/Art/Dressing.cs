@@ -109,6 +109,27 @@ namespace FactoryWars.View {
       return wrapper.gameObject;
     }
 
+    /// <summary>사라지거나 움직이는 것에 붙이는 Kenney 소품 하나(실제 오브젝트). localPosition은 parent 기준이다.</summary>
+    public static GameObject Place(DressKind kind, Transform parent, Vector3 localPosition, float yaw, int seed) {
+      var map = Dressing.Map;
+      var entry = map != null ? map.Get(kind) : null;
+      if (entry == null) {
+        return null;
+      }
+      var (variant, _, scale) = KenneyAssetMap.Place(entry, seed);
+      var wrapper = new GameObject("Kenney").transform;
+      wrapper.SetParent(parent, false);
+      wrapper.localPosition = localPosition;
+      wrapper.localRotation = Quaternion.Euler(0f, yaw, 0f);
+      wrapper.localScale = Vector3.one * scale;
+      var model = Object.Instantiate(variant.Prefab, wrapper);
+      model.transform.localPosition += variant.Offset;
+      foreach (var renderer in model.GetComponentsInChildren<MeshRenderer>()) {
+        renderer.shadowCastingMode = entry.Shadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+      }
+      return wrapper.gameObject;
+    }
+
     static MaterialPropertyBlock _block;
 
     /// <summary>손상 단계의 그을음(공용 셰이더 _Soot). 0이면 블록을 지워 SRP Batcher로 돌아간다.</summary>

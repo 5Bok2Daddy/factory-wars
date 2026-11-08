@@ -138,7 +138,7 @@ namespace Quantum.FactoryWars {
 
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out _, out var transform, out var building)) {
-        if (Overlaps(position, transform->Position, radius + f.FindAsset(building->Spec).FootprintRadius)) {
+        if (Overlaps(position, transform->Position, radius + f.FindAsset(building->Spec).FootprintRadius + rules.BuildingGap)) {
           return false;
         }
       }

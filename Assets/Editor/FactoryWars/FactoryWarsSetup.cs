@@ -439,7 +439,8 @@ namespace FactoryWars.EditorTools {
       ai.BreakReserveIronLeft = 4000;
       ai.PowerMargin = 3;
       ai.PopulationMargin = 4;
-      ai.SiteGrid = 7;
+      // 건물 지름 6m + 간격(BuildingGap) 2m. 7이면 이웃 칸이 모두 막혀 4인 본진이 차서 인구가 막혔다(항목 19).
+      ai.SiteGrid = 8;
       ai.SiteRings = 7;
       ai.StrategicDiplomacy = strategic;
       // 보통은 점수로만, 쉬움은 낮은 기준에 무작위를 더해 판단한다.
@@ -560,6 +561,8 @@ namespace FactoryWars.EditorTools {
       rules.RepairPerSecond = 20;
       rules.RepairCostRatio = N(0.5);
       rules.FoundationHealthRatio = N(0.1);
+      // 본진 사령부 크기 수용이 25채 이상이라 2m를 쓴다(25채 미만이면 1.5m로 줄일 것). MapTests가 잰다.
+      rules.BuildingGap = N(2);
       rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 2, 2, 0, 420, 90, 6, 2, 12, false, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
       }));
