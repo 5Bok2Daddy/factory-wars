@@ -184,6 +184,10 @@ namespace FactoryWars.View {
       var station = Item(root, "Station", StationMesh(site->Kind), ArtLook.NeutralMaterial);
       station.transform.localPosition = new Vector3(0, 0, site->Radius.AsFloat + 2.4f);
       station.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
+      var seed = KenneyAssetMap.Seed(position, 601);
+      DressingSpawn.Place(DressKind.SpaceProp, station.transform, new Vector3(-1.3f, 0.15f, 0.2f), 90f, seed);
+      DressingSpawn.Place(site->Kind == CaptureKind.Comms ? DressKind.SpaceProp : DressKind.Hopper, station.transform, new Vector3(1.3f, 0.15f, -0.2f), -90f, seed + 1);
+      DressingSpawn.Place(DressKind.Prop, station.transform, new Vector3(0f, 0.15f, 1.1f), 0f, seed + 2);
       return new Site {
         Root = root.gameObject, Progress = progress.GetComponent<MeshFilter>(), ProgressRenderer = progress.GetComponent<MeshRenderer>(),
         Flag = flag.transform, FlagRenderer = flag.GetComponent<MeshRenderer>(),
@@ -230,14 +234,19 @@ namespace FactoryWars.View {
       local.Center = default;
       TerrainKit.Boulders(kit, local, 300 + barricade->Index);
       Item(root, "Rubble", kit.ToMesh("barricade"), ArtLook.NeutralMaterial).GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
-      // 공사 바리케이드·콘을 잔해 앞뒤에 섞는다(Kenney, 판정 없음). 바리케이드가 사라지면 같이 사라진다.
+      // 폐차 더미(Kenney car-kit, 불탄 고철 톤)를 잔해 앞뒤에 섞는다. 판정은 바리케이드 영역 그대로이고, 사라지면 같이 사라진다(항목 19C).
       var length = local.IsCircle ? local.Radius.AsFloat : local.HalfLength.AsFloat;
       var width = local.IsCircle ? local.Radius.AsFloat : local.HalfWidth.AsFloat;
       for (var i = 0; i < 4; i++) {
         var along = (i - 1.5f) / 1.5f * length * 0.8f;
         var side = (i % 2 == 0 ? 1f : -1f) * width * 0.9f;
         var offset = Quaternion.Euler(0, local.Yaw.AsFloat, 0) * new Vector3(along, 0, side);
-        DressingSpawn.Place(DressKind.Barrier, root, offset, local.Yaw.AsFloat + MeshKit.Hash(barricade->Index, i) * 30f - 15f, barricade->Index * 13 + i);
+        var tilt = MeshKit.Hash(barricade->Index, 20 + i);
+        var wreck = DressingSpawn.Place(i % 2 == 0 ? DressKind.Wreck : DressKind.Debris, root, offset * 0.8f, local.Yaw.AsFloat + tilt * 70f - 35f, barricade->Index * 13 + i);
+        if (wreck != null && i % 2 == 0) {
+          // 옆으로 기울어진 폐차.
+          wreck.transform.localRotation *= Quaternion.Euler(0f, 0f, tilt < 0.5f ? 12f : 88f);
+        }
       }
       _bar ??= BarMesh(Swatch.Black, 0f, "barricade_bar");
       _fill ??= BarMesh(Swatch.LeafLight, 0.06f, "barricade_fill");

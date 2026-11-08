@@ -28,6 +28,15 @@ namespace FactoryWars.View {
     Hopper,
     Ruin,
     Prop,
+    Grass,
+    Wreck,
+    Debris,
+    Worker,
+    RoadProp,
+    BridgePillar,
+    BridgeDeck,
+    SpaceProp,
+    GarrisonBoard,
   }
 
   /// <summary>
@@ -66,6 +75,8 @@ namespace FactoryWars.View {
       public bool Shadows = true;
       /// <summary>품질 낮음에서 남기는 비율(나무·소품 수 줄이기).</summary>
       [Range(0f, 1f)] public float LowKeep = 1f;
+      /// <summary>품질 보통에서 남기는 비율(흩뿌리기 소품은 0.7).</summary>
+      [Range(0f, 1f)] public float MediumKeep = 1f;
     }
 
     public List<Entry> Entries = new List<Entry>();

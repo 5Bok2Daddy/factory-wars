@@ -103,14 +103,12 @@ namespace FactoryWars.View {
     static float Smooth(float t) => t * t * (3f - 2f * t);
 
     /// <summary>0~1의 값 노이즈. 흙과 풀의 큰 얼룩을 만든다.</summary>
+    /// <summary>바닥 얼룩 노이즈 0~1. 펄린 두 겹이라 경계가 둥글고 불규칙하다(항목 19C, 네모 얼룩 제거).</summary>
     static float Noise(float x, float z, int seed) {
       var patch = Mathf.Max(6f, VisualProfile.Current.PatchSize);
-      var cx = Mathf.FloorToInt(x / patch);
-      var cz = Mathf.FloorToInt(z / patch);
-      var tx = Smooth(x / patch - cx);
-      var tz = Smooth(z / patch - cz);
-      float Corner(int i, int j) => MeshKit.Hash(seed + (cx + i) * 73, (cz + j) * 31 + 1000);
-      return Mathf.Lerp(Mathf.Lerp(Corner(0, 0), Corner(1, 0), tx), Mathf.Lerp(Corner(0, 1), Corner(1, 1), tx), tz);
+      var o = seed * 17.37f;
+      var n = Mathf.PerlinNoise(x / patch + o, z / patch - o) * 0.7f + Mathf.PerlinNoise(x / (patch * 0.37f) - o, z / (patch * 0.37f) + o) * 0.3f;
+      return Mathf.Clamp01((n - 0.5f) * 1.6f + 0.5f);
     }
 
     static bool Inside(MapShape[] shapes, float x, float z) {
@@ -131,7 +129,7 @@ namespace FactoryWars.View {
       if (outside) {
         return Swatch.ConcreteDark;
       }
-      if (Inside(map.NoBuildZones, x, z)) {
+      if (profile.NoBuildAlways && Inside(map.NoBuildZones, x, z)) {
         return noise < 0.55f ? Swatch.Dirt : Swatch.DirtDark;
       }
       if (Inside(map.BaseAreas, x, z)) {
@@ -143,6 +141,26 @@ namespace FactoryWars.View {
       if (profile.ZoneColors && new Vector2(x, z).magnitude < 26f) {
         // 중앙 교전지: 그을린 흙.
         return noise < 0.5f ? Swatch.DirtDark : noise < 0.75f ? Swatch.Earth : Swatch.GrassDark;
+      }
+      // 도로·건물·자원 둘레 2~4m는 흙 색을 자연스럽게 섞는다(항목 19C).
+      var fp = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(z));
+      var nearEdge = false;
+      foreach (var r in map.Roads ?? Array.Empty<MapShape>()) {
+        if (r.Distance(fp).AsFloat <= 3.2f) {
+          nearEdge = true;
+          break;
+        }
+      }
+      if (nearEdge == false && map.CityBuildings != null) {
+        for (var i = 0; i < map.CityBuildings.Length; i++) {
+          if (map.CityBuildings[i].Shape.Distance(fp).AsFloat <= 3.2f) {
+            nearEdge = true;
+            break;
+          }
+        }
+      }
+      if (nearEdge && noise < 0.62f) {
+        return noise < 0.34f ? Swatch.Dirt : Swatch.DirtDark;
       }
       if (profile.GroundPalette == 1) {
         return noise < 0.18f ? Swatch.Dirt : noise < 0.42f ? Swatch.GrassLight : noise < 0.72f ? Swatch.Grass : Swatch.GrassDark;
@@ -415,16 +433,15 @@ namespace FactoryWars.View {
       var radius = shape.IsCircle ? shape.Radius.AsFloat : Mathf.Min(shape.HalfLength.AsFloat, shape.HalfWidth.AsFloat);
       // Kenney 바위: 큰 바위 하나와 둘레의 큰·작은 바위 무리. 크기·회전은 해시로 정한다.
       if (Dressing.Collecting && Dressing.Has(DressKind.RockLarge)) {
-        Dressing.Add(DressKind.RockLarge, center, seed, Vector3.one * radius * 0.9f);
+        Dressing.Add(DressKind.RockLarge, center, seed, Vector3.one * (radius * 0.34f));
         var around = 4 + (int)(MeshKit.Hash(seed, 2) * 4f);
         for (var i = 0; i < around; i++) {
           var angle = (i + MeshKit.Hash(seed, i + 10)) * Mathf.PI * 2f / around;
-          var distance = radius * (0.6f + 0.4f * MeshKit.Hash(seed, i + 20));
+          var distance = radius * (0.4f + 0.25f * MeshKit.Hash(seed, i + 20));
           var spot = center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * distance;
           var small = MeshKit.Hash(seed, i + 30) < 0.5f;
-          Dressing.Add(small ? DressKind.RockSmall : DressKind.RockLarge, spot, seed * 31 + i, Vector3.one * radius * (small ? 0.8f : 0.4f));
+          Dressing.Add(small ? DressKind.RockSmall : DressKind.RockLarge, spot, seed * 31 + i, Vector3.one * (radius * (small ? 0.18f : 0.2f)));
         }
-        return;
       }
       k.ShadeFaces(seed, Swatch.BoulderDark, Swatch.Boulder, Swatch.BoulderLight);
       k.Rock(center, radius * 0.72f, radius * (1.05f + 0.4f * MeshKit.Hash(seed, 1)), seed);

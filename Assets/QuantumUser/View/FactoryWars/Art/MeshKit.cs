@@ -12,6 +12,7 @@ namespace FactoryWars.View {
     Boulder, BoulderDark, BoulderLight, WaterDeep, StripeYellow, GlowRed, LampDark,
     Concrete, ConcreteDark, Window,
     Asphalt, LaneYellow, LaneWhite, RockFace, RockFaceDark, RockFaceLight, LeafAutumn, Brick, Outline, GrassLight,
+    ForestFloor,
   }
 
   public static class ArtPalette {
@@ -58,6 +59,7 @@ namespace FactoryWars.View {
       new Cell(0x3C3D40, 0f, 0.18f), new Cell(0xE0B23A, 0f, 0.2f), new Cell(0xE6E2D6, 0f, 0.2f),
       new Cell(0x8A7F70, 0f, 0.08f), new Cell(0x5E554B, 0f, 0.06f), new Cell(0xA89C88, 0f, 0.1f),
       new Cell(0xC8662A, 0f, 0.1f), new Cell(0x8E4A36, 0f, 0.06f), new Cell(0x1E1A16, 0f, 0f), new Cell(0x9AB25A, 0f, 0.06f),
+      new Cell(0x2A3322, 0f, 0.04f),
     };
 
     public static int CellCount => Cells.Length;
@@ -600,16 +602,23 @@ namespace FactoryWars.View {
       return Dressing.Add(kind, world, seed) || Dressing.Add(DressKind.Conifer, world, seed);
     }
 
+    /// <summary>Kenney 나무를 쓸 때 숲 바닥은 부엽토색이고 나무 간격이 좁다(항목 19C: 잎이 숲 면적의 85% 이상을 덮게).</summary>
+    static bool Dense(Matrix4x4? toWorld) => toWorld.HasValue && Dressing.Collecting && Dressing.Has(DressKind.Conifer);
+
     public static void Forest(MeshKit kit, float halfLength, float halfWidth, int seed, float remaining, Matrix4x4? toWorld = null) {
-      kit.Paint(Swatch.Grass);
-      kit.Box(new Vector3(0, 0.08f, 0), new Vector3(halfLength * 2, 0.16f, halfWidth * 2));
+      if (Dense(toWorld)) {
+        kit.Paint(Swatch.GrassDark).Chamfer(new Vector3(0, 0.05f, 0), new Vector3(halfLength * 2, 0.1f, halfWidth * 2), 1.4f);
+        kit.Paint(Swatch.ForestFloor).Chamfer(new Vector3(0, 0.09f, 0), new Vector3(Mathf.Max(2f, (halfLength - 2.2f) * 2), 0.16f, Mathf.Max(2f, (halfWidth - 2.2f) * 2)), 1.4f);
+      } else {
+        kit.Paint(Swatch.Grass).Box(new Vector3(0, 0.08f, 0), new Vector3(halfLength * 2, 0.16f, halfWidth * 2));
+      }
       kit.Paint(Swatch.Earth);
       var spots = new List<(Vector3 Position, float Edge, int Id)>();
-      const float Spacing = 1.9f;
+      var spacing = Dense(toWorld) ? 1.65f : 1.9f;
       var id = 0;
-      for (var x = -halfLength + Spacing / 2; x < halfLength; x += Spacing) {
-        for (var z = -halfWidth + Spacing / 2; z < halfWidth; z += Spacing) {
-          var jitter = new Vector3(MeshKit.Hash(seed, id * 2) - 0.5f, 0, MeshKit.Hash(seed, id * 2 + 1) - 0.5f) * 0.7f;
+      for (var x = -halfLength + spacing / 2; x < halfLength; x += spacing) {
+        for (var z = -halfWidth + spacing / 2; z < halfWidth; z += spacing) {
+          var jitter = new Vector3(MeshKit.Hash(seed, id * 2) - 0.5f, 0, MeshKit.Hash(seed, id * 2 + 1) - 0.5f) * spacing * 0.4f;
           var edge = Mathf.Min(halfLength - Mathf.Abs(x), (halfWidth - Mathf.Abs(z)) * 2f);
           spots.Add((new Vector3(x, 0.16f, z) + jitter, edge, id));
           id++;
@@ -620,15 +629,20 @@ namespace FactoryWars.View {
 
     /// <summary>원형 군락. 나무 배치만 다르고 바깥부터 벌목되는 규칙은 같다.</summary>
     public static void Grove(MeshKit kit, float radius, int seed, float remaining, Matrix4x4? toWorld = null) {
-      kit.Paint(Swatch.Grass);
-      kit.Cylinder(new Vector3(0, 0, 0), radius, 0.16f, 12);
+      var dense = Dense(toWorld);
+      if (dense) {
+        kit.Paint(Swatch.GrassDark).Cylinder(new Vector3(0, 0, 0), radius, 0.1f, 20);
+        kit.Paint(Swatch.ForestFloor).Cylinder(new Vector3(0, 0.04f, 0), Mathf.Max(1.5f, radius - 2.2f), 0.14f, 20);
+      } else {
+        kit.Paint(Swatch.Grass).Cylinder(new Vector3(0, 0, 0), radius, 0.16f, 12);
+      }
       kit.Paint(Swatch.Earth);
       var spots = new List<(Vector3 Position, float Edge, int Id)>();
-      const float Spacing = 2.3f;
+      var spacing = dense ? 1.75f : 2.3f;
       var id = 0;
-      for (var x = -radius + Spacing / 2; x < radius; x += Spacing) {
-        for (var z = -radius + Spacing / 2; z < radius; z += Spacing) {
-          var jitter = new Vector3(MeshKit.Hash(seed, id * 2) - 0.5f, 0, MeshKit.Hash(seed, id * 2 + 1) - 0.5f) * 0.9f;
+      for (var x = -radius + spacing / 2; x < radius; x += spacing) {
+        for (var z = -radius + spacing / 2; z < radius; z += spacing) {
+          var jitter = new Vector3(MeshKit.Hash(seed, id * 2) - 0.5f, 0, MeshKit.Hash(seed, id * 2 + 1) - 0.5f) * spacing * 0.4f;
           var edge = radius - new Vector2(x, z).magnitude;
           if (edge > 0.4f) {
             spots.Add((new Vector3(x, 0.16f, z) + jitter, edge, id));
@@ -639,7 +653,7 @@ namespace FactoryWars.View {
       Plant(kit, spots, seed, remaining, toWorld);
     }
 
-    /// <summary>toWorld가 있고 Kenney 나무가 있으면 모델로 놓고, 없으면 절차 나무를 kit에 굽는다. 가장자리에는 덤불을 섞는다.</summary>
+    /// <summary>toWorld가 있고 Kenney 나무가 있으면 모델로 놓고, 없으면 절차 나무를 kit에 굽는다. 가장자리에는 덤불·통나무·작은 바위를 섞는다.</summary>
     static void Plant(MeshKit kit, List<(Vector3 Position, float Edge, int Id)> spots, int seed, float remaining, Matrix4x4? toWorld) {
       spots.Sort((a, b) => a.Edge != b.Edge ? a.Edge.CompareTo(b.Edge) : a.Id.CompareTo(b.Id));
       var cut = Mathf.RoundToInt(spots.Count * (1f - Mathf.Clamp01(remaining)));
@@ -647,9 +661,11 @@ namespace FactoryWars.View {
         var state = i >= cut ? TreeState.Full : MeshKit.Hash(seed, spots[i].Id + 500) < 0.3f ? TreeState.Stump : TreeState.Sparse;
         var id = seed * 131 + spots[i].Id;
         if (toWorld.HasValue && DressTree(toWorld.Value.MultiplyPoint3x4(spots[i].Position), id, state)) {
-          if (spots[i].Edge < 1.2f && MeshKit.Hash(id, 9) < 0.45f) {
-            var side = new Vector3(MeshKit.Hash(id, 10) - 0.5f, 0, MeshKit.Hash(id, 11) - 0.5f) * 1.6f;
-            Dressing.Add(DressKind.Bush, toWorld.Value.MultiplyPoint3x4(spots[i].Position + side), id + 7);
+          if (spots[i].Edge < 2.2f && MeshKit.Hash(id, 9) < 0.55f) {
+            var side = new Vector3(MeshKit.Hash(id, 10) - 0.5f, 0, MeshKit.Hash(id, 11) - 0.5f) * 1.4f;
+            var pick = MeshKit.Hash(id, 12);
+            var edgeKind = pick < 0.5f ? DressKind.Bush : pick < 0.78f ? DressKind.Stump : DressKind.RockSmall;
+            Dressing.Add(edgeKind, toWorld.Value.MultiplyPoint3x4(spots[i].Position + side), id + 7);
           }
           continue;
         }

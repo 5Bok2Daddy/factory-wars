@@ -93,12 +93,20 @@ namespace FactoryWars.View {
               if (Vector3.Dot(normal, outward) < 0f) {
                 normal = -normal;
               }
-              const float Depth = 2.2f;
+              const float Depth = 3.6f;
               var mid = (a + b) * 0.5f - normal * (Depth * 0.5f - 0.15f);
               var yaw = Mathf.Atan2(-direction.z, direction.x) * Mathf.Rad2Deg;
-              Dressing.Add(DressKind.Cliff, new Vector3(mid.x, bottom, mid.z), seed * 7919 + l * 977 + i, new Vector3(length + 0.4f, top - bottom, Depth), yaw);
+              Dressing.Add(DressKind.Cliff, new Vector3(mid.x, bottom, mid.z), seed * 7919 + l * 977 + i, new Vector3(length + 0.6f, top - bottom, Depth), yaw);
+              // 아래층 바깥 가장자리에 바위, 맨 위층 가장자리 안쪽에 나무를 듬성듬성(판정 경계 안쪽).
+              var edge = (a + b) * 0.5f - normal * 1.4f;
+              if (l == 0 && MeshKit.Hash(seed, 3000 + i) < 0.22f) {
+                Dressing.Add(DressKind.RockLarge, new Vector3(edge.x, 0f, edge.z), seed * 131 + i, Vector3.one * 0.65f);
+              }
+              if (l == layers - 1 && MeshKit.Hash(seed, 5000 + i) < 0.12f) {
+                var inside = (a + b) * 0.5f - normal * 2.2f;
+                ForestKit.DressTree(new Vector3(inside.x, top, inside.z), seed * 977 + i, ForestKit.TreeState.Full);
+              }
             }
-            continue;
           }
           var shade = faces[Mathf.Min(l * faces.Length / layers, faces.Length - 1)];
           k.Paint(MeshKit.Hash(seed, l * 977 + i) < 0.22f ? Swatch.RockFaceLight : shade);
@@ -141,6 +149,26 @@ namespace FactoryWars.View {
           k.Quad(new Vector3(x, 0.06f, -LaneWidth / 2), new Vector3(end, 0.06f, -LaneWidth / 2), new Vector3(end, 0.06f, LaneWidth / 2), new Vector3(x, 0.06f, LaneWidth / 2), Vector3.up);
         }
         k.Pop();
+        if (Dressing.Collecting && Dressing.Has(DressKind.RoadProp)) {
+          var turn = Quaternion.Euler(0, yaw, 0);
+          var step = 18f;
+          var idx = 0;
+          for (var x = -half.x + 6f; x <= half.x - 6f; x += step, idx++) {
+            var side = idx % 2 == 0 ? 1f : -1f;
+            var spot = center + turn * new Vector3(x, 0f, side * (half.y + CurbWidth + 0.9f));
+            var fp = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(spot.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(spot.z));
+            var blocked = false;
+            foreach (var other in map.Roads ?? System.Array.Empty<MapShape>()) {
+              if (other.Center != road.Center && other.Distance(fp).AsFloat <= 1f) {
+                blocked = true;
+                break;
+              }
+            }
+            if (blocked == false && Inside(map.Bridges, spot.x, spot.z) == false && Inside(map.BaseAreas, spot.x, spot.z) == false) {
+              Dressing.Add(DressKind.RoadProp, spot, KenneyAssetMap.Seed(spot, 801 + idx), null, yaw + (side > 0 ? 180f : 0f));
+            }
+          }
+        }
       }
     }
 
@@ -236,6 +264,9 @@ namespace FactoryWars.View {
           var height = -0.25f - (WaterLevel - 0.5f);
           k.Paint(Swatch.ConcreteDark);
           k.Box(center + Vector3.up * height / 2, new Vector3(size.x, height, size.z));
+          if (Dressing.Collecting && Dressing.Has(DressKind.BridgePillar)) {
+            Dressing.Add(DressKind.BridgePillar, center, KenneyAssetMap.Seed(center, 911), Vector3.one * 0.35f, acrossX ? 90f : 0f);
+          }
         }
       }
     }

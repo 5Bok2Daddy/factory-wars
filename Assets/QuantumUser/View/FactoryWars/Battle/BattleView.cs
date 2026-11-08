@@ -46,12 +46,21 @@ namespace FactoryWars.View {
       public readonly List<(Transform Part, Vector3 Home, Vector3 Reach, float Speed)> Sliders = new List<(Transform, Vector3, Vector3, float)>();
       public readonly List<(Transform Part, Quaternion Home, float Swing, float Speed)> Swingers = new List<(Transform, Quaternion, float, float)>();
       public GameObject Scaffold;
+      public GameObject Dressing;
       public float Height;
+    }
+
+    class BaseWorker {
+      public GameObject Root;
+      public Vector3 From;
+      public Vector3 To;
+      public float Phase;
     }
 
     static Mesh _scaffold;
 
     readonly Dictionary<EntityRef, Actor> _actors = new Dictionary<EntityRef, Actor>();
+    readonly List<BaseWorker> _baseWorkers = new List<BaseWorker>();
     readonly HashSet<EntityRef> _seen = new HashSet<EntityRef>();
     readonly List<EntityRef> _gone = new List<EntityRef>();
     readonly List<Actor> _marked = new List<Actor>();
@@ -121,8 +130,50 @@ namespace FactoryWars.View {
         _stage = null;
       }
       _actors.Clear();
+      _baseWorkers.Clear();
       _marked.Clear();
       World = null;
+    }
+
+    void UpdateBaseWorkers(Frame frame) {
+      var allow = GraphicsQuality.Current != QualityTier.Low && Dressing.Has(DressKind.Worker);
+      if (allow && _baseWorkers.Count == 0 && World?.Map?.StartPositions != null) {
+        for (var i = 0; i < Mathf.Min(frame.PlayerCount, World.Map.StartPositions.Length) && _baseWorkers.Count < 8; i++) {
+          if (frame.Global->Players.GetPointer(i)->Active == false) {
+            continue;
+          }
+          var home = World.Map.StartPositions[i].ToUnityVector3();
+          for (var w = 0; w < 2 && _baseWorkers.Count < 8; w++) {
+            var from = home + new Vector3(w == 0 ? 4.2f : -4.2f, 0f, 3.2f);
+            var to = home + new Vector3(w == 0 ? 8.5f : -8.5f, 0f, -4.5f);
+            var worker = DressingSpawn.Place(DressKind.Worker, _stage, from, 0f, 9500 + i * 11 + w);
+            if (worker != null) {
+              worker.name = "BaseWorker";
+              _baseWorkers.Add(new BaseWorker { Root = worker, From = from, To = to, Phase = i * 1.7f + w * 2.3f });
+            }
+          }
+        }
+      }
+      var time = Time.time;
+      foreach (var worker in _baseWorkers) {
+        if (worker.Root == null) {
+          continue;
+        }
+        if (worker.Root.activeSelf != allow) {
+          worker.Root.SetActive(allow);
+        }
+        if (allow == false) {
+          continue;
+        }
+        var ping = Mathf.PingPong(time * 0.22f + worker.Phase, 1f);
+        var pos = Vector3.Lerp(worker.From, worker.To, ping);
+        pos.y = TerrainKit.SurfaceHeight(World.Map, pos.x, pos.z) + Mathf.Abs(Mathf.Sin((time * 4.5f + worker.Phase) * Mathf.PI)) * 0.08f;
+        var dir = ping < Mathf.PingPong((time + 0.05f) * 0.22f + worker.Phase, 1f) ? (worker.To - worker.From) : (worker.From - worker.To);
+        worker.Root.transform.localPosition = pos;
+        if (dir.sqrMagnitude > 0.01f) {
+          worker.Root.transform.localRotation = Quaternion.Euler(0f, Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg, 0f);
+        }
+      }
     }
 
     void LateUpdate() {
@@ -167,6 +218,7 @@ namespace FactoryWars.View {
       foreach (var entity in _gone) {
         Remove(entity);
       }
+      UpdateBaseWorkers(frame);
       UpdateSelection(frame);
     }
 
@@ -418,10 +470,29 @@ namespace FactoryWars.View {
       if (actor.Scaffold != null) {
         actor.Scaffold.SetActive(building);
       }
+      if (actor.Dressing != null) {
+        actor.Dressing.SetActive(building == false);
+      }
       // 땅 밑에서 올라온다. 바닥이 불투명해서 아래쪽은 가려진다.
       var position = actor.View.Model.transform.localPosition;
       position.y = building ? -(1f - progress) * actor.Height : 0f;
       actor.View.Model.transform.localPosition = position;
+    }
+
+    static void DressBuilding(Actor actor, BuildingSpec spec, Vector3 worldPos) {
+      if (spec.Role == BuildingRole.GroundTower || spec.Role == BuildingRole.AirDefense || spec.FootprintRadius.AsFloat < 2.2f) {
+        return;
+      }
+      var group = new GameObject("BuildingDressing").transform;
+      group.SetParent(actor.View.Turn, false);
+      var r = spec.FootprintRadius.AsFloat * 0.62f;
+      var seed = KenneyAssetMap.Seed(worldPos, 701);
+      var useSpace = spec.name.StartsWith("ff_") && (spec.Role == BuildingRole.Headquarters || spec.Role == BuildingRole.ResearchLab);
+      var first = useSpace ? DressKind.SpaceProp : (spec.Role == BuildingRole.CollectionYard || spec.Role == BuildingRole.Processor ? DressKind.Crane : DressKind.Hopper);
+      var second = useSpace ? DressKind.Hopper : DressKind.Prop;
+      DressingSpawn.Place(first, group, new Vector3(-r, 0f, -r * 0.5f), 90f, seed);
+      DressingSpawn.Place(second, group, new Vector3(r, 0f, r * 0.4f), -90f, seed + 1);
+      actor.Dressing = group.gameObject;
     }
 
     void UpdateBuilding(Frame frame, EntityRef entity, Transform3D* transform3D, Building* building, float dt) {
@@ -436,6 +507,7 @@ namespace FactoryWars.View {
         actor.Position = position;
         actor.View.transform.position = position;
         actor.View.AddPlate(frame.FindAsset(building->Spec).FootprintRadius.AsFloat, frame.Global->Players.GetPointer(building->Owner)->ColorIndex);
+        DressBuilding(actor, spec, position);
         actor.HullYaw = 180f;
         actor.View.SetYaw(180f);
       }

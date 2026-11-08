@@ -38,6 +38,8 @@ namespace FactoryWars.EditorTools {
       BuildData();
       BuildVisualProfiles();
       KenneyTools.ConfigureImport();
+      KenneyTools.ConvertMaterials();
+      KenneyTools.RecolorAtlases();
       KenneyTools.BuildMap();
       BuildMaterials();
       BuildTestScene();

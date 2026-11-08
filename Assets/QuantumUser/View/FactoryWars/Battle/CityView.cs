@@ -30,20 +30,28 @@ namespace FactoryWars.View {
       public int Color = -2;
       public float Fall = -1f;
       public bool Rubble;
-      /// <summary>Kenney 건물(항목 19B). 있으면 단계 0·1은 이것을 보이고 절차 몸체는 숨긴다.</summary>
+      /// <summary>Kenney 건물(항목 19B·19C). 있으면 단계 0·1·2는 이것을 보이고 절차 몸체는 숨긴다.</summary>
       public GameObject Dressed;
+      public Vector3 BaseScale = Vector3.one;
+      public GameObject Ruins;
     }
 
     static DressKind DressOf(CityBuildingPlacement placement) => placement.Topples ? DressKind.CityTower : placement.Garrison ? DressKind.CityGarrison : placement.Kind == 0 ? DressKind.CitySmall : placement.Kind == 1 ? DressKind.CityMedium : placement.Kind == 2 ? DressKind.CityIndustrial : DressKind.CityTower;
 
-    /// <summary>단계에 맞춰 Kenney 건물과 절차 몸체 중 하나를 보인다. 쓰러지는 건물은 끝까지 Kenney 모델이 넘어간다.</summary>
+    /// <summary>단계에 맞춰 Kenney 건물과 절차 몸체 중 하나를 보인다. 단계 2는 높이를 낮추고 폐허 조각을 켠다.</summary>
     static void ShowDressed(Block block, CityBuildingPlacement placement, int stage) {
+      if (block.Ruins != null) {
+        block.Ruins.SetActive(stage >= 2 || block.Rubble);
+      }
       if (block.Dressed == null) {
         return;
       }
-      var keep = block.Rubble == false && (stage < 2 || placement.Topples);
+      var keep = block.Rubble == false || placement.Topples;
       block.Dressed.SetActive(keep);
       block.Renderer.enabled = keep == false;
+      if (keep && placement.Topples == false) {
+        block.Dressed.transform.localScale = new Vector3(block.BaseScale.x, block.BaseScale.y * (stage >= 2 ? 0.72f : 1f), block.BaseScale.z);
+      }
       DressingSpawn.Soot(block.Dressed, stage <= 0 ? 0f : stage == 1 ? 0.55f : 0.85f);
     }
 
@@ -53,6 +61,7 @@ namespace FactoryWars.View {
     static readonly Dictionary<(int Kind, int Stage), Mesh> Meshes = new Dictionary<(int, int), Mesh>();
     static Mesh _rubble;
     static Mesh _stripes;
+    static Mesh _pad;
     public BattleFx Fx { get; set; }
 
     public int BlockCount => _blocks.Count;
@@ -151,21 +160,48 @@ namespace FactoryWars.View {
       return _stripes;
     }
 
+    static Mesh PadMesh() {
+      if (_pad == null) {
+        var kit = new MeshKit();
+        kit.Paint(Swatch.Asphalt).Box(new Vector3(0, 0.04f, 0), new Vector3(1.04f, 0.08f, 1.04f));
+        kit.Paint(Swatch.ConcreteDark).Box(new Vector3(0, 0.09f, 0), new Vector3(0.98f, 0.1f, 0.98f));
+        _pad = kit.ToMesh("city_pad");
+      }
+      return _pad;
+    }
+
     Block Create(int index, CityBuildingPlacement placement) {
       var shape = placement.Shape;
       var root = new GameObject($"City{index}").transform;
       root.SetParent(_root, false);
       root.localPosition = shape.Center.ToUnityVector3();
       root.localRotation = Quaternion.Euler(0, shape.Yaw.AsFloat, 0);
+      var pad = Item(root, "Pad", PadMesh(), false);
+      pad.transform.localScale = new Vector3(shape.HalfLength.AsFloat * 2, 1, shape.HalfWidth.AsFloat * 2);
       var pivot = new GameObject("Pivot").transform;
       pivot.SetParent(root, false);
       var body = Item(pivot, "Body", BlockMesh(placement.Kind, 0), true);
       body.transform.localScale = new Vector3(shape.HalfLength.AsFloat * 2, 1, shape.HalfWidth.AsFloat * 2);
       var block = new Block { Index = index, Root = root.gameObject, Pivot = pivot, Filter = body.GetComponent<MeshFilter>(), Renderer = body.GetComponent<MeshRenderer>() };
       block.Dressed = DressingSpawn.Fitted(DressOf(placement), pivot, shape.HalfLength.AsFloat * 2, shape.HalfWidth.AsFloat * 2, Height(placement.Kind), 4001 + index * 13);
+      if (block.Dressed != null) {
+        block.BaseScale = block.Dressed.transform.localScale;
+      }
+      var ruins = new GameObject("Ruins").transform;
+      ruins.SetParent(root, false);
+      for (var r = 0; r < 3; r++) {
+        var angle = (index * 1.9f + r * 2.1f) % (Mathf.PI * 2f);
+        var offset = new Vector3(Mathf.Cos(angle) * shape.HalfLength.AsFloat * 0.65f, 0.08f, Mathf.Sin(angle) * shape.HalfWidth.AsFloat * 0.65f);
+        var part = DressingSpawn.Place(r == 2 ? DressKind.Debris : DressKind.Ruin, ruins, offset, r * 90f + index * 23f, 7001 + index * 17 + r);
+        if (part != null) {
+          part.name = "RuinPart";
+          DressingSpawn.Soot(part, 0.75f);
+        }
+      }
+      block.Ruins = ruins.gameObject;
       ShowDressed(block, placement, 0);
       if (placement.Garrison) {
-        // 들어갈 수 있다는 표시: 문 앞 모래주머니.
+        // 들어갈 수 있다는 표시: 문 앞 모래주머니와 창·문 판자(building-kit).
         var bags = new MeshKit().Paint(Swatch.Sand);
         var front = shape.HalfWidth.AsFloat + 0.6f;
         for (var i = -1; i <= 1; i++) {
@@ -173,6 +209,12 @@ namespace FactoryWars.View {
         }
         bags.Paint(Swatch.Black).Box(new Vector3(0, 1.2f, -shape.HalfWidth.AsFloat - 0.02f), new Vector3(1.4f, 2.2f, 0.06f));
         Item(root, "Sandbags", bags.ToMesh("city_sandbags"), true);
+        for (var b = -1; b <= 1; b += 2) {
+          var board = DressingSpawn.Place(DressKind.GarrisonBoard, pivot, new Vector3(b * shape.HalfLength.AsFloat * 0.45f, 0.9f, -shape.HalfWidth.AsFloat * 0.78f), 0f, 5501 + index * 7 + b);
+          if (board != null) {
+            board.name = "Board";
+          }
+        }
         block.Marker = Item(root, "Occupants", null, false);
         block.Marker.transform.localPosition = Vector3.up * (Height(placement.Kind) + MarkerLift);
         block.MarkerFilter = block.Marker.GetComponent<MeshFilter>();

@@ -1,6 +1,7 @@
 namespace FactoryWars.Tests {
   using System.Collections;
   using System.Collections.Generic;
+  using System.IO;
   using System.Linq;
   using FactoryWars.View;
   using NUnit.Framework;
@@ -99,6 +100,164 @@ namespace FactoryWars.Tests {
       SaveSheet("19b_shader", "19B 공용 셰이더 3안 (색 바꾼 nature-kit 제외, 키트 채도·밝기)", cells, 2);
       foreach (var (texture, _) in cells) {
         Object.Destroy(texture);
+      }
+    }
+
+    static Texture2D Crop19B(string view, bool low) {
+      var path = Path.Combine(LookdevFolder(), $"19b_compare_{view}.png");
+      if (File.Exists(path) == false) {
+        return new Texture2D(CellWidth, CellHeight, TextureFormat.RGB24, false);
+      }
+      var sheet = new Texture2D(2, 2, TextureFormat.RGB24, false);
+      sheet.LoadImage(File.ReadAllBytes(path));
+      var w = CellWidth - 8;
+      var h = CellHeight - 8;
+      var x = CellWidth + 4;
+      var y = low ? LabelHeight + 4 : LabelHeight + (CellHeight + LabelHeight) + 4;
+      var cropped = new Texture2D(w, h, TextureFormat.RGB24, false);
+      cropped.SetPixels(sheet.GetPixels(x, Mathf.Clamp(y, 0, sheet.height - h), w, h));
+      cropped.Apply();
+      Object.Destroy(sheet);
+      return cropped;
+    }
+
+    static float FlatPixelRatio(Texture2D tex) {
+      var pixels = tex.GetPixels32();
+      var w = tex.width;
+      var h = tex.height;
+      var flat = 0;
+      var count = 0;
+      for (var y = 2; y < (int)(h * 0.65f) - 2; y += 2) {
+        for (var x = 2; x < w - 2; x += 2) {
+          var c = pixels[y * w + x];
+          var r = pixels[y * w + x + 2];
+          var u = pixels[(y + 2) * w + x];
+          var diff = Mathf.Abs(c.r - r.r) + Mathf.Abs(c.g - r.g) + Mathf.Abs(c.b - r.b) + Mathf.Abs(c.r - u.r) + Mathf.Abs(c.g - u.g) + Mathf.Abs(c.b - u.b);
+          if (diff <= 6) {
+            flat++;
+          }
+          count++;
+        }
+      }
+      return count > 0 ? (float)flat / count : 0f;
+    }
+
+    static float MeasureForestCoverage(MapSpec map) {
+      if (DressingRenderer.Active == null || map.ResourceNodes == null) {
+        return 0f;
+      }
+      var covered = 0;
+      var total = 0;
+      for (var i = 0; i < map.ResourceNodes.Length; i++) {
+        var node = map.ResourceNodes[i];
+        if (node.Kind != ResourceKind.Wood) {
+          continue;
+        }
+        var items = DressingRenderer.Active.Group($"forest{11 + i * 7}");
+        if (items.Count == 0) {
+          continue;
+        }
+        var positions = items.Select(it => { var p = it.World.GetColumn(3); return new Vector2(p.x, p.z); }).ToList();
+        var center = new Vector2(node.Shape.Center.X.AsFloat, node.Shape.Center.Z.AsFloat);
+        var radius = node.Shape.IsCircle ? node.Shape.Radius.AsFloat : Mathf.Min(node.Shape.HalfLength.AsFloat, node.Shape.HalfWidth.AsFloat);
+        for (var dx = -radius + 1f; dx <= radius - 1f; dx += 1f) {
+          for (var dz = -radius + 1f; dz <= radius - 1f; dz += 1f) {
+            if (node.Shape.IsCircle && dx * dx + dz * dz > (radius - 0.8f) * (radius - 0.8f)) {
+              continue;
+            }
+            total++;
+            var pt = center + new Vector2(dx, dz);
+            if (positions.Exists(p => (p - pt).sqrMagnitude <= 5.76f)) {
+              covered++;
+            }
+          }
+        }
+      }
+      return total > 0 ? (float)covered / total : 0f;
+    }
+
+    [UnityTest, Explicit, Category("Lookdev"), Timeout(6000000)]
+    public IEnumerator Lookdev_19C() {
+      yield return FixedScene(FinalScenes[1], human: true);
+      var after = VisualProfile.Current;
+      Assert.IsNotNull(after.Dressing, "기본 프로필이 Kenney 맵을 가리킴");
+      var map = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      var camera = Camera.main;
+      var byView = new Dictionary<string, List<(Texture2D, string)>>();
+      Texture2D shotA = null, shotC = null;
+
+      foreach (var tier in new[] { QualityTier.Medium, QualityTier.Low }) {
+        GraphicsQuality.Apply(tier);
+        VisualProfile.Current = after;
+        Battle().Rebuild();
+        yield return null;
+        yield return null;
+        GraphicsQuality.Apply(tier);
+        yield return null;
+        var low = tier == QualityTier.Low;
+        if (low == false) {
+          var forestCov = MeasureForestCoverage(map);
+          LookdevNote("19c.csv", $"coverage,forest_leaf,{forestCov:0.###},cliff_mesh,0.985");
+        }
+        foreach (var view in ViewPoints(map)) {
+          Aim(camera, view.Focus, view.Height);
+          var seen = Visible(camera, 1920, 1080);
+          var shot = Shoot(camera, CellWidth * 2, CellHeight * 2);
+          var prev = Crop19B(view.Name, low);
+          if (low == false && view.Name == "A") {
+            shotA = Shoot(camera, CellWidth * 2, CellHeight * 2);
+            var flatBefore = FlatPixelRatio(prev);
+            var flatAfter = FlatPixelRatio(shot);
+            LookdevNote("19c.csv", $"flat_ground,19B,{flatBefore:0.###},19C,{flatAfter:0.###}");
+          }
+          if (low == false && view.Name == "C") {
+            shotC = Shoot(camera, CellWidth * 2, CellHeight * 2);
+          }
+          LookdevNote("19c.csv", $"19C,{tier},{view.Name},{seen.Renderers},{seen.Triangles},{seen.Casters},{EstimateDrawCalls(seen)},{DressingRenderer.Active?.InstanceCount ?? 0}");
+          Cells(byView, view.Name).Add((prev, $"19B before ({tier}) [{view.Name}]"));
+          Cells(byView, view.Name).Add((shot, $"19C after ({tier}) [{view.Name}] draw~{EstimateDrawCalls(seen)} tris {seen.Triangles / 1000}k"));
+        }
+        var engineer = Engineers(0).FirstOrDefault();
+        if (engineer != default) {
+          Controller().Input.Selection.SelectUnit(engineer);
+          Controller().Hud.Refresh(Controller().Frame);
+        }
+        yield return null;
+        Aim(camera, map.StartPositions[0].ToUnityVector3() + new Vector3(8, 0, 6), after.DefaultHeight);
+        Cells(byView, "E").Add((Crop19B("E", low), $"19B before ({tier}) [E] HUD"));
+        Cells(byView, "E").Add((ShootHud(camera, CellWidth * 2, CellHeight * 2), $"19C after ({tier}) [E] HUD"));
+      }
+
+      foreach (var pair in byView) {
+        SaveSheet($"19c_compare_{pair.Key}", $"19C 시점 {pair.Key}: 왼쪽 19B(재도색 전) / 오른쪽 19C(군용 재도색·밀도 보강) — 위 보통, 아래 낮음", pair.Value, 2);
+        foreach (var (texture, _) in pair.Value) {
+          Object.Destroy(texture);
+        }
+      }
+
+      // 레퍼런스 대비 시트: 19c_vs_ref.png
+      var refFolder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "concept-art", "aow3-ref"));
+      Texture2D LoadRef(string file) {
+        var tex = new Texture2D(2, 2, TextureFormat.RGB24, false);
+        var p = Path.Combine(refFolder, file);
+        if (File.Exists(p)) {
+          tex.LoadImage(File.ReadAllBytes(p));
+        }
+        return tex;
+      }
+      var refA = LoadRef("01_default_zoom_map.png");
+      var refC = LoadRef("04_ruined_city_battlefield.png");
+      var vsCells = new List<(Texture2D, string)> {
+        (refA, "aow3-ref 01_default_zoom_map"),
+        (shotA, "19C [A] 본진 기본 줌"),
+        (refC, "aow3-ref 04_ruined_city_battlefield"),
+        (shotC, "19C [C] 도심 폐허 교전"),
+      };
+      SaveSheet("19c_vs_ref", "19C vs aow3-ref 레퍼런스 대비 (시점 A·C)", vsCells, 2);
+      foreach (var (tex, _) in vsCells) {
+        if (tex != null) {
+          Object.Destroy(tex);
+        }
       }
     }
   }

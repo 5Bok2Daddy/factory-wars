@@ -24,15 +24,15 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 56183e2a08644f742a4186c3b4eff7f9, type: 3}
+        m_Texture: {fileID: 2800000, guid: 91db11213328d3e4b895529a03823fd5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AoHeight: 1
     - _AoStrength: 0.35
-    - _Brightness: 0.88
-    - _Desaturate: 0.45
+    - _Brightness: 1
+    - _Desaturate: 0
     - _GradientBottom: 0
     - _GradientStrength: 0.22
     - _GradientTop: 12
@@ -43,6 +43,6 @@ Material:
     - _UseVertexColor: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Tint: {r: 0.8509804, g: 0.83137256, b: 0.78431374, a: 1}
+    - _Tint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

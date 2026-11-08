@@ -8,7 +8,7 @@ namespace FactoryWars.EditorTools {
   using UnityEngine.Rendering;
 
   /// <summary>
-  /// 항목 19B: Kenney 키트 도구. 임포트 설정, 공용 셰이더 머티리얼 변환, 키트별 접촉 시트(모델 격자 사진 + 번호 목록).
+  /// 항목 19B·19C: Kenney 키트 도구. 임포트 설정, 공용 셰이더 머티리얼 변환, 아틀라스 군용 재도색, 키트별 접촉 시트(모델 격자 사진 + 번호 목록).
   /// 배치 모드에서 GPU가 있어야 접촉 시트를 찍는다(-nographics 없이 실행).
   /// </summary>
   public static class KenneyTools {
@@ -213,6 +213,7 @@ namespace FactoryWars.EditorTools {
       public bool Fit;
       public bool Shadows = true;
       public float LowKeep = 1f;
+      public float MediumKeep = 1f;
       public string[] Models;
     }
 
@@ -242,6 +243,10 @@ namespace FactoryWars.EditorTools {
         if (kit == null) {
           continue;
         }
+        var military = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/{kit.Kit}/Textures/colormap_military.png");
+        if (military != null && material.GetTexture("_BaseMap") != null) {
+          material.SetTexture("_BaseMap", military);
+        }
         material.SetFloat("_Desaturate", kit.Desaturate);
         material.SetFloat("_Brightness", kit.Brightness);
         material.SetColor("_Tint", Hex(kit.Tint));
@@ -269,7 +274,7 @@ namespace FactoryWars.EditorTools {
         }
         var entry = new FactoryWars.View.KenneyAssetMap.Entry {
           Kind = kind, Scale = file.Scale, ScaleJitter = new Vector2(file.JitterMin, file.JitterMax), SnapYaw90 = file.SnapYaw90,
-          Fit = file.Fit, Shadows = file.Shadows, LowKeep = file.LowKeep,
+          Fit = file.Fit, Shadows = file.Shadows, LowKeep = file.LowKeep, MediumKeep = file.MediumKeep,
         };
         foreach (var model in file.Models) {
           var parts = model.Split(':');
@@ -307,12 +312,98 @@ namespace FactoryWars.EditorTools {
       Debug.Log($"[FW-KENNEY] 매핑 {map.Entries.Count}종, 변종 {map.Entries.Sum(e => e.Variants.Count)}개" + (missing.Count > 0 ? ", 못 찾음: " + string.Join(", ", missing) : ""));
     }
 
-    /// <summary>배치 모드 진입점: 임포트 설정 → 머티리얼 변환 → 접촉 시트.</summary>
+    // 항목 19C 목표색. 벽·지붕·창문·금속·장식·초록·작업복.
+    static readonly Color Wall = Hex("6E6A63");
+    static readonly Color Roof = Hex("3D4043");
+    static readonly Color Glass = Hex("222A30");
+    static readonly Color Steel = Hex("5A626A");
+    static readonly Color Rust = Hex("6B4A35");
+    static readonly Color Khaki = Hex("7A7454");
+    static readonly Color Olive = Hex("4E5A3A");
+    static readonly Color WorkerOrange = Hex("C8662A");
+
+    /// <summary>아틀라스 한 칸의 색을 범주로 나눠 군용 목표색으로 바꾼다. 원래 밝기 차이는 ±18%로 남긴다.</summary>
+    public static Color Military(Color color, out string category, bool isCharacterKit = false) {
+      Color.RGBToHSV(color, out var h, out var s, out var v);
+      h *= 360f;
+      Color target;
+      if (s < 0.18f) {
+        (target, category) = v > 0.72f ? (Wall, "벽") : v > 0.38f ? (Steel, "금속") : (Roof, "지붕");
+      } else if (isCharacterKit && h >= 12f && h < 48f && s >= 0.35f) {
+        (target, category) = (WorkerOrange, "작업복");
+      } else if (h >= 170f && h <= 260f) {
+        (target, category) = (Glass, "창문");
+      } else if (h >= 70f && h < 170f) {
+        (target, category) = (Olive, "초록");
+      } else if (h >= 40f && h < 70f) {
+        (target, category) = (Khaki, "노랑");
+      } else if (h >= 15f && h < 40f && v < 0.75f) {
+        (target, category) = (Color.Lerp(color, Rust, 0.6f), "갈색");
+      } else {
+        (target, category) = (Rust, "원색");
+      }
+      var shade = Mathf.Lerp(0.82f, 1.18f, v);
+      return new Color(Mathf.Clamp01(target.r * shade), Mathf.Clamp01(target.g * shade), Mathf.Clamp01(target.b * shade), color.a);
+    }
+
+    /// <summary>
+    /// 키트마다 colormap.png를 군용 팔레트로 다시 칠해 colormap_military.png로 굽는다(항목 19C).
+    /// 바꾼 색 칸은 Game/Docs/kenney-palette.csv에 남긴다. nature-kit은 아틀라스가 없어 kenney-map.json의 색 바꾸기를 쓴다.
+    /// </summary>
+    [MenuItem("Tools/Factory Wars/Kenney/Recolor Atlases")]
+    public static void RecolorAtlases() {
+      var csv = new StringBuilder("kit,from,to,category,pixels\n");
+      foreach (var kit in Kits()) {
+        var source = $"{kit}/Textures/colormap.png";
+        if (File.Exists(source) == false) {
+          continue;
+        }
+        var isCharacterKit = kit.EndsWith("mini-characters") || kit.EndsWith("animated-characters-protagonists");
+        var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        texture.LoadImage(File.ReadAllBytes(source));
+        var pixels = texture.GetPixels32();
+        var counts = new Dictionary<Color32, (Color32 To, string Category, int Count)>();
+        for (var i = 0; i < pixels.Length; i++) {
+          var from = pixels[i];
+          if (counts.TryGetValue(from, out var known) == false) {
+            var to = (Color32)Military(from, out var category, isCharacterKit);
+            known = (to, category, 0);
+          }
+          counts[from] = (known.To, known.Category, known.Count + 1);
+          pixels[i] = known.To;
+        }
+        texture.SetPixels32(pixels);
+        texture.Apply();
+        var target = $"{kit}/Textures/colormap_military.png";
+        File.WriteAllBytes(target, texture.EncodeToPNG());
+        Object.DestroyImmediate(texture);
+        AssetDatabase.ImportAsset(target);
+        var importer = (TextureImporter)AssetImporter.GetAtPath(target);
+        var original = (TextureImporter)AssetImporter.GetAtPath(source);
+        if (importer != null && original != null) {
+          importer.filterMode = original.filterMode;
+          importer.mipmapEnabled = original.mipmapEnabled;
+          importer.textureCompression = TextureImporterCompression.Uncompressed;
+          importer.SaveAndReimport();
+        }
+        foreach (var pair in counts.OrderByDescending(p => p.Value.Count)) {
+          csv.AppendLine($"{Path.GetFileName(kit)},#{ColorUtility.ToHtmlStringRGB(pair.Key)},#{ColorUtility.ToHtmlStringRGB(pair.Value.To)},{pair.Value.Category},{pair.Value.Count}");
+        }
+      }
+      var docs = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs"));
+      Directory.CreateDirectory(docs);
+      File.WriteAllText(Path.Combine(docs, "kenney-palette.csv"), csv.ToString());
+      Debug.Log("[FW-KENNEY] 아틀라스 군용 재도색 완료");
+    }
+
+    /// <summary>배치 모드 진입점: 임포트 설정 → 머티리얼 변환 → 군용 재도색 → 접촉 시트 → 매핑 에셋.</summary>
     public static void PrepareAll() {
       AssetDatabase.Refresh();
       ConfigureImport();
       ConvertMaterials();
+      RecolorAtlases();
       ContactSheets();
+      BuildMap();
       foreach (var kit in Kits()) {
         Debug.Log($"[FW-KENNEY] {Path.GetFileName(kit)} FBX {Models(kit).Length}");
       }

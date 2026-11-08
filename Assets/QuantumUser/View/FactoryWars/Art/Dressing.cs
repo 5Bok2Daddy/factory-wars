@@ -1,5 +1,7 @@
 namespace FactoryWars.View {
   using System.Collections.Generic;
+  using System.Linq;
+  using Quantum;
   using UnityEngine;
   using UnityEngine.Rendering;
 
@@ -9,12 +11,14 @@ namespace FactoryWars.View {
   /// </summary>
   public static class Dressing {
     public struct Item {
+      public DressKind Kind;
       public GameObject Prefab;
       public Matrix4x4 World;
       public bool Shadows;
       /// <summary>0~1 해시. 품질 낮음에서는 이 값이 LowKeep보다 작은 것만 남긴다.</summary>
       public float Keep;
       public float LowKeep;
+      public float MediumKeep;
     }
 
     static List<Item> _collector;
@@ -55,11 +59,13 @@ namespace FactoryWars.View {
         rotation = Quaternion.Euler(0f, yaw.Value, 0f);
       }
       _collector.Add(new Item {
+        Kind = kind,
         Prefab = variant.Prefab,
         World = KenneyAssetMap.Matrix(variant, position, rotation, (scale ?? Vector3.one) * size),
         Shadows = entry.Shadows,
         Keep = MeshKit.Hash(seed, 77),
         LowKeep = entry.LowKeep,
+        MediumKeep = entry.MediumKeep,
       });
       return true;
     }
@@ -77,8 +83,65 @@ namespace FactoryWars.View {
       var turned = MeshKit.Hash(seed, 2) < 0.5f;
       var fit = KenneyAssetMap.FitScale(variant, length, width, turned) * margin * entry.Scale;
       var rotation = Quaternion.Euler(0f, yaw + (turned ? 90f : 0f), 0f);
-      _collector.Add(new Item { Prefab = variant.Prefab, World = KenneyAssetMap.Matrix(variant, position, rotation, Vector3.one * fit), Shadows = entry.Shadows, Keep = 0f, LowKeep = 1f });
+      _collector.Add(new Item { Kind = kind, Prefab = variant.Prefab, World = KenneyAssetMap.Matrix(variant, position, rotation, Vector3.one * fit), Shadows = entry.Shadows, Keep = 0f, LowKeep = 1f, MediumKeep = 1f });
       return true;
+    }
+  }
+
+  /// <summary>
+  /// 빈 땅 흩뿌리기(항목 19C): 풀포기·작은 바위·덤불을 5m 격자에 해시로 놓는다.
+  /// 도로·다리·강·본진·건설 금지 구역·지형·자원·도시 건물·점령지 위는 피한다. 모두 통과 가능한 작은 장식이다.
+  /// </summary>
+  public static class Scatter {
+    const float Step = 5f;
+
+    static bool Near(MapShape[] shapes, Vector3 point, float margin) {
+      if (shapes == null) {
+        return false;
+      }
+      var p = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(point.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(point.z));
+      foreach (var shape in shapes) {
+        if (shape.Distance(p).AsFloat <= margin) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public static int Fill(MapSpec map) {
+      if (Dressing.Collecting == false || Dressing.Has(DressKind.Grass) == false) {
+        return 0;
+      }
+      var paths = TerrainKit.RiverPaths(map);
+      var terrain = map.Terrain?.Select(t => t.Shape).ToArray();
+      var nodes = map.ResourceNodes?.Select(n => n.Shape).ToArray();
+      var city = map.CityBuildings?.Select(c => c.Shape).ToArray();
+      var sites = map.CaptureSites?.Select(c => new MapShape { Center = c.Center, Radius = c.Radius }).ToArray();
+      var count = 0;
+      var index = 0;
+      for (var x = map.BoundsMin.X.AsFloat + Step / 2; x < map.BoundsMax.X.AsFloat; x += Step) {
+        for (var z = map.BoundsMin.Y.AsFloat + Step / 2; z < map.BoundsMax.Y.AsFloat; z += Step) {
+          index++;
+          var spot = new Vector3(x + (MeshKit.Hash(index, 1) - 0.5f) * Step * 0.8f, 0f, z + (MeshKit.Hash(index, 2) - 0.5f) * Step * 0.8f);
+          if (MeshKit.Hash(index, 3) > 0.7f) {
+            continue;
+          }
+          if (TerrainKit.RiverDistance(paths, new Vector2(spot.x, spot.z)) < 3f || Near(map.Roads, spot, 1.5f) || Near(map.Bridges, spot, 2f)
+              || Near(map.BaseAreas, spot, 0f) || Near(map.NoBuildZones, spot, 0f) || Near(terrain, spot, 0.5f) || Near(nodes, spot, 1.5f)
+              || Near(city, spot, 1.5f) || Near(sites, spot, 1f) || Near(map.HighGrounds, spot, 1f) || Near(map.Fords, spot, 1f)) {
+            continue;
+          }
+          var pick = MeshKit.Hash(index, 4);
+          var kind = pick < 0.6f ? DressKind.Grass : pick < 0.85f ? DressKind.RockSmall : DressKind.Bush;
+          // 도시 건물 둘레(폐허 주변)는 차량 부품·타이어 같은 잔해를 섞는다. 작아서 통과해도 어색하지 않다.
+          if (Near(city, spot, 5f) && pick < 0.6f) {
+            kind = DressKind.Debris;
+          }
+          spot.y = TerrainKit.SurfaceHeight(map, spot.x, spot.z);
+          count += Dressing.Add(kind, spot, 9000 + index) ? 1 : 0;
+        }
+      }
+      return count;
     }
   }
 
@@ -95,7 +158,10 @@ namespace FactoryWars.View {
       }
       var variant = KenneyAssetMap.Pick(entry, MeshKit.Hash(seed, 1));
       var turned = MeshKit.Hash(seed, 2) < 0.5f;
-      var fit = KenneyAssetMap.FitScale(variant, length, width, turned) * 0.94f * entry.Scale;
+      var fit = KenneyAssetMap.FitScale(variant, length, width, turned) * 0.86f * entry.Scale;
+      if (kind == DressKind.CityTower) {
+        fit = Mathf.Min(fit, 3.2f);
+      }
       var stretch = targetHeight > 0f ? Mathf.Clamp(targetHeight / Mathf.Max(0.01f, variant.Size.y * fit), 0.8f, 1.3f) : 1f;
       var wrapper = new GameObject("Kenney").transform;
       wrapper.SetParent(parent, false);
@@ -214,6 +280,8 @@ namespace FactoryWars.View {
       _instancedDirty = true;
     }
 
+    public IReadOnlyList<Dressing.Item> Group(string group) => _groups.TryGetValue(group, out var list) ? list : System.Array.Empty<Dressing.Item>();
+
     /// <summary>품질이 바뀌면(낮음은 나무 수를 줄인다) 모두 다시 만든다.</summary>
     public void MarkDirty() {
       foreach (var group in _groups.Keys) {
@@ -240,7 +308,8 @@ namespace FactoryWars.View {
       return parts;
     }
 
-    static bool Skip(Dressing.Item item) => item.Prefab == null || (GraphicsQuality.Current == QualityTier.Low && item.Keep > item.LowKeep);
+    static bool Skip(Dressing.Item item) => item.Prefab == null || (GraphicsQuality.Current == QualityTier.Low && item.Keep > item.LowKeep)
+      || (GraphicsQuality.Current == QualityTier.Medium && item.Keep > item.MediumKeep);
 
     /// <summary>합친 메쉬용 머티리얼: 공용 셰이더, 흰 바탕, 정점 색 사용. 다른 값은 원본 머티리얼에서 가져온다.</summary>
     Material VertexColorMaterial(Material source) {

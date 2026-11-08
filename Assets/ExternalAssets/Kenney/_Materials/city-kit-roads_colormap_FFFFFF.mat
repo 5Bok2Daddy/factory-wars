@@ -24,15 +24,15 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 8e46c1ddee026ef4389e2c0114bab700, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2fcf1a01a7e88d347b4e3b07d6b0897c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AoHeight: 1
     - _AoStrength: 0.35
-    - _Brightness: 0.9
-    - _Desaturate: 0.4
+    - _Brightness: 1
+    - _Desaturate: 0
     - _GradientBottom: 0
     - _GradientStrength: 0.22
     - _GradientTop: 12

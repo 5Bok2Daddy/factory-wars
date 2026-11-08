@@ -9,7 +9,8 @@ $dest = if ($env:FW_KENNEY_DEST) { $env:FW_KENNEY_DEST } else { "$root\Game\Asse
 $temp = "$root\temp-assets"
 New-Item -ItemType Directory -Force -Path $dest,$temp | Out-Null
 
-$kits = @("nature-kit", "city-kit-commercial", "city-kit-industrial", "city-kit-roads", "factory-kit", "tower-defense-kit", "train-kit")
+$kits = @("nature-kit", "city-kit-commercial", "city-kit-industrial", "city-kit-roads", "factory-kit", "tower-defense-kit", "train-kit",
+          "car-kit", "modular-buildings", "city-kit-suburban", "building-kit", "modular-space-kit", "space-station-kit", "mini-characters")
 foreach ($kit in $kits) {
     try {
         $found   = Get-ChildItem $temp -Filter "kenney_$kit*.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
