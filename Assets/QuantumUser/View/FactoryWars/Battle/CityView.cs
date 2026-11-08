@@ -81,6 +81,7 @@ namespace FactoryWars.View {
       }
       Dressing.End("city_props");
       BuildBoundary();
+      BuildPads();
     }
 
     static GameObject Item(Transform parent, string name, Mesh mesh, bool casts) {
@@ -166,6 +167,21 @@ namespace FactoryWars.View {
       return _stripes;
     }
 
+    /// <summary>건물 부지 패드를 메쉬 하나로 합친다(항목 25-1: 건물마다 렌더러 하나씩이던 것을 하나로). 패드는 무너져도 남는다.</summary>
+    void BuildPads() {
+      var kit = new MeshKit();
+      for (var i = 0; _map.CityBuildings != null && i < _map.CityBuildings.Length; i++) {
+        var shape = _map.CityBuildings[i].Shape;
+        kit.Push(shape.Center.ToUnityVector3(), new Vector3(0, shape.Yaw.AsFloat, 0), new Vector3(shape.HalfLength.AsFloat * 2, 1, shape.HalfWidth.AsFloat * 2));
+        kit.Paint(Swatch.Asphalt).Box(new Vector3(0, 0.04f, 0), new Vector3(1.04f, 0.08f, 1.04f));
+        kit.Paint(Swatch.ConcreteDark).Box(new Vector3(0, 0.09f, 0), new Vector3(0.98f, 0.1f, 0.98f));
+        kit.Pop();
+      }
+      if (kit.TriangleCount > 0) {
+        Item(_root, "Pads", kit.ToMesh("city_pads"), false);
+      }
+    }
+
     static Mesh PadMesh() {
       if (_pad == null) {
         var kit = new MeshKit();
@@ -182,8 +198,6 @@ namespace FactoryWars.View {
       root.SetParent(_root, false);
       root.localPosition = shape.Center.ToUnityVector3();
       root.localRotation = Quaternion.Euler(0, shape.Yaw.AsFloat, 0);
-      var pad = Item(root, "Pad", PadMesh(), false);
-      pad.transform.localScale = new Vector3(shape.HalfLength.AsFloat * 2, 1, shape.HalfWidth.AsFloat * 2);
       var pivot = new GameObject("Pivot").transform;
       pivot.SetParent(root, false);
       var body = Item(pivot, "Body", BlockMesh(placement.Kind, 0), true);

@@ -100,6 +100,15 @@ namespace FactoryWars.View {
     /// <summary>0 고층 블록 벽, 1 층진 바위 절벽과 숲.</summary>
     public int Boundary = 0;
 
+    [Header("바닥 정점 색 (항목 25-1)")]
+    /// <summary>true면 바닥 색을 정점마다 정해 부드럽게 섞는다(삼각형 체크무늬 제거). 색은 아래 값이다.</summary>
+    public bool GroundVertexColors = true;
+    public Color GroundGrass = new Color32(0x5B, 0x72, 0x40, 0xFF);
+    public Color GroundGrassLight = new Color32(0x6C, 0x81, 0x4A, 0xFF);
+    public Color GroundGrassDark = new Color32(0x46, 0x5A, 0x31, 0xFF);
+    public Color GroundDirt = new Color32(0x86, 0x72, 0x55, 0xFF);
+    public Color GroundDirtDark = new Color32(0x69, 0x59, 0x45, 0xFF);
+
     [Header("숲·바위")]
     public float TreeDensity = 1f;
     public float ConiferRatio = 1f;

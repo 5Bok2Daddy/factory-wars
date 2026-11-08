@@ -348,6 +348,41 @@ namespace FactoryWars.Tests {
         Object.Destroy(go);
       }
 
+      // 레퍼런스 대비 시트 19d_vs_ref.png(항목 25-1): 보통 품질 19D 결과를 aow3-ref 01·04 옆에 둔다.
+      GraphicsQuality.Apply(QualityTier.Medium);
+      VisualProfile.Current = after;
+      Battle().Rebuild();
+      yield return null;
+      yield return null;
+      GraphicsQuality.Apply(QualityTier.Medium);
+      yield return null;
+      var refFolder19 = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "concept-art", "aow3-ref"));
+      Texture2D Reference(string file) {
+        var texture = new Texture2D(2, 2, TextureFormat.RGB24, false);
+        var path = Path.Combine(refFolder19, file);
+        if (File.Exists(path)) {
+          texture.LoadImage(File.ReadAllBytes(path));
+        }
+        return texture;
+      }
+      var points19 = ViewPoints(map);
+      var a19 = points19.First(v => v.Name == "A");
+      Aim(camera, a19.Focus, a19.Height);
+      var shotA19 = Shoot(camera, CellWidth * 2, CellHeight * 2);
+      var c19 = points19.First(v => v.Name == "C");
+      Aim(camera, c19.Focus, c19.Height);
+      var shotC19 = Shoot(camera, CellWidth * 2, CellHeight * 2);
+      var reference = new List<(Texture2D, string)> {
+        (Reference("01_default_zoom_map.png"), "aow3-ref 01 기본 줌"),
+        (shotA19, "19D [A] 본진(보통)"),
+        (Reference("04_ruined_city_battlefield.png"), "aow3-ref 04 도시 폐허 전장"),
+        (shotC19, "19D [C] 중앙 교전(보통)"),
+      };
+      SaveSheet("19d_vs_ref", "19D vs aow3-ref (시점 A·C, 보통 품질)", reference, 2);
+      foreach (var (texture, _) in reference) {
+        Object.Destroy(texture);
+      }
+
       foreach (var pair in byView) {
         SaveSheet($"19d_compare_{pair.Key}", $"19D 시점 {pair.Key}: 왼쪽 19C / 오른쪽 19D(키트 추가 소품·작업자 애니메이션) — 위 보통, 아래 낮음", pair.Value, 2);
         foreach (var (texture, _) in pair.Value) {

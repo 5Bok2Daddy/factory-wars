@@ -84,7 +84,10 @@ namespace FactoryWars.View {
           var c = new Vector3(to[j].x, top, to[j].y);
           var d = new Vector3(to[i].x, top, to[i].y);
           var outward = new Vector3(from[i].x + from[j].x, 0, from[i].y + from[j].y) * 0.5f - new Vector3(center.x, 0, center.y);
-          if (dressed) {
+          // 성능(항목 25-1): Kenney 절벽 블록은 둘레 두 칸을 한 블록으로 늘여 놓는다(블록 수 절반). 홀수 끝 칸은 혼자 놓는다.
+          if (dressed && i % 2 == 0) {
+            var k2 = i + 2 < from.Length ? i + 2 : (i + 1) % from.Length;
+            b = new Vector3(from[k2].x, bottom, from[k2].y);
             var along = b - a;
             var length = along.magnitude;
             if (length > 0.05f) {
@@ -99,7 +102,7 @@ namespace FactoryWars.View {
               Dressing.Add(DressKind.Cliff, new Vector3(mid.x, bottom, mid.z), seed * 7919 + l * 977 + i, new Vector3(length + 0.6f, top - bottom, Depth), yaw);
               // 아래층 바깥 가장자리에 바위, 맨 위층 가장자리 안쪽에 나무를 듬성듬성(판정 경계 안쪽).
               var edge = (a + b) * 0.5f - normal * 1.4f;
-              if (l == 0 && MeshKit.Hash(seed, 3000 + i) < 0.22f) {
+              if (l == 0 && MeshKit.Hash(seed, 3000 + i) < 0.14f) {
                 Dressing.Add(DressKind.RockLarge, new Vector3(edge.x, 0f, edge.z), seed * 131 + i, Vector3.one * 0.65f);
               }
               if (l == layers - 1 && MeshKit.Hash(seed, 5000 + i) < 0.12f) {
@@ -108,6 +111,7 @@ namespace FactoryWars.View {
               }
             }
           }
+          b = new Vector3(from[j].x, bottom, from[j].y);
           var shade = faces[Mathf.Min(l * faces.Length / layers, faces.Length - 1)];
           k.Paint(MeshKit.Hash(seed, l * 977 + i) < 0.22f ? Swatch.RockFaceLight : shade);
           k.Quad(a, b, c, d, outward);

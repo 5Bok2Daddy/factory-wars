@@ -62,6 +62,12 @@ MonoBehaviour:
   ShadeNoise: 0.07
   Dressing: {fileID: 11400000, guid: 4a5414e68bc57034e8dbf72f5d9b1623, type: 2}
   Boundary: 1
+  GroundVertexColors: 1
+  GroundGrass: {r: 0.35686275, g: 0.44705883, b: 0.2509804, a: 1}
+  GroundGrassLight: {r: 0.42352942, g: 0.5058824, b: 0.2901961, a: 1}
+  GroundGrassDark: {r: 0.27450982, g: 0.3529412, b: 0.19215687, a: 1}
+  GroundDirt: {r: 0.5254902, g: 0.44705883, b: 0.33333334, a: 1}
+  GroundDirtDark: {r: 0.4117647, g: 0.34901962, b: 0.27058825, a: 1}
   TreeDensity: 1
   ConiferRatio: 0.6
   AutumnRatio: 0.22

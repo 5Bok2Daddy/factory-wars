@@ -73,7 +73,7 @@ namespace FactoryWars.EditorTools {
     // 낮음은 모바일 기준이다. Bloom·톤매핑은 GraphicsQuality가 카메라에서 끈다.
     static readonly (string Name, bool Hdr, float Scale, int Msaa, float Shadow, int Resolution, int Cascades, bool Soft)[] Tiers = {
       ("Low", false, 0.75f, 1, 80f, 1024, 1, false),
-      ("Medium", true, 0.85f, 1, 130f, 1024, 2, true),
+      ("Medium", true, 0.85f, 1, 130f, 1024, 1, true),
       ("High", true, 1f, 2, 200f, 2048, 4, true),
     };
 

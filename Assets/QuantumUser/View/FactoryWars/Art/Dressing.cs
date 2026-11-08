@@ -170,7 +170,8 @@ namespace FactoryWars.View {
       var model = Object.Instantiate(variant.Prefab, wrapper);
       model.transform.localPosition += variant.Offset;
       foreach (var renderer in model.GetComponentsInChildren<MeshRenderer>()) {
-        renderer.shadowCastingMode = entry.Shadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+        // 품질 낮음에서는 도시 건물 그림자를 끈다(그림자 그리기 호출 절약, 항목 25-1).
+        renderer.shadowCastingMode = entry.Shadows && GraphicsQuality.Current != QualityTier.Low ? ShadowCastingMode.On : ShadowCastingMode.Off;
       }
       return wrapper.gameObject;
     }
@@ -180,6 +181,11 @@ namespace FactoryWars.View {
       var map = Dressing.Map;
       var entry = map != null ? map.Get(kind) : null;
       if (entry == null) {
+        return null;
+      }
+      // 품질별 남김 비율(항목 25-1): 인스턴싱 개체와 같은 규칙을 실제 오브젝트 소품에도 적용한다(낮음·보통에서 렌더러 수를 줄인다).
+      var keep = MeshKit.Hash(seed, 77);
+      if ((GraphicsQuality.Current == QualityTier.Low && keep > entry.LowKeep) || (GraphicsQuality.Current == QualityTier.Medium && keep > entry.MediumKeep)) {
         return null;
       }
       var (variant, _, scale) = KenneyAssetMap.Place(entry, seed);

@@ -138,19 +138,19 @@
   {
    "Kit": "nature-kit",
    "From": "29C9AB",
-   "To": "4F7F33",
+   "To": "4C6236",
    "Note": "잎·풀 중간"
   },
   {
    "Kit": "nature-kit",
    "From": "2CD8B8",
-   "To": "6E9A3C",
+   "To": "5A7040",
    "Note": "잎·풀 밝음"
   },
   {
    "Kit": "nature-kit",
    "From": "2BA6AA",
-   "To": "34572A",
+   "To": "3A4E2E",
    "Note": "잎 짙음"
   },
   {
@@ -275,8 +275,8 @@
    "Fit": false,
    "Models": [
     "nature-kit/tree_pineTallA:3",
-    "nature-kit/tree_pineTallC:3",
-    "nature-kit/tree_pineTallD:2"
+    "nature-kit/tree_pineTallB:3",
+    "nature-kit/tree_pineTallC:1"
    ]
   },
   {
@@ -290,8 +290,8 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "nature-kit/tree_simple_fall:2",
-    "nature-kit/tree_pineDefaultA:1"
+    "nature-kit/tree_fat_fall:1",
+    "nature-kit/tree_simple_fall:1"
    ]
   },
   {
@@ -305,8 +305,8 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "nature-kit/tree_simple_dark:2",
-    "nature-kit/tree_pineDefaultB:1"
+    "nature-kit/tree_fat_darkh:1",
+    "nature-kit/tree_simple_dark:1"
    ]
   },
   {
@@ -320,10 +320,8 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "nature-kit/tree_pineSmallC:2",
-    "nature-kit/tree_pineSmallD:2",
-    "city-kit-suburban/tree-large:1",
-    "city-kit-suburban/tree-small:1"
+    "nature-kit/tree_pineSmallC:1",
+    "nature-kit/tree_pineSmallD:1"
    ]
   },
   {
@@ -338,8 +336,7 @@
    "Fit": false,
    "Models": [
     "nature-kit/stump_round:2",
-    "nature-kit/log_large:1",
-    "nature-kit/log_stack:1"
+    "nature-kit/log_large:1"
    ]
   },
   {
@@ -359,7 +356,7 @@
   },
   {
    "Kind": "Grass",
-   "Scale": 5.0,
+   "Scale": 7.0,
    "JitterMin": 0.8,
    "JitterMax": 1.3,
    "LowKeep": 0.25,
@@ -368,8 +365,7 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "nature-kit/grass_leafs:2",
-    "nature-kit/grass_leafsLarge:1"
+    "nature-kit/grass_leafs:1"
    ]
   },
   {
@@ -377,17 +373,15 @@
    "Scale": 2.6,
    "JitterMin": 0.85,
    "JitterMax": 1.2,
-   "LowKeep": 1.0,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.5,
+   "MediumKeep": 0.85,
    "Shadows": false,
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "nature-kit/rock_largeA:2",
-    "nature-kit/rock_largeD:2",
-    "nature-kit/rock_tallG:2",
-    "mini-forest/rocks-high:1",
-    "mini-forest/rocks-ramp:1"
+    "nature-kit/rock_largeA:1",
+    "nature-kit/rock_largeD:1",
+    "nature-kit/rock_tallG:1"
    ]
   },
   {
@@ -401,10 +395,8 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "nature-kit/rock_smallD:2",
-    "nature-kit/rock_smallG:2",
-    "mini-forest/rocks-low:1",
-    "mini-forest/stones:1"
+    "nature-kit/rock_smallD:1",
+    "nature-kit/rock_smallG:1"
    ]
   },
   {
@@ -434,24 +426,18 @@
    "Fit": true,
    "Models": [
     "city-kit-suburban/building-type-a:1",
-    "city-kit-suburban/building-type-b:1",
     "city-kit-suburban/building-type-c:1",
-    "city-kit-suburban/building-type-d:1",
     "city-kit-suburban/building-type-e:1",
-    "city-kit-suburban/building-type-f:1",
     "city-kit-suburban/building-type-g:1",
     "city-kit-suburban/building-type-h:1",
-    "city-kit-suburban/building-type-j:1",
+    "city-kit-suburban/building-type-i:1",
     "city-kit-suburban/building-type-k:1",
     "city-kit-suburban/building-type-m:1",
-    "city-kit-suburban/building-type-n:1",
-    "city-kit-suburban/building-type-p:1",
     "city-kit-suburban/building-type-q:1",
     "city-kit-suburban/building-type-r:1",
-    "city-kit-suburban/building-type-t:1",
-    "modular-buildings/building-sample-house-a:1",
-    "modular-buildings/building-sample-house-b:1",
-    "modular-buildings/building-sample-house-c:1"
+    "modular-buildings/building-sample-house-a:2",
+    "modular-buildings/building-sample-house-b:2",
+    "modular-buildings/building-sample-house-c:2"
    ]
   },
   {
@@ -465,12 +451,7 @@
    "SnapYaw90": false,
    "Fit": true,
    "Models": [
-    "city-kit-industrial/building-a:1",
-    "city-kit-industrial/building-b:1",
-    "city-kit-industrial/building-c:1",
     "city-kit-industrial/building-d:1",
-    "city-kit-industrial/building-e:1",
-    "city-kit-industrial/building-f:1",
     "city-kit-industrial/building-g:1",
     "city-kit-industrial/building-h:1",
     "city-kit-industrial/building-i:1",
@@ -491,15 +472,10 @@
    "Fit": true,
    "Models": [
     "city-kit-industrial/building-k:1",
-    "city-kit-industrial/building-l:1",
-    "city-kit-industrial/building-m:1",
     "city-kit-industrial/building-n:1",
     "city-kit-industrial/building-o:1",
     "city-kit-industrial/building-p:1",
-    "city-kit-industrial/building-q:1",
-    "city-kit-industrial/building-r:1",
     "city-kit-industrial/building-s:1",
-    "city-kit-industrial/building-t:1",
     "city-kit-industrial/detail-tank-large:1"
    ]
   },
@@ -529,9 +505,9 @@
    "SnapYaw90": false,
    "Fit": true,
    "Models": [
+    "city-kit-industrial/building-d:1",
     "city-kit-industrial/building-g:1",
-    "city-kit-industrial/building-h:1",
-    "city-kit-industrial/building-c:1"
+    "city-kit-industrial/building-h:1"
    ]
   },
   {
@@ -539,8 +515,8 @@
    "Scale": 5.5,
    "JitterMin": 0.95,
    "JitterMax": 1.05,
-   "LowKeep": 0.6,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -555,8 +531,8 @@
    "Scale": 1.7,
    "JitterMin": 0.9,
    "JitterMax": 1.1,
-   "LowKeep": 0.4,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -590,8 +566,8 @@
    "Scale": 2.8,
    "JitterMin": 0.95,
    "JitterMax": 1.05,
-   "LowKeep": 0.8,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": true,
    "SnapYaw90": false,
    "Fit": false,
@@ -612,7 +588,7 @@
    "Scale": 4.0,
    "JitterMin": 0.8,
    "JitterMax": 1.2,
-   "LowKeep": 0.4,
+   "LowKeep": 0.3,
    "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": false,
@@ -630,8 +606,8 @@
    "Scale": 1.6,
    "JitterMin": 0.9,
    "JitterMax": 1.1,
-   "LowKeep": 0.5,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -648,8 +624,8 @@
    "Scale": 1.5,
    "JitterMin": 0.9,
    "JitterMax": 1.1,
-   "LowKeep": 0.5,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -664,8 +640,8 @@
    "Scale": 1.8,
    "JitterMin": 0.85,
    "JitterMax": 1.15,
-   "LowKeep": 0.5,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": false,
    "Fit": false,
@@ -689,8 +665,8 @@
    "Scale": 2.2,
    "JitterMin": 0.95,
    "JitterMax": 1.05,
-   "LowKeep": 0.8,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": false,
    "Fit": false,
@@ -756,8 +732,8 @@
    "Scale": 1.5,
    "JitterMin": 0.9,
    "JitterMax": 1.1,
-   "LowKeep": 0.5,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -848,8 +824,8 @@
    "Scale": 1.8,
    "JitterMin": 0.9,
    "JitterMax": 1.1,
-   "LowKeep": 0.5,
-   "MediumKeep": 0.85,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -865,8 +841,8 @@
    "Scale": 1.6,
    "JitterMin": 0.95,
    "JitterMax": 1.05,
-   "LowKeep": 0.7,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -881,8 +857,8 @@
    "Scale": 1.8,
    "JitterMin": 0.95,
    "JitterMax": 1.05,
-   "LowKeep": 0.6,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -897,8 +873,8 @@
    "Scale": 2.4,
    "JitterMin": 1.0,
    "JitterMax": 1.0,
-   "LowKeep": 1.0,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -914,8 +890,8 @@
    "Scale": 1.8,
    "JitterMin": 0.95,
    "JitterMax": 1.05,
-   "LowKeep": 0.7,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": false,
    "Fit": false,
@@ -942,8 +918,8 @@
    "Scale": 1.7,
    "JitterMin": 1.0,
    "JitterMax": 1.0,
-   "LowKeep": 0.7,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -962,8 +938,7 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "mini-forest/patch-dirt:2",
-    "mini-forest/patch-grass:2"
+    "mini-forest/patch-dirt:1"
    ]
   },
   {
@@ -985,8 +960,8 @@
    "Scale": 1.8,
    "JitterMin": 0.95,
    "JitterMax": 1.05,
-   "LowKeep": 0.6,
-   "MediumKeep": 1.0,
+   "LowKeep": 0.3,
+   "MediumKeep": 0.7,
    "Shadows": false,
    "SnapYaw90": true,
    "Fit": false,
@@ -1046,7 +1021,7 @@
   },
   {
    "Kind": "TrainWreck",
-   "Scale": 1.8,
+   "Scale": 1.5,
    "JitterMin": 0.95,
    "JitterMax": 1.05,
    "LowKeep": 0.5,

@@ -121,6 +121,25 @@ namespace FactoryWars.View {
       return false;
     }
 
+    /// <summary>
+    /// 정점 하나의 바닥 색(항목 25-1). 기존 구역 규칙(GroundColor)으로 칸을 고른 뒤, 풀·흙 칸은 프로필의 차분한 색으로 바꾼다.
+    /// 이웃 삼각형이 같은 정점 색을 나눠 가지므로 면 단위 체크무늬가 생기지 않는다.
+    /// </summary>
+    public static Color GroundTint(MapSpec map, float x, float z, int seed) {
+      var profile = VisualProfile.Current;
+      var swatch = GroundColor(map, x, z, seed);
+      switch (swatch) {
+        case Swatch.Grass: return profile.GroundGrass;
+        case Swatch.GrassLight: return profile.GroundGrassLight;
+        case Swatch.GrassDark: return profile.GroundGrassDark;
+        case Swatch.Olive: return Color.Lerp(profile.GroundGrass, profile.GroundDirt, 0.35f);
+        case Swatch.Dirt: return profile.GroundDirt;
+        case Swatch.DirtDark: return profile.GroundDirtDark;
+        case Swatch.Earth: return Color.Lerp(profile.GroundDirt, profile.GroundDirtDark, 0.5f);
+        default: return ArtPalette.ColorOf(swatch);
+      }
+    }
+
     static Swatch GroundColor(MapSpec map, float x, float z, int seed) {
       var noise = Noise(x, z, seed);
       var profile = VisualProfile.Current;
@@ -427,6 +446,9 @@ namespace FactoryWars.View {
       k.Pop();
     }
 
+    /// <summary>Features가 채우는 점령지 목록. 바위 위 장식이 점령지 원을 덮지 않게 할 때 쓴다(화면 전용).</summary>
+    static CaptureSitePlacement[] _sites;
+
     /// <summary>크기와 각도가 다른 회색 바위 무더기.</summary>
     public static void Boulders(MeshKit k, MapShape shape, int seed) {
       var center = new Vector3(shape.Center.X.AsFloat, 0, shape.Center.Z.AsFloat);
@@ -443,13 +465,18 @@ namespace FactoryWars.View {
           Dressing.Add(small ? DressKind.RockSmall : DressKind.RockLarge, spot, seed * 31 + i, Vector3.one * (radius * (small ? 0.18f : 0.2f)));
         }
         // 중앙 폐허의 대칭 바위 엄폐물에는 손상된 철로와 탈선한 화차 더미를 함께 놓는다(항목 19D, 기존 바위 판정 공유).
-        if (new Vector2(center.x, center.z).magnitude < 62f && Dressing.Has(DressKind.TrainWreck)) {
+        var nearSite = false;
+        foreach (var site in _sites ?? Array.Empty<CaptureSitePlacement>()) {
+          nearSite |= (new Vector2(site.Center.X.AsFloat - center.x, site.Center.Z.AsFloat - center.z)).magnitude < site.Radius.AsFloat + radius + 4f;
+        }
+        if (nearSite == false && new Vector2(center.x, center.z).magnitude < 62f && Dressing.Has(DressKind.TrainWreck)) {
           var yaw = Mathf.Atan2(center.z, center.x) * Mathf.Rad2Deg + 90f;
           if (Dressing.Has(DressKind.TrainTrack)) {
             Dressing.Add(DressKind.TrainTrack, center + new Vector3(0f, 0.04f, 0f), seed + 701, null, yaw);
           }
           Dressing.Add(DressKind.TrainWreck, center + new Vector3(0f, 0.1f, 0f), seed + 709, null, yaw + 18f);
         }
+        return;
       }
       k.ShadeFaces(seed, Swatch.BoulderDark, Swatch.Boulder, Swatch.BoulderLight);
       k.Rock(center, radius * 0.72f, radius * (1.05f + 0.4f * MeshKit.Hash(seed, 1)), seed);
@@ -622,6 +649,7 @@ namespace FactoryWars.View {
 
     /// <summary>언덕·협곡·바위·강·줄무늬를 메쉬 하나로 모은다. 번호는 MapSpec.Terrain의 순서다.</summary>
     public static void Features(MeshKit k, MapSpec map) {
+      _sites = map.CaptureSites;
       var profile = VisualProfile.Current;
       var paths = RiverPaths(map);
       var features = map.Terrain ?? Array.Empty<TerrainFeature>();

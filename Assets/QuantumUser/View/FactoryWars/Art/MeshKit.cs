@@ -58,11 +58,14 @@ namespace FactoryWars.View {
       new Cell(0xA8A39A, 0f, 0.12f), new Cell(0x5E5B57, 0f, 0.1f), new Cell(0x2E3E4C, 0.3f, 0.7f),
       new Cell(0x3C3D40, 0f, 0.18f), new Cell(0xE0B23A, 0f, 0.2f), new Cell(0xE6E2D6, 0f, 0.2f),
       new Cell(0x8A7F70, 0f, 0.08f), new Cell(0x5E554B, 0f, 0.06f), new Cell(0xA89C88, 0f, 0.1f),
-      new Cell(0xC8662A, 0f, 0.1f), new Cell(0x8E4A36, 0f, 0.06f), new Cell(0x1E1A16, 0f, 0f), new Cell(0x9AB25A, 0f, 0.06f),
-      new Cell(0x2A3322, 0f, 0.04f),
+      new Cell(0xC8662A, 0f, 0.1f), new Cell(0x8E4A36, 0f, 0.06f), new Cell(0x1E1A16, 0f, 0f), new Cell(0x7A8C52, 0f, 0.06f),
+      new Cell(0x384530, 0f, 0.04f),
     };
 
     public static int CellCount => Cells.Length;
+
+    /// <summary>칸의 기본색(팀·발광 보정 없음).</summary>
+    public static Color ColorOf(Swatch swatch) => Cells[(int)swatch].Color;
 
     /// <summary>밝기 단계 줄 수. 홀수라 가운데 줄 중심이 정확히 V 0.5(원래 색)다.</summary>
     public const int Rows = 17;

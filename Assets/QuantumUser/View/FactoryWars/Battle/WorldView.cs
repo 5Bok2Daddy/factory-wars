@@ -62,6 +62,27 @@ namespace FactoryWars.View {
       BuildStatic();
     }
 
+    static Material _ground;
+
+    /// <summary>바닥 전용 공유 머티리얼: 공용 셰이더에 정점 색을 켜고 접촉 AO·높이 그라데이션은 끈다.</summary>
+    static Material GroundMaterial() {
+      if (_ground == null) {
+        var shader = Shader.Find("FactoryWars/KenneyLit");
+        if (shader == null) {
+          return null;
+        }
+        _ground = new Material(shader) { name = "GroundVertexColor" };
+        _ground.SetFloat("_UseVertexColor", 1f);
+        _ground.SetFloat("_Desaturate", 0f);
+        _ground.SetFloat("_Brightness", 1f);
+        _ground.SetFloat("_AoStrength", 0f);
+        _ground.SetFloat("_GradientStrength", 0f);
+        _ground.SetFloat("_NoiseStrength", 0.05f);
+        _ground.SetFloat("_NoiseScale", 0.05f);
+      }
+      return _ground;
+    }
+
     static GameObject MeshObject(Transform parent, string name, Mesh mesh, bool casts) {
       var item = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
       item.transform.SetParent(parent, false);
@@ -75,7 +96,20 @@ namespace FactoryWars.View {
     void BuildStatic() {
       var ground = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
       TerrainKit.Ground(ground, _map, 3);
-      MeshObject(_root, "Ground", ground.ToMesh("world_ground"), false);
+      var groundMesh = ground.ToMesh("world_ground");
+      var groundObject = MeshObject(_root, "Ground", groundMesh, false);
+      if (VisualProfile.Current.GroundVertexColors && GroundMaterial() != null) {
+        // 정점 색 바닥(항목 25-1): 정점 위치마다 색을 골라 부드럽게 섞는다. 머티리얼은 하나를 같이 쓴다.
+        var vertices = groundMesh.vertices;
+        var colors = new Color[vertices.Length];
+        var linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
+        for (var v = 0; v < vertices.Length; v++) {
+          var tint = TerrainKit.GroundTint(_map, vertices[v].x, vertices[v].z, 3);
+          colors[v] = linear ? tint.linear : tint;
+        }
+        groundMesh.colors = colors;
+        groundObject.GetComponent<MeshRenderer>().sharedMaterial = GroundMaterial();
+      }
       var features = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
       Dressing.Begin();
       TerrainKit.Features(features, _map);
@@ -185,7 +219,8 @@ namespace FactoryWars.View {
         // 고철·광산 설비 느낌: 둘레에 호퍼·고철 하치장(skip-rocks)·크레인·작업 차량(Kenney, 판정 없음 — 항목 19C·19D).
         Dressing.Begin();
         var radius = node->Shape.Radius.AsFloat;
-        DressKind[] kinds = { DressKind.Hopper, DressKind.ScrapSkip, DressKind.Crane, DressKind.WorkVehicle };
+        // 작업 차량(삼각형 2,700개)은 성능 예산 때문에 컨테이너로 바꿨다(항목 25-1).
+        DressKind[] kinds = { DressKind.Hopper, DressKind.ScrapSkip, DressKind.Crane, DressKind.Container };
         for (var i = 0; i < kinds.Length; i++) {
           var angle = (index * 1.7f + i * (Mathf.PI * 2f / kinds.Length)) % (Mathf.PI * 2f);
           var spot = center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (radius * 0.88f + MeshKit.Hash(index, 40 + i) * 0.9f);
