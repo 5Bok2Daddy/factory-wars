@@ -99,10 +99,14 @@ namespace FactoryWars.Tests {
       var rows = new List<string>();
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var broken = (spec.Barricades?.Length ?? 0) - Verified.ComponentCount<Barricade>();
+      var collapsed = 0;
+      for (var i = 0; spec.CityBuildings != null && i < spec.CityBuildings.Length; i++) {
+        collapsed += CitySystem.IsCollapsed(Verified, i) ? 1 : 0;
+      }
       var winners = Verified.Global->GameEnded ? Verified.Global->WinnerMask : 0;
       for (var p = 0; p < players; p++) {
         var state = Verified.Global->Players.GetPointer(p);
-        rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{((winners >> p) & 1)},{state->Captures},{F(state->CaptureFrames / (float)Fps)},{state->CratesPicked},{state->HighGroundShots},{broken}");
+        rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{((winners >> p) & 1)},{state->Captures},{F(state->CaptureFrames / (float)Fps)},{state->CratesPicked},{state->HighGroundShots},{broken},{collapsed},{state->GarrisonEntries}");
       }
       return rows;
     }

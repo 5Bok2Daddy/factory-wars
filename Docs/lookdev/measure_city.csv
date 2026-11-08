@@ -1,0 +1,14 @@
+city,Low,A,103,92122,67,170
+city,Low,B,95,91510,59,154
+city,Low,C,94,89216,28,122
+city,Low,D,353,178884,168,521
+city,Medium,A,106,92122,97,304
+city,Medium,B,95,91510,89,277
+city,Medium,C,92,88544,81,258
+city,Medium,D,353,178884,333,1023
+city,High,A,106,92122,97,498
+city,High,B,95,91510,89,455
+city,High,C,94,89564,83,430
+city,High,D,353,178884,333,1689
+city,ground_width_m,120.6
+city,tank_px,2008.2,cf_dragonscale_tank

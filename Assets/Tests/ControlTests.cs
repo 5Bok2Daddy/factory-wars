@@ -85,6 +85,7 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(new Vector2(-80, 10), RtsCamera.ClampFocus(new Vector2(-90, 10), min, max));
       Assert.AreEqual(RtsCamera.MaxHeight, RtsCamera.ClampHeight(9999f));
       Assert.AreEqual(RtsCamera.MinHeight, RtsCamera.ClampHeight(1f));
+      CheckCameraBoundary();
     }
 
     [Test]
@@ -294,6 +295,28 @@ namespace FactoryWars.Tests {
       }
       var scaler = Controller().Hud.GetComponentInChildren<CanvasScaler>();
       Assert.AreEqual(1f, scaler.matchWidthOrHeight, "높이 기준이면 16:9~21:9에서 버튼 크기가 같다");
+    }
+
+    /// <summary>닫힌 맵: 최대 줌 아웃에서도 경계 밖이 화면 가로의 10%를 넘지 않는다.</summary>
+    static void CheckCameraBoundary() {
+      var item = new GameObject("BoundaryCamera", typeof(Camera), typeof(RtsCamera));
+      try {
+        var rts = item.GetComponent<RtsCamera>();
+        var camera = item.GetComponent<Camera>();
+        camera.aspect = 16f / 9f;
+        rts.BoundsMin = new Vector2(-120, -120);
+        rts.BoundsMax = new Vector2(120, 120);
+        rts.Height = 9999f;
+        rts.Zoom(1f);
+        Assert.LessOrEqual(rts.Height, rts.FitHeight() + 0.01f, "최대 높이는 맵 가로에 맞춘다");
+        rts.MoveTo(new Vector2(-500, -500));
+        var left = rts.ToGround(new Vector2(0, camera.pixelHeight * 0.5f), out var a) ? a.x : 0f;
+        var right = rts.ToGround(new Vector2(camera.pixelWidth, camera.pixelHeight * 0.5f), out var b) ? b.x : 0f;
+        var outside = Mathf.Max(0f, -120f - left) / (right - left);
+        Assert.LessOrEqual(outside, 0.11f, "경계 밖 비율");
+      } finally {
+        Object.DestroyImmediate(item);
+      }
     }
   }
 }

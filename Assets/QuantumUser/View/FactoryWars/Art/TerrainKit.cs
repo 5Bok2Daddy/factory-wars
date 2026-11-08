@@ -124,8 +124,9 @@ namespace FactoryWars.View {
     static Swatch GroundColor(MapSpec map, float x, float z, int seed) {
       var noise = Noise(x, z, seed);
       var outside = x < map.BoundsMin.X.AsFloat || x > map.BoundsMax.X.AsFloat || z < map.BoundsMin.Y.AsFloat || z > map.BoundsMax.Y.AsFloat;
+      // 닫힌 맵: 경계 밖은 경계 벽 뒤로 어둡게 끊는다.
       if (outside) {
-        return Swatch.Grass;
+        return Swatch.ConcreteDark;
       }
       if (Inside(map.NoBuildZones, x, z)) {
         return noise < 0.55f ? Swatch.Dirt : Swatch.DirtDark;
@@ -201,10 +202,12 @@ namespace FactoryWars.View {
       return new Vector3(position.x, y, position.y);
     }
 
-    /// <summary>바닥 메쉬가 덮는 범위. 강은 이 밖으로 나가지 않는다.</summary>
+    /// <summary>강이 그려지는 범위. 경계 벽 안쪽까지다.</summary>
+    public const float WallDepth = 14f;
+
     public static Rect Land(MapSpec map) {
-      var min = new Vector2(map.BoundsMin.X.AsFloat - Margin, map.BoundsMin.Y.AsFloat - Margin);
-      var max = new Vector2(map.BoundsMax.X.AsFloat + Margin, map.BoundsMax.Y.AsFloat + Margin);
+      var min = new Vector2(map.BoundsMin.X.AsFloat - WallDepth, map.BoundsMin.Y.AsFloat - WallDepth);
+      var max = new Vector2(map.BoundsMax.X.AsFloat + WallDepth, map.BoundsMax.Y.AsFloat + WallDepth);
       return new Rect(min, max - min);
     }
 

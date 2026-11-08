@@ -120,5 +120,5 @@ CLAUDE.md 규칙, visual-style 스킬, 결정론 유지. 전체 테스트(PlayMo
 - `concept-art/2026-11-07/VISUAL-REFERENCE.md`에 이번에 정한 규칙(카메라, 조명, 높낮이, 바닥판, 외곽선, 숲 변화)을 추가.
 - ROADMAP.md, SETUP-REPORT.md 갱신.
 
-끝나면 push 하고 멈춰. 사령부 단계, 지뢰, 청룡 공화국은 하지 마.
+끝나면 push하고, 이어서 NEXT-TASK-22-BALANCE.md → NEXT-TASK-23-DEVICE.md를 진행한 뒤 멈춰. 사령부 단계, 지뢰, 청룡 공화국은 하지 마.
 보안 규칙은 이전과 같음(결제·구독 변경 금지, Photon 대시보드 변경 금지, 비밀번호·토큰 입력 금지, 사용자 폴더 밖 삭제 금지, UAC 금지).
