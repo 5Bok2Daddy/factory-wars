@@ -19,7 +19,10 @@ namespace Quantum.FactoryWars {
       for (var i = 0; map.CrateSpots != null && i < map.CrateSpots.Length; i++) {
         var spot = map.CrateSpots[i];
         if (spot.Seat >= 0 && rules.BaseCrateRewards != null && rules.BaseCrateRewards.Length > 0) {
-          SpawnCrate(f, spot.Position, spot.Seat, rules.BaseCrateRewards[spot.Group % rules.BaseCrateRewards.Length]);
+          var owner = FactoryWarsUtil.PlayerAtSeat(f, spot.Seat);
+          if (owner >= 0) {
+            SpawnCrate(f, spot.Position, owner, rules.BaseCrateRewards[spot.Group % rules.BaseCrateRewards.Length]);
+          }
         }
       }
       f.Global->NextDropFrame = f.Global->TruceEndFrame + FactoryWarsUtil.SecondsToFrames(f, rules.DropIntervalSeconds);
@@ -223,9 +226,13 @@ namespace Quantum.FactoryWars {
           f.Destroy(entity);
         }
       }
+      var seatIndex = 0;
       for (var i = 0; i < map.CrateSpots.Length; i++) {
         if (map.CrateSpots[i].Seat < 0 && map.CrateSpots[i].Group == f.Global->DropGroup) {
-          SpawnCrate(f, map.CrateSpots[i].Position, -1, rules.DropReward);
+          if (f.PlayerCount != 2 || FactoryWarsUtil.PlayerAtSeat(f, seatIndex) >= 0) {
+            SpawnCrate(f, map.CrateSpots[i].Position, -1, rules.DropReward);
+          }
+          seatIndex++;
         }
       }
       f.Global->DropAnnounced = false;

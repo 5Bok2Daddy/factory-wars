@@ -106,7 +106,7 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void City_LayoutCountsAndSymmetry() {
-      foreach (var (id, players, min, max, topMin, topMax, garMin, garMax) in new[] { ("Map2P", 2, 40, 60, 6, 10, 6, 8), ("Map4P", 4, 80, 120, 12, 20, 12, 16) }) {
+      foreach (var (id, players, min, max, topMin, topMax, garMin, garMax) in new[] { ("Map4P", 4, 80, 120, 12, 20, 12, 16) }) {
         var spec = MapAsset(id);
         var cities = spec.CityBuildings;
         Debug.Log($"[FW-TEST] {id} 도시 건물 {cities.Length}, 쓰러짐 {cities.Count(c => c.Topples)}, 진지 {cities.Count(c => c.Garrison)}, 지름길 {cities.Count(c => c.Shortcut)}");
@@ -125,14 +125,14 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void City_ToppleCombinationsKeepEverythingConnected() {
-      foreach (var id in new[] { "Map2P", "Map4P" }) {
+      foreach (var id in new[] { "Map4P" }) {
         AssertConnectedAfterTopples(MapAsset(id), id);
       }
     }
 
     [Test]
     public void City_FallZonesAvoidBridgesEntrancesAndBases() {
-      foreach (var id in new[] { "Map2P", "Map4P" }) {
+      foreach (var id in new[] { "Map4P" }) {
         var spec = MapAsset(id);
         foreach (var city in spec.CityBuildings.Where(c => c.Topples)) {
           var zone = city.FallZone;

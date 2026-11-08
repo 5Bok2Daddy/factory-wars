@@ -41,15 +41,17 @@ namespace FactoryWars.Tests {
       yield return StartMatch(scene, players, truce: 600);
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var navMesh = MapNavMesh();
-      Assert.IsTrue(Verified.Map.RegionMap.ContainsKey("Barrier"), "다리 영역이 구워짐");
-      Assert.AreEqual(2 + spec.Barricades.Length + spec.CityBuildings.Length + spec.CityBuildings.Count(c => c.Topples), Verified.Map.RegionMap.Count, "기본 영역 + 다리 영역 + 바리케이드 + 도시 건물 + 낙하 구역");
+      Assert.IsTrue(Verified.Map.RegionMap.ContainsKey("Barrier0"), "다리 영역이 구워짐");
+      Assert.AreEqual(1 + spec.BaseAreas.Length + spec.Barricades.Length + spec.CityBuildings.Length + spec.CityBuildings.Count(c => c.Topples), Verified.Map.RegionMap.Count, "기본 영역 + 자리별 다리 영역 + 바리케이드 + 도시 건물 + 낙하 구역");
       var mask = NavMeshRegionMask.Default;
       var rules = Verified.FindAsset(Verified.RuntimeConfig.Rules);
-      for (var seat = 0; seat < players; seat++) {
+      for (var p = 0; p < players; p++) {
+        var seat = FactoryWarsUtil.SeatOf(Verified, p);
         var reachable = ReachableNow(navMesh, spec.StartPositions[seat]);
         for (var other = 0; other < players; other++) {
-          if (other != seat) {
-            Assert.IsFalse(reachable.Contains(navMesh.FindTriangle2D(spec.StartPositions[other], mask, true)), $"{seat}번에서 {other}번 본진으로 못 감");
+          if (other != p) {
+            var otherSeat = FactoryWarsUtil.SeatOf(Verified, other);
+            Assert.IsFalse(reachable.Contains(navMesh.FindTriangle2D(spec.StartPositions[otherSeat], mask, true)), $"{p}번에서 {other}번 본진으로 못 감");
           }
         }
         foreach (var node in spec.ResourceNodes) {
@@ -58,11 +60,17 @@ namespace FactoryWars.Tests {
           Assert.AreEqual(inside, reachable.Contains(spot), $"{seat}번 본진에서 {node.Shape.Center}");
         }
       }
+      for (var seat = 0; seat < spec.BaseAreas.Length; seat++) {
+        if (FactoryWarsUtil.PlayerAtSeat(Verified, seat) < 0) {
+          var emptyReachable = ReachableNow(navMesh, spec.StartPositions[seat]);
+          Assert.IsTrue(emptyReachable.Contains(navMesh.FindTriangle2D(V(-8, -8), mask, true)), $"빈 본진 {seat}번은 휴전 중에도 중앙과 열려 있음");
+        }
+      }
     }
 
     [UnityTest]
     public IEnumerator Truce_BridgesAreOnlyExit_Map2P() {
-      yield return AssertBridgesAreOnlyExit(Map2PScene, 2);
+      yield return AssertBridgesAreOnlyExit(Map4PScene, 2);
     }
 
     [UnityTest]
@@ -72,46 +80,50 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Truce_ClosedBridgeStopsGroundUnits() {
-      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -68, -100) }, truce: 120);
+      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_eagle_tank", -140, -108) }, truce: 120);
       var tank = UnitsNamed(0, "ff_eagle_tank")[0];
-      yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = V(-44, -100) });
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = V(-140, -84) });
       yield return WaitFrames(8 * Fps);
-      Assert.Less(Verified.Get<Transform3D>(tank).Position.X.AsFloat, -59f, "다리를 건너지 못함");
+      Assert.Less(Verified.Get<Transform3D>(tank).Position.Z.AsFloat, -99f, "다리를 건너지 못함");
     }
 
     [UnityTest]
     public IEnumerator Truce_BarrierOpensOnTimeAndUnitsCross() {
-      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -68, -100) }, truce: 10);
+      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_eagle_tank", -140, -108) }, truce: 10);
       var opened = new List<int>();
       QuantumEvent.Subscribe<EventBarrierOpened>(_listener, e => opened.Add(e.Frame));
       Assert.IsFalse(BarrierOpen());
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var navMesh = MapNavMesh();
-      Assert.IsFalse(ReachableNow(navMesh, spec.StartPositions[0]).Contains(navMesh.FindTriangle2D(spec.StartPositions[1], NavMeshRegionMask.Default, true)), "휴전 중에는 경로가 없음");
+      var start0 = spec.StartPositions[FactoryWarsUtil.SeatOf(Verified, 0)];
+      var start1 = spec.StartPositions[FactoryWarsUtil.SeatOf(Verified, 1)];
+      Assert.IsFalse(ReachableNow(navMesh, start0).Contains(navMesh.FindTriangle2D(start1, NavMeshRegionMask.Default, true)), "휴전 중에는 경로가 없음");
       yield return WaitFor(() => BarrierOpen(), 30f, "울타리 개방");
       yield return WaitFrames(2);
       Assert.AreEqual(new List<int> { 10 * Fps }, opened, "10초에 이벤트 한 번");
       Assert.AreEqual(10 * Fps, TruceEnd(), "이벤트 프레임이 TruceEndFrame");
-      Assert.IsTrue(ReachableNow(navMesh, spec.StartPositions[0]).Contains(navMesh.FindTriangle2D(spec.StartPositions[1], NavMeshRegionMask.Default, true)), "개방 뒤에는 경로가 있음");
+      Assert.IsTrue(ReachableNow(navMesh, start0).Contains(navMesh.FindTriangle2D(start1, NavMeshRegionMask.Default, true)), "개방 뒤에는 경로가 있음");
 
       var tank = UnitsNamed(0, "ff_eagle_tank")[0];
-      var target = V(-44, -100);
+      var target = V(-140, -84);
       yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = target });
       yield return WaitFor(() => (Verified.Get<Transform3D>(tank).Position - target).Magnitude < 2, 30f, "다리 통과");
     }
 
     [UnityTest]
     public IEnumerator Truce_ZeroMeansOpenFromStart() {
-      yield return StartMatch(Map2PScene, 2, truce: 0);
+      yield return StartMatch(Map4PScene, 2, truce: 0);
       Assert.IsTrue(BarrierOpen());
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var navMesh = MapNavMesh();
-      Assert.IsTrue(ReachableNow(navMesh, spec.StartPositions[0]).Contains(navMesh.FindTriangle2D(spec.StartPositions[1], NavMeshRegionMask.Default, true)));
+      var start0 = spec.StartPositions[FactoryWarsUtil.SeatOf(Verified, 0)];
+      var start1 = spec.StartPositions[FactoryWarsUtil.SeatOf(Verified, 1)];
+      Assert.IsTrue(ReachableNow(navMesh, start0).Contains(navMesh.FindTriangle2D(start1, NavMeshRegionMask.Default, true)));
     }
 
     [UnityTest]
     public IEnumerator Truce_DefaultIsSevenMinutes() {
-      yield return StartMatch(Map2PScene, 2, truce: -1);
+      yield return StartMatch(Map4PScene, 2, truce: -1);
       Assert.AreEqual(420 * Fps, TruceEnd());
       Assert.IsFalse(BarrierOpen());
     }
@@ -152,28 +164,28 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Truce_LimitsGatherAndBuildToOwnBase() {
-      yield return StartMatch(Map2PScene, 2, truce: 300);
+      yield return StartMatch(Map4PScene, 2, truce: 300);
       var engineer = Engineers(0)[0];
-      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = NodeAt(V(-108, -28)) });
+      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = NodeAt(V(-148, -76)) });
       AssertRejected(0, ActionKind.Gather, RejectReason.Truce);
       Assert.AreEqual(WorkerTask.Idle, WorkerOf(engineer).Task);
       _rejected.Clear();
 
-      yield return Build(0, "_supply_depot", V(-40, -40), engineer);
+      yield return Build(0, "_supply_depot", V(-80, -80), engineer);
       AssertRejected(0, ActionKind.Build, RejectReason.Truce);
       _rejected.Clear();
 
-      yield return Build(0, "_supply_depot", V(-80, -80), engineer);
+      yield return Build(0, "_supply_depot", V(-120, -120), engineer);
       Assert.AreEqual(0, _rejected.Count, "본진 안은 허용");
-      yield return Send(0, new GatherCommand { Units = new[] { Engineers(0)[1] }, Node = NodeAt(V(-105, -78)) });
+      yield return Send(0, new GatherCommand { Units = new[] { Engineers(0)[1] }, Node = NodeAt(V(-145, -118)) });
       Assert.AreEqual(0, _rejected.Count, "본진 철광산은 허용");
     }
 
     [UnityTest]
     public IEnumerator Truce_NoBuildOnBridgesOrTheirEnds() {
-      yield return StartMatch(Map2PScene, 2, truce: 0);
+      yield return StartMatch(Map4PScene, 2, truce: 0);
       var engineer = Engineers(0)[0];
-      foreach (var site in new[] { V(-57, -100), V(-62, -100), V(-52, -100) }) {
+      foreach (var site in new[] { V(-97, -140), V(-102, -140), V(-92, -140) }) {
         _rejected.Clear();
         yield return Build(0, "_supply_depot", site, engineer);
         AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);
@@ -182,7 +194,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Bot_WaitsForBridgesBeforeAttacking() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal }, truce: 60);
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal }, truce: 60);
       yield return Sim(50);
       Assert.AreEqual(0, StateOf(0).UnitsLost, "휴전 중 피해 없음");
       foreach (var pair in Verified.GetComponentIterator<Unit>()) {
@@ -190,10 +202,11 @@ namespace FactoryWars.Tests {
           Assert.AreNotEqual(UnitOrder.AttackMove, pair.Component.Order, "휴전 중 공격 명령 없음");
         }
       }
+      var botSeat = FactoryWarsUtil.SeatOf(Verified, 1);
       foreach (var engineer in Engineers(1)) {
         var worker = WorkerOf(engineer);
         if (Verified.TryGet<ResourceNode>(worker.Target, out var node)) {
-          Assert.LessOrEqual(Verified.FindAsset<MapSpec>(Verified.Map.UserAsset).BaseAreas[1].Distance(node.Shape.Center).AsFloat, 0f, "본진 노드만 채집");
+          Assert.LessOrEqual(Verified.FindAsset<MapSpec>(Verified.Map.UserAsset).BaseAreas[botSeat].Distance(node.Shape.Center).AsFloat, 0f, "본진 노드만 채집");
         }
       }
     }

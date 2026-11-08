@@ -80,12 +80,14 @@ namespace FactoryWars.View {
     RectTransform _faction;
     RectTransform _options;
     RectTransform _settings;
-    Button _map;
+    Text _notice;
     Button _mode;
     Button _bots;
     Button _difficulty;
     Button _truce;
     Button _color;
+
+    public string NoticeText => _notice != null ? _notice.text : "";
 
     void Awake() {
       var canvas = Ui.CreateCanvas("Menu");
@@ -110,7 +112,8 @@ namespace FactoryWars.View {
       _options = Page("Options");
       var match = Ui.Label("Match", _options, "경기 설정", 60, TextAnchor.MiddleCenter);
       Ui.Place(match.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 470), new Vector2(1000, 90));
-      _map = Add(_options, "", 340, ToggleMap);
+      _notice = Ui.Label("Notice", _options, "", 30, TextAnchor.MiddleCenter);
+      Ui.Place(_notice.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 340), new Vector2(1000, 70));
       _mode = Add(_options, "", 190, NextMode);
       _bots = Add(_options, "", 40, NextBots);
       _difficulty = Add(_options, "", -110, NextDifficulty);
@@ -155,27 +158,20 @@ namespace FactoryWars.View {
       Show(Screen.Options);
     }
 
-    public void ToggleMap() {
-      Settings.FourPlayerMap = Settings.FourPlayerMap == false;
-      if (Settings.FourPlayerMap) {
-        Settings.Mode = MatchMode.FreeForAll;
+    public void NextMode() {
+      Settings.Mode = (MatchMode)(((int)Settings.Mode + 1) % 3);
+      if (Settings.Mode == MatchMode.FreeForAll) {
         Settings.Bots = 3;
       }
       RefreshOptions();
     }
 
-    public void NextMode() {
-      if (Settings.FourPlayerMap) {
-        Settings.Mode = (MatchMode)(((int)Settings.Mode + 1) % 3);
-        if (Settings.Mode == MatchMode.FreeForAll) {
-          Settings.Bots = 3;
-        }
-      }
-      RefreshOptions();
-    }
-
     public void NextBots() {
-      Settings.Bots = Settings.Bots == 2 ? 3 : 2;
+      if (Settings.Mode == MatchMode.Team) {
+        Settings.DiagonalTeams = Settings.DiagonalTeams == false;
+      } else {
+        Settings.Bots = Settings.Bots == 2 ? 3 : 2;
+      }
       RefreshOptions();
     }
 
@@ -197,12 +193,26 @@ namespace FactoryWars.View {
 
     void RefreshOptions() {
       Settings.Normalize();
-      Ui.SetLabel(_map, $"맵: {(Settings.FourPlayerMap ? "4인" : "2인")}");
       var mode = Settings.Mode == MatchMode.Duel ? "1대1" : Settings.Mode == MatchMode.FreeForAll ? "자유 대전" : "팀전";
       Ui.SetLabel(_mode, $"모드: {mode}");
-      Ui.SetLabel(_bots, $"봇: {Settings.Bots}명");
-      Ui.SetEnabled(_mode, Settings.FourPlayerMap);
-      Ui.SetEnabled(_bots, Settings.Mode == MatchMode.FreeForAll);
+      if (Settings.Mode == MatchMode.Team) {
+        Ui.SetLabel(_bots, $"2대2: {(Settings.DiagonalTeams ? "대각선 동맹" : "이웃 동맹")}");
+      } else if (Settings.Mode == MatchMode.FreeForAll) {
+        Ui.SetLabel(_bots, Settings.Bots == 2 ? "봇: 2명 (빈자리 비우기)" : "봇: 3명 (봇 채우기)");
+      } else {
+        Ui.SetLabel(_bots, $"봇: {Settings.Bots}명");
+      }
+      Ui.SetEnabled(_mode, true);
+      Ui.SetEnabled(_bots, Settings.Mode != MatchMode.Duel);
+      if (_notice != null) {
+        _notice.text = Settings.Mode == MatchMode.Duel
+          ? "배치: 남서·북동 / 남동·북서 대각선 (빈 본진은 중립 대형 확장)"
+          : Settings.Players == 3
+            ? "3인은 자리 유불리가 있을 수 있음"
+            : Settings.Mode == MatchMode.Team
+              ? (Settings.DiagonalTeams ? "배치: 대각선끼리 같은 편 (기본)" : "배치: 이웃끼리 같은 편")
+              : "배치: 4인 전원 본진 배치";
+      }
       Ui.SetLabel(_difficulty, $"난이도: {(Settings.Difficulty == BotDifficulty.Easy ? "쉬움" : "보통")}");
       Ui.SetLabel(_truce, Settings.TruceMinutes == 0 ? "휴전: 없음" : $"휴전: {Settings.TruceMinutes}분");
       var color = Palette.Colors[Settings.Color];

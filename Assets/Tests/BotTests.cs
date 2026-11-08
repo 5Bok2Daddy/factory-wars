@@ -34,7 +34,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Bot_BuildsEconomyInOrder() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal });
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal });
       for (var minute = 1; minute <= 5; minute++) {
         yield return Sim(60);
         var state = StateOf(1);
@@ -53,7 +53,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Bot_ProducesArmy() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal });
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal });
       yield return Sim(240);
       Assert.Greater(StateOf(1).UnitsProduced, 5, "유닛 생산");
       Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.VehicleFactory), 1, "군수공장");
@@ -63,7 +63,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Bot_EasyIsSlowerThanNormal() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Easy, BotDifficulty.Normal });
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Easy, BotDifficulty.Normal });
       yield return Sim(300);
       Debug.Log($"[FW-TEST] 300s easy earned {StateOf(0).Earned.Iron} produced {StateOf(0).UnitsProduced}; normal earned {StateOf(1).Earned.Iron} produced {StateOf(1).UnitsProduced}");
       Assert.Greater((StateOf(1).Earned.Iron + StateOf(1).Earned.Wood).AsFloat, (StateOf(0).Earned.Iron + StateOf(0).Earned.Wood).AsFloat, "보통이 더 번다");
@@ -72,7 +72,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Timeout(600000)]
     public IEnumerator Bot_DefeatsIdlePlayer() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal });
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal });
       yield return WaitFor(() => GameEnded(), 500f, "AI 승리");
       Assert.IsTrue(Defeated(0), "가만히 있는 사람이 패배");
       Assert.AreEqual(1 << 1, WinnerMask());
@@ -104,7 +104,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Bot_DiplomacyDisabledInDuel() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal });
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal });
       yield return Sim(100);
       Assert.AreEqual(Relation.Enemy, DiplomacySystem.GetRelation(Verified, 0, 1));
     }
@@ -113,7 +113,7 @@ namespace FactoryWars.Tests {
     public IEnumerator Bot_SameSeedGivesSameMatch() {
       var checksums = new long[2];
       for (var run = 0; run < 2; run++) {
-        yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 12345);
+        yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 12345);
         var target = 90 * Fps;
         yield return WaitFor(() => Verified.Number >= target, 60f, "90초 진행");
         checksums[run] = Fingerprint();

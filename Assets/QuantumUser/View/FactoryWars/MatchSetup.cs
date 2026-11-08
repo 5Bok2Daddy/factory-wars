@@ -4,28 +4,26 @@ namespace FactoryWars.View {
 
   public enum MatchMode { Duel, FreeForAll, Team }
 
-  /// <summary>시작 화면에서 고른 경기 조건.</summary>
+  /// <summary>시작 화면에서 고른 경기 조건. 맵은 언제나 4인 맵 하나다(항목 17B).</summary>
   public class MatchSettings {
     public int FactionIndex;
-    public bool FourPlayerMap;
     public int Bots = 1;
     public BotDifficulty Difficulty = BotDifficulty.Normal;
     public MatchMode Mode = MatchMode.Duel;
     public int TruceMinutes = 7;
+    /// <summary>2대2 동맹 배치. 기본은 대각선(0·2 대 1·3)이고, 끄면 이웃(0·1 대 2·3)이다.</summary>
+    public bool DiagonalTeams = true;
     /// <summary>고른 색. 음수면 진영 기본 추천색이다.</summary>
     public int ColorIndex = -1;
 
     public int Color => ColorIndex >= 0 ? ColorIndex : Palette.Recommended(FactionIndex);
 
-    public string Scene => FourPlayerMap ? "Map4P" : "Map2P";
+    public string Scene => "Map4P";
 
     public int Players => Bots + 1;
 
-    /// <summary>맵·모드·봇 수의 조합을 유효한 값으로 맞춘다. 2인 맵은 1대1뿐이고 팀전은 4명이다.</summary>
+    /// <summary>모드·봇 수의 조합을 유효한 값으로 맞춘다. 1대1은 2명, 자유 대전은 3~4명, 팀전은 4명이다.</summary>
     public void Normalize() {
-      if (FourPlayerMap == false) {
-        Mode = MatchMode.Duel;
-      }
       switch (Mode) {
         case MatchMode.Duel: Bots = 1; break;
         case MatchMode.Team: Bots = 3; break;
@@ -50,7 +48,7 @@ namespace FactoryWars.View {
       config.ScenarioUnits = null;
       config.ScenarioBuildings = null;
 
-      int Team(int slot) => settings.Mode == MatchMode.Team ? slot / 2 : slot;
+      int Team(int slot) => settings.Mode == MatchMode.Team ? (settings.DiagonalTeams ? slot % 2 : slot / 2) : slot;
       AssetRef<FactionSpec> Faction(int slot) => factions[(settings.FactionIndex + slot) % factions.Length];
       // AI는 사람이 고른 색을 피해 진영 추천색부터 남은 색을 쓴다.
       var used = new System.Collections.Generic.HashSet<int> { settings.Color };

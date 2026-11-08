@@ -301,11 +301,12 @@ namespace Quantum.FactoryWars {
 
     static bool FindExpansion(Frame f, PlayerRef player, PlayerState* state, BotState* bot, AiSpec ai, out FPVector3 site) {
       site = default;
-      var sites = FactoryWarsUtil.MapInfo(f).Expansions;
+      var map = FactoryWarsUtil.MapInfo(f);
+      var sites = map.Expansions;
       if (sites == null) {
         return false;
       }
-      var seat = 1 << (int)player;
+      var seat = 1 << FactoryWarsUtil.SeatOf(f, player);
       var wanted = PreferredForecourt(state->Stock);
       var late = ai.LateExpansionSeconds > FP._0 && f.Number >= FactoryWarsUtil.SecondsToFrames(f, ai.LateExpansionSeconds);
       var best = FP.MaxValue;
@@ -321,6 +322,19 @@ namespace Quantum.FactoryWars {
         if (score < best) {
           best = score;
           site = sites[i].Position;
+        }
+      }
+      // 빈 본진 자리(중립 대형 확장지): 중반 이후에 높은 가치(거리/2)로 후보에 넣는다.
+      if (late && map.StartPositions != null) {
+        for (var s = 0; s < map.StartPositions.Length; s++) {
+          var pos = map.StartPositions[s];
+          if (FactoryWarsUtil.PlayerAtSeat(f, s) < 0 && IsFreeSite(f, pos, ai.ExpandReserveRadius)) {
+            var score = FactoryWarsUtil.FlatDistanceSqr(pos, bot->Home) / 2;
+            if (score < best) {
+              best = score;
+              site = pos;
+            }
+          }
         }
       }
       return best < FP.MaxValue;
@@ -575,28 +589,40 @@ namespace Quantum.FactoryWars {
     }
 
     /// <summary>
-    /// 이번 웨이브의 경유점. 측면은 두 자리에 모두 닿는 공유 확장이고, 없거나 확률에서 빠지면 중앙이다.
-    /// 대각선 상대에게는 닿는 공유 확장이 없어서 언제나 중앙으로 간다.
+    /// 이번 웨이브의 경유점. 측면은 두 자리에 모두 닿는 공유 확장이고, 대각선 상대(2인 대전 등)일 때는 빈 본진 자리를 측면 경유점으로 쓴다.
     /// </summary>
     static bool PickSideLane(Frame f, PlayerRef player, PlayerRef enemy, BotState* bot, AiSpec ai, out FPVector3 point) {
       point = default;
-      var sites = FactoryWarsUtil.MapInfo(f).Expansions;
+      var map = FactoryWarsUtil.MapInfo(f);
+      var sites = map.Expansions;
       if (sites == null || f.RNG->Next() >= ai.SideLaneChance) {
         return false;
       }
-      var seats = 1 << (int)player | 1 << (int)enemy;
+      var seats = 1 << FactoryWarsUtil.SeatOf(f, player) | 1 << FactoryWarsUtil.SeatOf(f, enemy);
       var count = 0;
       for (var i = 0; i < sites.Length; i++) {
         count += sites[i].Kind == ExpansionKind.Shared && (sites[i].SeatMask & seats) == seats ? 1 : 0;
       }
-      if (count == 0) {
-        return false;
+      if (count > 0) {
+        var pick = f.RNG->Next(0, count);
+        for (var i = 0; i < sites.Length; i++) {
+          if (sites[i].Kind == ExpansionKind.Shared && (sites[i].SeatMask & seats) == seats && pick-- == 0) {
+            point = sites[i].Position;
+            return true;
+          }
+        }
       }
-      var pick = f.RNG->Next(0, count);
-      for (var i = 0; i < sites.Length; i++) {
-        if (sites[i].Kind == ExpansionKind.Shared && (sites[i].SeatMask & seats) == seats && pick-- == 0) {
-          point = sites[i].Position;
-          return true;
+      var emptyCount = 0;
+      for (var s = 0; map.StartPositions != null && s < map.StartPositions.Length; s++) {
+        emptyCount += FactoryWarsUtil.PlayerAtSeat(f, s) < 0 ? 1 : 0;
+      }
+      if (emptyCount > 0) {
+        var pick = f.RNG->Next(0, emptyCount);
+        for (var s = 0; s < map.StartPositions.Length; s++) {
+          if (FactoryWarsUtil.PlayerAtSeat(f, s) < 0 && pick-- == 0) {
+            point = map.StartPositions[s];
+            return true;
+          }
         }
       }
       return false;

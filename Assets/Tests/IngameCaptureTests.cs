@@ -71,12 +71,12 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Explicit, Category("Ingame"), Timeout(3000000)]
     public IEnumerator Ingame_TwoPlayer() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 7003, truce: -1);
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 7003, truce: -1);
       GraphicsQuality.Apply(QualityTier.Medium);
       Time.timeScale = CaptureSpeed;
       yield return WaitForBattle();
       var camera = Camera.main;
-      var map = MapAsset("Map2P");
+      var map = MapAsset("Map4P");
 
       Time.timeScale = 1f;
       AimCamera(camera, Vector3.zero, 165f);
@@ -173,7 +173,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Explicit, Category("Ingame"), Timeout(3000000)]
     public IEnumerator Ingame_Map17() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 7010, truce: -1);
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 7010, truce: -1);
       yield return WaitForHud();
       yield return WaitForBattle();
       GraphicsQuality.Apply(QualityTier.Medium);
@@ -183,7 +183,7 @@ namespace FactoryWars.Tests {
       Directory.CreateDirectory(Path.Combine(IngameFolder(), "map17"));
       SaveMinimap("map17/2p_minimap.png");
       yield return ShootMap(
-        new[] { new Vector3(0, 0, 8), new Vector3(0, 0, -4), new Vector3(-107, 0, 50), new Vector3(-44, 0, 22) },
+        new[] { new Vector3(0, 0, 8), new Vector3(0, 0, -4), new Vector3(-147, 0, -14), new Vector3(-72, 0, -8) },
         new[] { 225f, 60f, 45f, 45f },
         new[] { "2p_overview", "2p_center", "2p_canyon", "2p_backdoor" });
     }
@@ -207,7 +207,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Explicit, Category("Ingame"), Timeout(3000000)]
     public IEnumerator Ingame_Hud() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 7005, truce: -1);
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 7005, truce: -1);
       yield return WaitForHud();
       yield return WaitForBattle();
       GraphicsQuality.Apply(QualityTier.Medium);

@@ -37,7 +37,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Explicit, Category("AiBatch"), Timeout(3000000)]
     public IEnumerator AiBatch_TwoPlayer([ValueSource(nameof(AiRuns))] int run) {
-      yield return PlayAiMatch(Map2PScene, "2P", 2, run);
+      yield return PlayAiMatch(Map4PScene, "2P", 2, run);
     }
 
     [UnityTest, Explicit, Category("AiBatch"), Timeout(3000000)]
@@ -144,7 +144,7 @@ namespace FactoryWars.Tests {
         _crossed = Enumerable.Range(0, players).Select(_ => new HashSet<EntityRef>()).ToArray();
         _homes = new Rect[players];
         for (var p = 0; p < players; p++) {
-          var start = spec.StartPositions[p].ToUnityVector3();
+          var start = FactoryWarsUtil.StartPosition(Verified, p).ToUnityVector3();
           _homes[p] = spec.BaseAreas.Select(a => FactoryWars.View.TerrainKit.Extent(a, RiverReach)).First(r => r.Contains(new Vector2(start.x, start.z)));
         }
       }

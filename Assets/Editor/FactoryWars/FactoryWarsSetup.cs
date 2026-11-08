@@ -43,11 +43,19 @@ namespace FactoryWars.EditorTools {
       KenneyTools.BuildMap();
       BuildMaterials();
       BuildTestScene();
-      BuildMapScene(TwoPlayerMap);
       BuildMapScene(FourPlayerMap);
       BuildMenuScene();
       AssetDatabase.SaveAssets();
       Debug.Log("FactoryWarsSetup: 완료");
+    }
+
+    public static void BuildMapsAndMenu() {
+      BuildData();
+      BuildTestScene();
+      BuildMapScene(FourPlayerMap);
+      BuildMenuScene();
+      AssetDatabase.SaveAssets();
+      Debug.Log("FactoryWarsSetup.BuildMapsAndMenu: 완료");
     }
 
     public static void ConfigurePlayer() {
@@ -615,7 +623,6 @@ namespace FactoryWars.EditorTools {
       BakeGroundGrid(testMap);
       EditorUtility.SetDirty(testMap);
 
-      BuildMapSpec(TwoPlayerMap);
       BuildMapSpec(FourPlayerMap);
 
       AssetDatabase.SaveAssets();
@@ -794,7 +801,7 @@ namespace FactoryWars.EditorTools {
         AddBlock(root, feature.Kind.ToString(), feature.Shape, feature.Kind == TerrainKind.Rock ? 3 : 6);
       }
       foreach (var bridge in spec.Bridges ?? new MapShape[0]) {
-        AddBridge(root, bridge);
+        AddBridge(root, spec, bridge);
       }
       foreach (var barricade in spec.Barricades ?? new BarricadePlacement[0]) {
         AddRegion(root, "Barricade", barricade.Shape, BarricadeArea, barricade.Region);
@@ -809,9 +816,24 @@ namespace FactoryWars.EditorTools {
 
     /// <summary>
     /// 다리 하나를 NavMesh 영역으로 칠한다. Quantum은 같은 Unity 영역의 삼각형 덩어리가 렌더러 경계 안에 다 들어올 때
-    /// 그 영역 이름을 붙이므로, 렌더러는 꺼 둔 채 경계로만 쓴다. 모든 다리가 같은 이름이라 영역은 하나다.
+    /// 그 영역 이름을 붙이므로, 렌더러는 꺼 둔 채 경계로만 쓴다. 자리별 본진이 있으면 자리 번호를 붙여 빈 본진 다리는 처음부터 열 수 있게 한다.
     /// </summary>
-    static void AddBridge(Transform root, MapShape shape) => AddRegion(root, "Bridge", shape, BarrierArea, BarrierRegion);
+    static void AddBridge(Transform root, MapSpec spec, MapShape shape) {
+      if (spec.BaseAreas != null && spec.BaseAreas.Length > 0) {
+        var seat = 0;
+        var best = float.MaxValue;
+        for (var i = 0; i < spec.BaseAreas.Length; i++) {
+          var distance = (shape.Center - spec.BaseAreas[i].Center).SqrMagnitude.AsFloat;
+          if (distance < best) {
+            best = distance;
+            seat = i;
+          }
+        }
+        AddRegion(root, "Bridge", shape, BarrierArea, $"{BarrierRegion}{seat}");
+      } else {
+        AddRegion(root, "Bridge", shape, BarrierArea, BarrierRegion);
+      }
+    }
 
     static void AddRegion(Transform root, string name, MapShape shape, int area, string regionId) {
       var bridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -881,7 +903,7 @@ namespace FactoryWars.EditorTools {
       camera.GetComponent<Camera>().backgroundColor = new Color(0.1f, 0.13f, 0.17f);
       new GameObject("Menu").AddComponent<FactoryWars.View.MenuController>();
       EditorSceneManager.SaveScene(scene, path);
-      EditorBuildSettings.scenes = new[] { path, $"{ScenesRoot}/{TwoPlayerMap.Id}.unity", $"{ScenesRoot}/{FourPlayerMap.Id}.unity" }
+      EditorBuildSettings.scenes = new[] { path, $"{ScenesRoot}/{FourPlayerMap.Id}.unity" }
         .Select(scenePath => new EditorBuildSettingsScene(scenePath, true)).ToArray();
     }
 

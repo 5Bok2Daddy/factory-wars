@@ -46,7 +46,10 @@ MonoBehaviour:
   - Barricade1
   - Barricade2
   - Barricade3
-  - Barrier
+  - Barrier0
+  - Barrier1
+  - Barrier2
+  - Barrier3
   - City0
   - City1
   - City10

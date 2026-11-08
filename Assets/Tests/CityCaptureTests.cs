@@ -28,7 +28,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Explicit, Category("Ingame"), Timeout(3000000)]
     public IEnumerator Ingame_City21Overview() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 7030, truce: -1);
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 7030, truce: -1);
       yield return WaitForHud();
       yield return WaitForBattle();
       GraphicsQuality.Apply(QualityTier.Medium);
@@ -72,7 +72,7 @@ namespace FactoryWars.Tests {
     /// <summary>진지 교전과 쓰러짐 전·중·후. 실제 맵에 유닛을 놓고 연출을 확인한다.</summary>
     [UnityTest, Explicit, Category("Ingame"), Timeout(3000000)]
     public IEnumerator Ingame_City21Collapse() {
-      var spec0 = Resources.Load<MapSpec>("FactoryWars/map_Map2P");
+      var spec0 = Resources.Load<MapSpec>("FactoryWars/map_Map4P");
       var garrison = FirstCity(spec0, c => c.Garrison, Vector3.zero);
       var tall = FirstCity(spec0, c => c.Topples, Vector3.zero);
       var g = spec0.CityBuildings[garrison].Shape.Center.ToUnityVector3();
@@ -82,7 +82,7 @@ namespace FactoryWars.Tests {
         (0, "ff_ranger_squad", (int)gz.x, (int)gz.z), (0, "ff_ranger_squad", (int)gz.x + 2, (int)gz.z),
         (1, "cf_militia", (int)g.x, (int)g.z - 14), (1, "cf_militia", (int)g.x + 3, (int)g.z - 15), (1, "cf_flame_squad", (int)g.x - 3, (int)g.z - 14),
       }.Concat(Enumerable.Range(0, 6).Select(i => (0, "cf_longwall_mlrs", (int)t.x - 10 + i * 4, (int)t.z - 22))).ToArray();
-      yield return StartMatch(Map2PScene, 2, units: units, bots: new[] { BotDifficulty.Easy }, truce: 0);
+      yield return StartMatch(Map4PScene, 2, units: units, bots: new[] { BotDifficulty.Easy }, truce: 0);
       yield return WaitForBattle();
       GraphicsQuality.Apply(QualityTier.Medium);
       Directory.CreateDirectory(Path.Combine(IngameFolder(), "city21"));

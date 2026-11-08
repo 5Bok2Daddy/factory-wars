@@ -14,7 +14,6 @@ namespace FactoryWars.Tests {
   /// <summary>Quantum 로컬 모드로 씬을 돌려 이동·전투·외교·비용·맵을 확인한다.</summary>
   public unsafe partial class LocalMatchTests {
     const string TestScene = "Assets/QuantumUser/Scenes/QuantumGameScene.unity";
-    const string Map2PScene = "Assets/QuantumUser/Scenes/Map2P.unity";
     const string Map4PScene = "Assets/QuantumUser/Scenes/Map4P.unity";
     const float TimeScale = 8f;
     const int Fps = 20;

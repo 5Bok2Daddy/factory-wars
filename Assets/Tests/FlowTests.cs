@@ -16,16 +16,17 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Settings_KeepValidCombinations() {
-      var settings = new MatchSettings { FourPlayerMap = false, Mode = MatchMode.Team, Bots = 3 };
+      var settings = new MatchSettings { Mode = MatchMode.Duel, Bots = 3 };
       settings.Normalize();
-      Assert.AreEqual(MatchMode.Duel, settings.Mode, "2인 맵은 1대1뿐");
+      Assert.AreEqual(MatchMode.Duel, settings.Mode, "1대1");
       Assert.AreEqual(1, settings.Bots);
 
-      settings = new MatchSettings { FourPlayerMap = true, Mode = MatchMode.Team, Bots = 1 };
+      settings = new MatchSettings { Mode = MatchMode.Team, Bots = 1 };
       settings.Normalize();
       Assert.AreEqual(3, settings.Bots, "팀전은 4명");
+      Assert.IsTrue(settings.DiagonalTeams, "기본은 대각선 동맹");
 
-      settings = new MatchSettings { FourPlayerMap = true, Mode = MatchMode.FreeForAll, Bots = 1 };
+      settings = new MatchSettings { Mode = MatchMode.FreeForAll, Bots = 1 };
       settings.Normalize();
       Assert.AreEqual(2, settings.Bots, "자유 대전은 3인 이상");
       Assert.AreEqual("Map4P", settings.Scene);
@@ -62,11 +63,12 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(MenuController.Screen.Options, menu.Current);
       menu.NextDifficulty();
       Assert.AreEqual(BotDifficulty.Easy, menu.Settings.Difficulty);
+      StringAssert.Contains("대각선", menu.NoticeText);
       menu.Begin();
 
       yield return WaitFor(() => Game?.Frames?.Verified != null && Verified.ComponentCount<Building>() >= 2, 30f, "대전 시작");
       yield return WaitFrames(CommandFrames);
-      Assert.AreEqual("Map2P", SceneManager.GetActiveScene().name);
+      Assert.AreEqual("Map4P", SceneManager.GetActiveScene().name);
       Assert.AreEqual("continental_federation", FactionOf(0).FactionId, "고른 진영");
       Assert.AreEqual("free_federation", FactionOf(1).FactionId, "상대는 다른 진영");
       Assert.IsTrue((bool)StateOf(1).IsBot);
@@ -82,17 +84,19 @@ namespace FactoryWars.Tests {
       yield return OpenMenu();
       var menu = Object.FindAnyObjectByType<MenuController>();
       menu.Show(MenuController.Screen.Options);
-      menu.ToggleMap();
+      menu.NextMode();
       Assert.AreEqual(MatchMode.FreeForAll, menu.Settings.Mode);
+      menu.NextBots();
+      Assert.AreEqual("3인은 자리 유불리가 있을 수 있음", menu.NoticeText);
       menu.NextMode();
       Assert.AreEqual(MatchMode.Team, menu.Settings.Mode);
       menu.Begin();
 
       yield return WaitFor(() => Game?.Frames?.Verified != null && Verified.ComponentCount<Building>() >= 4, 30f, "대전 시작");
       yield return WaitFrames(CommandFrames);
-      Assert.AreEqual(Relation.Allied, DiplomacySystem.GetRelation(Verified, 0, 1), "0·1번이 한 팀");
-      Assert.AreEqual(Relation.Allied, DiplomacySystem.GetRelation(Verified, 2, 3), "2·3번이 한 팀");
-      Assert.AreEqual(Relation.Enemy, DiplomacySystem.GetRelation(Verified, 0, 2));
+      Assert.AreEqual(Relation.Allied, DiplomacySystem.GetRelation(Verified, 0, 2), "0·2번 대각선이 한 팀");
+      Assert.AreEqual(Relation.Allied, DiplomacySystem.GetRelation(Verified, 1, 3), "1·3번 대각선이 한 팀");
+      Assert.AreEqual(Relation.Enemy, DiplomacySystem.GetRelation(Verified, 0, 1));
     }
 
     [UnityTest]

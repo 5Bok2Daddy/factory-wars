@@ -163,7 +163,7 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Garrison_NotOutsideBaseDuringTruce() {
       // 시험 맵에는 본진 구역이 없어 실제 맵으로 잰다.
-      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_ranger_squad", -80, -80) }, truce: 300);
+      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_ranger_squad", -120, -120) }, truce: 300);
       var ranger = UnitsNamed(0, "ff_ranger_squad")[0];
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var index = System.Array.FindIndex(spec.CityBuildings, c => c.Garrison);

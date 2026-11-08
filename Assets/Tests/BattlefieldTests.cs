@@ -118,18 +118,18 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Barricade_BlocksUntilDestroyedAndIsNotAutoTargeted() {
-      var near = new[] { (0, "ff_eagle_tank", -38, 24), (0, "ff_eagle_tank", -36, 22), (0, "ff_eagle_tank", -34, 24), (0, "ff_eagle_tank", -38, 20) };
-      yield return StartMatch(Map2PScene, 2, units: near, truce: 0);
+      var near = new[] { (0, "ff_eagle_tank", -72, -8), (0, "ff_eagle_tank", -70, -8), (0, "ff_eagle_tank", -74, -8), (0, "ff_eagle_tank", -72, -10) };
+      yield return StartMatch(Map4PScene, 2, units: near, truce: 0);
       var destroyed = new List<int>();
       QuantumEvent.Subscribe<EventBarricadeDestroyed>(_listener, e => destroyed.Add(e.Index));
-      var entity = All<Barricade>().OrderBy(p => (p.Component.Shape.Center - V(-44, 31)).SqrMagnitude.AsFloat).First().Entity;
-      var from = V(-38, 24);
-      var to = V(-50, 38);
+      var entity = All<Barricade>().OrderBy(p => (p.Component.Shape.Center - V(-72, 0)).SqrMagnitude.AsFloat).First().Entity;
+      var from = V(-72, -8);
+      var to = V(-72, 8);
       yield return WaitFrames(3 * Fps);
       Assert.AreEqual(1500f, BarricadeHealth(entity), "자동 조준 대상이 아님");
       Assert.IsFalse(PathOpen(from, to), "막혀 있음");
 
-      var tanks = UnitsNamed(0, "ff_eagle_tank").Where(e => Verified.Get<Transform3D>(e).Position.X > -50).ToArray();
+      var tanks = UnitsNamed(0, "ff_eagle_tank").Where(e => Verified.Get<Transform3D>(e).Position.Z > -20).ToArray();
       yield return Send(0, new AttackTargetCommand { Units = tanks, Target = entity });
       Time.timeScale = 12f;
       yield return WaitFor(() => Verified.Exists(entity) == false, 60f, "파괴");
@@ -141,9 +141,9 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Barricade_TakesSplashDamage() {
-      var units = new[] { (0, "cf_longwall_mlrs", -30, 20), (1, "ff_ranger_squad", -41, 27) };
-      yield return StartMatch(Map2PScene, 2, units: units, truce: 0);
-      var entity = All<Barricade>().OrderBy(p => (p.Component.Shape.Center - V(-44, 31)).SqrMagnitude.AsFloat).First().Entity;
+      var units = new[] { (0, "cf_longwall_mlrs", -72, -12), (1, "ff_ranger_squad", -72, -3) };
+      yield return StartMatch(Map4PScene, 2, units: units, truce: 0);
+      var entity = All<Barricade>().OrderBy(p => (p.Component.Shape.Center - V(-72, 0)).SqrMagnitude.AsFloat).First().Entity;
       yield return WaitFor(() => BarricadeHealth(entity) < 1500f, 30f, "범위 피해");
     }
 
@@ -153,8 +153,8 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Crate_OwnBaseCrateIsPickedDuringTruce() {
-      var spot = new[] { (0, "ff_eagle_tank", -70, -90), (1, "cf_dragonscale_tank", -88, -72) };
-      yield return StartMatch(Map2PScene, 2, units: spot, truce: 300);
+      var spot = new[] { (0, "ff_eagle_tank", -110, -130), (1, "cf_dragonscale_tank", -128, -112) };
+      yield return StartMatch(Map4PScene, 2, units: spot, truce: 300);
       yield return WaitFrames(Fps);
       Assert.AreEqual(1, CrateCount(c => c.Seat == 0), "자기 상자 하나만 주웠다");
       Assert.AreEqual(600, Funds(0), "시작 철 500 + 상자 100");
@@ -164,7 +164,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Crate_DropsComeInSymmetricPairsAfterWarning() {
-      yield return StartMatch(Map2PScene, 2, truce: 0);
+      yield return StartMatch(Map4PScene, 2, truce: 0);
       var warned = new List<int>();
       QuantumEvent.Subscribe<EventSupplyDropIncoming>(_listener, e => warned.Add(e.Frame));
       Time.timeScale = 30f;
@@ -182,7 +182,7 @@ namespace FactoryWars.Tests {
     public IEnumerator Crate_DropChoiceIsDeterministic() {
       var groups = new int[2];
       for (var run = 0; run < 2; run++) {
-        yield return StartMatch(Map2PScene, 2, truce: 0, seed: 555);
+        yield return StartMatch(Map4PScene, 2, truce: 0, seed: 555);
         Time.timeScale = 30f;
         yield return WaitFor(DropAnnounced, 60f, "예고");
         Time.timeScale = TimeScale;
@@ -253,7 +253,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Bot_CollectsItsBaseCratesDuringTruce() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Easy }, seed: 21, truce: 300);
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Easy }, seed: 21, truce: 300);
       Time.timeScale = 12f;
       yield return WaitFor(() => CrateCount(c => c.Seat == 1) == 0, 40f, "쉬움도 상자를 줍는다");
       Time.timeScale = TimeScale;
@@ -263,13 +263,13 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Battlefield_ViewShowsSitesCratesAndBarricades() {
-      yield return StartMatch(Map2PScene, 2, truce: 300);
+      yield return StartMatch(Map4PScene, 2, truce: 300);
       yield return WaitForBattle();
       yield return null;
       var field = Battle().Field;
-      Assert.AreEqual(3, field.SiteCount, "점령지");
-      Assert.AreEqual(2, field.WallCount, "바리케이드");
-      Assert.AreEqual(4, field.CrateCount, "본진 상자");
+      Assert.AreEqual(5, field.SiteCount, "점령지");
+      Assert.AreEqual(4, field.WallCount, "바리케이드");
+      Assert.AreEqual(4, field.CrateCount, "점유 본진 상자");
     }
 
     [UnityTest]

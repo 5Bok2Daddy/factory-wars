@@ -569,7 +569,7 @@ namespace FactoryWars.EditorTools {
       // 지형: 실제 맵 데이터로 만든다. 갤러리에서 멀리 떨어뜨려 놓는다.
       var mapRoot = new GameObject("MapPreview").transform;
       mapRoot.position = MapPreview;
-      var map2 = AssetDatabase.LoadAssetAtPath<Quantum.MapSpec>($"{DataRoot}/map_Map2P.asset");
+      var map2 = AssetDatabase.LoadAssetAtPath<Quantum.MapSpec>($"{DataRoot}/map_Map4P.asset");
       var catalog = AssetDatabase.LoadAssetAtPath<ViewCatalog>($"{ResourceRoot}/ViewCatalog.asset");
       new WorldView(mapRoot, map2, catalog).Update(null, 0f);
       Vector3 OnMap(float x, float z) => MapPreview + new Vector3(x, 0, z);

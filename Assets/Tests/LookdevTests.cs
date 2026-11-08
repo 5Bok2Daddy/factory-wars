@@ -40,7 +40,7 @@ namespace FactoryWars.Tests {
     /// <summary>AI 대 AI 2인 경기를 정해진 시드로 seconds까지 돌리고 멈춘다. 같은 시드·프레임이면 같은 장면이다.</summary>
     IEnumerator FixedScene(int seconds, bool human = false) {
       var bots = human ? new[] { BotDifficulty.Normal } : new[] { BotDifficulty.Normal, BotDifficulty.Normal };
-      yield return StartMatch(Map2PScene, 2, bots: bots, seed: LookdevSeed, truce: -1);
+      yield return StartMatch(Map4PScene, 2, bots: bots, seed: LookdevSeed, truce: -1);
       if (human) {
         yield return WaitForHud();
       }

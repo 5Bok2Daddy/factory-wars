@@ -142,7 +142,7 @@ namespace FactoryWars.View {
           if (frame.Global->Players.GetPointer(i)->Active == false) {
             continue;
           }
-          var home = World.Map.StartPositions[i].ToUnityVector3();
+          var home = Quantum.FactoryWars.FactoryWarsUtil.StartPosition(frame, i).ToUnityVector3();
           for (var w = 0; w < 2 && _baseWorkers.Count < 8; w++) {
             var from = home + new Vector3(w == 0 ? 4.2f : -4.2f, 0f, 3.2f);
             var to = home + new Vector3(w == 0 ? 8.5f : -8.5f, 0f, -4.5f);

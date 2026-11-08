@@ -29,13 +29,12 @@ namespace FactoryWars.EditorTools {
     }
 
     static readonly Dictionary<string, CityPlan> CityPlans = new Dictionary<string, CityPlan> {
-      { "Map2P", new CityPlan { BuildingsPerSeat = 22, ToppleCandidates = 4, GarrisonsPerSeat = 4, Shortcuts = WithMirror(new[] { Rect(-62, -31, 7, 6.5, 90) }).ToArray() } },
       { "Map4P", new CityPlan { BuildingsPerSeat = 30, ToppleCandidates = 4, GarrisonsPerSeat = 4, Shortcuts = new[] { Rect(-44, 0, 7, 7) } } },
     };
 
     static MapShape Rotated(MapShape shape, int seat, int players) => Turn(shape, seat * (4 / players));
 
-    static bool InShare(MapDef def, Vector2 p) => def.Players == 2 ? p.x + p.y < -4f : p.x < -2f && p.y < -2f;
+    static bool InShare(MapDef def, Vector2 p) => p.x < -2f && p.y < -2f;
 
     static float Circum(MapShape shape) => shape.IsCircle ? shape.Radius.AsFloat : new Vector2(shape.HalfLength.AsFloat, shape.HalfWidth.AsFloat).magnitude;
 

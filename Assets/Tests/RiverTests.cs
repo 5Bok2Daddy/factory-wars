@@ -12,7 +12,7 @@ namespace FactoryWars.Tests {
 
   /// <summary>구불구불한 강의 제약과 개폐식 방어 울타리.</summary>
   public partial class LocalMatchTests {
-    static readonly string[] RiverMaps = { "Map2P", "Map4P" };
+    static readonly string[] RiverMaps = { "Map4P" };
 
     static FPVector3 Fp(Vector2 point) => new FPVector3(FP.FromFloat_UNSAFE(point.x), default, FP.FromFloat_UNSAFE(point.y));
 
@@ -146,13 +146,12 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void River_KeepsBridgeCount() {
-      Assert.AreEqual(4, MapAsset("Map2P").Bridges.Length);
       Assert.AreEqual(8, MapAsset("Map4P").Bridges.Length);
     }
 
     [Test]
     public void River_IsRotationallySymmetric() {
-      foreach (var (id, turns) in new[] { ("Map2P", 2), ("Map4P", 4) }) {
+      foreach (var (id, turns) in new[] { ("Map4P", 4) }) {
         var pieces = MapAsset(id).River;
         var count = pieces.Length / turns;
         Assert.AreEqual(count * turns, pieces.Length, id);
@@ -188,7 +187,7 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void River_RocksStayInsideTheBlockedWater() {
-      var map = MapAsset("Map2P");
+      var map = MapAsset("Map4P");
       var path = TerrainKit.RiverPaths(map)[0];
       var kit = new MeshKit();
       TerrainKit.RiverRocks(kit, path, 70, map);
@@ -202,10 +201,10 @@ namespace FactoryWars.Tests {
     [Test]
     public void River_MeshIsSingleSubmeshNeutralArt() {
       var kit = new MeshKit();
-      TerrainKit.Features(kit, MapAsset("Map2P"));
+      TerrainKit.Features(kit, MapAsset("Map4P"));
       var mesh = kit.ToMesh("test");
       Assert.AreEqual(1, mesh.subMeshCount);
-      Assert.Less(kit.TriangleCount, 45000, "삼각형 예산");
+      Assert.Less(kit.TriangleCount, 70000, "삼각형 예산");
     }
 
     // 울타리
@@ -277,11 +276,11 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Barrier_SinksAndWarnsWhenTruceEnds() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 5, truce: 20);
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 5, truce: 20);
       yield return WaitForHud();
       yield return WaitForBattle();
       var world = Battle().World;
-      Assert.AreEqual(4, world.BarrierCount, "다리마다");
+      Assert.AreEqual(4, world.BarrierCount, "점유 본진 다리마다");
       Assert.AreEqual(0f, world.BarrierDrop);
       Assert.IsTrue(world.BarrierVisible);
       yield return WaitFor(BarrierOpen, 30f, "휴전 종료");
@@ -296,7 +295,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Barrier_IsGoneFromTheStartWithoutTruce() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 5, truce: 0);
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 5, truce: 0);
       yield return WaitForBattle();
       Assert.IsFalse(Battle().World.BarrierVisible);
     }

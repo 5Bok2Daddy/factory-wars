@@ -197,67 +197,7 @@ namespace FactoryWars.EditorTools {
 
     static ExpansionSite Expansion(ExpansionKind kind, double x, double z) => new ExpansionSite { Kind = kind, Position = Position(x, z) };
 
-    static readonly MapDef TwoPlayerMap = BuildTwoPlayer();
     static readonly MapDef FourPlayerMap = BuildFourPlayer();
-
-    static MapDef BuildTwoPlayer() {
-      var terrain = new List<TerrainFeature>();
-      // 앞마당 벽. 대각선 거울로 숲 앞마당도 같은 모양이다.
-      terrain.AddRange(Features(TerrainKind.Hill, WithMirror(Ridge(1, 6, P(-62, -50), P(-62, -42)).Concat(Ridge(11, 6, P(-62, -21), P(-62, -16))).Concat(Ridge(2, 6, P(-96, 18), P(-58, 18))))));
-      // 공유 모서리 확장을 두르는 벽과 안쪽 돌출부. 측면 길은 이 안을 지나야 한다.
-      var box = Ridge(3, 6, P(-96, 62), P(-62, 62));
-      terrain.AddRange(Features(TerrainKind.Hill, box.Concat(box.Select(Anti)).Concat(Ridge(4, 6, P(-62, 62), P(-90, 90)))));
-      terrain.Add(Feature(TerrainKind.CanyonWall, Rect(-116, 60, 12, 4, 90)));
-      terrain.Add(Feature(TerrainKind.CanyonWall, Rect(-60, 116, 12, 4)));
-      // 중앙과 측면을 나누는 능선. 뒷길 틈은 A쪽으로 치우쳐 있다.
-      terrain.AddRange(Features(TerrainKind.Hill, Ridge(5, 6, P(-60, 16), P(-52, 23)).Concat(Ridge(6, 6, P(-35, 40), P(-18, 56))).Concat(Ridge(7, 6, P(-32, 44), P(-62, 62)))));
-      terrain.AddRange(Rocks(8, (-14, -24), (-26, 12), (-44, -12), (12, -44)));
-
-      var grounds = new List<MapShape>();
-      var ramps = new List<MapShape>();
-      HighGround(-36, -36, 10, new[] { 45f }, terrain, grounds, ramps);
-      HighGround(-78, 47, 8, new[] { -90f }, terrain, grounds, ramps);
-
-      var bridge = P(-100, -50);
-      var iron = P(-82, -24);
-      var gate = P(-62, 3);
-      var relay = P(-106, 106);
-      var center = P(-8, 0);
-      var lane = new[] { iron, P(-111, 18), P(-107, 46), P(-107, 72), relay };
-      var roads = Road(bridge, iron, gate, P(-30, 2), center).Concat(Road(lane)).ToList();
-
-      return new MapDef {
-        Id = "Map2P", Players = 2, HalfSize = 120, Start = Position(-90, -90), RiverAmplitude = 4.5f, RiverSeed = 11,
-        BaseArea = Rect(-90, -90, 30, 30),
-        Bridges = new[] { Rect(-57, -100, 3.5, 6.5), Rect(-100, -57, 6.5, 3.5) },
-        Nodes = new[] {
-          Mine(-105, -78, 4000), Mine(-78, -105, 4000), Grove(-106, -106, 9, 6000),
-          Mine(-108, -28, 3000), Mine(-84, -20, 3000), Grove(-109, -5, 6, 2000),
-          Grove(-30, -105, 11, 5000), Grove(-5, -106, 8, 3000), Mine(-30, -84, 1500, 2.5),
-          Mine(-113, 88, 5000, 3.5), Grove(-86, 108, 9, 5000),
-          Grove(-24, 26, 6, 2000),
-        },
-        CenterNodes = new[] { Mine(0, 0, 8000, 5) },
-        Terrain = terrain.ToArray(),
-        NoBuildZones = WithMirror(new[] {
-          Rect(-100, -57, 9, 8), Rect(-62, 3, 8, 12), Rect(-111, 18, 10, 8), Rect(-107, 60, 6, 14),
-        }).Concat(new[] { Rect(-44, 31, 10, 9, -45) }).Concat(ramps.Select(ramp => Rect(ramp.Center.X.AsFloat, ramp.Center.Z.AsFloat, 6, 6, ramp.Yaw.AsFloat))).ToArray(),
-        CameraPosition = new Vector3(0, 190, -155),
-        CaptureSites = new[] { Site(CaptureKind.Relay, relay.x, relay.y, 8) },
-        CenterSites = new[] { Site(CaptureKind.Comms, 0, 0, 12) },
-        Barricades = new[] { Rect(-44, 31, 8, 3, -45) },
-        BaseCrates = new[] { Position(-70, -88), Position(-88, -70) },
-        DropCrates = new[] { Position(-36, 8), Position(8, -36), Position(-96, 34), Position(-114, 114) },
-        HighGrounds = grounds.ToArray(),
-        Ramps = ramps.ToArray(),
-        Roads = roads.Concat(roads.Select(Mirror)).ToArray(),
-        Fords = new[] { Segment(P(-50, 8), P(8, -50), FordHalfWidth) },
-        Expansions = new[] { Expansion(ExpansionKind.IronForecourt, -96, -30), Expansion(ExpansionKind.WoodForecourt, -30, -88) },
-        SharedExpansions = new[] { Expansion(ExpansionKind.Shared, -106, 106) },
-        CenterExpansions = new[] { Expansion(ExpansionKind.Center, 0, 0) },
-        SharedSeatOffsets = new[] { 0, 1 },
-      };
-    }
 
     static MapDef BuildFourPlayer() {
       var terrain = new List<TerrainFeature>();

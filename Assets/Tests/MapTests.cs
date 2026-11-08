@@ -253,108 +253,69 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest]
-    public IEnumerator Map2P_LayoutAndCrossing() {
+    public IEnumerator Map17B_TwoPlayerDiagonalLayoutAndCrossing() {
       var tanks = new[] {
-        (0, "ff_eagle_tank", -100, -57), (0, "ff_eagle_tank", -106, 106), (0, "ff_eagle_tank", -82, -82), (0, "ff_eagle_tank", -78, -82), (0, "ff_eagle_tank", -82, -78), (0, "ff_eagle_tank", -78, -78),
-        (1, "cf_dragonscale_tank", 82, 82),
+        (0, "ff_eagle_tank", -140, -97), (0, "ff_eagle_tank", -136, -95), (0, "ff_eagle_tank", -130, 130),
+        (0, "ff_eagle_tank", -122, -122), (0, "ff_eagle_tank", 122, 122),
       };
-      yield return StartMatch(Map2PScene, 2, units: tanks, truce: 0);
+      yield return StartMatch(Map4PScene, 2, units: tanks, seed: 100, truce: 0);
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
-      DumpMap(spec, "map2p");
-      Assert.AreEqual(2, spec.StartPositions.Length);
-      Assert.AreEqual(new FPVector2(240, 240), spec.BoundsMax - spec.BoundsMin);
-      Assert.AreEqual(V(-90, -90), spec.StartPositions[0]);
-      Assert.AreEqual(25, Verified.ComponentCount<ResourceNode>());
-      Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 4000), "본진 철광산");
-      Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 6000), "본진 숲");
-      Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 3000), "철 앞마당");
-      Assert.AreEqual(2, NodeCount(ResourceKind.Iron, 1500), "숲 앞마당 작은 철");
-      Assert.AreEqual(2, NodeCount(ResourceKind.Iron, 5000), "공유 확장 철");
-      Assert.AreEqual(4, NodeCount(ResourceKind.Wood, 5000), "숲 앞마당 군락과 공유 확장 숲");
-      Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 3000), "숲 앞마당 군락");
-      Assert.AreEqual(1, NodeCount(ResourceKind.Iron, 8000), "중앙 대형 철");
-      AssertRotationalSymmetry(spec, 2);
-      AssertBattlefieldSymmetry(spec, 2);
-      AssertEverythingConnected(spec);
-      AssertBattlefieldReachable(spec);
-      AssertNoSticks(spec);
-      AssertBarricadesBlock(spec);
-      Assert.AreEqual(3, spec.CaptureSites.Length, "중앙 1 + 공유 확장 2");
-      Assert.AreEqual(2, spec.Barricades.Length);
-      Assert.AreEqual(4, spec.HighGrounds.Length);
-      Assert.AreEqual(2, spec.Fords.Length);
-      Assert.AreEqual(8, spec.CrateSpots.Count(s => s.Seat < 0), "투하 후보지");
-      Assert.AreEqual(2, spec.CrateSpots.Count(s => s.Seat == 0), "본진 상자");
+      Assert.AreEqual(0, FactoryWarsUtil.SeatOf(Verified, 0), "시드 100은 남서(0)·북동(2) 대각선");
+      Assert.AreEqual(2, FactoryWarsUtil.SeatOf(Verified, 1));
+      Assert.AreEqual(2, Verified.ComponentCount<Building>(), "2인 대전은 사령부 2채만 스폰");
+      Assert.AreEqual(V(-130, -130), Verified.Get<Transform3D>(Headquarters(0)).Position);
+      Assert.AreEqual(V(130, 130), Verified.Get<Transform3D>(Headquarters(1)).Position);
+      Assert.AreEqual(-1, FactoryWarsUtil.PlayerAtSeat(Verified, 1), "남동(1)은 빈 본진");
+      Assert.AreEqual(-1, FactoryWarsUtil.PlayerAtSeat(Verified, 3), "북서(3)는 빈 본진");
+      Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 4000), "점유 본진 철광산 100%");
+      Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 6000), "점유 본진 숲 100%");
+      Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 2800), "빈 본진 중립 확장 철광산 70%");
+      Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 4200), "빈 본진 중립 확장 숲 70%");
+      Assert.AreEqual(4, All<SupplyCrate>().Count(p => p.Component.Seat >= 0), "점유 본진에만 시작 상자 스폰");
 
-      var ironGates = new[] { GateBlock(-100, -57, 7, 4), GateBlock(-62, 3, 8, 12), GateBlock(-111, 18, 11, 8) };
-      AssertSealed(spec, new Vector2(-96, -30), new Vector2(-20, 10), ironGates, "철 앞마당에서 중앙");
-      var relayGates = new[] { GateBlock(-107, 60, 7, 2), GateBlock(-60, 107, 2, 7) };
-      AssertSealed(spec, new Vector2(-106, 106), new Vector2(-96, 34), relayGates, "공유 확장은 협곡으로만");
-      AssertWidth(spec, "철 앞마당 중앙 입구", new Vector2(-62, 3), Vector2.up, 16f, 20f);
-      AssertWidth(spec, "철 앞마당 측면 입구", new Vector2(-111, 18), Vector2.right, 16f, 20f);
-      AssertWidth(spec, "숲 앞마당 중앙 입구", new Vector2(3, -62), Vector2.right, 16f, 20f);
-      AssertWidth(spec, "숲 앞마당 측면 입구", new Vector2(18, -111), Vector2.up, 16f, 20f);
-      AssertWidth(spec, "서쪽 협곡", new Vector2(-107, 60), Vector2.right, 8f, 10.5f);
-      AssertWidth(spec, "북쪽 협곡", new Vector2(-60, 107), Vector2.up, 8f, 10.5f);
-      AssertWidth(spec, "뒷길 틈", new Vector2(-44, 31), new Vector2(1, 1), 10f, 12f);
-
-      var usage = UsedArea(spec);
-      Measure("Map2P 사용 영역", T(usage * 100f));
-      Assert.GreaterOrEqual(usage, 0.85f);
-      var capacity = HeadquartersCapacity(spec);
-      Measure("Map2P 사령부 수용", capacity.ToString());
-      Assert.GreaterOrEqual(capacity, 25);
-
-      var seconds = new float[7];
+      var seconds = new float[5];
       yield return TimeRoutes(new[] {
-        (TankNear(0, V(-100, -57)), 0, V(57, 100)),
-        (TankNear(0, V(-106, 106)), 0, V(57, 100)),
-        (TankNear(0, V(-82, -82)), 0, V(-96, -30)),
-        (TankNear(0, V(-78, -82)), 0, V(-24, -96)),
-        (TankNear(0, V(-82, -78)), 0, V(-106, 106)),
-        (TankNear(0, V(-78, -78)), 0, V(106, -106)),
-        (TankNear(1, V(82, 82)), 1, V(-106, 106)),
-      }, seconds);
-      Measure("Map2P 중앙 길 초", T(seconds[0]));
-      Measure("Map2P 공유 확장에서 상대 다리 초", T(seconds[1]));
-      Measure("Map2P 본진에서 철 앞마당 초", T(seconds[2]));
-      Measure("Map2P 본진에서 숲 앞마당 초", T(seconds[3]));
-      Measure("Map2P 본진에서 북서 공유 확장 초", T(seconds[4]));
-      Measure("Map2P 본진에서 남동 공유 확장 초", T(seconds[5]));
-      Measure("Map2P 상대 본진에서 북서 공유 확장 초", T(seconds[6]));
-      Assert.GreaterOrEqual(seconds[0], 45f, "중앙 길 하한");
-      Assert.LessOrEqual(seconds[0], 60f, "중앙 길 상한");
-      Assert.GreaterOrEqual(seconds[2], 10f);
-      Assert.LessOrEqual(seconds[2], 15f);
-      Assert.GreaterOrEqual(seconds[3], 10f);
-      Assert.LessOrEqual(seconds[3], 15f);
-      Assert.LessOrEqual(Mathf.Abs(seconds[4] - seconds[6]), 2f, "공유 확장 거리 차이");
-    }
-
-    [UnityTest]
-    public IEnumerator Map2P_CenterLaneWithRoads() {
-      yield return StartMatch(Map2PScene, 2, units: new[] { (0, "ff_eagle_tank", -100, -57) }, truce: 0);
-      var seconds = new float[1];
-      yield return TimeRoutes(new[] { (TankNear(0, V(-100, -57)), 0, V(57, 100)) }, seconds, roads: true);
-      Measure("Map2P 중앙 길 초(도로 적용)", T(seconds[0]));
-    }
-
-    [UnityTest]
-    public IEnumerator Map2P_SideLaneIsLongerThanCenter() {
-      // 측면 길은 공유 확장을 지나므로 다리에서 공유 확장까지와 공유 확장에서 상대 다리까지를 더한다.
-      var tanks = new[] { (0, "ff_eagle_tank", -100, -57), (0, "ff_eagle_tank", -106, 106), (0, "ff_eagle_tank", -98, -55) };
-      yield return StartMatch(Map2PScene, 2, units: tanks, truce: 0);
-      var seconds = new float[3];
-      yield return TimeRoutes(new[] {
-        (TankNear(0, V(-100, -57)), 0, V(57, 100)),
-        (TankNear(0, V(-106, 106)), 0, V(57, 100)),
-        (TankNear(0, V(-98, -55)), 0, V(-106, 106)),
+        (TankNear(0, V(-140, -97)), 0, V(97, 140)),
+        (TankNear(0, V(-136, -95)), 0, V(-132, 124)),
+        (TankNear(0, V(-130, 130)), 0, V(97, 140)),
+        (TankNear(0, V(-122, -122)), 0, V(128, -128)),
+        (TankNear(0, V(122, 122)), 0, V(-128, 128)),
       }, seconds);
       var side = seconds[1] + seconds[2];
-      Measure("Map2P 측면 길 초", T(side));
-      Measure("Map2P 측면 배율", (side / seconds[0]).ToString("0.00", CultureInfo.InvariantCulture));
-      Assert.GreaterOrEqual(side / seconds[0], 1.4f);
-      Assert.LessOrEqual(side / seconds[0], 1.7f);
+      var diff = Mathf.Abs(seconds[3] - seconds[4]);
+      Measure("Map4P 2인 대각선 중앙 길 초", T(seconds[0]));
+      Measure("Map4P 2인 빈 본진 경유 측면 길 초", T(side));
+      Measure("Map4P 2인 측면/중앙 배율", (side / seconds[0]).ToString("0.00", CultureInfo.InvariantCulture));
+      Measure("Map4P 2인 남서 본진→북서 빈 본진 초", T(seconds[3]));
+      Measure("Map4P 2인 북동 본진→북서 빈 본진 초", T(seconds[4]));
+      Measure("Map4P 2인 빈 본진 거리 차이 초", T(diff));
+      Assert.Greater(side, seconds[0], "빈 본진 경유 측면 길이 중앙 길보다 김");
+      Assert.LessOrEqual(diff, 1.5f, "양쪽 본진에서 빈 본진까지 이동 시간 차이 ≤ 1.5초");
+    }
+
+    [Test]
+    public void Map17B_TwoPlayerDiagonalSeatIsDeterministic() {
+      var pair02 = false;
+      var pair13 = false;
+      for (var seed = 0; seed < 20; seed++) {
+        var s0 = FactoryWarsUtil.SeatOf(0, 2, seed, 4);
+        var s1 = FactoryWarsUtil.SeatOf(1, 2, seed, 4);
+        Assert.AreEqual(s0, FactoryWarsUtil.SeatOf(0, 2, seed, 4), "같은 시드면 같은 자리");
+        Assert.AreEqual((s0 + 2) % 4, s1, "항상 마주 보는 대각선 자리");
+        pair02 |= (s0 == 0 && s1 == 2) || (s0 == 2 && s1 == 0);
+        pair13 |= (s0 == 1 && s1 == 3) || (s0 == 3 && s1 == 1);
+      }
+      Assert.IsTrue(pair02 && pair13, "시드에 따라 남서·북동(0·2)과 남동·북서(1·3) 대각선이 모두 쓰임");
+    }
+
+    [UnityTest]
+    public IEnumerator Map17B_ThreePlayerSpawnsThreeSeatsAndLeavesOneNeutral() {
+      yield return StartMatch(Map4PScene, 3, truce: 0);
+      Assert.AreEqual(3, Verified.ComponentCount<Building>(), "3인 대전은 사령부 3채");
+      Assert.AreEqual(-1, FactoryWarsUtil.PlayerAtSeat(Verified, 3), "4번째 자리는 빈 본진 중립 확장");
+      Assert.AreEqual(6, NodeCount(ResourceKind.Iron, 4000), "점유 본진 3곳 철광산 100%");
+      Assert.AreEqual(2, NodeCount(ResourceKind.Iron, 2800), "빈 본진 1곳 철광산 70%");
+      Assert.AreEqual(1, NodeCount(ResourceKind.Wood, 4200), "빈 본진 1곳 숲 70%");
     }
 
     [UnityTest]

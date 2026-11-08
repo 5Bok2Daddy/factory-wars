@@ -232,9 +232,14 @@ namespace FactoryWars.View {
       return best;
     }
 
-    /// <summary>다리마다 울타리 하나. 몸체 메쉬 하나와 깜빡일 경고등 메쉬 하나다.</summary>
+    /// <summary>다리마다 울타리 하나. 빈 본진 자리의 다리는 시작부터 열려 있으므로 울타리를 세우지 않는다.</summary>
     void BuildBarriers(Frame frame) {
       for (var i = 0; _map.Bridges != null && i < _map.Bridges.Length; i++) {
+        var ownerSeat = NearestBase(_map.Bridges[i].Center.ToUnityVector3());
+        var owner = Quantum.FactoryWars.FactoryWarsUtil.PlayerAtSeat(frame, ownerSeat);
+        if (owner < 0) {
+          continue;
+        }
         var body = new MeshKit();
         var lamps = new MeshKit();
         var pieces = TerrainKit.BarrierPieces(_map, i);
@@ -244,7 +249,6 @@ namespace FactoryWars.View {
           dust.Add((piece.From + piece.To) / 2);
         }
         var item = MeshObject(_root, "Barrier", body.ToMesh("barrier"), true);
-        var owner = NearestBase(_map.Bridges[i].Center.ToUnityVector3());
         var state = owner < frame.PlayerCount ? frame.Global->Players.GetPointer(owner) : null;
         if (state != null && state->Active) {
           item.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(state->ColorIndex, true);

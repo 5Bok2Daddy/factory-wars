@@ -71,7 +71,7 @@ namespace FactoryWars.Tests {
       menu.Show(MenuController.Screen.Options);
       menu.PickFaction(1);
       Assert.AreEqual(1, menu.Settings.Color, "대륙 연방 기본 진홍");
-      menu.ToggleMap();
+      menu.NextMode();
       menu.NextColor();
       menu.NextColor();
       Assert.AreEqual(3, menu.Settings.Color);

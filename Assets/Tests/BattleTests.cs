@@ -28,7 +28,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Battle_EveryEntityIsDrawnWithItsPrefab() {
-      yield return StartMatch(Map2PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 5, truce: -1);
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 5, truce: -1);
       yield return WaitForBattle();
       yield return WaitFrames(Fps);
       var view = Battle();
@@ -41,7 +41,7 @@ namespace FactoryWars.Tests {
       }
       Assert.Greater(view.World.ForestCount, 0, "숲");
       Assert.Greater(view.World.MineCount, 0, "철광산");
-      Assert.AreEqual(MapAsset("Map2P").ResourceNodes.Length, view.World.ForestCount + view.World.MineCount, "자원 전부");
+      Assert.AreEqual(MapAsset("Map4P").ResourceNodes.Length, view.World.ForestCount + view.World.MineCount, "자원 전부");
       var terrain = GameObject.Find("Terrain");
       Assert.IsFalse(terrain.GetComponentsInChildren<Renderer>(true).Any(r => r.enabled), "임시 도형은 꺼짐");
     }
@@ -196,21 +196,21 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Terrain_GroundIsCutAlongTheRiver() {
-      var map = MapAsset("Map2P");
+      var map = MapAsset("Map4P");
       var kit = new MeshKit();
       TerrainKit.Ground(kit, map, 3);
       var mesh = kit.ToMesh("test");
       var bridge = map.Bridges[0];
       var center = new Vector2(bridge.Center.X.AsFloat, bridge.Center.Z.AsFloat);
       Assert.IsFalse(mesh.vertices.Any(v => (new Vector2(v.x, v.z) - center).magnitude < 1.5f), "강 자리에는 바닥이 없음");
-      Assert.Less(kit.TriangleCount, 30000, "삼각형 예산");
+      Assert.Less(kit.TriangleCount, 50000, "삼각형 예산");
     }
 
     [Test]
     public void Terrain_SameMapSameShape() {
       Vector3[] Build() {
         var kit = new MeshKit();
-        TerrainKit.Features(kit, MapAsset("Map2P"));
+        TerrainKit.Features(kit, MapAsset("Map4P"));
         return kit.ToMesh("test").vertices;
       }
       Assert.AreEqual(Build(), Build());
@@ -218,7 +218,7 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Terrain_FeaturesStayInsideTheirBlockedShape() {
-      var map = MapAsset("Map2P");
+      var map = MapAsset("Map4P");
       for (var i = 0; i < map.Terrain.Length; i++) {
         var feature = map.Terrain[i];
         if (feature.Kind != TerrainKind.Hill) {
@@ -236,7 +236,7 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Terrain_DifferentSeedsChangeHills() {
-      var map = MapAsset("Map2P");
+      var map = MapAsset("Map4P");
       var shape = map.Terrain.First(t => t.Kind == TerrainKind.Hill).Shape;
       var a = new MeshKit();
       var b = new MeshKit();

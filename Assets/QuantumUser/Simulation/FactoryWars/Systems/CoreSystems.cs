@@ -17,13 +17,70 @@ namespace Quantum.FactoryWars {
 
     public static bool InTruce(Frame f) => f.Global->BarrierOpen == false;
 
+    /// <summary>
+    /// 인원수와 방 시드에 따라 플레이어 번호(0..PlayerCount-1)를 본진 자리 번호(0..seatCount-1)로 바꾼다.
+    /// 4인 맵에서 2명이면 대각선(0·2 또는 1·3), 3명이면 시드로 고른 3자리다.
+    /// </summary>
+    public static int SeatOf(int player, int playerCount, int seed, int seatCount) {
+      if (seatCount <= 0) {
+        return 0;
+      }
+      var absSeed = seed < 0 ? -(seed + 1) : seed;
+      if (seatCount == 4 && playerCount == 2) {
+        var pair = absSeed % 2;
+        return (pair + (player % 2) * 2) % 4;
+      }
+      if (seatCount == 4 && playerCount == 3) {
+        var start = absSeed % 4;
+        return (start + (player % 3)) % 4;
+      }
+      return player % seatCount;
+    }
+
+    public static int SeatOf(Frame f, PlayerRef player) {
+      var map = MapInfo(f);
+      var starts = map.StartPositions;
+      if (starts == null || starts.Length == 0) {
+        return 0;
+      }
+      if (map.BaseAreas == null || map.BaseAreas.Length < starts.Length) {
+        return (int)player % starts.Length;
+      }
+      return SeatOf((int)player, f.PlayerCount, f.RuntimeConfig.Seed, starts.Length);
+    }
+
+    /// <summary>해당 본진 자리에 배치된 플레이어 번호. 빈 본진 자리이면 -1이다.</summary>
+    public static int PlayerAtSeat(Frame f, int seat) {
+      for (var p = 0; p < f.PlayerCount; p++) {
+        if (SeatOf(f, p) == seat) {
+          return p;
+        }
+      }
+      return -1;
+    }
+
+    public static FPVector3 StartPosition(Frame f, PlayerRef player) {
+      var starts = MapInfo(f).StartPositions;
+      return starts[SeatOf(f, player)];
+    }
+
+    public static int BaseSeatAt(MapSpec map, FPVector3 position) {
+      var areas = map.BaseAreas;
+      for (var i = 0; areas != null && i < areas.Length; i++) {
+        if (areas[i].Distance(position) <= FP._0) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
     /// <summary>지상으로 갈 수 있는 곳이면 true. 휴전 중에는 자기 본진 안뿐이다.</summary>
     public static bool IsReachable(Frame f, PlayerRef player, FPVector3 position) {
       var areas = MapInfo(f).BaseAreas;
       if (InTruce(f) == false || areas == null || areas.Length == 0) {
         return true;
       }
-      return areas[(int)player % areas.Length].Distance(position) <= FP._0;
+      return areas[SeatOf(f, player) % areas.Length].Distance(position) <= FP._0;
     }
 
     /// <summary>
@@ -84,11 +141,17 @@ namespace Quantum.FactoryWars {
       BattlefieldSystem.Init(f);
       CitySystem.Init(f);
 
-      var nodes = FactoryWarsUtil.MapInfo(f).ResourceNodes;
+      var map = FactoryWarsUtil.MapInfo(f);
+      var nodes = map.ResourceNodes;
       for (var i = 0; nodes != null && i < nodes.Length; i++) {
+        var amount = nodes[i].Amount;
+        var baseSeat = FactoryWarsUtil.BaseSeatAt(map, nodes[i].Shape.Center);
+        if (baseSeat >= 0 && FactoryWarsUtil.PlayerAtSeat(f, baseSeat) < 0) {
+          amount = FPMath.RoundToInt(amount * (FP._7 / 10));
+        }
         var node = f.Create();
         f.Add(node, Transform3D.Create(nodes[i].Shape.Center));
-        f.Add(node, new ResourceNode { Kind = nodes[i].Kind, Remaining = nodes[i].Amount, Shape = nodes[i].Shape });
+        f.Add(node, new ResourceNode { Kind = nodes[i].Kind, Remaining = amount, Shape = nodes[i].Shape });
       }
 
       var bots = f.RuntimeConfig.Bots;
@@ -109,10 +172,7 @@ namespace Quantum.FactoryWars {
       }
     }
 
-    static FPVector3 StartPosition(Frame f, PlayerRef player) {
-      var starts = FactoryWarsUtil.MapInfo(f).StartPositions;
-      return starts[(int)player % starts.Length];
-    }
+    static FPVector3 StartPosition(Frame f, PlayerRef player) => FactoryWarsUtil.StartPosition(f, player);
 
     public void OnPlayerAdded(Frame f, PlayerRef player, bool firstTime) {
       if (firstTime == false) {
@@ -184,13 +244,21 @@ namespace Quantum.FactoryWars {
     }
   }
 
-  /// <summary>초반 휴전. 끝나면 모든 다리 입구의 울타리를 한 번에 연다.</summary>
+  /// <summary>초반 휴전. 끝나면 모든 다리 입구의 울타리를 한 번에 연다. 빈 본진 자리의 울타리는 시작부터 열어 둔다.</summary>
   public unsafe class TruceSystem : SystemMainThread {
-    /// <summary>영역 하나만 켜고 끈다. 영역 상태는 프레임 데이터라 롤백에도 안전하다.</summary>
+    /// <summary>영역 상태를 바꾼다. 영역 상태는 프레임 데이터라 롤백에도 안전하다.</summary>
     public static void SetBarrier(Frame f, bool open) {
       f.Global->BarrierOpen = open;
-      if (f.Map.RegionMap.TryGetValue(FactoryWarsUtil.Rules(f).BarrierRegion, out var region)) {
+      var prefix = FactoryWarsUtil.Rules(f).BarrierRegion;
+      if (f.Map.RegionMap.TryGetValue(prefix, out var region)) {
         f.NavMeshRegionMask->ToggleRegion(region, open);
+      }
+      var areas = FactoryWarsUtil.MapInfo(f).BaseAreas;
+      for (var seat = 0; areas != null && seat < areas.Length; seat++) {
+        if (f.Map.RegionMap.TryGetValue($"{prefix}{seat}", out var seatRegion)) {
+          var seatOpen = open || FactoryWarsUtil.PlayerAtSeat(f, seat) < 0;
+          f.NavMeshRegionMask->ToggleRegion(seatRegion, seatOpen);
+        }
       }
     }
 

@@ -12,7 +12,7 @@ namespace FactoryWars.Tests {
   public unsafe partial class LocalMatchTests {
     [UnityTest]
     public IEnumerator Build_KeepsGapBetweenBuildings() {
-      yield return StartMatch(Map2PScene, 2, truce: 0);
+      yield return StartMatch(Map4PScene, 2, truce: 0);
       var rules = FactoryWarsUtil.Rules(Verified);
       Assert.AreEqual(2f, rules.BuildingGap.AsFloat, 0.001f, "간격은 데이터 값 2m");
       var hq = Headquarters(0);
