@@ -1,0 +1,14 @@
+before,Low,A,81,88130,50,131
+before,Low,B,76,87974,45,121
+before,Low,C,34,69120,5,39
+before,Low,D,289,175008,104,393
+before,Medium,A,84,88130,77,242
+before,Medium,B,76,87974,72,224
+before,Medium,C,33,68492,26,89
+before,Medium,D,289,175008,272,837
+before,High,A,84,88130,77,396
+before,High,B,76,87974,72,368
+before,High,C,34,69120,27,146
+before,High,D,289,175008,272,1381
+before,ground_width_m,120.6
+before,tank_px,699.3,cf_dragonscale_tank

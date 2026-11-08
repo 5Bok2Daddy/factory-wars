@@ -94,10 +94,11 @@ namespace FactoryWars.View {
 
     /// <summary>갤러리와 같은 빛을 쓴다.</summary>
     public static void ApplyLighting(Camera camera) {
+      var profile = VisualProfile.Current;
       RenderSettings.ambientMode = AmbientMode.Trilight;
-      RenderSettings.ambientSkyColor = new Color(0.56f, 0.59f, 0.64f);
-      RenderSettings.ambientEquatorColor = new Color(0.44f, 0.44f, 0.42f);
-      RenderSettings.ambientGroundColor = new Color(0.28f, 0.26f, 0.24f);
+      RenderSettings.ambientSkyColor = profile.AmbientSky;
+      RenderSettings.ambientEquatorColor = profile.AmbientEquator;
+      RenderSettings.ambientGroundColor = profile.AmbientGround;
       RenderSettings.fog = false;
       var sun = RenderSettings.sun;
       if (sun == null) {
@@ -112,10 +113,11 @@ namespace FactoryWars.View {
         sun = new GameObject("Sun").AddComponent<Light>();
         sun.type = LightType.Directional;
       }
-      sun.color = new Color(1f, 0.96f, 0.88f);
-      sun.intensity = 0.98f;
-      sun.shadows = LightShadows.Soft;
-      sun.transform.rotation = Quaternion.Euler(52, 20, 0);
+      sun.color = profile.SunColor;
+      sun.intensity = profile.SunIntensity;
+      sun.shadows = GraphicsQuality.Current == QualityTier.Low ? LightShadows.Hard : LightShadows.Soft;
+      sun.shadowStrength = profile.ShadowStrength;
+      sun.transform.rotation = Quaternion.Euler(profile.SunElevation, profile.SunAzimuth, 0);
       if (camera != null) {
         camera.clearFlags = CameraClearFlags.SolidColor;
         camera.backgroundColor = new Color(0.36f, 0.42f, 0.3f);

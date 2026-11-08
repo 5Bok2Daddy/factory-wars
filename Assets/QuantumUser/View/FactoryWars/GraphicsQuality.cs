@@ -67,7 +67,38 @@ namespace FactoryWars.View {
         volume.isGlobal = true;
       }
       volume.enabled = true;
-      volume.sharedProfile = Resources.Load<VolumeProfile>(Root + ProfileName(Current));
+      volume.sharedProfile = BuildVolume(Current, VisualProfile.Current);
+    }
+
+    static VolumeProfile _volume;
+
+    /// <summary>품질 단계와 화면 프로필로 Volume을 만든다. 저장하지 않는 실행용 에셋이다.</summary>
+    public static VolumeProfile BuildVolume(QualityTier tier, VisualProfile profile) {
+      if (_volume != null) {
+        foreach (var component in _volume.components) {
+          Object.Destroy(component);
+        }
+        Object.Destroy(_volume);
+      }
+      _volume = ScriptableObject.CreateInstance<VolumeProfile>();
+      var bloom = _volume.Add<Bloom>(true);
+      bloom.intensity.Override(profile.BloomIntensity);
+      bloom.threshold.Override(profile.BloomThreshold);
+      bloom.scatter.Override(profile.BloomScatter);
+      bloom.downscale.Override(tier == QualityTier.High ? BloomDownscaleMode.Half : BloomDownscaleMode.Quarter);
+      bloom.highQualityFiltering.Override(tier == QualityTier.High);
+      bloom.maxIterations.Override(tier == QualityTier.High ? 6 : 4);
+      var tone = _volume.Add<Tonemapping>(true);
+      tone.mode.Override(profile.Tone == ToneMode.Aces ? TonemappingMode.ACES : TonemappingMode.Neutral);
+      var color = _volume.Add<ColorAdjustments>(true);
+      color.saturation.Override(profile.Saturation);
+      color.contrast.Override(profile.Contrast);
+      if (profile.Vignette > 0f) {
+        var vignette = _volume.Add<Vignette>(true);
+        vignette.intensity.Override(profile.Vignette);
+        vignette.smoothness.Override(0.5f);
+      }
+      return _volume;
     }
   }
 }

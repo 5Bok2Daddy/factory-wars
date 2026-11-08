@@ -13,13 +13,13 @@ namespace FactoryWars.Tests {
   /// <summary>실제 AI 대 AI 경기 화면을 저장한다. GPU가 있는 배치 모드에서 -testCategory Ingame으로 돌린다.</summary>
   public partial class LocalMatchTests {
     const float CaptureSpeed = 10f;
-    const float CameraPitch = 50f;
+    static float CameraPitch => VisualProfile.Current.Pitch;
 
     static string IngameFolder() => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "screenshots", "ingame"));
 
     static void AimCamera(Camera camera, Vector3 focus, float height) {
       camera.orthographic = false;
-      camera.fieldOfView = 60f;
+      camera.fieldOfView = VisualProfile.Current.FieldOfView;
       camera.nearClipPlane = 0.3f;
       camera.farClipPlane = 900f;
       var back = height / Mathf.Tan(CameraPitch * Mathf.Deg2Rad);

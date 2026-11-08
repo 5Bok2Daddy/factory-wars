@@ -331,8 +331,8 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Camera_DefaultsCloserAndZoomsOutLess() {
-      Assert.AreEqual(45f, RtsCamera.DefaultHeight);
-      Assert.AreEqual(110f, RtsCamera.MaxHeight);
+      Assert.AreEqual(VisualProfile.Current.DefaultHeight, RtsCamera.DefaultHeight);
+      Assert.Greater(RtsCamera.MaxHeight, RtsCamera.DefaultHeight);
       Assert.AreEqual(RtsCamera.DefaultHeight, RtsCamera.ClampHeight(RtsCamera.DefaultHeight));
     }
 

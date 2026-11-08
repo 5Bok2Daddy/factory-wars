@@ -9,7 +9,7 @@ namespace FactoryWars.View {
   /// <summary>화면 입력을 선택 변경이나 커맨드로 해석한다. 시뮬레이션은 읽기만 한다.</summary>
   public unsafe class MatchInput {
     public const float UnitPickRadius = 2f;
-    const float CameraPitch = 50f;
+    static float CameraPitch => VisualProfile.Current.Pitch;
 
     static ViewCatalog _catalog;
 
@@ -17,12 +17,12 @@ namespace FactoryWars.View {
 
     /// <summary>표시 크기에 맞춘 터치 반경. 선택 링과 같고, 작은 유닛도 손가락으로 누를 수 있는 크기는 보장한다.</summary>
     public static float PickRadius(string unitId) {
-      return Catalog != null && Catalog.TryGet(unitId, out var entry) ? Mathf.Max(UnitPickRadius, entry.RingRadius) : UnitPickRadius;
+      return Catalog != null && Catalog.TryGet(unitId, out var entry) ? Mathf.Max(UnitPickRadius, entry.RingRadius * ArtView.ScaleOf(entry)) : UnitPickRadius;
     }
 
     /// <summary>공중 유닛은 화면에서 땅 위치보다 앞쪽 위에 보인다. 그 자리를 눌렀을 때 맞는 땅 좌표로 옮긴다.</summary>
     public static float AirTapOffset(string unitId) {
-      return Catalog != null && Catalog.TryGet(unitId, out var entry) ? entry.Altitude / Mathf.Tan(CameraPitch * Mathf.Deg2Rad) : 0f;
+      return Catalog != null && Catalog.TryGet(unitId, out var entry) ? entry.Altitude * ArtView.ScaleOf(entry) / Mathf.Tan(CameraPitch * Mathf.Deg2Rad) : 0f;
     }
 
     public readonly SelectionModel Selection = new SelectionModel();

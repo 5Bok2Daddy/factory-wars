@@ -2024,11 +2024,12 @@ AI 행동도 함께 넣었습니다.
 
 ## 현재 단계 (재개 기준)
 
-지시 순서: 17 → 20 → 19A(`NEXT-TASK-19A-LOOKDEV.md`) → 19(`NEXT-TASK-19.md`). 19가 끝나면 push하고 멈춘다.
+지시 순서: 17 → 20 → 21(`NEXT-TASK-21-CITY.md`) → 19A(`NEXT-TASK-19A-LOOKDEV.md`) → 19(`NEXT-TASK-19.md`). 19가 끝나면 push하고 멈춘다.
 
 | 항목 | 상태 |
 | --- | --- |
 | 17 맵 재설계 | 완료 |
 | 20 재미 요소 | 완료 |
-| 19A 룩 개발 | 진행 중 |
+| 21 도시 전장 | 진행 중 (`NEXT-TASK-21-CITY.md`, 19A보다 먼저) |
+| 19A 룩 개발 | 준비만 함: `VisualProfile` 연결(화면 변화 없음), 비교 도구 `Tests/LookdevTests.cs`, before 화면·수치 |
 | 19 그래픽 적용 | 대기 |

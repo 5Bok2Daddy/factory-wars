@@ -14,7 +14,7 @@ namespace FactoryWars.View {
     const float BarMinWidth = 1.8f;
     const float BarMaxWidth = 5f;
     const float BarPerRadius = 1.3f;
-    const float BarPitch = 50f;
+    static float BarPitch => VisualProfile.Current.Pitch;
 
     static Mesh _ring;
     static Mesh _barBack;
@@ -27,6 +27,9 @@ namespace FactoryWars.View {
     public GameObject Bar;
     public Transform Fill;
 
+    /// <summary>프로필의 유닛 배율. 건물은 바닥판 칸 크기가 정해져 있어 따로 다룬다.</summary>
+    public static float ScaleOf(ViewCatalog.Entry entry) => entry.Unit ? VisualProfile.Current.UnitScale : 1f;
+
     public static ArtView Create(ViewCatalog catalog, string id, Transform parent, int color, bool powered = true) {
       if (catalog.TryGet(id, out var entry) == false) {
         return null;
@@ -37,22 +40,23 @@ namespace FactoryWars.View {
 
       view.Turn = new GameObject("Turn").transform;
       view.Turn.SetParent(view.transform, false);
-      view.Turn.localPosition = Vector3.up * entry.Altitude;
+      var extra = ScaleOf(entry);
+      view.Turn.localPosition = Vector3.up * entry.Altitude * extra;
 
       view.Model = Instantiate(entry.Prefab, view.Turn);
       view.Model.name = "Model";
-      view.Model.transform.localScale = Vector3.one * entry.DisplayScale;
-      view.Model.transform.localPosition = new Vector3(-entry.Center.x, 0, -entry.Center.y) * entry.DisplayScale;
+      view.Model.transform.localScale = Vector3.one * entry.DisplayScale * extra;
+      view.Model.transform.localPosition = new Vector3(-entry.Center.x, 0, -entry.Center.y) * entry.DisplayScale * extra;
       ArtLook.Apply(view.Model, color, powered);
 
       view.Ring = Marker("Ring", view.transform, RingMesh());
       view.Ring.transform.localPosition = Vector3.up * RingLift;
-      view.Ring.transform.localScale = new Vector3(entry.RingRadius, 1, entry.RingRadius);
+      view.Ring.transform.localScale = new Vector3(entry.RingRadius * extra, 1, entry.RingRadius * extra);
       view.Ring.SetActive(false);
 
-      var width = Mathf.Clamp(entry.RingRadius * BarPerRadius, BarMinWidth, BarMaxWidth);
+      var width = Mathf.Clamp(entry.RingRadius * extra * BarPerRadius, BarMinWidth, BarMaxWidth);
       view.Bar = Marker("Bar", view.transform, BarBackMesh());
-      view.Bar.transform.localPosition = Vector3.up * entry.BarHeight;
+      view.Bar.transform.localPosition = Vector3.up * entry.BarHeight * extra;
       view.Bar.transform.localRotation = Quaternion.Euler(BarPitch, 0, 0);
       view.Bar.transform.localScale = new Vector3(width, BarThickness, 1);
       view.Fill = Marker("Fill", view.Bar.transform, BarFillMesh()).transform;
