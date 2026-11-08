@@ -152,6 +152,13 @@ namespace FactoryWars.Tests {
       foreach (var renderer in Object.FindObjectsByType<ParticleSystemRenderer>(FindObjectsSortMode.None)) {
         renderers += renderer.isVisible ? 1 : 0;
       }
+      // Kenney 인스턴싱 묶음(항목 19B): 묶음 하나가 그리기 호출 하나다.
+      if (DressingRenderer.Active != null) {
+        var dressed = DressingRenderer.Active.Count(planes);
+        renderers += dressed.Batches;
+        triangles += dressed.Triangles;
+        casters += dressed.Casters;
+      }
       return (renderers, triangles, casters);
     }
 

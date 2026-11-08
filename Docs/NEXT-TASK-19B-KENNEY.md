@@ -12,6 +12,78 @@ CLAUDE.md 규칙, 결정론 유지. **모델 교체는 화면(View) 전용**이�
 
 ---
 
+
+## 0. 받은 키트 (2026-11-08 15:00, Claude가 사용자 Downloads·Documents에서 옮김) — 이 절이 1·2절보다 우선
+`temp-assets/`에 zip 6개가 있다. 모두 무결성 확인 완료. **다운로드 단계는 건너뛰고 압축 풀기부터 한다.**
+
+| zip | FBX | 용도 |
+| --- | --- | --- |
+| kenney_city-kit-commercial_2.1.zip | 41 | 도시 건물(building-a~n), 고층(building-skyscraper-a~e = **쓰러지는 건물 후보**), 원거리용 low-detail-building-* (LOD), 차양·파라솔 소품 |
+| kenney_city-kit-industrial_2.0.zip | 37 | 공장·창고(building-a~t), 굴뚝(chimney-*), 저장 탱크(detail-tank*), 컨테이너(shipping-container-a~c), 급수탑(water-tower = **쓰러지는 건물 후보**), 태양광 패널 |
+| kenney_city-kit-roads.zip | 95 | 도로 조각(직선·커브·교차로·로터리·경사), 다리(road-bridge, bridge-pillar*), 공사 바리케이드·콘·펜스, 가로등(light-*), 전봇대·전선, 표지판, 쓰레기통 |
+| kenney_factory-kit_3.0.zip | 143 | 컨베이어, 크레인(crane*), 호퍼, 캣워크, 상자, 문, 기어 — **플레이어 건물(가공소·군수공장·중공업 기지·집하장) 부품** |
+| kenney_tower-defense-kit.zip | 160 | detail-tree(-large), detail-rocks(-large), detail-crystal(-large = **철광석 결정 후보**), detail-dirt, 강·언덕 타일. 성·캐릭터·UFO(enemy-ufo-*)는 쓰지 않는다 |
+| kenney_nature-kit.zip | 329 | 나무(침엽·활엽·단풍 fall·짙은 dark 변종), 바위·돌, **층진 절벽 조각(cliff_*)**, 강·흙길 바닥 조각, 그루터기·통나무, 덤불·풀·꽃 |
+| kenney_train-kit.zip | 103 | 철로·손상된 철로(railroad-damaged-*) — 공업 지구·중앙 폐허 장식. 기차 차량은 쓰지 않는다(사용자 확인 전) |
+
+- **nature-kit도 받았다(15:05 추가, zip 7개).** `kenney_nature-kit.zip`, FBX 329개, 무결성 확인 완료. 숲·바위·절벽·강변은 아래 0-1-N 매핑대로 nature-kit을 1순위로 쓴다.
+- `kenney-install.ps1`의 `$kits`를 위 6개 + nature-kit(총 7개)으로 바꾸고, zip 이름의 버전 표기(`_2.0`, `_2.1`, `_3.0`)를 허용하게 패턴을 `kenney_<kit>*.zip`로 고친다. FBX와 그 텍스처(png)만 `Assets/ExternalAssets/Kenney/<kit>/`로 복사한다(glb·obj·mtl은 빼서 저장소 크기를 줄인다). 각 키트 License.txt도 같이 둔다.
+
+### 0-1. 구체 매핑 (KenneyAssetMap 초안 — 접촉 시트를 본 뒤 조정)
+| 게임 요소 | 1순위 모델 | 비고 |
+| --- | --- | --- |
+| 도시 건물 소형 | commercial building-a~f | 지붕·창문 디테일. 폐허 단계는 같은 모델 상단을 잘라내고 잔해 소품 |
+| 도시 건물 중형 | commercial building-g~n, industrial building-a~h | |
+| 도시 건물 대형 | industrial building-i~t | 창고·공장형 |
+| 쓰러지는 건물 | commercial building-skyscraper-a~e, industrial water-tower, industrial chimney-large | 쓰러지는 방향 축에 맞춰 회전 |
+| 파괴 불가 고층 블록(능선이 도시 쪽일 때) | skyscraper + low-detail-building-wide-* | 19A 결정대로 기본은 바위 절벽, 도시 구간만 |
+| 진지 건물 | commercial building 중 입구가 큰 것 + roads construction-barrier·모래주머니(절차) | 문·창 강조 |
+| 원거리 LOD | commercial low-detail-building-* | 줌 아웃·4인 전체 화면 |
+| 도로·교차로·다리 | roads road-*, road-bridge, bridge-pillar* | 바닥 도로 메쉬를 교체하거나 위에 얹는다. 판정용 Roads 데이터는 그대로 |
+| 길가 소품 | roads light-*, electricity-pole*, road-sign-*(글자 없는 empty/object형만), dumpster | 실존 표지 문구 금지 |
+| 바리케이드·공사 구역 | roads construction-barrier/cone/fence | 뒷길 바리케이드 위에 얹어 폐차 더미와 섞기 |
+| 고철 하치장(철) | industrial shipping-container-*, factory box-*, tower-defense detail-crystal(-large) | 결정은 철광석 발광(청록 아님, 기존 규칙 색) |
+| 공원 숲(목재) | tower-defense detail-tree(-large) + 기존 절차 침엽수 | 단풍색 틴트 섞기. nature-kit 오면 교체 |
+| 바위 | tower-defense detail-rocks(-large) + 절차 바위 | |
+| 가공소 | factory hopper-*, conveyor*, industrial chimney-* + 기존 용광로(주황 쇳물) | |
+| 군수공장·중공업 기지 | factory crane*, door-wide-*, catwalk-*, industrial building 부품 | 진영 형태 대비 유지(자유=곡면, 대륙=각진) |
+| 집하장·보급창 | factory box-*, industrial shipping-container-*, detail-tank | |
+| 발전소 | industrial detail-tank-large, chimney-* + 기존 냉각탑·청록 코어 | |
+| 방어탑 받침 | tower-defense의 받침·벽 부품만 | 포탑·포신은 기존 절차 |
+| 중앙 폐허 장식 | train railroad-damaged-* | |
+
+
+### 0-1-N. nature-kit 매핑 (숲·바위·절벽은 이것이 1순위)
+| 게임 요소 | 모델 | 비고 |
+| --- | --- | --- |
+| 공원 숲(목재) | tree_pineTall*·tree_pineRound*·tree_pineDefault*(침엽 주력) + tree_oak·tree_detailed·tree_default의 **_fall**(단풍)·**_dark** 변종 | 목표 이미지처럼 침엽 60%, 단풍 25%, 짙은 활엽 15%(값은 VisualProfile). tree_palm*·cactus*는 쓰지 않는다 |
+| 채집에 따른 숲 변화 | stump_*(그루터기), log·log_stack(쓰러진 통나무) | 채집량에 비례해 바깥 나무부터 그루터기로 교체(기존 규칙 유지) |
+| 숲 가장자리 | plant_bush*, grass*, grass_leafs*, mushroom_* (소량) | 통과 가능 장식. low에서는 줄인다 |
+| 바위·자원 주변 돌 | rock_large*·rock_small*·rock_tall*, stone_* | 2~4개 무리, 해시 기반 크기·회전 |
+| 능선·맵 경계·고지대 측면 절벽 | **cliff_* 조각**(block·corner·cornerInner·half·steps·top·diagonal, _rock은 회색, _stone은 밝은 회색) | 판정 경계를 따라 조각을 이어 붙여 층진 절벽을 만든다. 높이 2~3단 쌓기. 회색=_rock 기본, 황토 틴트 변종 섞기. 기존 절차 절벽은 이 조각으로 교체 |
+| 고지대 비탈길 | cliff_steps*, cliff_blockSlope* | 판정상 비탈길 위치에만 |
+| 강변·운하 가장자리(자연 구간) | ground_riverSide*·ground_riverBank*, ground_riverRocks, rock_small* | 도시 구간 운하는 콘크리트 제방(절차) 유지 |
+| 흙길(도시 밖 구간) | ground_path* | 판정용 Roads 데이터는 그대로, 겉모습만 |
+| 폭포(선택) | cliff_waterfall* | 강이 단차를 넘는 곳이 있으면 1~2곳 |
+| 쓰지 않는 것 | bed, tent, canoe, crops_*, statue_*, pot_*, campfire_*, fence_*(목재 울타리), sign | 전장 분위기와 맞지 않음 |
+
+nature-kit도 원래 색이 밝고 원색이므로 0-2의 KenneyLit 교정을 똑같이 적용한다. 특히 숲은 목표 이미지(aow3-ref 01·03)의 짙은 초록·주황·황금 톤으로, 절벽은 층마다 윗면이 밝게(높이 그라데이션).
+
+### 0-2. 렌더링 적용 (Kenney 원래 색 → 목표 그림체)
+Kenney 모델은 밝은 원색·평면 색이라 그대로 두면 장난감처럼 보인다. **반드시** 아래를 거친다.
+1. **공용 셰이더 `FactoryWars/KenneyLit`로 전부 교체.** Kenney 원본 머티리얼은 쓰지 않는다. 팔레트 텍스처(colormap)는 그대로 읽되:
+   - 채도 −35~−50%, 밝기 −10%로 눌러 군용 톤으로(값은 VisualProfile, 비교 시트로 정함)
+   - 재질별 틴트: 콘크리트·벽돌은 회색·황토, 지붕은 짙은 회색, 금속은 슬레이트, 녹색 요소는 국방색으로
+   - 월드 높이 그라데이션(아래 어둡게), 저주파 색 노이즈(건물마다 조금씩 다른 색), 바닥 접촉 AO
+   - 손상 단계 파라미터: 그을음 양·균열 데칼 강도(도시 건물 체력 단계와 연결)
+2. **스케일 통일:** 전차 1대 기준. 건물 1층 높이 ≈ 전차 높이 × 1.5, 나무 ≈ 전차 × 2~3. KenneyAssetMap에 키트별 기본 스케일.
+3. **피벗·바닥 정렬:** 모델마다 바닥이 y=0에 오도록 오프셋 보정, 건물 부지(사각형) 안에 들어오게 크기 맞춤. 부지 밖으로 튀어나오면 판정과 어긋나 보이므로 테스트로 검사.
+4. **배칭:** 같은 모델은 GPU 인스턴싱 또는 정적 배칭. 그리기 호출 목표는 19A 표(보통 품질 기준 +30% 이내).
+5. **유닛은 교체하지 않는다.** 대신 유닛도 KenneyLit와 같은 톤(채도·AO)으로 맞춰 화면이 따로 놀지 않게 한다.
+
+### 0-3. 진행 순서
+1) zip 풀기·임포트(FBX import 설정: 스케일 1, 노멀 import, 애니메이션 없음, 읽기/쓰기 꺼짐) → 2) 키트별 접촉 시트 `screenshots/kenney/<kit>_contact.png` → 3) KenneyAssetMap 작성 → 4) KenneyLit 셰이더 값 탐색(채도·틴트 3안 비교 시트) → 5) 맵에 적용 → 6) 19A 고정 시점 5개로 before/after 비교 `screenshots/lookdev/19b_compare_*.png` → 7) 테스트·커밋·push → 이어서 19 → 22 → 23.
+
 ## 1. 원격 3D 에셋 자동 설치 (PowerShell)
 로그인·결제가 필요 없는 CC0 퍼블릭 도메인 에셋(Kenney.nl)에서 자연물(소나무·바위·절벽), 산업/도시 건물, 타워 FBX 모델을 `Game/Assets/ExternalAssets/Kenney/<kit>/`로 자동 다운로드·추출한다.
 

@@ -30,6 +30,21 @@ namespace FactoryWars.View {
       public int Color = -2;
       public float Fall = -1f;
       public bool Rubble;
+      /// <summary>Kenney 건물(항목 19B). 있으면 단계 0·1은 이것을 보이고 절차 몸체는 숨긴다.</summary>
+      public GameObject Dressed;
+    }
+
+    static DressKind DressOf(CityBuildingPlacement placement) => placement.Topples ? DressKind.CityTower : placement.Garrison ? DressKind.CityGarrison : placement.Kind == 0 ? DressKind.CitySmall : placement.Kind == 1 ? DressKind.CityMedium : placement.Kind == 2 ? DressKind.CityIndustrial : DressKind.CityTower;
+
+    /// <summary>단계에 맞춰 Kenney 건물과 절차 몸체 중 하나를 보인다. 쓰러지는 건물은 끝까지 Kenney 모델이 넘어간다.</summary>
+    static void ShowDressed(Block block, CityBuildingPlacement placement, int stage) {
+      if (block.Dressed == null) {
+        return;
+      }
+      var keep = block.Rubble == false && (stage < 2 || placement.Topples);
+      block.Dressed.SetActive(keep);
+      block.Renderer.enabled = keep == false;
+      DressingSpawn.Soot(block.Dressed, stage <= 0 ? 0f : stage == 1 ? 0.55f : 0.85f);
     }
 
     readonly Transform _root;
@@ -147,6 +162,8 @@ namespace FactoryWars.View {
       var body = Item(pivot, "Body", BlockMesh(placement.Kind, 0), true);
       body.transform.localScale = new Vector3(shape.HalfLength.AsFloat * 2, 1, shape.HalfWidth.AsFloat * 2);
       var block = new Block { Index = index, Root = root.gameObject, Pivot = pivot, Filter = body.GetComponent<MeshFilter>(), Renderer = body.GetComponent<MeshRenderer>() };
+      block.Dressed = DressingSpawn.Fitted(DressOf(placement), pivot, shape.HalfLength.AsFloat * 2, shape.HalfWidth.AsFloat * 2, Height(placement.Kind), 4001 + index * 13);
+      ShowDressed(block, placement, 0);
       if (placement.Garrison) {
         // 들어갈 수 있다는 표시: 문 앞 모래주머니.
         var bags = new MeshKit().Paint(Swatch.Sand);
@@ -222,6 +239,7 @@ namespace FactoryWars.View {
       const float Depth = 14f;
       const float Segment = 22f;
       var rock = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
+      Dressing.Begin();
       var trees = new MeshKit { Shading = MeshKit.ShadeMode.Object };
       var index = 0;
       void Side(Vector2 from, Vector2 to, Vector2 outward, float low, float high) {
@@ -244,7 +262,10 @@ namespace FactoryWars.View {
               continue;
             }
             var spot = mid + along.normalized * ((MeshKit.Hash(index, 50 + t) - 0.5f) * along.magnitude * 0.8f) + outward * ((MeshKit.Hash(index, 60 + t) - 0.3f) * Depth * 0.5f);
-            ForestKit.Tree(trees, new Vector3(spot.x, height * 0.97f, spot.y), index * 17 + t, ForestKit.TreeState.Full);
+            var origin = new Vector3(spot.x, height * 0.97f, spot.y);
+            if (ForestKit.DressTree(origin, index * 17 + t, ForestKit.TreeState.Full) == false) {
+              ForestKit.Tree(trees, origin, index * 17 + t, ForestKit.TreeState.Full);
+            }
           }
         }
       }
@@ -252,6 +273,7 @@ namespace FactoryWars.View {
       Side(new Vector2(minX - Depth, maxZ), new Vector2(maxX + Depth, maxZ), Vector2.up, 9f, 14f);
       Side(new Vector2(minX, minZ), new Vector2(minX, maxZ), Vector2.left, 5f, 9f);
       Side(new Vector2(maxX, minZ), new Vector2(maxX, maxZ), Vector2.right, 5f, 9f);
+      Dressing.End("boundary");
       Item(_root, "Boundary", rock.ToMesh("city_boundary_rock"), false);
       Item(_root, "BoundaryTrees", trees.ToMesh("city_boundary_trees"), true);
     }
@@ -277,6 +299,7 @@ namespace FactoryWars.View {
             }
             block.Stage = stage;
             block.Filter.sharedMesh = BlockMesh(placement.Kind, stage);
+            ShowDressed(block, placement, stage);
           }
           if (placement.Topples) {
             var warn = stage >= 2;
@@ -323,6 +346,7 @@ namespace FactoryWars.View {
       Fx?.GroundDust(block.Root.transform.position);
       block.Filter.sharedMesh = RubbleMesh();
       block.Pivot.localRotation = Quaternion.identity;
+      ShowDressed(block, placement, 3);
       if (block.Marker != null) {
         block.Marker.SetActive(false);
       }

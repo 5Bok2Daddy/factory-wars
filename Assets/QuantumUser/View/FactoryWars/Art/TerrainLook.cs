@@ -70,6 +70,8 @@ namespace FactoryWars.View {
         rings.Add(points);
       }
       Swatch[] faces = dark ? new[] { Swatch.RockFaceDark, Swatch.RockFaceDark, Swatch.RockFace } : new[] { Swatch.RockFaceDark, Swatch.RockFace, Swatch.RockFaceLight };
+      // Kenney 절벽 조각이 있으면 층마다 둘레 조각을 늘인 바위 블록으로 쌓는다(윗면 풀 턱이 층을 만든다). 판정은 그대로다.
+      var dressed = Dressing.Collecting && Dressing.Has(DressKind.Cliff);
       for (var l = 0; l < layers; l++) {
         var bottom = height * l / layers;
         var top = height * (l + 1) / layers * (0.92f + 0.08f * MeshKit.Hash(seed, 900 + l));
@@ -82,6 +84,22 @@ namespace FactoryWars.View {
           var c = new Vector3(to[j].x, top, to[j].y);
           var d = new Vector3(to[i].x, top, to[i].y);
           var outward = new Vector3(from[i].x + from[j].x, 0, from[i].y + from[j].y) * 0.5f - new Vector3(center.x, 0, center.y);
+          if (dressed) {
+            var along = b - a;
+            var length = along.magnitude;
+            if (length > 0.05f) {
+              var direction = along / length;
+              var normal = new Vector3(direction.z, 0, -direction.x);
+              if (Vector3.Dot(normal, outward) < 0f) {
+                normal = -normal;
+              }
+              const float Depth = 2.2f;
+              var mid = (a + b) * 0.5f - normal * (Depth * 0.5f - 0.15f);
+              var yaw = Mathf.Atan2(-direction.z, direction.x) * Mathf.Rad2Deg;
+              Dressing.Add(DressKind.Cliff, new Vector3(mid.x, bottom, mid.z), seed * 7919 + l * 977 + i, new Vector3(length + 0.4f, top - bottom, Depth), yaw);
+            }
+            continue;
+          }
           var shade = faces[Mathf.Min(l * faces.Length / layers, faces.Length - 1)];
           k.Paint(MeshKit.Hash(seed, l * 977 + i) < 0.22f ? Swatch.RockFaceLight : shade);
           k.Quad(a, b, c, d, outward);

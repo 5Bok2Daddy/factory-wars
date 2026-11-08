@@ -36,6 +36,7 @@ namespace FactoryWars.View {
       QualitySettings.SetQualityLevel((int)tier, true);
       Bind(Camera.main);
       ArtView.RefreshAll();
+      DressingRenderer.Active?.MarkDirty();
     }
 
     /// <summary>설정 화면의 버튼. 다음 단계로 넘기고 저장한다.</summary>

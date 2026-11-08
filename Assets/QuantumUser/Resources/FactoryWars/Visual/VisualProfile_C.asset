@@ -60,10 +60,11 @@ MonoBehaviour:
   ShadeAo: 0.3
   ShadeAoHeight: 1.2
   ShadeNoise: 0.07
-  Dressing: {fileID: 0}
+  Dressing: {fileID: 11400000, guid: 4a5414e68bc57034e8dbf72f5d9b1623, type: 2}
   Boundary: 1
   TreeDensity: 1
-  ConiferRatio: 0.75
+  ConiferRatio: 0.6
+  AutumnRatio: 0.22
   LeafSet: 1
   Bushes: 0
   NoBuild: 0

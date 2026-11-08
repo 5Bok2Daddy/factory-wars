@@ -581,7 +581,26 @@ namespace FactoryWars.View {
     /// 사각형 숲. remaining은 남은 매장량 비율이다. 바깥 나무부터 앙상한 나무나 그루터기로 바뀌고 숲 모양은 그대로다.
     /// 앙상한 나무를 많이 남겨 통과할 수 있는 빈틈처럼 보이지 않게 한다.
     /// </summary>
-    public static void Forest(MeshKit kit, float halfLength, float halfWidth, int seed, float remaining) {
+    /// <summary>
+    /// Kenney 나무로 한 그루를 놓는다(모으는 중일 때만). 침엽·단풍·짙은 활엽 비율은 프로필 값이다. 놓았으면 true.
+    /// </summary>
+    public static bool DressTree(Vector3 world, int seed, TreeState state) {
+      if (Dressing.Collecting == false || Dressing.Has(DressKind.Conifer) == false) {
+        return false;
+      }
+      if (state == TreeState.Stump) {
+        return Dressing.Add(DressKind.Stump, world, seed);
+      }
+      if (state == TreeState.Sparse) {
+        return Dressing.Add(DressKind.TreeSparse, world, seed);
+      }
+      var profile = VisualProfile.Current;
+      var pick = MeshKit.Hash(seed, 2);
+      var kind = pick < profile.ConiferRatio ? DressKind.Conifer : pick < profile.ConiferRatio + profile.AutumnRatio ? DressKind.Autumn : DressKind.Broadleaf;
+      return Dressing.Add(kind, world, seed) || Dressing.Add(DressKind.Conifer, world, seed);
+    }
+
+    public static void Forest(MeshKit kit, float halfLength, float halfWidth, int seed, float remaining, Matrix4x4? toWorld = null) {
       kit.Paint(Swatch.Grass);
       kit.Box(new Vector3(0, 0.08f, 0), new Vector3(halfLength * 2, 0.16f, halfWidth * 2));
       kit.Paint(Swatch.Earth);
@@ -596,11 +615,11 @@ namespace FactoryWars.View {
           id++;
         }
       }
-      Plant(kit, spots, seed, remaining);
+      Plant(kit, spots, seed, remaining, toWorld);
     }
 
     /// <summary>원형 군락. 나무 배치만 다르고 바깥부터 벌목되는 규칙은 같다.</summary>
-    public static void Grove(MeshKit kit, float radius, int seed, float remaining) {
+    public static void Grove(MeshKit kit, float radius, int seed, float remaining, Matrix4x4? toWorld = null) {
       kit.Paint(Swatch.Grass);
       kit.Cylinder(new Vector3(0, 0, 0), radius, 0.16f, 12);
       kit.Paint(Swatch.Earth);
@@ -617,15 +636,24 @@ namespace FactoryWars.View {
           id++;
         }
       }
-      Plant(kit, spots, seed, remaining);
+      Plant(kit, spots, seed, remaining, toWorld);
     }
 
-    static void Plant(MeshKit kit, List<(Vector3 Position, float Edge, int Id)> spots, int seed, float remaining) {
+    /// <summary>toWorld가 있고 Kenney 나무가 있으면 모델로 놓고, 없으면 절차 나무를 kit에 굽는다. 가장자리에는 덤불을 섞는다.</summary>
+    static void Plant(MeshKit kit, List<(Vector3 Position, float Edge, int Id)> spots, int seed, float remaining, Matrix4x4? toWorld) {
       spots.Sort((a, b) => a.Edge != b.Edge ? a.Edge.CompareTo(b.Edge) : a.Id.CompareTo(b.Id));
       var cut = Mathf.RoundToInt(spots.Count * (1f - Mathf.Clamp01(remaining)));
       for (var i = 0; i < spots.Count; i++) {
         var state = i >= cut ? TreeState.Full : MeshKit.Hash(seed, spots[i].Id + 500) < 0.3f ? TreeState.Stump : TreeState.Sparse;
-        Tree(kit, spots[i].Position, seed * 131 + spots[i].Id, state);
+        var id = seed * 131 + spots[i].Id;
+        if (toWorld.HasValue && DressTree(toWorld.Value.MultiplyPoint3x4(spots[i].Position), id, state)) {
+          if (spots[i].Edge < 1.2f && MeshKit.Hash(id, 9) < 0.45f) {
+            var side = new Vector3(MeshKit.Hash(id, 10) - 0.5f, 0, MeshKit.Hash(id, 11) - 0.5f) * 1.6f;
+            Dressing.Add(DressKind.Bush, toWorld.Value.MultiplyPoint3x4(spots[i].Position + side), id + 7);
+          }
+          continue;
+        }
+        Tree(kit, spots[i].Position, id, state);
       }
     }
   }

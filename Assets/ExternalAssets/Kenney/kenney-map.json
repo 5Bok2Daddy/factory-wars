@@ -1,0 +1,75 @@
+{
+  "Note": "항목 19B Kenney 매핑 원본. Tools/Factory Wars/Kenney/Build Map이 이 파일로 Resources/FactoryWars/Visual/KenneyAssetMap 에셋과 머티리얼 값을 다시 만든다. 모델은 <키트>/<파일 이름(확장자 없이)>. 배율은 전차 기준(나무 높이 전차 2~3배 = 약 6m, 건물 1층 = 전차 높이 1.5배)이다.",
+  "Kits": [
+    { "Kit": "city-kit-commercial", "Desaturate": 0.5, "Brightness": 0.88, "Tint": "#E4DDCF" },
+    { "Kit": "city-kit-industrial", "Desaturate": 0.6, "Brightness": 0.85, "Tint": "#D6CFBE" },
+    { "Kit": "city-kit-roads", "Desaturate": 0.4, "Brightness": 0.9, "Tint": "#FFFFFF" },
+    { "Kit": "factory-kit", "Desaturate": 0.45, "Brightness": 0.88, "Tint": "#D9D4C8" },
+    { "Kit": "tower-defense-kit", "Desaturate": 0.4, "Brightness": 0.9, "Tint": "#FFFFFF" },
+    { "Kit": "train-kit", "Desaturate": 0.45, "Brightness": 0.88, "Tint": "#FFFFFF" },
+    { "Kit": "nature-kit", "Desaturate": 0.0, "Brightness": 1.0, "Tint": "#FFFFFF" }
+  ],
+  "Colors": [
+    { "Kit": "nature-kit", "From": "29C9AB", "To": "4F7F33", "Note": "잎·풀 중간" },
+    { "Kit": "nature-kit", "From": "2CD8B8", "To": "6E9A3C", "Note": "잎·풀 밝음" },
+    { "Kit": "nature-kit", "From": "2BA6AA", "To": "34572A", "Note": "잎 짙음" },
+    { "Kit": "nature-kit", "From": "B0F4FF", "To": "A8A398", "Note": "밝은 돌" },
+    { "Kit": "nature-kit", "From": "B8E2E8", "To": "959189", "Note": "돌" },
+    { "Kit": "nature-kit", "From": "9AB5BA", "To": "76736C", "Note": "어두운 돌" },
+    { "Kit": "nature-kit", "From": "B56845", "To": "7E6448", "Note": "황토 바위" },
+    { "Kit": "nature-kit", "From": "C46D4B", "To": "8C7050", "Note": "황토 바위 밝음" },
+    { "Kit": "nature-kit", "From": "CC765E", "To": "5E4632", "Note": "나무껍질" },
+    { "Kit": "nature-kit", "From": "E28357", "To": "8E6C4A", "Note": "흙" },
+    { "Kit": "nature-kit", "From": "FF8E62", "To": "9A7652", "Note": "흙 밝음" },
+    { "Kit": "nature-kit", "From": "F5BC64", "To": "C99A3A", "Note": "황금 단풍" },
+    { "Kit": "nature-kit", "From": "FEB147", "To": "C47A28", "Note": "주황 단풍" },
+    { "Kit": "nature-kit", "From": "FF9241", "To": "B5602A", "Note": "짙은 주황 단풍" },
+    { "Kit": "nature-kit", "From": "FFAE6F", "To": "C88A4A", "Note": "연한 단풍" },
+    { "Kit": "nature-kit", "From": "F5D7BB", "To": "B3A286", "Note": "모래" },
+    { "Kit": "nature-kit", "From": "FFF2DE", "To": "C9C0A8", "Note": "밝은 모래" },
+    { "Kit": "nature-kit", "From": "C1363B", "To": "7E3A30", "Note": "빨강" },
+    { "Kit": "nature-kit", "From": "E04A50", "To": "8E4436", "Note": "빨강 밝음" },
+    { "Kit": "nature-kit", "From": "9F89FF", "To": "6E6488", "Note": "보라 꽃" },
+    { "Kit": "nature-kit", "From": "FFFFFF", "To": "DEDAD0", "Note": "흰색" }
+  ],
+  "Entries": [
+    { "Kind": "Conifer", "Scale": 4.2, "JitterMin": 0.85, "JitterMax": 1.15, "LowKeep": 0.6, "Models": [
+      "nature-kit/tree_pineTallA:3", "nature-kit/tree_pineTallC:3", "nature-kit/tree_pineTallD:2" ] },
+    { "Kind": "Autumn", "Scale": 4.6, "JitterMin": 0.85, "JitterMax": 1.15, "LowKeep": 0.6, "Models": [
+      "nature-kit/tree_fat_fall:1", "nature-kit/tree_simple_fall:1" ] },
+    { "Kind": "Broadleaf", "Scale": 4.6, "JitterMin": 0.85, "JitterMax": 1.15, "LowKeep": 0.6, "Models": [
+      "nature-kit/tree_fat_darkh:1", "nature-kit/tree_simple_dark:1" ] },
+    { "Kind": "TreeSparse", "Scale": 3.4, "JitterMin": 0.8, "JitterMax": 1.1, "LowKeep": 0.5, "Models": [
+      "nature-kit/tree_pineSmallC:1", "nature-kit/tree_pineSmallD:1" ] },
+    { "Kind": "Stump", "Scale": 3.0, "JitterMin": 0.85, "JitterMax": 1.15, "LowKeep": 0.4, "Shadows": false, "Models": [
+      "nature-kit/stump_round:2", "nature-kit/log_large:1" ] },
+    { "Kind": "Bush", "Scale": 3.2, "JitterMin": 0.8, "JitterMax": 1.2, "LowKeep": 0.0, "Shadows": false, "Models": [
+      "nature-kit/plant_bush:1", "nature-kit/plant_bushLarge:1" ] },
+    { "Kind": "RockLarge", "Scale": 2.4, "JitterMin": 0.85, "JitterMax": 1.2, "LowKeep": 1.0, "Shadows": false, "Models": [
+      "nature-kit/rock_largeA:1", "nature-kit/rock_largeD:1", "nature-kit/rock_tallG:1" ] },
+    { "Kind": "RockSmall", "Scale": 3.2, "JitterMin": 0.8, "JitterMax": 1.2, "LowKeep": 0.5, "Shadows": false, "Models": [
+      "nature-kit/rock_smallD:1", "nature-kit/rock_smallG:1" ] },
+    { "Kind": "Cliff", "Scale": 1.0, "JitterMin": 1.0, "JitterMax": 1.0, "LowKeep": 1.0, "Shadows": false, "Models": [
+      "nature-kit/cliff_block_rock:3", "nature-kit/cliff_block_stone:1" ] },
+    { "Kind": "CitySmall", "Fit": true, "Scale": 1.0, "Models": [
+      "city-kit-commercial/building-a:1", "city-kit-commercial/building-b:1", "city-kit-commercial/building-c:1", "city-kit-commercial/building-d:1",
+      "city-kit-commercial/building-f:1", "city-kit-commercial/building-g:1", "city-kit-commercial/building-h:1" ] },
+    { "Kind": "CityMedium", "Fit": true, "Scale": 1.0, "Models": [
+      "city-kit-commercial/building-i:1", "city-kit-commercial/building-l:1", "city-kit-commercial/building-m:1", "city-kit-commercial/building-n:1",
+      "city-kit-industrial/building-e:1", "city-kit-industrial/building-f:1" ] },
+    { "Kind": "CityIndustrial", "Fit": true, "Scale": 1.0, "Models": [
+      "city-kit-industrial/building-a:1", "city-kit-industrial/building-b:1", "city-kit-industrial/building-c:1", "city-kit-industrial/building-g:1",
+      "city-kit-industrial/building-l:1", "city-kit-industrial/building-m:1", "city-kit-industrial/building-q:1", "city-kit-industrial/building-r:1" ] },
+    { "Kind": "CityTower", "Fit": true, "Scale": 1.0, "Models": [
+      "city-kit-commercial/building-skyscraper-a:1", "city-kit-commercial/building-skyscraper-b:1", "city-kit-commercial/building-skyscraper-c:1",
+      "city-kit-commercial/building-skyscraper-e:1" ] },
+    { "Kind": "CityGarrison", "Fit": true, "Scale": 1.0, "Models": [
+      "city-kit-commercial/building-j:1", "city-kit-commercial/building-k:1", "city-kit-commercial/building-e:1" ] },
+    { "Kind": "Container", "Scale": 5.5, "JitterMin": 0.95, "JitterMax": 1.05, "SnapYaw90": true, "LowKeep": 0.6, "Shadows": false, "Models": [
+      "city-kit-industrial/shipping-container-a:1", "city-kit-industrial/shipping-container-b:1", "city-kit-industrial/shipping-container-c:1" ] },
+    { "Kind": "Prop", "Scale": 1.7, "JitterMin": 0.9, "JitterMax": 1.1, "SnapYaw90": true, "LowKeep": 0.4, "Shadows": false, "Models": [
+      "factory-kit/box-large:2", "factory-kit/box-long:1", "factory-kit/box-small:1" ] },
+    { "Kind": "Barrier", "Scale": 8.0, "JitterMin": 0.95, "JitterMax": 1.05, "LowKeep": 0.7, "Shadows": false, "Models": [
+      "city-kit-roads/construction-barrier:3", "city-kit-roads/construction-cone:1" ] }
+  ]
+}

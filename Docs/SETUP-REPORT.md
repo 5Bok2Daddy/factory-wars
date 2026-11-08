@@ -8,14 +8,7 @@
 
 ## 사용자가 직접 할 일
 
-**(2026-11-08, 항목 19B) Kenney 키트 zip 4개를 직접 받아 주세요.** kenney.nl 자산 페이지에 zip 링크가 없습니다. "Download → Continue without donating..." 버튼이 자바스크립트로 내려받기를 시작합니다. 지시대로 우회(스크립트로 버튼 흉내 내기, 다른 미러)하지 않았습니다.
-1. 브라우저에서 아래 네 페이지를 열고 Download → "Continue without donating..."을 눌러 zip을 받습니다.
-   - https://kenney.nl/assets/nature-kit
-   - https://kenney.nl/assets/city-kit-industrial
-   - https://kenney.nl/assets/city-kit-commercial
-   - https://kenney.nl/assets/tower-defense-kit
-2. 받은 zip을 이름 그대로(예: `kenney_nature-kit.zip`) `C:\Users\MinGyu\FactoryWars\temp-assets\`에 넣습니다. 폴더는 만들어 두었습니다.
-3. "이어서 진행해줘"라고 하면 `Game\Tools\kenney-install.ps1`이 zip을 풀어 `Game\Assets\ExternalAssets\Kenney\<kit>\`로 옮기고 다음 단계를 진행합니다.
+(2026-11-08 항목 19B의 Kenney zip 요청은 해결됨: 사용자가 7개를 `temp-assets/`에 넣었다.)
 
 자세한 내용은 문서 끝 "채집·건설·전투 결과"의 "사용자가 할 일"에 있습니다. `Game\FactoryWars` 폴더 정리입니다.
 
@@ -2147,7 +2140,7 @@ AI 행동도 함께 넣었습니다.
 
 ## 현재 단계 (재개 기준)
 
-2026-11-08 추가 지시: `NEXT-TASK-19B-KENNEY.md`(Kenney CC0 모델 도입)를 진행한다. 다운로드가 막혀 사용자 입력을 기다리는 중이다. 그동안 에셋 없이 할 수 있는 준비를 한다: 설치 스크립트, 공용 셰이더, `KenneyAssetMap`, 접촉 시트 도구.
+2026-11-08 15시 지시: 19B(0절 우선) → 19 → 22 → 23 순서로 진행하고 23 뒤에 멈춘다. 19B는 끝났다.
 
 지시 순서(2026-11-08 갱신): 21(`NEXT-TASK-21-CITY.md`) → 19A(`NEXT-TASK-19A-LOOKDEV.md`) → 19(`NEXT-TASK-19.md`) → 22(`NEXT-TASK-22-BALANCE.md`) → 23(`NEXT-TASK-23-DEVICE.md`). 23이 끝나면 push하고 멈춘다. 19A·19는 `concept-art/aow3-ref`의 그림체가 목표이고, visual-style 스킬과 VISUAL-REFERENCE.md도 새 그림체로 고친다.
 
@@ -2157,7 +2150,7 @@ AI 행동도 함께 넣었습니다.
 | 20 재미 요소 | 완료 |
 | 21 도시 전장 | 완료 |
 | 19A 룩 개발 | 완료. 기본값 A "AoW3 전장". `LOOKDEV.md`, `screenshots/lookdev/final_compare.png` |
-| 19B Kenney 도입 | **사용자 대기**: zip 4개를 `temp-assets\`에 넣어 주세요(맨 위 "사용자가 직접 할 일"). 링크가 없어 자동 내려받기는 실패했습니다. |
+| 19B Kenney 도입 | 완료. `LOOKDEV.md` 19B, `screenshots/lookdev/19b_compare_*.png` |
 | 19 그래픽 적용 | 대기 |
 | 22 밸런스 | 대기 |
 | 23 실기기 | 대기 |
@@ -2195,17 +2188,25 @@ AI 행동도 함께 넣었습니다.
   - 나무·바위·도시 건물은 아직 기본 도형 조합이다. 19B의 Kenney 모델 교체로 해결할 예정이며, 사용자의 zip을 기다리고 있다.
   - 19 적용 항목 중 남은 것: 5-b `BuildingGap`, 장면 소품, LOD, AI 10판, after_19 화면, APK.
 
-## 항목 19B 결과 (진행 중)
+## 항목 19B 결과
 
-**한 줄 요약:** 자동 내려받기가 실패했다(키트 4개 모두 FBX 0개). kenney.nl 페이지에 zip 링크가 없고 자바스크립트 버튼으로만 받을 수 있다. 지시대로 우회하지 않고 사용자에게 직접 내려받기를 요청했다.
+**한 줄 요약:** Kenney CC0 키트 7개(FBX 908개, 37MB)를 넣었다. 숲·바위·절벽과 도시 건물을 Kenney 모델로 바꾸고, 공용 셰이더로 군용 톤에 맞췄다. 전체 테스트 255개가 통과한다.
 
-| 키트 | FBX 개수 | 원인 |
-| --- | --- | --- |
-| nature-kit | 0 | 페이지 링크에 `.zip`이 없다. 내려받기는 `initiateDownload()` 자바스크립트(`data-download-id`)가 한다 |
-| city-kit-industrial | 0 | 같음 |
-| city-kit-commercial | 0 | 같음 |
-| tower-defense-kit | 0 | 같음 |
-
-- 설치 스크립트: `Game/Tools/kenney-install.ps1`. 지시의 스크립트에서 바꾼 점은 두 가지다.
-  - `temp-assets/`에 `*<kit>*.zip`이 있으면 내려받기를 건너뛰고 풀기만 한다.
-  - 받은 zip은 지우지 않고, 풀어 둔 폴더만 지운다.
+- **키트별 FBX:** nature 329, city-commercial 41, city-industrial 37, city-roads 95, factory 143, tower-defense 160, train 103. zip은 사용자가 받아 `temp-assets/`에 넣었다. 설치는 `Game/Tools/kenney-install.ps1`이 한다.
+- **비교 시트:**
+  - `screenshots/lookdev/19b_compare_A~E.png` (before 절차 / after Kenney, 보통·낮음)
+  - `19b_shader.png` (셰이더 3안)
+  - `screenshots/kenney/<kit>_contact.png` (모델 목록)
+- **교체한 요소:**
+  - 숲: 침엽 60%, 단풍 22%, 짙은 활엽 18%, 그루터기, 가장자리 덤불
+  - 바위 지형
+  - 능선·언덕·고지대·맵 경계 절벽: 2층 바위 블록
+  - 도시 건물: 소형·중형·공장형·고층·진지, 손상 그을음
+  - 고철 하치장 둘레의 컨테이너·상자
+- **매핑:** `Assets/ExternalAssets/Kenney/kenney-map.json`. 근거·버린 모델은 `LOOKDEV.md` "19B"에 있다.
+- **품질별 비용(본진 시점, 추정 그리기 호출):** 보통 124 → 165, 낮음 74 → 90. 표 전체는 LOOKDEV.md에 있다.
+- **아직 부족한 점:**
+  - 절벽이 늘인 블록 모양이다(모서리 조각 미적용). Northgard 회화풍보다 단단하고 깨끗하다.
+  - 플레이어 건물 부품, 도로 조각, 바리케이드 소품, 철로가 남았다.
+  - 보통 품질 그리기 호출이 본진·다리 시점에서 +33~35%로, 목표 +30%를 조금 넘는다.
+- **지시와 다르게 한 점:** nature-kit만 FBX 읽기/쓰기를 켰다. 실행 중에 그룹별 한 메쉬로 합치기 위해서다. 나머지 키트는 꺼 두었다.

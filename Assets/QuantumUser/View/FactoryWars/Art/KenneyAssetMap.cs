@@ -6,31 +6,36 @@ namespace FactoryWars.View {
   /// <summary>Kenney 모델로 바꿀 수 있는 화면 요소 종류(항목 19B). 판정과 무관한 겉모습 분류다.</summary>
   public enum DressKind {
     Conifer,
-    Broadleaf,
     Autumn,
+    Broadleaf,
+    TreeSparse,
+    Stump,
     Bush,
     RockLarge,
     RockSmall,
     Cliff,
-    CliffCorner,
-    CityWarehouse,
-    CityFactory,
-    CityOffice,
+    CitySmall,
+    CityMedium,
+    CityIndustrial,
     CityTower,
-    CityRuin,
+    CityGarrison,
+    Container,
+    Crystal,
+    Barrier,
     Chimney,
     Tank,
-    Pipe,
-    Roof,
-    TowerBase,
-    Barricade,
+    Crane,
+    Hopper,
+    Ruin,
     Prop,
   }
 
   /// <summary>
   /// 게임 요소 종류 → Kenney 프리팹 후보(가중치)·스케일·회전·틴트. 화면 전용이다.
-  /// 파일 이름은 코드에 쓰지 않고 이 에셋에만 둔다. VisualProfile.Dressing이 이 맵을 가리키면 절차 메쉬 대신 이 모델을 쓴다.
-  /// 변종·회전은 오브젝트 ID·좌표 해시로 고르므로 같은 장면은 항상 같은 화면이다.
+  /// 파일 이름은 코드에 쓰지 않는다. `Assets/ExternalAssets/Kenney/kenney-map.json`이 원본이고
+  /// `Tools/Factory Wars/Kenney/Build Map`이 이 에셋을 다시 만든다(모델 크기·바닥 보정도 그때 잰다).
+  /// VisualProfile.Dressing이 이 맵을 가리키면 절차 메쉬 대신 이 모델을 쓴다.
+  /// 변종·회전은 오브젝트 번호·좌표 해시로 고르므로 같은 장면은 항상 같은 화면이다.
   /// </summary>
   [CreateAssetMenu(menuName = "FactoryWars/Kenney Asset Map")]
   public class KenneyAssetMap : ScriptableObject {
@@ -40,35 +45,38 @@ namespace FactoryWars.View {
     public class Variant {
       public GameObject Prefab;
       public float Weight = 1f;
-      /// <summary>모델 원점에서 바닥까지의 보정(모델마다 원점이 다르다).</summary>
-      public float Lift;
+      /// <summary>모델 좌표의 바닥 가운데를 원점으로 옮기는 보정(-중심 x, -바닥 y, -중심 z).</summary>
+      public Vector3 Offset;
+      /// <summary>모델 좌표의 크기(바운드).</summary>
+      public Vector3 Size = Vector3.one;
     }
 
     [Serializable]
     public class Entry {
       public DressKind Kind;
       public List<Variant> Variants = new List<Variant>();
-      /// <summary>모델 1단위 → 월드 미터. 전차 기준(나무 높이 전차 2~3배, 건물 1층 전차 1.5배)으로 맞춘다.</summary>
+      /// <summary>모델 1단위 → 월드 미터. 전차 기준(나무 높이 전차 2~3배, 건물 1층 전차 1.5배)으로 맞춘다. Fit이면 칸에 맞춘 뒤 곱한다.</summary>
       public float Scale = 1f;
-      /// <summary>개체마다 곱하는 배율 범위.</summary>
       public Vector2 ScaleJitter = new Vector2(0.9f, 1.1f);
-      /// <summary>Y축 회전 범위(도). 건물은 90도 단위로 맞춘다.</summary>
+      /// <summary>Y축 회전 범위(도). SnapYaw90이면 90도 단위다.</summary>
       public Vector2 Yaw = new Vector2(0f, 360f);
       public bool SnapYaw90;
-      public Color Tint = Color.white;
+      /// <summary>건물 부지처럼 정해진 칸에 넣을 때: 칸 안에 들어가는 가장 큰 배율로 맞춘다.</summary>
+      public bool Fit;
+      public bool Shadows = true;
       /// <summary>품질 낮음에서 남기는 비율(나무·소품 수 줄이기).</summary>
       [Range(0f, 1f)] public float LowKeep = 1f;
     }
 
     public List<Entry> Entries = new List<Entry>();
 
-    Dictionary<DressKind, Entry> _lookup;
+    [NonSerialized] Dictionary<DressKind, Entry> _lookup;
 
     public Entry Get(DressKind kind) {
       if (_lookup == null) {
         _lookup = new Dictionary<DressKind, Entry>();
         foreach (var entry in Entries) {
-          if (entry.Variants.Count > 0) {
+          if (entry.Variants.Exists(v => v.Prefab != null)) {
             _lookup[entry.Kind] = entry;
           }
         }
@@ -94,7 +102,7 @@ namespace FactoryWars.View {
       return entry.Variants[entry.Variants.Count - 1];
     }
 
-    /// <summary>개체 하나의 배치: 변종, 회전, 배율. seed는 오브젝트 ID나 좌표에서 만든다.</summary>
+    /// <summary>개체 하나의 배치: 변종, 회전, 배율. seed는 오브젝트 번호나 좌표에서 만든다.</summary>
     public static (Variant Variant, Quaternion Rotation, float Scale) Place(Entry entry, int seed) {
       var variant = Pick(entry, MeshKit.Hash(seed, 1));
       var yaw = Mathf.Lerp(entry.Yaw.x, entry.Yaw.y, MeshKit.Hash(seed, 2));
@@ -104,6 +112,16 @@ namespace FactoryWars.View {
       var scale = entry.Scale * Mathf.Lerp(entry.ScaleJitter.x, entry.ScaleJitter.y, MeshKit.Hash(seed, 3));
       return (variant, Quaternion.Euler(0f, yaw, 0f), scale);
     }
+
+    /// <summary>칸(가로 length × 세로 width) 안에 들어가는 배율. 모델을 90도 돌렸으면 turned를 준다.</summary>
+    public static float FitScale(Variant variant, float length, float width, bool turned) {
+      var x = turned ? variant.Size.z : variant.Size.x;
+      var z = turned ? variant.Size.x : variant.Size.z;
+      return Mathf.Min(length / Mathf.Max(0.01f, x), width / Mathf.Max(0.01f, z));
+    }
+
+    /// <summary>모델 좌표 → 월드: 위치·회전·배율 뒤에 바닥 보정을 곱한다.</summary>
+    public static Matrix4x4 Matrix(Variant variant, Vector3 position, Quaternion rotation, Vector3 scale) => Matrix4x4.TRS(position, rotation, scale) * Matrix4x4.Translate(variant.Offset);
 
     /// <summary>좌표 해시. 같은 자리면 같은 값이다.</summary>
     public static int Seed(Vector3 position, int salt) => Mathf.RoundToInt(position.x * 7.31f) * 73856093 ^ Mathf.RoundToInt(position.z * 5.17f) * 19349663 ^ salt * 83492791;

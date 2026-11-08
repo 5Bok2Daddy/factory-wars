@@ -37,6 +37,8 @@ namespace FactoryWars.EditorTools {
       ConfigureQuantum();
       BuildData();
       BuildVisualProfiles();
+      KenneyTools.ConfigureImport();
+      KenneyTools.BuildMap();
       BuildMaterials();
       BuildTestScene();
       BuildMapScene(TwoPlayerMap);

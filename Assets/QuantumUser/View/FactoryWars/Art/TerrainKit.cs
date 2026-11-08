@@ -413,6 +413,19 @@ namespace FactoryWars.View {
     public static void Boulders(MeshKit k, MapShape shape, int seed) {
       var center = new Vector3(shape.Center.X.AsFloat, 0, shape.Center.Z.AsFloat);
       var radius = shape.IsCircle ? shape.Radius.AsFloat : Mathf.Min(shape.HalfLength.AsFloat, shape.HalfWidth.AsFloat);
+      // Kenney 바위: 큰 바위 하나와 둘레의 큰·작은 바위 무리. 크기·회전은 해시로 정한다.
+      if (Dressing.Collecting && Dressing.Has(DressKind.RockLarge)) {
+        Dressing.Add(DressKind.RockLarge, center, seed, Vector3.one * radius * 0.9f);
+        var around = 4 + (int)(MeshKit.Hash(seed, 2) * 4f);
+        for (var i = 0; i < around; i++) {
+          var angle = (i + MeshKit.Hash(seed, i + 10)) * Mathf.PI * 2f / around;
+          var distance = radius * (0.6f + 0.4f * MeshKit.Hash(seed, i + 20));
+          var spot = center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * distance;
+          var small = MeshKit.Hash(seed, i + 30) < 0.5f;
+          Dressing.Add(small ? DressKind.RockSmall : DressKind.RockLarge, spot, seed * 31 + i, Vector3.one * radius * (small ? 0.8f : 0.4f));
+        }
+        return;
+      }
       k.ShadeFaces(seed, Swatch.BoulderDark, Swatch.Boulder, Swatch.BoulderLight);
       k.Rock(center, radius * 0.72f, radius * (1.05f + 0.4f * MeshKit.Hash(seed, 1)), seed);
       var count = 5 + (int)(MeshKit.Hash(seed, 2) * 3f);

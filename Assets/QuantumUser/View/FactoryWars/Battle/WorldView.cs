@@ -77,7 +77,9 @@ namespace FactoryWars.View {
       TerrainKit.Ground(ground, _map, 3);
       MeshObject(_root, "Ground", ground.ToMesh("world_ground"), false);
       var features = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
+      Dressing.Begin();
       TerrainKit.Features(features, _map);
+      Dressing.End("world");
       if (features.TriangleCount > 0) {
         MeshObject(_root, "Features", features.ToMesh("world_features"), true);
       }
@@ -170,6 +172,15 @@ namespace FactoryWars.View {
         view.Model.transform.localScale = Vector3.one * (node->Shape.Radius.AsFloat / MineModelRadius);
         view.SetYaw(index * 57f);
         _crystals[entity] = view.Model.transform.Find("Crystals").gameObject;
+        // 고철 하치장 느낌: 둘레에 컨테이너와 상자 몇 개(Kenney, 판정 없음).
+        Dressing.Begin();
+        var radius = node->Shape.Radius.AsFloat;
+        for (var i = 0; i < 5; i++) {
+          var angle = (index * 1.7f + i * 1.31f) % (Mathf.PI * 2f);
+          var spot = center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (radius + 1.6f + MeshKit.Hash(index, 40 + i) * 1.4f);
+          Dressing.Add(i % 3 == 2 ? DressKind.Prop : DressKind.Container, spot, index * 97 + i);
+        }
+        Dressing.End($"iron{index}");
         return;
       }
       var item = MeshObject(_root, "Forest", null, true);
@@ -185,11 +196,15 @@ namespace FactoryWars.View {
       }
       forest.Step = step;
       var kit = new MeshKit { Shading = MeshKit.ShadeMode.Object };
+      // Kenney 나무가 있으면 나무는 인스턴싱 그룹으로 가고 kit에는 바닥 판만 남는다. 채집 단계가 바뀌면 그룹을 바꿔 끼운다.
+      var toWorld = forest.Filter.transform.localToWorldMatrix;
+      Dressing.Begin();
       if (forest.Shape.IsCircle) {
-        ForestKit.Grove(kit, forest.Shape.Radius.AsFloat, forest.Seed, step / (float)ForestSteps);
+        ForestKit.Grove(kit, forest.Shape.Radius.AsFloat, forest.Seed, step / (float)ForestSteps, toWorld);
       } else {
-        ForestKit.Forest(kit, forest.Shape.HalfLength.AsFloat, forest.Shape.HalfWidth.AsFloat, forest.Seed, step / (float)ForestSteps);
+        ForestKit.Forest(kit, forest.Shape.HalfLength.AsFloat, forest.Shape.HalfWidth.AsFloat, forest.Seed, step / (float)ForestSteps, toWorld);
       }
+      Dressing.End($"forest{forest.Seed}");
       if (forest.Filter.sharedMesh != null) {
         Object.Destroy(forest.Filter.sharedMesh);
       }

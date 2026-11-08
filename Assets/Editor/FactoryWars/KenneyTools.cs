@@ -22,7 +22,7 @@ namespace FactoryWars.EditorTools {
 
     public static string[] Models(string kit) => Directory.GetFiles(kit, "*.fbx", SearchOption.AllDirectories).Select(f => f.Replace('\\', '/')).OrderBy(f => f).ToArray();
 
-    /// <summary>모델은 읽기 가능(정적 배칭·해시 배치용)하고 애니메이션·카메라·조명은 가져오지 않는다.</summary>
+    /// <summary>스케일 1, 노멀은 파일 값, 애니메이션·카메라·조명 없음. 읽기/쓰기는 nature-kit만 켠다(실행 중 합치기). 나머지는 GPU 인스턴싱.</summary>
     [MenuItem("Tools/Factory Wars/Kenney/Configure Import")]
     public static void ConfigureImport() {
       foreach (var kit in Kits()) {
@@ -42,7 +42,10 @@ namespace FactoryWars.EditorTools {
           Set(importer.importCameras, false, v => importer.importCameras = v);
           Set(importer.importLights, false, v => importer.importLights = v);
           Set(importer.animationType, ModelImporterAnimationType.None, v => importer.animationType = v);
-          Set(importer.isReadable, true, v => importer.isReadable = v);
+          // nature-kit은 실행 중에 그룹별로 한 메쉬로 합치므로 읽기 가능해야 한다(그리기 호출 절약). 나머지는 끈다.
+          Set(importer.isReadable, kit.EndsWith("nature-kit"), v => importer.isReadable = v);
+          Set(importer.globalScale, 1f, v => importer.globalScale = v);
+          Set(importer.importNormals, ModelImporterNormals.Import, v => importer.importNormals = v);
           Set(importer.materialImportMode, ModelImporterMaterialImportMode.ImportStandard, v => importer.materialImportMode = v);
           if (dirty) {
             importer.SaveAndReimport();
@@ -147,7 +150,7 @@ namespace FactoryWars.EditorTools {
             foreach (var r in renderers) {
               bounds.Encapsulate(r.bounds);
             }
-            var triangles = item.GetComponentsInChildren<MeshFilter>().Where(f => f.sharedMesh != null).Sum(f => (int)(f.sharedMesh.triangles.Length / 3));
+            var triangles = item.GetComponentsInChildren<MeshFilter>().Where(f => f.sharedMesh != null).Sum(f => Enumerable.Range(0, f.sharedMesh.subMeshCount).Sum(i => (int)f.sharedMesh.GetIndexCount(i)) / 3);
             var materials = renderers.SelectMany(r => r.sharedMaterials).Where(m => m != null).Select(m => m.name).Distinct().Count();
             list.AppendLine($"{i},{Path.GetFileName(models[i])},{bounds.size.x:0.##},{bounds.size.y:0.##},{bounds.size.z:0.##},{triangles},{materials}");
             var radius = Mathf.Max(0.01f, bounds.extents.magnitude);
@@ -176,6 +179,132 @@ namespace FactoryWars.EditorTools {
         Object.DestroyImmediate(cameraObject);
         Object.DestroyImmediate(sun.gameObject);
       }
+    }
+
+    [System.Serializable]
+    class MapFile {
+      public KitLook[] Kits;
+      public ColorLook[] Colors;
+      public EntryFile[] Entries;
+    }
+
+    [System.Serializable]
+    class KitLook {
+      public string Kit;
+      public float Desaturate = 0.4f;
+      public float Brightness = 0.9f;
+      public string Tint = "#FFFFFF";
+    }
+
+    [System.Serializable]
+    class ColorLook {
+      public string Kit;
+      public string From;
+      public string To;
+    }
+
+    [System.Serializable]
+    class EntryFile {
+      public string Kind;
+      public float Scale = 1f;
+      public float JitterMin = 1f;
+      public float JitterMax = 1f;
+      public bool SnapYaw90;
+      public bool Fit;
+      public bool Shadows = true;
+      public float LowKeep = 1f;
+      public string[] Models;
+    }
+
+    const string MapJson = Root + "/kenney-map.json";
+    const string MapAsset = "Assets/QuantumUser/Resources/" + FactoryWars.View.KenneyAssetMap.ResourcePath + ".asset";
+
+    static Color Hex(string value) => ColorUtility.TryParseHtmlString(value.StartsWith("#") ? value : "#" + value, out var color) ? color : Color.white;
+
+    /// <summary>
+    /// kenney-map.json → KenneyAssetMap 에셋과 공용 셰이더 머티리얼 값(키트별 채도·밝기·틴트, nature-kit 색 바꾸기).
+    /// 모델마다 바운드를 재서 바닥 보정(Offset)과 크기(Size)를 저장한다. 기본 프로필 A·C가 이 맵을 쓰고 B는 절차 메쉬로 남긴다.
+    /// </summary>
+    [MenuItem("Tools/Factory Wars/Kenney/Build Map")]
+    public static void BuildMap() {
+      if (File.Exists(MapJson) == false) {
+        Debug.Log("[FW-KENNEY] 매핑 파일 없음, 건너뜀");
+        return;
+      }
+      var data = JsonUtility.FromJson<MapFile>(File.ReadAllText(MapJson));
+      // 1. 머티리얼 값
+      foreach (var path in Directory.Exists(MaterialRoot) ? Directory.GetFiles(MaterialRoot, "*.mat") : new string[0]) {
+        var material = AssetDatabase.LoadAssetAtPath<Material>(path.Replace('\\', '/'));
+        if (material == null) {
+          continue;
+        }
+        var kit = data.Kits.FirstOrDefault(k => material.name.StartsWith(k.Kit + "_"));
+        if (kit == null) {
+          continue;
+        }
+        material.SetFloat("_Desaturate", kit.Desaturate);
+        material.SetFloat("_Brightness", kit.Brightness);
+        material.SetColor("_Tint", Hex(kit.Tint));
+        var hex = material.name.Substring(material.name.LastIndexOf('_') + 1);
+        var swap = data.Colors.FirstOrDefault(c => c.Kit == kit.Kit && string.Equals(c.From, hex, System.StringComparison.OrdinalIgnoreCase));
+        if (swap != null) {
+          material.SetColor("_BaseColor", Hex(swap.To));
+        }
+        material.enableInstancing = true;
+        EditorUtility.SetDirty(material);
+      }
+      // 2. 매핑 에셋
+      var map = AssetDatabase.LoadAssetAtPath<FactoryWars.View.KenneyAssetMap>(MapAsset);
+      if (map == null) {
+        map = ScriptableObject.CreateInstance<FactoryWars.View.KenneyAssetMap>();
+        Directory.CreateDirectory(Path.GetDirectoryName(MapAsset));
+        AssetDatabase.CreateAsset(map, MapAsset);
+      }
+      map.Entries.Clear();
+      var missing = new List<string>();
+      foreach (var file in data.Entries) {
+        if (System.Enum.TryParse<FactoryWars.View.DressKind>(file.Kind, out var kind) == false) {
+          missing.Add("종류 " + file.Kind);
+          continue;
+        }
+        var entry = new FactoryWars.View.KenneyAssetMap.Entry {
+          Kind = kind, Scale = file.Scale, ScaleJitter = new Vector2(file.JitterMin, file.JitterMax), SnapYaw90 = file.SnapYaw90,
+          Fit = file.Fit, Shadows = file.Shadows, LowKeep = file.LowKeep,
+        };
+        foreach (var model in file.Models) {
+          var parts = model.Split(':');
+          var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/{parts[0]}.fbx");
+          if (prefab == null) {
+            missing.Add(parts[0]);
+            continue;
+          }
+          var probe = (GameObject)Object.Instantiate(prefab);
+          var renderers = probe.GetComponentsInChildren<Renderer>();
+          var bounds = renderers.Length > 0 ? renderers[0].bounds : new Bounds();
+          foreach (var r in renderers) {
+            bounds.Encapsulate(r.bounds);
+          }
+          Object.DestroyImmediate(probe);
+          entry.Variants.Add(new FactoryWars.View.KenneyAssetMap.Variant {
+            Prefab = prefab,
+            Weight = parts.Length > 1 && float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var w) ? w : 1f,
+            Offset = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z),
+            Size = bounds.size,
+          });
+        }
+        map.Entries.Add(entry);
+      }
+      EditorUtility.SetDirty(map);
+      // 3. 프로필 연결: A(기본)·C는 Kenney, B는 절차 메쉬 비교용.
+      foreach (var name in new[] { "VisualProfile", "VisualProfile_C" }) {
+        var profile = AssetDatabase.LoadAssetAtPath<FactoryWars.View.VisualProfile>($"Assets/QuantumUser/Resources/FactoryWars/Visual/{name}.asset");
+        if (profile != null) {
+          profile.Dressing = map;
+          EditorUtility.SetDirty(profile);
+        }
+      }
+      AssetDatabase.SaveAssets();
+      Debug.Log($"[FW-KENNEY] 매핑 {map.Entries.Count}종, 변종 {map.Entries.Sum(e => e.Variants.Count)}개" + (missing.Count > 0 ? ", 못 찾음: " + string.Join(", ", missing) : ""));
     }
 
     /// <summary>배치 모드 진입점: 임포트 설정 → 머티리얼 변환 → 접촉 시트.</summary>

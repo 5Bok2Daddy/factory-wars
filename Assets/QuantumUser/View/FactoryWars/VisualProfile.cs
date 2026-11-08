@@ -103,6 +103,8 @@ namespace FactoryWars.View {
     [Header("숲·바위")]
     public float TreeDensity = 1f;
     public float ConiferRatio = 1f;
+    /// <summary>Kenney 나무에서 단풍 비율. 나머지(1 - 침엽 - 단풍)는 짙은 활엽이다.</summary>
+    public float AutumnRatio = 0.25f;
     /// <summary>잎 색 조합 번호. 0 한 가지, 1 세 가지.</summary>
     public int LeafSet = 0;
     public bool Bushes = false;

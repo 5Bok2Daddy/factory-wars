@@ -82,6 +82,9 @@ namespace FactoryWars.View {
       WorldView.HideBakedScene();
       WorldView.ApplyLighting(Camera.main);
       GraphicsQuality.Bind(Camera.main);
+      // Kenney 모델 인스턴싱(항목 19B). 월드·도시가 만들어지며 그룹을 채운다.
+      var dressing = new GameObject("Dressing").AddComponent<DressingRenderer>();
+      dressing.transform.SetParent(_stage, false);
       World = new WorldView(_stage, frame.FindAsset<MapSpec>(frame.Map.UserAsset), _catalog);
       Fx = new GameObject("Fx").AddComponent<BattleFx>();
       Fx.transform.SetParent(_stage, false);

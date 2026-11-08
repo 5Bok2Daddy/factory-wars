@@ -103,12 +103,97 @@
 
 ## 19B (Kenney CC0 모델)
 
-진행 중이다. SETUP-REPORT.md "항목 19B"를 본다. 자동 내려받기가 실패해, 사용자가 zip을 `temp-assets/`에 넣어 주기를 기다리고 있다.
+**결론:** 자연물(나무·덤불·그루터기·바위·층진 절벽)과 도시 건물·컨테이너·상자는 Kenney CC0 모델을 쓴다. 공용 셰이더 `FactoryWars/KenneyLit`로 색을 맞춘다. 유닛과 플레이어 건물은 절차 생성 그대로다. 기본 프로필 A와 C가 Kenney를 쓰고, B는 절차 메쉬 비교용으로 남긴다.
 
-미리 만든 것:
-- 공용 셰이더 `FactoryWars/KenneyLit`
-- 매핑 에셋 `KenneyAssetMap` (`VisualProfile.Dressing`이 가리킨다)
-- 도구 `KenneyTools`
-  - 임포트 설정
-  - 머티리얼 변환
-  - 접촉 시트 `screenshots/kenney/<kit>_contact.png`
+### 받은 키트 (`Assets/ExternalAssets/Kenney/<kit>/`, FBX와 colormap.png와 License.txt만, 37MB)
+
+| 키트 | FBX | 쓰는 곳 |
+| --- | --- | --- |
+| nature-kit | 329 | 나무, 덤불, 그루터기, 바위, 절벽 블록 |
+| city-kit-commercial | 41 | 도시 소형·중형·고층·진지 건물 |
+| city-kit-industrial | 37 | 공장형 도시 건물, 컨테이너 |
+| city-kit-roads | 95 | 공사 바리케이드·콘(매핑만 있고 배치는 아직) |
+| factory-kit | 143 | 상자(고철 하치장 소품) |
+| tower-defense-kit | 160 | 아직 안 씀 |
+| train-kit | 103 | 아직 안 씀 |
+
+- 모델 접촉 시트: `screenshots/kenney/<kit>_contact.png`. 번호·이름·크기·삼각형은 `<kit>_list.csv`에 있다.
+
+### 매핑 (`Assets/ExternalAssets/Kenney/kenney-map.json` → `Resources/FactoryWars/Visual/KenneyAssetMap.asset`)
+
+파일 이름은 코드에 없고 이 JSON에만 있다. `Tools/Factory Wars/Kenney/Build Map`(설정 전체 실행에 포함)이 모델 바운드를 재서 바닥 보정·크기를 저장한다.
+
+| 요소 | 모델 | 배율·규칙 |
+| --- | --- | --- |
+| 숲 침엽(60%) | tree_pineTall A·C·D | ×4.2 (약 6m, 전차 높이 2~3배) |
+| 숲 단풍(22%) | tree_fat_fall, tree_simple_fall | ×4.6 |
+| 숲 짙은 활엽(18%) | tree_fat_darkh, tree_simple_dark | ×4.6 |
+| 벌목된 자리 | 앙상한 나무는 tree_pineSmall C·D, 그루터기는 stump_round, log_large | 바깥부터 벌목되는 규칙은 그대로 |
+| 숲 가장자리 | plant_bush, plant_bushLarge | 품질 낮음에서는 뺀다 |
+| 바위 지형 | rock_large A·D, rock_tallG + rock_small D·G | 큰 바위 1개와 둘레 4~7개 |
+| 능선·언덕·고지대·맵 경계 절벽 | cliff_block_rock(3) / _stone(1) | 판정 둘레의 각 변을 블록 하나로 늘여 2층으로 쌓는다. 윗면은 절차 판 |
+| 도시 건물 소형 | commercial building-a~d, f~h | 부지에 맞춰 배율, 높이는 0.8~1.3배까지 늘임 |
+| 도시 건물 중형 | commercial building-i, l, m, n + industrial e, f | |
+| 도시 공장형 | industrial building-a, b, c, g, l, m, q, r | |
+| 쓰러지는 건물 | commercial skyscraper-a, b, c, e | 넘어지는 애니메이션은 기존 축 그대로 |
+| 진지 건물 | commercial building-j, k, e | 모래주머니는 절차 |
+| 고철 하치장 둘레 | industrial shipping-container-a~c, factory box-* | 판정 없음 |
+
+**버린 것과 이유**
+- tree_pineRound·tree_detailed: 삼각형이 200~400개다. 숲 하나에 100그루가 넘어 모바일 예산을 넘는다.
+- tree_palm·cactus·텐트·작물·울타리: 전장 분위기와 맞지 않는다.
+- tower-defense 성·캐릭터·UFO: 지시대로 쓰지 않는다.
+- 기차 차량: 사용자 확인 전이라 쓰지 않는다.
+- 도로 조각: 판정용 Roads 데이터와 이음새를 맞추는 일이 커서 이번에는 기존 절차 아스팔트를 유지했다.
+
+### 렌더링 (`KenneyLit`)
+
+- **색 계산:** 원래 색(아틀라스 × 색) × 틴트 × 밝기 → 채도 빼기 → 월드 높이 그라데이션 → 저주파 색 노이즈 → 바닥 접촉 AO → 손상 그을음(`_Soot`).
+- **아틀라스 키트(도시·공장):** 채도 −40~−60%, 밝기 0.85~0.9, 따뜻한 회색 틴트.
+- **nature-kit:** 색마다 직접 바꿨다(JSON `Colors`).
+  - 청록 잎 → 짙은 녹색 3단계
+  - 주황 → 주황·황금 단풍
+  - 하늘색 돌 → 회색 3단계
+  - 갈색 → 황토 바위·나무껍질
+- **손상 단계:** 도시 건물이 단계 1이면 그을음 0.55, 2이면 0.85. 무너지면 절차 잔해로 바꾼다.
+- **그리기 방식**
+  - nature-kit 메쉬(읽기 가능)는 그룹 × 120m 칸마다 한 메쉬로 합친다. 색은 정점 색으로 굽고, 머티리얼은 하나다.
+  - 숲은 숲마다 그룹이라, 벌목되면 그 숲만 다시 합친다.
+  - 나머지는 GPU 인스턴싱(`Graphics.RenderMeshInstanced`)이다.
+  - 도시 건물은 단계가 바뀌고 쓰러지므로 실제 오브젝트로 둔다(SRP Batcher).
+- **품질 낮음:** 나무 60%, 덤불 0%, 소품 40~70%만 남기고 그림자는 끈다.
+- **지시와 다르게 한 점:** nature-kit만 읽기/쓰기를 켰다. 실행 중 합치기에 필요하기 때문이다. 메모리는 늘지만 그리기 호출이 1/4 정도로 줄었다(인스턴싱만 쓸 때 본진 시점 353 → 165).
+- **공용 셰이더 3안:** `screenshots/lookdev/19b_shader.png`
+  - 원래 값 / 채도 −25%·밝기 0.95 / 채도 −65%·밝기 0.85
+  - −65%는 도시가 잿빛 덩어리가 되고, −25%는 장난감 색이 남는다. 그래서 −40~−60%(키트별)로 정했다.
+
+### 비교 (`screenshots/lookdev/19b_compare_A~E.png`, 위 보통, 아래 낮음, 1920×1080 추정 그리기 호출 / 삼각형)
+
+| 시점 | before 보통 | after 보통 | before 낮음 | after 낮음 |
+| --- | --- | --- | --- | --- |
+| A 본진 | 124 / 90k | 165 / 157k (+33%) | 74 | 90 |
+| B 다리 | 109 / 91k | 147 / 148k (+35%) | 64 | 78 |
+| C 중앙 교전 | 226 / 103k | 274 / 204k (+21%) | 112 | 128 |
+| D 맵 전체 | 777 / 174k | 920 / 429k (+18%) | 428 | 487 |
+
+- 낮음은 19A 이전(본진 170, 맵 전체 521)보다 적다.
+- 보통은 본진·다리 시점이 목표 +30%를 3~5%p 넘는다. 이 측정 뒤에 큰 바위·컨테이너 그림자를 껐고, 항목 19 after 측정에서 다시 확인한다.
+- 개체는 13,124개다(대부분 절벽 블록과 나무). 삼각형은 C 시점 기준 약 2배다.
+
+### 점수 (1~5, 19A 기준표)
+
+| 기준 | before (A 절차) | after (A + Kenney) |
+| --- | --- | --- |
+| 가독성 | 4 | 4 (도시 건물 창문으로 건물·유닛 구분이 쉬워짐, 컨테이너 색이 조금 시끄러움) |
+| 입체감 | 4 | 4 |
+| 목표 유사도 | 4 | 4 (침엽수 실루엣·창문·지붕 디테일. 절벽은 아직 블록 느낌) |
+| 정보 전달 | 4 | 4 |
+| 눈의 피로 | 4 | 4 |
+| 성능 | 3 | 3 |
+| 합계 | 23 | 23. 질감은 좋아졌지만 절벽 모양과 성능 여유는 다음에 다듬어야 한다 |
+
+### 아직 부족한 점
+- 절벽이 "늘인 블록"이라 Northgard처럼 깎인 바위 모양이 아니다. `cliff_corner*`·`cliff_top*` 조각으로 모서리를 처리하는 일이 남았다.
+- 플레이어 건물에 Kenney 부품(굴뚝·탱크·크레인·호퍼)을 아직 붙이지 않았다.
+- 도로 조각, 바리케이드 위 공사 장비, 중앙 폐허 철로, 강변 조각(ground_river*)도 아직이다.
+- 유닛 색조를 KenneyLit와 맞추는 일은 정점 음영(19A)까지만 했다.

@@ -1,0 +1,16 @@
+before Medium,Medium,A,41,90076,38,124,0
+before Medium,Medium,B,36,91696,33,109,0
+before Medium,Medium,C,79,96800,70,226,0
+before Medium,Medium,D,280,167472,245,777,0
+after Medium,Medium,A,64,157185,47,165,13124
+after Medium,Medium,B,58,148283,41,147,13124
+after Medium,Medium,C,101,203593,83,274,13124
+after Medium,Medium,D,355,428511,279,920,13124
+before Low,Low,A,44,90144,30,74,0
+before Low,Low,B,39,91764,25,64,0
+before Low,Low,C,85,100216,27,112,0
+before Low,Low,D,283,167540,145,428,0
+after Low,Low,A,61,141403,29,90,12736
+after Low,Low,B,54,131133,24,78,12736
+after Low,Low,C,102,193129,26,128,12736
+after Low,Low,D,342,395107,145,487,12736

@@ -8,7 +8,10 @@ Shader "FactoryWars/KenneyLit"
         _BaseMap ("Base Map", 2D) = "white" {}
         _BaseColor ("Base Color", Color) = (1, 1, 1, 1)
         _Tint ("Palette Tint", Color) = (1, 1, 1, 1)
-        _Desaturate ("Desaturate", Range(0, 1)) = 0.35
+        _Desaturate ("Desaturate", Range(0, 1)) = 0.4
+        _Brightness ("Brightness", Range(0, 2)) = 0.9
+        _Soot ("Soot (damage)", Range(0, 1)) = 0
+        _UseVertexColor ("Use Vertex Color (merged meshes)", Range(0, 1)) = 0
         _GradientBottom ("Gradient Bottom (world Y)", Float) = 0
         _GradientTop ("Gradient Top (world Y)", Float) = 12
         _GradientStrength ("Gradient Strength", Range(0, 1)) = 0.22
@@ -34,6 +37,9 @@ Shader "FactoryWars/KenneyLit"
             half4 _BaseColor;
             half4 _Tint;
             half _Desaturate;
+            half _Brightness;
+            half _Soot;
+            half _UseVertexColor;
             float _GradientBottom;
             float _GradientTop;
             half _GradientStrength;
@@ -68,14 +74,16 @@ Shader "FactoryWars/KenneyLit"
         half3 FwShade(half3 albedo, float3 positionWS)
         {
             half grey = dot(albedo, half3(0.299, 0.587, 0.114));
-            albedo = lerp(albedo, grey.xxx, _Desaturate) * _Tint.rgb;
+            albedo = lerp(albedo, grey.xxx, _Desaturate) * _Tint.rgb * _Brightness;
             float t = saturate((positionWS.y - _GradientBottom) / max(0.01, _GradientTop - _GradientBottom));
             half shade = 1.0 + _GradientStrength * (t - 0.5);
             float n = FwNoise(positionWS.xz * _NoiseScale) * 0.7 + FwNoise(positionWS.xz * _NoiseScale * 3.1 + 17.0) * 0.3;
             shade += _NoiseStrength * (n * 2.0 - 1.0);
             float lift = positionWS.y - _GroundY;
             shade -= _AoStrength * (1.0 - saturate(lift / max(0.01, _AoHeight)));
-            return albedo * max(0.2, shade);
+            // 손상 단계: 노이즈 얼룩으로 그을린다. 위쪽(불난 층)일수록 진하다.
+            float soot = saturate(_Soot * (0.6 + 0.8 * FwNoise(positionWS.xz * 0.6 + positionWS.y * 0.4)) * (0.5 + t));
+            return albedo * max(0.2, shade) * (1.0 - 0.75 * soot);
         }
         ENDHLSL
 
@@ -101,6 +109,7 @@ Shader "FactoryWars/KenneyLit"
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
+                half4 color : COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -111,6 +120,7 @@ Shader "FactoryWars/KenneyLit"
                 float3 positionWS : TEXCOORD1;
                 half3 normalWS : TEXCOORD2;
                 half fog : TEXCOORD3;
+                half3 color : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -125,13 +135,15 @@ Shader "FactoryWars/KenneyLit"
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.fog = ComputeFogFactor(position.positionCS.z);
+                // 합친 메쉬는 원래 머티리얼 색을 정점 색으로 갖는다. 그 밖에는 흰색으로 둔다.
+                output.color = lerp(half3(1, 1, 1), input.color.rgb, _UseVertexColor);
                 return output;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb;
+                half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb * input.color;
                 albedo = FwShade(albedo, input.positionWS);
                 half3 normal = normalize(input.normalWS);
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);

@@ -44,7 +44,7 @@ MonoBehaviour:
   OutlineWidth: 0.06
   OutlineColor: {r: 0.11764706, g: 0.101960786, b: 0.08627451, a: 1}
   PlateauHeight: 5
-  CliffLayers: 3
+  CliffLayers: 2
   Jagged: 0.5
   HighGroundHeight: 2.5
   WaterDepth: 2.5
@@ -63,7 +63,8 @@ MonoBehaviour:
   Dressing: {fileID: 0}
   Boundary: 0
   TreeDensity: 1
-  ConiferRatio: 0.75
+  ConiferRatio: 0.6
+  AutumnRatio: 0.22
   LeafSet: 1
   Bushes: 0
   NoBuild: 0

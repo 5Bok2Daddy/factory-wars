@@ -63,7 +63,8 @@ namespace FactoryWars.View {
       p.ShadeNoise = 0.07f;
 
       p.PlateauHeight = 5f;
-      p.CliffLayers = 3;
+      // Kenney 절벽 조각은 층이 낮으면 풀 턱만 보인다. 2층(층당 2.5m)이 바위 면이 잘 보인다(19B).
+      p.CliffLayers = 2;
       p.Jagged = 0.5f;
       p.HighGroundHeight = 2.5f;
       p.WaterDepth = 2.5f;
@@ -75,7 +76,8 @@ namespace FactoryWars.View {
       p.ZoneColors = true;
 
       p.TreeDensity = 1f;
-      p.ConiferRatio = 0.75f;
+      p.ConiferRatio = 0.6f;
+      p.AutumnRatio = 0.22f;
       p.LeafSet = 1;
       p.Bushes = false;
 
