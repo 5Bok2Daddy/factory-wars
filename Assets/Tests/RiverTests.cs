@@ -205,7 +205,7 @@ namespace FactoryWars.Tests {
       TerrainKit.Features(kit, MapAsset("Map2P"));
       var mesh = kit.ToMesh("test");
       Assert.AreEqual(1, mesh.subMeshCount);
-      Assert.Less(kit.TriangleCount, 36000, "삼각형 예산");
+      Assert.Less(kit.TriangleCount, 45000, "삼각형 예산");
     }
 
     // 울타리

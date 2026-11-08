@@ -36,6 +36,7 @@ namespace FactoryWars.View {
       public bool Powered = true;
       public bool Active;
       public float SmokeAt;
+      public float DamageAt;
       public float Radius;
       public Transform Turret;
       public Transform Barrel;
@@ -82,6 +83,13 @@ namespace FactoryWars.View {
       Fx.transform.SetParent(transform, false);
       World.Fx = Fx;
       Field = new BattlefieldView(transform);
+      QuantumEvent.Subscribe<EventCratePicked>(this, e => Fx.Burst(e.Position.ToUnityVector3(), new Color(1f, 0.85f, 0.3f), 1f));
+      QuantumEvent.Subscribe<EventCaptureChanged>(this, e => {
+        var frame = e.Game.Frames.Verified;
+        if (e.Next.IsValid && frame != null && frame.Exists(e.Site)) {
+          Fx.Pulse(frame.Get<Transform3D>(e.Site).Position.ToUnityVector3(), Palette.Of(frame, e.Next), frame.Get<CaptureSite>(e.Site).Radius.AsFloat);
+        }
+      });
       City = new CityView(transform, frame.FindAsset<MapSpec>(frame.Map.UserAsset)) { Fx = Fx };
       _controller = FindAnyObjectByType<MatchController>();
     }
@@ -98,6 +106,7 @@ namespace FactoryWars.View {
       World.Update(frame, dt);
       Field.Update(frame, dt);
       City.Update(frame, _controller != null ? _controller.Player : PlayerRef.None, dt);
+      World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
 
       _seen.Clear();
       var units = frame.Filter<Transform3D, Unit>();
@@ -128,7 +137,7 @@ namespace FactoryWars.View {
       var center = actor.View.transform.position + Vector3.up * (actor.IsAir ? actor.View.Entry.Altitude : actor.Height * 0.4f);
       Fx.Explosion(center, actor.IsBuilding ? 2.2f : Mathf.Clamp(actor.Radius * 0.5f, 0.5f, 1.5f));
       if (actor.IsAir == false && (actor.IsBuilding || actor.Radius > 1.8f)) {
-        Fx.Wreck(actor.View.transform.position, actor.IsBuilding ? 3.2f : actor.Radius * 0.8f);
+        Fx.Wreck(actor.View.transform.position, actor.IsBuilding ? 3.2f : actor.Radius * 0.8f, actor.IsBuilding ? 20f : 30f);
       }
       _marked.Remove(actor);
       Destroy(actor.View.gameObject);
@@ -252,6 +261,9 @@ namespace FactoryWars.View {
       var speed = attack == AttackType.AntiInfantry ? BulletSpeed : missile ? MissileSpeed : ShellSpeed;
       Fx.Tracer(muzzle, target, speed, attack == AttackType.AntiInfantry ? 0.18f : 0.34f, missile);
       Fx.Impact(target, attack == AttackType.AntiInfantry ? 0.8f : 1.6f);
+      if (attack == AttackType.Area) {
+        Fx.Crater(target, 1.8f);
+      }
     }
 
     void UpdateUnit(Frame frame, EntityRef entity, Transform3D* transform3D, Unit* unit, float dt) {
@@ -299,7 +311,7 @@ namespace FactoryWars.View {
       var moved = goal - actor.Position;
       actor.Position += moved * (1f - Mathf.Exp(-FollowRate * dt));
       var hover = spec.IsAir ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.12f : 0f;
-      actor.View.transform.position = actor.Position;
+      actor.View.transform.position = spec.IsAir ? actor.Position : actor.Position + Vector3.up * TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z);
       actor.View.Turn.localPosition = Vector3.up * (actor.View.Entry.Altitude + hover);
 
       var hasTarget = TryTarget(frame, unit->TargetEntity, out var target, out var air);
@@ -382,9 +394,10 @@ namespace FactoryWars.View {
           return;
         }
         var position = transform3D->Position.ToUnityVector3();
-        position.y = 0f;
+        position.y = TerrainKit.SurfaceHeight(World.Map, position.x, position.z);
         actor.Position = position;
         actor.View.transform.position = position;
+        actor.View.AddPlate(frame.FindAsset(building->Spec).FootprintRadius.AsFloat, frame.Global->Players.GetPointer(building->Owner)->ColorIndex);
         actor.HullYaw = 180f;
         actor.View.SetYaw(180f);
       }
@@ -408,6 +421,12 @@ namespace FactoryWars.View {
       var hasTarget = TryTarget(frame, building->TargetEntity, out var target, out var air);
       Aim(actor, hasTarget, target, air, dt);
       var cooldown = building->AttackCooldown.AsFloat;
+      // 손상: 체력 50% 이하는 연기, 25% 이하는 불.
+      var ratio = building->Health.AsFloat / Mathf.Max(spec.MaxHealth.AsFloat, 1f);
+      if (building->ConstructionRemaining <= FP._0 && ratio < 0.5f && Time.time >= actor.DamageAt) {
+        actor.DamageAt = Time.time + (ratio < 0.25f ? 0.22f : 0.5f) / Mathf.Max(GraphicsQuality.FxScale, 0.2f);
+        Fx.Burning(actor.View.transform.position + Vector3.up * (actor.Height * 0.7f + 0.5f), ratio < 0.25f);
+      }
       if (cooldown > actor.Cooldown + 0.05f && spec.Attack != AttackType.None) {
         Fire(actor, spec.Attack, spec.Range.AsFloat, hasTarget, target, false);
       }

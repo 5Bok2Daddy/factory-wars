@@ -8,8 +8,10 @@ namespace FactoryWars.View {
   /// </summary>
   public class BattleFx : MonoBehaviour {
     const int MaxWrecks = 24;
-    const float WreckSeconds = 14f;
+    const float WreckSeconds = 30f;
     const float WreckSink = 1.2f;
+    const int MaxCraters = 64;
+    const float CraterSeconds = 60f;
 
     static readonly Color Muzzle = new Color(1f, 0.62f, 0.2f, 1f);
     static readonly Color Flame = new Color(1f, 0.42f, 0.08f, 1f);
@@ -25,6 +27,11 @@ namespace FactoryWars.View {
     ParticleSystem _smoke;
     Mesh _rubble;
     readonly Queue<(GameObject Item, float Born, float Y)> _wrecks = new Queue<(GameObject, float, float)>();
+    readonly List<(Vector3 Position, float Size, float Born)> _craters = new List<(Vector3, float, float)>();
+    MeshFilter _craterFilter;
+    bool _cratersDirty;
+    public int CraterCount => _craters.Count;
+    public float ShakeAmount { get; private set; }
 
     public int Emitted { get; private set; }
 
@@ -106,14 +113,18 @@ namespace FactoryWars.View {
       }
       Emit(_tracer, from, delta / distance * speed, width, distance / speed + 0.04f, missile ? Missile : Bullet);
       if (missile) {
-        var trail = Scaled(4);
+        // 미사일 연기 꼬리: 길고 굵게, 오래 남는다.
+        var trail = Scaled(10);
         for (var i = 1; i <= trail; i++) {
-          Emit(_smoke, Vector3.Lerp(from, to, i / (trail + 1f)), Vector3.up * 0.4f, 0.5f, 0.7f, SmokeGray);
+          var t = i / (trail + 1f);
+          Emit(_smoke, Vector3.Lerp(from, to, t) + Vector3.up * Mathf.Sin(t * Mathf.PI) * distance * 0.08f, Vector3.up * 0.3f, 0.6f + t * 0.4f, 1.2f + t * 0.6f, SmokeGray);
         }
       }
     }
 
     public void Impact(Vector3 position, float size) {
+      // 피격 번쩍임.
+      Emit(_glow, position + Vector3.up * 0.3f, Vector3.zero, size * 1.6f, 0.08f, Color.white);
       var count = Scaled(5);
       for (var i = 0; i < count; i++) {
         var velocity = (Random.onUnitSphere + Vector3.up) * Random.Range(2f, 6f);
@@ -122,7 +133,88 @@ namespace FactoryWars.View {
       Emit(_glow, position, Vector3.zero, size, 0.18f, Spark);
     }
 
+    /// <summary>땅에 남는 크레이터. 최대 64개를 메쉬 하나로 합쳐 그린다. 60초 뒤 사라진다.</summary>
+    public void Crater(Vector3 position, float size) {
+      if (_craters.Count >= MaxCraters) {
+        _craters.RemoveAt(0);
+      }
+      _craters.Add((new Vector3(position.x, 0f, position.z), size, Time.time));
+      _cratersDirty = true;
+    }
+
+    void RebuildCraters() {
+      _cratersDirty = false;
+      if (_craterFilter == null) {
+        var item = new GameObject("Craters", typeof(MeshFilter), typeof(MeshRenderer));
+        item.transform.SetParent(transform, false);
+        _craterFilter = item.GetComponent<MeshFilter>();
+        var renderer = item.GetComponent<MeshRenderer>();
+        renderer.sharedMaterial = ArtLook.NeutralMaterial;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      }
+      var kit = new MeshKit();
+      const int Sides = 9;
+      for (var c = 0; c < _craters.Count; c++) {
+        var (center, size, _) = _craters[c];
+        var lift = 0.07f + c * 0.0004f;
+        for (var ring = 0; ring < 2; ring++) {
+          kit.Paint(ring == 0 ? Swatch.DirtDark : Swatch.Black);
+          var radius = size * (ring == 0 ? 1f : 0.55f);
+          for (var i = 0; i < Sides; i++) {
+            var a = Mathf.PI * 2f * i / Sides + c;
+            var b = Mathf.PI * 2f * (i + 1) / Sides + c;
+            var wobbleA = 0.8f + 0.4f * MeshKit.Hash(c * 31 + ring, i);
+            var wobbleB = 0.8f + 0.4f * MeshKit.Hash(c * 31 + ring, (i + 1) % Sides);
+            kit.Tri(center + Vector3.up * (lift + ring * 0.01f), center + new Vector3(Mathf.Cos(a) * radius * wobbleA, lift + ring * 0.01f, Mathf.Sin(a) * radius * wobbleA),
+              center + new Vector3(Mathf.Cos(b) * radius * wobbleB, lift + ring * 0.01f, Mathf.Sin(b) * radius * wobbleB), Vector3.up);
+          }
+        }
+      }
+      if (_craterFilter.sharedMesh != null) {
+        Destroy(_craterFilter.sharedMesh);
+      }
+      _craterFilter.sharedMesh = _craters.Count > 0 ? kit.ToMesh("craters") : null;
+    }
+
+    /// <summary>손상된 건물의 연기와 불. fire면 불꽃을 더한다.</summary>
+    public void Burning(Vector3 position, bool fire) {
+      Emit(_smoke, position + Random.insideUnitSphere * 0.6f, new Vector3(Random.Range(-0.3f, 0.3f), Random.Range(1.2f, 2f), Random.Range(-0.3f, 0.3f)), Random.Range(0.8f, 1.3f), Random.Range(1.6f, 2.4f), SmokeDark);
+      if (fire) {
+        Emit(_glow, position + Random.insideUnitSphere * 0.8f, Vector3.up * Random.Range(0.6f, 1.4f), Random.Range(0.6f, 1.1f), Random.Range(0.3f, 0.5f), Flame);
+      }
+    }
+
+    /// <summary>획득·점령 같은 좋은 소식의 반짝임.</summary>
+    public void Burst(Vector3 position, Color color, float size) {
+      var count = Scaled(14);
+      for (var i = 0; i < count; i++) {
+        var velocity = (Random.onUnitSphere + Vector3.up * 1.5f) * Random.Range(2f, 5f) * size;
+        Emit(_tracer, position + Vector3.up, velocity, 0.18f, Random.Range(0.4f, 0.8f), color);
+      }
+      Emit(_glow, position + Vector3.up, Vector3.zero, size * 3f, 0.3f, color);
+    }
+
+    /// <summary>점령 완료: 땅을 따라 퍼지는 팀 색 고리.</summary>
+    public void Pulse(Vector3 position, Color color, float radius) {
+      var count = Scaled(24);
+      for (var i = 0; i < count; i++) {
+        var angle = Mathf.PI * 2f * i / count;
+        var direction = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
+        Emit(_glow, position + direction * 1.5f + Vector3.up * 0.3f, direction * radius * 1.6f, 0.9f, 0.6f, color);
+      }
+    }
+
+    /// <summary>큰 폭발의 화면 흔들림. 설정에서 끌 수 있다.</summary>
+    public void Shake(float amount) {
+      if (ScreenShake.Enabled) {
+        ShakeAmount = Mathf.Max(ShakeAmount, amount);
+      }
+    }
+
     public void Explosion(Vector3 position, float size) {
+      if (size >= 2f) {
+        Shake(size * 0.12f);
+      }
       var flames = Scaled(8);
       for (var i = 0; i < flames; i++) {
         Emit(_glow, position + Random.insideUnitSphere * size * 0.5f, Random.insideUnitSphere * size * 2f + Vector3.up * size, size * Random.Range(1f, 1.8f), Random.Range(0.3f, 0.5f), Flame);
@@ -171,7 +263,9 @@ namespace FactoryWars.View {
     }
 
     /// <summary>파괴된 자리에 잠시 남는 잔해. 오래되면 땅으로 가라앉는다.</summary>
-    public void Wreck(Vector3 position, float radius) {
+    public void Wreck(Vector3 position, float radius) => Wreck(position, radius, WreckSeconds);
+
+    public void Wreck(Vector3 position, float radius, float seconds) {
       if (_wrecks.Count >= MaxWrecks) {
         Destroy(_wrecks.Dequeue().Item);
       }
@@ -183,10 +277,25 @@ namespace FactoryWars.View {
       var renderer = item.GetComponent<MeshRenderer>();
       renderer.sharedMaterial = ArtLook.NeutralMaterial;
       renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      _wrecks.Enqueue((item, Time.time, 0f));
+      _wrecks.Enqueue((item, Time.time - (WreckSeconds - seconds), 0f));
+    }
+
+    void LateUpdate() {
+      var camera = Camera.main;
+      if (ShakeAmount > 0.001f && camera != null) {
+        camera.transform.position += Random.insideUnitSphere * ShakeAmount;
+        ShakeAmount = Mathf.MoveTowards(ShakeAmount, 0f, Time.deltaTime * 1.5f);
+      }
     }
 
     void Update() {
+      if (_craters.Count > 0 && Time.time - _craters[0].Born > CraterSeconds) {
+        _craters.RemoveAll(c => Time.time - c.Born > CraterSeconds);
+        _cratersDirty = true;
+      }
+      if (_cratersDirty) {
+        RebuildCraters();
+      }
       while (_wrecks.Count > 0 && Time.time - _wrecks.Peek().Born > WreckSeconds + 2f) {
         Destroy(_wrecks.Dequeue().Item);
       }

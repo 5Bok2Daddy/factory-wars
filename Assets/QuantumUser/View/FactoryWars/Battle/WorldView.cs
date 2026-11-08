@@ -41,7 +41,18 @@ namespace FactoryWars.View {
     public float BarrierDrop => Mathf.Max(_barrierDrop, 0f);
     public bool BarrierVisible => _barriers.Exists(b => b.Root.activeSelf);
     public int ForestCount => _forests.Count;
+    GameObject _noBuild;
+    public bool NoBuildShown => _noBuild == null || _noBuild.activeSelf;
+
+    /// <summary>건설 위치를 고를 때만 금지 표시를 켠다.</summary>
+    public void ShowNoBuild(bool show) {
+      if (_noBuild != null && _noBuild.activeSelf != show) {
+        _noBuild.SetActive(show);
+      }
+    }
     public int MineCount => _crystals.Count;
+
+    public MapSpec Map => _map;
 
     public WorldView(Transform parent, MapSpec map, ViewCatalog catalog) {
       _root = new GameObject("World").transform;
@@ -69,6 +80,14 @@ namespace FactoryWars.View {
       TerrainKit.Features(features, _map);
       if (features.TriangleCount > 0) {
         MeshObject(_root, "Features", features.ToMesh("world_features"), true);
+      }
+      if (VisualProfile.Current.NoBuildAlways == false) {
+        var marks = new MeshKit();
+        TerrainKit.NoBuildMarks(marks, _map);
+        if (marks.TriangleCount > 0) {
+          _noBuild = MeshObject(_root, "NoBuild", marks.ToMesh("world_nobuild"), false);
+          _noBuild.SetActive(false);
+        }
       }
       foreach (var shape in _map.Bridges ?? new MapShape[0]) {
         var rect = TerrainKit.Extent(shape);
@@ -118,6 +137,11 @@ namespace FactoryWars.View {
       sun.shadows = GraphicsQuality.Current == QualityTier.Low ? LightShadows.Hard : LightShadows.Soft;
       sun.shadowStrength = profile.ShadowStrength;
       sun.transform.rotation = Quaternion.Euler(profile.SunElevation, profile.SunAzimuth, 0);
+      // 맵 밖 처리: 안개는 멀리 있는 경계 밖을 어둡게 감싼다.
+      RenderSettings.fog = profile.Outside == OutsideMode.Fog;
+      RenderSettings.fogMode = FogMode.ExponentialSquared;
+      RenderSettings.fogDensity = 0.0022f;
+      RenderSettings.fogColor = new Color(0.22f, 0.24f, 0.26f);
       if (camera != null) {
         camera.clearFlags = CameraClearFlags.SolidColor;
         camera.backgroundColor = new Color(0.36f, 0.42f, 0.3f);

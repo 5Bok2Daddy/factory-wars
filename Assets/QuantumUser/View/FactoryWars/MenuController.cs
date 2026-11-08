@@ -38,8 +38,14 @@ namespace FactoryWars.View {
         Ui.SetLabel(quality, $"그래픽: {GraphicsQuality.Name(GraphicsQuality.Cycle())}");
       }, 34);
       Ui.Place((RectTransform)quality.transform, new Vector2(0.5f, 0.5f), new Vector2(0, -20), new Vector2(420, Ui.MinButtonSize));
+      Button shake = null;
+      shake = Ui.Button("Shake", panel, ScreenShake.Label, () => {
+        ScreenShake.Enabled = ScreenShake.Enabled == false;
+        Ui.SetLabel(shake, ScreenShake.Label);
+      }, 30);
+      Ui.Place((RectTransform)shake.transform, new Vector2(0.5f, 0.5f), new Vector2(0, -110), new Vector2(420, Ui.MinButtonSize));
       var language = Ui.Label("Language", panel, "언어: 한국어", 34, TextAnchor.MiddleCenter);
-      Ui.Place(language.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, -130), new Vector2(600, 70));
+      Ui.Place(language.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, -200), new Vector2(600, 70));
       var close = Ui.Button("Close", panel, "닫기", onClose, 32);
       Ui.Place((RectTransform)close.transform, new Vector2(0.5f, 0), new Vector2(0, 30), new Vector2(260, Ui.MinButtonSize));
       return panel;

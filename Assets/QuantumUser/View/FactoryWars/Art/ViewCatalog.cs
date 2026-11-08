@@ -66,7 +66,12 @@ namespace FactoryWars.View {
       foreach (var renderer in root.GetComponentsInChildren<Renderer>(true)) {
         var current = renderer.sharedMaterial;
         if (current != null && current.name.StartsWith(TeamPrefix)) {
-          renderer.sharedMaterial = Team(color, powered);
+          // 외곽선 서브메쉬가 있으면 두 칸 모두 같은 머티리얼이다.
+          var materials = renderer.sharedMaterials;
+          for (var i = 0; i < materials.Length; i++) {
+            materials[i] = Team(color, powered);
+          }
+          renderer.sharedMaterials = materials;
         }
       }
     }

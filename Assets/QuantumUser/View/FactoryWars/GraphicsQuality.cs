@@ -68,6 +68,31 @@ namespace FactoryWars.View {
       }
       volume.enabled = true;
       volume.sharedProfile = BuildVolume(Current, VisualProfile.Current);
+      ApplySsao(Current, VisualProfile.Current);
+    }
+
+    /// <summary>
+    /// SSAO는 렌더러 기능이다. 높음은 켜고, 보통은 절반 해상도로 켜고, 낮음은 끈다. 세기·반경은 프로필에서 읽는다.
+    /// 설정 필드가 공개되어 있지 않아 이름으로 찾는다. 찾지 못하면 켜고 끄기만 한다.
+    /// </summary>
+    static void ApplySsao(QualityTier tier, VisualProfile profile) {
+      var on = profile.Ssao && tier != QualityTier.Low;
+      foreach (var feature in Resources.FindObjectsOfTypeAll<ScreenSpaceAmbientOcclusion>()) {
+        feature.SetActive(on);
+        var field = typeof(ScreenSpaceAmbientOcclusion).GetField("m_Settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var settings = field?.GetValue(feature);
+        if (settings == null) {
+          continue;
+        }
+        void Set(string name, object value) {
+          var member = settings.GetType().GetField(name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+          member?.SetValue(settings, value);
+        }
+        Set("Downsample", tier == QualityTier.Medium);
+        Set("Intensity", profile.SsaoIntensity);
+        Set("Radius", profile.SsaoRadius);
+        field.SetValue(feature, settings);
+      }
     }
 
     static VolumeProfile _volume;

@@ -11,6 +11,7 @@ namespace FactoryWars.View {
     Dirt, DirtDark, GrassDark, CliffDark, CliffMid, CliffLight, CanyonDark, CanyonMid, CanyonLight,
     Boulder, BoulderDark, BoulderLight, WaterDeep, StripeYellow, GlowRed, LampDark,
     Concrete, ConcreteDark, Window,
+    Asphalt, LaneYellow, LaneWhite, RockFace, RockFaceDark, RockFaceLight, LeafAutumn, Brick, Outline, GrassLight,
   }
 
   public static class ArtPalette {
@@ -54,6 +55,9 @@ namespace FactoryWars.View {
       new Cell(0x7A7670, 0f, 0.14f), new Cell(0x5C5954, 0f, 0.12f), new Cell(0x98948C, 0f, 0.16f),
       new Cell(0x16303E, 0.1f, 0.86f), new Cell(0xF2C40F, 0f, 0.24f), new Cell(0xE02018, 0f, 0.5f), new Cell(0x4A1210, 0.2f, 0.5f),
       new Cell(0xA8A39A, 0f, 0.12f), new Cell(0x5E5B57, 0f, 0.1f), new Cell(0x2E3E4C, 0.3f, 0.7f),
+      new Cell(0x3C3D40, 0f, 0.18f), new Cell(0xE0B23A, 0f, 0.2f), new Cell(0xE6E2D6, 0f, 0.2f),
+      new Cell(0x8A7F70, 0f, 0.08f), new Cell(0x5E554B, 0f, 0.06f), new Cell(0xA89C88, 0f, 0.1f),
+      new Cell(0xC8662A, 0f, 0.1f), new Cell(0x8E4A36, 0f, 0.06f), new Cell(0x1E1A16, 0f, 0f), new Cell(0x9AB25A, 0f, 0.06f),
     };
 
     public static int CellCount => Cells.Length;
@@ -462,8 +466,9 @@ namespace FactoryWars.View {
     public enum TreeState { Full, Sparse, Stump }
 
     public static void Tree(MeshKit kit, Vector3 origin, int seed, TreeState state) {
-      var size = 0.85f + 0.4f * MeshKit.Hash(seed, 1);
-      var conifer = MeshKit.Hash(seed, 2) < 0.45f;
+      var profile = VisualProfile.Current;
+      var size = profile.LeafSet == 0 ? 0.85f + 0.4f * MeshKit.Hash(seed, 1) : 0.8f + 0.5f * MeshKit.Hash(seed, 1);
+      var conifer = MeshKit.Hash(seed, 2) < profile.ConiferRatio;
       kit.Paint(Swatch.Bark);
       if (state == TreeState.Stump) {
         kit.Frustum(origin, 0.3f * size, 0.24f * size, 0.45f, 5);
@@ -471,7 +476,18 @@ namespace FactoryWars.View {
       }
       kit.Frustum(origin, 0.24f * size, 0.14f * size, 1.8f * size, 5);
       var leaf = MeshKit.Hash(seed, 3);
-      kit.Paint(leaf < 0.33f ? Swatch.LeafDark : leaf < 0.72f ? Swatch.Leaf : Swatch.LeafLight);
+      if (profile.LeafSet == 0) {
+        kit.Paint(leaf < 0.33f ? Swatch.LeafDark : leaf < 0.72f ? Swatch.Leaf : Swatch.LeafLight);
+      } else {
+        // 침엽수 위주에 단풍 포인트를 섞는다.
+        kit.Paint(leaf < 0.42f ? Swatch.LeafDark : leaf < 0.78f ? Swatch.Leaf : leaf < 0.9f ? Swatch.LeafAutumn : Swatch.LeafLight);
+      }
+      if (conifer == false && profile.LeafSet != 0 && state == TreeState.Full) {
+        // 둥근 활엽수: 줄기 위에 겹친 잎 덩어리 둘.
+        kit.Frustum(origin + new Vector3(0, 1.3f * size, 0), 0.9f * size, 1.15f * size, 0.9f * size, 6);
+        kit.Frustum(origin + new Vector3(0, 2.2f * size, 0), 1.15f * size, 0.45f * size, 0.9f * size, 6);
+        return;
+      }
       var tiers = state == TreeState.Sparse ? 1 : 3;
       for (var i = 0; i < tiers; i++) {
         var y = (1.0f + i * 0.85f) * size;

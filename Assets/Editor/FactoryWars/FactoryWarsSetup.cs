@@ -80,6 +80,20 @@ namespace FactoryWars.EditorTools {
       var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(rendererPath);
       // 코드로 만든 렌더러는 이 값이 비어 있고, 비어 있으면 Volume을 켜도 후처리가 전혀 돌지 않는다.
       renderer.postProcessData = AssetDatabase.LoadAssetAtPath<PostProcessData>("Packages/com.unity.render-pipelines.universal/Runtime/Data/PostProcessData.asset");
+      // 화면 공간 차폐. 품질에 따라 GraphicsQuality가 켜고 끈다.
+      if (renderer.rendererFeatures.Exists(f => f is ScreenSpaceAmbientOcclusion) == false) {
+        var ssao = ScriptableObject.CreateInstance<ScreenSpaceAmbientOcclusion>();
+        ssao.name = "SSAO";
+        AssetDatabase.AddObjectToAsset(ssao, renderer);
+        renderer.rendererFeatures.Add(ssao);
+        var map = new SerializedObject(renderer).FindProperty("m_RendererFeatureMap");
+        if (map != null) {
+          AssetDatabase.TryGetGUIDAndLocalFileIdentifier(ssao, out _, out long id);
+          map.InsertArrayElementAtIndex(map.arraySize);
+          map.GetArrayElementAtIndex(map.arraySize - 1).longValue = id;
+          map.serializedObject.ApplyModifiedPropertiesWithoutUndo();
+        }
+      }
       EditorUtility.SetDirty(renderer);
       GraphicsSettings.defaultRenderPipeline = pipeline;
 

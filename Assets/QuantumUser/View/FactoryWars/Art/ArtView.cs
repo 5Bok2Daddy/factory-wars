@@ -47,6 +47,9 @@ namespace FactoryWars.View {
       view.Model.name = "Model";
       view.Model.transform.localScale = Vector3.one * entry.DisplayScale * extra;
       view.Model.transform.localPosition = new Vector3(-entry.Center.x, 0, -entry.Center.y) * entry.DisplayScale * extra;
+      if (VisualProfile.Current.Outline == OutlineMode.Hull) {
+        OutlineKit.Attach(view.Model, entry.DisplayScale * extra);
+      }
       ArtLook.Apply(view.Model, color, powered);
 
       view.Ring = Marker("Ring", view.transform, RingMesh());
@@ -156,7 +159,45 @@ namespace FactoryWars.View {
       Fill.localPosition = new Vector3((value - 1f) * 0.5f, 0, 0);
     }
 
+    GameObject _plate;
+    static readonly System.Collections.Generic.Dictionary<int, Mesh> Plates = new System.Collections.Generic.Dictionary<int, Mesh>();
+
+    /// <summary>
+    /// 건물 바닥판: 칸보다 조금 넓은 밝은 콘크리트 판과 턱, 테두리 한 줄은 팀 색이다. 본체는 칸 크기의 BuildingBody 비율로 줄인다.
+    /// </summary>
+    public void AddPlate(float footprintRadius, int color) {
+      var profile = VisualProfile.Current;
+      if (profile.BuildingBody >= 0.999f || _plate != null) {
+        return;
+      }
+      var key = Mathf.RoundToInt(footprintRadius * 100f);
+      if (Plates.TryGetValue(key, out var mesh) == false) {
+        var kit = new MeshKit();
+        var half = footprintRadius * profile.PlateScale;
+        var h = profile.PlateHeight;
+        kit.Paint(Swatch.Concrete).Box(new Vector3(0, h / 2, 0), new Vector3(half * 2, h, half * 2));
+        kit.Team();
+        const float Stripe = 0.22f;
+        var inner = half - 0.35f;
+        foreach (var (x, z, sx, sz) in new[] { (0f, inner, inner * 2, Stripe), (0f, -inner, inner * 2, Stripe), (inner, 0f, Stripe, inner * 2), (-inner, 0f, Stripe, inner * 2) }) {
+          kit.Box(new Vector3(x, h + 0.005f, z), new Vector3(sx, 0.02f, sz));
+        }
+        kit.Paint(Swatch.ConcreteDark);
+        kit.Box(new Vector3(0, h + 0.004f, 0), new Vector3(half * 1.2f, 0.01f, half * 0.5f));
+        mesh = kit.ToMesh("building_plate");
+        Plates[key] = mesh;
+      }
+      _plate = Marker("Plate", transform, mesh);
+      var renderer = _plate.GetComponent<MeshRenderer>();
+      renderer.sharedMaterial = ArtLook.Team(color, true);
+      renderer.receiveShadows = true;
+      Turn.localPosition += Vector3.up * profile.PlateHeight;
+      Model.transform.localScale *= profile.BuildingBody;
+      Model.transform.localPosition *= profile.BuildingBody;
+    }
+
     public void ApplyQuality() {
+      OutlineKit.Refresh(Model);
       if (Entry.Unit == false) {
         return;
       }

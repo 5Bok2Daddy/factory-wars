@@ -68,8 +68,9 @@ namespace FactoryWars.View {
     public int CliffLayers = 3;
     /// <summary>절벽 가장자리의 들쭉날쭉한 정도. 0~1.</summary>
     public float Jagged = 0.5f;
-    public float RiverbedDepth = 0.8f;
-    public float WaterDepth = 0f;
+    /// <summary>고지대 윗면 높이. 판정은 2D이고 화면에서만 올린다.</summary>
+    public float HighGroundHeight = 0f;
+    public float WaterDepth = 0.8f;
     public OutsideMode Outside = OutsideMode.Dark;
     /// <summary>바닥 색 세트 번호. TerrainKit.GroundPalettes.</summary>
     public int GroundPalette = 0;

@@ -9,8 +9,9 @@ namespace FactoryWars.View {
   /// MapSpec에서 바닥과 지형 메쉬를 만든다. 변형값은 지형 번호를 시드로 정해 모든 기기에서 같다.
   /// 화면 전용이다. 통과와 건설 판정은 시뮬레이션의 MapSpec 그대로다.
   /// </summary>
-  public static class TerrainKit {
-    public const float WaterLevel = -0.8f;
+  public static partial class TerrainKit {
+    /// <summary>수면 높이. 프로필의 강 깊이를 따른다.</summary>
+    public static float WaterLevel => -Mathf.Max(0.8f, VisualProfile.Current.WaterDepth);
     const float Step = 4f;
     const float OuterStep = 20f;
     const float Margin = 80f;
@@ -103,10 +104,11 @@ namespace FactoryWars.View {
 
     /// <summary>0~1의 값 노이즈. 흙과 풀의 큰 얼룩을 만든다.</summary>
     static float Noise(float x, float z, int seed) {
-      var cx = Mathf.FloorToInt(x / Patch);
-      var cz = Mathf.FloorToInt(z / Patch);
-      var tx = Smooth(x / Patch - cx);
-      var tz = Smooth(z / Patch - cz);
+      var patch = Mathf.Max(6f, VisualProfile.Current.PatchSize);
+      var cx = Mathf.FloorToInt(x / patch);
+      var cz = Mathf.FloorToInt(z / patch);
+      var tx = Smooth(x / patch - cx);
+      var tz = Smooth(z / patch - cz);
       float Corner(int i, int j) => MeshKit.Hash(seed + (cx + i) * 73, (cz + j) * 31 + 1000);
       return Mathf.Lerp(Mathf.Lerp(Corner(0, 0), Corner(1, 0), tx), Mathf.Lerp(Corner(0, 1), Corner(1, 1), tx), tz);
     }
@@ -123,6 +125,7 @@ namespace FactoryWars.View {
 
     static Swatch GroundColor(MapSpec map, float x, float z, int seed) {
       var noise = Noise(x, z, seed);
+      var profile = VisualProfile.Current;
       var outside = x < map.BoundsMin.X.AsFloat || x > map.BoundsMax.X.AsFloat || z < map.BoundsMin.Y.AsFloat || z > map.BoundsMax.Y.AsFloat;
       // 닫힌 맵: 경계 밖은 경계 벽 뒤로 어둡게 끊는다.
       if (outside) {
@@ -132,7 +135,20 @@ namespace FactoryWars.View {
         return noise < 0.55f ? Swatch.Dirt : Swatch.DirtDark;
       }
       if (Inside(map.BaseAreas, x, z)) {
+        if (profile.ZoneColors) {
+          return noise < 0.45f ? Swatch.Dirt : noise < 0.6f ? Swatch.Concrete : noise < 0.8f ? Swatch.Grass : Swatch.DirtDark;
+        }
         return noise < 0.3f ? Swatch.Dirt : noise < 0.42f ? Swatch.DirtDark : noise < 0.78f ? Swatch.Grass : Swatch.GrassDark;
+      }
+      if (profile.ZoneColors && new Vector2(x, z).magnitude < 26f) {
+        // 중앙 교전지: 그을린 흙.
+        return noise < 0.5f ? Swatch.DirtDark : noise < 0.75f ? Swatch.Earth : Swatch.GrassDark;
+      }
+      if (profile.GroundPalette == 1) {
+        return noise < 0.18f ? Swatch.Dirt : noise < 0.42f ? Swatch.GrassLight : noise < 0.72f ? Swatch.Grass : Swatch.GrassDark;
+      }
+      if (profile.GroundPalette == 2) {
+        return noise < 0.28f ? Swatch.Dirt : noise < 0.4f ? Swatch.DirtDark : noise < 0.7f ? Swatch.Olive : Swatch.GrassDark;
       }
       return noise < 0.2f ? Swatch.Dirt : noise < 0.3f ? Swatch.DirtDark : noise < 0.66f ? Swatch.Grass : Swatch.GrassDark;
     }
@@ -231,8 +247,12 @@ namespace FactoryWars.View {
         k.Paint(Swatch.WaterDeep);
         k.Quad(Edge(a, -1, SlopeInner, WaterLevel), Edge(a, 1, SlopeInner, WaterLevel), Edge(b, 1, SlopeInner, WaterLevel), Edge(b, -1, SlopeInner, WaterLevel), Vector3.up);
         foreach (var side in new[] { -1f, 1f }) {
-          k.Paint(MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.DirtDark);
-          k.Quad(Edge(a, side, BandInner, BankY), Edge(a, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, BandInner, BankY), Vector3.up);
+          var middle = (BankY + WaterLevel) * 0.5f;
+          var ledge = (BandInner + SlopeInner) * 0.5f;
+          k.Paint(MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.CanyonMid);
+          k.Quad(Edge(a, side, BandInner, BankY), Edge(a, side, ledge, middle), Edge(b, side, ledge, middle), Edge(b, side, BandInner, BankY), Vector3.up);
+          k.Paint(Swatch.CanyonDark);
+          k.Quad(Edge(a, side, ledge, middle), Edge(a, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, ledge, middle), Vector3.up);
           if (Folded(path, a, side) || Folded(path, b, side)) {
             continue;
           }
@@ -563,14 +583,15 @@ namespace FactoryWars.View {
 
     /// <summary>언덕·협곡·바위·강·줄무늬를 메쉬 하나로 모은다. 번호는 MapSpec.Terrain의 순서다.</summary>
     public static void Features(MeshKit k, MapSpec map) {
+      var profile = VisualProfile.Current;
       var paths = RiverPaths(map);
       var features = map.Terrain ?? Array.Empty<TerrainFeature>();
       for (var i = 0; i < features.Length; i++) {
         var seed = 100 + i * 17;
         switch (features[i].Kind) {
-          case TerrainKind.Hill: Hill(k, features[i].Shape, seed); break;
-          case TerrainKind.Cliff: Hill(k, features[i].Shape, seed); break;
-          case TerrainKind.CanyonWall: CanyonWall(k, features[i].Shape, seed); break;
+          case TerrainKind.Hill: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * (0.85f + 0.3f * MeshKit.Hash(seed, 5)), profile.CliffLayers, profile.Jagged, false); break;
+          case TerrainKind.Cliff: Plateau(k, features[i].Shape, seed, HighGroundHeight + 0.8f, 1, profile.Jagged * 0.5f, false); break;
+          case TerrainKind.CanyonWall: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * 1.25f, profile.CliffLayers + 1, profile.Jagged, true); break;
           case TerrainKind.Rock: Boulders(k, features[i].Shape, seed); break;
         }
       }
@@ -578,6 +599,17 @@ namespace FactoryWars.View {
         River(k, paths[i], 40 + i, Land(map));
         RiverRocks(k, paths[i], 70 + i, map);
       }
+      Roads(k, map);
+      HighGrounds(k, map);
+      BridgePiers(k, map);
+      if (profile.NoBuildAlways) {
+        NoBuildMarks(k, map);
+      }
+    }
+
+    /// <summary>건설 금지 표시. 프로필에 따라 늘 보이거나, 건설 위치를 고를 때만 보인다.</summary>
+    public static void NoBuildMarks(MeshKit k, MapSpec map) {
+      var paths = RiverPaths(map);
       foreach (var zone in map.NoBuildZones ?? Array.Empty<MapShape>()) {
         NoBuildStripes(k, zone, paths);
       }
