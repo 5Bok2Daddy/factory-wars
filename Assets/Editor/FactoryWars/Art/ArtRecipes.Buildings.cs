@@ -27,7 +27,7 @@ namespace FactoryWars.EditorTools {
         new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.62f, 0), Build = FreeAirMissiles });
       yield return Building("ff_airfield", FreeAirfield, new MovingPart { Name = "Radar", Pivot = new Vector3(2.0f, 3.0f, -0.8f), Build = SmallDish });
       yield return Building("ff_heavy_works", FreeHeavy, new MovingPart { Name = "Hoist", Pivot = new Vector3(0.4f, 4.3f, -2.45f), Build = Hoist });
-      yield return Building("ff_shipyard", FreeShipyard, new MovingPart { Name = "Crane", Pivot = new Vector3(-1.8f, 2.8f, 0.5f), Build = RoofCrane });
+      yield return Building("ff_shipyard", FreeShipyard, new MovingPart { Name = "Crane", Pivot = new Vector3(0f, 2.8f, -0.6f), Build = RoofCrane });
 
       yield return Building("cf_collection_yard", ContinentalYard, new MovingPart { Name = "Forklift", Pivot = new Vector3(0.5f, Floor, 0.9f), Build = Forklift });
       yield return Building("cf_supply_depot", ContinentalDepot, new MovingPart { Name = "Door", Pivot = new Vector3(-0.5f, Floor, 1.16f), Build = ContinentalDepotDoor });

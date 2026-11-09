@@ -75,7 +75,7 @@ namespace FactoryWars.View {
       top.anchorMin = new Vector2(0, 1);
       top.anchorMax = Vector2.one;
       top.pivot = new Vector2(0.5f, 1);
-      top.sizeDelta = new Vector2(0, 80);
+      top.sizeDelta = new Vector2(0, 92);
       _resources.Clear();
       foreach (var (icon, x, width) in ResourceSlots) {
         var capsule = Ui.Capsule($"{icon}_capsule", top, new Color(0.96f, 0.98f, 1f, 0.95f));
@@ -88,9 +88,9 @@ namespace FactoryWars.View {
       }
 
       var diplomacyButton = Ui.Button("DiplomacyButton", top, "외교", ToggleDiplomacy);
-      Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-180, -6), new Vector2(160, 56));
+      Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-180, -6), new Vector2(160, 76));
       var menuButton = Ui.Button("MenuButton", top, "메뉴", () => Controller.TogglePause());
-      Ui.Place((RectTransform)menuButton.transform, Vector2.one, new Vector2(-12, -6), new Vector2(160, 56));
+      Ui.Place((RectTransform)menuButton.transform, Vector2.one, new Vector2(-12, -6), new Vector2(160, 76));
 
       _truce = Ui.Label("Truce", Root, "", 34, TextAnchor.MiddleCenter);
       Ui.Place(_truce.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -84), new Vector2(1200, 50));
@@ -108,9 +108,9 @@ namespace FactoryWars.View {
 
       // 왼쪽 아래 미니맵 오른쪽: 선택·부대 버튼 (동글동글한 팝 UI).
       var actions = Ui.Rect("Actions", Root);
-      Ui.Place(actions, Vector2.zero, new Vector2(324, 12), new Vector2(3 * 144, 2 * 144));
+      Ui.Place(actions, Vector2.zero, new Vector2(324, 12), new Vector2(3 * 150, 2 * 150));
       var grid = actions.gameObject.AddComponent<GridLayoutGroup>();
-      grid.cellSize = new Vector2(134, 134);
+      grid.cellSize = new Vector2(140, 140);
       grid.spacing = new Vector2(10, 10);
       grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
       grid.constraintCount = 3;
@@ -140,7 +140,7 @@ namespace FactoryWars.View {
       var slots = Ui.Rect("Slots", panel);
       Ui.Place(slots, Vector2.zero, new Vector2(10, 10), new Vector2(6 * 144, 2 * 144));
       var slotGrid = slots.gameObject.AddComponent<GridLayoutGroup>();
-      slotGrid.cellSize = new Vector2(134, 134);
+      slotGrid.cellSize = new Vector2(140, 140);
       slotGrid.spacing = new Vector2(10, 10);
       slotGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
       slotGrid.constraintCount = 6;
@@ -148,6 +148,7 @@ namespace FactoryWars.View {
       for (var i = 0; i < ContextSlots; i++) {
         var index = i;
         _context[i] = Ui.Button($"Context{i}", slots, "", () => PressContext(index), 22);
+        ((RectTransform)_context[i].transform).sizeDelta = new Vector2(Ui.MinButtonSize, Ui.MinButtonSize);
       }
 
       BuildDiplomacy(frame);

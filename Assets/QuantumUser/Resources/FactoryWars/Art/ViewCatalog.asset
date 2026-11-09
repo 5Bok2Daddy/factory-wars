@@ -363,7 +363,7 @@ MonoBehaviour:
     DisplayScale: 1
     Altitude: 0
     Center: {x: 0, y: 0}
-    RingRadius: 3.7940476
+    RingRadius: 3.24
     BarHeight: 4.07
     MuzzlePart: Model
     Muzzle: {x: 0, y: 0.8, z: 2.98}

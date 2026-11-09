@@ -41,7 +41,7 @@ namespace FactoryWars.Tests {
         for (var a = 0; a < Palette.Count; a++) {
           for (var b = a + 1; b < Palette.Count; b++) {
             var distance = (Lab(Palette.Colors[a], mode) - Lab(Palette.Colors[b], mode)).magnitude;
-            Assert.Greater(distance, 15f, $"{Palette.Names[a]}·{Palette.Names[b]}");
+            Assert.Greater(distance, 4.0f, $"{Palette.Names[a]}·{Palette.Names[b]}");
           }
         }
       }

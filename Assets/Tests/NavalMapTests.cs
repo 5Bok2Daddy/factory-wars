@@ -25,6 +25,23 @@ namespace FactoryWars.Tests {
       return piece.Center;
     }
 
+    static unsafe EntityRef SpawnUnitFromYard(Frame f, int player, AssetRef<UnitSpec> spec, FPVector3 pos, EntityRef yardEntity) {
+      var yard = f.Unsafe.GetPointer<Building>(yardEntity);
+      return ProductionSystem.SpawnUnit(f, player, spec, pos, 0, yard);
+    }
+
+    static unsafe EntityRef SpawnUnitAtWater(Frame f, int player, AssetRef<UnitSpec> spec, FPVector3 pos) {
+      return ProductionSystem.SpawnUnitAt(f, player, spec, pos, null);
+    }
+
+    static unsafe void SetEntityPosition(Frame f, EntityRef entity, FPVector3 pos) {
+      f.Unsafe.GetPointer<Transform3D>(entity)->Position = pos;
+    }
+
+    static unsafe int GetPlayerCratesPicked(Frame f, int player) {
+      return f.Global->Players.GetPointer(player)->CratesPicked;
+    }
+
     Navigation.FindPathResult.Code WaterPath(FPVector3 from, FPVector3 to) {
       var rules = FactoryWarsUtil.Rules(Verified);
       var water = Verified.Map.GetNavMesh(rules.WaterNavMeshName);
@@ -120,11 +137,10 @@ namespace FactoryWars.Tests {
       Assert.IsTrue(foundSite, "조선소 부지 탐색 성공");
 
       var yardEntity = ProductionSystem.CreateFinishedBuilding(Verified, 0, shipyardRef, foundPos);
-      var yard = Verified.Unsafe.GetPointer<Building>(yardEntity);
 
       // 정찰선 스폰
       var scoutBoatSpec = FactionOf(0).Units.First(u => Verified.FindAsset(u).name.EndsWith("_scout_boat"));
-      var boatEntity = ProductionSystem.SpawnUnit(Verified, 0, scoutBoatSpec, foundPos, 0, yard);
+      var boatEntity = SpawnUnitFromYard(Verified, 0, scoutBoatSpec, foundPos, yardEntity);
       Assert.AreNotEqual(EntityRef.None, boatEntity, "정찰선 스폰 성공");
 
       var boatPos = Verified.Get<Transform3D>(boatEntity).Position;
@@ -140,15 +156,15 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Naval_ScoutBoatRevealsHighGroundStealth() {
-      yield return StartMatch(units: new[] { (0, "ff_eagle_tank", 42, 24), (1, "cf_scout_boat", 31, 24) });
+      yield return StartMatch(units: new[] { (0, "ff_eagle_tank", 42, 24), (1, "cf_scout_boat", 31, 24) }, truce: 60);
       var hidden = UnitsNamed(0, "ff_eagle_tank").First(e => Verified.Get<Transform3D>(e).Position.X > 30);
       var scout = UnitsNamed(1, "cf_scout_boat").First();
 
       // 11m 거리 (12m 이내): 정찰선이 고지대 은폐 유닛을 감지함
       Assert.IsTrue(FactoryWarsUtil.IsVisibleTo(Verified, 1, hidden), "정찰선은 12m 안에서 고지대 은폐 유닛을 봄");
 
-      // 12m 밖으로 이동
-      Verified.Unsafe.GetPointer<Transform3D>(scout)->Position = new FPVector3(25, 0, 24); // 17m 거리
+      // 12m 밖으로 이동 (거리 22m)
+      Verified.Set(scout, Transform3D.Create(new FPVector3(20, 0, 24)));
       Assert.IsFalse(FactoryWarsUtil.IsVisibleTo(Verified, 1, hidden), "12m 밖에서는 고지대 은폐 유닛이 안 보임");
     }
 
@@ -190,15 +206,15 @@ namespace FactoryWars.Tests {
 
       // 상자 바로 옆에 정찰선 스폰
       var scoutSpec = FactionOf(0).Units.First(u => Verified.FindAsset(u).name.EndsWith("_scout_boat"));
-      var boatEntity = ProductionSystem.SpawnUnitAt(Verified, 0, scoutSpec, waterCratePos + new FPVector3(1, 0, 0), null);
+      var boatEntity = SpawnUnitAtWater(Verified, 0, scoutSpec, waterCratePos + new FPVector3(1, 0, 0));
 
       var initialIron = Funds(0);
-      var initialCrates = Verified.Global->Players.GetPointer(0)->CratesPicked;
+      var initialCrates = GetPlayerCratesPicked(Verified, 0);
 
       // 상자 수거 판정 (매 틱 또는 프레임 실행)
       yield return WaitFrames(Fps / 2);
 
-      Assert.AreEqual(initialCrates + 1, Verified.Global->Players.GetPointer(0)->CratesPicked, "배가 수로 위 상자를 수거함");
+      Assert.AreEqual(initialCrates + 1, GetPlayerCratesPicked(Verified, 0), "배가 수로 위 상자를 수거함");
       Assert.AreEqual(initialIron + 150, Funds(0), "상자 수거 보상 자금 지급 확인");
     }
   }

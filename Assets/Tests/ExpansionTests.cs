@@ -154,20 +154,20 @@ namespace FactoryWars.Tests {
       var hud = Controller().Hud;
       Controller().Input.Selection.SelectUnit(Engineers(0)[0]);
       hud.Refresh(Controller().Frame);
-      Assert.AreEqual(12, hud.Entries.Count);
+      Assert.AreEqual(13, hud.Entries.Count);
       Assert.AreEqual(2, hud.ContextPages);
       Assert.AreEqual(0, hud.ContextPage);
-      hud.PressContext(9);
+      hud.PressContext(11);
       Assert.AreEqual(1, hud.ContextPage, "다음 쪽");
       Assert.IsFalse(Controller().Input.IsPlacing, "쪽 넘김은 건물을 고르지 않음");
 
       var hqIndex = hud.Entries.FindIndex(e => e.Label.StartsWith("사령부"));
-      Assert.GreaterOrEqual(hqIndex, 9, "사령부는 둘째 쪽");
-      hud.PressContext(hqIndex - 9);
+      Assert.GreaterOrEqual(hqIndex, 11, "사령부는 둘째 쪽");
+      hud.PressContext(hqIndex - 11);
       Assert.IsTrue(Controller().Input.IsPlacing, "둘째 쪽 칸이 맞는 건물을 고름");
       Assert.AreEqual(BuildingOf(0, "_headquarters"), Controller().Input.Placing);
 
-      hud.PressContext(9);
+      hud.PressContext(11);
       Assert.AreEqual(0, hud.ContextPage, "처음으로 돌아옴");
     }
 

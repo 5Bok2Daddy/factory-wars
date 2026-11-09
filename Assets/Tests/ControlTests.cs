@@ -217,7 +217,7 @@ namespace FactoryWars.Tests {
       var hud = Controller().Hud;
       Controller().Input.Selection.SelectUnit(Engineers(0)[0]);
       hud.Refresh(Controller().Frame);
-      Assert.AreEqual(12, hud.Entries.Count, "사령부를 포함한 건물 전부");
+      Assert.AreEqual(13, hud.Entries.Count, "사령부를 포함한 건물 전부");
       var depot = hud.Entries.First(e => e.Label.StartsWith("보급창"));
       Assert.IsTrue(depot.Enabled);
       Assert.IsTrue(depot.Label.Contains("철 100"), depot.Label);
@@ -290,7 +290,8 @@ namespace FactoryWars.Tests {
       yield return WaitForHud();
       foreach (var button in Controller().Hud.GetComponentsInChildren<Button>(true)) {
         var rect = (RectTransform)button.transform;
-        var size = rect.GetComponentInParent<GridLayoutGroup>() != null ? rect.GetComponentInParent<GridLayoutGroup>().cellSize : rect.sizeDelta;
+        var grid = rect.GetComponentInParent<GridLayoutGroup>(true);
+        var size = grid != null ? grid.cellSize : rect.sizeDelta;
         Assert.GreaterOrEqual(Mathf.Min(size.x, size.y), button.name == "DiplomacyButton" || button.name == "MenuButton" ? 76f : Ui.MinButtonSize, button.name);
       }
       var scaler = Controller().Hud.GetComponentInChildren<CanvasScaler>();

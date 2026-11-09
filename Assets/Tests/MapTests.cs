@@ -143,6 +143,10 @@ namespace FactoryWars.Tests {
         Check(ring, "점령지");
       }
       foreach (var spot in spec.CrateSpots) {
+        // 항목 24 해군: 외곽 수로 위 상자는 배가 수거하는 수상 상자이므로 지상 NavMesh 도달성 검사 제외
+        if (spec.Channel != null && spec.Channel.Any(c => c.Distance(spot.Position) <= FP._0)) {
+          continue;
+        }
         Check(spot.Position, "상자");
       }
       foreach (var ground in spec.HighGrounds) {
@@ -341,7 +345,7 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(4, spec.Barricades.Length);
       Assert.AreEqual(4, spec.HighGrounds.Length);
       Assert.AreEqual(4, spec.Fords.Length);
-      Assert.AreEqual(8, spec.CrateSpots.Count(s => s.Seat < 0), "투하 후보지");
+      Assert.AreEqual(12, spec.CrateSpots.Count(s => s.Seat < 0), "투하 후보지");
 
       var ironGates = new[] { GateBlock(-140, -97, 7, 4), GateBlock(-102, -64, 8, 12), GateBlock(-151, -48, 11, 8) };
       AssertSealed(spec, new Vector2(-136, -72), new Vector2(-60, -40), ironGates, "철 앞마당에서 중앙");

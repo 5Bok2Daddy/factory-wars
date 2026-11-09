@@ -175,10 +175,10 @@ namespace FactoryWars.View {
         // 항목 27 K: 본진 내부는 시작지점/건물 중심 14m 밝은 보도블록 패드(#C1C9E4), 외곽은 회보라 바닥(#ABB3CC)
         if (Inside(map.BaseAreas, x, z)) {
           var nearStart = false;
-          if (map.Starts != null) {
-            for (var s = 0; s < map.Starts.Length; s++) {
-              var dx = x - map.Starts[s].X.AsFloat;
-              var dz = z - map.Starts[s].Z.AsFloat;
+          if (map.StartPositions != null) {
+            for (var s = 0; s < map.StartPositions.Length; s++) {
+              var dx = x - map.StartPositions[s].X.AsFloat;
+              var dz = z - map.StartPositions[s].Z.AsFloat;
               if (dx * dx + dz * dz <= 14f * 14f) {
                 nearStart = true;
                 break;
