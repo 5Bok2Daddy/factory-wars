@@ -663,32 +663,29 @@ namespace FactoryWars.View {
       return pieces;
     }
 
-    /// <summary>방벽처럼 두꺼운 금속 기둥(굵기 2배, 높이 약 3.5m)과 가로 패널 3단. 팀 색은 패널 테두리에만 쓴다. 경고등은 따로 모아 깜빡인다.</summary>
+    /// <summary>깔끔한 화이트/파스텔 그레이 둥근 블록형 바리케이드 (city-kit-roads / modular-buildings 스타일)</summary>
     public static void Fence(MeshKit body, MeshKit lamps, FencePiece piece) {
       var delta = piece.To - piece.From;
       var length = delta.magnitude;
       var yaw = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
       body.Push(piece.From, new Vector3(0, yaw, 0));
       lamps.Push(piece.From, new Vector3(0, yaw, 0));
-      const float Post = 3.3f;
+      const float Post = 1.35f;
       foreach (var z in new[] { 0f, length }) {
-        body.Paint(Swatch.MetalDark);
-        body.Taper(new Vector3(0, 0, z), new Vector2(1.2f, 1.2f), new Vector2(0.84f, 0.84f), Post);
-        body.Paint(Swatch.Metal);
-        body.Box(new Vector3(0, Post + 0.06f, z), new Vector3(1f, 0.14f, 1f));
-        body.Paint(Swatch.LampDark);
-        body.Cylinder(new Vector3(0, Post + 0.13f, z), 0.2f, 0.1f, 6);
-        lamps.Glow(Swatch.GlowRed);
-        lamps.Dome(new Vector3(0, Post + 0.23f, z), 0.24f, 0.28f, 6, 2);
+        body.Paint(Swatch.Concrete);
+        body.Cylinder(new Vector3(0, Post * 0.5f, z), 0.48f, Post, 8);
+        body.Paint(Swatch.ConcreteDark);
+        body.Dome(new Vector3(0, Post, z), 0.5f, 0.22f, 8, 3);
+        lamps.Glow(Swatch.GlowCyan);
+        lamps.Dome(new Vector3(0, Post + 0.14f, z), 0.24f, 0.18f, 6, 2);
       }
-      var inner = length - 0.8f;
-      foreach (var y in new[] { 0.75f, 1.75f, 2.75f }) {
-        body.Paint(Swatch.Armor);
-        body.Box(new Vector3(0, y, length / 2), new Vector3(0.32f, 0.82f, inner));
-        body.Team();
-        body.Box(new Vector3(0, y + 0.43f, length / 2), new Vector3(0.38f, 0.1f, inner));
-        body.Box(new Vector3(0, y - 0.43f, length / 2), new Vector3(0.38f, 0.1f, inner));
-      }
+      var inner = Mathf.Max(0.1f, length - 0.7f);
+      body.Paint(Swatch.Concrete);
+      body.Box(new Vector3(0, 0.5f, length / 2), new Vector3(0.44f, 0.75f, inner));
+      body.Team();
+      body.Box(new Vector3(0, 0.88f, length / 2), new Vector3(0.48f, 0.12f, inner));
+      body.Paint(Swatch.ConcreteDark);
+      body.Box(new Vector3(0, 0.96f, length / 2), new Vector3(0.52f, 0.08f, inner));
       body.Pop();
       lamps.Pop();
     }
@@ -699,12 +696,14 @@ namespace FactoryWars.View {
       var profile = VisualProfile.Current;
       var paths = RiverPaths(map);
       var features = map.Terrain ?? Array.Empty<TerrainFeature>();
+      // 품질 낮음은 절벽 층을 절반으로 합친다(높이는 같다, 절벽 블록·삼각형 절반, 항목 27 성능).
+      var layers = GraphicsQuality.Current == QualityTier.Low ? Mathf.Max(1, (profile.CliffLayers + 1) / 2) : profile.CliffLayers;
       for (var i = 0; i < features.Length; i++) {
         var seed = 100 + i * 17;
         switch (features[i].Kind) {
-          case TerrainKind.Hill: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * (0.85f + 0.3f * MeshKit.Hash(seed, 5)), profile.CliffLayers, profile.Jagged, false); break;
+          case TerrainKind.Hill: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * (0.85f + 0.3f * MeshKit.Hash(seed, 5)), layers, profile.Jagged, false); break;
           case TerrainKind.Cliff: Plateau(k, features[i].Shape, seed, HighGroundHeight + 0.8f, 1, profile.Jagged * 0.5f, false); break;
-          case TerrainKind.CanyonWall: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * 1.25f, profile.CliffLayers + 1, profile.Jagged, true); break;
+          case TerrainKind.CanyonWall: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * 1.25f, layers + 1, profile.Jagged, true); break;
           case TerrainKind.Rock: Boulders(k, features[i].Shape, seed); break;
         }
       }

@@ -844,24 +844,28 @@ namespace FactoryWars.EditorTools {
     /// <summary>항상 내려진 나무 다리. Z축으로 건너고 원점이 땅 높이다.</summary>
     static void Bridge(MeshKit k) {
       const float Half = 5.2f;
-      k.Paint(Swatch.WoodDark);
-      foreach (var x in new[] { -6.2f, -2f, 2f, 6.2f }) {
-        k.Box(new Vector3(x, 0.02f, 0), new Vector3(0.34f, 0.2f, Half * 2));
-      }
-      for (var i = 0; i < 13; i++) {
-        k.Paint(i % 2 == 0 ? Swatch.Wood : Swatch.WoodDark);
-        k.Box(new Vector3(0, 0.14f, -Half + 0.4f + i * 0.8f), new Vector3(12.6f, 0.08f, 0.74f));
-      }
+      // 깔끔한 화이트/파스텔 그레이 장난감 교량 (city-kit-roads / modular-buildings 스타일)
+      k.Paint(Swatch.Concrete);
+      k.Box(new Vector3(0, 0.05f, 0), new Vector3(12.8f, 0.22f, Half * 2));
+      k.Paint(Swatch.ConcreteDark);
+      k.Box(new Vector3(0, 0.17f, 0), new Vector3(10.8f, 0.04f, Half * 2));
+      k.Paint(Swatch.LaneWhite);
+      k.Box(new Vector3(0, 0.2f, 0), new Vector3(0.24f, 0.02f, Half * 2));
+      k.Box(new Vector3(-4.6f, 0.2f, 0), new Vector3(0.18f, 0.02f, Half * 2));
+      k.Box(new Vector3(4.6f, 0.2f, 0), new Vector3(0.18f, 0.02f, Half * 2));
       foreach (var side in new[] { -1f, 1f }) {
-        k.Paint(Swatch.Stone);
-        k.Taper(new Vector3(side * 6.6f, -1f, 3.4f), new Vector2(0.9f, 0.9f), new Vector2(0.62f, 0.62f), 1.9f);
-        k.Taper(new Vector3(side * 6.6f, -1f, -3.4f), new Vector2(0.9f, 0.9f), new Vector2(0.62f, 0.62f), 1.9f);
-        k.Paint(Swatch.WoodDark);
-        k.Box(new Vector3(side * 6.4f, 0.55f, 0), new Vector3(0.12f, 0.12f, 6.8f));
+        k.Paint(Swatch.White);
+        k.Box(new Vector3(side * 5.8f, 0.45f, 0), new Vector3(0.36f, 0.45f, Half * 2));
+        k.Paint(Swatch.ConcreteDark);
+        k.Box(new Vector3(side * 5.8f, 0.7f, 0), new Vector3(0.44f, 0.08f, Half * 2));
+        for (var i = -4; i <= 4; i += 2) {
+          k.Paint(Swatch.White);
+          k.Cylinder(new Vector3(side * 5.8f, 0.65f, i), 0.26f, 0.32f, 8);
+        }
       }
-      k.Paint(Swatch.MetalDark);
-      foreach (var x in new[] { -3f, 3f }) {
-        k.Box(new Vector3(x, -0.5f, 0), new Vector3(0.4f, 0.9f, 0.4f));
+      k.Paint(Swatch.Concrete);
+      foreach (var x in new[] { -3.6f, 3.6f }) {
+        k.Cylinder(new Vector3(x, -0.6f, 0), 0.65f, 1.2f, 10);
       }
     }
   }

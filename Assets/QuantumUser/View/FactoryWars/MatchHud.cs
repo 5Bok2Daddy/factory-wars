@@ -22,7 +22,7 @@ namespace FactoryWars.View {
     const float RefreshSeconds = 0.2f;
     const float AlertSeconds = 3f;
     const float NoteSeconds = 3f;
-    const int ContextSlots = 10;
+    const int ContextSlots = 12;
     const int PagedSlots = ContextSlots - 1;
 
     public readonly List<ContextEntry> Entries = new List<ContextEntry>();
@@ -70,27 +70,26 @@ namespace FactoryWars.View {
       canvas.transform.SetParent(transform, false);
       Root = Ui.SafeArea(canvas);
 
-      var top = Ui.Panel("TopBar", Root);
+      var top = Ui.Rect("TopBar", Root);
       top.anchorMin = new Vector2(0, 1);
       top.anchorMax = Vector2.one;
       top.pivot = new Vector2(0.5f, 1);
-      top.sizeDelta = new Vector2(0, 76);
+      top.sizeDelta = new Vector2(0, 80);
+      _resources.Clear();
       foreach (var (icon, x, width) in ResourceSlots) {
-        var image = Ui.Icon(icon, top, icon, new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(60, 60));
-        var rect = (RectTransform)image.transform;
-        rect.pivot = new Vector2(0, 0.5f);
-        rect.anchoredPosition = new Vector2(x, 0);
-        var value = Ui.Label($"{icon}_value", top, "", 34);
-        Ui.Place(value.rectTransform, new Vector2(0, 0.5f), new Vector2(x + 66, 0), new Vector2(width - 66, 60));
-        value.rectTransform.pivot = new Vector2(0, 0.5f);
-        value.rectTransform.anchoredPosition = new Vector2(x + 66, 0);
+        var capsule = Ui.Capsule($"{icon}_capsule", top, new Color(0.96f, 0.98f, 1f, 0.95f));
+        Ui.Place(capsule, new Vector2(0, 0.5f), new Vector2(x, -6), new Vector2(width, 56));
+        var image = Ui.Icon(icon, capsule, icon, new Vector2(0, 0.5f), new Vector2(6, 0), new Vector2(44, 44));
+        var value = Ui.Label($"{icon}_value", capsule, "", 30);
+        value.color = new Color(0.16f, 0.20f, 0.30f, 1f);
+        Ui.Place(value.rectTransform, new Vector2(0, 0.5f), new Vector2(54, 0), new Vector2(width - 58, 48));
         _resources.Add((image, value));
       }
 
       var diplomacyButton = Ui.Button("DiplomacyButton", top, "외교", ToggleDiplomacy);
-      Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-170, 0), new Vector2(160, 76));
+      Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-180, -6), new Vector2(160, 56));
       var menuButton = Ui.Button("MenuButton", top, "메뉴", () => Controller.TogglePause());
-      Ui.Place((RectTransform)menuButton.transform, Vector2.one, Vector2.zero, new Vector2(160, 76));
+      Ui.Place((RectTransform)menuButton.transform, Vector2.one, new Vector2(-12, -6), new Vector2(160, 56));
 
       _truce = Ui.Label("Truce", Root, "", 34, TextAnchor.MiddleCenter);
       Ui.Place(_truce.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -84), new Vector2(1200, 50));
@@ -106,11 +105,11 @@ namespace FactoryWars.View {
       _minimap.Init(frame.FindAsset<MapSpec>(frame.Map.UserAsset));
       _minimap.OnPick = world => Controller.Camera.MoveTo(world);
 
-      // 왼쪽 아래 미니맵 오른쪽: 선택·부대 버튼.
+      // 왼쪽 아래 미니맵 오른쪽: 선택·부대 버튼 (동글동글한 팝 UI).
       var actions = Ui.Rect("Actions", Root);
-      Ui.Place(actions, Vector2.zero, new Vector2(324, 12), new Vector2(3 * 150, 2 * 150));
+      Ui.Place(actions, Vector2.zero, new Vector2(324, 12), new Vector2(3 * 144, 2 * 144));
       var grid = actions.gameObject.AddComponent<GridLayoutGroup>();
-      grid.cellSize = new Vector2(Ui.MinButtonSize, Ui.MinButtonSize);
+      grid.cellSize = new Vector2(134, 134);
       grid.spacing = new Vector2(10, 10);
       grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
       grid.constraintCount = 3;
@@ -126,22 +125,23 @@ namespace FactoryWars.View {
         _groupButtons[i] = Ui.Button($"Group{i + 1}", actions, $"{i + 1}부대", () => PressGroup(index));
       }
 
-      // 오른쪽 아래: 건설·생산 패널.
-      var panel = Ui.Panel("ContextPanel", Root);
-      Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 12), new Vector2(5 * 150 + 10, 2 * 150 + 70));
+      // 오른쪽 아래: 한눈에 보기 건설·생산 패널 (화이트/파스텔 톤 둥근 패널).
+      var panel = Ui.Panel("ContextPanel", Root, new Color(0.96f, 0.98f, 1f, 0.92f));
+      Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 12), new Vector2(6 * 144 + 20, 2 * 144 + 64));
       _status = Ui.Label("Status", panel, "", 28);
+      _status.color = new Color(0.16f, 0.20f, 0.30f, 1f);
       _status.rectTransform.anchorMin = new Vector2(0, 1);
       _status.rectTransform.anchorMax = Vector2.one;
       _status.rectTransform.pivot = new Vector2(0.5f, 1);
-      _status.rectTransform.sizeDelta = new Vector2(-20, 60);
+      _status.rectTransform.sizeDelta = new Vector2(-20, 50);
       _status.rectTransform.anchoredPosition = new Vector2(0, -4);
       var slots = Ui.Rect("Slots", panel);
-      Ui.Place(slots, Vector2.zero, new Vector2(10, 10), new Vector2(5 * 150, 2 * 150));
+      Ui.Place(slots, Vector2.zero, new Vector2(10, 10), new Vector2(6 * 144, 2 * 144));
       var slotGrid = slots.gameObject.AddComponent<GridLayoutGroup>();
-      slotGrid.cellSize = new Vector2(Ui.MinButtonSize, Ui.MinButtonSize);
+      slotGrid.cellSize = new Vector2(134, 134);
       slotGrid.spacing = new Vector2(10, 10);
       slotGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-      slotGrid.constraintCount = 5;
+      slotGrid.constraintCount = 6;
       _context = new Button[ContextSlots];
       for (var i = 0; i < ContextSlots; i++) {
         var index = i;

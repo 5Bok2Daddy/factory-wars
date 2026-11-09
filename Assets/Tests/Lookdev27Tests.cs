@@ -66,6 +66,11 @@ namespace FactoryWars.Tests {
       Debug.Log($"[FW-K0-GAME] {tier} C {checkC}");
       cells.Add((Shoot(camera, CellWidth * 2, CellHeight * 2), $"K {tier} [C] 중앙 draw~{EstimateDrawCalls(seen)} tris {seen.Triangles / 1000}k"));
       Aim(camera, map.StartPositions[0].ToUnityVector3() + new Vector3(8, 0, 6), profile.DefaultHeight);
+      if (big) {
+        var hudFull = ShootHud(camera, 1920, 1080);
+        File.WriteAllBytes(Path.Combine(LookdevShots(), "27_toy_diorama_fixed.png"), hudFull.EncodeToPNG());
+        Object.Destroy(hudFull);
+      }
       cells.Add((ShootHud(camera, CellWidth * 2, CellHeight * 2), $"K {tier} [E] HUD"));
     }
 

@@ -49,8 +49,8 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Palette_KeepsFactionRecommendations() {
-      Assert.AreEqual(new Color32(0x1F, 0x3A, 0x6B, 0xFF), Palette.Colors[Palette.Recommended(0)], "자유 연방 남색");
-      Assert.AreEqual(new Color32(0xA3, 0x22, 0x2B, 0xFF), Palette.Colors[Palette.Recommended(1)], "대륙 연방 진홍");
+      Assert.AreEqual(new Color32(0x5B, 0x8D, 0xEF, 0xFF), Palette.Colors[Palette.Recommended(0)], "자유 연방 남색");
+      Assert.AreEqual(new Color32(0xFF, 0x6B, 0x6B, 0xFF), Palette.Colors[Palette.Recommended(1)], "대륙 연방 진홍");
     }
 
     static int ColorOf(int player) => StateOf(player).ColorIndex;

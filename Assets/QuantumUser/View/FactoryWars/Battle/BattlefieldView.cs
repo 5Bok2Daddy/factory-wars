@@ -275,7 +275,7 @@ namespace FactoryWars.View {
         UpdateSite(frame, view, site, rules.CaptureSeconds.AsFloat);
       }
       var crates = frame.Filter<Transform3D, SupplyCrate>();
-      while (crates.NextUnsafe(out var entity, out var transform, out _)) {
+      while (crates.NextUnsafe(out var entity, out var transform, out var supplyCrate)) {
         _seen.Add(entity);
         if (_crates.ContainsKey(entity) == false) {
           var crate = new GameObject("Crate");
@@ -283,13 +283,17 @@ namespace FactoryWars.View {
           crate.transform.localPosition = transform->Position.ToUnityVector3();
           var body = Item(crate.transform, "Body", CrateMesh(), ArtLook.NeutralMaterial);
           body.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
-          Item(body.transform, "Parachute", ParachuteMesh(), ArtLook.NeutralMaterial);
+          var parachute = Item(body.transform, "Parachute", ParachuteMesh(), ArtLook.NeutralMaterial);
           var dressedCrate = DressingSpawn.Place(DressKind.SupplyCrate, body.transform, Vector3.zero, entity.Index * 90f, 8400 + entity.Index);
           if (dressedCrate != null) {
             dressedCrate.name = "KenneyCrate";
           }
           _crates[entity] = crate;
-          _falling[entity] = 0f;
+          if (supplyCrate->Seat >= 0) {
+            parachute.SetActive(false);
+          } else {
+            _falling[entity] = 0f;
+          }
         }
         if (_falling.TryGetValue(entity, out var age)) {
           // 하강 연출: 낙하산을 펴고 내려와 땅에 닿으면 접는다. 판정 위치는 처음부터 땅이다.
@@ -298,7 +302,10 @@ namespace FactoryWars.View {
           var t = Mathf.Clamp01(age / DropSeconds);
           body.localPosition = Vector3.up * DropHeight * (1f - t) * (1f - t);
           if (t >= 1f) {
-            body.GetChild(0).gameObject.SetActive(false);
+            var chute = body.Find("Parachute");
+            if (chute != null) {
+              chute.gameObject.SetActive(false);
+            }
             _falling.Remove(entity);
           } else {
             _falling[entity] = age;

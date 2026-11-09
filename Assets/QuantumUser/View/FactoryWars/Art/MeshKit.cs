@@ -112,27 +112,55 @@ namespace FactoryWars.View {
       return pixels;
     }
 
-    static readonly Swatch[] Lifted = { Swatch.Metal, Swatch.MetalDark, Swatch.MetalLight, Swatch.Armor, Swatch.ArmorDark, Swatch.Olive, Swatch.OliveDark, Swatch.Rubber };
+    static readonly Swatch[] Lifted = { Swatch.Metal, Swatch.MetalDark, Swatch.MetalLight, Swatch.Armor, Swatch.ArmorDark, Swatch.Olive, Swatch.OliveDark, Swatch.Rubber, Swatch.Black };
 
     /// <summary>
-    /// 프로필에 따른 칸 색 보정(항목 27 K): 유닛·플레이어 건물 몸체 칸(금속·장갑·국방색)을 밝은 기본색 쪽으로 올리고, 물 칸은 프로필 물색으로 바꾼다.
-    /// 팀 색·발광 칸은 건드리지 않는다. 팔레트를 구울 때(에디터) 한 번 적용된다.
+    /// 프로필에 따른 칸 색 보정(항목 27 K 교정): 100% Kenney 파스텔 장난감 디오라마 팔레트.
+    /// 유닛·사령부·건물은 깨끗한 화이트/크림(#EDF0F7) 베이스와 부드러운 음영, 민트 잔디(#7BE5BA), 파스텔 암벽(#9AA5B8).
     /// </summary>
     static Color32 Adjust(Swatch swatch, Color32 color) {
       var profile = VisualProfile.Current;
-      if (profile.PaletteLift > 0f && System.Array.IndexOf(Lifted, swatch) >= 0) {
+      if (profile.SolidGround) {
+        switch (swatch) {
+          case Swatch.Metal:
+          case Swatch.Armor:
+            return new Color32(0xED, 0xF0, 0xF7, 0xFF);
+          case Swatch.MetalDark:
+          case Swatch.ArmorDark:
+            return new Color32(0xC2, 0xCB, 0xD9, 0xFF);
+          case Swatch.MetalLight:
+            return new Color32(0xFF, 0xFF, 0xFF, 0xFF);
+          case Swatch.Rubber:
+          case Swatch.Black:
+            return new Color32(0x56, 0x60, 0x72, 0xFF);
+          case Swatch.Glass:
+            return new Color32(0x8C, 0xE8, 0xFF, 0xFF);
+          case Swatch.Wood:
+          case Swatch.WoodDark:
+            return new Color32(0xED, 0xF0, 0xF7, 0xFF);
+          case Swatch.Stone:
+            return new Color32(0x9A, 0xA5, 0xB8, 0xFF);
+          case Swatch.Concrete:
+            return new Color32(0xED, 0xF0, 0xF7, 0xFF);
+          case Swatch.ConcreteDark:
+            return new Color32(0xC2, 0xCB, 0xD9, 0xFF);
+          case Swatch.Grass:
+          case Swatch.GrassLight:
+          case Swatch.GrassDark:
+            return new Color32(0x7B, 0xE5, 0xBA, 0xFF);
+          case Swatch.ForestFloor:
+            return new Color32(0x6A, 0xD4, 0xA8, 0xFF);
+          case Swatch.RockFace:
+          case Swatch.RockFaceDark:
+          case Swatch.RockFaceLight:
+            return new Color32(0x9A, 0xA5, 0xB8, 0xFF);
+          case Swatch.GlowRed:
+            return new Color32(0xFF, 0x6B, 0x6B, 0xFF);
+        }
+      } else if (profile.PaletteLift > 0f && System.Array.IndexOf(Lifted, swatch) >= 0) {
         var c = (Color)color;
         var lifted = Color.Lerp(c, new Color(0.93f, 0.92f, 0.9f), profile.PaletteLift);
         return (Color32)lifted;
-      }
-      if (profile.SolidGround) {
-        // 항목 27 K: 팔레트로 칠하는 잔디(숲 둘레·장식)와 숲 바닥도 단색 바닥의 잔디색을 따른다. 어두운 부엽토 원판이 튀지 않게 한다.
-        switch (swatch) {
-          case Swatch.Grass: return (Color32)profile.GroundGrass;
-          case Swatch.GrassLight: return (Color32)profile.GroundGrassLight;
-          case Swatch.GrassDark: return (Color32)profile.GroundGrassDark;
-          case Swatch.ForestFloor: return (Color32)(profile.GroundGrassDark * 0.88f);
-        }
       }
       if (profile.WaterColor.a > 0f && (swatch == Swatch.Water || swatch == Swatch.WaterDeep)) {
         return (Color32)(swatch == Swatch.WaterDeep ? profile.WaterColor * 0.82f : profile.WaterColor);

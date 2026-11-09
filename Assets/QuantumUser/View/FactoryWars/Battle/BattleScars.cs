@@ -158,10 +158,28 @@ namespace FactoryWars.View {
         _dirty = false;
         var sum = 0f;
         var damaged = 0;
-        for (var i = 0; i < _damage.Length; i++) {
-          _bytes[i] = (byte)(_damage[i] * 255f);
-          sum += _damage[i];
-          damaged += _damage[i] > 0.05f ? 1 : 0;
+        // 텍스처는 3×3 흐림을 거쳐 칸 경계가 각지게 보이지 않게 한다. 판정용 값(_damage)은 그대로다.
+        for (var z = 0; z < Size; z++) {
+          for (var x = 0; x < Size; x++) {
+            var i = z * Size + x;
+            sum += _damage[i];
+            damaged += _damage[i] > 0.05f ? 1 : 0;
+            var blurred = 0f;
+            var weight = 0f;
+            for (var dz = -1; dz <= 1; dz++) {
+              for (var dx = -1; dx <= 1; dx++) {
+                var nx = x + dx;
+                var nz = z + dz;
+                if (nx < 0 || nz < 0 || nx >= Size || nz >= Size) {
+                  continue;
+                }
+                var w = dx == 0 && dz == 0 ? 2f : 1f;
+                blurred += _damage[nz * Size + nx] * w;
+                weight += w;
+              }
+            }
+            _bytes[i] = (byte)(Mathf.Clamp01(blurred / weight) * 255f);
+          }
         }
         Average = sum / _damage.Length;
         Damaged = damaged;

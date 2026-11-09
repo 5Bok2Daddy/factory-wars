@@ -114,10 +114,12 @@ namespace FactoryWars.View {
               }
             }
           }
-          b = new Vector3(from[j].x, bottom, from[j].y);
-          var shade = faces[Mathf.Min(l * faces.Length / layers, faces.Length - 1)];
-          k.Paint(MeshKit.Hash(seed, l * 977 + i) < 0.22f ? Swatch.RockFaceLight : shade);
-          k.Quad(a, b, c, d, outward);
+          if (dressed == false) {
+            b = new Vector3(from[j].x, bottom, from[j].y);
+            var shade = faces[Mathf.Min(l * faces.Length / layers, faces.Length - 1)];
+            k.Paint(MeshKit.Hash(seed, l * 977 + i) < 0.22f ? Swatch.RockFaceLight : shade);
+            k.Quad(a, b, c, d, outward);
+          }
         }
       }
       // 장식 숲(항목 27 2-4): 통과 불가 대지 윗면을 3.5m 격자로 채운다. 판정 없음, 걷지 않는 땅이다.
@@ -143,7 +145,7 @@ namespace FactoryWars.View {
       // 윗면: 맨 위 고리를 가운데 점으로 덮는다.
       var last = rings[layers];
       var cap = new Vector3(center.x, height, center.y);
-      k.Paint(dark ? Swatch.RockFace : Swatch.GrassDark);
+      k.Paint(dark ? Swatch.RockFace : Swatch.Grass);
       for (var i = 0; i < last.Length; i++) {
         var j = (i + 1) % last.Length;
         var top = height * (0.92f + 0.08f * MeshKit.Hash(seed, 900 + layers - 1));
@@ -239,6 +241,26 @@ namespace FactoryWars.View {
             var tentSpot = center + new Vector3(-signX * (hx * 0.55f), 0f, signZ * (hz * 0.55f));
             if (Inside(map.Roads, tentSpot.x, tentSpot.z) == false) {
               Dressing.Add(DressKind.BaseTent, tentSpot, 9200 + b * 11, null, b * 90f);
+            }
+          }
+          if (Dressing.Has(DressKind.RoadProp)) {
+            var lampA = center + new Vector3(signX * (hx * 0.45f), 0f, -signZ * (hz * 0.45f));
+            var lampB = center + new Vector3(-signX * (hx * 0.45f), 0f, signZ * (hz * 0.45f));
+            if (Inside(map.Roads, lampA.x, lampA.z) == false) {
+              Dressing.Add(DressKind.RoadProp, lampA, 9300 + b * 5, null, b * 90f);
+            }
+            if (Inside(map.Roads, lampB.x, lampB.z) == false) {
+              Dressing.Add(DressKind.RoadProp, lampB, 9301 + b * 5, null, b * 90f + 180f);
+            }
+          }
+          if (Dressing.Has(DressKind.Bush)) {
+            var flowerA = center + new Vector3(signX * (hx * 0.52f), 0f, -signZ * (hz * 0.15f));
+            var flowerB = center + new Vector3(-signX * (hx * 0.15f), 0f, signZ * (hz * 0.52f));
+            if (Inside(map.Roads, flowerA.x, flowerA.z) == false) {
+              Dressing.Add(DressKind.Bush, flowerA, 9400 + b * 7, null, 0f);
+            }
+            if (Inside(map.Roads, flowerB.x, flowerB.z) == false) {
+              Dressing.Add(DressKind.Bush, flowerB, 9401 + b * 7, null, 45f);
             }
           }
         }

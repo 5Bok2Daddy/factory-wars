@@ -11,9 +11,10 @@ namespace FactoryWars.View {
     public const float MinButtonSize = 140f;
     public static readonly Vector2 ReferenceResolution = new Vector2(1920, 1080);
 
-    public static readonly Color PanelColor = new Color(0.08f, 0.1f, 0.13f, 0.82f);
-    public static readonly Color ButtonColor = new Color(0.2f, 0.25f, 0.32f, 0.95f);
-    public static readonly Color DisabledColor = new Color(0.14f, 0.15f, 0.17f, 0.9f);
+    public static readonly Color PanelColor = new Color(0.96f, 0.98f, 1f, 0.92f);
+    public static readonly Color ButtonColor = new Color(1f, 1f, 1f, 1f);
+    public static readonly Color ButtonTextColor = new Color(0.16f, 0.20f, 0.30f, 1f);
+    public static readonly Color DisabledColor = new Color(0.82f, 0.86f, 0.92f, 0.72f);
 
     static Font _font;
 
@@ -73,9 +74,41 @@ namespace FactoryWars.View {
       rect.offsetMax = new Vector2(-padding, -padding);
     }
 
+    static readonly Dictionary<string, Sprite> UiSprites = new Dictionary<string, Sprite>();
+
+    public static Sprite UiSprite(string name, Vector4? border = null) {
+      if (UiSprites.TryGetValue(name, out var sprite) == false || sprite == null) {
+        var tex = Resources.Load<Texture2D>($"FactoryWars/UI/{name}");
+        if (tex != null) {
+          var b = border ?? (name.Contains("bar_round") ? new Vector4(12, 12, 12, 12) : new Vector4(14, 18, 14, 14));
+          sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, b);
+          UiSprites[name] = sprite;
+        }
+      }
+      return sprite;
+    }
+
     public static RectTransform Panel(string name, Transform parent, Color? color = null) {
       var rect = Rect(name, parent);
-      rect.gameObject.AddComponent<Image>().color = color ?? PanelColor;
+      var img = rect.gameObject.AddComponent<Image>();
+      var sprite = UiSprite("panel_rectangle");
+      if (sprite != null) {
+        img.sprite = sprite;
+        img.type = Image.Type.Sliced;
+      }
+      img.color = color ?? PanelColor;
+      return rect;
+    }
+
+    public static RectTransform Capsule(string name, Transform parent, Color? color = null) {
+      var rect = Rect(name, parent);
+      var img = rect.gameObject.AddComponent<Image>();
+      var sprite = UiSprite("bar_round_large");
+      if (sprite != null) {
+        img.sprite = sprite;
+        img.type = Image.Type.Sliced;
+      }
+      img.color = color ?? PanelColor;
       return rect;
     }
 
@@ -95,13 +128,21 @@ namespace FactoryWars.View {
     }
 
     public static Button Button(string name, Transform parent, string value, UnityAction onClick, int size = 28) {
-      var rect = Panel(name, parent, ButtonColor);
+      var rect = Rect(name, parent);
+      var img = rect.gameObject.AddComponent<Image>();
+      var sprite = UiSprite("button_square_depth");
+      if (sprite != null) {
+        img.sprite = sprite;
+        img.type = Image.Type.Sliced;
+      }
+      img.color = ButtonColor;
       var button = rect.gameObject.AddComponent<Button>();
-      button.targetGraphic = rect.GetComponent<Image>();
+      button.targetGraphic = img;
       if (onClick != null) {
         button.onClick.AddListener(onClick);
       }
       var label = Label("Label", rect, value, size, TextAnchor.MiddleCenter);
+      label.color = ButtonTextColor;
       Stretch(label.rectTransform, 6f);
       return button;
     }

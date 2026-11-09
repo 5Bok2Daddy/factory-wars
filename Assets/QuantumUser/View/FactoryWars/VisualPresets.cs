@@ -96,37 +96,36 @@ namespace FactoryWars.View {
       p.DefaultHeight = 62f;
       p.MinHeight = 35f;
       p.MaxHeight = 140f;
-      // 빛·바닥색은 K-0 색 맞추기 2차(Lookdev_KenneyColorMatchNeutral, 참고 장면에서 받아 둔 Kenney 모델로 렌더) 결과다.
-      // 햇빛은 약하고 환경광(HDR)이 대부분이라 그림자가 연하다(그림자/빛 약 0.65). 빛의 파랑은 그림자 비율에 필요한 만큼(+15%)만 두고,
-      // 나머지 푸른 기운은 바닥 단색이 맡는다. 그래야 Kenney 모델 원래 색(벽·나무)이 보라·하늘색으로 바뀌지 않는다.
-      p.SunColor = new Color32(0xFF, 0xF8, 0xEE, 0xFF);
-      p.SunIntensity = 0.3f;
-      p.SunElevation = 58f;
-      p.SunAzimuth = -30f;
-      p.AmbientSky = new Color(1.046f, 1.044f, 1.115f);
-      p.AmbientEquator = new Color(0.988f, 0.985f, 1.052f);
-      p.AmbientGround = new Color(0.893f, 0.891f, 0.95f);
-      p.ShadowStrength = 1f;
+      // 장난감 블록 입체감 복원: 태양광 윗면 100% 밝기 + 그늘진 옆면 65~70% 파스텔 블루/퍼플 그늘
+      p.SunColor = new Color32(0xFF, 0xFD, 0xF5, 0xFF);
+      p.SunIntensity = 1.1f;
+      p.SunElevation = 50f;
+      p.SunAzimuth = -35f;
+      p.AmbientSky = new Color(0.68f, 0.72f, 0.85f);
+      p.AmbientEquator = new Color(0.58f, 0.62f, 0.75f);
+      p.AmbientGround = new Color(0.48f, 0.52f, 0.65f);
+      p.ShadowStrength = 0.85f;
       p.Tone = ToneMode.None;
       p.BloomIntensity = 0f;
       p.Saturation = 0f;
       p.Contrast = 0f;
       p.Vignette = 0f;
-      p.Ssao = false;
+      p.Ssao = true;
+      p.SsaoIntensity = 1.6f;
+      p.SsaoRadius = 0.45f;
       p.Outline = OutlineMode.None;
       p.VertexShade = false;
       p.KenneyMilitary = false;
-      p.PaletteLift = 0.32f;
+      p.PaletteLift = 0.9f;
       p.WhiteLanes = true;
-      p.GroundGrass = new Color32(0x62, 0xBA, 0x90, 0xFF);
-      p.GroundGrassLight = new Color32(0x68, 0xBD, 0x94, 0xFF);
-      p.GroundGrassDark = new Color32(0x5C, 0xAF, 0x87, 0xFF);
-      // 흙은 보도와의 밝기 비를 예전 값 그대로 두고 새 빛에 맞춰 옮겼다.
-      p.GroundDirt = new Color32(0x9F, 0xA8, 0xB3, 0xFF);
-      p.GroundDirtDark = new Color32(0x95, 0x9D, 0xA9, 0xFF);
-      p.GroundPlaza = new Color32(0x90, 0x98, 0xA5, 0xFF);
-      p.GroundPlazaDark = new Color32(0x87, 0x8F, 0x9B, 0xFF);
-      p.RoadColor = new Color32(0x32, 0x3A, 0x3C, 0xFF);
+      p.GroundGrass = new Color32(0x7B, 0xE5, 0xBA, 0xFF);
+      p.GroundGrassLight = new Color32(0x8C, 0xEE, 0xC6, 0xFF);
+      p.GroundGrassDark = new Color32(0x6A, 0xD4, 0xA8, 0xFF);
+      p.GroundDirt = new Color32(0xC2, 0xCB, 0xD9, 0xFF);
+      p.GroundDirtDark = new Color32(0xA8, 0xB3, 0xC5, 0xFF);
+      p.GroundPlaza = new Color32(0xED, 0xF0, 0xF7, 0xFF);
+      p.GroundPlazaDark = new Color32(0xD2, 0xDC, 0xED, 0xFF);
+      p.RoadColor = new Color32(0x42, 0x48, 0x54, 0xFF);
       p.SolidGround = true;
       p.BackgroundColor = new Color32(0xB2, 0xBA, 0xCC, 0xFF);
       p.WaterColor = new Color32(0x4A, 0xA3, 0xD6, 0xFF);
@@ -135,7 +134,7 @@ namespace FactoryWars.View {
       p.CliffLayers = 4;
       p.HighGroundHeight = 5f;
       p.WaterDepth = 7f;
-      p.CliffTierShade = 0.22f;
+      p.CliffTierShade = 0.15f;
       p.PlateauTrees = 0.55f;
       p.ConiferRatio = 0.6f;
       p.AutumnRatio = 0.25f;

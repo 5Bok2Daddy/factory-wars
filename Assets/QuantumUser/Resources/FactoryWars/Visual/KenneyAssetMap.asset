@@ -33,7 +33,7 @@ MonoBehaviour:
     SnapYaw90: 0
     Fit: 0
     Shadows: 1
-    LowKeep: 0.35
+    LowKeep: 0.28
     MediumKeep: 0.65
   - Kind: 1
     Variants:
@@ -51,7 +51,7 @@ MonoBehaviour:
     SnapYaw90: 0
     Fit: 0
     Shadows: 1
-    LowKeep: 0.35
+    LowKeep: 0.28
     MediumKeep: 0.65
   - Kind: 2
     Variants:
@@ -69,7 +69,7 @@ MonoBehaviour:
     SnapYaw90: 0
     Fit: 0
     Shadows: 1
-    LowKeep: 0.35
+    LowKeep: 0.28
     MediumKeep: 0.65
   - Kind: 3
     Variants:
@@ -87,7 +87,7 @@ MonoBehaviour:
     SnapYaw90: 0
     Fit: 0
     Shadows: 1
-    LowKeep: 0.4
+    LowKeep: 0.32
     MediumKeep: 0.75
   - Kind: 4
     Variants:
