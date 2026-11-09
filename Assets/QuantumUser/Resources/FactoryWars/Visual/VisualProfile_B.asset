@@ -74,6 +74,7 @@ MonoBehaviour:
   GroundPlaza: {r: 0.6039216, g: 0.59607846, b: 0.57254905, a: 1}
   GroundPlazaDark: {r: 0.5254902, g: 0.5176471, b: 0.49411765, a: 1}
   RoadColor: {r: 0, g: 0, b: 0, a: 0}
+  SolidGround: 0
   BackgroundColor: {r: 0.11, g: 0.12, b: 0.13, a: 1}
   WaterColor: {r: 0, g: 0, b: 0, a: 0}
   CliffTierShade: 0

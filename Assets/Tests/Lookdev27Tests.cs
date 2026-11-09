@@ -61,6 +61,9 @@ namespace FactoryWars.Tests {
       Aim(camera, c.Focus, profile.DefaultHeight);
       seen = Visible(camera, 1920, 1080);
       LookdevNote("27.csv", $"K1,{tier},C,{seen.Renderers},{seen.Triangles},{seen.Casters},{EstimateDrawCalls(seen)}");
+      var checkC = GameColorCheck(camera, map);
+      LookdevNote("27.csv", $"K0-game,{tier},C,{checkC}");
+      Debug.Log($"[FW-K0-GAME] {tier} C {checkC}");
       cells.Add((Shoot(camera, CellWidth * 2, CellHeight * 2), $"K {tier} [C] 중앙 draw~{EstimateDrawCalls(seen)} tris {seen.Triangles / 1000}k"));
       Aim(camera, map.StartPositions[0].ToUnityVector3() + new Vector3(8, 0, 6), profile.DefaultHeight);
       cells.Add((ShootHud(camera, CellWidth * 2, CellHeight * 2), $"K {tier} [E] HUD"));
@@ -100,10 +103,19 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Explicit, Category("Lookdev"), Timeout(9000000)]
     public IEnumerator Lookdev_27K2() {
+      // 1차: 20분까지 돌려 가장 많이 부서진 두 곳(교전지)을 찾는다. 같은 시드라 2차 경기도 같은 곳에서 싸운다.
+      yield return FixedScene(60, human: false);
+      yield return AdvanceTo(1200);
+      var hot = BattleScars.Active != null ? BattleScars.Active.Hotspots(2, 70f) : new List<Vector3>();
+      LookdevNote("27.csv", $"K2-hotspots,{string.Join(";", hot.Select(h => $"{h.x:0}/{h.z:0}"))},{BattleScarsInfo()}");
+      TearDown();
+      yield return null;
       yield return FixedScene(60, human: false);
       var map = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var camera = Camera.main;
-      var places = new[] { ("중앙 교전지", Vector3.zero), ("앞마당 입구", map.Expansions[0].Position.ToUnityVector3() + new Vector3(18f, 0f, 10f)) };
+      var first = hot.Count > 0 ? hot[0] : Vector3.zero;
+      var second = hot.Count > 1 ? hot[1] : map.Expansions[0].Position.ToUnityVector3() + new Vector3(18f, 0f, 10f);
+      var places = new[] { ($"교전지 1 ({first.x:0},{first.z:0})", first), ($"교전지 2 ({second.x:0},{second.z:0})", second) };
       var byTier = new Dictionary<QualityTier, List<(Texture2D, string)>> { [QualityTier.Medium] = new List<(Texture2D, string)>(), [QualityTier.Low] = new List<(Texture2D, string)>() };
       var shots = new Dictionary<(QualityTier, int, int), (Texture2D, string)>();
       var times = new[] { 60, 600, 1200 };
@@ -146,18 +158,29 @@ namespace FactoryWars.Tests {
     static string GameColorCheck(Camera camera, MapSpec map) {
       const int w = 960;
       const int h = 540;
-      var target = RenderTexture.GetTemporary(new RenderTextureDescriptor(w, h, RenderTextureFormat.ARGB32, 24) { sRGB = true });
       var aspect = camera.aspect;
-      camera.targetTexture = target;
       camera.aspect = w / (float)h;
-      camera.Render();
-      RenderTexture.active = target;
-      var image = new Texture2D(w, h, TextureFormat.RGBA32, false, false);
-      image.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-      image.Apply();
-      RenderTexture.active = null;
-      camera.targetTexture = null;
+      // 시안과 같은 경로(Shoot)로 찍어야 화면에 보이는 색·방향과 같다.
+      var image = Shoot(camera, w, h);
       var profile = VisualProfile.Current;
+      var rivers = TerrainKit.RiverPaths(map);
+      // 트인 땅만 잰다: 강·수로, 자원 노드(숲·광산), 지형(대지·바위), 고지대, 도시 건물에서 떨어진 곳.
+      bool Open(Vector3 p) {
+        if (TerrainKit.RiverDistance(rivers, new Vector2(p.x, p.z)) < 12f) {
+          return false;
+        }
+        var fp = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(p.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(p.z));
+        if (map.ResourceNodes != null && map.ResourceNodes.Any(n => n.Shape.Distance(fp).AsFloat < 5f)) {
+          return false;
+        }
+        if (map.Terrain != null && map.Terrain.Any(t => t.Shape.Distance(fp).AsFloat < 7f)) {
+          return false;
+        }
+        if (map.HighGrounds != null && map.HighGrounds.Any(g => g.Distance(fp).AsFloat < 7f)) {
+          return false;
+        }
+        return map.CityBuildings == null || map.CityBuildings.All(c => c.Shape.Distance(fp).AsFloat >= 4f);
+      }
       var groups = new Dictionary<string, List<Color32>> { ["grass"] = new List<Color32>(), ["plaza"] = new List<Color32>(), ["road"] = new List<Color32>() };
       bool Same(Color a, Color b) => Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b) < 0.01f;
       var ground = new Plane(Vector3.up, 0f);
@@ -176,6 +199,9 @@ namespace FactoryWars.Tests {
             groups["road"].Add(pixel);
             continue;
           }
+          if (Open(world) == false) {
+            continue;
+          }
           var tint = TerrainKit.GroundTint(map, world.x, world.z, 0);
           if (Same(tint, profile.GroundGrass) || Same(tint, profile.GroundGrassLight) || Same(tint, profile.GroundGrassDark)) {
             groups["grass"].Add(pixel);
@@ -185,7 +211,6 @@ namespace FactoryWars.Tests {
         }
       }
       camera.aspect = aspect;
-      RenderTexture.ReleaseTemporary(target);
       Object.Destroy(image);
       var goals = new Dictionary<string, Color32> { ["grass"] = new Color32(0x7B, 0xE5, 0xBA, 0xFF), ["plaza"] = new Color32(0xB6, 0xBE, 0xD8, 0xFF), ["road"] = new Color32(0x40, 0x4A, 0x50, 0xFF) };
       var parts = new List<string>();

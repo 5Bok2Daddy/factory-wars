@@ -59,15 +59,16 @@ namespace FactoryWars.View {
           return;
         }
         var radius = e.Radius.AsFloat;
-        Add(e.Position.ToUnityVector3(), radius * 1.6f, 0.22f);
+        Add(e.Position.ToUnityVector3(), Mathf.Max(3.5f, radius * 2f), 0.3f);
         Fx?.Crater(e.Position.ToUnityVector3(), Mathf.Clamp(radius, 0.8f, 3.5f));
       });
       QuantumEvent.Subscribe<EventWrecked>(this, e => {
         if (Take(e) == false) {
           return;
         }
-        var radius = e.Size < 0 ? e.Footprint.AsFloat * 1.8f : e.Size >= (int)UnitSize.Large ? 4f : e.Size == (int)UnitSize.Medium ? 3f : 1.6f;
-        Add(e.Position.ToUnityVector3(), radius, e.Size < 0 ? 0.9f : e.Size >= (int)UnitSize.Medium ? 0.45f : 0.12f);
+        // 유닛 사망: 소형 3m·0.22, 중형 4.5m·0.5, 대형 6m·0.7. 건물 파괴: 부지 반경의 2배·1.
+        var radius = e.Size < 0 ? e.Footprint.AsFloat * 2f : e.Size >= (int)UnitSize.Large ? 6f : e.Size == (int)UnitSize.Medium ? 4.5f : 3f;
+        Add(e.Position.ToUnityVector3(), radius, e.Size < 0 ? 1f : e.Size >= (int)UnitSize.Large ? 0.7f : e.Size == (int)UnitSize.Medium ? 0.5f : 0.22f);
       });
       QuantumEvent.Subscribe<EventCityBuildingDamaged>(this, e => {
         if (Take(e) && _map.CityBuildings != null && e.Index >= 0 && e.Index < _map.CityBuildings.Length) {
@@ -179,6 +180,36 @@ namespace FactoryWars.View {
           }
         }
       }
+    }
+
+    /// <summary>가장 많이 부서진 곳들(5×5칸 합이 큰 순, 서로 separation 이상 떨어짐). 시안 촬영 위치를 고를 때 쓴다.</summary>
+    public System.Collections.Generic.List<Vector3> Hotspots(int count, float separation) {
+      var cell = _span / Size;
+      var scored = new System.Collections.Generic.List<(float Score, Vector3 Position)>();
+      for (var z = 2; z < Size - 2; z++) {
+        for (var x = 2; x < Size - 2; x++) {
+          var sum = 0f;
+          for (var dz = -2; dz <= 2; dz++) {
+            for (var dx = -2; dx <= 2; dx++) {
+              sum += _damage[(z + dz) * Size + x + dx];
+            }
+          }
+          if (sum > 0.5f) {
+            scored.Add((sum, new Vector3(_min.x + (x + 0.5f) * cell, 0f, _min.y + (z + 0.5f) * cell)));
+          }
+        }
+      }
+      scored.Sort((a, b) => b.Score.CompareTo(a.Score));
+      var picked = new System.Collections.Generic.List<Vector3>();
+      foreach (var (_, position) in scored) {
+        if (picked.TrueForAll(p => (p - position).magnitude >= separation)) {
+          picked.Add(position);
+          if (picked.Count >= count) {
+            break;
+          }
+        }
+      }
+      return picked;
     }
 
     /// <summary>손상 지도 해시(테스트: 같은 리플레이면 같다).</summary>

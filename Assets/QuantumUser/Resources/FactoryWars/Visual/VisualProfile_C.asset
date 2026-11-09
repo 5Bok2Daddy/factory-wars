@@ -25,9 +25,9 @@ MonoBehaviour:
   SunIntensity: 0.3
   SunElevation: 58
   SunAzimuth: -30
-  AmbientSky: {r: 1.05, g: 1.066, b: 1.334, a: 1}
-  AmbientEquator: {r: 0.941, g: 0.93, b: 1.136, a: 1}
-  AmbientGround: {r: 0.746, g: 0.752, b: 0.898, a: 1}
+  AmbientSky: {r: 1.046, g: 1.044, b: 1.115, a: 1}
+  AmbientEquator: {r: 0.988, g: 0.985, b: 1.052, a: 1}
+  AmbientGround: {r: 0.893, g: 0.891, b: 0.95, a: 1}
   ShadowStrength: 0.8
   Tone: 2
   BloomIntensity: 0
@@ -63,17 +63,18 @@ MonoBehaviour:
   Dressing: {fileID: 11400000, guid: 4a5414e68bc57034e8dbf72f5d9b1623, type: 2}
   Boundary: 1
   GroundVertexColors: 1
-  GroundGrass: {r: 0.38431373, g: 0.72156864, b: 0.5058824, a: 1}
-  GroundGrassLight: {r: 0.40784314, g: 0.73333335, b: 0.5254902, a: 1}
-  GroundGrassDark: {r: 0.36078432, g: 0.6784314, b: 0.4745098, a: 1}
-  GroundDirt: {r: 0.61960787, g: 0.654902, b: 0.627451, a: 1}
-  GroundDirtDark: {r: 0.5803922, g: 0.6117647, b: 0.5921569, a: 1}
+  GroundGrass: {r: 0.38431373, g: 0.7294118, b: 0.5647059, a: 1}
+  GroundGrassLight: {r: 0.40784314, g: 0.7411765, b: 0.5803922, a: 1}
+  GroundGrassDark: {r: 0.36078432, g: 0.6862745, b: 0.5294118, a: 1}
+  GroundDirt: {r: 0.62352943, g: 0.65882355, b: 0.7019608, a: 1}
+  GroundDirtDark: {r: 0.58431375, g: 0.6156863, b: 0.6627451, a: 1}
   KenneyMilitary: 0
   PaletteLift: 0.32
   WhiteLanes: 1
-  GroundPlaza: {r: 0.56078434, g: 0.5921569, b: 0.5803922, a: 1}
-  GroundPlazaDark: {r: 0.5254902, g: 0.5568628, b: 0.54509807, a: 1}
-  RoadColor: {r: 0.19215687, g: 0.22745098, b: 0.21176471, a: 1}
+  GroundPlaza: {r: 0.5647059, g: 0.59607846, b: 0.64705884, a: 1}
+  GroundPlazaDark: {r: 0.5294118, g: 0.56078434, b: 0.60784316, a: 1}
+  RoadColor: {r: 0.19607843, g: 0.22745098, b: 0.23529412, a: 1}
+  SolidGround: 1
   BackgroundColor: {r: 0.69803923, g: 0.7294118, b: 0.8, a: 1}
   WaterColor: {r: 0.2901961, g: 0.6392157, b: 0.8392157, a: 1}
   CliffTierShade: 0.22

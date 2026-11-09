@@ -125,6 +125,15 @@ namespace FactoryWars.View {
         var lifted = Color.Lerp(c, new Color(0.93f, 0.92f, 0.9f), profile.PaletteLift);
         return (Color32)lifted;
       }
+      if (profile.SolidGround) {
+        // 항목 27 K: 팔레트로 칠하는 잔디(숲 둘레·장식)와 숲 바닥도 단색 바닥의 잔디색을 따른다. 어두운 부엽토 원판이 튀지 않게 한다.
+        switch (swatch) {
+          case Swatch.Grass: return (Color32)profile.GroundGrass;
+          case Swatch.GrassLight: return (Color32)profile.GroundGrassLight;
+          case Swatch.GrassDark: return (Color32)profile.GroundGrassDark;
+          case Swatch.ForestFloor: return (Color32)(profile.GroundGrassDark * 0.88f);
+        }
+      }
       if (profile.WaterColor.a > 0f && (swatch == Swatch.Water || swatch == Swatch.WaterDeep)) {
         return (Color32)(swatch == Swatch.WaterDeep ? profile.WaterColor * 0.82f : profile.WaterColor);
       }

@@ -2460,9 +2460,11 @@ OVERNIGHT-QUEUE.md 규칙 1에 따라 묻지 않고 기본값으로 진행했다
 
 | # | 항목 | 질문 | 고른 기본값 | 되돌리는 방법 |
 | --- | --- | --- | --- | --- |
-| 1 | 27 K-0 | 지붕·잎 색차가 목표(ΔE 8)를 넘는다. 모델 색을 바꿔서라도 맞출까? | 바꾸지 않음. 지시 5("Kenney 모델 그대로")를 따라 지붕 ΔE 30, 잎 ΔE 36.5로 둔다. 바닥·그림자·배경 다섯 대상은 ΔE 2 이하 | 잎을 맞추려면 `kenney-map.json`의 nature-kit `Brightness`를 0.5쯤으로 낮추고 `KenneyTools.BuildMap`(설정 실행) 다시. 지붕은 상업 건물 키트 `Brightness` 1.6쯤 |
+| 1 | 27 K-0 | 지붕·잎 색차가 목표(ΔE 8)를 넘는다. 모델 색을 바꿔서라도 맞출까? | 바꾸지 않음. 지시 5("Kenney 모델 그대로")를 따라 지붕 ΔE 24, 잎 ΔE 29로 둔다. 바닥·그림자·배경 다섯 대상은 ΔE 2.3 이하 | 잎을 맞추려면 `kenney-map.json`의 nature-kit `Brightness`를 0.5쯤으로 낮추고 `KenneyTools.BuildMap`(설정 실행) 다시. 지붕은 상업 건물 키트 `Brightness` 1.6쯤 |
 | 2 | 27 K-0 | 비교 장면을 참고 이미지처럼 건물 십여 채·곡선 도로로 만들까? | 대상 색을 재는 데 필요한 최소 장면(바닥 띠 3개, 건물 1채, 침엽수 5그루). 결과 그림은 "차이 히트맵" 대신 대상별 색 띠 | `KenneyMatchTests`에 건물·도로를 더하면 된다 |
-| 3 | 27 K-0 | 빛을 맞추느라 햇빛이 약하고(×0.3) 환경광이 HDR로 강하다. 유닛 입체감이 약해질 수 있다 | 맞춘 값 그대로 적용(톤매핑 없음) | `VisualPresets.Kenney()`의 `SunIntensity`·`Ambient*`·`Tone`을 예전 값(1.05, #C9D4EA/#B4B9C8/#8E959E, Neutral)으로 |
+| 3 | 27 K-0 | 빛을 맞추느라 햇빛이 약하고(×0.3) 환경광이 HDR로 강하다(그림자/빛 약 0.65). 유닛 입체감이 약해질 수 있다. 빛 색은 중립에 가깝게(파랑 +15%) 둔 2차 풀이를 골랐다(1차는 +35%라 건물·나무가 보라·하늘색) | 2차 값 그대로 적용(톤매핑 없음) | `VisualPresets.Kenney()`의 `SunIntensity`·`Ambient*`·`Tone`을 예전 값(1.05, #C9D4EA/#B4B9C8/#8E959E, Neutral)으로. 1차 값은 LOOKDEV.md 27 표 |
 | 4 | 27 K-2 | "시뮬레이션은 바꾸지 않는다"와 "위치·반경을 시뮬레이션 이벤트에서 읽는다"가 부딪친다(범위 피해·파괴 위치 이벤트가 없었다) | synced 이벤트 2개 추가: `AreaImpact`(범위 피해 자리), `Wrecked`(유닛·건물 파괴 자리). 상태·판정·체크섬은 바뀌지 않는다 | `FactoryWars.qtn`의 두 이벤트와 `GameplaySystems.cs`의 `f.Events.AreaImpact`·`f.Events.Wrecked` 세 줄을 지우고 `BattleScars`의 구독을 뺀다 |
 | 5 | 27 K-2 | 손상 지도 칸 크기 | 128×128 칸(4인 맵 약 2.8m, 지시 2~4m). 지시 예시 256×256보다 작게 해 텍스처 갱신 비용을 줄였다 | `BattleScars.Size` |
+| 6 | 27 K-1 | 본진 바닥을 흙·잔디 얼룩(19C)으로 둘까, 참고 이미지처럼 단색으로 할까? | 단색: 본진과 도로·도시 건물 둘레 3m는 밝은 회색 보도, 나머지는 민트 잔디(`VisualProfile.SolidGround`). 숲 바닥도 잔디색 | `VisualPresets.Kenney()`의 `SolidGround = false` |
+| 7 | 27 K-1 | 대지 절벽 블록이 주황 바위 + 청록 풀 띠로 층마다 줄무늬가 졌다 | nature-kit 회색 돌 블록(`cliff_block_stone`)만 쓴다. 원래 색 그대로다 | `kenney-map.json`의 `Cliff` 모델에 `cliff_block_rock:3`을 다시 넣는다 |
 <!-- 사용자 결정 대기 끝 -->

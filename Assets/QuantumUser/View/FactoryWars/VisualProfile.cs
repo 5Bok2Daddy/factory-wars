@@ -121,6 +121,8 @@ namespace FactoryWars.View {
     public Color GroundPlazaDark = new Color32(0x86, 0x84, 0x7E, 0xFF);
     /// <summary>도로 아스팔트 색(알파 0이면 팔레트 기본색). 항목 27 K-0 색 맞추기에서 정한다.</summary>
     public Color RoadColor = new Color(0f, 0f, 0f, 0f);
+    /// <summary>항목 27 K: 단색 바닥. 본진·도로·도시 건물 둘레는 보도(광장) 한 색, 나머지는 잔디 한 색. 얼룩 노이즈와 흙 섞임이 없다. 숲 바닥·팔레트 잔디 칸도 프로필 잔디색을 따른다.</summary>
+    public bool SolidGround;
     /// <summary>맵 밖 배경색(OutsideMode.Dark).</summary>
     public Color BackgroundColor = new Color(0.11f, 0.12f, 0.13f);
     /// <summary>강·운하·수로 물색. 알파가 0이면 팔레트 기본색을 쓴다.</summary>

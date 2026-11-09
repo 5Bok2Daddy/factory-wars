@@ -473,7 +473,6 @@
    "SnapYaw90": false,
    "Fit": false,
    "Models": [
-    "nature-kit/cliff_block_rock:3",
     "nature-kit/cliff_block_stone:1"
    ]
   },

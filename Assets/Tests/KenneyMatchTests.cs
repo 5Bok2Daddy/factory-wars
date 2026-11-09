@@ -130,7 +130,16 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest, Explicit, Category("Lookdev"), Timeout(3000000)]
-    public IEnumerator Lookdev_KenneyColorMatch() {
+    public IEnumerator Lookdev_KenneyColorMatch() => Match(false);
+
+    /// <summary>
+    /// 빛 색을 되도록 중립으로 두는 풀이(항목 27 K-0 2차). 채널마다 환경광을 풀면 빛 자체가 파래져(파랑 +35%) 모델 원래 색이 보라·하늘색으로 바뀐다.
+    /// 그래서 환경광 색조는 목표의 그림자/빛 비율에서 한 번 계산해 고정하고(햇빛 색과 함께 그림자 비율을 맞추는 최소 파랑), 세기 하나만 맞춘다. 나머지 색 차이는 바닥 단색이 맡는다.
+    /// </summary>
+    [UnityTest, Explicit, Category("Lookdev"), Timeout(3000000)]
+    public IEnumerator Lookdev_KenneyColorMatchNeutral() => Match(true);
+
+    IEnumerator Match(bool neutral) {
       var basis = VisualProfile.Current;
       Assert.IsNotNull(basis.Dressing, "Kenney 맵이 있는 프로필");
       var profile = Object.Instantiate(basis);
@@ -154,6 +163,32 @@ namespace FactoryWars.Tests {
       var ground = new GameObject("Ground", typeof(MeshFilter), typeof(MeshRenderer));
       ground.GetComponent<MeshFilter>().sharedMesh = GroundStrips();
       // 첫 값은 게임 프로필(K) 그대로다. 맞춘 값을 VisualPresets.Kenney()로 옮겨 두었으므로 0회차가 곧 게임 값의 검증이다.
+      Vector3 Ratio(Color32 shadow, Color32 lit) => new Vector3(Linear(shadow).r / Mathf.Max(0.002f, Linear(lit).r), Linear(shadow).g / Mathf.Max(0.002f, Linear(lit).g), Linear(shadow).b / Mathf.Max(0.002f, Linear(lit).b));
+      float Luma(Color32 c) => Linear(c).r * 0.2126f + Linear(c).g * 0.7152f + Linear(c).b * 0.0722f;
+      var hue = Vector3.one;
+      var level = 1f;
+      if (neutral && System.Environment.GetEnvironmentVariable("FW_K0_KEEP") != "1") {
+        // A_c ∝ w_c/(1-w_c) · S_c (S 햇빛 색). 가장 큰 채널을 1로.
+        var w = Ratio(Targets[2].Target, Targets[1].Target);
+        var sunLinear = new Color32(0xFF, 0xF8, 0xEE, 0xFF);
+        var sl = Linear(sunLinear);
+        hue = new Vector3(w.x / (1f - w.x) * sl.r, w.y / (1f - w.y) * sl.g, w.z / (1f - w.z) * sl.b);
+        hue /= Mathf.Max(hue.x, Mathf.Max(hue.y, hue.z));
+        profile.SunColor = sunLinear;
+        profile.SunIntensity = 0.3f;
+        profile.ShadowStrength = 1f;
+        level = 1.0f;
+      }
+      void SetAmbient() {
+        if (neutral == false) {
+          return;
+        }
+        Color L(float scale) => new Color(hue.x * level * scale, hue.y * level * scale, hue.z * level * scale).gamma;
+        profile.AmbientSky = L(1f);
+        profile.AmbientEquator = L(0.88f);
+        profile.AmbientGround = L(0.7f);
+      }
+      SetAmbient();
       var root = new GameObject("Props").transform;
       var building = DressingSpawn.Fitted(DressKind.CitySmall, root, 10f, 10f, 12f, 4001);
       Assert.IsNotNull(building, "상업 건물 모델");
@@ -211,7 +246,7 @@ namespace FactoryWars.Tests {
           }
           finalImage = image;
           finalColors = colors;
-          File.WriteAllText(Path.Combine(LocalMatchTests.LookdevLogPath(), "kenney_match_values.txt"), Values(profile));
+          File.WriteAllText(Path.Combine(LocalMatchTests.LookdevLogPath(), neutral ? "kenney_match_values_neutral.txt" : "kenney_match_values.txt"), Values(profile));
         } else {
           Object.Destroy(image);
         }
@@ -233,8 +268,15 @@ namespace FactoryWars.Tests {
         profile.GroundGrass = Fix(profile.GroundGrass, colors[4], Targets[4].Target);
         profile.GroundGrassLight = Color.Lerp(profile.GroundGrass, Color.white, 0.04f);
         profile.GroundGrassDark = profile.GroundGrass * 0.94f;
+        if (neutral) {
+          var gl = Mathf.Clamp(Luma(colors[2]) / Mathf.Max(0.002f, Luma(colors[1])), 0.05f, 0.97f);
+          var wl = Mathf.Clamp(Luma(Targets[2].Target) / Mathf.Max(0.002f, Luma(Targets[1].Target)), 0.05f, 0.97f);
+          level *= Mathf.Pow((1f - gl) / gl * (wl / (1f - wl)), 0.7f);
+          SetAmbient();
+          profile.BackgroundColor = Targets[0].Target;
+          continue;
+        }
         // 그림자/빛 = A/(S+A). 채널마다 A' = A·[(1-g)/g]·[w/(1-w)] (g 지금 비율, w 목표 비율), 0.7 감쇠. 환경광은 HDR이라 1을 넘어도 된다.
-        Vector3 Ratio(Color32 shadow, Color32 lit) => new Vector3(Linear(shadow).r / Mathf.Max(0.002f, Linear(lit).r), Linear(shadow).g / Mathf.Max(0.002f, Linear(lit).g), Linear(shadow).b / Mathf.Max(0.002f, Linear(lit).b));
         var want = Ratio(Targets[2].Target, Targets[1].Target);
         var got = Ratio(colors[2], colors[1]);
         float Gain(float w, float g) {
@@ -244,7 +286,6 @@ namespace FactoryWars.Tests {
         }
         var gain = new Vector3(Gain(want.x, got.x), Gain(want.y, got.y), Gain(want.z, got.z));
         // 노출: 지붕·잎은 모델 원래 색(못 바꾼다)이라 빛 전체 세기로만 맞춘다. 두 곳 밝기 비의 기하평균, 0.5 감쇠, 한 번에 -20%~+25%.
-        float Luma(Color32 c) => Linear(c).r * 0.2126f + Linear(c).g * 0.7152f + Linear(c).b * 0.0722f;
         var exposure = Mathf.Clamp(Mathf.Pow(Luma(Targets[5].Target) / Mathf.Max(0.002f, Luma(colors[5])) * (Luma(Targets[6].Target) / Mathf.Max(0.002f, Luma(colors[6]))), 0.25f), 0.8f, 1.25f);
         Color Ambient(Color c) => new Color(c.linear.r * gain.x * exposure, c.linear.g * gain.y * exposure, c.linear.b * gain.z * exposure).gamma;
         profile.AmbientSky = Ambient(profile.AmbientSky);
@@ -254,8 +295,8 @@ namespace FactoryWars.Tests {
         profile.BackgroundColor = Targets[0].Target;
       }
       Debug.Log("[FW-KENNEY-MATCH] 반복별 ΔE(배경,보도빛,보도그림자,도로,잔디,지붕,잎,평균)\n" + log);
-      File.WriteAllText(Path.Combine(LocalMatchTests.LookdevLogPath(), "kenney_match.csv"), "iteration,background,walk_lit,walk_shadow,road,grass,roof,leaves,mean\n" + log);
-      File.WriteAllText(Path.Combine(LocalMatchTests.LookdevLogPath(), "kenney_match_rendered.csv"), "iteration,background,walk_lit,walk_shadow,road,grass,roof,leaves,values\n" + rendered);
+      File.WriteAllText(Path.Combine(LocalMatchTests.LookdevLogPath(), neutral ? "kenney_match_neutral.csv" : "kenney_match.csv"), "iteration,background,walk_lit,walk_shadow,road,grass,roof,leaves,mean\n" + log);
+      File.WriteAllText(Path.Combine(LocalMatchTests.LookdevLogPath(), neutral ? "kenney_match_rendered_neutral.csv" : "kenney_match_rendered.csv"), "iteration,background,walk_lit,walk_shadow,road,grass,roof,leaves,values\n" + rendered);
 
       // 시트: 참고 | 렌더 | 대상별 목표(왼쪽 반)·렌더(오른쪽 반) 색 비교.
       var swatches = new Texture2D(Width, Height, TextureFormat.RGBA32, false);
@@ -271,7 +312,7 @@ namespace FactoryWars.Tests {
       var reference = new Texture2D(2, 2);
       reference.LoadImage(File.ReadAllBytes(Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "concept-art", "kenney-ref", "city-builder.png"))));
       var labels = Targets.Select((t, i) => $"{t.Name} ΔE {DeltaE(finalColors[i], t.Target):0.0}").ToArray();
-      LocalMatchTests.SaveSheet("27_kenney_match", $"27 K-0 색 맞추기: 참고 | 비교 장면 렌더 | 대상별 목표(왼쪽)·렌더(오른쪽) — 평균 ΔE {best:0.0} / " + string.Join(", ", labels),
+      LocalMatchTests.SaveSheet(neutral ? "27_kenney_match_neutral" : "27_kenney_match", $"27 K-0 색 맞추기: 참고 | 비교 장면 렌더 | 대상별 목표(왼쪽)·렌더(오른쪽) — 평균 ΔE {best:0.0} / " + string.Join(", ", labels),
         new List<(Texture2D, string)> { (reference, "참고: Kenney City Builder"), (finalImage, "비교 장면(받아 둔 Kenney 모델, 맞춘 값)"), (swatches, "위부터 " + string.Join(" · ", Targets.Select(t => t.Name))) }, 3);
       VisualProfile.Current = basis;
       yield return SceneManager.UnloadSceneAsync(scene);

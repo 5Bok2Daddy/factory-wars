@@ -171,6 +171,10 @@ namespace FactoryWars.View {
       if (outside) {
         return Swatch.ConcreteDark;
       }
+      if (profile.SolidGround) {
+        // 항목 27 K: 단색 바닥. 본진과 도로·도시 건물 둘레 3m는 밝은 회색 보도, 나머지는 민트 잔디. 얼룩이 없다.
+        return Inside(map.BaseAreas, x, z) || NearRoadOrCity(map, x, z, 3.2f) ? Swatch.Concrete : Swatch.Grass;
+      }
       if (profile.NoBuildAlways && Inside(map.NoBuildZones, x, z)) {
         return noise < 0.55f ? Swatch.Dirt : Swatch.DirtDark;
       }
@@ -211,6 +215,22 @@ namespace FactoryWars.View {
         return noise < 0.28f ? Swatch.Dirt : noise < 0.4f ? Swatch.DirtDark : noise < 0.7f ? Swatch.Olive : Swatch.GrassDark;
       }
       return noise < 0.2f ? Swatch.Dirt : noise < 0.3f ? Swatch.DirtDark : noise < 0.66f ? Swatch.Grass : Swatch.GrassDark;
+    }
+
+    /// <summary>도로나 도시 건물 가장자리에서 reach 안인가.</summary>
+    static bool NearRoadOrCity(MapSpec map, float x, float z, float reach) {
+      var fp = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(z));
+      foreach (var r in map.Roads ?? Array.Empty<MapShape>()) {
+        if (r.Distance(fp).AsFloat <= reach) {
+          return true;
+        }
+      }
+      for (var i = 0; map.CityBuildings != null && i < map.CityBuildings.Length; i++) {
+        if (map.CityBuildings[i].Shape.Distance(fp).AsFloat <= reach) {
+          return true;
+        }
+      }
+      return false;
     }
 
     static void Triangle(MeshKit k, MapSpec map, int seed, Vector3 a, Vector3 b, Vector3 c) {
