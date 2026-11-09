@@ -7,7 +7,7 @@ namespace FactoryWars.View {
 
   public enum NoBuildMode { Stripes, RedTint, Grid }
 
-  public enum ToneMode { Neutral, Aces }
+  public enum ToneMode { Neutral, Aces, None }
 
   /// <summary>
   /// 화면 설정 한 묶음. 카메라·조명·후처리·지형 높이·팔레트·외곽선·표시 크기를 모은다.
@@ -108,6 +108,27 @@ namespace FactoryWars.View {
     public Color GroundGrassDark = new Color32(0x46, 0x5A, 0x31, 0xFF);
     public Color GroundDirt = new Color32(0x86, 0x72, 0x55, 0xFF);
     public Color GroundDirtDark = new Color32(0x69, 0x59, 0x45, 0xFF);
+
+    [Header("Kenney 원본 분위기 (항목 27)")]
+    /// <summary>true면 Kenney 모델을 군용 재도색(colormap_military·nature 색 바꾸기)으로 그린다. false면 원본 색이다.</summary>
+    public bool KenneyMilitary;
+    /// <summary>유닛·플레이어 건물 팔레트의 금속·장갑 칸을 밝게 올리는 정도(0~1). 팀 색·발광 칸은 그대로다. 팔레트를 구울 때 쓴다.</summary>
+    public float PaletteLift;
+    /// <summary>도로 가운데 선을 흰색으로(Kenney 도시 기준). false면 노란 점선이다.</summary>
+    public bool WhiteLanes;
+    /// <summary>본진 광장·보도 색(바닥 정점 색).</summary>
+    public Color GroundPlaza = new Color32(0x9A, 0x98, 0x92, 0xFF);
+    public Color GroundPlazaDark = new Color32(0x86, 0x84, 0x7E, 0xFF);
+    /// <summary>도로 아스팔트 색(알파 0이면 팔레트 기본색). 항목 27 K-0 색 맞추기에서 정한다.</summary>
+    public Color RoadColor = new Color(0f, 0f, 0f, 0f);
+    /// <summary>맵 밖 배경색(OutsideMode.Dark).</summary>
+    public Color BackgroundColor = new Color(0.11f, 0.12f, 0.13f);
+    /// <summary>강·운하·수로 물색. 알파가 0이면 팔레트 기본색을 쓴다.</summary>
+    public Color WaterColor = new Color(0f, 0f, 0f, 0f);
+    /// <summary>절벽 단마다 밝기 차이(아래 단이 어둡고 위 단이 밝다). 단색 면에서 층 경계가 보이게 한다.</summary>
+    public float CliffTierShade;
+    /// <summary>통과 불가 대지 윗면에 심는 장식 숲 밀도(0~1, 3.5m 격자에서 심을 확률).</summary>
+    public float PlateauTrees;
 
     [Header("숲·바위")]
     public float TreeDensity = 1f;

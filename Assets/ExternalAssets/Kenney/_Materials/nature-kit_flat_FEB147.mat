@@ -30,19 +30,20 @@ Material:
     m_Ints: []
     m_Floats:
     - _AoHeight: 1
-    - _AoStrength: 0.35
+    - _AoStrength: 0.18
     - _Brightness: 1
     - _Desaturate: 0
     - _GradientBottom: 0
-    - _GradientStrength: 0.22
+    - _GradientStrength: 0.06
     - _GradientTop: 12
     - _GroundY: 0
     - _NoiseScale: 0.035
-    - _NoiseStrength: 0.08
+    - _NoiseStrength: 0
+    - _ScarStrength: 0
     - _Soot: 0
     - _UseVertexColor: 0
     m_Colors:
-    - _BaseColor: {r: 0.76862746, g: 0.47843137, b: 0.15686275, a: 1}
+    - _BaseColor: {r: 0.99607843, g: 0.69411767, b: 0.2784314, a: 1}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

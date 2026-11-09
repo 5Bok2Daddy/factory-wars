@@ -241,3 +241,7 @@ synced event GarrisonChanged { entity_ref Building; player_ref Occupant; Int32 C
 synced event PowerOutage { player_ref Player; QBoolean Started; }
 synced event BuildingPaused { entity_ref Building; PauseReason Reason; }
 synced event GameOver { Int32 WinnerMask; }
+// 항목 27: 범위 피해가 난 자리(포격·폭격·폭발). 화면 손상 지도·크레이터용.
+synced event AreaImpact { FPVector3 Position; FP Radius; }
+// 항목 27: 유닛·건물이 부서진 자리. Size는 유닛이면 UnitSize 값, 건물이면 -1이고 Footprint가 반지름이다.
+synced event Wrecked { FPVector3 Position; Int32 Size; FP Footprint; }

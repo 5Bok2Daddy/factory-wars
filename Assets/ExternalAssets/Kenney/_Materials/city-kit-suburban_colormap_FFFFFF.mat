@@ -24,21 +24,22 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 6443863d605ce004e9513431b8b82479, type: 3}
+        m_Texture: {fileID: 2800000, guid: adf25a77831122240a025677e02fab74, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AoHeight: 1
-    - _AoStrength: 0.35
+    - _AoStrength: 0.18
     - _Brightness: 1
     - _Desaturate: 0
     - _GradientBottom: 0
-    - _GradientStrength: 0.22
+    - _GradientStrength: 0.06
     - _GradientTop: 12
     - _GroundY: 0
     - _NoiseScale: 0.035
-    - _NoiseStrength: 0.08
+    - _NoiseStrength: 0
+    - _ScarStrength: 0
     - _Soot: 0
     - _UseVertexColor: 0
     m_Colors:

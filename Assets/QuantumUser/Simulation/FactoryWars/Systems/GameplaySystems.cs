@@ -590,6 +590,7 @@ namespace Quantum.FactoryWars {
 
       if (unit->Health <= FP._0) {
         f.Events.UnitDestroyed(target, unit->Owner, unit->Spec);
+        f.Events.Wrecked(f.Unsafe.GetPointer<Transform3D>(target)->Position, (int)spec.Size, FP._0);
         FactoryWarsUtil.Player(f, unit->Owner)->UnitsLost++;
         f.Destroy(target);
       } else if (weapon.Ability == SpecialAbility.TargetDesignator) {
@@ -615,6 +616,7 @@ namespace Quantum.FactoryWars {
         building->Health -= amount;
         if (building->Health <= FP._0) {
           FactoryWarsUtil.Player(f, building->Owner)->BuildingsLost++;
+          f.Events.Wrecked(f.Unsafe.GetPointer<Transform3D>(target)->Position, -1, f.FindAsset(building->Spec).FootprintRadius);
           f.Destroy(target);
         }
       } else if (f.Unsafe.TryGetPointer<Barricade>(target, out var barricade)) {
@@ -640,6 +642,7 @@ namespace Quantum.FactoryWars {
     }
 
     static void DamageArea(Frame f, in Weapon weapon, FPVector3 center, FP radius, FP amount) {
+      f.Events.AreaImpact(center, radius);
       var radiusSqr = radius * radius;
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform, out _)) {

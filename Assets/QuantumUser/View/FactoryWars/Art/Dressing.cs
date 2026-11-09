@@ -19,6 +19,8 @@ namespace FactoryWars.View {
       public float Keep;
       public float LowKeep;
       public float MediumKeep;
+      /// <summary>합친 메쉬의 정점 색에 곱하는 색(절벽 단 밝기, 그을린 나무 등). 기본 흰색.</summary>
+      public Color Tint;
     }
 
     static List<Item> _collector;
@@ -46,7 +48,10 @@ namespace FactoryWars.View {
     /// 종류 하나를 놓는다. scale은 엔트리 배율에 곱하는 축별 배율이다. yaw가 null이면 엔트리 범위에서 해시로 고른다.
     /// 놓았으면 true. 모으는 중이 아니거나 종류가 비어 있으면 false다.
     /// </summary>
-    public static bool Add(DressKind kind, Vector3 position, int seed, Vector3? scale = null, float? yaw = null) {
+    public static bool Add(DressKind kind, Vector3 position, int seed, Vector3? scale = null, float? yaw = null) => Add(kind, position, seed, Color.white, scale, yaw);
+
+    /// <summary>틴트를 곱해 놓는다(합친 메쉬에서만 보인다).</summary>
+    public static bool Add(DressKind kind, Vector3 position, int seed, Color tint, Vector3? scale = null, float? yaw = null) {
       if (_collector == null || Map == null) {
         return false;
       }
@@ -66,6 +71,7 @@ namespace FactoryWars.View {
         Keep = MeshKit.Hash(seed, 77),
         LowKeep = entry.LowKeep,
         MediumKeep = entry.MediumKeep,
+        Tint = tint,
       });
       return true;
     }
@@ -170,6 +176,7 @@ namespace FactoryWars.View {
       var model = Object.Instantiate(variant.Prefab, wrapper);
       model.transform.localPosition += variant.Offset;
       foreach (var renderer in model.GetComponentsInChildren<MeshRenderer>()) {
+        renderer.sharedMaterials = KenneyLook.Resolve(renderer.sharedMaterials);
         // 품질 낮음에서는 도시 건물 그림자를 끈다(그림자 그리기 호출 절약, 항목 25-1).
         renderer.shadowCastingMode = entry.Shadows && GraphicsQuality.Current != QualityTier.Low ? ShadowCastingMode.On : ShadowCastingMode.Off;
       }
@@ -197,6 +204,7 @@ namespace FactoryWars.View {
       var model = Object.Instantiate(variant.Prefab, wrapper);
       model.transform.localPosition += variant.Offset;
       foreach (var renderer in model.GetComponentsInChildren<Renderer>()) {
+        renderer.sharedMaterials = KenneyLook.Resolve(renderer.sharedMaterials);
         renderer.shadowCastingMode = entry.Shadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
       }
       return wrapper.gameObject;
@@ -264,6 +272,8 @@ namespace FactoryWars.View {
 
     void Awake() {
       Active = this;
+      // 프로필이 바뀌었을 수 있다(원본 ↔ 군용). 부품 캐시를 비운다.
+      Parts.Clear();
     }
 
     void OnDestroy() {
@@ -309,7 +319,7 @@ namespace FactoryWars.View {
         if (filter.sharedMesh == null || renderer == null) {
           continue;
         }
-        list.Add(new Part { Mesh = filter.sharedMesh, Materials = renderer.sharedMaterials, Local = filter.transform.localToWorldMatrix });
+        list.Add(new Part { Mesh = filter.sharedMesh, Materials = KenneyLook.Resolve(renderer.sharedMaterials), Local = filter.transform.localToWorldMatrix });
       }
       parts = list.ToArray();
       Parts[prefab] = parts;
@@ -366,7 +376,8 @@ namespace FactoryWars.View {
               continue;
             }
             VertexColorMaterial(material);
-            var color = material.HasProperty("_BaseColor") ? material.GetColor("_BaseColor") : Color.white;
+            var source = KenneyLook.Resolve(material);
+            var color = (source.HasProperty("_BaseColor") ? source.GetColor("_BaseColor") : Color.white) * (item.Tint.a > 0f ? item.Tint : Color.white);
             if (linear) {
               color = color.linear;
             }

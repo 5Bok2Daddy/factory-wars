@@ -202,6 +202,8 @@ namespace FactoryWars.EditorTools {
 
     [System.Serializable]
     class MapFile {
+      /// <summary>"original"(기본, 항목 27 K) 또는 "military"(19C 군용 재도색을 기본으로).</summary>
+      public string Palette = "original";
       public KitLook[] Kits;
       public ColorLook[] Colors;
       public EntryFile[] Entries;
@@ -213,6 +215,10 @@ namespace FactoryWars.EditorTools {
       public float Desaturate = 0.4f;
       public float Brightness = 0.9f;
       public string Tint = "#FFFFFF";
+      /// <summary>공용 셰이더의 높이 그라데이션·저주파 노이즈·접촉 AO 세기(항목 27: Kenney 원본은 거의 0).</summary>
+      public float Gradient = 0.22f;
+      public float Noise = 0.08f;
+      public float Ao = 0.35f;
     }
 
     [System.Serializable]
@@ -252,6 +258,7 @@ namespace FactoryWars.EditorTools {
         return;
       }
       var data = JsonUtility.FromJson<MapFile>(File.ReadAllText(MapJson));
+      var swaps = new List<FactoryWars.View.KenneyAssetMap.MilitarySwap>();
       // 1. 머티리얼 값
       foreach (var path in Directory.Exists(MaterialRoot) ? Directory.GetFiles(MaterialRoot, "*.mat") : new string[0]) {
         var material = AssetDatabase.LoadAssetAtPath<Material>(path.Replace('\\', '/'));
@@ -262,20 +269,28 @@ namespace FactoryWars.EditorTools {
         if (kit == null) {
           continue;
         }
+        // 항목 27: 기본은 Kenney 원본 색이다. 군용 아틀라스·색은 KenneyAssetMap.Military에 따로 남겨 프로필(B)이 런타임에 바꿔 끼운다.
+        var original = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/{kit.Kit}/Textures/colormap.png");
         var military = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/{kit.Kit}/Textures/colormap_military.png");
-        if (military != null && (material.GetTexture("_BaseMap") != null || kit.Kit == "animated-characters-protagonists")) {
-          material.SetTexture("_BaseMap", military);
+        var atlas = material.GetTexture("_BaseMap") != null || kit.Kit == "animated-characters-protagonists";
+        var hex = material.name.Substring(material.name.LastIndexOf('_') + 1);
+        var swap = data.Colors.FirstOrDefault(c => c.Kit == kit.Kit && string.Equals(c.From, hex, System.StringComparison.OrdinalIgnoreCase));
+        var militaryColor = swap != null ? Hex(swap.To) : Military(Hex(hex), out _);
+        var useMilitary = data.Palette == "military";
+        if (atlas) {
+          material.SetTexture("_BaseMap", useMilitary && military != null ? military : original != null ? original : material.GetTexture("_BaseMap"));
+        } else {
+          material.SetColor("_BaseColor", useMilitary ? militaryColor : Hex(hex));
         }
+        swaps.Add(new FactoryWars.View.KenneyAssetMap.MilitarySwap {
+          Material = material, Texture = atlas ? military : null, HasColor = atlas == false, Color = militaryColor,
+        });
         material.SetFloat("_Desaturate", kit.Desaturate);
         material.SetFloat("_Brightness", kit.Brightness);
         material.SetColor("_Tint", Hex(kit.Tint));
-        var hex = material.name.Substring(material.name.LastIndexOf('_') + 1);
-        var swap = data.Colors.FirstOrDefault(c => c.Kit == kit.Kit && string.Equals(c.From, hex, System.StringComparison.OrdinalIgnoreCase));
-        if (swap != null) {
-          material.SetColor("_BaseColor", Hex(swap.To));
-        } else if (material.GetTexture("_BaseMap") == null) {
-          material.SetColor("_BaseColor", Military(Hex(hex), out _));
-        }
+        material.SetFloat("_GradientStrength", kit.Gradient);
+        material.SetFloat("_NoiseStrength", kit.Noise);
+        material.SetFloat("_AoStrength", kit.Ao);
         material.enableInstancing = true;
         EditorUtility.SetDirty(material);
       }
@@ -287,6 +302,7 @@ namespace FactoryWars.EditorTools {
         AssetDatabase.CreateAsset(map, MapAsset);
       }
       map.Entries.Clear();
+      map.Military = swaps;
       var missing = new List<string>();
       foreach (var file in data.Entries) {
         if (System.Enum.TryParse<FactoryWars.View.DressKind>(file.Kind, out var kind) == false) {

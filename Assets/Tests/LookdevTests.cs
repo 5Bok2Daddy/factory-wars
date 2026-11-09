@@ -27,6 +27,12 @@ namespace FactoryWars.Tests {
 
     static string LookdevFolder() => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "screenshots", "lookdev"));
 
+    /// <summary>룩 개발 기록 폴더(없으면 만든다). 다른 테스트 클래스가 쓴다.</summary>
+    public static string LookdevLogPath() {
+      Directory.CreateDirectory(LookdevLog());
+      return LookdevLog();
+    }
+
     static string LookdevLog() => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Game-logs", "lookdev"));
 
     static void LookdevNote(string file, string line) {

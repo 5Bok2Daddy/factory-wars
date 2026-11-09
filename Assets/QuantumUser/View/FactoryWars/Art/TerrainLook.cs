@@ -99,7 +99,10 @@ namespace FactoryWars.View {
               const float Depth = 3.6f;
               var mid = (a + b) * 0.5f - normal * (Depth * 0.5f - 0.15f);
               var yaw = Mathf.Atan2(-direction.z, direction.x) * Mathf.Rad2Deg;
-              Dressing.Add(DressKind.Cliff, new Vector3(mid.x, bottom, mid.z), seed * 7919 + l * 977 + i, new Vector3(length + 0.6f, top - bottom, Depth), yaw);
+              // 단마다 밝기를 달리해 단색 면에서도 층 경계가 보이게 한다(항목 27 K): 아래 단 어둡게, 위 단 밝게.
+              var tier = layers > 1 ? (float)l / (layers - 1) : 1f;
+              var shadeTier = 1f - VisualProfile.Current.CliffTierShade * (1f - tier);
+              Dressing.Add(DressKind.Cliff, new Vector3(mid.x, bottom, mid.z), seed * 7919 + l * 977 + i, new Color(shadeTier, shadeTier, shadeTier, 1f), new Vector3(length + 0.6f, top - bottom, Depth), yaw);
               // 아래층 바깥 가장자리에 바위, 맨 위층 가장자리 안쪽에 나무를 듬성듬성(판정 경계 안쪽).
               var edge = (a + b) * 0.5f - normal * 1.4f;
               if (l == 0 && MeshKit.Hash(seed, 3000 + i) < 0.14f) {
@@ -117,6 +120,26 @@ namespace FactoryWars.View {
           k.Quad(a, b, c, d, outward);
         }
       }
+      // 장식 숲(항목 27 2-4): 통과 불가 대지 윗면을 3.5m 격자로 채운다. 판정 없음, 걷지 않는 땅이다.
+      var lastRing = rings[layers];
+      if (dressed && VisualProfile.Current.PlateauTrees > 0f && dark == false) {
+        var minP = lastRing[0];
+        var maxP = lastRing[0];
+        foreach (var q in lastRing) {
+          minP = Vector2.Min(minP, q);
+          maxP = Vector2.Max(maxP, q);
+        }
+        var topY = height * (0.92f + 0.08f * MeshKit.Hash(seed, 900 + layers - 1));
+        var n = 0;
+        for (var x = minP.x + 2f; x < maxP.x - 1f; x += 3.5f) {
+          for (var z = minP.y + 2f; z < maxP.y - 1f; z += 3.5f, n++) {
+            var spot = new Vector2(x + (MeshKit.Hash(seed, 7000 + n) - 0.5f) * 2f, z + (MeshKit.Hash(seed, 8000 + n) - 0.5f) * 2f);
+            if (MeshKit.Hash(seed, 9000 + n) < VisualProfile.Current.PlateauTrees && InsidePolygon(lastRing, spot, 1.5f)) {
+              ForestKit.DressTree(new Vector3(spot.x, topY, spot.y), seed * 1301 + n, ForestKit.TreeState.Full);
+            }
+          }
+        }
+      }
       // 윗면: 맨 위 고리를 가운데 점으로 덮는다.
       var last = rings[layers];
       var cap = new Vector3(center.x, height, center.y);
@@ -126,6 +149,25 @@ namespace FactoryWars.View {
         var top = height * (0.92f + 0.08f * MeshKit.Hash(seed, 900 + layers - 1));
         k.Tri(new Vector3(last[i].x, top, last[i].y), new Vector3(last[j].x, top, last[j].y), new Vector3(cap.x, top, cap.z), Vector3.up);
       }
+    }
+
+    /// <summary>점이 다각형 안쪽이고 가장자리에서 margin 이상 떨어져 있는지(짝수-홀수 규칙 + 꼭짓점 거리 근사).</summary>
+    static bool InsidePolygon(Vector2[] ring, Vector2 point, float margin) {
+      var inside = false;
+      for (int i = 0, j = ring.Length - 1; i < ring.Length; j = i++) {
+        if ((ring[i].y > point.y) != (ring[j].y > point.y) && point.x < (ring[j].x - ring[i].x) * (point.y - ring[i].y) / (ring[j].y - ring[i].y + 1e-6f) + ring[i].x) {
+          inside = !inside;
+        }
+      }
+      if (inside == false) {
+        return false;
+      }
+      foreach (var q in ring) {
+        if ((q - point).sqrMagnitude < margin * margin) {
+          return false;
+        }
+      }
+      return true;
     }
 
     /// <summary>MapSpec.Roads 조각마다 아스팔트, 가장자리 연석, 가운데 노란 점선, 양옆 흰 선.</summary>
@@ -147,7 +189,7 @@ namespace FactoryWars.View {
           k.Quad(new Vector3(-half.x, 0.055f, z - LaneWidth / 2), new Vector3(half.x, 0.055f, z - LaneWidth / 2),
             new Vector3(half.x, 0.055f, z + LaneWidth / 2), new Vector3(-half.x, 0.055f, z + LaneWidth / 2), Vector3.up);
         }
-        k.Paint(Swatch.LaneYellow);
+        k.Paint(VisualProfile.Current.WhiteLanes ? Swatch.LaneWhite : Swatch.LaneYellow);
         for (var x = -half.x; x < half.x; x += LaneDash + LaneGap) {
           var end = Mathf.Min(x + LaneDash, half.x);
           k.Quad(new Vector3(x, 0.06f, -LaneWidth / 2), new Vector3(end, 0.06f, -LaneWidth / 2), new Vector3(end, 0.06f, LaneWidth / 2), new Vector3(x, 0.06f, LaneWidth / 2), Vector3.up);

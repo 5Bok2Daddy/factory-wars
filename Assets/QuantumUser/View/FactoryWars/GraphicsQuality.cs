@@ -115,7 +115,7 @@ namespace FactoryWars.View {
       bloom.highQualityFiltering.Override(tier == QualityTier.High);
       bloom.maxIterations.Override(tier == QualityTier.High ? 6 : 4);
       var tone = _volume.Add<Tonemapping>(true);
-      tone.mode.Override(profile.Tone == ToneMode.Aces ? TonemappingMode.ACES : TonemappingMode.Neutral);
+      tone.mode.Override(profile.Tone == ToneMode.Aces ? TonemappingMode.ACES : profile.Tone == ToneMode.None ? TonemappingMode.None : TonemappingMode.Neutral);
       var color = _volume.Add<ColorAdjustments>(true);
       color.saturation.Override(profile.Saturation);
       color.contrast.Override(profile.Contrast);

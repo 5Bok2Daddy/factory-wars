@@ -12,29 +12,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62130f9e5e5b00046ab3c22149879d2c, type: 3}
   m_Name: VisualProfile_C
   m_EditorClassIdentifier: 
-  FieldOfView: 30
+  FieldOfView: 33
   Pitch: 50
-  DefaultHeight: 104
-  MinHeight: 62
-  MaxHeight: 250
+  DefaultHeight: 62
+  MinHeight: 35
+  MaxHeight: 140
   UnitScale: 1.2
   BuildingBody: 0.78
   PlateScale: 1.05
   PlateHeight: 0.15
-  SunColor: {r: 1, g: 0.95686275, b: 0.8784314, a: 1}
-  SunIntensity: 1.2
-  SunElevation: 40
-  SunAzimuth: -35
-  AmbientSky: {r: 0.52, g: 0.6, b: 0.72, a: 1}
-  AmbientEquator: {r: 0.44, g: 0.44, b: 0.42, a: 1}
-  AmbientGround: {r: 0.25, g: 0.2, b: 0.16, a: 1}
-  ShadowStrength: 0.75
-  Tone: 0
+  SunColor: {r: 1, g: 0.972549, b: 0.93333334, a: 1}
+  SunIntensity: 0.3
+  SunElevation: 58
+  SunAzimuth: -30
+  AmbientSky: {r: 1.05, g: 1.066, b: 1.334, a: 1}
+  AmbientEquator: {r: 0.941, g: 0.93, b: 1.136, a: 1}
+  AmbientGround: {r: 0.746, g: 0.752, b: 0.898, a: 1}
+  ShadowStrength: 0.8
+  Tone: 2
   BloomIntensity: 0
   BloomThreshold: 1.2
   BloomScatter: 0.6
   Saturation: 0
-  Contrast: 6
+  Contrast: 0
   Vignette: 0
   Ssao: 0
   SsaoIntensity: 0.6
@@ -43,11 +43,11 @@ MonoBehaviour:
   Outline: 0
   OutlineWidth: 0.05
   OutlineColor: {r: 0.11764706, g: 0.101960786, b: 0.08627451, a: 1}
-  PlateauHeight: 5
-  CliffLayers: 2
+  PlateauHeight: 11
+  CliffLayers: 4
   Jagged: 0.5
-  HighGroundHeight: 2.5
-  WaterDepth: 2.5
+  HighGroundHeight: 5
+  WaterDepth: 7
   Outside: 0
   GroundPalette: 1
   PatchSize: 18
@@ -55,7 +55,7 @@ MonoBehaviour:
   ZoneColors: 1
   WaterDeep: {r: 0.12, g: 0.27, b: 0.36, a: 1}
   WaterShallow: {r: 0.36, g: 0.62, b: 0.62, a: 1}
-  VertexShade: 1
+  VertexShade: 0
   ShadeGradient: 0.16
   ShadeAo: 0.3
   ShadeAoHeight: 1.2
@@ -63,14 +63,24 @@ MonoBehaviour:
   Dressing: {fileID: 11400000, guid: 4a5414e68bc57034e8dbf72f5d9b1623, type: 2}
   Boundary: 1
   GroundVertexColors: 1
-  GroundGrass: {r: 0.35686275, g: 0.44705883, b: 0.2509804, a: 1}
-  GroundGrassLight: {r: 0.42352942, g: 0.5058824, b: 0.2901961, a: 1}
-  GroundGrassDark: {r: 0.27450982, g: 0.3529412, b: 0.19215687, a: 1}
-  GroundDirt: {r: 0.5254902, g: 0.44705883, b: 0.33333334, a: 1}
-  GroundDirtDark: {r: 0.4117647, g: 0.34901962, b: 0.27058825, a: 1}
+  GroundGrass: {r: 0.38431373, g: 0.72156864, b: 0.5058824, a: 1}
+  GroundGrassLight: {r: 0.40784314, g: 0.73333335, b: 0.5254902, a: 1}
+  GroundGrassDark: {r: 0.36078432, g: 0.6784314, b: 0.4745098, a: 1}
+  GroundDirt: {r: 0.61960787, g: 0.654902, b: 0.627451, a: 1}
+  GroundDirtDark: {r: 0.5803922, g: 0.6117647, b: 0.5921569, a: 1}
+  KenneyMilitary: 0
+  PaletteLift: 0.32
+  WhiteLanes: 1
+  GroundPlaza: {r: 0.56078434, g: 0.5921569, b: 0.5803922, a: 1}
+  GroundPlazaDark: {r: 0.5254902, g: 0.5568628, b: 0.54509807, a: 1}
+  RoadColor: {r: 0.19215687, g: 0.22745098, b: 0.21176471, a: 1}
+  BackgroundColor: {r: 0.69803923, g: 0.7294118, b: 0.8, a: 1}
+  WaterColor: {r: 0.2901961, g: 0.6392157, b: 0.8392157, a: 1}
+  CliffTierShade: 0.22
+  PlateauTrees: 0.3
   TreeDensity: 1
   ConiferRatio: 0.6
-  AutumnRatio: 0.22
+  AutumnRatio: 0.25
   LeafSet: 1
   Bushes: 0
   NoBuild: 0

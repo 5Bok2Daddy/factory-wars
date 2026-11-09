@@ -12,6 +12,7 @@ Shader "FactoryWars/KenneyLit"
         _Brightness ("Brightness", Range(0, 2)) = 0.9
         _Soot ("Soot (damage)", Range(0, 1)) = 0
         _UseVertexColor ("Use Vertex Color (merged meshes)", Range(0, 1)) = 0
+        _ScarStrength ("Battle Scars (ground/roads)", Range(0, 1)) = 0
         _GradientBottom ("Gradient Bottom (world Y)", Float) = 0
         _GradientTop ("Gradient Top (world Y)", Float) = 12
         _GradientStrength ("Gradient Strength", Range(0, 1)) = 0.22
@@ -40,6 +41,7 @@ Shader "FactoryWars/KenneyLit"
             half _Brightness;
             half _Soot;
             half _UseVertexColor;
+            half _ScarStrength;
             float _GradientBottom;
             float _GradientTop;
             half _GradientStrength;
@@ -50,6 +52,11 @@ Shader "FactoryWars/KenneyLit"
             float _GroundY;
             half _Cutoff;
         CBUFFER_END
+
+        // 항목 27 K-2: 전장 손상 지도(전역). 화면이 확정 이벤트로만 쌓는다. _ScarRect = (최소 x, 최소 z, 1/폭, 1/폭).
+        TEXTURE2D(_ScarMap);
+        SAMPLER(sampler_ScarMap);
+        float4 _ScarRect;
 
         // 값 노이즈 두 겹. 월드 좌표만 쓰므로 같은 자리는 항상 같은 색이다.
         float FwHash(float2 p)
@@ -84,6 +91,25 @@ Shader "FactoryWars/KenneyLit"
             // 손상 단계: 노이즈 얼룩으로 그을린다. 위쪽(불난 층)일수록 진하다.
             float soot = saturate(_Soot * (0.6 + 0.8 * FwNoise(positionWS.xz * 0.6 + positionWS.y * 0.4)) * (0.5 + t));
             return albedo * max(0.2, shade) * (1.0 - 0.75 * soot);
+        }
+
+        // 손상도에 따른 바닥·도로 색: 0.2 누런 잔디 → 0.5 흙·그을음 → 0.8 이상 검게 탄 땅. 경계는 노이즈로 불규칙하게.
+        half3 FwScar(half3 albedo, float3 positionWS)
+        {
+            if (_ScarStrength <= 0.0 || _ScarRect.z <= 0.0)
+            {
+                return albedo;
+            }
+            float2 uv = (positionWS.xz - _ScarRect.xy) * _ScarRect.zw;
+            float d = SAMPLE_TEXTURE2D(_ScarMap, sampler_ScarMap, uv).r * _ScarStrength;
+            float n = FwNoise(positionWS.xz * 0.35);
+            d = saturate(d + (n - 0.5) * 0.22 * step(0.02, d));
+            half3 c = albedo;
+            c = lerp(c, albedo * half3(1.08, 0.98, 0.62), saturate(d / 0.2));
+            c = lerp(c, half3(0.55, 0.45, 0.33), saturate((d - 0.2) / 0.3));
+            c = lerp(c, half3(0.30, 0.27, 0.24), saturate((d - 0.5) / 0.3));
+            c = lerp(c, half3(0.12, 0.11, 0.10), saturate((d - 0.8) / 0.2));
+            return c;
         }
         ENDHLSL
 
@@ -145,6 +171,7 @@ Shader "FactoryWars/KenneyLit"
                 UNITY_SETUP_INSTANCE_ID(input);
                 half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb * input.color;
                 albedo = FwShade(albedo, input.positionWS);
+                albedo = FwScar(albedo, input.positionWS);
                 half3 normal = normalize(input.normalWS);
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 Light light = GetMainLight(shadowCoord);

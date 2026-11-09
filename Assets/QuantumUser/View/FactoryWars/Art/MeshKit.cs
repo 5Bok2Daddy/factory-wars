@@ -107,9 +107,28 @@ namespace FactoryWars.View {
       var pixels = new Color32[Size];
       for (var i = 0; i < Cells.Length; i++) {
         var swatch = (Swatch)i;
-        pixels[i] = swatch == Swatch.Team ? team : IsGlow(swatch) ? Scale(Cells[i].Color, GlowBase) : Cells[i].Color;
+        pixels[i] = swatch == Swatch.Team ? team : IsGlow(swatch) ? Scale(Cells[i].Color, GlowBase) : Adjust(swatch, Cells[i].Color);
       }
       return pixels;
+    }
+
+    static readonly Swatch[] Lifted = { Swatch.Metal, Swatch.MetalDark, Swatch.MetalLight, Swatch.Armor, Swatch.ArmorDark, Swatch.Olive, Swatch.OliveDark, Swatch.Rubber };
+
+    /// <summary>
+    /// 프로필에 따른 칸 색 보정(항목 27 K): 유닛·플레이어 건물 몸체 칸(금속·장갑·국방색)을 밝은 기본색 쪽으로 올리고, 물 칸은 프로필 물색으로 바꾼다.
+    /// 팀 색·발광 칸은 건드리지 않는다. 팔레트를 구울 때(에디터) 한 번 적용된다.
+    /// </summary>
+    static Color32 Adjust(Swatch swatch, Color32 color) {
+      var profile = VisualProfile.Current;
+      if (profile.PaletteLift > 0f && System.Array.IndexOf(Lifted, swatch) >= 0) {
+        var c = (Color)color;
+        var lifted = Color.Lerp(c, new Color(0.93f, 0.92f, 0.9f), profile.PaletteLift);
+        return (Color32)lifted;
+      }
+      if (profile.WaterColor.a > 0f && (swatch == Swatch.Water || swatch == Swatch.WaterDeep)) {
+        return (Color32)(swatch == Swatch.WaterDeep ? profile.WaterColor * 0.82f : profile.WaterColor);
+      }
+      return color;
     }
 
     /// <summary>발광 칸 외에는 검정이다. 정전이면 전기는 꺼지고 쇳물은 어두워진다. 광석 결정은 전기와 무관하다.</summary>
@@ -593,8 +612,17 @@ namespace FactoryWars.View {
       if (Dressing.Collecting == false || Dressing.Has(DressKind.Conifer) == false) {
         return false;
       }
+      var scar = BattleScars.Active != null ? BattleScars.Active.Level(world) : 0f;
+      if (scar >= 0.7f) {
+        // 부러진 나무: 그루터기·통나무를 그을린 색으로(항목 27 K-2). 채집 그루터기와 같은 모델을 쓰되 어둡다.
+        return Dressing.Add(DressKind.Stump, world, seed, new Color(0.38f, 0.34f, 0.3f, 1f));
+      }
       if (state == TreeState.Stump) {
         return Dressing.Add(DressKind.Stump, world, seed);
+      }
+      if (scar >= 0.4f) {
+        var burnt = new Color(0.42f, 0.38f, 0.33f, 1f);
+        return Dressing.Add(DressKind.TreeSparse, world, seed, burnt) || Dressing.Add(DressKind.Conifer, world, seed, burnt);
       }
       if (state == TreeState.Sparse) {
         return Dressing.Add(DressKind.TreeSparse, world, seed);

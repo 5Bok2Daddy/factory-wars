@@ -157,6 +157,8 @@ namespace FactoryWars.View {
         case Swatch.Dirt: return profile.GroundDirt;
         case Swatch.DirtDark: return profile.GroundDirtDark;
         case Swatch.Earth: return Color.Lerp(profile.GroundDirt, profile.GroundDirtDark, 0.5f);
+        case Swatch.Concrete: return profile.GroundPlaza;
+        case Swatch.ConcreteDark: return profile.GroundPlazaDark;
         default: return ArtPalette.ColorOf(swatch);
       }
     }
@@ -672,7 +674,7 @@ namespace FactoryWars.View {
     }
 
     /// <summary>언덕·협곡·바위·강·줄무늬를 메쉬 하나로 모은다. 번호는 MapSpec.Terrain의 순서다.</summary>
-    public static void Features(MeshKit k, MapSpec map) {
+    public static void Features(MeshKit k, MapSpec map, bool roads = true) {
       _sites = map.CaptureSites;
       var profile = VisualProfile.Current;
       var paths = RiverPaths(map);
@@ -690,7 +692,9 @@ namespace FactoryWars.View {
         River(k, paths[i], 40 + i, Land(map));
         RiverRocks(k, paths[i], 70 + i, map);
       }
-      Roads(k, map);
+      if (roads) {
+        Roads(k, map);
+      }
       HighGrounds(k, map);
       BridgePiers(k, map);
       if (profile.NoBuildAlways) {

@@ -21,6 +21,30 @@ namespace FactoryWars.View {
       public float Amount;
       public int Step = -1;
       public MeshFilter Filter;
+      /// <summary>숲 자리의 전장 손상 단계(0 멀쩡, 1 그을림, 2 부러짐). 바뀌면 나무를 다시 놓는다(항목 27 K-2).</summary>
+      public int ScarBand;
+    }
+
+    int _scarVersion = -1;
+    float _scarCheckAt;
+
+    /// <summary>손상 지도가 바뀌었으면 숲마다 손상 단계를 다시 보고, 바뀐 숲은 다음 갱신에서 다시 만든다. 1초에 한 번.</summary>
+    void CheckForestScars() {
+      var scars = BattleScars.Active;
+      if (scars == null || scars.Version == _scarVersion || Time.time < _scarCheckAt) {
+        return;
+      }
+      _scarVersion = scars.Version;
+      _scarCheckAt = Time.time + 1f;
+      foreach (var forest in _forests.Values) {
+        var radius = forest.Shape.IsCircle ? forest.Shape.Radius.AsFloat : Mathf.Max(forest.Shape.HalfLength.AsFloat, forest.Shape.HalfWidth.AsFloat);
+        var level = scars.Max(forest.Shape.Center.ToUnityVector3(), radius);
+        var band = level >= 0.7f ? 2 : level >= 0.4f ? 1 : 0;
+        if (band != forest.ScarBand) {
+          forest.ScarBand = band;
+          forest.Step = -1;
+        }
+      }
     }
 
     class Barrier {
@@ -65,6 +89,9 @@ namespace FactoryWars.View {
     static Material _ground;
 
     /// <summary>바닥 전용 공유 머티리얼: 공용 셰이더에 정점 색을 켜고 접촉 AO·높이 그라데이션은 끈다.</summary>
+    /// <summary>바닥·도로 공용 머티리얼(정점 색 + 전장 손상). 색 맞추기 비교 장면도 쓴다.</summary>
+    public static Material SharedGroundMaterial => GroundMaterial();
+
     static Material GroundMaterial() {
       if (_ground == null) {
         var shader = Shader.Find("FactoryWars/KenneyLit");
@@ -79,6 +106,7 @@ namespace FactoryWars.View {
         _ground.SetFloat("_GradientStrength", 0f);
         _ground.SetFloat("_NoiseStrength", 0.05f);
         _ground.SetFloat("_NoiseScale", 0.05f);
+        _ground.SetFloat("_ScarStrength", 1f);
       }
       return _ground;
     }
@@ -110,9 +138,28 @@ namespace FactoryWars.View {
         groundMesh.colors = colors;
         groundObject.GetComponent<MeshRenderer>().sharedMaterial = GroundMaterial();
       }
+      // 도로는 따로 그려 바닥과 같은 머티리얼(정점 색 + 전장 손상)을 쓴다(항목 27 K-2: 균열·패임·그을음).
+      if (GroundMaterial() != null) {
+        var roads = new MeshKit();
+        TerrainKit.Roads(roads, _map);
+        if (roads.TriangleCount > 0) {
+          var roadMesh = roads.ToMesh("world_roads");
+          var uvs = roadMesh.uv;
+          var roadColors = new Color[uvs.Length];
+          var linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
+          for (var v = 0; v < uvs.Length; v++) {
+            var swatch = (Swatch)Mathf.Clamp(Mathf.FloorToInt(uvs[v].x * ArtPalette.Size), 0, ArtPalette.CellCount - 1);
+            var tint = swatch == Swatch.Concrete || swatch == Swatch.ConcreteDark ? VisualProfile.Current.GroundPlaza
+              : swatch == Swatch.Asphalt && VisualProfile.Current.RoadColor.a > 0f ? VisualProfile.Current.RoadColor : ArtPalette.ColorOf(swatch);
+            roadColors[v] = linear ? tint.linear : tint;
+          }
+          roadMesh.colors = roadColors;
+          MeshObject(_root, "Roads", roadMesh, false).GetComponent<MeshRenderer>().sharedMaterial = GroundMaterial();
+        }
+      }
       var features = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
       Dressing.Begin();
-      TerrainKit.Features(features, _map);
+      TerrainKit.Features(features, _map, GroundMaterial() == null);
       Dressing.End("world");
       Dressing.Begin();
       Scatter.Fill(_map);
@@ -164,6 +211,8 @@ namespace FactoryWars.View {
       RenderSettings.ambientSkyColor = profile.AmbientSky;
       RenderSettings.ambientEquatorColor = profile.AmbientEquator;
       RenderSettings.ambientGroundColor = profile.AmbientGround;
+      // 실행 중에 환경광 색을 바꾸면 환경 프로브를 다시 계산해야 반영된다(항목 27 K-0).
+      DynamicGI.UpdateEnvironment();
       RenderSettings.fog = false;
       var sun = RenderSettings.sun;
       if (sun == null) {
@@ -191,7 +240,7 @@ namespace FactoryWars.View {
       if (camera != null) {
         camera.clearFlags = CameraClearFlags.SolidColor;
         // 맵 밖은 어둡게 끊는다. 안개면 안개 색과 맞춘다.
-        camera.backgroundColor = profile.Outside == OutsideMode.Fog ? RenderSettings.fogColor : new Color(0.11f, 0.12f, 0.13f);
+        camera.backgroundColor = profile.Outside == OutsideMode.Fog ? RenderSettings.fogColor : profile.BackgroundColor;
         camera.allowHDR = true;
         camera.farClipPlane = 700f;
       }
@@ -353,6 +402,7 @@ namespace FactoryWars.View {
         return;
       }
       UpdateBarriers(frame, deltaTime);
+      CheckForestScars();
       var nodes = frame.Filter<ResourceNode>();
       while (nodes.NextUnsafe(out var entity, out var node)) {
         if (_forests.TryGetValue(entity, out var forest)) {

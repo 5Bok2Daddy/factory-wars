@@ -204,7 +204,8 @@ namespace FactoryWars.Tests {
       TerrainKit.Features(kit, MapAsset("Map4P"));
       var mesh = kit.ToMesh("test");
       Assert.AreEqual(1, mesh.subMeshCount);
-      Assert.Less(kit.TriangleCount, 70000, "삼각형 예산");
+      // 항목 27(K-1): 대지 11m 4층·수로 깊이 7m로 절벽 층이 늘어 70k → 90k. 화면 전체 예산(보통 550k)은 Lookdev 27이 잰다.
+      Assert.Less(kit.TriangleCount, 90000, "삼각형 예산");
     }
 
     // 울타리

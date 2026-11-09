@@ -10,8 +10,9 @@ namespace FactoryWars.View {
     const int MaxWrecks = 24;
     const float WreckSeconds = 30f;
     const float WreckSink = 1.2f;
-    const int MaxCraters = 64;
-    const float CraterSeconds = 60f;
+    // 항목 27 K-2: 크레이터는 영구로 남는다. 상한을 넘으면 오래된 것부터 지운다(손상 지도에는 이미 그을음으로 남아 있다).
+    static int MaxCraters => GraphicsQuality.Current == QualityTier.Low ? 48 : 96;
+    const float CraterSeconds = float.MaxValue;
 
     static readonly Color Muzzle = new Color(1f, 0.62f, 0.2f, 1f);
     static readonly Color Flame = new Color(1f, 0.42f, 0.08f, 1f);

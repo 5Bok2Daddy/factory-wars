@@ -98,6 +98,17 @@ namespace FactoryWars.View {
     }
 
     public List<Entry> Entries = new List<Entry>();
+
+    /// <summary>군용 재도색(항목 19C)을 프로필로 남긴 것(항목 27). 머티리얼마다 군용 아틀라스 또는 바꾼 색. 기본(원본) 머티리얼은 그대로 둔다.</summary>
+    [Serializable]
+    public class MilitarySwap {
+      public Material Material;
+      public Texture2D Texture;
+      public bool HasColor;
+      public Color Color = Color.white;
+    }
+
+    public List<MilitarySwap> Military = new List<MilitarySwap>();
     public AnimationClip WorkerIdle;
     public AnimationClip WorkerRun;
 

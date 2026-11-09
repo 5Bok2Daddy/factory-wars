@@ -199,18 +199,38 @@ MonoBehaviour:
     MediumKeep: 1
   - Kind: 9
     Variants:
+    - Prefab: {fileID: 919132149155446097, guid: 0fe8df3ef1759b641aec732c79724ee8, type: 3}
+      Weight: 2
+      Offset: {x: 0.000000059604645, y: -0, z: -0.000000059604645}
+      Size: {x: 0.88358784, y: 1.293, z: 0.93999994}
+    - Prefab: {fileID: 919132149155446097, guid: 3194a01703073594c8ce397b5e45d861, type: 3}
+      Weight: 2
+      Offset: {x: 0.000000059604645, y: -0, z: -0.000000059604645}
+      Size: {x: 0.97, y: 1.293, z: 0.93999994}
+    - Prefab: {fileID: 919132149155446097, guid: cbb30004448b7b24ea5aed88b3687f19, type: 3}
+      Weight: 2
+      Offset: {x: 0.000000059604645, y: -0, z: -0}
+      Size: {x: 0.88358784, y: 0.893, z: 1.0900002}
+    - Prefab: {fileID: 919132149155446097, guid: 6600a2e634eb3474e8e9b92dae76708d, type: 3}
+      Weight: 2
+      Offset: {x: -0, y: -0, z: 0.00000011920929}
+      Size: {x: 0.84000003, y: 1.293, z: 0.89999986}
+    - Prefab: {fileID: 919132149155446097, guid: b04a01ea59e66d54494e77805d099e1b, type: 3}
+      Weight: 2
+      Offset: {x: -0, y: -0, z: -0.00000011920929}
+      Size: {x: 0.84, y: 1.693, z: 1.0300002}
+    - Prefab: {fileID: 919132149155446097, guid: a4b15e9bacf365e45b2e400f6af68868, type: 3}
+      Weight: 2
+      Offset: {x: -0, y: -0, z: -0.00000011920929}
+      Size: {x: 0.96999997, y: 1.693, z: 0.92200017}
+    - Prefab: {fileID: 919132149155446097, guid: 7fad53efe1acd23488624fc0045713f1, type: 3}
+      Weight: 2
+      Offset: {x: -0, y: -0, z: 0.00000011920929}
+      Size: {x: 0.8835878, y: 1.293, z: 1.0078912}
     - Prefab: {fileID: 919132149155446097, guid: 439708bd39bb7374faf910fa4fb22a2e, type: 3}
       Weight: 1
       Offset: {x: -0, y: -0, z: -0}
       Size: {x: 1.3, y: 0.8335409, z: 1.0281378}
-    - Prefab: {fileID: 919132149155446097, guid: 60fee78b6c3e1c446b1bf65048e86232, type: 3}
-      Weight: 1
-      Offset: {x: -0, y: -0, z: -0}
-      Size: {x: 1.2863803, y: 1.033541, z: 1.0281378}
-    - Prefab: {fileID: 919132149155446097, guid: a59fa7db65749c34790e7aae7dbedded, type: 3}
-      Weight: 1
-      Offset: {x: -0, y: -0, z: -0}
-      Size: {x: 1.3, y: 1.1375, z: 1.028}
     - Prefab: {fileID: 919132149155446097, guid: 1fa1973fc3dbc034688b32cad5f7fde9, type: 3}
       Weight: 1
       Offset: {x: -0, y: -0, z: -0}
@@ -219,38 +239,10 @@ MonoBehaviour:
       Weight: 1
       Offset: {x: -0, y: -0, z: -0}
       Size: {x: 1.3, y: 0.7374999, z: 0.91599995}
-    - Prefab: {fileID: 919132149155446097, guid: 083e5d307675ba64c8694c24f1fa97f9, type: 3}
-      Weight: 1
-      Offset: {x: -0, y: -0, z: -0}
-      Size: {x: 1.2863803, y: 0.7374999, z: 1.028}
     - Prefab: {fileID: 919132149155446097, guid: 9bfc9bab11312e14c8d46f99818a34ab, type: 3}
       Weight: 1
       Offset: {x: -0, y: -0, z: -0}
       Size: {x: 0.920938, y: 1.1495962, z: 1.02}
-    - Prefab: {fileID: 919132149155446097, guid: 4bb17d5d5b1c22b4985550bba6c2a56b, type: 3}
-      Weight: 1
-      Offset: {x: -0, y: -0, z: -0}
-      Size: {x: 1.428, y: 0.7374999, z: 1.428}
-    - Prefab: {fileID: 919132149155446097, guid: 2b4265d1ba6185e46b80e3546561879e, type: 3}
-      Weight: 1
-      Offset: {x: -0, y: -0, z: -0.020793974}
-      Size: {x: 1.24, y: 0.9179999, z: 0.88558793}
-    - Prefab: {fileID: 919132149155446097, guid: 1b82b2e02c7f4e4479439a5a635c6537, type: 3}
-      Weight: 1
-      Offset: {x: -0, y: -0, z: -0}
-      Size: {x: 1.0280001, y: 1.1411428, z: 1.02}
-    - Prefab: {fileID: 919132149155446097, guid: a8cd34332cab1994f813f244b153aca7, type: 3}
-      Weight: 2
-      Offset: {x: 0.000000059604645, y: -0, z: -0}
-      Size: {x: 1.0956428, y: 1.14375, z: 2}
-    - Prefab: {fileID: 919132149155446097, guid: 2bf67dc162e818c488271fdcf182fece, type: 3}
-      Weight: 2
-      Offset: {x: -0, y: -0, z: -0}
-      Size: {x: 1.0912855, y: 1.9812499, z: 2.2}
-    - Prefab: {fileID: 919132149155446097, guid: 3dc04c7e30e45e94d9acb90881187133, type: 3}
-      Weight: 2
-      Offset: {x: -0, y: -0, z: -0}
-      Size: {x: 2.0000002, y: 1.9812499, z: 2.2}
     Scale: 1
     ScaleJitter: {x: 0.85, y: 1.15}
     Yaw: {x: 0, y: 360}
@@ -261,34 +253,38 @@ MonoBehaviour:
     MediumKeep: 1
   - Kind: 10
     Variants:
+    - Prefab: {fileID: 919132149155446097, guid: 27b3a3ecbf1f7b643bff3ff4625467b6, type: 3}
+      Weight: 2
+      Offset: {x: -0, y: -0, z: -0.00000011920929}
+      Size: {x: 1.6400001, y: 0.893, z: 1.0078915}
+    - Prefab: {fileID: 919132149155446097, guid: d3e43adbbdb64434e846a698afa90ebc, type: 3}
+      Weight: 2
+      Offset: {x: -0, y: -0, z: -0}
+      Size: {x: 1.24, y: 1.68, z: 1.302}
+    - Prefab: {fileID: 919132149155446097, guid: 9adb632cf08f7a04a84f22ae0a52fdf4, type: 3}
+      Weight: 2
+      Offset: {x: -0, y: -0, z: -0}
+      Size: {x: 2.0835881, y: 1.693, z: 1.3399999}
+    - Prefab: {fileID: 919132149155446097, guid: 98cfacf8cd88f6346a8a85b50f4bb34b, type: 3}
+      Weight: 2
+      Offset: {x: -0, y: -0, z: 0.00000011920929}
+      Size: {x: 2.0835881, y: 1.4699999, z: 0.9419998}
+    - Prefab: {fileID: 919132149155446097, guid: 0ca08e0f557ab3c4aa88aae251ead209, type: 3}
+      Weight: 2
+      Offset: {x: -0, y: -0, z: -0}
+      Size: {x: 1.37, y: 2.27, z: 1.402}
+    - Prefab: {fileID: 919132149155446097, guid: 9011bfaee4f6da24ba6c1730ea06bdba, type: 3}
+      Weight: 2
+      Offset: {x: -0, y: -0, z: -0}
+      Size: {x: 2.3200002, y: 2.48, z: 1.8199999}
     - Prefab: {fileID: 919132149155446097, guid: 96ee6b6a5d6acd94188f98e6b4052894, type: 3}
       Weight: 1
       Offset: {x: 0.000000059604645, y: -0, z: 0.089999974}
       Size: {x: 0.88358784, y: 1.4145521, z: 1.4200002}
-    - Prefab: {fileID: 919132149155446097, guid: ce527fe0031810d42903b19c8fe497f7, type: 3}
-      Weight: 1
-      Offset: {x: -0, y: -0, z: -0.00000011920929}
-      Size: {x: 1.6781383, y: 1.2800001, z: 1.2835882}
     - Prefab: {fileID: 919132149155446097, guid: 8fd0a15e4695dcb42b7cd3f03e2e4168, type: 3}
       Weight: 1
       Offset: {x: -0.5809311, y: -0, z: -0.27899998}
       Size: {x: 1.3217257, y: 0.733541, z: 1.3100001}
-    - Prefab: {fileID: 919132149155446097, guid: 0b77086cfb9ad7a4bb899a3044a72211, type: 3}
-      Weight: 1
-      Offset: {x: -0.4341371, y: -0, z: -0.27399996}
-      Size: {x: 1.0281378, y: 0.733541, z: 1.3}
-    - Prefab: {fileID: 919132149155446097, guid: 28d1f74bf61999f4990ce129ed31780b, type: 3}
-      Weight: 1
-      Offset: {x: -0.43489516, y: -0, z: -0.274}
-      Size: {x: 1.0266218, y: 0.86114573, z: 1.3}
-    - Prefab: {fileID: 919132149155446097, guid: 2bf67dc162e818c488271fdcf182fece, type: 3}
-      Weight: 1
-      Offset: {x: -0, y: -0, z: -0}
-      Size: {x: 1.0912855, y: 1.9812499, z: 2.2}
-    - Prefab: {fileID: 919132149155446097, guid: 3dc04c7e30e45e94d9acb90881187133, type: 3}
-      Weight: 1
-      Offset: {x: -0, y: -0, z: -0}
-      Size: {x: 2.0000002, y: 1.9812499, z: 2.2}
     Scale: 1
     ScaleJitter: {x: 0.85, y: 1.15}
     Yaw: {x: 0, y: 360}
@@ -351,18 +347,18 @@ MonoBehaviour:
     MediumKeep: 1
   - Kind: 13
     Variants:
-    - Prefab: {fileID: 919132149155446097, guid: 96ee6b6a5d6acd94188f98e6b4052894, type: 3}
+    - Prefab: {fileID: 919132149155446097, guid: 9adb632cf08f7a04a84f22ae0a52fdf4, type: 3}
       Weight: 1
-      Offset: {x: 0.000000059604645, y: -0, z: 0.089999974}
-      Size: {x: 0.88358784, y: 1.4145521, z: 1.4200002}
-    - Prefab: {fileID: 919132149155446097, guid: ce527fe0031810d42903b19c8fe497f7, type: 3}
+      Offset: {x: -0, y: -0, z: -0}
+      Size: {x: 2.0835881, y: 1.693, z: 1.3399999}
+    - Prefab: {fileID: 919132149155446097, guid: 98cfacf8cd88f6346a8a85b50f4bb34b, type: 3}
       Weight: 1
-      Offset: {x: -0, y: -0, z: -0.00000011920929}
-      Size: {x: 1.6781383, y: 1.2800001, z: 1.2835882}
-    - Prefab: {fileID: 919132149155446097, guid: 8fd0a15e4695dcb42b7cd3f03e2e4168, type: 3}
+      Offset: {x: -0, y: -0, z: 0.00000011920929}
+      Size: {x: 2.0835881, y: 1.4699999, z: 0.9419998}
+    - Prefab: {fileID: 919132149155446097, guid: 9011bfaee4f6da24ba6c1730ea06bdba, type: 3}
       Weight: 1
-      Offset: {x: -0.5809311, y: -0, z: -0.27899998}
-      Size: {x: 1.3217257, y: 0.733541, z: 1.3100001}
+      Offset: {x: -0, y: -0, z: -0}
+      Size: {x: 2.3200002, y: 2.48, z: 1.8199999}
     Scale: 1
     ScaleJitter: {x: 0.85, y: 1.15}
     Yaw: {x: 0, y: 360}
@@ -1191,5 +1187,238 @@ MonoBehaviour:
     Shadows: 0
     LowKeep: 0
     MediumKeep: 1
+  Military:
+  - Material: {fileID: 2100000, guid: 62f5a503487297842bc0cd7b6d94f035, type: 2}
+    Texture: {fileID: 2800000, guid: 136cdc31e8089e345ad2df2963041def, type: 3}
+    HasColor: 0
+    Color: {r: 0.47796077, g: 0.46058038, b: 0.4301647, a: 1}
+  - Material: {fileID: 2100000, guid: 908720a4fa9a9d84193c35c784c444e9, type: 2}
+    Texture: {fileID: 2800000, guid: 90180696f9d39ad4c91685939d735c20, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 68c9d1c94e0c8c240808fed75389bf8d, type: 2}
+    Texture: {fileID: 2800000, guid: 7a8bf08dd39c00c4dbd41d270aa7fdb2, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: b585e752dfb7f2d4784afe169c10bb5a, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 7a3b343189acdb54b9faf3fe6fd9bf57, type: 2}
+    Texture: {fileID: 2800000, guid: 9617c723eef8d314db674d88193fc9d7, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 19aed04be99f4194aa9e220460e7232f, type: 2}
+    Texture: {fileID: 2800000, guid: ed3d8f15e3e368448bae67496aab9f15, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: d8776c39a819d3740b8e8f553b853516, type: 2}
+    Texture: {fileID: 2800000, guid: 14b43fef2531a9840b5234717d2306b9, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: bb36b5f1f6fb8ce4b9b679f5fe0f12c0, type: 2}
+    Texture: {fileID: 2800000, guid: 2fcf1a01a7e88d347b4e3b07d6b0897c, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 00fe3acf7dc36f44db27b3af1d7acf77, type: 2}
+    Texture: {fileID: 2800000, guid: 6443863d605ce004e9513431b8b82479, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: d3cf7b2839676b54b8178a979098e413, type: 2}
+    Texture: {fileID: 2800000, guid: 91db11213328d3e4b895529a03823fd5, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: cd2742ade45de5946ba1dcc202cb5e3d, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.13333334, g: 0.16470589, b: 0.1882353, a: 1}
+  - Material: {fileID: 2100000, guid: 5a4095a699d12fb4ca9a5dc2710c4d5b, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.34107682, g: 0.39355016, b: 0.25362122, a: 1}
+  - Material: {fileID: 2100000, guid: adac8be7531f8704c81b2c34472b9ab6, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.12796862, g: 0.1580789, b: 0.18066159, a: 1}
+  - Material: {fileID: 2100000, guid: c89f772b98fb4824ea60ebf16ce5be06, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.15093334, g: 0.18644705, b: 0.21308236, a: 1}
+  - Material: {fileID: 2100000, guid: 4c62e499e2b25fa4184d4b84c04e0656, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.13173334, g: 0.16272941, b: 0.18597648, a: 1}
+  - Material: {fileID: 2100000, guid: 8bc3cf878c4b733459cef761e9130825, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.43589848, g: 0.3014625, b: 0.21591234, a: 1}
+  - Material: {fileID: 2100000, guid: 8ee888565b9fab54694cfd3d9e0a0baa, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.5376194, g: 0.37658134, b: 0.25683507, a: 1}
+  - Material: {fileID: 2100000, guid: ade89bad72eb6374f880c6818198c988, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.5567411, g: 0.37895122, b: 0.25958994, a: 1}
+  - Material: {fileID: 2100000, guid: 723c634a6820ff6448d5c7bdbf88847f, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.48222378, g: 0.46468836, b: 0.4340014, a: 1}
+  - Material: {fileID: 2100000, guid: ff6f9c96ab915454fa39ce8b74c45fab, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.48405075, g: 0.4664489, b: 0.43564567, a: 1}
+  - Material: {fileID: 2100000, guid: b2ccab7c530f11d42829d868d5fb1848, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.47973517, g: 0.33177948, b: 0.23762584, a: 1}
+  - Material: {fileID: 2100000, guid: 8b605b0b657fdc54fb255cbf76781de3, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.5059746, g: 0.48757553, b: 0.45537713, a: 1}
+  - Material: {fileID: 2100000, guid: ee62eb64862c2ab4a962aa34adbe27c1, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.48684382, g: 0.33669573, b: 0.24114695, a: 1}
+  - Material: {fileID: 2100000, guid: b7bdcabc2ce47ee4e9be3ff7dc8372b8, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 570eeaab843187848b285ff7d0b5e87e, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.56454897, g: 0.5367843, b: 0.38870588, a: 1}
+  - Material: {fileID: 2100000, guid: 3f3711b669235824e9ca64d5a0f2dbb7, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 7fbb16083a0d09e4eaa26c280b30e2c1, type: 2}
+    Texture: {fileID: 2800000, guid: 265ca594f84eda345a08c9c4052a9fcd, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 76756aae8b72460439268852d50a0597, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.12646276, g: 0.1562187, b: 0.17853564, a: 1}
+  - Material: {fileID: 2100000, guid: 41ecec33af3fdcf43808ef1887b7a488, type: 2}
+    Texture: {fileID: 2800000, guid: d9187eb4a6d6b624f8ae62e0b2c7eb01, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 28bd05a83fd49b948904c7f5c51bad13, type: 2}
+    Texture: {fileID: 2800000, guid: 7de0a1e0686941343be7803afef78788, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: e008ecaba0421254bb63384d77ec5287, type: 2}
+    Texture: {fileID: 2800000, guid: 91822f436abe8774ab82b7727960d465, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: e88fdee1836c0254cabcbe4aba96898d, type: 2}
+    Texture: {fileID: 2800000, guid: b57170e82fb910b4b811289d8bf5aee1, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 59627f9897071ba449478ba8873f26da, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.29803923, g: 0.38431373, b: 0.21176471, a: 1}
+  - Material: {fileID: 2100000, guid: c24ed732ef97d9f47804b4f19671d5eb, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.22745098, g: 0.30588236, b: 0.18039216, a: 1}
+  - Material: {fileID: 2100000, guid: 08bdc78fde71a8449b844f131a452750, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.3529412, g: 0.4392157, b: 0.2509804, a: 1}
+  - Material: {fileID: 2100000, guid: 76ccfb82d72c7e04bad6f722a4104979, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.4627451, g: 0.4509804, b: 0.42352942, a: 1}
+  - Material: {fileID: 2100000, guid: 864eca8d8ad8763459d2af4eed160fcc, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.43137255, g: 0.39215687, b: 0.53333336, a: 1}
+  - Material: {fileID: 2100000, guid: d0d4ce624e5176e4fb90dc8704eebd43, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.65882355, g: 0.6392157, b: 0.59607846, a: 1}
+  - Material: {fileID: 2100000, guid: e897d800b344bcb458c03af41605247b, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.49411765, g: 0.39215687, b: 0.28235295, a: 1}
+  - Material: {fileID: 2100000, guid: bb04eaf12ff1a6345a16051d2b631d7c, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.58431375, g: 0.5686275, b: 0.5372549, a: 1}
+  - Material: {fileID: 2100000, guid: 83c202cd1fa106848807c82cec92e341, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.49411765, g: 0.22745098, b: 0.1882353, a: 1}
+  - Material: {fileID: 2100000, guid: 6e5e39c641718424aa64283e2bcdb0a5, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.54901963, g: 0.4392157, b: 0.3137255, a: 1}
+  - Material: {fileID: 2100000, guid: 8b765f8ddc972bb4e8c115400c73265b, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.36862746, g: 0.27450982, b: 0.19607843, a: 1}
+  - Material: {fileID: 2100000, guid: 859b72761b33c2941a6e22d0af294e4b, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.5568628, g: 0.26666668, b: 0.21176471, a: 1}
+  - Material: {fileID: 2100000, guid: ac32e35e49c7b5d4c98fe1cec04e3ead, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.5568628, g: 0.42352942, b: 0.2901961, a: 1}
+  - Material: {fileID: 2100000, guid: 8376164f2e9079d4c9f745c4a7d3afa6, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.7882353, g: 0.6039216, b: 0.22745098, a: 1}
+  - Material: {fileID: 2100000, guid: 51059b47b3ea88a4f9f98d47ca1804f1, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.7019608, g: 0.63529414, b: 0.5254902, a: 1}
+  - Material: {fileID: 2100000, guid: b9fd6bb894b2df747a173622625b4df9, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.76862746, g: 0.47843137, b: 0.15686275, a: 1}
+  - Material: {fileID: 2100000, guid: 30f093b21a119ed47a73b9c5bb3bb9ac, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.6039216, g: 0.4627451, b: 0.32156864, a: 1}
+  - Material: {fileID: 2100000, guid: 7f31321d5c7af57479cafc06a0d5b7da, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.70980394, g: 0.3764706, b: 0.16470589, a: 1}
+  - Material: {fileID: 2100000, guid: c35977910ef4f454e8cd4120ca78895e, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.78431374, g: 0.5411765, b: 0.2901961, a: 1}
+  - Material: {fileID: 2100000, guid: 4f54f286484e7e64183a954544282ffb, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.7882353, g: 0.7529412, b: 0.65882355, a: 1}
+  - Material: {fileID: 2100000, guid: 8ee0582e0231a4d4b9497ca364688c6a, type: 2}
+    Texture: {fileID: 0}
+    HasColor: 1
+    Color: {r: 0.87058824, g: 0.85490197, b: 0.8156863, a: 1}
+  - Material: {fileID: 2100000, guid: c790e5e0402043d4f8a41285c19c51d3, type: 2}
+    Texture: {fileID: 2800000, guid: b57160de699361141a6880a6989c886c, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 4cdfcb1671fd2c14ca48c41688f3fbc6, type: 2}
+    Texture: {fileID: 2800000, guid: f4bce88fe00006d4f8105043ba1b5729, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 85b16675ed139a440a13114b5612670c, type: 2}
+    Texture: {fileID: 2800000, guid: 753a1cebc5592634f8a5cd6ab7038411, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: 81602206f1ba02d43953a78f9a381fd4, type: 2}
+    Texture: {fileID: 2800000, guid: f4fe308ea31190f48b8d40ffbc7353fa, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
+  - Material: {fileID: 2100000, guid: b8415f9b953f07344adc57e049195267, type: 2}
+    Texture: {fileID: 2800000, guid: c4ad1cd0281c43541bb8ed85a220f71f, type: 3}
+    HasColor: 0
+    Color: {r: 0.5090196, g: 0.49050978, b: 0.45811763, a: 1}
   WorkerIdle: {fileID: -9165865403480842816, guid: 99480f07834a0f84fb15074d3b8ed244, type: 3}
   WorkerRun: {fileID: -9165865403480842816, guid: fea0d15977183bf4bb7932ab444d2cf1, type: 3}

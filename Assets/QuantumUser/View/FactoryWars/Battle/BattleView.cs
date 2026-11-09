@@ -96,10 +96,15 @@ namespace FactoryWars.View {
       // Kenney 모델 인스턴싱(항목 19B). 월드·도시가 만들어지며 그룹을 채운다.
       var dressing = new GameObject("Dressing").AddComponent<DressingRenderer>();
       dressing.transform.SetParent(_stage, false);
+      // 전장 손상 지도(항목 27 K-2). 숲·바닥이 만들어지기 전에 있어야 한다.
+      var scars = new GameObject("BattleScars").AddComponent<BattleScars>();
+      scars.transform.SetParent(_stage, false);
       World = new WorldView(_stage, frame.FindAsset<MapSpec>(frame.Map.UserAsset), _catalog);
       Fx = new GameObject("Fx").AddComponent<BattleFx>();
       Fx.transform.SetParent(_stage, false);
       World.Fx = Fx;
+      scars.Fx = Fx;
+      scars.Init(frame.FindAsset<MapSpec>(frame.Map.UserAsset));
       Field = new BattlefieldView(_stage);
       QuantumEvent.Subscribe<EventSupplyDropIncoming>(this, e => {
         var spots = e.Game.Frames.Verified != null ? e.Game.Frames.Verified.FindAsset<MapSpec>(e.Game.Frames.Verified.Map.UserAsset).CrateSpots : null;
@@ -373,7 +378,7 @@ namespace FactoryWars.View {
       Fx.Tracer(muzzle, target, speed, attack == AttackType.AntiInfantry ? 0.18f : 0.34f, missile);
       Fx.Impact(target, attack == AttackType.AntiInfantry ? 0.8f : 1.6f);
       if (attack == AttackType.Area) {
-        Fx.Crater(target, 1.8f);
+        // 크레이터는 확정 이벤트(AreaImpact)로 손상 지도가 만든다(항목 27 K-2). 예측 사격으로는 만들지 않는다.
       }
     }
 

@@ -5,127 +5,190 @@
    "Kit": "city-kit-commercial",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "city-kit-industrial",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "city-kit-roads",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "factory-kit",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "tower-defense-kit",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "train-kit",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "modular-buildings",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "city-kit-suburban",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "building-kit",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "modular-space-kit",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "space-station-kit",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "mini-characters",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "car-kit",
-   "Desaturate": 0.3,
-   "Brightness": 0.62,
-   "Tint": "#B0A69C"
+   "Desaturate": 0.0,
+   "Brightness": 1.0,
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "nature-kit",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "furniture-kit",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "prototype-kit",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "mini-forest",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "blaster-kit",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "mini-arcade",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "animated-characters-protagonists",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   },
   {
    "Kit": "watercraft-pack",
    "Desaturate": 0.0,
    "Brightness": 1.0,
-   "Tint": "#FFFFFF"
+   "Tint": "#FFFFFF",
+   "Gradient": 0.06,
+   "Noise": 0.0,
+   "Ao": 0.18
   }
  ],
  "Colors": [
@@ -425,19 +488,17 @@
    "SnapYaw90": false,
    "Fit": true,
    "Models": [
+    "city-kit-commercial/building-a:2",
+    "city-kit-commercial/building-b:2",
+    "city-kit-commercial/building-c:2",
+    "city-kit-commercial/building-d:2",
+    "city-kit-commercial/building-f:2",
+    "city-kit-commercial/building-g:2",
+    "city-kit-commercial/building-h:2",
     "city-kit-suburban/building-type-a:1",
-    "city-kit-suburban/building-type-c:1",
-    "city-kit-suburban/building-type-e:1",
     "city-kit-suburban/building-type-g:1",
     "city-kit-suburban/building-type-h:1",
-    "city-kit-suburban/building-type-i:1",
-    "city-kit-suburban/building-type-k:1",
-    "city-kit-suburban/building-type-m:1",
-    "city-kit-suburban/building-type-q:1",
-    "city-kit-suburban/building-type-r:1",
-    "modular-buildings/building-sample-house-a:2",
-    "modular-buildings/building-sample-house-b:2",
-    "modular-buildings/building-sample-house-c:2"
+    "city-kit-suburban/building-type-k:1"
    ]
   },
   {
@@ -451,13 +512,14 @@
    "SnapYaw90": false,
    "Fit": true,
    "Models": [
+    "city-kit-commercial/building-e:2",
+    "city-kit-commercial/building-i:2",
+    "city-kit-commercial/building-j:2",
+    "city-kit-commercial/building-k:2",
+    "city-kit-commercial/building-l:2",
+    "city-kit-commercial/building-n:2",
     "city-kit-industrial/building-d:1",
-    "city-kit-industrial/building-g:1",
-    "city-kit-industrial/building-h:1",
-    "city-kit-industrial/building-i:1",
-    "city-kit-industrial/building-j:1",
-    "modular-buildings/building-sample-house-b:1",
-    "modular-buildings/building-sample-house-c:1"
+    "city-kit-industrial/building-h:1"
    ]
   },
   {
@@ -505,9 +567,9 @@
    "SnapYaw90": false,
    "Fit": true,
    "Models": [
-    "city-kit-industrial/building-d:1",
-    "city-kit-industrial/building-g:1",
-    "city-kit-industrial/building-h:1"
+    "city-kit-commercial/building-j:1",
+    "city-kit-commercial/building-k:1",
+    "city-kit-commercial/building-n:1"
    ]
   },
   {
@@ -1051,5 +1113,6 @@
     "animated-characters-protagonists/characterMedium:1"
    ]
   }
- ]
+ ],
+ "Palette": "original"
 }

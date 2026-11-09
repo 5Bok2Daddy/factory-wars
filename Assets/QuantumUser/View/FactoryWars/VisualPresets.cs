@@ -11,9 +11,9 @@ namespace FactoryWars.View {
 
     public static string Title(string name) {
       switch (name) {
-        case "B": return "B 스타일라이즈드";
-        case "C": return "C 성능 우선";
-        default: return "A AoW3 전장";
+        case "B": return "B 군용 전장(19D)";
+        case "C": return "C Kenney 저사양";
+        default: return "A Kenney 원본";
       }
     }
 
@@ -85,32 +85,73 @@ namespace FactoryWars.View {
       p.NoBuildAlways = false;
     }
 
-    public static void Apply(VisualProfile p, string name) {
+    /// <summary>
+    /// 항목 27 결정(K): Kenney 원본 분위기. 원본 colormap, 단색 바닥(민트 잔디·밝은 회색 보도·짙은 회색 도로와 흰 차선),
+    /// 밝은 하늘빛 환경광과 연한 짧은 그림자, 연한 회청색 배경, 외곽선·블룸·안개·SSAO 없음. 카메라·높낮이는 27 2-1·2-2 값.
+    /// </summary>
+    static void Kenney(VisualProfile p) {
       Aow3(p);
+      p.FieldOfView = 33f;
+      p.Pitch = 50f;
+      p.DefaultHeight = 62f;
+      p.MinHeight = 35f;
+      p.MaxHeight = 140f;
+      // 빛·바닥색은 K-0 색 맞추기(Lookdev_KenneyColorMatch, 참고 장면에서 받아 둔 Kenney 모델로 렌더) 결과다.
+      // 햇빛은 약하고 하늘빛 환경광(HDR, 파랑이 강함)이 대부분이라 그림자가 연한 푸른빛이다(그림자/빛 약 0.7).
+      p.SunColor = new Color32(0xFF, 0xF8, 0xEE, 0xFF);
+      p.SunIntensity = 0.3f;
+      p.SunElevation = 58f;
+      p.SunAzimuth = -30f;
+      p.AmbientSky = new Color(1.05f, 1.066f, 1.334f);
+      p.AmbientEquator = new Color(0.941f, 0.93f, 1.136f);
+      p.AmbientGround = new Color(0.746f, 0.752f, 0.898f);
+      p.ShadowStrength = 1f;
+      p.Tone = ToneMode.None;
+      p.BloomIntensity = 0f;
+      p.Saturation = 0f;
+      p.Contrast = 0f;
+      p.Vignette = 0f;
+      p.Ssao = false;
+      p.Outline = OutlineMode.None;
+      p.VertexShade = false;
+      p.KenneyMilitary = false;
+      p.PaletteLift = 0.32f;
+      p.WhiteLanes = true;
+      p.GroundGrass = new Color32(0x62, 0xB8, 0x81, 0xFF);
+      p.GroundGrassLight = new Color32(0x68, 0xBB, 0x86, 0xFF);
+      p.GroundGrassDark = new Color32(0x5C, 0xAD, 0x79, 0xFF);
+      // 흙은 보도와의 밝기 비를 예전 값 그대로 두고 새 빛에 맞춰 옮겼다.
+      p.GroundDirt = new Color32(0x9E, 0xA7, 0xA0, 0xFF);
+      p.GroundDirtDark = new Color32(0x94, 0x9C, 0x97, 0xFF);
+      p.GroundPlaza = new Color32(0x8F, 0x97, 0x94, 0xFF);
+      p.GroundPlazaDark = new Color32(0x86, 0x8E, 0x8B, 0xFF);
+      p.RoadColor = new Color32(0x31, 0x3A, 0x36, 0xFF);
+      p.BackgroundColor = new Color32(0xB2, 0xBA, 0xCC, 0xFF);
+      p.WaterColor = new Color32(0x4A, 0xA3, 0xD6, 0xFF);
+      p.Outside = OutsideMode.Dark;
+      p.PlateauHeight = 11f;
+      p.CliffLayers = 4;
+      p.HighGroundHeight = 5f;
+      p.WaterDepth = 7f;
+      p.CliffTierShade = 0.22f;
+      p.PlateauTrees = 0.55f;
+      p.ConiferRatio = 0.6f;
+      p.AutumnRatio = 0.25f;
+    }
+
+    public static void Apply(VisualProfile p, string name) {
+      if (name == "B") {
+        // B: 19D까지의 군용 전장 룩을 프로필로 남긴다(군용 재도색 Kenney, AoW3 빛).
+        Aow3(p);
+        p.KenneyMilitary = true;
+        return;
+      }
+      Kenney(p);
       switch (name) {
-        case "B":
-          // B: 08_target_style 방향 비교용. 평면 색 + 외곽선, 채도·대비 강화, 조금 더 높은 각도.
-          p.FieldOfView = 35f;
-          p.Pitch = 55f;
-          p.DefaultHeight = 95f;
-          p.MinHeight = 57f;
-          p.MaxHeight = 228f;
-          p.BuildingBody = 0.8f;
-          p.Outline = OutlineMode.Hull;
-          p.OutlineWidth = 0.06f;
-          p.Saturation = 12f;
-          p.Contrast = 10f;
-          p.BloomIntensity = 0.8f;
-          p.VertexShade = false;
-          p.Boundary = 0;
-          break;
         case "C":
-          // C: 저사양 폰 기준. A에서 SSAO·비네트·블룸을 끄고 그림자를 약하게. 정점 음영은 비용이 없어 유지한다.
-          p.Ssao = false;
-          p.Vignette = 0f;
-          p.BloomIntensity = 0f;
-          p.ShadowStrength = 0.75f;
-          p.CliffLayers = 2;
+          // C: Kenney 저사양. 그림자 조금 연하게, 장식 숲 줄임. 나머지는 A와 같다.
+          p.ShadowStrength = 0.8f;
+          p.PlateauTrees = 0.3f;
           break;
       }
     }
