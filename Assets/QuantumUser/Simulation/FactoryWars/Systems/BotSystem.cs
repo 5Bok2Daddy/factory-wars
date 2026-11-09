@@ -226,7 +226,20 @@ namespace Quantum.FactoryWars {
       for (var i = 0; i < RoleCount; i++) {
         seen[i] = 0;
       }
+      // 진영별 조정(항목 22): 당길 역할은 차량 공장이 생기면 바로, 뺄 역할은 순서에서 건너뛴다.
+      var faction = f.FindAsset(state->Faction);
+      if (faction.AiEarlyRoles != null && counts[(int)BuildingRole.VehicleFactory] > 0) {
+        foreach (var early in faction.AiEarlyRoles) {
+          if (counts[(int)early] == 0) {
+            role = early;
+            return true;
+          }
+        }
+      }
       for (var i = 0; i < ai.BuildOrder.Length; i++) {
+        if (faction.AiSkipRoles != null && System.Array.IndexOf(faction.AiSkipRoles, ai.BuildOrder[i]) >= 0) {
+          continue;
+        }
         var index = (int)ai.BuildOrder[i];
         seen[index]++;
         if (counts[index] < seen[index]) {
@@ -516,8 +529,7 @@ namespace Quantum.FactoryWars {
         if (spec.Upkeep != UpkeepMode.None && state->Stock.Power < ai.PowerReserve) {
           continue;
         }
-        var choices = System.Math.Min(ai.UnitVariety, spec.Producible.Length);
-        var unitRef = spec.Producible[f.RNG->Next(0, choices)];
+        var unitRef = ai.CounterPicks ? CounterPick(f, player, ai, spec.Producible) : spec.Producible[f.RNG->Next(0, System.Math.Min(ai.UnitVariety, spec.Producible.Length))];
         var unit = f.FindAsset(unitRef);
         var population = unit.Population * unit.SpawnCount;
         if (room >= population && CanSpend(state->Stock, unit.Cost, reserve)) {
@@ -525,6 +537,102 @@ namespace Quantum.FactoryWars {
           room -= population;
         }
       }
+    }
+
+    /// <summary>
+    /// 상대 구성 대응 생산(항목 22). 보이는 적 전투 유닛을 크기(소·중·대)·공중으로 나눠 비율을 내고,
+    /// 후보마다 (내 공격이 적 구성에 주는 상성 배율 평균) ÷ (적 공격이 나에게 주는 상성 배율 평균)으로 점수를 매긴다.
+    /// 상대 공중이 적으면 대공 유닛은 몇 기까지만 둔다. 상위 CounterTop개 중 RNG로 고른다. 수치는 규칙의 상성표와 AiSpec에만 있다.
+    /// </summary>
+    static AssetRef<UnitSpec> CounterPick(Frame f, PlayerRef player, AiSpec ai, AssetRef<UnitSpec>[] producible) {
+      var rules = FactoryWarsUtil.Rules(f);
+      FP small = 0, medium = 0, large = 0, air = 0, total = 0;
+      FP antiInfantry = 0, antiArmor = 0, antiAir = 0, area = 0;
+      var ownAntiAir = 0;
+      var units = f.Filter<Unit>();
+      while (units.NextUnsafe(out var entity, out var unit)) {
+        var spec = f.FindAsset(unit->Spec);
+        if (spec.Attack == AttackType.None) {
+          continue;
+        }
+        if (unit->Owner == player) {
+          ownAntiAir += spec.Attack == AttackType.AntiAir ? 1 : 0;
+          continue;
+        }
+        if (DiplomacySystem.CanAttack(f, player, unit->Owner) == false || FactoryWarsUtil.IsVisibleTo(f, player, entity) == false) {
+          continue;
+        }
+        var weight = spec.Population;
+        total += weight;
+        if (spec.IsAir) {
+          air += weight;
+        } else if (spec.Size == UnitSize.Large) {
+          large += weight;
+        } else if (spec.Size == UnitSize.Medium) {
+          medium += weight;
+        } else {
+          small += weight;
+        }
+        switch (spec.Attack) {
+          case AttackType.AntiInfantry: antiInfantry += weight; break;
+          case AttackType.AntiArmor: antiArmor += weight; break;
+          case AttackType.AntiAir: antiAir += weight; break;
+          default: area += weight; break;
+        }
+      }
+      var count = producible.Length;
+      var scores = stackalloc long[count];
+      for (var i = 0; i < count; i++) {
+        var candidate = f.FindAsset(producible[i]);
+        FP score;
+        if (total <= FP._0) {
+          // 보이는 적이 없으면 모두 같은 점수(무작위와 같다). 대공만 아래 규칙으로 줄인다.
+          score = FP._1;
+        } else {
+          var offense = (small * Matchup(rules, candidate.Attack, UnitSize.Small, false) + medium * Matchup(rules, candidate.Attack, UnitSize.Medium, false)
+            + large * Matchup(rules, candidate.Attack, UnitSize.Large, false) + air * Matchup(rules, candidate.Attack, UnitSize.Small, true)) / total;
+          var taken = (antiInfantry * CombatSystem.UnitMultiplier(rules, AttackType.AntiInfantry, candidate) + antiArmor * CombatSystem.UnitMultiplier(rules, AttackType.AntiArmor, candidate)
+            + antiAir * CombatSystem.UnitMultiplier(rules, AttackType.AntiAir, candidate) + area * CombatSystem.UnitMultiplier(rules, AttackType.Area, candidate)) / total;
+          score = offense / FPMath.Max(FP._0_25, taken);
+        }
+        var airShare = total > FP._0 ? air / total : FP._0;
+        if (candidate.Attack == AttackType.AntiAir && airShare < ai.AirShareForAntiAir && ownAntiAir >= ai.IdleAntiAir) {
+          score = FP._0;
+        }
+        // 정렬용 정수(동점은 앞 순서). 결정론: FP 원값만 쓴다.
+        scores[i] = score.RawValue;
+      }
+      var top = System.Math.Max(1, System.Math.Min(ai.CounterTop, count));
+      var picked = stackalloc int[top];
+      for (var k = 0; k < top; k++) {
+        var best = -1;
+        for (var i = 0; i < count; i++) {
+          var used = false;
+          for (var j = 0; j < k; j++) {
+            used |= picked[j] == i;
+          }
+          if (used == false && (best < 0 || scores[i] > scores[best])) {
+            best = i;
+          }
+        }
+        picked[k] = best;
+      }
+      // 0점(막힌 대공)은 다른 후보가 있으면 고르지 않는다.
+      var usable = 0;
+      for (var k = 0; k < top; k++) {
+        usable += scores[picked[k]] > 0 ? 1 : 0;
+      }
+      return producible[picked[usable > 0 ? f.RNG->Next(0, usable) : 0]];
+    }
+
+    static FP Matchup(GameRulesSpec rules, AttackType attack, UnitSize size, bool isAir) {
+      for (var i = 0; rules.Matchups != null && i < rules.Matchups.Length; i++) {
+        if (rules.Matchups[i].Attack == attack) {
+          var m = rules.Matchups[i];
+          return isAir ? m.VsAir : size == UnitSize.Large ? m.VsLarge : size == UnitSize.Medium ? m.VsMedium : m.VsSmall;
+        }
+      }
+      return FP._1;
     }
 
     /// <summary>적 군대가 사실상 없으면 true. 남은 건물을 치우는 데 웨이브를 기다릴 이유가 없다.</summary>

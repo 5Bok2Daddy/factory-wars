@@ -27,7 +27,7 @@ namespace FactoryWars.Tests {
     static QuantumGame Game => QuantumRunner.Default?.Game;
     static Frame Verified => Game.Frames.Verified;
 
-    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null, ResourceCost? stock = null, bool swapFactions = false, int truce = 0) {
+    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null, ResourceCost? stock = null, bool swapFactions = false, int truce = 0, int mirrorFaction = -1) {
       Time.timeScale = TimeScale;
       // 씬 로드 직후, 러너의 Start 전에 규칙을 바꾼다.
       UnityEngine.Events.UnityAction<Scene, LoadSceneMode> onLoaded = (loaded, mode) => {
@@ -45,6 +45,13 @@ namespace FactoryWars.Tests {
         }
         for (var i = 0; teamMode && i < list.Count; i++) {
           list[i].Team = i / 2;
+        }
+        if (mirrorFaction >= 0) {
+          // 자리 쏠림 측정(항목 22): 모든 자리가 같은 진영이다.
+          var original = list.Select(p => p.Faction).ToArray();
+          foreach (var entry in list) {
+            entry.Faction = original[mirrorFaction % original.Length];
+          }
         }
         if (swapFactions) {
           var original = list.Select(p => p.Faction).ToArray();

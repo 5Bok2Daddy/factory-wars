@@ -59,6 +59,13 @@ namespace Quantum {
     public int QueueTarget;
     /// <summary>생산 건물의 유닛 목록에서 앞쪽 몇 종까지 쓸지.</summary>
     public int UnitVariety;
+    /// <summary>true면 상대 구성에 맞춰 생산한다(항목 22). false면 UnitVariety 안에서 무작위(쉬움).</summary>
+    public bool CounterPicks;
+    /// <summary>상대 공중 비율이 이 값보다 낮으면 대공 유닛은 IdleAntiAir기까지만 둔다.</summary>
+    public FP AirShareForAntiAir;
+    public int IdleAntiAir;
+    /// <summary>상위 몇 개 안에서 RNG로 고를지(다양성).</summary>
+    public int CounterTop;
     public FP FirstAttackSeconds;
     public FP AttackRepeatSeconds;
     public int WaveSize;

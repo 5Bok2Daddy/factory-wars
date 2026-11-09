@@ -29,6 +29,8 @@ MonoBehaviour:
   Engineer:
     Id:
       Value: 444537364326843627
+  AiSkipRoles: 
+  AiEarlyRoles: 
   Buildings:
   - Id:
       Value: 342299686155455319

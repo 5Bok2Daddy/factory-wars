@@ -45,9 +45,17 @@ namespace FactoryWars.Tests {
       yield return PlayAiMatch(Map4PScene, "4P", 4, run);
     }
 
-    IEnumerator PlayAiMatch(string scene, string map, int players, int run) {
+    static IEnumerable<int> MirrorRuns() => Enumerable.Range(0, 20);
+
+    /// <summary>항목 22 자리 쏠림: 4인 맵 2인 대각선에서 두 자리가 같은 진영(짝수 판 자유, 홀수 판 대륙)으로 20판.</summary>
+    [UnityTest, Explicit, Category("AiBatch"), Timeout(3000000)]
+    public IEnumerator AiBatch_Mirror([ValueSource(nameof(MirrorRuns))] int run) {
+      yield return PlayAiMatch(Map4PScene, "2PM", 2, run, mirror: run % 2);
+    }
+
+    IEnumerator PlayAiMatch(string scene, string map, int players, int run, int mirror = -1) {
       var bots = Enumerable.Repeat(BotDifficulty.Normal, players).ToArray();
-      yield return StartMatch(scene, players, bots: bots, seed: 7000 + run, swapFactions: run % 2 == 1, truce: -1);
+      yield return StartMatch(scene, players, bots: bots, seed: (mirror >= 0 ? 8000 : 7000) + run, swapFactions: mirror < 0 && run % 2 == 1, truce: -1, mirrorFaction: mirror);
       Time.timeScale = AiTimeScale;
       var view = Object.FindAnyObjectByType<FactoryWars.View.BattleView>();
       if (view != null) {

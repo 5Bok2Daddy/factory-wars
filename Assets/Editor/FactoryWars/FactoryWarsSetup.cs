@@ -425,6 +425,9 @@ namespace FactoryWars.EditorTools {
       faction.Buildings = buildings.Skip(1).Concat(buildings.Take(1)).Select(Ref).ToArray();
       faction.Units = ids.Select(k => Ref(units[k])).ToArray();
       faction.StartingUnits = startingUnits.Select(id => Ref(U(id))).ToArray();
+      // 항목 22: 공중 유닛이 없는 진영은 AI가 비행장을 짓지 않는다. 대륙 연방은 물량형이라 중공업 기지를 차량 공장 바로 다음에 짓는다.
+      faction.AiSkipRoles = ids.Any(k => units[k].IsAir) ? new BuildingRole[0] : new[] { BuildingRole.Airfield };
+      faction.AiEarlyRoles = factionId == "continental_federation" ? new[] { BuildingRole.HeavyWorks } : new BuildingRole[0];
       faction.Modules = modules;
       EditorUtility.SetDirty(faction);
       return faction;
@@ -471,6 +474,11 @@ namespace FactoryWars.EditorTools {
       ai.ConcurrentBuilds = 1;
       ai.QueueTarget = 2;
       ai.UnitVariety = variety;
+      // 항목 22: 보통은 상대 구성 대응 생산(상위 2개 중 RNG), 쉬움은 기존 무작위.
+      ai.CounterPicks = id == "ai_normal";
+      ai.AirShareForAntiAir = N(0.1);
+      ai.IdleAntiAir = 2;
+      ai.CounterTop = 2;
       ai.FirstAttackSeconds = N(firstAttack);
       ai.AttackRepeatSeconds = N(repeat);
       ai.WaveSize = wave;

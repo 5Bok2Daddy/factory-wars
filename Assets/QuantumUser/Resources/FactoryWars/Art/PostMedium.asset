@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-8639181529720654786
+--- !u!114 &-8745847381689900577
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -40,7 +40,7 @@ MonoBehaviour:
   maxNits:
     m_OverrideState: 1
     m_Value: 1000
---- !u!114 &-3789468363106376484
+--- !u!114 &-3772457639054874148
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -100,5 +100,5 @@ MonoBehaviour:
   m_Name: PostMedium
   m_EditorClassIdentifier: 
   components:
-  - {fileID: -3789468363106376484}
-  - {fileID: -8639181529720654786}
+  - {fileID: -3772457639054874148}
+  - {fileID: -8745847381689900577}

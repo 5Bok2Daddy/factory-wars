@@ -21,24 +21,24 @@ MonoBehaviour:
   BuildingBody: 0.78
   PlateScale: 1.05
   PlateHeight: 0.15
-  SunColor: {r: 1, g: 0.99215686, b: 0.9607843, a: 1}
-  SunIntensity: 1.1
-  SunElevation: 50
+  SunColor: {r: 1, g: 0.98039216, b: 0.93333334, a: 1}
+  SunIntensity: 1.15
+  SunElevation: 48
   SunAzimuth: -35
-  AmbientSky: {r: 0.68, g: 0.72, b: 0.85, a: 1}
-  AmbientEquator: {r: 0.58, g: 0.62, b: 0.75, a: 1}
-  AmbientGround: {r: 0.48, g: 0.52, b: 0.65, a: 1}
+  AmbientSky: {r: 0.42, g: 0.45, b: 0.58, a: 1}
+  AmbientEquator: {r: 0.35, g: 0.38, b: 0.48, a: 1}
+  AmbientGround: {r: 0.24, g: 0.26, b: 0.34, a: 1}
   ShadowStrength: 0.8
-  Tone: 2
+  Tone: 0
   BloomIntensity: 0
   BloomThreshold: 1.2
   BloomScatter: 0.6
-  Saturation: 0
-  Contrast: 0
+  Saturation: 0.05
+  Contrast: 8
   Vignette: 0
   Ssao: 1
-  SsaoIntensity: 1.6
-  SsaoRadius: 0.45
+  SsaoIntensity: 2.8
+  SsaoRadius: 0.8
   GlowBoost: 1
   Outline: 0
   OutlineWidth: 0.05
@@ -71,9 +71,9 @@ MonoBehaviour:
   KenneyMilitary: 0
   PaletteLift: 0.9
   WhiteLanes: 1
-  GroundPlaza: {r: 0.92941177, g: 0.9411765, b: 0.96862745, a: 1}
-  GroundPlazaDark: {r: 0.8235294, g: 0.8627451, b: 0.92941177, a: 1}
-  RoadColor: {r: 0.25882354, g: 0.28235295, b: 0.32941177, a: 1}
+  GroundPlaza: {r: 0.67058825, g: 0.7019608, b: 0.8, a: 1}
+  GroundPlazaDark: {r: 0.75686276, g: 0.7882353, b: 0.89411765, a: 1}
+  RoadColor: {r: 0.23529412, g: 0.24313726, b: 0.28235295, a: 1}
   SolidGround: 1
   BackgroundColor: {r: 0.69803923, g: 0.7294118, b: 0.8, a: 1}
   WaterColor: {r: 0.2901961, g: 0.6392157, b: 0.8392157, a: 1}

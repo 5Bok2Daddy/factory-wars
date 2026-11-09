@@ -66,6 +66,11 @@ MonoBehaviour:
   ConcurrentBuilds: 1
   QueueTarget: 2
   UnitVariety: 1
+  CounterPicks: 0
+  AirShareForAntiAir:
+    RawValue: 6553
+  IdleAntiAir: 2
+  CounterTop: 2
   FirstAttackSeconds:
     RawValue: 27525120
   AttackRepeatSeconds:
