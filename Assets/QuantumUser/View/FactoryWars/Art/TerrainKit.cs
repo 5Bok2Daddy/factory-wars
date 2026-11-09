@@ -172,8 +172,22 @@ namespace FactoryWars.View {
         return Swatch.ConcreteDark;
       }
       if (profile.SolidGround) {
-        // 항목 27 K: 단색 바닥. 본진과 도로·도시 건물 둘레 3m는 밝은 회색 보도, 나머지는 민트 잔디. 얼룩이 없다.
-        return Inside(map.BaseAreas, x, z) || NearRoadOrCity(map, x, z, 3.2f) ? Swatch.Concrete : Swatch.Grass;
+        // 항목 27 K: 본진 내부는 시작지점/건물 중심 14m 밝은 보도블록 패드(#C1C9E4), 외곽은 회보라 바닥(#ABB3CC)
+        if (Inside(map.BaseAreas, x, z)) {
+          var nearStart = false;
+          if (map.Starts != null) {
+            for (var s = 0; s < map.Starts.Length; s++) {
+              var dx = x - map.Starts[s].X.AsFloat;
+              var dz = z - map.Starts[s].Z.AsFloat;
+              if (dx * dx + dz * dz <= 14f * 14f) {
+                nearStart = true;
+                break;
+              }
+            }
+          }
+          return nearStart ? Swatch.ConcreteDark : Swatch.Concrete;
+        }
+        return NearRoadOrCity(map, x, z, 3.2f) ? Swatch.Concrete : Swatch.Grass;
       }
       if (profile.NoBuildAlways && Inside(map.NoBuildZones, x, z)) {
         return noise < 0.55f ? Swatch.Dirt : Swatch.DirtDark;

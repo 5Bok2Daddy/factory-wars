@@ -274,21 +274,25 @@ namespace FactoryWars.View {
     /// </summary>
     public static void HighGrounds(MeshKit k, MapSpec map) {
       var height = HighGroundHeight;
+      var dressed = Dressing.Collecting && Dressing.Has(DressKind.Cliff);
       for (var g = 0; map.HighGrounds != null && g < map.HighGrounds.Length; g++) {
         var ground = map.HighGrounds[g];
         var center = new Vector3(ground.Center.X.AsFloat, height, ground.Center.Z.AsFloat);
-        var radius = ground.Radius.AsFloat + CliffThicknessView;
-        const int Sides = 20;
-        k.Paint(Swatch.Concrete);
+        var radius = ground.Radius.AsFloat + (dressed ? 0.2f : CliffThicknessView);
+        const int Sides = 24;
+        // 고지대 윗면: 깔끔한 민트 잔디(#7BE5BA)로 덮음
+        k.Paint(Swatch.Grass);
         for (var i = 0; i < Sides; i++) {
           var a = Mathf.PI * 2f * i / Sides;
           var b = Mathf.PI * 2f * (i + 1) / Sides;
           k.Tri(center, center + new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * radius, center + new Vector3(Mathf.Cos(b), 0, Mathf.Sin(b)) * radius, Vector3.up);
-          k.Paint(Swatch.RockFace);
-          k.Quad(center + new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * radius, center + new Vector3(Mathf.Cos(b), 0, Mathf.Sin(b)) * radius,
-            new Vector3(center.x, 0, center.z) + new Vector3(Mathf.Cos(b), 0, Mathf.Sin(b)) * radius, new Vector3(center.x, 0, center.z) + new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * radius,
-            new Vector3(Mathf.Cos((a + b) / 2), 0, Mathf.Sin((a + b) / 2)));
-          k.Paint(Swatch.Concrete);
+          // 얼룩말 메쉬 겹침(Z-fighting) 완전 제거: Kenney 절벽 블록(dressed)이 있을 땐 옛 절차적 갈색 기둥 메쉬 생성을 완전히 생략
+          if (dressed == false) {
+            k.Paint(Swatch.RockFace);
+            k.Quad(center + new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * radius, center + new Vector3(Mathf.Cos(b), 0, Mathf.Sin(b)) * radius,
+              new Vector3(center.x, 0, center.z) + new Vector3(Mathf.Cos(b), 0, Mathf.Sin(b)) * radius, new Vector3(center.x, 0, center.z) + new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * radius,
+              new Vector3(Mathf.Cos((a + b) / 2), 0, Mathf.Sin((a + b) / 2)));
+          }
         }
       }
       foreach (var ramp in map.Ramps ?? System.Array.Empty<MapShape>()) {
@@ -303,7 +307,8 @@ namespace FactoryWars.View {
         var tangent = new Vector2(-outward.y, outward.x) * ramp.HalfLength.AsFloat;
         var inner = hub + outward * (ground.Radius.AsFloat - 0.2f);
         var outer = hub + outward * (ground.Radius.AsFloat + CliffThicknessView + 3f);
-        k.Paint(Swatch.Dirt);
+        // 비탈길 상판: 밝은 보도/아스팔트 계열로 깔끔하게 처리
+        k.Paint(Swatch.Concrete);
         k.Quad(new Vector3(inner.x - tangent.x, height + 0.02f, inner.y - tangent.y), new Vector3(inner.x + tangent.x, height + 0.02f, inner.y + tangent.y),
           new Vector3(outer.x + tangent.x, 0.03f, outer.y + tangent.y), new Vector3(outer.x - tangent.x, 0.03f, outer.y - tangent.y), Vector3.up);
       }

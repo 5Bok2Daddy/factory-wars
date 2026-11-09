@@ -27,6 +27,7 @@ namespace FactoryWars.EditorTools {
         new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.62f, 0), Build = FreeAirMissiles });
       yield return Building("ff_airfield", FreeAirfield, new MovingPart { Name = "Radar", Pivot = new Vector3(2.0f, 3.0f, -0.8f), Build = SmallDish });
       yield return Building("ff_heavy_works", FreeHeavy, new MovingPart { Name = "Hoist", Pivot = new Vector3(0.4f, 4.3f, -2.45f), Build = Hoist });
+      yield return Building("ff_shipyard", FreeShipyard, new MovingPart { Name = "Crane", Pivot = new Vector3(-1.8f, 2.8f, 0.5f), Build = RoofCrane });
 
       yield return Building("cf_collection_yard", ContinentalYard, new MovingPart { Name = "Forklift", Pivot = new Vector3(0.5f, Floor, 0.9f), Build = Forklift });
       yield return Building("cf_supply_depot", ContinentalDepot, new MovingPart { Name = "Door", Pivot = new Vector3(-0.5f, Floor, 1.16f), Build = ContinentalDepotDoor });
@@ -43,6 +44,7 @@ namespace FactoryWars.EditorTools {
         new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.5f, 0.3f), Build = ContinentalAirGuns });
       yield return Building("cf_airfield", ContinentalAirfield, new MovingPart { Name = "Radar", Pivot = new Vector3(2.0f, 3.1f, -1.3f), Build = SmallDish });
       yield return Building("cf_heavy_works", ContinentalHeavy, new MovingPart { Name = "Hoist", Pivot = new Vector3(0.6f, 4.35f, 1.6f), Build = Hoist });
+      yield return Building("cf_shipyard", ContinentalShipyard, new MovingPart { Name = "Crane", Pivot = new Vector3(-1.8f, 3.2f, 0.5f), Build = TowerCrane });
     }
 
     static ArtRecipe Building(string id, Action<MeshKit> body, params MovingPart[] moving) {
@@ -1117,6 +1119,42 @@ namespace FactoryWars.EditorTools {
         k.Box(new Vector3(-2.7f, 4.35f, z), new Vector3(0.36f, 0.3f, 0.36f));
         k.Box(new Vector3(2.7f, 4.35f, z), new Vector3(0.36f, 0.3f, 0.36f));
       }
+
+    }
+
+    static void FreeShipyard(MeshKit k) {
+      BasePlate(k);
+      k.Paint(Swatch.Armor);
+      k.Box(new Vector3(0, Floor + 0.1f, 1.2f), new Vector3(4.8f, 0.2f, 2.6f));
+      k.Paint(Swatch.MetalDark);
+      k.Box(new Vector3(0, Floor + 0.05f, 1.6f), new Vector3(2.4f, 0.12f, 2.4f));
+      var hangar = new Vector3(0, Floor, -1.2f);
+      Hangar(k, hangar, 2.2f, 2.4f, -1.8f, 1.8f);
+      k.Team();
+      k.Box(new Vector3(0, 2.6f, -1.2f), new Vector3(1.2f, 0.08f, 2.4f));
+      k.Paint(Swatch.MetalDark);
+      k.Cylinder(new Vector3(-2.0f, Floor, 0.8f), 0.2f, 0.5f, 8);
+      k.Cylinder(new Vector3(2.0f, Floor, 0.8f), 0.2f, 0.5f, 8);
+      k.Paint(Swatch.Glass);
+      k.Box(new Vector3(1.8f, Floor + 0.6f, -1.0f), new Vector3(1.0f, 1.2f, 1.2f));
+      k.Paint(Swatch.GlowCyan);
+      k.Disc(new Vector3(-1.8f, Floor + 1.2f, -1.0f), 0.12f, 8);
+    }
+
+    static void ContinentalShipyard(MeshKit k) {
+      BasePlate(k);
+      k.Paint(Swatch.Armor);
+      k.Box(new Vector3(0, Floor + 0.15f, 0.8f), new Vector3(5.0f, 0.3f, 3.2f));
+      k.Paint(Swatch.MetalDark);
+      k.Box(new Vector3(0, Floor + 0.05f, 1.2f), new Vector3(2.6f, 0.16f, 2.8f));
+      var shed = new Vector3(0, Floor, -1.3f);
+      Shed(k, shed, 2.4f, 2.5f, -1.6f, 1.6f);
+      k.Team();
+      k.Box(new Vector3(0, 2.7f, -1.3f), new Vector3(2.2f, 0.08f, 1.4f));
+      k.Paint(Swatch.MetalDark);
+      k.Box(new Vector3(1.9f, Floor + 0.4f, 0.8f), new Vector3(0.9f, 0.8f, 1.6f));
+      k.Paint(Swatch.GlowCyan);
+      k.Disc(new Vector3(-2.1f, Floor + 1.2f, -1.3f), 0.14f, 8);
     }
   }
 }

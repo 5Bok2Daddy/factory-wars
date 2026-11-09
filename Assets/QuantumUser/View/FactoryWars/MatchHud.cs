@@ -51,6 +51,7 @@ namespace FactoryWars.View {
     Text _status;
     Text _truce;
     Minimap _minimap;
+    GameObject _contextPanel;
     Button[] _context;
     Button _boxButton;
     Button _saveButton;
@@ -127,6 +128,7 @@ namespace FactoryWars.View {
 
       // 오른쪽 아래: 한눈에 보기 건설·생산 패널 (화이트/파스텔 톤 둥근 패널).
       var panel = Ui.Panel("ContextPanel", Root, new Color(0.96f, 0.98f, 1f, 0.92f));
+      _contextPanel = panel.gameObject;
       Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 12), new Vector2(6 * 144 + 20, 2 * 144 + 64));
       _status = Ui.Label("Status", panel, "", 28);
       _status.color = new Color(0.16f, 0.20f, 0.30f, 1f);
@@ -426,6 +428,10 @@ namespace FactoryWars.View {
         status = "건설할 곳을 누르세요";
       }
       _status.text = status;
+      var hasContext = Entries.Count > 0 || !string.IsNullOrEmpty(status) || input.IsPlacing;
+      if (_contextPanel != null) {
+        _contextPanel.SetActive(hasContext);
+      }
       if (ContextPage >= ContextPages) {
         ContextPage = 0;
       }

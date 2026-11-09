@@ -24,8 +24,22 @@ namespace Quantum.FactoryWars {
       return entity;
     }
 
-    public static EntityRef SpawnUnit(Frame f, PlayerRef owner, AssetRef<UnitSpec> specRef, FPVector3 origin, int index, Building* source) {
-      // 건물 주변에 순서대로 펼쳐 놓는다.
+        public static EntityRef SpawnUnit(Frame f, PlayerRef owner, AssetRef<UnitSpec> specRef, FPVector3 origin, int index, Building* source) {
+      var unitSpec = f.FindAsset(specRef);
+      if (unitSpec != null && unitSpec.IsNaval) {
+        var rules = FactoryWarsUtil.Rules(f);
+        var waterNavMesh = f.Map.GetNavMesh(rules.WaterNavMeshName);
+        var radius = source != null ? f.FindAsset(source->Spec).FootprintRadius : FP._3;
+        var dist = radius + FP.FromFloat_UNSAFE(3f);
+        for (var d = 0; d < 8; d++) {
+          var a = FP.PiTimes2 * (index + d) / 8;
+          var p = origin + new FPVector3(FPMath.Cos(a), FP._0, FPMath.Sin(a)) * dist;
+          if (waterNavMesh != null && waterNavMesh.Contains(p, NavMeshRegionMask.Default, true)) {
+            return SpawnUnitAt(f, owner, specRef, p, source);
+          }
+        }
+      }
+      // 건물 주변에 골고루 놓는다.
       var angle = FP.PiTimes2 * (index % 8) / 8;
       var position = origin + new FPVector3(FPMath.Cos(angle), FP._0, FPMath.Sin(angle)) * FactoryWarsUtil.Rules(f).SpawnOffset;
       return SpawnUnitAt(f, owner, specRef, position, source);
@@ -128,14 +142,29 @@ namespace Quantum.FactoryWars {
         return false;
       }
 
+      var isShipyard = spec.Role == BuildingRole.Shipyard;
       var navMesh = f.Map.GetNavMesh(rules.NavMeshName);
       var mask = NavMeshRegionMask.Default;
-      if (navMesh.Contains(position, mask, true) == false
-          || navMesh.Contains(position + new FPVector3(radius, FP._0, radius), mask, true) == false
-          || navMesh.Contains(position + new FPVector3(radius, FP._0, -radius), mask, true) == false
-          || navMesh.Contains(position + new FPVector3(-radius, FP._0, radius), mask, true) == false
-          || navMesh.Contains(position + new FPVector3(-radius, FP._0, -radius), mask, true) == false) {
-        return false;
+      if (isShipyard) {
+        if (navMesh.Contains(position, mask, true) == false) {
+          return false;
+        }
+        var cornersOnGround = 0;
+        if (navMesh.Contains(position + new FPVector3(radius, FP._0, radius), mask, true)) cornersOnGround++;
+        if (navMesh.Contains(position + new FPVector3(radius, FP._0, -radius), mask, true)) cornersOnGround++;
+        if (navMesh.Contains(position + new FPVector3(-radius, FP._0, radius), mask, true)) cornersOnGround++;
+        if (navMesh.Contains(position + new FPVector3(-radius, FP._0, -radius), mask, true)) cornersOnGround++;
+        if (cornersOnGround < 2) {
+          return false;
+        }
+      } else {
+        if (navMesh.Contains(position, mask, true) == false
+            || navMesh.Contains(position + new FPVector3(radius, FP._0, radius), mask, true) == false
+            || navMesh.Contains(position + new FPVector3(radius, FP._0, -radius), mask, true) == false
+            || navMesh.Contains(position + new FPVector3(-radius, FP._0, radius), mask, true) == false
+            || navMesh.Contains(position + new FPVector3(-radius, FP._0, -radius), mask, true) == false) {
+          return false;
+        }
       }
 
       var buildings = f.Filter<Transform3D, Building>();
@@ -144,15 +173,36 @@ namespace Quantum.FactoryWars {
           return false;
         }
       }
-      // 고갈된 노드도 그대로 남아 있어 같은 검사를 받는다.
       var nodes = f.Filter<ResourceNode>();
       while (nodes.NextUnsafe(out _, out var node)) {
         if (IsClear(node->Shape, position, radius, rules.ResourceBuildMargin) == false) {
           return false;
         }
       }
+      var touchesWater = false;
+      var waterMargin = radius + FP.FromFloat_UNSAFE(3f);
       for (var i = 0; map.Terrain != null && i < map.Terrain.Length; i++) {
+        if (map.Terrain[i].Kind == TerrainKind.River) {
+          if (isShipyard) {
+            if (map.Terrain[i].Shape.Distance(position) <= waterMargin) {
+              touchesWater = true;
+            }
+            continue;
+          }
+        }
         if (IsClear(map.Terrain[i].Shape, position, radius, rules.TerrainBuildMargin) == false) {
+          return false;
+        }
+      }
+      if (isShipyard) {
+        if (map.Channel != null) {
+          for (var i = 0; i < map.Channel.Length; i++) {
+            if (map.Channel[i].Distance(position) <= waterMargin) {
+              touchesWater = true;
+            }
+          }
+        }
+        if (touchesWater == false) {
           return false;
         }
       }
@@ -170,7 +220,6 @@ namespace Quantum.FactoryWars {
       return true;
     }
 
-    /// <summary>정사각형 부지의 가장자리·중심 아홉 점이 모양에서 margin 이상 떨어져 있으면 true.</summary>
     static bool IsClear(MapShape shape, FPVector3 position, FP radius, FP margin) {
       var reach = shape.Reach + radius * 2 + margin;
       if (FPMath.Abs(position.X - shape.Center.X) > reach || FPMath.Abs(position.Z - shape.Center.Z) > reach) {

@@ -49,6 +49,8 @@ namespace FactoryWars.EditorTools {
       BuildTestScene();
       BuildMapScene(FourPlayerMap);
       BuildMenuScene();
+      IconBaker.BakeAll();
+      ArtBaker.BakeAll();
       AssetDatabase.SaveAssets();
       Debug.Log("FactoryWarsSetup: 완료");
     }
@@ -249,6 +251,7 @@ namespace FactoryWars.EditorTools {
       public string Id;
       public UnitSize Size;
       public bool Air;
+      public bool Naval;
       public ResourceCost Cost;
       public int Build, Health;
       public AttackType Attack;
@@ -257,6 +260,7 @@ namespace FactoryWars.EditorTools {
       public SpecialAbility Ability;
       public double AbilityMultiplier, AbilitySeconds, AbilityRadius, AbilityCooldown;
       public int AbilityCount;
+      public int Population;
     }
 
     // 비용은 DESIGN-RESOURCE-TERRAIN.md 5장. 생산·체력·공격 유형은 GDD. 피해·사거리·간격·속도는 임시값(SETUP-REPORT.md 참조).
@@ -273,6 +277,10 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "cf_dragonscale_tank", Size = UnitSize.Medium, Cost = R(190, 0, 50, 60), Build = 28, Health = 520, Attack = AttackType.AntiArmor, Damage = 45, Range = 8, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
       new UnitRow { Id = "cf_thunder_aa", Size = UnitSize.Medium, Cost = R(170, 0, 50, 60), Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
       new UnitRow { Id = "cf_longwall_mlrs", Size = UnitSize.Large, Cost = R(400, 0, 200, 200), Build = 55, Health = 1000, Attack = AttackType.Area, Damage = 120, Range = 18, MinRange = 6, Splash = 4, Interval = 6, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
+      new UnitRow { Id = "ff_scout_boat", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
+      new UnitRow { Id = "ff_artillery_ship", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
+      new UnitRow { Id = "cf_scout_boat", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
+      new UnitRow { Id = "cf_artillery_ship", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
     };
 
     static UnitSpec BuildUnit(UnitRow row) {
@@ -291,10 +299,9 @@ namespace FactoryWars.EditorTools {
       spec.IsRanged = row.Range > 3;
       spec.MoveSpeed = N(row.Speed);
       spec.SpawnCount = row.Spawn > 0 ? row.Spawn : 1;
-      // 인구: 소형 1, 중형 3, 대형 6. 공병은 1(임시). 민병대는 2명이 인구 1.
-      var population = row.Size == UnitSize.Large ? 6 : row.Size == UnitSize.Medium ? 3 : 1;
+      spec.IsNaval = row.Naval;
+      var population = row.Population > 0 ? row.Population : (row.Size == UnitSize.Large ? 6 : row.Size == UnitSize.Medium ? 3 : 1);
       spec.Population = N((double)population / spec.SpawnCount);
-      // 모듈 슬롯: 소형 1, 중형 2, 대형 3. 공병은 0(임시).
       spec.ModuleSlots = row.Size == UnitSize.Large ? 3 : row.Size == UnitSize.Medium ? 2 : row.Size == UnitSize.Small ? 1 : 0;
       spec.Ability = row.Ability;
       spec.AbilityMultiplier = row.AbilityMultiplier > 0 ? N(row.AbilityMultiplier) : 1;
@@ -325,10 +332,11 @@ namespace FactoryWars.EditorTools {
       UnitSpec U(string id) => units[$"{prefix}_{id}"];
       var ids = units.Keys.Where(k => k.StartsWith(prefix + "_")).ToArray();
       var engineer = units[$"{prefix}_engineer"];
-      var small = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Small).ToArray();
-      var mediumGround = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Medium && u.IsAir == false).ToArray();
+      var small = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Small && u.IsNaval == false).ToArray();
+      var mediumGround = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Medium && u.IsAir == false && u.IsNaval == false).ToArray();
       var air = ids.Select(k => units[k]).Where(u => u.IsAir).ToArray();
-      var large = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Large && u.IsAir == false).ToArray();
+      var large = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Large && u.IsAir == false && u.IsNaval == false).ToArray();
+      var naval = ids.Select(k => units[k]).Where(u => u.IsNaval).ToArray();
 
       var buildings = new[] {
         BuildBuilding($"{prefix}_headquarters", R(400, 300), 60, 3000, 10, 0, engineer),
@@ -343,6 +351,7 @@ namespace FactoryWars.EditorTools {
         BuildBuilding($"{prefix}_ground_tower", R(250, 100, 0, 100), 20, 700, 0, 1),
         BuildBuilding($"{prefix}_collection_yard", R(0, 150), 15, 500, 0, 0),
         BuildBuilding($"{prefix}_air_defense", R(200, 100, 30, 100), 20, 700, 0, 1),
+        BuildBuilding($"{prefix}_shipyard", R(350, 150, 0, 150), 25, 1000, 0, 0, naval),
       };
       void Requires(int building, params int[] prerequisites) {
         buildings[building].Prerequisites = prerequisites.Select(i => Ref(buildings[i])).ToArray();
@@ -360,6 +369,7 @@ namespace FactoryWars.EditorTools {
       Requires(9, 4, 1);
       Requires(10, 0);
       Requires(11, 4, 1);
+      Requires(12, 6, 1);
       void Power(int building, int output, int storage, double upkeep, UpkeepMode mode) {
         buildings[building].PowerOutput = output;
         buildings[building].PowerStorage = storage;
@@ -377,10 +387,11 @@ namespace FactoryWars.EditorTools {
       Power(8, 0, 0, 3, UpkeepMode.WhileProducing);
       Power(9, 0, 0, 0.5, UpkeepMode.Always);
       Power(11, 0, 0, 0.5, UpkeepMode.Always);
+      Power(12, 0, 0, 1, UpkeepMode.WhileProducing);
       for (var i = 0; i < buildings.Length; i++) {
         buildings[i].Role = (BuildingRole)i;
       }
-      foreach (var core in new[] { 0, 4, 6, 7, 8 }) {
+      foreach (var core in new[] { 0, 4, 6, 7, 8, 12 }) {
         buildings[core].IsCoreBuilding = true;
       }
       foreach (var building in buildings) {
@@ -605,7 +616,7 @@ namespace FactoryWars.EditorTools {
       }));
       rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 4, 3, 5, 600, 300, 60, 8, 3, 24, true, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.ResearchLab,
-        BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Airfield, BuildingRole.HeavyWorks, BuildingRole.GroundTower, BuildingRole.AirDefense, BuildingRole.SupplyDepot,
+        BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Shipyard, BuildingRole.Airfield, BuildingRole.HeavyWorks, BuildingRole.GroundTower, BuildingRole.AirDefense, BuildingRole.SupplyDepot,
       }));
       rules.UnitClearance = N(0.5);
       rules.SlideMemorySeconds = 1;

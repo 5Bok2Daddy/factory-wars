@@ -250,7 +250,9 @@ namespace FactoryWars.Tests {
     static readonly string[] IconNames = {
       "res_iron", "res_wood", "res_steel", "res_power", "res_population", "mark_free_federation", "mark_continental_federation",
       "ff_engineer", "ff_ranger_squad", "ff_skyguard_squad", "ff_eagle_tank", "ff_hawk_gunship", "ff_skyfortress_bomber",
+      "ff_scout_boat", "ff_artillery_ship",
       "cf_engineer", "cf_militia", "cf_flame_squad", "cf_dragonscale_tank", "cf_thunder_aa", "cf_longwall_mlrs",
+      "cf_scout_boat", "cf_artillery_ship",
     };
 
     [Test]

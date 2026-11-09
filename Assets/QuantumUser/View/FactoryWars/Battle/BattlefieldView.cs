@@ -296,7 +296,7 @@ namespace FactoryWars.View {
           }
         }
         if (_falling.TryGetValue(entity, out var age)) {
-          // 하강 연출: 낙하산을 펴고 내려와 땅에 닿으면 접는다. 판정 위치는 처음부터 땅이다.
+          // 하강 연출: 낙하산을 펴고 내려와 땅에 닿으면 즉시 접는다(SetActive false).
           age += deltaTime;
           var body = _crates[entity].transform.GetChild(0);
           var t = Mathf.Clamp01(age / DropSeconds);
@@ -309,6 +309,16 @@ namespace FactoryWars.View {
             _falling.Remove(entity);
           } else {
             _falling[entity] = age;
+          }
+        }
+        // 착지 확인 안전장치: 하강 중이 아니거나 바닥 높이에 도달했으면 낙하산 무조건 비활성화
+        if (_crates.TryGetValue(entity, out var crateObj) && crateObj != null) {
+          var b = crateObj.transform.childCount > 0 ? crateObj.transform.GetChild(0) : null;
+          if (b != null && (_falling.ContainsKey(entity) == false || b.localPosition.y <= 0.05f)) {
+            var chute = b.Find("Parachute");
+            if (chute != null && chute.gameObject.activeSelf) {
+              chute.gameObject.SetActive(false);
+            }
           }
         }
       }

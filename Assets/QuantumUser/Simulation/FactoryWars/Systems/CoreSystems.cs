@@ -118,7 +118,9 @@ namespace Quantum.FactoryWars {
           continue;
         }
         var distance = FlatDistanceSqr(transform->Position, position);
-        if (distance <= near || (f.FindAsset(other->Spec).IsAir && distance <= air) || map.HighGroundAt(transform->Position) == ground) {
+        var otherSpec = f.FindAsset(other->Spec);
+        var isScout = otherSpec.IsAir || (otherSpec.IsNaval && otherSpec.Size == UnitSize.Small);
+        if (distance <= near || (isScout && distance <= air) || map.HighGroundAt(transform->Position) == ground) {
           return true;
         }
       }

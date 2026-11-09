@@ -1,5 +1,6 @@
 namespace FactoryWars.Tests {
   using System.Collections;
+  using System.Collections.Generic;
   using System.Linq;
   using NUnit.Framework;
   using Photon.Deterministic;
@@ -63,6 +64,142 @@ namespace FactoryWars.Tests {
         var p = turn * canal.ToUnityVector3();
         Assert.AreEqual(Navigation.FindPathResult.Code.Success, WaterPath(WaterPoint(p.x, p.z), channel), $"자리 {seat} 운하 → 수로");
       }
+    }
+
+    [UnityTest]
+    public IEnumerator Naval_ShipyardPlacementOnlyNearWater() {
+      yield return StartMatch(Map4PScene, 2, truce: 0);
+      var map = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      var shipyardRef = BuildingOf(0, "_shipyard");
+      var spec = Verified.FindAsset(shipyardRef);
+      Assert.IsNotNull(spec, "조선소 스펙이 존재함");
+
+      // 1. 물에서 먼 본진 마른 땅에는 건설 불가
+      var dryLand = map.StartPositions[0] + new FPVector3(10, 0, 10);
+      Assert.IsFalse(ProductionSystem.CanPlace(Verified, spec, dryLand), "물에서 먼 마른 땅에는 조선소 설치 불가");
+
+      // 2. 운하 변의 유효 지상 위치 탐색 (최소 1곳 이상 설치 가능해야 함)
+      var canal = CanalPoint(map);
+      var foundSite = false;
+      for (var dx = -20; dx <= 20; dx += 2) {
+        for (var dz = -20; dz <= 20; dz += 2) {
+          var testPos = canal + new FPVector3(dx, 0, dz);
+          if (ProductionSystem.CanPlace(Verified, spec, testPos)) {
+            foundSite = true;
+            break;
+          }
+        }
+        if (foundSite) break;
+      }
+      Assert.IsTrue(foundSite, "운하 변에 유효한 조선소 설치 위치가 존재함");
+    }
+
+    [UnityTest]
+    public IEnumerator Naval_ShipyardSpawnsUnitOnWaterNavMesh() {
+      yield return StartMatch(Map4PScene, 2, truce: 0);
+      var map = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      var rules = FactoryWarsUtil.Rules(Verified);
+      var waterNavMesh = Verified.Map.GetNavMesh(rules.WaterNavMeshName);
+      var canal = CanalPoint(map);
+      var shipyardRef = BuildingOf(0, "_shipyard");
+      var shipyardSpec = Verified.FindAsset(shipyardRef);
+
+      var foundPos = FPVector3.Zero;
+      var foundSite = false;
+      for (var dx = -20; dx <= 20; dx += 2) {
+        for (var dz = -20; dz <= 20; dz += 2) {
+          var testPos = canal + new FPVector3(dx, 0, dz);
+          if (ProductionSystem.CanPlace(Verified, shipyardSpec, testPos)) {
+            foundPos = testPos;
+            foundSite = true;
+            break;
+          }
+        }
+        if (foundSite) break;
+      }
+      Assert.IsTrue(foundSite, "조선소 부지 탐색 성공");
+
+      var yardEntity = ProductionSystem.CreateFinishedBuilding(Verified, 0, shipyardRef, foundPos);
+      var yard = Verified.Unsafe.GetPointer<Building>(yardEntity);
+
+      // 정찰선 스폰
+      var scoutBoatSpec = FactionOf(0).Units.First(u => Verified.FindAsset(u).name.EndsWith("_scout_boat"));
+      var boatEntity = ProductionSystem.SpawnUnit(Verified, 0, scoutBoatSpec, foundPos, 0, yard);
+      Assert.AreNotEqual(EntityRef.None, boatEntity, "정찰선 스폰 성공");
+
+      var boatPos = Verified.Get<Transform3D>(boatEntity).Position;
+      var all = NavMeshRegionMask.Default;
+      Assert.IsTrue(waterNavMesh.Contains(boatPos, all, true), "배는 수상 NavMesh 위에 스폰됨");
+
+      var groundNav = Verified.Map.GetNavMesh(rules.NavMeshName);
+      Assert.IsFalse(groundNav.Contains(boatPos, all, true), "배 스폰 위치는 지상 NavMesh가 아님");
+
+      var boatUnit = Verified.Get<Unit>(boatEntity);
+      Assert.IsTrue(Verified.FindAsset(boatUnit.Spec).IsNaval, "유닛 IsNaval 플래그 활성화");
+    }
+
+    [UnityTest]
+    public IEnumerator Naval_ScoutBoatRevealsHighGroundStealth() {
+      yield return StartMatch(units: new[] { (0, "ff_eagle_tank", 42, 24), (1, "cf_scout_boat", 31, 24) });
+      var hidden = UnitsNamed(0, "ff_eagle_tank").First(e => Verified.Get<Transform3D>(e).Position.X > 30);
+      var scout = UnitsNamed(1, "cf_scout_boat").First();
+
+      // 11m 거리 (12m 이내): 정찰선이 고지대 은폐 유닛을 감지함
+      Assert.IsTrue(FactoryWarsUtil.IsVisibleTo(Verified, 1, hidden), "정찰선은 12m 안에서 고지대 은폐 유닛을 봄");
+
+      // 12m 밖으로 이동
+      Verified.Unsafe.GetPointer<Transform3D>(scout)->Position = new FPVector3(25, 0, 24); // 17m 거리
+      Assert.IsFalse(FactoryWarsUtil.IsVisibleTo(Verified, 1, hidden), "12m 밖에서는 고지대 은폐 유닛이 안 보임");
+    }
+
+    [UnityTest]
+    public IEnumerator Naval_ArtilleryShipCombatAndMinRange() {
+      // 0번: 포격함 (0, 40), 1번: 5m 거리 적(5, 40), 1번: 15m 거리 적(15, 40)
+      yield return StartMatch(units: new[] {
+        (0, "ff_artillery_ship", 0, 40),
+        (1, "cf_scout_boat", 5, 40),
+        (1, "cf_scout_boat", 15, 40)
+      }, truce: 0);
+
+      var artShip = UnitsNamed(0, "ff_artillery_ship").First();
+      var artSpec = Verified.FindAsset(Verified.Get<Unit>(artShip).Spec);
+      Assert.AreEqual(24, artSpec.Range.AsInt, "포격함 최대 사거리 24");
+      Assert.AreEqual(8, artSpec.MinRange.AsInt, "포격함 최소 사거리 8");
+
+      var closeTarget = UnitsNamed(1, "cf_scout_boat").First(e => Verified.Get<Transform3D>(e).Position.X < 10);
+      var midTarget = UnitsNamed(1, "cf_scout_boat").First(e => Verified.Get<Transform3D>(e).Position.X > 10);
+
+      // 몇 프레임 진행하여 자동 조준 확인
+      yield return WaitFrames(CommandFrames);
+
+      var targeted = Verified.Get<Unit>(artShip).TargetEntity;
+      Assert.AreEqual(midTarget, targeted, "최소 사거리(8m) 이내인 5m 표적을 건너뛰고 15m 표적을 조준함");
+    }
+
+    [UnityTest]
+    public IEnumerator Naval_BoatCollectsSupplyCrateOnWater() {
+      yield return StartMatch(Map4PScene, 2, truce: 0);
+
+      // 외곽 수로 위 보급상자 투하 지점 확인
+      var waterCratePos = WaterPoint(-169, -20);
+
+      // 수로 위에 상자 생성
+      var crateEntity = Verified.Create();
+      Verified.Add(crateEntity, Transform3D.Create(waterCratePos));
+      Verified.Add(crateEntity, new SupplyCrate { Seat = -1, Reward = new ResourceCost { Iron = 150, Wood = 75 } });
+
+      // 상자 바로 옆에 정찰선 스폰
+      var scoutSpec = FactionOf(0).Units.First(u => Verified.FindAsset(u).name.EndsWith("_scout_boat"));
+      var boatEntity = ProductionSystem.SpawnUnitAt(Verified, 0, scoutSpec, waterCratePos + new FPVector3(1, 0, 0), null);
+
+      var initialIron = Funds(0);
+      var initialCrates = Verified.Global->Players.GetPointer(0)->CratesPicked;
+
+      // 상자 수거 판정 (매 틱 또는 프레임 실행)
+      yield return WaitFrames(Fps / 2);
+
+      Assert.AreEqual(initialCrates + 1, Verified.Global->Players.GetPointer(0)->CratesPicked, "배가 수로 위 상자를 수거함");
+      Assert.AreEqual(initialIron + 150, Funds(0), "상자 수거 보상 자금 지급 확인");
     }
   }
 }

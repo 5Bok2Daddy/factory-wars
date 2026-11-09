@@ -57,6 +57,11 @@ namespace FactoryWars.EditorTools {
         new MovingPart { Name = "TailFan", Pivot = new Vector3(0, 0.3f, -2.2f), Build = HawkFan }).Flying(2.8f);
       yield return Unit("ff_skyfortress_bomber", 2, 900, BomberBody,
         new MovingPart { Name = "BombDoors", Pivot = new Vector3(0, -0.28f, 0.1f), Build = BomberDoors }).Flying(3.2f);
+      yield return Unit("ff_scout_boat", 2, 800, FreeScoutBoatHull,
+        new MovingPart { Name = "Turret", Pivot = new Vector3(0, 0.42f, 0.6f), Build = FreeScoutBoatTurret });
+      yield return Unit("ff_artillery_ship", 3, 1100, FreeArtilleryShipHull,
+        new MovingPart { Name = "Turret", Pivot = new Vector3(0, 0.72f, 0.7f), Build = FreeArtilleryShipTurret },
+        new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.16f, 0.5f), Build = FreeArtilleryShipBarrel });
 
       yield return Unit("cf_engineer", 3, 800, ContinentalEngineer, new MovingPart { Name = "Crane", Pivot = new Vector3(0, 1.0f, -0.65f), Build = ContinentalCrane });
       yield return Infantry("cf_militia", 600, k => Squad(k, Pair, Militia));
@@ -71,6 +76,11 @@ namespace FactoryWars.EditorTools {
       yield return Unit("cf_longwall_mlrs", 3, 1000, LongwallBody,
         new MovingPart { Name = "Launcher", Pivot = new Vector3(0, 1.0f, -0.9f), Build = LongwallBase },
         new MovingPart { Name = "Tubes", Parent = "Launcher", Pivot = new Vector3(0, 0.25f, -0.6f), Build = LongwallTubes });
+      yield return Unit("cf_scout_boat", 2, 800, ContinentalScoutBoatHull,
+        new MovingPart { Name = "Turret", Pivot = new Vector3(0, 0.45f, 0.7f), Build = ContinentalScoutBoatTurret });
+      yield return Unit("cf_artillery_ship", 3, 1100, ContinentalArtilleryShipHull,
+        new MovingPart { Name = "Turret", Pivot = new Vector3(0, 0.75f, 0.7f), Build = ContinentalArtilleryShipTurret },
+        new MovingPart { Name = "Barrel", Parent = "Turret", Pivot = new Vector3(0, 0.18f, 0.5f), Build = ContinentalArtilleryShipBarrel });
 
       yield return new ArtRecipe {
         Id = "ff_headquarters", Kind = "건물", MaxRenderers = 5, MaxTriangles = 2000, Body = FreeHeadquarters,
@@ -867,6 +877,113 @@ namespace FactoryWars.EditorTools {
       foreach (var x in new[] { -3.6f, 3.6f }) {
         k.Cylinder(new Vector3(x, -0.6f, 0), 0.65f, 1.2f, 10);
       }
+
+    }
+
+    static void FreeScoutBoatHull(MeshKit k) {
+      k.Paint(Swatch.Armor);
+      k.Taper(new Vector3(0, 0.22f, 0), new Vector2(1.2f, 2.6f), new Vector2(0.9f, 2.2f), 0.38f, new Vector2(0, 0.25f));
+      k.Paint(Swatch.ArmorDark);
+      k.Chamfer(new Vector3(0, 0.3f, 1.05f), new Vector3(0.85f, 0.3f, 0.7f), 0.08f);
+      foreach (var s in new[] { -0.38f, 0.38f }) {
+        k.Paint(Swatch.MetalDark);
+        k.Cylinder(new Vector3(s, 0.24f, -1.15f), 0.14f, 0.4f, 8);
+      }
+      k.Paint(Swatch.Glass);
+      k.Box(new Vector3(0, 0.48f, 0.05f), new Vector3(0.65f, 0.24f, 0.75f));
+      k.Team();
+      k.Box(new Vector3(0, 0.44f, -0.55f), new Vector3(0.85f, 0.05f, 0.7f));
+    }
+
+    static void FreeScoutBoatTurret(MeshKit k) {
+      k.Paint(Swatch.Armor);
+      k.Cylinder(new Vector3(0, 0.08f, 0), 0.22f, 0.15f, 8);
+      k.Paint(Swatch.MetalDark);
+      k.Cylinder(new Vector3(-0.08f, 0.12f, 0.28f), 0.035f, 0.45f, 6);
+      k.Cylinder(new Vector3(0.08f, 0.12f, 0.28f), 0.035f, 0.45f, 6);
+    }
+
+    static void FreeArtilleryShipHull(MeshKit k) {
+      k.Paint(Swatch.Armor);
+      k.Taper(new Vector3(0, 0.32f, 0), new Vector2(1.7f, 4.2f), new Vector2(1.35f, 3.6f), 0.6f, new Vector2(0, 0.35f));
+      k.Paint(Swatch.ArmorDark);
+      k.Chamfer(new Vector3(0, 0.38f, 1.7f), new Vector3(1.05f, 0.45f, 1.0f), 0.1f);
+      k.Paint(Swatch.Armor);
+      k.Box(new Vector3(0, 0.92f, -0.6f), new Vector3(1.15f, 0.6f, 1.4f));
+      k.Paint(Swatch.Glass);
+      k.Box(new Vector3(0, 1.12f, -0.4f), new Vector3(0.95f, 0.2f, 0.65f));
+      k.Paint(Swatch.MetalDark);
+      k.Cylinder(new Vector3(0, 1.45f, -0.7f), 0.045f, 0.55f, 6);
+      k.Team();
+      k.Box(new Vector3(0, 0.68f, 0.75f), new Vector3(1.4f, 0.07f, 1.3f));
+    }
+
+    static void FreeArtilleryShipTurret(MeshKit k) {
+      k.Paint(Swatch.Armor);
+      k.Chamfer(new Vector3(0, 0.14f, 0), new Vector3(0.85f, 0.3f, 0.95f), 0.08f);
+      k.Team();
+      k.Box(new Vector3(0, 0.32f, 0), new Vector3(0.55f, 0.04f, 0.75f));
+    }
+
+    static void FreeArtilleryShipBarrel(MeshKit k) {
+      k.Paint(Swatch.MetalDark);
+      k.Cylinder(new Vector3(-0.15f, 0.02f, 0.7f), 0.055f, 1.35f, 8);
+      k.Cylinder(new Vector3(0.15f, 0.02f, 0.7f), 0.055f, 1.35f, 8);
+      k.Paint(Swatch.Black);
+      k.Cylinder(new Vector3(-0.15f, 0.02f, 1.38f), 0.085f, 0.14f, 8);
+      k.Cylinder(new Vector3(0.15f, 0.02f, 1.38f), 0.085f, 0.14f, 8);
+    }
+
+    static void ContinentalScoutBoatHull(MeshKit k) {
+      k.Paint(Swatch.Armor);
+      k.Taper(new Vector3(0, 0.24f, 0), new Vector2(1.25f, 2.7f), new Vector2(0.9f, 2.2f), 0.42f, new Vector2(0, 0.25f));
+      k.Paint(Swatch.ArmorDark);
+      k.Box(new Vector3(0, 0.3f, -0.15f), new Vector3(1.05f, 0.32f, 1.7f));
+      k.Paint(Swatch.Armor);
+      k.Box(new Vector3(0, 0.62f, -0.1f), new Vector3(0.75f, 0.38f, 0.85f));
+      k.Paint(Swatch.Glass);
+      k.Box(new Vector3(0, 0.7f, 0.2f), new Vector3(0.6f, 0.14f, 0.25f));
+      k.Team();
+      k.Box(new Vector3(0, 0.82f, -0.1f), new Vector3(0.65f, 0.04f, 0.65f));
+    }
+
+    static void ContinentalScoutBoatTurret(MeshKit k) {
+      k.Paint(Swatch.Armor);
+      k.Box(new Vector3(0, 0.1f, 0), new Vector3(0.32f, 0.2f, 0.36f));
+      k.Paint(Swatch.MetalDark);
+      k.Cylinder(new Vector3(0, 0.14f, 0.38f), 0.055f, 0.6f, 6);
+    }
+
+    static void ContinentalArtilleryShipHull(MeshKit k) {
+      k.Paint(Swatch.Armor);
+      k.Taper(new Vector3(0, 0.32f, 0), new Vector2(1.9f, 4.2f), new Vector2(1.45f, 3.6f), 0.65f, new Vector2(0, 0.3f));
+      foreach (var s in new[] { -1f, 1f }) {
+        k.Paint(Swatch.ArmorDark);
+        k.Box(new Vector3(s * 0.92f, 0.48f, 0), new Vector3(0.14f, 0.4f, 3.6f));
+      }
+      k.Paint(Swatch.Armor);
+      k.Box(new Vector3(0, 0.96f, -0.65f), new Vector3(1.25f, 0.7f, 1.5f));
+      k.Paint(Swatch.Glass);
+      k.Box(new Vector3(0, 1.1f, -0.38f), new Vector3(0.95f, 0.13f, 0.36f));
+      k.Paint(Swatch.MetalDark);
+      k.Cylinder(new Vector3(-0.28f, 1.4f, -1.15f), 0.13f, 0.5f, 8);
+      k.Cylinder(new Vector3(0.28f, 1.4f, -1.15f), 0.13f, 0.5f, 8);
+      k.Team();
+      k.Box(new Vector3(0, 0.7f, 0.85f), new Vector3(1.5f, 0.07f, 1.4f));
+    }
+
+    static void ContinentalArtilleryShipTurret(MeshKit k) {
+      k.Paint(Swatch.Armor);
+      k.Taper(new Vector3(0, 0.14f, 0), new Vector2(0.95f, 1.05f), new Vector2(0.75f, 0.85f), 0.35f);
+      k.Paint(Swatch.ArmorDark);
+      k.Box(new Vector3(0, 0.2f, 0), new Vector3(0.85f, 0.18f, 0.95f));
+    }
+
+    static void ContinentalArtilleryShipBarrel(MeshKit k) {
+      k.Paint(Swatch.MetalDark);
+      k.Cylinder(new Vector3(0, 0.08f, 0.75f), 0.1f, 1.5f, 8);
+      k.Paint(Swatch.Black);
+      k.Cylinder(new Vector3(0, 0.08f, 0.22f), 0.15f, 0.38f, 8);
     }
   }
 }

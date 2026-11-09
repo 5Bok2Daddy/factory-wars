@@ -26,6 +26,7 @@ namespace FactoryWars.View {
       public EntityRef Entity;
       public bool IsBuilding;
       public bool IsAir;
+      public bool IsNaval;
       public Vector3 Position;
       public float HullYaw;
       public float TurretYaw;
@@ -252,7 +253,7 @@ namespace FactoryWars.View {
       var actor = _actors[entity];
       var center = actor.View.transform.position + Vector3.up * (actor.IsAir ? actor.View.Entry.Altitude : actor.Height * 0.4f);
       Fx.Explosion(center, actor.IsBuilding ? 2.2f : Mathf.Clamp(actor.Radius * 0.5f, 0.5f, 1.5f));
-      if (actor.IsAir == false && (actor.IsBuilding || actor.Radius > 1.8f)) {
+      if (actor.IsAir == false && actor.IsNaval == false && (actor.IsBuilding || actor.Radius > 1.8f)) {
         Fx.Wreck(actor.View.transform.position, actor.IsBuilding ? 3.2f : actor.Radius * 0.8f, actor.IsBuilding ? 20f : 30f);
       }
       _marked.Remove(actor);
@@ -265,7 +266,7 @@ namespace FactoryWars.View {
       if (view == null) {
         return null;
       }
-      var actor = new Actor { View = view, Entity = entity, IsBuilding = isBuilding, IsAir = isAir, Radius = view.Entry.RingRadius, Height = view.Entry.BarHeight, Phase = Random.value * 10f };
+      var actor = new Actor { View = view, Entity = entity, IsBuilding = isBuilding, IsAir = isAir, IsNaval = id.Contains("boat") || id.Contains("ship"), Radius = view.Entry.RingRadius, Height = view.Entry.BarHeight, Phase = Random.value * 10f };
       var model = view.Model.transform;
       actor.Turret = FindDeep(model, "Turret") ?? FindDeep(model, "Launcher");
       actor.Barrel = FindDeep(model, "Barrel") ?? FindDeep(model, "Guns") ?? FindDeep(model, "Tubes");

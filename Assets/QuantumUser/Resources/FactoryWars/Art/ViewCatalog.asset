@@ -79,6 +79,28 @@ MonoBehaviour:
     MuzzlePart: Model
     Muzzle: {x: 0, y: 0.8, z: 2.6}
     Smoke: []
+  - Id: ff_scout_boat
+    Prefab: {fileID: 890774469869810932, guid: 7a3e16900a03a3c46bc26f505eb2c97f, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 0
+    Center: {x: 0, y: 0.049999952}
+    RingRadius: 2.0049999
+    BarHeight: 1.837
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 1.3999999}
+    Smoke: []
+  - Id: ff_artillery_ship
+    Prefab: {fileID: 9002239546207159681, guid: 3543deb29990f4549a01b097a0941d9a, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 0
+    Center: {x: 0, y: 0.28250027}
+    RingRadius: 3.3472502
+    BarHeight: 3.475
+    MuzzlePart: Barrel
+    Muzzle: {x: 0, y: 0.695, z: 1.4650002}
+    Smoke: []
   - Id: cf_engineer
     Prefab: {fileID: 6103229151435959058, guid: c6e5d38355d5dba4d868bc9b4e07f431, type: 3}
     Unit: 1
@@ -145,6 +167,28 @@ MonoBehaviour:
     MuzzlePart: Tubes
     Muzzle: {x: 0, y: 0.5664156, z: 1.7502246}
     Smoke: []
+  - Id: cf_scout_boat
+    Prefab: {fileID: 8521055078281159151, guid: c716a58a9ebe24d4e9950b2dffb3fd1d, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 2.0049999
+    BarHeight: 2.0970001
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 1.35}
+    Smoke: []
+  - Id: cf_artillery_ship
+    Prefab: {fileID: 2876409395631383132, guid: 5743ab9b529b18c47956c4af1168a5f6, type: 3}
+    Unit: 1
+    DisplayScale: 1.3
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 2.9799998
+    BarHeight: 3.813
+    MuzzlePart: Barrel
+    Muzzle: {x: 0, y: 0.83000004, z: 0.85}
+    Smoke: []
   - Id: ff_headquarters
     Prefab: {fileID: 7211810514476111655, guid: f0500d0f82ace3248b58a0226a2dc68a, type: 3}
     Unit: 0
@@ -184,8 +228,8 @@ MonoBehaviour:
     DisplayScale: 1
     Altitude: 0
     Center: {x: 0, y: 0}
-    RingRadius: 7.2999997
-    BarHeight: 1.45
+    RingRadius: 6.65
+    BarHeight: 1.52
     MuzzlePart: Model
     Muzzle: {x: 0, y: 0.8, z: 5.2}
     Smoke: []
@@ -313,6 +357,17 @@ MonoBehaviour:
     MuzzlePart: Model
     Muzzle: {x: 0, y: 0.8, z: 2.98}
     Smoke: []
+  - Id: ff_shipyard
+    Prefab: {fileID: 1510293591969908939, guid: 8935a3615a04206488080706f67428ce, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.7940476
+    BarHeight: 4.07
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
   - Id: cf_collection_yard
     Prefab: {fileID: 9132538957432950280, guid: cc0b90c117d16ff4a971ccd1a681f32f, type: 3}
     Unit: 0
@@ -435,6 +490,17 @@ MonoBehaviour:
     Center: {x: 0, y: 0}
     RingRadius: 3.23
     BarHeight: 5.2300005
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 2.98}
+    Smoke: []
+  - Id: cf_shipyard
+    Prefab: {fileID: 9695087661425531, guid: 7768e6457342d3b4fa0f146417ee0530, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 3.23
+    BarHeight: 4.3250003
     MuzzlePart: Model
     Muzzle: {x: 0, y: 0.8, z: 2.98}
     Smoke: []

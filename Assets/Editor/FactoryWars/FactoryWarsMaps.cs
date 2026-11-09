@@ -248,7 +248,7 @@ namespace FactoryWars.EditorTools {
         CenterSites = new[] { Site(CaptureKind.Comms, 0, 0, 12) },
         Barricades = new[] { Rect(-72, 0, 7, 3) },
         BaseCrates = new[] { Position(-110, -128), Position(-128, -110) },
-        DropCrates = new[] { Position(-70, -30), Position(-142, 12) },
+        DropCrates = new[] { Position(-70, -30), Position(-142, 12), Position(-169, -20) },
         HighGrounds = grounds.ToArray(),
         Ramps = ramps.ToArray(),
         Roads = roads.Concat(roads.Select(Mirror)).ToArray(),

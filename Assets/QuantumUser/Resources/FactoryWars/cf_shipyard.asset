@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2878a441c035e894a9b579e4615c4cf1, type: 3}
+  m_Name: cf_shipyard
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/cf_shipyard
+    Guid:
+      Value: 286400351016628290
+  Role: 12
+  Cost:
+    Iron:
+      RawValue: 22937600
+    Wood:
+      RawValue: 9830400
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 9830400
+  BuildTimeSeconds:
+    RawValue: 1638400
+  MaxHealth:
+    RawValue: 65536000
+  PowerOutput:
+    RawValue: 0
+  PowerStorage:
+    RawValue: 0
+  PowerUpkeep:
+    RawValue: 65536
+  Upkeep: 1
+  ProcessSeconds:
+    RawValue: 0
+  ProcessInput:
+    Iron:
+      RawValue: 0
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  ProcessSteel:
+    RawValue: 0
+  PopulationCapBonus:
+    RawValue: 0
+  ModuleSlots: 0
+  FootprintRadius:
+    RawValue: 196608
+  IsDropOff: 0
+  Prerequisites:
+  - Id:
+      Value: 419863775431176602
+  - Id:
+      Value: 390583282545688127
+  IsCoreBuilding: 1
+  Producible:
+  - Id:
+      Value: 414552557689055005
+  - Id:
+      Value: 339574118408755731
+  Attack: 0
+  GroundOnly: 0
+  Damage:
+    RawValue: 0
+  Range:
+    RawValue: 0
+  AttackInterval:
+    RawValue: 0

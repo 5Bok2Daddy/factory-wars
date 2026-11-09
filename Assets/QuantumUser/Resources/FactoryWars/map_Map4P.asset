@@ -19401,6 +19401,42 @@ MonoBehaviour:
         RawValue: 9306112
     Seat: -1
     Group: 1
+  - Position:
+      X:
+        RawValue: -11075584
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -1310720
+    Seat: -1
+    Group: 2
+  - Position:
+      X:
+        RawValue: 1310720
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -11075584
+    Seat: -1
+    Group: 2
+  - Position:
+      X:
+        RawValue: 11075584
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 1310720
+    Seat: -1
+    Group: 2
+  - Position:
+      X:
+        RawValue: -1310720
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 11075584
+    Seat: -1
+    Group: 2
   HighGrounds:
   - Center:
       X:

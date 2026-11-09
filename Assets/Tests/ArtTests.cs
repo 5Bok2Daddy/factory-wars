@@ -12,13 +12,13 @@ namespace FactoryWars.Tests {
   public partial class LocalMatchTests {
     static readonly string[] Infantry = { "ff_ranger_squad", "ff_skyguard_squad", "cf_militia", "cf_flame_squad" };
     static readonly string[] Vehicles = {
-      "ff_engineer", "ff_eagle_tank", "ff_hawk_gunship", "ff_skyfortress_bomber",
-      "cf_engineer", "cf_dragonscale_tank", "cf_thunder_aa", "cf_longwall_mlrs",
+      "ff_engineer", "ff_eagle_tank", "ff_hawk_gunship", "ff_skyfortress_bomber", "ff_scout_boat", "ff_artillery_ship",
+      "cf_engineer", "cf_dragonscale_tank", "cf_thunder_aa", "cf_longwall_mlrs", "cf_scout_boat", "cf_artillery_ship",
     };
     static readonly string[] Headquarters2 = { "ff_headquarters", "cf_headquarters" };
     static readonly string[] BuildingKinds = {
       "collection_yard", "supply_depot", "barracks", "power_plant", "processor",
-      "research_lab", "vehicle_factory", "ground_tower", "air_defense", "airfield", "heavy_works",
+      "research_lab", "vehicle_factory", "ground_tower", "air_defense", "airfield", "heavy_works", "shipyard",
     };
 
     static IEnumerable<string> Buildings() => BuildingKinds.SelectMany(kind => new[] { $"ff_{kind}", $"cf_{kind}" });
@@ -88,7 +88,7 @@ namespace FactoryWars.Tests {
     [Test]
     public void Art_EveryBuildingSpecHasAModelInsideItsFootprint() {
       var specs = Resources.LoadAll<Quantum.BuildingSpec>("FactoryWars");
-      Assert.AreEqual(24, specs.Length, "두 진영의 건물 12종");
+      Assert.AreEqual(26, specs.Length, "진영당 13개");
       var problems = new List<string>();
       foreach (var spec in specs) {
         var id = spec.name;

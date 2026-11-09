@@ -3,7 +3,7 @@ namespace Quantum.FactoryWars {
 
   /// <summary>규칙 기반 AI. 사람과 같은 함수로 행동해 비용과 제한을 그대로 받는다.</summary>
   public unsafe class BotSystem : SystemMainThread {
-    const int RoleCount = 12;
+    const int RoleCount = 13;
     const int MaxOrder = MoveUnitsCommand.MaxUnits;
 
     public static void Init(Frame f, PlayerRef player, BotDifficulty difficulty, FPVector3 home) {
@@ -445,13 +445,16 @@ namespace Quantum.FactoryWars {
 
     /// <summary>중심에서 바깥으로 격자를 돌며 지을 수 있는 첫 칸을 찾는다.</summary>
     static bool FindSite(Frame f, PlayerRef player, AiSpec ai, BuildingSpec spec, FPVector3 center, out FPVector3 site) {
-      for (var ring = 1; ring <= ai.SiteRings; ring++) {
+      var isShipyard = spec.Role == BuildingRole.Shipyard;
+      var step = isShipyard ? ai.SiteGrid / 2 : ai.SiteGrid;
+      var rings = isShipyard ? ai.SiteRings * 2 : ai.SiteRings;
+      for (var ring = 1; ring <= rings; ring++) {
         for (var x = -ring; x <= ring; x++) {
           for (var z = -ring; z <= ring; z++) {
             if (FPMath.Abs(x) != ring && FPMath.Abs(z) != ring) {
               continue;
             }
-            site = center + new FPVector3(ai.SiteGrid * x, FP._0, ai.SiteGrid * z);
+            site = center + new FPVector3(step * x, FP._0, step * z);
             if (FactoryWarsUtil.IsReachable(f, player, site) && ProductionSystem.CanPlace(f, spec, site)) {
               return true;
             }
@@ -767,7 +770,7 @@ namespace Quantum.FactoryWars {
         var units = f.Filter<Transform3D, Unit>();
         while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
           var spec = f.FindAsset(unit->Spec);
-          if (unit->Owner != player || spec.Attack == AttackType.None || spec.IsAir || spec.Range < minRange || f.Number < unit->ReservedUntilFrame || unit->Garrison != EntityRef.None) {
+          if (unit->Owner != player || spec.Attack == AttackType.None || spec.IsAir || spec.IsNaval || spec.Range < minRange || f.Number < unit->ReservedUntilFrame || unit->Garrison != EntityRef.None) {
             continue;
           }
           var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, target);

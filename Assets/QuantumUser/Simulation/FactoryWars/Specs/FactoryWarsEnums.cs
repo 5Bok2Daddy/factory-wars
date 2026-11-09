@@ -2,7 +2,7 @@ namespace Quantum {
   public enum UnitSize { Engineer, Small, Medium, Large }
 
   public enum BuildingRole {
-    Headquarters, PowerPlant, Processor, SupplyDepot, Barracks, ResearchLab, VehicleFactory, Airfield, HeavyWorks, GroundTower, CollectionYard, AirDefense
+    Headquarters, PowerPlant, Processor, SupplyDepot, Barracks, ResearchLab, VehicleFactory, Airfield, HeavyWorks, GroundTower, CollectionYard, AirDefense, Shipyard
   }
 
   /// <summary>ActionRejected.Missing의 비트.</summary>
