@@ -11,10 +11,19 @@ namespace FactoryWars.View {
     public BotDifficulty Difficulty = BotDifficulty.Normal;
     public MatchMode Mode = MatchMode.Duel;
     public int TruceMinutes = 7;
+    /// <summary>고정 시드(음수면 무작위). 개발용 "대규모 교전 장면"이 쓴다.</summary>
+    public int Seed = -1;
+    /// <summary>시작 뒤 이 시간(초)까지 빨리 감는다. 0이면 안 한다.</summary>
+    public int FastForwardSeconds;
+    /// <summary>19A 비교 환경의 고정 장면과 같은 시드.</summary>
+    public const int BattleSceneSeed = 7020;
     /// <summary>2대2 동맹 배치. 기본은 대각선(0·2 대 1·3)이고, 끄면 이웃(0·1 대 2·3)이다.</summary>
     public bool DiagonalTeams = true;
     /// <summary>고른 색. 음수면 진영 기본 추천색이다.</summary>
     public int ColorIndex = -1;
+    /// <summary>온라인 6자리 방 코드 대전(항목 28).</summary>
+    public bool IsOnline;
+    public string RoomCode = "";
 
     public int Color => ColorIndex >= 0 ? ColorIndex : Palette.Recommended(FactionIndex);
 
@@ -64,7 +73,10 @@ namespace FactoryWars.View {
       }).ToArray();
       runner.LocalPlayers = new[] { new RuntimePlayer { PlayerNickname = "지휘관", Faction = Faction(0), Team = Team(0), ColorIndex = settings.Color } };
       runner.MaxPlayerCount = settings.Players;
-      runner.UseRandomSeed = true;
+      runner.UseRandomSeed = settings.Seed < 0;
+      if (settings.Seed >= 0) {
+        config.Seed = settings.Seed;
+      }
     }
   }
 }

@@ -28,6 +28,9 @@ namespace FactoryWars.View {
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Boot() {
+      if (PlayerPrefs.HasKey(PrefsKey) == false) {
+        PlayerPrefs.SetInt(PrefsKey, (int)AutoQuality.Guess());
+      }
       Apply((QualityTier)Mathf.Clamp(PlayerPrefs.GetInt(PrefsKey, (int)Default), 0, Names.Length - 1));
     }
 
@@ -44,6 +47,7 @@ namespace FactoryWars.View {
       var next = (QualityTier)(((int)Current + 1) % Names.Length);
       Apply(next);
       PlayerPrefs.SetInt(PrefsKey, (int)next);
+      PlayerPrefs.SetInt(AutoQuality.DoneKey, 1);
       return next;
     }
 

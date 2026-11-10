@@ -24,12 +24,23 @@ namespace FactoryWars.View {
       Current = this;
       _controller = GetComponent<MatchController>();
       if (MatchSetup.Pending != null) {
+        _fastForwardFrames = MatchSetup.Pending.FastForwardSeconds * 20;
         MatchSetup.Apply(FindFirstObjectByType<QuantumRunnerLocalDebug>(), MatchSetup.Pending);
         MatchSetup.Pending = null;
       }
     }
 
+    int _fastForwardFrames;
+
     void Update() {
+      // 개발용 빨리 감기: 정해진 프레임까지 8배속, 그 뒤 원래 속도.
+      if (_fastForwardFrames > 0 && _controller.IsReady && _controller.Frame != null) {
+        var reached = _controller.Frame.Number >= _fastForwardFrames;
+        Time.timeScale = reached ? 1f : 8f;
+        if (reached) {
+          _fastForwardFrames = 0;
+        }
+      }
       if (_built || _controller.IsReady == false) {
         return;
       }

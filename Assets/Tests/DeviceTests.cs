@@ -1,0 +1,98 @@
+namespace FactoryWars.Tests {
+  using System.Collections;
+  using System.Globalization;
+  using System.IO;
+  using System.Linq;
+  using FactoryWars.View;
+  using NUnit.Framework;
+  using Quantum;
+  using UnityEngine;
+  using UnityEngine.TestTools;
+  using UnityEngine.UI;
+  using Assert = NUnit.Framework.Assert;
+  using Button = UnityEngine.UI.Button;
+  using Object = UnityEngine.Object;
+
+  /// <summary>
+  /// 항목 23 터치 점검. 실제 HUD를 기기 해상도로 그려 버튼의 물리 크기(mm)와 가장 작은 글자 높이를 잰다.
+  /// 화면 크기(인치)로 dpi를 계산한다. 결과: screenshots/device/<기기>.png, Game-logs/device/touch.csv.
+  /// </summary>
+  public unsafe partial class LocalMatchTests {
+    static readonly (string Name, int Width, int Height, float Inches)[] Devices = {
+      ("phone_6.1in_2400x1080", 2400, 1080, 6.1f),
+      ("phone_6.7in_3200x1440", 3200, 1440, 6.7f),
+      ("tablet_11in_2560x1600", 2560, 1600, 11f),
+    };
+
+    const float MinButtonMillimeters = 9f;
+
+    [UnityTest, Explicit, Category("Device"), Timeout(300000)]
+    public IEnumerator Device_TouchTargets() {
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal }, truce: 0);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      Controller().Input.Selection.SelectUnit(Engineers(0)[0]);
+      Controller().Hud.Refresh(Controller().Frame);
+      yield return null;
+      var canvas = Controller().Hud.Root.GetComponentInParent<Canvas>();
+      var camera = Camera.main;
+      var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "screenshots", "device"));
+      var logs = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Game-logs", "device"));
+      Directory.CreateDirectory(folder);
+      Directory.CreateDirectory(logs);
+      var csv = "device,dpi,min_button_mm,min_button_name,min_font_mm,buttons_under_9mm\n";
+      var worst = float.MaxValue;
+      var hasGpu = SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null;
+      foreach (var device in Devices) {
+        var dpi = Mathf.Sqrt(device.Width * device.Width + device.Height * device.Height) / device.Inches;
+        RenderTexture surface = null;
+        if (hasGpu) {
+          surface = new RenderTexture(device.Width, device.Height, 24);
+          camera.targetTexture = surface;
+          canvas.renderMode = RenderMode.ScreenSpaceCamera;
+          canvas.worldCamera = camera;
+          canvas.planeDistance = 2f;
+        }
+        yield return null;
+        Canvas.ForceUpdateCanvases();
+        var corners = new Vector3[4];
+        var minMm = float.MaxValue;
+        var minName = "";
+        var under = 0;
+        foreach (var button in Controller().Hud.Root.GetComponentsInChildren<Button>(false)) {
+          var rect = (RectTransform)button.transform;
+          rect.GetWorldCorners(corners);
+          var px = hasGpu
+            ? Mathf.Min(Mathf.Abs(camera.WorldToScreenPoint(corners[2]).x - camera.WorldToScreenPoint(corners[0]).x), Mathf.Abs(camera.WorldToScreenPoint(corners[2]).y - camera.WorldToScreenPoint(corners[0]).y))
+            : Mathf.Min(Mathf.Abs(corners[2].x - corners[0].x), Mathf.Abs(corners[2].y - corners[0].y));
+          var mm = px / dpi * 25.4f;
+          under += mm < MinButtonMillimeters ? 1 : 0;
+          if (mm < minMm) {
+            minMm = mm;
+            minName = button.name;
+          }
+        }
+        var minFont = Controller().Hud.Root.GetComponentsInChildren<Text>(false).Where(t => t.text.Length > 0).Min(t => t.fontSize) * canvas.scaleFactor;
+        var fontMm = minFont / dpi * 25.4f;
+        worst = Mathf.Min(worst, minMm);
+        csv += string.Join(",", device.Name, dpi.ToString("0", CultureInfo.InvariantCulture), minMm.ToString("0.0", CultureInfo.InvariantCulture), minName, fontMm.ToString("0.0", CultureInfo.InvariantCulture), under) + "\n";
+        if (hasGpu && surface != null) {
+          camera.Render();
+          RenderTexture.active = surface;
+          var image = new Texture2D(device.Width, device.Height, TextureFormat.RGB24, false);
+          image.ReadPixels(new Rect(0, 0, device.Width, device.Height), 0, 0);
+          image.Apply();
+          RenderTexture.active = null;
+          File.WriteAllBytes(Path.Combine(folder, device.Name + ".png"), image.EncodeToPNG());
+          Object.Destroy(image);
+          camera.targetTexture = null;
+          surface.Release();
+        }
+      }
+      canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+      File.WriteAllText(Path.Combine(logs, "touch.csv"), csv);
+      Debug.Log("[FW-DEVICE]\n" + csv);
+      Assert.GreaterOrEqual(worst, MinButtonMillimeters, "가장 작은 HUD 버튼이 9mm 이상\n" + csv);
+    }
+  }
+}

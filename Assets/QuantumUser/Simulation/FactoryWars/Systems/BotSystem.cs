@@ -2,9 +2,32 @@ namespace Quantum.FactoryWars {
   using Photon.Deterministic;
 
   /// <summary>규칙 기반 AI. 사람과 같은 함수로 행동해 비용과 제한을 그대로 받는다.</summary>
-  public unsafe class BotSystem : SystemMainThread {
+  public unsafe class BotSystem : SystemMainThread, ISignalOnPlayerDisconnected, ISignalOnPlayerConnected {
     const int RoleCount = 13;
     const int MaxOrder = MoveUnitsCommand.MaxUnits;
+
+    public void OnPlayerDisconnected(Frame f, PlayerRef player) {
+      var state = FactoryWarsUtil.Player(f, player);
+      if (state != null && state->Defeated == false) {
+        state->IsBot = true;
+        state->Difficulty = BotDifficulty.Normal;
+        var bot = f.Global->Bots.GetPointer(player);
+        if (bot->Home == FPVector3.Zero) {
+          bot->Home = FactoryWarsUtil.StartPosition(f, player);
+        }
+        var ai = Spec(f, BotDifficulty.Normal);
+        bot->NextThinkFrame = f.Number + 1;
+        bot->NextAttackFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.FirstAttackSeconds);
+        bot->WaveSize = ai.WaveSize;
+      }
+    }
+
+    public void OnPlayerConnected(Frame f, PlayerRef player) {
+      var state = FactoryWarsUtil.Player(f, player);
+      if (state != null) {
+        state->IsBot = false;
+      }
+    }
 
     public static void Init(Frame f, PlayerRef player, BotDifficulty difficulty, FPVector3 home) {
       var state = FactoryWarsUtil.Player(f, player);

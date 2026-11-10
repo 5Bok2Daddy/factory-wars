@@ -64,6 +64,9 @@ namespace FactoryWars.View {
       hud.Controller = this;
       hud.Build(frame);
       Hud = hud;
+      var perf = gameObject.AddComponent<PerfMonitor>();
+      perf.Controller = this;
+      perf.Build(hud.Root);
       _boxRect = Ui.Panel("SelectionBox", hud.Root, new Color(1f, 1f, 1f, 0.15f));
       _boxRect.GetComponent<Image>().raycastTarget = false;
       _boxRect.gameObject.SetActive(false);

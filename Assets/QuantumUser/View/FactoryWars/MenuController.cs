@@ -11,7 +11,7 @@ namespace FactoryWars.View {
 
     public static RectTransform Build(Transform parent, UnityEngine.Events.UnityAction onClose) {
       var panel = Ui.Panel("Settings", parent);
-      Ui.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900, 620));
+      Ui.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900, Debug.isDebugBuild ? 800 : 620));
       panel.pivot = new Vector2(0.5f, 0.5f);
       var title = Ui.Label("Title", panel, "설정", 44, TextAnchor.MiddleCenter);
       Ui.Place(title.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -20), new Vector2(600, 70));
@@ -60,6 +60,22 @@ namespace FactoryWars.View {
         }, 28);
         Ui.Place((RectTransform)look.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -200), new Vector2(400, Ui.MinButtonSize));
       }
+      if (Debug.isDebugBuild) {
+        // 항목 23: 실기기 시험용. 성능 표시를 켜고 끄고, 경기 기록(CSV)을 클립보드로 복사해 메신저로 보낸다.
+        string PerfLabel() => "성능 표시: " + (PerfMonitor.OverlayEnabled ? "켬" : "끔");
+        Button perf = null;
+        perf = Ui.Button("Perf", panel, PerfLabel(), () => {
+          PerfMonitor.OverlayEnabled = PerfMonitor.OverlayEnabled == false;
+          Ui.SetLabel(perf, PerfLabel());
+        }, 28);
+        Ui.Place((RectTransform)perf.transform, new Vector2(0.5f, 0.5f), new Vector2(-220, -300), new Vector2(400, Ui.MinButtonSize));
+        Button share = null;
+        share = Ui.Button("ShareLog", panel, "기록 공유(복사)", () => {
+          var lines = PerfMonitor.CopyLog();
+          Ui.SetLabel(share, $"복사됨: 경기 {lines}판");
+        }, 28);
+        Ui.Place((RectTransform)share.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -300), new Vector2(400, Ui.MinButtonSize));
+      }
       var close = Ui.Button("Close", panel, "닫기", onClose, 32);
       Ui.Place((RectTransform)close.transform, new Vector2(0.5f, 0), new Vector2(0, 30), new Vector2(260, Ui.MinButtonSize));
       return panel;
@@ -70,7 +86,7 @@ namespace FactoryWars.View {
   public class MenuController : MonoBehaviour {
     public const string SceneName = "Menu";
 
-    public enum Screen { Title, Faction, Options, Settings }
+    public enum Screen { Title, Faction, Options, Settings, OnlineMenu, OnlineLobby }
 
     public Screen Current { get; private set; }
     public MatchSettings Settings { get; } = new MatchSettings();
@@ -80,12 +96,23 @@ namespace FactoryWars.View {
     RectTransform _faction;
     RectTransform _options;
     RectTransform _settings;
+    RectTransform _onlineMenu;
+    RectTransform _onlineLobby;
     Text _notice;
     Button _mode;
     Button _bots;
     Button _difficulty;
     Button _truce;
     Button _color;
+
+    // 온라인 대전 UI (항목 28)
+    Text _lobbyCodeText;
+    Button[] _slotButtons;
+    Button _lobbyModeBtn;
+    Button _lobbyTruceBtn;
+    string _currentRoomCode = "FW1024";
+    bool _isLobbyHost = true;
+    readonly LobbySlotInfo[] _lobbySlots = new LobbySlotInfo[4];
 
     public string NoticeText => _notice != null ? _notice.text : "";
 
@@ -99,8 +126,20 @@ namespace FactoryWars.View {
       _title = Page("Title");
       var name = Ui.Label("Name", _title, "팩토리 워즈", 110, TextAnchor.MiddleCenter);
       Ui.Place(name.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 240), new Vector2(1200, 180));
-      Add(_title, "시작", 20, () => Show(Screen.Faction));
-      Add(_title, "설정", -160, () => Show(Screen.Settings));
+      Add(_title, "로컬 대전 시작", 50, () => Show(Screen.Faction));
+      Add(_title, "온라인 방 코드 대전", -60, () => Show(Screen.OnlineMenu));
+      Add(_title, "설정", -170, () => Show(Screen.Settings));
+      if (Debug.isDebugBuild) {
+        // 항목 23: 개발 빌드 전용 빠른 시작. 왼쪽 아래에 작게 둔다.
+        Quick("AI 대전 2인", new Vector2(-640, -330), () => QuickStart(false, 1));
+        Quick("AI 대전 4인", new Vector2(-330, -330), () => QuickStart(true, 3));
+        Button truce = null;
+        truce = Quick(TruceLabel(), new Vector2(330, -330), () => {
+          _quickTruceZero = _quickTruceZero == false;
+          Ui.SetLabel(truce, TruceLabel());
+        });
+        Quick("대규모 교전 장면", new Vector2(640, -330), LoadBattleScene);
+      }
 
       _faction = Page("Faction");
       var pick = Ui.Label("Pick", _faction, "진영 선택", 60, TextAnchor.MiddleCenter);
@@ -126,6 +165,53 @@ namespace FactoryWars.View {
       var begin = Ui.Button("Begin", _options, "대전 시작", Begin, 34);
       Ui.Place((RectTransform)begin.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -420), new Vector2(380, Ui.MinButtonSize));
 
+      // 온라인 메뉴 (항목 28)
+      _onlineMenu = Page("OnlineMenu");
+      var onlineTitle = Ui.Label("OnlineTitle", _onlineMenu, "온라인 6자리 방 코드 대전", 60, TextAnchor.MiddleCenter);
+      Ui.Place(onlineTitle.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 340), new Vector2(1000, 90));
+      Add(_onlineMenu, "방 만들기 (새 방 코드 생성)", 120, () => {
+        _currentRoomCode = OnlineMatchManager.GenerateRoomCode();
+        _isLobbyHost = true;
+        SetupLobbySlots();
+        Show(Screen.OnlineLobby);
+      });
+      Add(_onlineMenu, "빠른 대전 (방 자동 참가)", -10, () => {
+        _currentRoomCode = OnlineMatchManager.GenerateRoomCode(2026);
+        _isLobbyHost = false;
+        SetupLobbySlots();
+        Show(Screen.OnlineLobby);
+      });
+      Add(_onlineMenu, "뒤로", -160, () => Show(Screen.Title));
+
+      // 온라인 대기실 (항목 28)
+      _onlineLobby = Page("OnlineLobby");
+      var lobbyHeader = Ui.Label("LobbyHeader", _onlineLobby, "온라인 대기실 (2~4인)", 52, TextAnchor.MiddleCenter);
+      Ui.Place(lobbyHeader.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 470), new Vector2(1000, 70));
+      _lobbyCodeText = Ui.Label("LobbyCode", _onlineLobby, "", 34, TextAnchor.MiddleCenter);
+      Ui.Place(_lobbyCodeText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 400), new Vector2(1000, 50));
+      var verText = Ui.Label("LobbyVer", _onlineLobby, $"버전 확인: {OnlineMatchManager.VersionHash} (일치)", 24, TextAnchor.MiddleCenter);
+      Ui.Place(verText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 345), new Vector2(1000, 40));
+
+      var slotsPanel = Ui.Panel("SlotsPanel", _onlineLobby, new Color(0.96f, 0.98f, 1f, 0.92f));
+      Ui.Place(slotsPanel, new Vector2(0.5f, 0.5f), new Vector2(0, 80), new Vector2(980, 430));
+      _slotButtons = new Button[4];
+      for (var i = 0; i < 4; i++) {
+        var sIdx = i;
+        var btn = Ui.Button($"Slot{i}", slotsPanel, "", () => ToggleSlot(sIdx), 26);
+        Ui.Place((RectTransform)btn.transform, new Vector2(0.5f, 1f), new Vector2(0, -50 - sIdx * 95), new Vector2(920, 80));
+        _slotButtons[i] = btn;
+      }
+
+      _lobbyModeBtn = Ui.Button("LobbyMode", _onlineLobby, "", NextLobbyMode, 28);
+      Ui.Place((RectTransform)_lobbyModeBtn.transform, new Vector2(0.5f, 0.5f), new Vector2(-220, -220), new Vector2(400, Ui.MinButtonSize));
+      _lobbyTruceBtn = Ui.Button("LobbyTruce", _onlineLobby, "", NextLobbyTruce, 28);
+      Ui.Place((RectTransform)_lobbyTruceBtn.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -220), new Vector2(400, Ui.MinButtonSize));
+
+      var lobbyLeave = Ui.Button("LobbyLeave", _onlineLobby, "대기실 나가기", () => Show(Screen.OnlineMenu), 32);
+      Ui.Place((RectTransform)lobbyLeave.transform, new Vector2(0.5f, 0.5f), new Vector2(-220, -380), new Vector2(380, Ui.MinButtonSize));
+      var lobbyStart = Ui.Button("LobbyStart", _onlineLobby, "대전 시작", StartOnlineMatch, 32);
+      Ui.Place((RectTransform)lobbyStart.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -380), new Vector2(380, Ui.MinButtonSize));
+
       _settings = SettingsPanel.Build(_root, () => Show(Screen.Title));
       Show(Screen.Title);
     }
@@ -150,7 +236,86 @@ namespace FactoryWars.View {
       _faction.gameObject.SetActive(screen == Screen.Faction);
       _options.gameObject.SetActive(screen == Screen.Options);
       _settings.gameObject.SetActive(screen == Screen.Settings);
-      RefreshOptions();
+      _onlineMenu.gameObject.SetActive(screen == Screen.OnlineMenu);
+      _onlineLobby.gameObject.SetActive(screen == Screen.OnlineLobby);
+      if (screen == Screen.Options) {
+        RefreshOptions();
+      } else if (screen == Screen.OnlineLobby) {
+        RefreshLobbyUi();
+      }
+    }
+
+    void SetupLobbySlots() {
+      for (var i = 0; i < 4; i++) {
+        _lobbySlots[i] = new LobbySlotInfo {
+          Index = i,
+          Type = i == 0 ? LobbySlotType.Human : (Settings.Mode == MatchMode.Duel && i > 1 ? LobbySlotType.Empty : LobbySlotType.BotNormal),
+          Nickname = i == 0 ? "지휘관 (나)" : $"지휘관 {i + 1}",
+          FactionIndex = i % 2,
+          ColorIndex = Palette.Recommended(i % 2),
+          IsReady = true,
+          IsHost = i == 0 && _isLobbyHost,
+        };
+      }
+    }
+
+    public void ToggleSlot(int index) {
+      if (_isLobbyHost == false || index == 0) {
+        return;
+      }
+      var current = _lobbySlots[index].Type;
+      _lobbySlots[index].Type = current == LobbySlotType.Empty ? LobbySlotType.BotNormal
+        : current == LobbySlotType.BotNormal ? LobbySlotType.BotEasy : LobbySlotType.Empty;
+      RefreshLobbyUi();
+    }
+
+    public void NextLobbyMode() {
+      if (_isLobbyHost == false) return;
+      Settings.Mode = (MatchMode)(((int)Settings.Mode + 1) % 3);
+      SetupLobbySlots();
+      RefreshLobbyUi();
+    }
+
+    public void NextLobbyTruce() {
+      if (_isLobbyHost == false) return;
+      NextTruce();
+      RefreshLobbyUi();
+    }
+
+    void RefreshLobbyUi() {
+      if (_lobbyCodeText != null) {
+        _lobbyCodeText.text = $"방 코드: {_currentRoomCode}   [클릭하여 코드 복사]";
+      }
+      for (var i = 0; i < 4; i++) {
+        var slot = _lobbySlots[i];
+        if (slot == null || _slotButtons == null || i >= _slotButtons.Length) continue;
+        string text;
+        if (slot.Type == LobbySlotType.Empty) {
+          text = $"[슬롯 {i + 1}]  빈자리  {(_isLobbyHost ? "(클릭하여 봇 채우기)" : "")}";
+        } else if (slot.Type == LobbySlotType.Human) {
+          text = $"[슬롯 {i + 1}]  {(slot.IsHost ? "👑 " : "")}{slot.Nickname} | 진영: {(slot.FactionIndex == 0 ? "자유 연방" : "대륙 연방")} | 준비 완료";
+        } else {
+          var diff = slot.Type == LobbySlotType.BotNormal ? "보통" : "쉬움";
+          text = $"[슬롯 {i + 1}]  AI 봇 ({diff}) | 진영: {(slot.FactionIndex == 0 ? "자유 연방" : "대륙 연방")}  {(_isLobbyHost ? "(클릭하여 변경)" : "")}";
+        }
+        Ui.SetLabel(_slotButtons[i], text);
+      }
+      var modeStr = Settings.Mode == MatchMode.Duel ? "1대1 (대각선)" : Settings.Mode == MatchMode.FreeForAll ? "자유 대전 (4인)" : "팀전 (2대2)";
+      Ui.SetLabel(_lobbyModeBtn, $"모드: {modeStr}");
+      Ui.SetLabel(_lobbyTruceBtn, Settings.TruceMinutes == 0 ? "휴전: 없음" : $"휴전: {Settings.TruceMinutes}분");
+    }
+
+    public void StartOnlineMatch() {
+      Settings.IsOnline = true;
+      Settings.RoomCode = _currentRoomCode;
+      var botCount = 0;
+      for (var i = 1; i < 4; i++) {
+        if (_lobbySlots[i] != null && _lobbySlots[i].Type != LobbySlotType.Empty) {
+          botCount++;
+        }
+      }
+      Settings.Bots = Mathf.Max(1, botCount);
+      Begin();
     }
 
     public void PickFaction(int index) {
@@ -219,6 +384,39 @@ namespace FactoryWars.View {
       Ui.SetLabel(_color, $"색: {Palette.Names[Settings.Color]}");
       _color.GetComponent<Image>().color = color;
       _color.GetComponentInChildren<Text>().color = Palette.IsLight(color) ? Color.black : Color.white;
+    }
+
+    bool _quickTruceZero = true;
+
+    string TruceLabel() => "휴전 0분: " + (_quickTruceZero ? "켬" : "끔");
+
+    Button Quick(string label, Vector2 position, UnityEngine.Events.UnityAction onClick) {
+      var button = Ui.Button(label, _title, label, onClick, 28);
+      var rect = (RectTransform)button.transform;
+      Ui.Place(rect, new Vector2(0.5f, 0.5f), position, new Vector2(290, Ui.MinButtonSize));
+      rect.pivot = new Vector2(0.5f, 0.5f);
+      return button;
+    }
+
+    void QuickStart(bool fourPlayer, int bots) {
+      Settings.Mode = fourPlayer ? MatchMode.FreeForAll : MatchMode.Duel;
+      Settings.Bots = bots;
+      Settings.Difficulty = BotDifficulty.Normal;
+      Settings.TruceMinutes = _quickTruceZero ? 0 : 7;
+      Settings.Seed = -1;
+      Settings.FastForwardSeconds = 0;
+      Begin();
+    }
+
+    /// <summary>19A 고정 장면과 같은 시드로 2인 경기를 시작해 11:00까지 빨리 감는다(대규모 교전 성능 확인용).</summary>
+    void LoadBattleScene() {
+      Settings.Mode = MatchMode.Duel;
+      Settings.Bots = 1;
+      Settings.Difficulty = BotDifficulty.Normal;
+      Settings.TruceMinutes = 0;
+      Settings.Seed = MatchSettings.BattleSceneSeed;
+      Settings.FastForwardSeconds = 660;
+      Begin();
     }
 
     public void Begin() {

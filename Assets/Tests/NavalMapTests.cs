@@ -1,6 +1,7 @@
 namespace FactoryWars.Tests {
   using System.Collections;
   using System.Collections.Generic;
+  using System.IO;
   using System.Linq;
   using NUnit.Framework;
   using Photon.Deterministic;
@@ -216,6 +217,44 @@ namespace FactoryWars.Tests {
 
       Assert.AreEqual(initialCrates + 1, GetPlayerCratesPicked(Verified, 0), "배가 수로 위 상자를 수거함");
       Assert.AreEqual(initialIron + 150, Funds(0), "상자 수거 보상 자금 지급 확인");
+    }
+
+    [UnityTest]
+    public IEnumerator Naval_CaptureCompleteScreenshot() {
+      yield return StartMatch(Map4PScene, 2, truce: 0);
+      var map = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      var canal = CanalPoint(map);
+      var shipyardRef = BuildingOf(0, "_shipyard");
+      var shipyardSpec = Verified.FindAsset(shipyardRef);
+      var foundPos = FPVector3.Zero;
+      for (var dx = -20; dx <= 20; dx += 2) {
+        for (var dz = -20; dz <= 20; dz += 2) {
+          var testPos = canal + new FPVector3(dx, 0, dz);
+          if (ProductionSystem.CanPlace(Verified, shipyardSpec, testPos)) {
+            foundPos = testPos;
+            break;
+          }
+        }
+        if (foundPos != FPVector3.Zero) break;
+      }
+      var yardEntity = ProductionSystem.CreateFinishedBuilding(Verified, 0, shipyardRef, foundPos != FPVector3.Zero ? foundPos : canal + new FPVector3(0, 0, 4));
+      var scoutRef = FactionOf(0).Units.First(u => Verified.FindAsset(u).name.EndsWith("_scout_boat"));
+      var artRef = FactionOf(0).Units.First(u => Verified.FindAsset(u).name.EndsWith("_artillery_ship"));
+      SpawnUnitAtWater(Verified, 0, scoutRef, canal + new FPVector3(-6, 0, 0));
+      SpawnUnitAtWater(Verified, 0, artRef, canal + new FPVector3(6, 0, 0));
+      yield return null;
+      if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null) {
+        var camera = Camera.main;
+        if (camera != null) {
+          camera.transform.position = canal.ToUnityVector3() + new Vector3(0, 35, -30);
+          camera.transform.LookAt(canal.ToUnityVector3());
+          var shot = Shoot(camera, 1920, 1080);
+          var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "screenshots", "lookdev"));
+          Directory.CreateDirectory(folder);
+          File.WriteAllBytes(Path.Combine(folder, "24_naval_complete.png"), shot.EncodeToPNG());
+          Object.Destroy(shot);
+        }
+      }
     }
   }
 }
