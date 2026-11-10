@@ -98,7 +98,7 @@ namespace FactoryWars.View {
       p.MaxHeight = 140f;
       // 장난감 블록 입체감 복원: 태양광 윗면 100% 밝기 + 그늘진 옆면 65~70% 파스텔 블루/퍼플 그늘
       p.SunColor = new Color32(0xFF, 0xFA, 0xEE, 0xFF);
-      p.SunIntensity = 1.15f;
+      p.SunIntensity = 1.02f;
       p.SunElevation = 48f;
       p.SunAzimuth = -35f;
       p.AmbientSky = new Color(0.42f, 0.45f, 0.58f);
@@ -107,8 +107,8 @@ namespace FactoryWars.View {
       p.ShadowStrength = 0.88f;
       p.Tone = ToneMode.Neutral;
       p.BloomIntensity = 0f;
-      p.Saturation = 0.05f;
-      p.Contrast = 8f;
+      p.Saturation = 0.08f;
+      p.Contrast = 10f;
       p.Vignette = 0f;
       p.Ssao = true;
       p.SsaoIntensity = 2.8f;
@@ -130,11 +130,12 @@ namespace FactoryWars.View {
       p.BackgroundColor = new Color32(0xB2, 0xBA, 0xCC, 0xFF);
       p.WaterColor = new Color32(0x4A, 0xA3, 0xD6, 0xFF);
       p.Outside = OutsideMode.Dark;
-      p.PlateauHeight = 11f;
-      p.CliffLayers = 4;
+      p.PlateauHeight = 6f;
+      // 29 2-1: 단일 슬래브 절벽으로 얼룩말 층층 줄무늬 제거
+      p.CliffLayers = 1;
       p.HighGroundHeight = 5f;
       p.WaterDepth = 7f;
-      p.CliffTierShade = 0.15f;
+      p.CliffTierShade = 0f;
       p.PlateauTrees = 0.55f;
       p.ConiferRatio = 0.6f;
       p.AutumnRatio = 0.25f;

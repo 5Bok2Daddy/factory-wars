@@ -283,15 +283,14 @@ namespace FactoryWars.View {
           crate.transform.localPosition = transform->Position.ToUnityVector3();
           var body = Item(crate.transform, "Body", CrateMesh(), ArtLook.NeutralMaterial);
           body.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
-          var parachute = Item(body.transform, "Parachute", ParachuteMesh(), ArtLook.NeutralMaterial);
+          // 29 2-1: 절차 낙하산 메쉬 제거 및 Kenney 보급상자 키트 단독 적용 (옛 절차 메쉬 0개)
           var dressedCrate = DressingSpawn.Place(DressKind.SupplyCrate, body.transform, Vector3.zero, entity.Index * 90f, 8400 + entity.Index);
           if (dressedCrate != null) {
             dressedCrate.name = "KenneyCrate";
+            body.GetComponent<MeshRenderer>().enabled = false;
           }
           _crates[entity] = crate;
-          if (supplyCrate->Seat >= 0) {
-            parachute.SetActive(false);
-          } else {
+          if (supplyCrate->Seat < 0) {
             _falling[entity] = 0f;
           }
         }
@@ -302,23 +301,9 @@ namespace FactoryWars.View {
           var t = Mathf.Clamp01(age / DropSeconds);
           body.localPosition = Vector3.up * DropHeight * (1f - t) * (1f - t);
           if (t >= 1f) {
-            var chute = body.Find("Parachute");
-            if (chute != null) {
-              chute.gameObject.SetActive(false);
-            }
             _falling.Remove(entity);
           } else {
             _falling[entity] = age;
-          }
-        }
-        // 착지 확인 안전장치: 하강 중이 아니거나 바닥 높이에 도달했으면 낙하산 무조건 비활성화
-        if (_crates.TryGetValue(entity, out var crateObj) && crateObj != null) {
-          var b = crateObj.transform.childCount > 0 ? crateObj.transform.GetChild(0) : null;
-          if (b != null && (_falling.ContainsKey(entity) == false || b.localPosition.y <= 0.05f)) {
-            var chute = b.Find("Parachute");
-            if (chute != null && chute.gameObject.activeSelf) {
-              chute.gameObject.SetActive(false);
-            }
           }
         }
       }

@@ -83,6 +83,14 @@ namespace FactoryWars.Tests {
       cells.Add((Reference("kenney-ref", "city-builder.png"), "참고: Kenney Starter Kit City Builder"));
       cells.Add((Reference("aow3-ref", "01_default_zoom_map.png"), "참고: aow3-ref 01 (구도·이펙트 참고만)"));
       SaveSheet("27_sian_K1", "27 시안 K1 깨끗한 시작(0분, 보통): R·C·E와 참고 이미지", cells, 3);
+      // 29 품질 관문 6: 29_vs_kenney.png (Kenney 참고 | 게임 시점 R | 게임 시점 C | HUD 화면)
+      var comp29 = new List<(Texture2D, string)> {
+        (Reference("kenney-ref", "city-builder.png"), "Kenney 참고"),
+        (cells[0].Item1, "게임 시점 R"),
+        (cells[1].Item1, "게임 시점 C"),
+        (cells[2].Item1, "HUD 화면")
+      };
+      SaveSheet("29_vs_kenney", "29 Kenney 완성도: Kenney 참고 | 게임 시점 R | 게임 시점 C | HUD 화면", comp29, 4);
       foreach (var (texture, _) in cells) {
         Object.Destroy(texture);
       }
@@ -147,6 +155,7 @@ namespace FactoryWars.Tests {
         }
       }
       SaveSheet("27_sian_battle_progress", "27 시안 K2 전투 누적(AI 대 AI, 보통): 같은 장소 1·10·20분", byTier[QualityTier.Medium], 3);
+      SaveSheet("29_battle_progress", "29 전투 누적 파괴(AI 대 AI, 보통): 같은 장소 1·10·20분", byTier[QualityTier.Medium], 3);
       SaveSheet("27_sian_battle_progress_low", "27 시안 K2 전투 누적(낮음): 같은 장소 1·10·20분", byTier[QualityTier.Low], 3);
       foreach (var list in byTier.Values) {
         foreach (var (texture, _) in list) {

@@ -69,7 +69,8 @@ namespace FactoryWars.View {
         }
         rings.Add(points);
       }
-      Swatch[] faces = dark ? new[] { Swatch.RockFaceDark, Swatch.RockFaceDark, Swatch.RockFace } : new[] { Swatch.RockFaceDark, Swatch.RockFace, Swatch.RockFaceLight };
+      // 29 2-1: Kenney 디오라마 깔끔한 단색 슬래브 (옆면 #9AA5B8, 윗면 잔디 #7BE5BA)
+      Swatch[] faces = dark ? new[] { Swatch.ConcreteDark, Swatch.ConcreteDark, Swatch.ConcreteDark } : new[] { Swatch.ConcreteDark, Swatch.ConcreteDark, Swatch.Concrete };
       // Kenney 절벽 조각이 있으면 층마다 둘레 조각을 늘인 바위 블록으로 쌓는다(윗면 풀 턱이 층을 만든다). 판정은 그대로다.
       var dressed = Dressing.Collecting && Dressing.Has(DressKind.Cliff);
       for (var l = 0; l < layers; l++) {
@@ -117,7 +118,7 @@ namespace FactoryWars.View {
           if (dressed == false) {
             b = new Vector3(from[j].x, bottom, from[j].y);
             var shade = faces[Mathf.Min(l * faces.Length / layers, faces.Length - 1)];
-            k.Paint(MeshKit.Hash(seed, l * 977 + i) < 0.22f ? Swatch.RockFaceLight : shade);
+            k.Paint(shade);
             k.Quad(a, b, c, d, outward);
           }
         }

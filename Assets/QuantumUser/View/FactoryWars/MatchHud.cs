@@ -22,7 +22,8 @@ namespace FactoryWars.View {
     const float RefreshSeconds = 0.2f;
     const float AlertSeconds = 3f;
     const float NoteSeconds = 3f;
-    const int ContextSlots = 12;
+    // 29 2-5: 3열 2행 6슬롯 컴팩트 패널 (화면 1/3 이하 보장, 9mm 규격)
+    const int ContextSlots = 6;
     const int PagedSlots = ContextSlots - 1;
 
     public readonly List<ContextEntry> Entries = new List<ContextEntry>();
@@ -31,7 +32,7 @@ namespace FactoryWars.View {
     public MatchController Controller;
     public bool BoxMode { get; private set; }
     public int ContextPage { get; private set; }
-    /// <summary>10개까지는 한 쪽에 다 보인다. 넘치면 마지막 칸이 다음 쪽 버튼이 된다.</summary>
+    /// <summary>5개까지는 한 쪽에 다 보인다. 넘치면 마지막 칸이 다음 쪽 버튼이 된다.</summary>
     public int ContextPages => Entries.Count <= ContextSlots ? 1 : (Entries.Count + PagedSlots - 1) / PagedSlots;
     public string TopBarText { get; private set; } = "";
     public int ResourceIcons => _resources.Count(r => r.Icon.sprite != null);
@@ -46,6 +47,8 @@ namespace FactoryWars.View {
     };
 
     readonly List<(Image Icon, Text Value)> _resources = new List<(Image, Text)>();
+    RectTransform _alertBubble;
+    RectTransform _noteBubble;
     Text _alert;
     Text _note;
     Text _status;
@@ -75,7 +78,7 @@ namespace FactoryWars.View {
       top.anchorMin = new Vector2(0, 1);
       top.anchorMax = Vector2.one;
       top.pivot = new Vector2(0.5f, 1);
-      top.sizeDelta = new Vector2(0, 92);
+      top.sizeDelta = new Vector2(0, 166);
       _resources.Clear();
       foreach (var (icon, x, width) in ResourceSlots) {
         var capsule = Ui.Capsule($"{icon}_capsule", top, new Color(0.96f, 0.98f, 1f, 0.95f));
@@ -88,29 +91,43 @@ namespace FactoryWars.View {
       }
 
       var diplomacyButton = Ui.Button("DiplomacyButton", top, "외교", ToggleDiplomacy);
-      Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-180, -6), new Vector2(160, 76));
+      Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-180, -6), new Vector2(160, 154));
       var menuButton = Ui.Button("MenuButton", top, "메뉴", () => Controller.TogglePause());
-      Ui.Place((RectTransform)menuButton.transform, Vector2.one, new Vector2(-12, -6), new Vector2(160, 76));
+      Ui.Place((RectTransform)menuButton.transform, Vector2.one, new Vector2(-12, -6), new Vector2(160, 154));
 
       _truce = Ui.Label("Truce", Root, "", 34, TextAnchor.MiddleCenter);
       Ui.Place(_truce.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -84), new Vector2(1200, 50));
-      _alert = Ui.Label("Alert", Root, "", 36, TextAnchor.MiddleCenter);
-      Ui.Place(_alert.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -136), new Vector2(1200, 56));
-      _note = Ui.Label("Note", Root, "", 34, TextAnchor.MiddleCenter);
-      Ui.Place(_note.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -194), new Vector2(1200, 56));
 
-      var map = Ui.Rect("Minimap", Root);
-      Ui.Place(map, Vector2.zero, new Vector2(12, 12), new Vector2(300, 300));
+      // 알림·쪽지: 둥근 말풍선 팝 캡슐
+      _alertBubble = Ui.Capsule("AlertBubble", Root, new Color(0.96f, 0.98f, 1f, 0.95f));
+      Ui.Place(_alertBubble, new Vector2(0.5f, 1), new Vector2(0, -136), new Vector2(800, 56));
+      _alert = Ui.Label("Alert", _alertBubble, "", 32, TextAnchor.MiddleCenter);
+      Ui.Stretch(_alert.rectTransform, 4f);
+      _alert.color = new Color(0.16f, 0.20f, 0.30f, 1f);
+      _alertBubble.gameObject.SetActive(false);
+
+      _noteBubble = Ui.Capsule("NoteBubble", Root, new Color(0.96f, 0.98f, 1f, 0.95f));
+      Ui.Place(_noteBubble, new Vector2(0.5f, 1), new Vector2(0, -198), new Vector2(800, 56));
+      _note = Ui.Label("Note", _noteBubble, "", 30, TextAnchor.MiddleCenter);
+      Ui.Stretch(_note.rectTransform, 4f);
+      _note.color = new Color(0.16f, 0.20f, 0.30f, 1f);
+      _noteBubble.gameObject.SetActive(false);
+
+      // 왼쪽 아래 미니맵: 둥근 프레임 + 미니맵 (Kenney 둥근 팝 UI).
+      var mapFrame = Ui.Panel("MinimapFrame", Root, new Color(0.96f, 0.98f, 1f, 0.92f));
+      Ui.Place(mapFrame, Vector2.zero, new Vector2(8, 8), new Vector2(308, 308));
+      var map = Ui.Rect("Minimap", mapFrame);
+      Ui.Place(map, Vector2.zero, new Vector2(4, 4), new Vector2(300, 300));
       map.gameObject.AddComponent<RawImage>();
       _minimap = map.gameObject.AddComponent<Minimap>();
       _minimap.Init(frame.FindAsset<MapSpec>(frame.Map.UserAsset));
       _minimap.OnPick = world => Controller.Camera.MoveTo(world);
 
-      // 왼쪽 아래 미니맵 오른쪽: 선택·부대 버튼 (동글동글한 팝 UI).
+      // 왼쪽 아래 미니맵 오른쪽: 선택·부대 버튼 (동글동글한 팝 UI, 9mm 이상 규격).
       var actions = Ui.Rect("Actions", Root);
-      Ui.Place(actions, Vector2.zero, new Vector2(324, 12), new Vector2(3 * 150, 2 * 150));
+      Ui.Place(actions, Vector2.zero, new Vector2(324, 12), new Vector2(3 * 154 + 20, 2 * 154 + 10));
       var grid = actions.gameObject.AddComponent<GridLayoutGroup>();
-      grid.cellSize = new Vector2(140, 140);
+      grid.cellSize = new Vector2(154, 154);
       grid.spacing = new Vector2(10, 10);
       grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
       grid.constraintCount = 3;
@@ -126,10 +143,10 @@ namespace FactoryWars.View {
         _groupButtons[i] = Ui.Button($"Group{i + 1}", actions, $"{i + 1}부대", () => PressGroup(index));
       }
 
-      // 오른쪽 아래: 한눈에 보기 건설·생산 패널 (화이트/파스텔 톤 둥근 패널).
+      // 오른쪽 아래: 한눈에 보기 건설·생산 패널 (화이트/파스텔 톤 둥근 패널, 3x2 6슬롯 컴팩트, 1/3 초과 금지).
       var panel = Ui.Panel("ContextPanel", Root, new Color(0.96f, 0.98f, 1f, 0.92f));
       _contextPanel = panel.gameObject;
-      Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 12), new Vector2(6 * 144 + 20, 2 * 144 + 64));
+      Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 12), new Vector2(3 * 154 + 40, 2 * 154 + 74));
       _status = Ui.Label("Status", panel, "", 28);
       _status.color = new Color(0.16f, 0.20f, 0.30f, 1f);
       _status.rectTransform.anchorMin = new Vector2(0, 1);
@@ -138,12 +155,12 @@ namespace FactoryWars.View {
       _status.rectTransform.sizeDelta = new Vector2(-20, 50);
       _status.rectTransform.anchoredPosition = new Vector2(0, -4);
       var slots = Ui.Rect("Slots", panel);
-      Ui.Place(slots, Vector2.zero, new Vector2(10, 10), new Vector2(6 * 144, 2 * 144));
+      Ui.Place(slots, Vector2.zero, new Vector2(10, 10), new Vector2(3 * 154 + 20, 2 * 154 + 10));
       var slotGrid = slots.gameObject.AddComponent<GridLayoutGroup>();
-      slotGrid.cellSize = new Vector2(140, 140);
+      slotGrid.cellSize = new Vector2(154, 154);
       slotGrid.spacing = new Vector2(10, 10);
       slotGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-      slotGrid.constraintCount = 6;
+      slotGrid.constraintCount = 3;
       _context = new Button[ContextSlots];
       for (var i = 0; i < ContextSlots; i++) {
         var index = i;
@@ -339,6 +356,9 @@ namespace FactoryWars.View {
 
     public void ShowAlert(string text) {
       _alert.text = text;
+      if (_alertBubble != null) {
+        _alertBubble.gameObject.SetActive(!string.IsNullOrEmpty(text));
+      }
       _alertUntil = Time.unscaledTime + AlertSeconds;
     }
 
@@ -355,6 +375,9 @@ namespace FactoryWars.View {
       var line = $"플레이어 {(int)e.Sender + 1}: {Texts.Phrases[e.PhraseId]}";
       NoteInbox.Add(line);
       _note.text = line;
+      if (_noteBubble != null) {
+        _noteBubble.gameObject.SetActive(!string.IsNullOrEmpty(line));
+      }
       _noteUntil = Time.unscaledTime + NoteSeconds;
     }
 
@@ -370,12 +393,18 @@ namespace FactoryWars.View {
       }
       if (_alert.text.Length > 0 && Time.unscaledTime >= _alertUntil) {
         _alert.text = "";
+        if (_alertBubble != null) {
+          _alertBubble.gameObject.SetActive(false);
+        }
       }
       if (_floats.Count > 0) {
         UpdateFloats();
       }
       if (_note.text.Length > 0 && Time.unscaledTime >= _noteUntil) {
         _note.text = "";
+        if (_noteBubble != null) {
+          _noteBubble.gameObject.SetActive(false);
+        }
       }
       if (Time.unscaledTime < _nextRefresh) {
         return;
@@ -414,22 +443,28 @@ namespace FactoryWars.View {
       var input = Controller.Input;
       var selection = input.Selection;
       var status = "";
+      var showPanel = false;
       if (selection.Building != EntityRef.None && frame.Has<CityBuilding>(selection.Building)) {
         status = CityEntries(frame, selection.Building);
+        showPanel = true;
       } else if (selection.Building != EntityRef.None) {
         status = BuildingEntries(frame, state, selection.Building);
+        showPanel = true;
       } else if (selection.Units.Count > 0) {
         var spec = frame.FindAsset(frame.Get<Unit>(selection.Units[0]).Spec);
         status = selection.Units.Count == 1 ? $"{Texts.NameOf(spec.name)}  체력 {frame.Get<Unit>(selection.Units[0]).Health.AsInt}/{spec.MaxHealth.AsInt}" : $"유닛 {selection.Units.Count}기";
+        // 29 2-5: 건설 패널은 공병(Worker) 선택 시에만 열림
         if (selection.Units.Any(e => frame.Has<Worker>(e))) {
           BuildEntries(frame, state);
+          showPanel = true;
         }
       }
       if (input.IsPlacing) {
         status = "건설할 곳을 누르세요";
+        showPanel = true;
       }
       _status.text = status;
-      var hasContext = Entries.Count > 0 || !string.IsNullOrEmpty(status) || input.IsPlacing;
+      var hasContext = showPanel && (Entries.Count > 0 || input.IsPlacing);
       if (_contextPanel != null) {
         _contextPanel.SetActive(hasContext);
       }

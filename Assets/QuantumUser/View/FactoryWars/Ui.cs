@@ -7,8 +7,8 @@ namespace FactoryWars.View {
 
   /// <summary>uGUI를 코드로 만드는 도구. 아트가 들어오는 챕터 6 전까지 쓴다.</summary>
   public static class Ui {
-    /// <summary>기준 해상도 1080에서 약 9mm. 가로로 든 휴대폰의 세로 폭을 70mm로 잡았다.</summary>
-    public const float MinButtonSize = 140f;
+    /// <summary>29 2-5: 6.1인치 431dpi 기준 9mm 규격(154px) 보장</summary>
+    public const float MinButtonSize = 154f;
     public static readonly Vector2 ReferenceResolution = new Vector2(1920, 1080);
 
     public static readonly Color PanelColor = new Color(0.96f, 0.98f, 1f, 0.92f);

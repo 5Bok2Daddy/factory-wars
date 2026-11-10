@@ -94,5 +94,73 @@ namespace FactoryWars.Tests {
       Debug.Log("[FW-DEVICE]\n" + csv);
       Assert.GreaterOrEqual(worst, MinButtonMillimeters, "가장 작은 HUD 버튼이 9mm 이상\n" + csv);
     }
+
+    [UnityTest, Timeout(120000)]
+    public IEnumerator Ui_PanelsDoNotOverlap() {
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal }, truce: 0);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+
+      var hud = Controller().Hud;
+      var root = hud.Root;
+
+      // 1. 초기 상태 (유닛 미선택): ContextPanel 비활성화 확인
+      Controller().Input.Selection.Clear();
+      hud.Refresh(Controller().Frame);
+      yield return null;
+
+      var contextPanel = root.Find("ContextPanel") as RectTransform;
+      Assert.IsNotNull(contextPanel, "ContextPanel 존재");
+      Assert.IsFalse(contextPanel.gameObject.activeSelf, "유닛 미선택 시 건설 패널 비활성화");
+
+      // 2. 공병(Worker) 선택: ContextPanel 활성화 확인
+      var engineers = Engineers(0);
+      Assert.Greater(engineers.Count, 0, "공병 존재");
+      Controller().Input.Selection.SelectUnit(engineers[0]);
+      hud.Refresh(Controller().Frame);
+      yield return null;
+
+      Assert.IsTrue(contextPanel.gameObject.activeSelf, "공병 선택 시 건설 패널 활성화");
+
+      // 3. 패널 간 겹침 점검 (Minimap, Actions, ContextPanel)
+      var minimap = root.Find("MinimapFrame") as RectTransform ?? root.Find("Minimap") as RectTransform;
+      var actions = root.Find("Actions") as RectTransform;
+
+      Assert.IsNotNull(minimap, "Minimap 존재");
+      Assert.IsNotNull(actions, "Actions 존재");
+
+      Rect GetScreenRect(RectTransform rt) {
+        var corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+        return new Rect(corners[0].x, corners[0].y, corners[2].x - corners[0].x, corners[2].y - corners[0].y);
+      }
+
+      bool Overlaps(Rect a, Rect b) {
+        return a.xMin < b.xMax && a.xMax > b.xMin && a.yMin < b.yMax && a.yMax > b.yMin;
+      }
+
+      var mapRect = GetScreenRect(minimap);
+      var actionsRect = GetScreenRect(actions);
+      var contextRect = GetScreenRect(contextPanel);
+
+      Assert.IsFalse(Overlaps(mapRect, actionsRect), "Minimap과 Actions가 겹치지 않음");
+      Assert.IsFalse(Overlaps(actionsRect, contextRect), "Actions와 ContextPanel이 겹치지 않음");
+      Assert.IsFalse(Overlaps(mapRect, contextRect), "Minimap과 ContextPanel이 겹치지 않음");
+
+      // 4. 건설 패널 화면 1/3 면적 이하 점검
+      var rootRect = GetScreenRect(root);
+      var screenArea = rootRect.width * rootRect.height;
+      var panelArea = contextRect.width * contextRect.height;
+      Assert.LessOrEqual(panelArea, screenArea / 3f, "건설 패널은 화면 1/3 면적을 넘지 않음");
+
+      // 5. 일반 전투 유닛(비공병) 선택 시 건설 패널 비활성화 확인
+      var combatUnits = UnitsNamed(0, "ff_eagle_tank").Concat(UnitsNamed(0, "ff_trooper_squad")).ToArray();
+      if (combatUnits.Length > 0) {
+        Controller().Input.Selection.SelectUnit(combatUnits[0]);
+        hud.Refresh(Controller().Frame);
+        yield return null;
+        Assert.IsFalse(contextPanel.gameObject.activeSelf, "전투 유닛 선택 시 건설 패널 비활성화");
+      }
+    }
   }
 }
