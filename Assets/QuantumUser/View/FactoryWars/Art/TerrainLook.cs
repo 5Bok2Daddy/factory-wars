@@ -264,6 +264,23 @@ namespace FactoryWars.View {
               Dressing.Add(DressKind.Bush, flowerB, 9401 + b * 7, null, 45f);
             }
           }
+          // 29 2-3: 본진 광장 밝은 보도블록 패드 단차 및 마을 기지 소품 (벤치·가로등·상자)
+          if (Dressing.Has(DressKind.SuburbanProp)) {
+            var propSpotA = center + new Vector3(signX * (hx * 0.35f), 0f, signZ * (hz * 0.25f));
+            if (Inside(map.Roads, propSpotA.x, propSpotA.z) == false) {
+              Dressing.Add(DressKind.SuburbanProp, propSpotA, 9500 + b * 13, null, b * 90f);
+            }
+          }
+          if (Dressing.Has(DressKind.Prop)) {
+            var propSpotB = center + new Vector3(-signX * (hx * 0.35f), 0f, -signZ * (hz * 0.35f));
+            if (Inside(map.Roads, propSpotB.x, propSpotB.z) == false) {
+              Dressing.Add(DressKind.Prop, propSpotB, 9600 + b * 17, null, b * 90f);
+            }
+          }
+          k.Push(center, Vector3.zero);
+          k.Paint(Swatch.Concrete);
+          k.Box(new Vector3(0, 0.025f, 0), new Vector3(14f, 0.05f, 14f));
+          k.Pop();
         }
       }
     }

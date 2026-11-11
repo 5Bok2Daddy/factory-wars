@@ -22,9 +22,9 @@ namespace FactoryWars.View {
     const float RefreshSeconds = 0.2f;
     const float AlertSeconds = 3f;
     const float NoteSeconds = 3f;
-    // 29 2-5: 3열 2행 6슬롯 컴팩트 패널 (화면 1/3 이하 보장, 9mm 규격)
-    const int ContextSlots = 6;
-    const int PagedSlots = ContextSlots - 1;
+    // 29 2-5: 4열 3행 12슬롯 단일 화면 그리드 패널 (다음 페이지 넘김 버튼 제거, 화면 1/3 이하 보장, 9mm 규격)
+    const int ContextSlots = 12;
+    const int ContextColumns = 4;
 
     public readonly List<ContextEntry> Entries = new List<ContextEntry>();
     public readonly List<string> NoteInbox = new List<string>();
@@ -32,8 +32,8 @@ namespace FactoryWars.View {
     public MatchController Controller;
     public bool BoxMode { get; private set; }
     public int ContextPage { get; private set; }
-    /// <summary>5개까지는 한 쪽에 다 보인다. 넘치면 마지막 칸이 다음 쪽 버튼이 된다.</summary>
-    public int ContextPages => Entries.Count <= ContextSlots ? 1 : (Entries.Count + PagedSlots - 1) / PagedSlots;
+    /// <summary>4x3 12칸 단일 화면 구성으로 다음 쪽 버튼 없이 전 항목이 한눈에 보인다.</summary>
+    public int ContextPages => 1;
     public string TopBarText { get; private set; } = "";
     public int ResourceIcons => _resources.Count(r => r.Icon.sprite != null);
     public string AlertText => _alert.text;
@@ -95,8 +95,12 @@ namespace FactoryWars.View {
       var menuButton = Ui.Button("MenuButton", top, "메뉴", () => Controller.TogglePause());
       Ui.Place((RectTransform)menuButton.transform, Vector2.one, new Vector2(-12, -6), new Vector2(160, 154));
 
-      _truce = Ui.Label("Truce", Root, "", 34, TextAnchor.MiddleCenter);
-      Ui.Place(_truce.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -84), new Vector2(1200, 50));
+      // 중앙 7분 휴전 타이머 캡슐 배지
+      var truceBadge = Ui.Capsule("TruceBadge", top, new Color(0.96f, 0.98f, 1f, 0.95f));
+      Ui.Place(truceBadge, new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(360, 56));
+      _truce = Ui.Label("Truce", truceBadge, "", 28, TextAnchor.MiddleCenter);
+      Ui.Stretch(_truce.rectTransform);
+      _truce.color = new Color(0.16f, 0.20f, 0.30f, 1f);
 
       // 알림·쪽지: 둥근 말풍선 팝 캡슐
       _alertBubble = Ui.Capsule("AlertBubble", Root, new Color(0.96f, 0.98f, 1f, 0.95f));
@@ -123,14 +127,14 @@ namespace FactoryWars.View {
       _minimap.Init(frame.FindAsset<MapSpec>(frame.Map.UserAsset));
       _minimap.OnPick = world => Controller.Camera.MoveTo(world);
 
-      // 왼쪽 아래 미니맵 오른쪽: 선택·부대 버튼 (동글동글한 팝 UI, 9mm 이상 규격).
+      // 왼쪽 아래 미니맵 오른쪽: 선택·부대 버튼 (동글동글한 팝 UI, 9mm 이상 규격, 2x3 배치로 태블릿/모바일 어떤 화면비에서도 ContextPanel과 겹침 없음).
       var actions = Ui.Rect("Actions", Root);
-      Ui.Place(actions, Vector2.zero, new Vector2(324, 12), new Vector2(3 * 154 + 20, 2 * 154 + 10));
+      Ui.Place(actions, Vector2.zero, new Vector2(324, 12), new Vector2(2 * 154 + 10, 3 * 154 + 20));
       var grid = actions.gameObject.AddComponent<GridLayoutGroup>();
       grid.cellSize = new Vector2(154, 154);
       grid.spacing = new Vector2(10, 10);
       grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-      grid.constraintCount = 3;
+      grid.constraintCount = 2;
       _boxButton = Ui.Button("BoxButton", actions, "범위\n선택", ToggleBoxMode);
       Ui.Button("StopButton", actions, "정지", () => Controller.Stop());
       _saveButton = Ui.Button("SaveButton", actions, "부대\n지정", () => {
@@ -143,29 +147,36 @@ namespace FactoryWars.View {
         _groupButtons[i] = Ui.Button($"Group{i + 1}", actions, $"{i + 1}부대", () => PressGroup(index));
       }
 
-      // 오른쪽 아래: 한눈에 보기 건설·생산 패널 (화이트/파스텔 톤 둥근 패널, 3x2 6슬롯 컴팩트, 1/3 초과 금지).
+      // 오른쪽 아래: 한눈에 보기 건설·생산 패널 (화이트/파스텔 톤 둥근 패널, 4x3 12슬롯 단일 화면 그리드, 다음 쪽 버튼 없이 전 항목 노출, 1/3 초과 금지).
       var panel = Ui.Panel("ContextPanel", Root, new Color(0.96f, 0.98f, 1f, 0.92f));
       _contextPanel = panel.gameObject;
-      Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 12), new Vector2(3 * 154 + 40, 2 * 154 + 74));
+      const float cellW = 154f;
+      const float cellH = 154f;
+      const float space = 8f;
+      const float padX = 24f;
+      const float padY = 64f;
+      var totalW = ContextColumns * cellW + (ContextColumns - 1) * space + padX;
+      var totalH = 3 * cellH + 2 * space + padY;
+      Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 12), new Vector2(totalW, totalH));
       _status = Ui.Label("Status", panel, "", 28);
       _status.color = new Color(0.16f, 0.20f, 0.30f, 1f);
       _status.rectTransform.anchorMin = new Vector2(0, 1);
       _status.rectTransform.anchorMax = Vector2.one;
       _status.rectTransform.pivot = new Vector2(0.5f, 1);
-      _status.rectTransform.sizeDelta = new Vector2(-20, 50);
-      _status.rectTransform.anchoredPosition = new Vector2(0, -4);
+      _status.rectTransform.sizeDelta = new Vector2(-24, 46);
+      _status.rectTransform.anchoredPosition = new Vector2(0, -6);
       var slots = Ui.Rect("Slots", panel);
-      Ui.Place(slots, Vector2.zero, new Vector2(10, 10), new Vector2(3 * 154 + 20, 2 * 154 + 10));
+      Ui.Place(slots, Vector2.zero, new Vector2(12, 12), new Vector2(totalW - padX, totalH - padY));
       var slotGrid = slots.gameObject.AddComponent<GridLayoutGroup>();
-      slotGrid.cellSize = new Vector2(154, 154);
-      slotGrid.spacing = new Vector2(10, 10);
+      slotGrid.cellSize = new Vector2(cellW, cellH);
+      slotGrid.spacing = new Vector2(space, space);
       slotGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-      slotGrid.constraintCount = 3;
+      slotGrid.constraintCount = ContextColumns;
       _context = new Button[ContextSlots];
       for (var i = 0; i < ContextSlots; i++) {
         var index = i;
         _context[i] = Ui.Button($"Context{i}", slots, "", () => PressContext(index), 22);
-        ((RectTransform)_context[i].transform).sizeDelta = new Vector2(Ui.MinButtonSize, Ui.MinButtonSize);
+        ((RectTransform)_context[i].transform).sizeDelta = new Vector2(cellW, cellH);
       }
 
       BuildDiplomacy(frame);
@@ -337,19 +348,10 @@ namespace FactoryWars.View {
       }
     }
 
-    int EntryAt(int slot) => ContextPages > 1 ? ContextPage * PagedSlots + slot : slot;
-
-    /// <summary>패널의 칸 번호로 누른다. 쪽을 나눴으면 마지막 칸은 다음 쪽이다.</summary>
+    /// <summary>패널의 칸 번호로 누른다. 12칸 단일 화면 구성으로 전 항목 직접 실행.</summary>
     public void PressContext(int slot) {
-      if (ContextPages > 1 && slot == PagedSlots) {
-        ContextPage = (ContextPage + 1) % ContextPages;
-        _nextRefresh = 0f;
-        ApplyContextPage();
-        return;
-      }
-      var index = EntryAt(slot);
-      if (index < Entries.Count && Entries[index].Enabled) {
-        Entries[index].Action?.Invoke();
+      if (slot < Entries.Count && Entries[slot].Enabled) {
+        Entries[slot].Action?.Invoke();
         _nextRefresh = 0f;
       }
     }
@@ -475,22 +477,13 @@ namespace FactoryWars.View {
     }
 
     void ApplyContextPage() {
-      var paged = ContextPages > 1;
       for (var i = 0; i < _context.Length; i++) {
-        if (paged && i == PagedSlots) {
-          _context[i].gameObject.SetActive(true);
-          Ui.SetLabel(_context[i], $"다음\n{ContextPage + 1}/{ContextPages}");
-          Ui.SetIcon(_context[i], null);
-          Ui.SetEnabled(_context[i], true);
-          continue;
-        }
-        var index = EntryAt(i);
-        var used = index < Entries.Count;
+        var used = i < Entries.Count;
         _context[i].gameObject.SetActive(used);
         if (used) {
-          Ui.SetLabel(_context[i], Entries[index].Label);
-          Ui.SetIcon(_context[i], Entries[index].Icon != null ? Ui.IconSprite(Entries[index].Icon) : null);
-          Ui.SetEnabled(_context[i], Entries[index].Enabled);
+          Ui.SetLabel(_context[i], Entries[i].Label);
+          Ui.SetIcon(_context[i], Entries[i].Icon != null ? Ui.IconSprite(Entries[i].Icon) : null);
+          Ui.SetEnabled(_context[i], Entries[i].Enabled);
         }
       }
     }

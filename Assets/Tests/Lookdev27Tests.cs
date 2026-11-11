@@ -69,6 +69,7 @@ namespace FactoryWars.Tests {
       if (big) {
         var hudFull = ShootHud(camera, 1920, 1080);
         File.WriteAllBytes(Path.Combine(LookdevShots(), "27_toy_diorama_fixed.png"), hudFull.EncodeToPNG());
+        File.WriteAllBytes(Path.Combine(LookdevShots(), "26_kenney_ui_fixed.png"), hudFull.EncodeToPNG());
         Object.Destroy(hudFull);
       }
       cells.Add((ShootHud(camera, CellWidth * 2, CellHeight * 2), $"K {tier} [E] HUD"));

@@ -96,14 +96,14 @@ namespace FactoryWars.View {
       p.DefaultHeight = 62f;
       p.MinHeight = 35f;
       p.MaxHeight = 140f;
-      // 장난감 블록 입체감 복원: 태양광 윗면 100% 밝기 + 그늘진 옆면 65~70% 파스텔 블루/퍼플 그늘
+      // 장난감 블록 입체감 복원: 태양광 윗면 100% 밝기 + 그늘진 옆면 65~70% 파스텔 블루/퍼플 그늘 (#8E96B2)
       p.SunColor = new Color32(0xFF, 0xFA, 0xEE, 0xFF);
-      p.SunIntensity = 1.02f;
+      p.SunIntensity = 1.05f;
       p.SunElevation = 48f;
       p.SunAzimuth = -35f;
-      p.AmbientSky = new Color(0.42f, 0.45f, 0.58f);
-      p.AmbientEquator = new Color(0.35f, 0.38f, 0.48f);
-      p.AmbientGround = new Color(0.24f, 0.26f, 0.34f);
+      p.AmbientSky = new Color(0.40f, 0.42f, 0.54f);
+      p.AmbientEquator = new Color(0.32f, 0.34f, 0.44f);
+      p.AmbientGround = new Color(0.20f, 0.22f, 0.30f);
       p.ShadowStrength = 0.88f;
       p.Tone = ToneMode.Neutral;
       p.BloomIntensity = 0f;
@@ -111,8 +111,8 @@ namespace FactoryWars.View {
       p.Contrast = 10f;
       p.Vignette = 0f;
       p.Ssao = true;
-      p.SsaoIntensity = 2.8f;
-      p.SsaoRadius = 0.8f;
+      p.SsaoIntensity = 3.2f;
+      p.SsaoRadius = 0.9f;
       p.Outline = OutlineMode.None;
       p.VertexShade = false;
       p.KenneyMilitary = false;

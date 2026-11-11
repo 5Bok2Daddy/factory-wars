@@ -187,7 +187,19 @@ namespace FactoryWars.View {
         var view = ArtView.Create(_catalog, "bridge", _root, 0);
         view.transform.localPosition = new Vector3(rect.center.x, 0, rect.center.y);
         // 프리팹의 다리는 Z축으로 건넌다. 사각형의 짧은 변이 건너는 방향이다.
-        view.SetYaw(rect.width < rect.height ? 90f : 0f);
+        var yaw = rect.width < rect.height ? 90f : 0f;
+        view.SetYaw(yaw);
+        // 29: 갈색 나무판자 다리를 city-kit-roads의 화이트/라이트그레이 난간 교량 FBX로 교체
+        if (Dressing.Collecting && Dressing.Has(DressKind.BridgeDeck)) {
+          var dressed = DressingSpawn.Place(DressKind.BridgeDeck, view.transform, Vector3.zero, 0f, 9800);
+          if (dressed != null) {
+            foreach (var r in view.GetComponentsInChildren<Renderer>()) {
+              if (r.transform.IsChildOf(dressed.transform) == false) {
+                r.enabled = false;
+              }
+            }
+          }
+        }
       }
     }
 
@@ -344,6 +356,16 @@ namespace FactoryWars.View {
           item.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(state->ColorIndex, true);
         }
         var light = MeshObject(item.transform, "Lamps", lamps.ToMesh("barrier_lamps"), false);
+        // 29: 7분 휴전 빨간 가시 울타리를 깔끔한 블록형 바리케이드/게이트 FBX로 교체
+        if (Dressing.Collecting && Dressing.Has(DressKind.Barrier)) {
+          for (var p = 0; p < pieces.Count; p++) {
+            var mid = (pieces[p].From + pieces[p].To) * 0.5f;
+            var dir = pieces[p].To - pieces[p].From;
+            var yaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
+            DressingSpawn.Place(DressKind.Barrier, item.transform, mid, yaw, 8600 + i * 31 + p);
+          }
+          item.GetComponent<MeshRenderer>().enabled = false;
+        }
         _barriers.Add(new Barrier { Root = item, Lamps = light.GetComponent<MeshRenderer>(), Dust = dust });
       }
     }

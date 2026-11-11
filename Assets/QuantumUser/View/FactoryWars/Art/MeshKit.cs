@@ -124,6 +124,9 @@ namespace FactoryWars.View {
         switch (swatch) {
           case Swatch.Metal:
           case Swatch.Armor:
+          case Swatch.Olive:
+          case Swatch.OliveDark:
+          case Swatch.Bark:
             return new Color32(0xED, 0xF0, 0xF7, 0xFF);
           case Swatch.MetalDark:
           case Swatch.ArmorDark:

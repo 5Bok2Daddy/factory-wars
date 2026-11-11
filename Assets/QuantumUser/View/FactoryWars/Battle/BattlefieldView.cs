@@ -283,7 +283,9 @@ namespace FactoryWars.View {
           crate.transform.localPosition = transform->Position.ToUnityVector3();
           var body = Item(crate.transform, "Body", CrateMesh(), ArtLook.NeutralMaterial);
           body.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
-          // 29 2-1: 절차 낙하산 메쉬 제거 및 Kenney 보급상자 키트 단독 적용 (옛 절차 메쉬 0개)
+          // 29 2-1: 절차 낙하산 메쉬는 착지 전까지만 표시, 착지 즉시 SetActive(false)
+          var chute = Item(crate.transform, "Parachute", ParachuteMesh(), ArtLook.NeutralMaterial);
+          chute.SetActive(supplyCrate->Seat < 0);
           var dressedCrate = DressingSpawn.Place(DressKind.SupplyCrate, body.transform, Vector3.zero, entity.Index * 90f, 8400 + entity.Index);
           if (dressedCrate != null) {
             dressedCrate.name = "KenneyCrate";
@@ -302,6 +304,10 @@ namespace FactoryWars.View {
           body.localPosition = Vector3.up * DropHeight * (1f - t) * (1f - t);
           if (t >= 1f) {
             _falling.Remove(entity);
+            var chute = _crates[entity].transform.Find("Parachute");
+            if (chute != null) {
+              chute.gameObject.SetActive(false);
+            }
           } else {
             _falling[entity] = age;
           }
