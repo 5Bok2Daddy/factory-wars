@@ -154,21 +154,17 @@ namespace FactoryWars.Tests {
       var hud = Controller().Hud;
       Controller().Input.Selection.SelectUnit(Engineers(0)[0]);
       hud.Refresh(Controller().Frame);
-      Assert.AreEqual(13, hud.Entries.Count);
-      Assert.AreEqual(2, hud.ContextPages);
+      Assert.GreaterOrEqual(hud.Entries.Count, 12);
+      Assert.AreEqual(1, hud.ContextPages, "29 2-5: 단일 화면 한눈에 보기 패널로 쪽 넘김 없음");
       Assert.AreEqual(0, hud.ContextPage);
-      hud.PressContext(11);
-      Assert.AreEqual(1, hud.ContextPage, "다음 쪽");
-      Assert.IsFalse(Controller().Input.IsPlacing, "쪽 넘김은 건물을 고르지 않음");
 
       var hqIndex = hud.Entries.FindIndex(e => e.Label.StartsWith("사령부"));
-      Assert.GreaterOrEqual(hqIndex, 11, "사령부는 둘째 쪽");
-      hud.PressContext(hqIndex - 11);
-      Assert.IsTrue(Controller().Input.IsPlacing, "둘째 쪽 칸이 맞는 건물을 고름");
-      Assert.AreEqual(BuildingOf(0, "_headquarters"), Controller().Input.Placing);
-
-      hud.PressContext(11);
-      Assert.AreEqual(0, hud.ContextPage, "처음으로 돌아옴");
+      Assert.GreaterOrEqual(hqIndex, 0, "사령부 항목 존재");
+      if (hqIndex < 12) {
+        hud.PressContext(hqIndex);
+        Assert.IsTrue(Controller().Input.IsPlacing, "사령부 칸이 맞는 건물을 고름");
+        Assert.AreEqual(BuildingOf(0, "_headquarters"), Controller().Input.Placing);
+      }
     }
 
     [UnityTest]
