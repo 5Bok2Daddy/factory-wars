@@ -34,6 +34,24 @@ namespace FactoryWars.Tests {
       return texture;
     }
 
+    static (float overexposure, float topSideRatio) AnalyzeExposure(Texture2D tex) {
+      var pixels = tex.GetPixels32();
+      var over = 0;
+      for (var i = 0; i < pixels.Length; i++) {
+        if (pixels[i].r >= 245 && pixels[i].g >= 245 && pixels[i].b >= 245) {
+          over++;
+        }
+      }
+      var overRatio = (float)over / pixels.Length;
+      var sunDir = Quaternion.Euler(VisualProfile.Current.SunElevation, VisualProfile.Current.SunAzimuth, 0f) * Vector3.forward;
+      var topN = Vector3.up;
+      var sideN = new Vector3(0.707f, 0f, 0.707f);
+      var topLight = Mathf.Max(0f, Vector3.Dot(-sunDir, topN)) * VisualProfile.Current.SunIntensity + VisualProfile.Current.AmbientSky.grayscale;
+      var sideLight = Mathf.Max(0f, Vector3.Dot(-sunDir, sideN)) * VisualProfile.Current.SunIntensity + VisualProfile.Current.AmbientEquator.grayscale;
+      var ratio = topLight > 0.001f ? sideLight / topLight : 0.7f;
+      return (overRatio, ratio);
+    }
+
     IEnumerator ShootK1(List<(Texture2D, string)> cells, QualityTier tier, bool big) {
       GraphicsQuality.Apply(tier);
       Battle().Rebuild();
@@ -54,6 +72,9 @@ namespace FactoryWars.Tests {
       if (big) {
         var full = Shoot(camera, 1920, 1080);
         File.WriteAllBytes(Path.Combine(LookdevShots(), "27_sian_R_big_K.png"), full.EncodeToPNG());
+        File.WriteAllBytes(Path.Combine(LookdevShots(), "29A_R.png"), full.EncodeToPNG());
+        var expR = AnalyzeExposure(full);
+        Debug.Log($"[FW-EXPOSURE] R: Overexposed={expR.overexposure:P2}, TopSideRatio={expR.topSideRatio:F2}");
         Object.Destroy(full);
       }
       cells.Add((Shoot(camera, CellWidth * 2, CellHeight * 2), $"K {tier} [R] 본진·운하·다리 draw~{EstimateDrawCalls(seen)} tris {seen.Triangles / 1000}k"));
@@ -64,9 +85,22 @@ namespace FactoryWars.Tests {
       var checkC = GameColorCheck(camera, map);
       LookdevNote("27.csv", $"K0-game,{tier},C,{checkC}");
       Debug.Log($"[FW-K0-GAME] {tier} C {checkC}");
+      if (big) {
+        var fullC = Shoot(camera, 1920, 1080);
+        File.WriteAllBytes(Path.Combine(LookdevShots(), "29A_C.png"), fullC.EncodeToPNG());
+        var expC = AnalyzeExposure(fullC);
+        Debug.Log($"[FW-EXPOSURE] C: Overexposed={expC.overexposure:P2}, TopSideRatio={expC.topSideRatio:F2}");
+        Object.Destroy(fullC);
+      }
       cells.Add((Shoot(camera, CellWidth * 2, CellHeight * 2), $"K {tier} [C] 중앙 draw~{EstimateDrawCalls(seen)} tris {seen.Triangles / 1000}k"));
       Aim(camera, map.StartPositions[0].ToUnityVector3() + new Vector3(8, 0, 6), profile.DefaultHeight);
       if (big) {
+        var fullA = Shoot(camera, 1920, 1080);
+        File.WriteAllBytes(Path.Combine(LookdevShots(), "29A_A.png"), fullA.EncodeToPNG());
+        var expA = AnalyzeExposure(fullA);
+        Debug.Log($"[FW-EXPOSURE] A: Overexposed={expA.overexposure:P2}, TopSideRatio={expA.topSideRatio:F2}");
+        Object.Destroy(fullA);
+
         var hudFull = ShootHud(camera, 1920, 1080);
         File.WriteAllBytes(Path.Combine(LookdevShots(), "27_toy_diorama_fixed.png"), hudFull.EncodeToPNG());
         File.WriteAllBytes(Path.Combine(LookdevShots(), "26_kenney_ui_fixed.png"), hudFull.EncodeToPNG());
