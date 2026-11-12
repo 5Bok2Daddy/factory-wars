@@ -59,7 +59,7 @@ namespace FactoryWars.View {
     /// <summary>손가락이 짚은 땅이 손가락을 따라오도록 초점을 옮긴다.</summary>
     public void Drag(Vector2 screenFrom, Vector2 screenTo) {
       if (ToGround(screenFrom, out var from) && ToGround(screenTo, out var to)) {
-        MoveTo(Focus + new Vector2(from.x - to.x, from.z - to.z));
+        MoveTo(Focus + new Vector2(from.x - to.x, from.z - to.z) * PlayerOptions.CameraSpeed);
       }
     }
 

@@ -600,6 +600,10 @@ namespace FactoryWars.EditorTools {
       rules.PowerResumeLevel = 5;
       rules.OutageTowerIntervalMultiplier = 2;
       rules.SpawnOffset = 6;
+      rules.ShipSpawnGap = 3;
+      rules.ShipyardWaterReach = 3;
+      rules.DisconnectBotDifficulty = BotDifficulty.Normal;
+      rules.DisconnectForfeitSeconds = 60;
       rules.AirAltitude = 6;
       rules.CarryCapacity = 50;
       rules.IronGatherSeconds = 2;

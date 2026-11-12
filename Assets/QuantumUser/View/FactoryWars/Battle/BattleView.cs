@@ -257,7 +257,14 @@ namespace FactoryWars.View {
         Fx.Wreck(actor.View.transform.position, actor.IsBuilding ? 3.2f : actor.Radius * 0.8f, actor.IsBuilding ? 20f : 30f);
       }
       _marked.Remove(actor);
-      Destroy(actor.View.gameObject);
+      // 교체 모델에 사망 애니메이션이 있으면 그만큼 보여 주고 지운다.
+      var linger = actor.View.Animation != null ? actor.View.Animation.Die() : 0f;
+      if (linger > 0f) {
+        actor.View.SetSelected(false);
+        Destroy(actor.View.gameObject, linger);
+      } else {
+        Destroy(actor.View.gameObject);
+      }
       _actors.Remove(entity);
     }
 
@@ -363,6 +370,7 @@ namespace FactoryWars.View {
     }
 
     void Fire(Actor actor, AttackType attack, float range, bool hasTarget, Vector3 target, bool flame) {
+      actor.View.Animation?.Fire();
       actor.Recoil = RecoilDistance;
       var muzzle = actor.Muzzle.TransformPoint(actor.View.Entry.Muzzle);
       var forward = hasTarget ? (target - muzzle).normalized : actor.Muzzle.forward;
@@ -426,6 +434,7 @@ namespace FactoryWars.View {
       var goal = transform3D->Position.ToUnityVector3();
       goal.y = 0f;
       var moved = goal - actor.Position;
+      var before = actor.Position;
       actor.Position += moved * (1f - Mathf.Exp(-FollowRate * dt));
       var hover = spec.IsAir ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.12f : 0f;
       actor.View.transform.position = spec.IsAir ? actor.Position : actor.Position + Vector3.up * TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z);
@@ -448,6 +457,24 @@ namespace FactoryWars.View {
 
       var working = frame.Unsafe.TryGetPointer<Worker>(entity, out var worker) && worker->Task != WorkerTask.Idle && worker->Task != WorkerTask.Deliver;
       Animate(actor, dt, true, working);
+      if (actor.View.Animation != null) {
+        var speed = dt > 0f ? (actor.Position - before).magnitude / dt : 0f;
+        actor.View.Animation.Set(AnimState(speed, hasTarget, working ? worker->Task : WorkerTask.Idle), speed);
+      }
+    }
+
+    /// <summary>교체 모델 애니메이션 상태(항목 30). 시뮬레이션 상태를 읽기만 한다.</summary>
+    public static UnitAnimState AnimState(float speed, bool hasTarget, WorkerTask task) {
+      if (task == WorkerTask.Build || task == WorkerTask.Repair) {
+        return UnitAnimState.Build;
+      }
+      if (task != WorkerTask.Idle && task != WorkerTask.Deliver && speed < 0.3f) {
+        return UnitAnimState.Gather;
+      }
+      if (speed >= 0.3f) {
+        return UnitAnimState.Move;
+      }
+      return hasTarget ? UnitAnimState.Attack : UnitAnimState.Idle;
     }
 
     /// <summary>적 중 누구에게도 보이지 않으면 숨은 것이다.</summary>

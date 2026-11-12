@@ -103,6 +103,14 @@ namespace Quantum {
     /// <summary>고를 수 있는 플레이어 색 수.</summary>
     public int PlayerColorCount;
     public FP SpawnOffset;
+    /// <summary>배가 조선소 부지 가장자리에서 이만큼 더 떨어진 물 위에 나온다(항목 24).</summary>
+    public FP ShipSpawnGap;
+    /// <summary>조선소 부지 가장자리에서 이 거리 안에 물(강·수로)이 있어야 지을 수 있다.</summary>
+    public FP ShipyardWaterReach;
+    /// <summary>온라인 연결이 끊긴 자리를 대신 조종하는 봇 난이도(항목 30).</summary>
+    public BotDifficulty DisconnectBotDifficulty;
+    /// <summary>끊긴 뒤 이 시간 안에 돌아오지 않으면 기권 처리한다. 0이면 기권시키지 않는다(봇이 끝까지 조종).</summary>
+    public int DisconnectForfeitSeconds;
     public FP AirAltitude;
     public FP CarryCapacity;
     public FP IronGatherSeconds;

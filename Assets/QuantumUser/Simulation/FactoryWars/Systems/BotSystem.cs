@@ -6,26 +6,50 @@ namespace Quantum.FactoryWars {
     const int RoleCount = 13;
     const int MaxOrder = MoveUnitsCommand.MaxUnits;
 
+    /// <summary>
+    /// 온라인에서 사람 자리의 연결이 끊기면(Quantum PlayerConnectedSystem, 확정 프레임) 봇이 대신 조종한다.
+    /// 처음부터 접속하지 않은 자리(AI 자리)는 연결된 적이 없어 이 신호가 오지 않는다.
+    /// </summary>
     public void OnPlayerDisconnected(Frame f, PlayerRef player) {
       var state = FactoryWarsUtil.Player(f, player);
-      if (state != null && state->Defeated == false) {
-        state->IsBot = true;
-        state->Difficulty = BotDifficulty.Normal;
-        var bot = f.Global->Bots.GetPointer(player);
-        if (bot->Home == FPVector3.Zero) {
-          bot->Home = FactoryWarsUtil.StartPosition(f, player);
-        }
-        var ai = Spec(f, BotDifficulty.Normal);
-        bot->NextThinkFrame = f.Number + 1;
-        bot->NextAttackFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.FirstAttackSeconds);
-        bot->WaveSize = ai.WaveSize;
+      if (state == null || state->Active == false || state->Defeated || state->IsBot) {
+        return;
       }
+      var rules = FactoryWarsUtil.Rules(f);
+      state->DisconnectedFrame = f.Number;
+      var bot = f.Global->Bots.GetPointer(player);
+      var home = bot->Home == FPVector3.Zero ? FactoryWarsUtil.StartPosition(f, player) : bot->Home;
+      var attackFrame = bot->NextAttackFrame;
+      Init(f, player, rules.DisconnectBotDifficulty, home);
+      bot->NextThinkFrame = f.Number + 1;
+      // 끊기기 전 사람이 정한 공격 시점보다 앞당기지 않는다.
+      bot->NextAttackFrame = System.Math.Max(attackFrame, f.Number + FactoryWarsUtil.SecondsToFrames(f, Spec(f, rules.DisconnectBotDifficulty).AttackRepeatSeconds));
+      f.Events.PlayerConnection(player, false);
     }
 
+    /// <summary>끊겼던 사람이 돌아오면 다시 사람이 조종한다. 봇으로 시작한 자리는 건드리지 않는다.</summary>
     public void OnPlayerConnected(Frame f, PlayerRef player) {
       var state = FactoryWarsUtil.Player(f, player);
-      if (state != null) {
-        state->IsBot = false;
+      if (state == null || state->DisconnectedFrame == 0) {
+        return;
+      }
+      state->IsBot = false;
+      state->DisconnectedFrame = 0;
+      f.Events.PlayerConnection(player, true);
+    }
+
+    /// <summary>끊긴 채 규칙 시간이 지나면 기권. 0초면 봇이 끝까지 조종한다.</summary>
+    static void CheckForfeits(Frame f) {
+      var limit = FactoryWarsUtil.Rules(f).DisconnectForfeitSeconds;
+      if (limit <= 0) {
+        return;
+      }
+      var frames = FactoryWarsUtil.SecondsToFrames(f, limit);
+      for (var i = 0; i < f.PlayerCount; i++) {
+        var state = f.Global->Players.GetPointer(i);
+        if (state->DisconnectedFrame > 0 && state->Defeated == false && state->Forfeited == false && f.Number - state->DisconnectedFrame >= frames) {
+          state->Forfeited = true;
+        }
       }
     }
 
@@ -53,6 +77,7 @@ namespace Quantum.FactoryWars {
       if (f.Unsafe.TryGetPointerSingleton<Diplomacy>(out _) && DiplomacySystem.IsAllowed(f)) {
         UpdateOpinions(f);
       }
+      CheckForfeits(f);
       for (var i = 0; i < f.PlayerCount; i++) {
         var state = f.Global->Players.GetPointer(i);
         var bot = f.Global->Bots.GetPointer(i);

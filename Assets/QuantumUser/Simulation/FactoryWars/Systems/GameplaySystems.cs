@@ -24,13 +24,14 @@ namespace Quantum.FactoryWars {
       return entity;
     }
 
-        public static EntityRef SpawnUnit(Frame f, PlayerRef owner, AssetRef<UnitSpec> specRef, FPVector3 origin, int index, Building* source) {
+    public static EntityRef SpawnUnit(Frame f, PlayerRef owner, AssetRef<UnitSpec> specRef, FPVector3 origin, int index, Building* source) {
+      // 배는 조선소 주변 여덟 방향 중 처음 물 위인 곳에 나온다.
       var unitSpec = f.FindAsset(specRef);
       if (unitSpec != null && unitSpec.IsNaval) {
         var rules = FactoryWarsUtil.Rules(f);
         var waterNavMesh = f.Map.GetNavMesh(rules.WaterNavMeshName);
-        var radius = source != null ? f.FindAsset(source->Spec).FootprintRadius : FP._3;
-        var dist = radius + FP.FromFloat_UNSAFE(3f);
+        var radius = source != null ? f.FindAsset(source->Spec).FootprintRadius : rules.SpawnOffset;
+        var dist = radius + rules.ShipSpawnGap;
         for (var d = 0; d < 8; d++) {
           var a = FP.PiTimes2 * (index + d) / 8;
           var p = origin + new FPVector3(FPMath.Cos(a), FP._0, FPMath.Sin(a)) * dist;
@@ -173,6 +174,7 @@ namespace Quantum.FactoryWars {
           return false;
         }
       }
+      // 고갈된 노드도 그대로 남아 있어 같은 검사를 받는다.
       var nodes = f.Filter<ResourceNode>();
       while (nodes.NextUnsafe(out _, out var node)) {
         if (IsClear(node->Shape, position, radius, rules.ResourceBuildMargin) == false) {
@@ -180,7 +182,7 @@ namespace Quantum.FactoryWars {
         }
       }
       var touchesWater = false;
-      var waterMargin = radius + FP.FromFloat_UNSAFE(3f);
+      var waterMargin = radius + rules.ShipyardWaterReach;
       for (var i = 0; map.Terrain != null && i < map.Terrain.Length; i++) {
         if (map.Terrain[i].Kind == TerrainKind.River) {
           if (isShipyard) {
@@ -220,6 +222,7 @@ namespace Quantum.FactoryWars {
       return true;
     }
 
+    /// <summary>정사각형 부지의 가장자리·중심 아홉 점이 모양에서 margin 이상 떨어져 있으면 true.</summary>
     static bool IsClear(MapShape shape, FPVector3 position, FP radius, FP margin) {
       var reach = shape.Reach + radius * 2 + margin;
       if (FPMath.Abs(position.X - shape.Center.X) > reach || FPMath.Abs(position.Z - shape.Center.Z) > reach) {
@@ -365,8 +368,11 @@ namespace Quantum.FactoryWars {
           continue;
         }
         for (var i = 0; i < unit.SpawnCount; i++) {
-          SpawnUnit(f, building->Owner, building->Queue[0].Unit, transform->Position, i, building);
+          var spawned = SpawnUnit(f, building->Owner, building->Queue[0].Unit, transform->Position, i, building);
           state->UnitsProduced++;
+          if (building->HasRally && f.Unsafe.TryGetPointer<Unit>(spawned, out var fresh)) {
+            MovementSystem.Order(f, spawned, fresh, UnitOrder.Move, building->Rally);
+          }
         }
         state->PopulationUsed += population;
         RemoveOrder(building, 0);
@@ -641,6 +647,10 @@ namespace Quantum.FactoryWars {
         f.Events.UnitDestroyed(target, unit->Owner, unit->Spec);
         f.Events.Wrecked(f.Unsafe.GetPointer<Transform3D>(target)->Position, (int)spec.Size, FP._0);
         FactoryWarsUtil.Player(f, unit->Owner)->UnitsLost++;
+        var killer = FactoryWarsUtil.Player(f, weapon.Owner);
+        if (killer != null) {
+          killer->UnitsKilled++;
+        }
         f.Destroy(target);
       } else if (weapon.Ability == SpecialAbility.TargetDesignator) {
         unit->DesignatedBy = weapon.Owner;
@@ -665,6 +675,10 @@ namespace Quantum.FactoryWars {
         building->Health -= amount;
         if (building->Health <= FP._0) {
           FactoryWarsUtil.Player(f, building->Owner)->BuildingsLost++;
+          var destroyer = FactoryWarsUtil.Player(f, weapon.Owner);
+          if (destroyer != null) {
+            destroyer->BuildingsDestroyed++;
+          }
           f.Events.Wrecked(f.Unsafe.GetPointer<Transform3D>(target)->Position, -1, f.FindAsset(building->Spec).FootprintRadius);
           f.Destroy(target);
         }
@@ -829,8 +843,8 @@ namespace Quantum.FactoryWars {
         var targetPosition = f.Unsafe.GetPointer<Transform3D>(unit->TargetEntity)->Position;
         var distance = FactoryWarsUtil.FlatDistanceSqr(targetPosition, position);
         if (distance > ReachSqr(f, unit->TargetEntity, RangeTo(f, range, position, targetPosition)) || distance < spec.MinRange * spec.MinRange) {
-          // 정지 상태에서 사거리를 벗어난 대상은 쫓지 않는다.
-          if (unit->Order == UnitOrder.Stop) {
+          // 정지·위치 고수 상태에서 사거리를 벗어난 대상은 쫓지 않는다.
+          if (unit->Order == UnitOrder.Stop || unit->Order == UnitOrder.Hold) {
             unit->TargetEntity = EntityRef.None;
           }
           continue;
@@ -908,8 +922,18 @@ namespace Quantum.FactoryWars {
       if ((waypointFlags & Navigation.WaypointFlag.Target) != 0 && f.Unsafe.TryGetPointer<Unit>(entity, out var unit)) {
         if (unit->Order == UnitOrder.Move || unit->Order == UnitOrder.AttackMove) {
           unit->Order = UnitOrder.Stop;
+        } else if (unit->Order == UnitOrder.Patrol) {
+          TurnPatrol(f, entity, unit);
         }
       }
+    }
+
+    /// <summary>순찰 끝에 닿으면 출발점과 목적지를 바꿔 되돌아간다.</summary>
+    public static void TurnPatrol(Frame f, EntityRef entity, Unit* unit) {
+      var next = unit->PatrolOrigin;
+      unit->PatrolOrigin = unit->TargetPosition;
+      unit->TargetPosition = next;
+      SetDestination(f, entity, next);
     }
 
     public void OnNavMeshSearchFailed(Frame f, EntityRef entity, ref bool resetAgent) {
@@ -935,7 +959,7 @@ namespace Quantum.FactoryWars {
           continue;
         }
         var spec = f.FindAsset(unit->Spec);
-        var hasDestination = unit->Order == UnitOrder.Move || unit->Order == UnitOrder.AttackMove;
+        var hasDestination = unit->Order == UnitOrder.Move || unit->Order == UnitOrder.AttackMove || unit->Order == UnitOrder.Patrol;
         var destination = unit->TargetPosition;
 
         if (unit->TargetEntity != EntityRef.None && unit->Order != UnitOrder.Move
@@ -945,7 +969,7 @@ namespace Quantum.FactoryWars {
             Halt(f, entity);
             continue;
           }
-          if (unit->Order == UnitOrder.Stop) {
+          if (unit->Order == UnitOrder.Stop || unit->Order == UnitOrder.Hold) {
             continue;
           }
           // 쫓는 경로는 1초마다 갱신한다.
@@ -956,7 +980,7 @@ namespace Quantum.FactoryWars {
           if (spec.IsAir == false && f.Number % repathFrames == 0) {
             SetDestination(f, entity, destination);
           }
-        } else if (unit->Order == UnitOrder.AttackMove && spec.IsAir == false
+        } else if ((unit->Order == UnitOrder.AttackMove || unit->Order == UnitOrder.Patrol) && spec.IsAir == false
             && f.Unsafe.TryGetPointer<NavMeshPathfinder>(entity, out var pathfinder) && pathfinder->IsActive == false) {
           // 교전이 끝나면 원래 목적지로 재출발한다.
           SetDestination(f, entity, unit->TargetPosition);
@@ -1087,7 +1111,13 @@ namespace Quantum.FactoryWars {
       var step = spec.MoveSpeed * f.DeltaTime;
       if (delta.SqrMagnitude <= step * step) {
         transform->Position = destination;
-        if (unit->Order != UnitOrder.AttackTarget) {
+        if (unit->Order == UnitOrder.Patrol) {
+          if (destination.X == unit->TargetPosition.X && destination.Z == unit->TargetPosition.Z) {
+            var next = unit->PatrolOrigin;
+            unit->PatrolOrigin = unit->TargetPosition;
+            unit->TargetPosition = next;
+          }
+        } else if (unit->Order != UnitOrder.AttackTarget) {
           unit->Order = UnitOrder.Stop;
         }
         return;

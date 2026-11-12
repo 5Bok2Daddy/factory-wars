@@ -161,6 +161,12 @@ MonoBehaviour:
   PlayerColorCount: 8
   SpawnOffset:
     RawValue: 393216
+  ShipSpawnGap:
+    RawValue: 196608
+  ShipyardWaterReach:
+    RawValue: 196608
+  DisconnectBotDifficulty: 1
+  DisconnectForfeitSeconds: 60
   AirAltitude:
     RawValue: 393216
   CarryCapacity:

@@ -141,6 +141,7 @@ namespace FactoryWars.View {
       if (onClick != null) {
         button.onClick.AddListener(onClick);
       }
+      button.onClick.AddListener(() => GameAudio.Play(SoundEvent.Click));
       var label = Label("Label", rect, value, size, TextAnchor.MiddleCenter);
       label.color = ButtonTextColor;
       Stretch(label.rectTransform, 6f);

@@ -23,6 +23,8 @@ namespace FactoryWars.View {
     public int ColorIndex = -1;
     /// <summary>온라인 6자리 방 코드 대전(항목 28).</summary>
     public bool IsOnline;
+    /// <summary>튜토리얼 경기(항목 30).</summary>
+    public bool Tutorial;
     public string RoomCode = "";
 
     public int Color => ColorIndex >= 0 ? ColorIndex : Palette.Recommended(FactionIndex);
@@ -44,9 +46,12 @@ namespace FactoryWars.View {
   /// <summary>씬을 넘어 경기 조건을 전한다. 화면 쪽 상태라 정적 변수를 쓴다.</summary>
   public static class MatchSetup {
     public static MatchSettings Pending;
+    /// <summary>마지막으로 시작한 AI 대전 조건(결과 화면의 다시 하기).</summary>
+    public static MatchSettings Last;
 
     /// <summary>러너가 시작하기 전에 경기 조건을 넣는다. 사람은 0번 자리, 나머지는 AI다.</summary>
     public static void Apply(QuantumRunnerLocalDebug runner, MatchSettings settings) {
+      Last = settings;
       var factions = runner.LocalPlayers.Take(2).Select(p => p.Faction).ToArray();
       var config = runner.RuntimeConfig;
       config.TeamMode = settings.Mode == MatchMode.Team;

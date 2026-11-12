@@ -296,6 +296,78 @@ namespace Quantum.FactoryWars {
     }
   }
 
+  /// <summary>위치 고수: 멈추고, 사거리 안의 적만 쏜다(쫓지 않음). 항목 30.</summary>
+  public unsafe class HoldUnitsCommand : FactoryCommand {
+    public EntityRef[] Units = System.Array.Empty<EntityRef>();
+
+    public override void Serialize(BitStream stream) {
+      SerializeUnits(stream, ref Units);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      for (var i = 0; i < Units.Length; i++) {
+        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) && unit->Owner == player) {
+          MovementSystem.Stop(f, Units[i], unit);
+          unit->Order = UnitOrder.Hold;
+        }
+      }
+    }
+  }
+
+  /// <summary>순찰: 지금 위치와 목표 사이를 공격 이동으로 오간다. 항목 30.</summary>
+  public unsafe class PatrolUnitsCommand : FactoryCommand {
+    public EntityRef[] Units = System.Array.Empty<EntityRef>();
+    public FPVector3 Target;
+
+    public override void Serialize(BitStream stream) {
+      SerializeUnits(stream, ref Units);
+      stream.Serialize(ref Target);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      for (var i = 0; i < Units.Length; i++) {
+        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) && unit->Owner == player && f.Has<Worker>(Units[i]) == false
+            && f.Unsafe.TryGetPointer<Transform3D>(Units[i], out var transform)) {
+          MovementSystem.Order(f, Units[i], unit, UnitOrder.Patrol, Target);
+          unit->PatrolOrigin = transform->Position;
+        }
+      }
+    }
+  }
+
+  /// <summary>생산 건물의 집결 지점. Clear면 지운다. 항목 30.</summary>
+  public unsafe class RallyCommand : FactoryCommand {
+    public EntityRef Building;
+    public FPVector3 Position;
+    public bool Clear;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Building);
+      stream.Serialize(ref Position);
+      stream.Serialize(ref Clear);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      if (f.Unsafe.TryGetPointer<Building>(Building, out var building) && building->Owner == player && (f.FindAsset(building->Spec).Producible?.Length ?? 0) > 0) {
+        building->HasRally = Clear == false;
+        building->Rally = Position;
+      }
+    }
+  }
+
+  /// <summary>기권. 다음 승패 판정에서 패배한다(항목 30).</summary>
+  public unsafe class SurrenderCommand : FactoryCommand {
+    public override void Serialize(BitStream stream) {
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      var state = FactoryWarsUtil.Player(f, player);
+      if (state != null && state->Active) {
+        state->Forfeited = true;
+      }
+    }
+  }
+
   public class DiplomacyCommand : FactoryCommand {
     public DiplomacyAction Action;
     public PlayerRef Target;

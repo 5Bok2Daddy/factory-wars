@@ -9,7 +9,8 @@
 
 
 enum Relation : Byte { Enemy, Allied, BreakPending }
-enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget }
+// Hold: 위치 고수(쫓지 않음). Patrol: TargetPosition과 PatrolOrigin 사이를 공격 이동으로 오간다(항목 30).
+enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget, Hold, Patrol }
 enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce, Attack, Garrison }
 enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
@@ -61,6 +62,13 @@ struct PlayerState {
     Int32 CratesPicked;
     Int32 HighGroundShots;
     Int32 GarrisonEntries;
+    // 항목 30 온라인: 연결이 끊긴 프레임(0이면 연결됨). 끊긴 동안은 봇이 대신 조종한다.
+    Int32 DisconnectedFrame;
+    // 기권(직접 또는 끊김 시간 초과). VictorySystem이 패배로 처리한다.
+    QBoolean Forfeited;
+    // 결과 화면 통계(항목 30): 내가 파괴한 적 유닛·건물.
+    Int32 UnitsKilled;
+    Int32 BuildingsDestroyed;
 }
 
 struct BotState {
@@ -135,6 +143,8 @@ component Unit {
     entity_ref Garrison;
     // 들어가려고 걸어가는 진지 건물.
     entity_ref GarrisonTarget;
+    // 순찰 출발점(항목 30).
+    FPVector3 PatrolOrigin;
 }
 
 component Worker {
@@ -161,6 +171,9 @@ component Building {
     PauseReason Paused;
     QBoolean ProcessorOff;
     FP ProcessTimer;
+    // 집결 지점(항목 30). 생산된 유닛이 이리로 이동한다.
+    QBoolean HasRally;
+    FPVector3 Rally;
 }
 
 component ResourceNode {
@@ -226,6 +239,7 @@ synced event NoteReceived { player_ref Sender; player_ref Receiver; Int32 Phrase
 synced event AllianceChanged { player_ref A; player_ref B; Relation Relation; }
 event UnitDestroyed { entity_ref Unit; player_ref Owner; asset_ref<UnitSpec> Spec; }
 synced event PlayerDefeated { player_ref Player; }
+synced event PlayerConnection { player_ref Player; QBoolean Connected; }
 synced event BarrierOpened { Int32 Frame; }
 synced event CaptureStarted { entity_ref Site; player_ref Player; }
 synced event CaptureContested { entity_ref Site; }

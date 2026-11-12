@@ -20,6 +20,10 @@ namespace Quantum
             factories.Add(new FactoryWars.SetProcessorCommand());
             factories.Add(new FactoryWars.DiplomacyCommand());
             factories.Add(new FactoryWars.SendNoteCommand());
+            factories.Add(new FactoryWars.SurrenderCommand());
+            factories.Add(new FactoryWars.HoldUnitsCommand());
+            factories.Add(new FactoryWars.PatrolUnitsCommand());
+            factories.Add(new FactoryWars.RallyCommand());
         }
     }
 }

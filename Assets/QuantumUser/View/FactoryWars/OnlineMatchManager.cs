@@ -7,10 +7,10 @@ namespace FactoryWars.View {
   /// 항목 28 온라인 6자리 방 코드 대전.
   /// - 6자리 방 코드 생성·검증 (혼동 문자 I, O, 1, 0 제외)
   /// - 버전 호환성 검사
-  /// - 대기실 슬롯 (2~4인, 방장, 봇 채우기)
+  /// 실제 방·대기실은 OnlineRoom(Photon Realtime, 항목 30).
   /// </summary>
   public static class OnlineMatchManager {
-    public const string VersionHash = "FW-1.0.0";
+    public static string VersionHash => BuildVersion.Current;
     public const int CodeLength = 6;
     const string CodeChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -35,20 +35,7 @@ namespace FactoryWars.View {
       return true;
     }
 
-    public static bool CheckVersion(string clientVersion) {
-      return string.Equals(clientVersion, VersionHash, StringComparison.OrdinalIgnoreCase);
-    }
-  }
-
-  public enum LobbySlotType { Empty, Human, BotNormal, BotEasy }
-
-  public class LobbySlotInfo {
-    public int Index;
-    public LobbySlotType Type;
-    public string Nickname;
-    public int FactionIndex;
-    public int ColorIndex;
-    public bool IsReady;
-    public bool IsHost;
+    /// <summary>방 입장 버전 검사. 시뮬레이션 코드·데이터 해시(BuildVersion)가 같아야 한다.</summary>
+    public static bool CheckVersion(string clientVersion) => BuildVersion.Compatible(clientVersion);
   }
 }

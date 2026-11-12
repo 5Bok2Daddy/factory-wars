@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f534f690a53f9d84c932a0d56e884b98, type: 3}
+  m_Name: AudioCatalog
+  m_EditorClassIdentifier: 
+  Slots:
+  - Event: 0
+    Clips: []
+    Volume: 1
+    MinInterval: 0.05
+    Haptic: 0
+  - Event: 1
+    Clips: []
+    Volume: 1
+    MinInterval: 0.5
+    Haptic: 0
+  - Event: 2
+    Clips: []
+    Volume: 1
+    MinInterval: 0.5
+    Haptic: 1
+  - Event: 3
+    Clips: []
+    Volume: 1
+    MinInterval: 0.5
+    Haptic: 0
+  - Event: 4
+    Clips: []
+    Volume: 1
+    MinInterval: 0.5
+    Haptic: 0
+  - Event: 5
+    Clips: []
+    Volume: 1
+    MinInterval: 0.5
+    Haptic: 1
+  - Event: 6
+    Clips: []
+    Volume: 1
+    MinInterval: 0.5
+    Haptic: 0
+  - Event: 7
+    Clips: []
+    Volume: 1
+    MinInterval: 0.5
+    Haptic: 0
+  - Event: 8
+    Clips: []
+    Volume: 1
+    MinInterval: 0.5
+    Haptic: 0

@@ -123,7 +123,9 @@ namespace FactoryWars.View {
           }
         }
       }
-      return _lookup.TryGetValue(kind, out var found) ? found : null;
+      _lookup.TryGetValue(kind, out var found);
+      // 항목 30: VisualCatalog 슬롯이 채워져 있으면 Kenney 대신 그 프리팹을 쓴다.
+      return VisualCatalog.DressOverride(kind, found) ?? found;
     }
 
     public bool Has(DressKind kind) => Get(kind) != null;

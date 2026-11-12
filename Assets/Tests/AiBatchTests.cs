@@ -25,7 +25,8 @@ namespace FactoryWars.Tests {
     const float ArrivedDistance = 8f;
     const float RiverReach = 15f;
 
-    static readonly int[] AiRuns = Enumerable.Range(0, 10).ToArray();
+    // 항목 30: 20판(짝·홀 판이 진영을 바꿔 자리 교대).
+    static readonly int[] AiRuns = Enumerable.Range(0, 20).ToArray();
 
     static string AiFolder() {
       var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Game-logs", "ai"));
@@ -68,10 +69,12 @@ namespace FactoryWars.Tests {
       var nextMinute = 60 * Fps;
       var tracker = new StuckTracker(players);
       var realStart = Time.realtimeSinceStartup;
+      var naval = new NavalTracker(players);
       while (GameEnded() == false && Verified.Number < AiMaxSeconds * Fps) {
         var frame = Verified.Number;
         if (frame >= nextCheck) {
           nextCheck = frame + AiCheckSeconds * Fps;
+          naval.Sample();
           RecordFirsts(firsts, players, frame / (float)Fps);
           tracker.Sample(map, run, frame);
         }
@@ -98,8 +101,45 @@ namespace FactoryWars.Tests {
       File.AppendAllLines(Path.Combine(AiFolder(), "expansions.csv"), tracker.Expansions);
       File.AppendAllLines(Path.Combine(AiFolder(), "lanes.csv"), LaneRows(map, run, players));
       File.AppendAllLines(Path.Combine(AiFolder(), "battlefield.csv"), BattlefieldRows(map, run, players));
+      File.AppendAllLines(Path.Combine(AiFolder(), "naval.csv"), naval.Rows(map, run));
       Debug.Log($"[FW-AI] {row} real {F(Time.realtimeSinceStartup - realStart)}s");
       Assert.Greater(seconds, 0f);
+    }
+
+    /// <summary>항목 30: 자리별 조선소 수(최대)·만든 배 수. 5초마다 본 배 엔티티를 센다.</summary>
+    sealed class NavalTracker {
+      readonly int _players;
+      readonly int[] _shipyards;
+      readonly HashSet<EntityRef>[] _ships;
+
+      public NavalTracker(int players) {
+        _players = players;
+        _shipyards = new int[players];
+        _ships = Enumerable.Range(0, players).Select(_ => new HashSet<EntityRef>()).ToArray();
+      }
+
+      public void Sample() {
+        var yards = new int[_players];
+        foreach (var pair in Verified.GetComponentIterator<Building>()) {
+          var owner = (int)pair.Component.Owner;
+          if (owner < _players && Verified.FindAsset(pair.Component.Spec).Role == BuildingRole.Shipyard) {
+            yards[owner]++;
+          }
+        }
+        foreach (var pair in Verified.GetComponentIterator<Unit>()) {
+          var owner = (int)pair.Component.Owner;
+          if (owner < _players && Verified.FindAsset(pair.Component.Spec).IsNaval) {
+            _ships[owner].Add(pair.Entity);
+          }
+        }
+        for (var i = 0; i < _players; i++) {
+          _shipyards[i] = System.Math.Max(_shipyards[i], yards[i]);
+        }
+      }
+
+      public IEnumerable<string> Rows(string map, int run) {
+        return Enumerable.Range(0, _players).Select(i => $"{map},{run},{i},{FactionOf(i).FactionId},{_shipyards[i]},{_ships[i].Count}");
+      }
     }
 
     /// <summary>자리별 결과와 전장 요소 기록. 승리는 자리 번호로 남긴다.</summary>
@@ -114,7 +154,7 @@ namespace FactoryWars.Tests {
       var winners = Verified.Global->GameEnded ? Verified.Global->WinnerMask : 0;
       for (var p = 0; p < players; p++) {
         var state = Verified.Global->Players.GetPointer(p);
-        rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{((winners >> p) & 1)},{state->Captures},{F(state->CaptureFrames / (float)Fps)},{state->CratesPicked},{state->HighGroundShots},{broken},{collapsed},{state->GarrisonEntries}");
+        rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{((winners >> p) & 1)},{state->Captures},{F(state->CaptureFrames / (float)Fps)},{state->CratesPicked},{state->HighGroundShots},{broken},{collapsed},{state->GarrisonEntries},{FactoryWarsUtil.SeatOf(Verified, p)}");
       }
       return rows;
     }

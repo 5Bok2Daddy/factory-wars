@@ -31,6 +31,8 @@ namespace Quantum {
   public partial class RuntimeConfig {
     public AssetRef<GameRulesSpec> Rules;
     public bool TeamMode;
+    /// <summary>팀전에서 팀을 본진 자리로 정한다(대각선이 한 팀). 온라인 방은 서버가 플레이어 번호를 정해서 이것을 켠다.</summary>
+    public bool TeamsBySeat;
     public bool JointVictory = true;
     public BotSlot[] Bots;
     /// <summary>true면 규칙 대신 이 휴전 시간을 쓴다. 대전 설정 화면과 방 설정에서 고른다.</summary>

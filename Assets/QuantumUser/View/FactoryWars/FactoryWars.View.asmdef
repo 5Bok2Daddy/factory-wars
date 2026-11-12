@@ -6,7 +6,8 @@
         "Quantum.Unity",
         "UnityEngine.UI",
         "Unity.RenderPipelines.Core.Runtime",
-        "Unity.RenderPipelines.Universal.Runtime"
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Photon.Realtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -15,7 +16,8 @@
     "precompiledReferences": [
         "Quantum.Deterministic.dll",
         "Quantum.Engine.dll",
-        "Quantum.Log.dll"
+        "Quantum.Log.dll",
+        "PhotonClient.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

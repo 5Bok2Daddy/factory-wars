@@ -111,6 +111,8 @@ namespace Quantum.Prototypes.Unity {
     public Quantum.QEnum8<PauseReason> Paused;
     public QBoolean ProcessorOff;
     public FP ProcessTimer;
+    public QBoolean HasRally;
+    public FPVector3 Rally;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BuildingPrototype prototype);
     public override Quantum.Prototypes.BuildingPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BuildingPrototype();
@@ -127,6 +129,8 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Paused, out result.Paused);
       converter.Convert(this.ProcessorOff, out result.ProcessorOff);
       converter.Convert(this.ProcessTimer, out result.ProcessTimer);
+      converter.Convert(this.HasRally, out result.HasRally);
+      converter.Convert(this.Rally, out result.Rally);
       ConvertUser(converter, ref result);
       return result;
     }
@@ -156,6 +160,7 @@ namespace Quantum.Prototypes.Unity {
     public QBoolean Swarming;
     public Quantum.QuantumEntityPrototype Garrison;
     public Quantum.QuantumEntityPrototype GarrisonTarget;
+    public FPVector3 PatrolOrigin;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
     public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.UnitPrototype();
@@ -181,6 +186,7 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Swarming, out result.Swarming);
       converter.Convert(this.Garrison, out result.Garrison);
       converter.Convert(this.GarrisonTarget, out result.GarrisonTarget);
+      converter.Convert(this.PatrolOrigin, out result.PatrolOrigin);
       ConvertUser(converter, ref result);
       return result;
     }

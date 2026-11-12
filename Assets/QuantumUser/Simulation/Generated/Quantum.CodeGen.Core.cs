@@ -99,6 +99,8 @@ namespace Quantum {
     Move,
     AttackMove,
     AttackTarget,
+    Hold,
+    Patrol,
   }
   public enum WorkerTask : byte {
     Idle,
@@ -744,60 +746,68 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct PlayerState {
-    public const Int32 SIZE = 184;
+    public const Int32 SIZE = 200;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(72)]
-    public AssetRef<FactionSpec> Faction;
-    [FieldOffset(152)]
-    public ResourceCost Stock;
-    [FieldOffset(104)]
-    public FP PowerCap;
-    [FieldOffset(112)]
-    public FP PowerRate;
-    [FieldOffset(68)]
-    public QBoolean Outage;
-    [FieldOffset(80)]
-    public FP OutageSeconds;
-    [FieldOffset(40)]
-    public Int32 OutageCount;
-    [FieldOffset(96)]
-    public FP PopulationUsed;
     [FieldOffset(88)]
+    public AssetRef<FactionSpec> Faction;
+    [FieldOffset(168)]
+    public ResourceCost Stock;
+    [FieldOffset(120)]
+    public FP PowerCap;
+    [FieldOffset(128)]
+    public FP PowerRate;
+    [FieldOffset(84)]
+    public QBoolean Outage;
+    [FieldOffset(96)]
+    public FP OutageSeconds;
+    [FieldOffset(48)]
+    public Int32 OutageCount;
+    [FieldOffset(112)]
+    public FP PopulationUsed;
+    [FieldOffset(104)]
     public FP PopulationCap;
-    [FieldOffset(44)]
+    [FieldOffset(52)]
     public Int32 Team;
-    [FieldOffset(16)]
+    [FieldOffset(20)]
     public Int32 ColorIndex;
-    [FieldOffset(36)]
+    [FieldOffset(44)]
     public Int32 NextNoteFrame;
-    [FieldOffset(56)]
+    [FieldOffset(68)]
     public QBoolean Active;
-    [FieldOffset(60)]
+    [FieldOffset(72)]
     public QBoolean Defeated;
-    [FieldOffset(64)]
+    [FieldOffset(80)]
     public QBoolean IsBot;
     [FieldOffset(0)]
     public BotDifficulty Difficulty;
-    [FieldOffset(52)]
+    [FieldOffset(64)]
     public Int32 UnitsProduced;
-    [FieldOffset(48)]
+    [FieldOffset(60)]
     public Int32 UnitsLost;
-    [FieldOffset(4)]
-    public Int32 BuildingsLost;
-    [FieldOffset(120)]
-    public ResourceCost Earned;
-    [FieldOffset(32)]
-    public Int32 NextBaseAlertFrame;
-    [FieldOffset(12)]
-    public Int32 Captures;
     [FieldOffset(8)]
+    public Int32 BuildingsLost;
+    [FieldOffset(136)]
+    public ResourceCost Earned;
+    [FieldOffset(40)]
+    public Int32 NextBaseAlertFrame;
+    [FieldOffset(16)]
+    public Int32 Captures;
+    [FieldOffset(12)]
     public Int32 CaptureFrames;
-    [FieldOffset(20)]
-    public Int32 CratesPicked;
-    [FieldOffset(28)]
-    public Int32 HighGroundShots;
     [FieldOffset(24)]
+    public Int32 CratesPicked;
+    [FieldOffset(36)]
+    public Int32 HighGroundShots;
+    [FieldOffset(32)]
     public Int32 GarrisonEntries;
+    [FieldOffset(28)]
+    public Int32 DisconnectedFrame;
+    [FieldOffset(76)]
+    public QBoolean Forfeited;
+    [FieldOffset(56)]
+    public Int32 UnitsKilled;
+    [FieldOffset(4)]
+    public Int32 BuildingsDestroyed;
     public override readonly Int32 GetHashCode() {
       unchecked { 
         var hash = 14699;
@@ -827,27 +837,35 @@ namespace Quantum {
         hash = hash * 31 + CratesPicked.GetHashCode();
         hash = hash * 31 + HighGroundShots.GetHashCode();
         hash = hash * 31 + GarrisonEntries.GetHashCode();
+        hash = hash * 31 + DisconnectedFrame.GetHashCode();
+        hash = hash * 31 + Forfeited.GetHashCode();
+        hash = hash * 31 + UnitsKilled.GetHashCode();
+        hash = hash * 31 + BuildingsDestroyed.GetHashCode();
         return hash;
       }
     }
     public static void Serialize(void* ptr, FrameSerializer serializer) {
         var p = (PlayerState*)ptr;
         serializer.Stream.Serialize((Byte*)&p->Difficulty);
+        serializer.Stream.Serialize(&p->BuildingsDestroyed);
         serializer.Stream.Serialize(&p->BuildingsLost);
         serializer.Stream.Serialize(&p->CaptureFrames);
         serializer.Stream.Serialize(&p->Captures);
         serializer.Stream.Serialize(&p->ColorIndex);
         serializer.Stream.Serialize(&p->CratesPicked);
+        serializer.Stream.Serialize(&p->DisconnectedFrame);
         serializer.Stream.Serialize(&p->GarrisonEntries);
         serializer.Stream.Serialize(&p->HighGroundShots);
         serializer.Stream.Serialize(&p->NextBaseAlertFrame);
         serializer.Stream.Serialize(&p->NextNoteFrame);
         serializer.Stream.Serialize(&p->OutageCount);
         serializer.Stream.Serialize(&p->Team);
+        serializer.Stream.Serialize(&p->UnitsKilled);
         serializer.Stream.Serialize(&p->UnitsLost);
         serializer.Stream.Serialize(&p->UnitsProduced);
         QBoolean.Serialize(&p->Active, serializer);
         QBoolean.Serialize(&p->Defeated, serializer);
+        QBoolean.Serialize(&p->Forfeited, serializer);
         QBoolean.Serialize(&p->IsBot, serializer);
         QBoolean.Serialize(&p->Outage, serializer);
         AssetRef.Serialize(&p->Faction, serializer);
@@ -914,7 +932,7 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct _globals_ {
-    public const Int32 SIZE = 2024;
+    public const Int32 SIZE = 2088;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(0)]
     public AssetRef<Map> Map;
@@ -943,7 +961,7 @@ namespace Quantum {
     public BitSet4 PlayerLastConnectionState;
     [FieldOffset(1288)]
     [FramePrinter.FixedArrayAttribute(typeof(PlayerState), 4)]
-    private fixed Byte _Players_[736];
+    private fixed Byte _Players_[800];
     [FieldOffset(712)]
     [FramePrinter.FixedArrayAttribute(typeof(BotState), 4)]
     private fixed Byte _Bots_[576];
@@ -972,7 +990,7 @@ namespace Quantum {
     }
     public readonly FixedArray<PlayerState> Players {
       get {
-        fixed (byte* p = _Players_) { return new FixedArray<PlayerState>(p, 184, 4); }
+        fixed (byte* p = _Players_) { return new FixedArray<PlayerState>(p, 200, 4); }
       }
     }
     public readonly FixedArray<BotState> Bots {
@@ -1064,36 +1082,40 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Building : Quantum.IComponent {
-    public const Int32 SIZE = 296;
+    public const Int32 SIZE = 328;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(8)]
     public PlayerRef Owner;
-    [FieldOffset(16)]
+    [FieldOffset(24)]
     public AssetRef<BuildingSpec> Spec;
-    [FieldOffset(72)]
+    [FieldOffset(80)]
     public FP Health;
-    [FieldOffset(64)]
+    [FieldOffset(72)]
     public FP ConstructionRemaining;
-    [FieldOffset(96)]
+    [FieldOffset(128)]
     [FramePrinter.FixedArrayAttribute(typeof(ProductionOrder), 5)]
     private fixed Byte _Queue_[200];
     [FieldOffset(4)]
     public Int32 QueueCount;
-    [FieldOffset(88)]
+    [FieldOffset(96)]
     public FP QueueProgress;
-    [FieldOffset(24)]
+    [FieldOffset(32)]
     [FramePrinter.FixedArrayAttribute(typeof(AssetRef<ModuleSpec>), 3)]
     private fixed Byte _Preset_[24];
-    [FieldOffset(48)]
-    public EntityRef TargetEntity;
     [FieldOffset(56)]
+    public EntityRef TargetEntity;
+    [FieldOffset(64)]
     public FP AttackCooldown;
     [FieldOffset(0)]
     public PauseReason Paused;
-    [FieldOffset(12)]
+    [FieldOffset(16)]
     public QBoolean ProcessorOff;
-    [FieldOffset(80)]
+    [FieldOffset(88)]
     public FP ProcessTimer;
+    [FieldOffset(12)]
+    public QBoolean HasRally;
+    [FieldOffset(104)]
+    public FPVector3 Rally;
     public readonly FixedArray<ProductionOrder> Queue {
       get {
         fixed (byte* p = _Queue_) { return new FixedArray<ProductionOrder>(p, 40, 5); }
@@ -1120,6 +1142,8 @@ namespace Quantum {
         hash = hash * 31 + (Byte)Paused;
         hash = hash * 31 + ProcessorOff.GetHashCode();
         hash = hash * 31 + ProcessTimer.GetHashCode();
+        hash = hash * 31 + HasRally.GetHashCode();
+        hash = hash * 31 + Rally.GetHashCode();
         return hash;
       }
     }
@@ -1128,6 +1152,7 @@ namespace Quantum {
         serializer.Stream.Serialize((Byte*)&p->Paused);
         serializer.Stream.Serialize(&p->QueueCount);
         PlayerRef.Serialize(&p->Owner, serializer);
+        QBoolean.Serialize(&p->HasRally, serializer);
         QBoolean.Serialize(&p->ProcessorOff, serializer);
         AssetRef.Serialize(&p->Spec, serializer);
         FixedArray.Serialize(p->Preset, serializer, Statics.SerializeAssetRef);
@@ -1137,6 +1162,7 @@ namespace Quantum {
         FP.Serialize(&p->Health, serializer);
         FP.Serialize(&p->ProcessTimer, serializer);
         FP.Serialize(&p->QueueProgress, serializer);
+        FPVector3.Serialize(&p->Rally, serializer);
         FixedArray.Serialize(p->Queue, serializer, Statics.SerializeProductionOrder);
     }
   }
@@ -1336,7 +1362,7 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Unit : Quantum.IComponent {
-    public const Int32 SIZE = 168;
+    public const Int32 SIZE = 192;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(36)]
     public PlayerRef Owner;
@@ -1346,7 +1372,7 @@ namespace Quantum {
     public FP Health;
     [FieldOffset(0)]
     public UnitOrder Order;
-    [FieldOffset(144)]
+    [FieldOffset(168)]
     public FPVector3 TargetPosition;
     [FieldOffset(96)]
     public EntityRef TargetEntity;
@@ -1383,6 +1409,8 @@ namespace Quantum {
     public EntityRef Garrison;
     [FieldOffset(88)]
     public EntityRef GarrisonTarget;
+    [FieldOffset(144)]
+    public FPVector3 PatrolOrigin;
     public readonly FixedArray<AssetRef<ModuleSpec>> Modules {
       get {
         fixed (byte* p = _Modules_) { return new FixedArray<AssetRef<ModuleSpec>>(p, 8, 3); }
@@ -1413,6 +1441,7 @@ namespace Quantum {
         hash = hash * 31 + Swarming.GetHashCode();
         hash = hash * 31 + Garrison.GetHashCode();
         hash = hash * 31 + GarrisonTarget.GetHashCode();
+        hash = hash * 31 + PatrolOrigin.GetHashCode();
         return hash;
       }
     }
@@ -1439,6 +1468,7 @@ namespace Quantum {
         FP.Serialize(&p->DesignatedBonus, serializer);
         FP.Serialize(&p->Health, serializer);
         FP.Serialize(&p->ReactiveArmorCooldown, serializer);
+        FPVector3.Serialize(&p->PatrolOrigin, serializer);
         FPVector3.Serialize(&p->TargetPosition, serializer);
     }
   }

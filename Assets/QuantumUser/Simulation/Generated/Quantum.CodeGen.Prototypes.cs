@@ -142,6 +142,8 @@ namespace Quantum.Prototypes {
     public Quantum.QEnum8<PauseReason> Paused;
     public QBoolean ProcessorOff;
     public FP ProcessTimer;
+    public QBoolean HasRally;
+    public FPVector3 Rally;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Building component = default;
         Materialize((Frame)f, ref component, in context);
@@ -165,6 +167,8 @@ namespace Quantum.Prototypes {
         result.Paused = this.Paused;
         result.ProcessorOff = this.ProcessorOff;
         result.ProcessTimer = this.ProcessTimer;
+        result.HasRally = this.HasRally;
+        result.Rally = this.Rally;
     }
   }
   [System.SerializableAttribute()]
@@ -330,6 +334,10 @@ namespace Quantum.Prototypes {
     public Int32 CratesPicked;
     public Int32 HighGroundShots;
     public Int32 GarrisonEntries;
+    public Int32 DisconnectedFrame;
+    public QBoolean Forfeited;
+    public Int32 UnitsKilled;
+    public Int32 BuildingsDestroyed;
     partial void MaterializeUser(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context = default) {
         result.Faction = this.Faction;
@@ -358,6 +366,10 @@ namespace Quantum.Prototypes {
         result.CratesPicked = this.CratesPicked;
         result.HighGroundShots = this.HighGroundShots;
         result.GarrisonEntries = this.GarrisonEntries;
+        result.DisconnectedFrame = this.DisconnectedFrame;
+        result.Forfeited = this.Forfeited;
+        result.UnitsKilled = this.UnitsKilled;
+        result.BuildingsDestroyed = this.BuildingsDestroyed;
         MaterializeUser(frame, ref result, in context);
     }
   }
@@ -451,6 +463,7 @@ namespace Quantum.Prototypes {
     public QBoolean Swarming;
     public MapEntityId Garrison;
     public MapEntityId GarrisonTarget;
+    public FPVector3 PatrolOrigin;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Unit component = default;
         Materialize((Frame)f, ref component, in context);
@@ -481,6 +494,7 @@ namespace Quantum.Prototypes {
         result.Swarming = this.Swarming;
         PrototypeValidator.FindMapEntity(this.Garrison, in context, out result.Garrison);
         PrototypeValidator.FindMapEntity(this.GarrisonTarget, in context, out result.GarrisonTarget);
+        result.PatrolOrigin = this.PatrolOrigin;
     }
   }
   [System.SerializableAttribute()]

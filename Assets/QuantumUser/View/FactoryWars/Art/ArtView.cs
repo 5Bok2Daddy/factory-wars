@@ -21,6 +21,10 @@ namespace FactoryWars.View {
     static Mesh _barFill;
 
     public ViewCatalog.Entry Entry;
+    /// <summary>VisualCatalog에서 바꿔 낀 슬롯(항목 30). null이면 지금 모델이다.</summary>
+    public VisualSlot Slot;
+    /// <summary>교체 모델의 Animator 연결. 애니메이터가 없으면 null.</summary>
+    public UnitAnimatorBridge Animation;
     public Transform Turn;
     public GameObject Model;
     public GameObject Ring;
@@ -34,9 +38,11 @@ namespace FactoryWars.View {
       if (catalog.TryGet(id, out var entry) == false) {
         return null;
       }
+      VisualCatalog.Override(VisualCatalog.ViewSlotId(id, entry.Unit), ref entry, out var slot);
       var view = new GameObject(id).AddComponent<ArtView>();
       view.transform.SetParent(parent, false);
       view.Entry = entry;
+      view.Slot = slot;
 
       view.Turn = new GameObject("Turn").transform;
       view.Turn.SetParent(view.transform, false);
@@ -47,7 +53,14 @@ namespace FactoryWars.View {
       view.Model.name = "Model";
       view.Model.transform.localScale = Vector3.one * entry.DisplayScale * extra;
       view.Model.transform.localPosition = new Vector3(-entry.Center.x, 0, -entry.Center.y) * entry.DisplayScale * extra;
-      if (VisualProfile.Current.Outline == OutlineMode.Hull) {
+      if (slot != null) {
+        // 교체 모델: 앞 방향 보정, 바닥 보정(Center는 x·z만 담으므로 y는 따로), 원래 머티리얼 보관.
+        view.Model.transform.localRotation = Quaternion.Euler(0f, slot.YawOffset, 0f);
+        var (offset, _) = VisualCatalog.Measure(slot.Prefab, slot);
+        view.Model.transform.localPosition = view.Model.transform.localRotation * new Vector3(offset.x, offset.y, offset.z) * entry.DisplayScale * extra;
+        view.KeepOriginalMaterials();
+        view.Animation = UnitAnimatorBridge.Attach(view.Model, slot);
+      } else if (VisualProfile.Current.Outline == OutlineMode.Hull) {
         OutlineKit.Attach(view.Model, entry.DisplayScale * extra);
       }
       ArtLook.Apply(view.Model, color, powered);
@@ -109,6 +122,28 @@ namespace FactoryWars.View {
         _barFill = kit.ToMesh("marker_bar_fill");
       }
       return _barFill;
+    }
+
+    System.Collections.Generic.Dictionary<Renderer, Material[]> _originals;
+
+    void KeepOriginalMaterials() {
+      _originals = new System.Collections.Generic.Dictionary<Renderer, Material[]>();
+      foreach (var renderer in Model.GetComponentsInChildren<Renderer>(true)) {
+        _originals[renderer] = renderer.sharedMaterials;
+      }
+    }
+
+    /// <summary>교체 모델의 팀 색. 원래 머티리얼에서 다시 입혀 색이 겹쳐 쌓이지 않는다.</summary>
+    public void ApplySlotColor(int color, bool powered) {
+      if (Slot == null || _originals == null) {
+        return;
+      }
+      foreach (var pair in _originals) {
+        if (pair.Key != null) {
+          pair.Key.sharedMaterials = pair.Value;
+        }
+      }
+      VisualCatalog.ApplyTeamColor(Model, Slot, color, powered);
     }
 
     public void SetYaw(float degrees) {

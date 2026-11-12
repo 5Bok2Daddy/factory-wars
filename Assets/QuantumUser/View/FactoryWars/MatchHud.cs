@@ -23,8 +23,9 @@ namespace FactoryWars.View {
     const float AlertSeconds = 3f;
     const float NoteSeconds = 3f;
     // 29 2-5: 4열 3행 12슬롯 단일 화면 그리드 패널 (다음 페이지 넘김 버튼 제거, 화면 1/3 이하 보장, 9mm 규격)
-    const int ContextSlots = 12;
+    const int ContextSlots = 16;
     const int ContextColumns = 4;
+    const int ContextRows = 4;
 
     public readonly List<ContextEntry> Entries = new List<ContextEntry>();
     public readonly List<string> NoteInbox = new List<string>();
@@ -109,6 +110,14 @@ namespace FactoryWars.View {
       Ui.Stretch(_alert.rectTransform, 4f);
       _alert.color = new Color(0.16f, 0.20f, 0.30f, 1f);
       _alertBubble.gameObject.SetActive(false);
+      // 알림을 누르면 그 자리로 카메라가 간다(항목 30).
+      _alertBubble.gameObject.AddComponent<ClickRelay>().OnClick = JumpToAlert;
+
+      // 위쪽: 유휴 공병·전체 군대(항목 30). 엄지가 닿는 오른쪽 위, 외교·메뉴 옆.
+      var idleButton = Ui.Button("IdleEngineerButton", top, "유휴\n공병", SelectIdleEngineer);
+      Ui.Place((RectTransform)idleButton.transform, Vector2.one, new Vector2(-516, -6), new Vector2(160, 154));
+      var armyButton = Ui.Button("ArmyButton", top, "전체\n군대", SelectArmy);
+      Ui.Place((RectTransform)armyButton.transform, Vector2.one, new Vector2(-348, -6), new Vector2(160, 154));
 
       _noteBubble = Ui.Capsule("NoteBubble", Root, new Color(0.96f, 0.98f, 1f, 0.95f));
       Ui.Place(_noteBubble, new Vector2(0.5f, 1), new Vector2(0, -198), new Vector2(800, 56));
@@ -156,7 +165,7 @@ namespace FactoryWars.View {
       const float padX = 24f;
       const float padY = 64f;
       var totalW = ContextColumns * cellW + (ContextColumns - 1) * space + padX;
-      var totalH = 3 * cellH + 2 * space + padY;
+      var totalH = ContextRows * cellH + (ContextRows - 1) * space + padY;
       Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 12), new Vector2(totalW, totalH));
       _status = Ui.Label("Status", panel, "", 28);
       _status.color = new Color(0.16f, 0.20f, 0.30f, 1f);
@@ -190,13 +199,41 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventBarricadeDestroyed>(this, OnBarricade);
       QuantumEvent.Subscribe<EventBaseUnderAttack>(this, OnBaseAttacked);
       QuantumEvent.Subscribe<EventCratePicked>(this, OnCratePicked);
+      QuantumEvent.Subscribe<EventCityBuildingCollapsed>(this, e => GameAudio.Play(SoundEvent.Collapse));
+      QuantumEvent.Subscribe<EventPlayerConnection>(this, OnConnection);
     }
 
     void OnBaseAttacked(EventBaseUnderAttack e) {
       if (e.Player == Controller.Player) {
+        GameAudio.Play(SoundEvent.UnderAttack);
         ShowAlert(Texts.BaseAttacked);
-        _minimap.Ping(e.Position.ToUnityVector3());
+        PingAlert(e.Position.ToUnityVector3());
       }
+    }
+
+    int _produced = -1;
+
+    /// <summary>온라인(항목 30): 다른 사람이 끊기면 "연결 대기"와 기권까지 남은 시간을 보인다. 그동안 AI가 대신 조종한다.</summary>
+    void OnConnection(EventPlayerConnection e) {
+      if (e.Player == Controller.Player) {
+        return;
+      }
+      ShowAlert(e.Connected ? $"플레이어 {(int)e.Player + 1} 다시 연결됨" : $"플레이어 {(int)e.Player + 1} 연결 대기 중 (AI가 대신 조종)");
+    }
+
+    /// <summary>끊긴 사람 목록과 기권까지 남은 초. 화면 위 알림 줄에 계속 보인다.</summary>
+    public static string ConnectionWaiting(Frame frame, PlayerRef viewer) {
+      var rules = frame.FindAsset(frame.RuntimeConfig.Rules);
+      var parts = new List<string>();
+      for (var i = 0; i < frame.PlayerCount; i++) {
+        var state = frame.Global->Players.GetPointer(i);
+        if (i == (int)viewer || state->DisconnectedFrame <= 0 || state->Defeated) {
+          continue;
+        }
+        var left = rules.DisconnectForfeitSeconds - (frame.Number - state->DisconnectedFrame) / frame.SessionConfig.UpdateFPS;
+        parts.Add(rules.DisconnectForfeitSeconds > 0 ? $"플레이어 {i + 1} 연결 대기 {Mathf.Max(0, left)}초" : $"플레이어 {i + 1} 연결 끊김(AI 조종)");
+      }
+      return string.Join("  ", parts);
     }
 
     void OnCratePicked(EventCratePicked e) {
@@ -213,11 +250,12 @@ namespace FactoryWars.View {
       var kind = frame.Get<CaptureSite>(e.Site).Kind;
       var position = frame.Get<Transform3D>(e.Site).Position.ToUnityVector3();
       if (e.Next == Controller.Player) {
+        GameAudio.Play(SoundEvent.Captured);
         ShowAlert(Texts.Captured(kind));
-        _minimap.Ping(position);
+        PingAlert(position);
       } else if (e.Previous == Controller.Player) {
         ShowAlert(Texts.Lost(kind));
-        _minimap.Ping(position);
+        PingAlert(position);
       }
     }
 
@@ -226,7 +264,7 @@ namespace FactoryWars.View {
       var spots = MapOf(e.Game)?.CrateSpots;
       for (var i = 0; spots != null && i < spots.Length; i++) {
         if (spots[i].Seat < 0 && spots[i].Group == e.Group) {
-          _minimap.Ping(spots[i].Position.ToUnityVector3());
+          PingAlert(spots[i].Position.ToUnityVector3());
         }
       }
     }
@@ -235,7 +273,7 @@ namespace FactoryWars.View {
       ShowAlert(Texts.BackdoorOpened);
       var barricades = MapOf(e.Game)?.Barricades;
       if (barricades != null && e.Index < barricades.Length) {
-        _minimap.Ping(barricades[e.Index].Shape.Center.ToUnityVector3());
+        PingAlert(barricades[e.Index].Shape.Center.ToUnityVector3());
       }
     }
 
@@ -337,14 +375,67 @@ namespace FactoryWars.View {
       Ui.SetLabel(_boxButton, BoxMode ? "범위\n선택 중" : "범위\n선택");
     }
 
-    void PressGroup(int index) {
+    int _lastGroup = -1;
+    float _lastGroupTime;
+    Vector3? _alertAt;
+    public const float DoubleTapSeconds = 0.4f;
+
+    /// <summary>부대 버튼: 지정 모드면 저장, 아니면 선택. 같은 번호를 0.4초 안에 두 번 누르면 카메라가 그 부대로 간다.</summary>
+    public void PressGroup(int index) {
       var selection = Controller.Input.Selection;
       if (_saveMode) {
         selection.SaveGroup(index);
         _saveMode = false;
         Ui.SetLabel(_saveButton, "부대\n지정");
+        return;
+      }
+      selection.RecallGroup(index);
+      var now = Time.unscaledTime;
+      if (_lastGroup == index && now - _lastGroupTime <= DoubleTapSeconds && selection.Units.Count > 0) {
+        var frame = Controller.Frame;
+        var center = Vector3.zero;
+        var count = 0;
+        foreach (var unit in selection.Units) {
+          if (frame != null && frame.Exists(unit)) {
+            center += frame.Get<Transform3D>(unit).Position.ToUnityVector3();
+            count++;
+          }
+        }
+        if (count > 0) {
+          center /= count;
+          Controller.Camera.MoveTo(new Vector2(center.x, center.z));
+        }
+      }
+      _lastGroup = index;
+      _lastGroupTime = now;
+    }
+
+    public void SelectIdleEngineer() {
+      var frame = Controller.Frame;
+      if (frame != null && Controller.Input.SelectIdleEngineer(frame, Controller.Player, out var position)) {
+        Controller.Camera.MoveTo(new Vector2(position.x, position.z));
       } else {
-        selection.RecallGroup(index);
+        ShowAlert("놀고 있는 공병이 없습니다");
+      }
+    }
+
+    public void SelectArmy() {
+      var frame = Controller.Frame;
+      if (frame != null && Controller.Input.SelectArmy(frame, Controller.Player) == 0) {
+        ShowAlert("전투 유닛이 없습니다");
+      }
+    }
+
+    void PingAlert(Vector3 position) {
+      _minimap.Ping(position);
+      _alertAt = position;
+    }
+
+    public Vector3? AlertTarget => _alertAt;
+
+    public void JumpToAlert() {
+      if (_alertAt.HasValue) {
+        Controller.Camera.MoveTo(new Vector2(_alertAt.Value.x, _alertAt.Value.z));
       }
     }
 
@@ -358,6 +449,7 @@ namespace FactoryWars.View {
 
     public void ShowAlert(string text) {
       _alert.text = text;
+      _alertAt = null;
       if (_alertBubble != null) {
         _alertBubble.gameObject.SetActive(!string.IsNullOrEmpty(text));
       }
@@ -366,6 +458,7 @@ namespace FactoryWars.View {
 
     void OnRejected(EventActionRejected e) {
       if (e.Player == Controller.Player) {
+        GameAudio.Play(SoundEvent.Warning);
         ShowAlert(Texts.Rejected(e.Reason, (MissingResource)e.Missing));
       }
     }
@@ -428,6 +521,15 @@ namespace FactoryWars.View {
       _truce.text = FactoryWarsUtil.InTruce(frame)
         ? Texts.TruceCountdown((frame.Global->TruceEndFrame - frame.Number) / (float)frame.SessionConfig.UpdateFPS)
         : "";
+      var waiting = ConnectionWaiting(frame, Controller.Player);
+      if (waiting.Length > 0) {
+        _truce.text = waiting;
+      }
+      if (_produced >= 0 && state->UnitsProduced > _produced) {
+        GameAudio.Play(SoundEvent.ProductionDone);
+      }
+      _produced = state->UnitsProduced;
+      TruceTips.Update(this, frame, state);
       _minimap.Refresh(frame);
       var selection = Controller.Input.Selection;
       selection.Prune(frame);
@@ -459,6 +561,18 @@ namespace FactoryWars.View {
         if (selection.Units.Any(e => frame.Has<Worker>(e))) {
           BuildEntries(frame, state);
           showPanel = true;
+        } else {
+          // 전투 유닛: 명령 버튼(항목 30)과 상성 한 줄.
+          UnitCommandEntries();
+          showPanel = true;
+          if (selection.Units.Count == 1) {
+            status += "\n" + Texts.CounterTip(spec, frame.FindAsset(frame.RuntimeConfig.Rules));
+          }
+        }
+        if (input.Mode == MatchInput.TapMode.AttackMove) {
+          status = "공격 이동: 목적지를 누르세요";
+        } else if (input.Mode == MatchInput.TapMode.Patrol) {
+          status = "순찰: 반대쪽 끝을 누르세요";
         }
       }
       if (input.IsPlacing) {
@@ -486,6 +600,16 @@ namespace FactoryWars.View {
           Ui.SetEnabled(_context[i], Entries[i].Enabled);
         }
       }
+    }
+
+    void UnitCommandEntries() {
+      var input = Controller.Input;
+      Entries.Add(new ContextEntry { Label = input.Mode == MatchInput.TapMode.AttackMove ? "공격 이동\n(땅 누르기)" : "공격\n이동", Enabled = true,
+        Action = () => input.Mode = input.Mode == MatchInput.TapMode.AttackMove ? MatchInput.TapMode.None : MatchInput.TapMode.AttackMove });
+      Entries.Add(new ContextEntry { Label = "위치\n고수", Enabled = true, Action = () => Controller.Send(input.Hold(Controller.Frame)) });
+      Entries.Add(new ContextEntry { Label = input.Mode == MatchInput.TapMode.Patrol ? "순찰\n(땅 누르기)" : "순찰", Enabled = true,
+        Action = () => input.Mode = input.Mode == MatchInput.TapMode.Patrol ? MatchInput.TapMode.None : MatchInput.TapMode.Patrol });
+      Entries.Add(new ContextEntry { Label = "정지", Enabled = true, Action = () => Controller.Stop() });
     }
 
     void BuildEntries(Frame frame, PlayerState* state) {
@@ -564,6 +688,20 @@ namespace FactoryWars.View {
           Enabled = true,
           Action = () => Controller.Send(new SetProcessorCommand { Building = entity, Enabled = off }),
         });
+      }
+      if (spec.Producible != null && spec.Producible.Length > 0) {
+        var input = Controller.Input;
+        Entries.Add(new ContextEntry {
+          Label = input.Mode == MatchInput.TapMode.Rally ? "집결 지점\n(땅 누르기)" : "집결\n지점", Enabled = true,
+          Action = () => input.Mode = input.Mode == MatchInput.TapMode.Rally ? MatchInput.TapMode.None : MatchInput.TapMode.Rally,
+        });
+        if (building.HasRally) {
+          status += "  집결 지점 있음";
+          Entries.Add(new ContextEntry { Label = "집결\n해제", Enabled = true, Action = () => Controller.Send(new RallyCommand { Building = entity, Clear = true }) });
+        }
+        if (input.Mode == MatchInput.TapMode.Rally) {
+          status = "집결 지점: 땅을 누르세요";
+        }
       }
       if (spec.Producible != null && spec.Producible.Length > 0 && spec.Role != BuildingRole.Headquarters) {
         PresetEntries(frame, state, entity, building);

@@ -91,6 +91,9 @@ namespace FactoryWars.View {
     }
 
     public void MuzzleFlash(Vector3 position, Vector3 forward, float size) {
+      if (VisualCatalog.SpawnEffect("muzzle", position, forward, size)) {
+        return;
+      }
       var count = Scaled(4);
       for (var i = 0; i < count; i++) {
         Emit(_glow, position + forward * (0.2f * i), forward * Random.Range(2f, 7f) + Random.insideUnitSphere, size * Random.Range(0.6f, 1.2f), 0.14f, Muzzle);
@@ -98,6 +101,9 @@ namespace FactoryWars.View {
     }
 
     public void FlameJet(Vector3 position, Vector3 forward, float reach) {
+      if (VisualCatalog.SpawnEffect("flame", position, forward, reach)) {
+        return;
+      }
       var count = Scaled(10);
       for (var i = 0; i < count; i++) {
         var velocity = (forward + Random.insideUnitSphere * 0.18f) * reach * Random.Range(1.6f, 2.6f);
@@ -124,6 +130,9 @@ namespace FactoryWars.View {
     }
 
     public void Impact(Vector3 position, float size) {
+      if (VisualCatalog.SpawnEffect("impact", position, Vector3.up, size)) {
+        return;
+      }
       // 피격 번쩍임.
       Emit(_glow, position + Vector3.up * 0.3f, Vector3.zero, size * 1.6f, 0.08f, Color.white);
       var count = Scaled(5);
@@ -220,6 +229,13 @@ namespace FactoryWars.View {
     }
 
     public void Explosion(Vector3 position, float size) {
+      GameAudio.Play(SoundEvent.Explosion);
+      if (VisualCatalog.SpawnEffect("explosion", position, Vector3.up, size)) {
+        if (size >= 2f) {
+          Shake(size * 0.12f);
+        }
+        return;
+      }
       if (size >= 2f) {
         Shake(size * 0.12f);
       }
@@ -251,6 +267,9 @@ namespace FactoryWars.View {
     }
 
     public void ChimneySmoke(Vector3 position) {
+      if (VisualCatalog.SpawnEffect("smoke", position, Vector3.up, 1f)) {
+        return;
+      }
       Emit(_smoke, position, new Vector3(Random.Range(0.2f, 0.6f), Random.Range(1.4f, 2.2f), Random.Range(-0.2f, 0.2f)), Random.Range(0.5f, 0.8f), Random.Range(2.2f, 3.2f), SmokeGray);
     }
 

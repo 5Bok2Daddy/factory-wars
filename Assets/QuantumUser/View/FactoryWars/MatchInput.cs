@@ -31,6 +31,11 @@ namespace FactoryWars.View {
 
     public bool IsPlacing => Placing != default;
 
+    /// <summary>다음 땅 탭의 뜻(항목 30). 버튼으로 켜고, 탭 한 번에 꺼진다.</summary>
+    public enum TapMode { None, AttackMove, Patrol, Rally }
+
+    public TapMode Mode;
+
     static FPVector3 ToFP(Vector3 world) => new FPVector3(FP.FromFloat_UNSAFE(world.x), FP._0, FP.FromFloat_UNSAFE(world.z));
 
     public static EntityRef PickUnit(Frame frame, Vector3 world) {
@@ -108,6 +113,23 @@ namespace FactoryWars.View {
       if (IsPlacing) {
         return Place(frame, world);
       }
+      if (Mode != TapMode.None) {
+        var mode = Mode;
+        Mode = TapMode.None;
+        var chosen = SelectedUnits(frame);
+        switch (mode) {
+          case TapMode.AttackMove:
+            var enemy = PickUnit(frame, world);
+            if (enemy != EntityRef.None && frame.Get<Unit>(enemy).Owner != player) {
+              return Attack(frame, player, enemy);
+            }
+            return chosen.Count == 0 ? null : new MoveUnitsCommand { Units = chosen.ToArray(), Target = ToFP(world), AttackMove = true };
+          case TapMode.Patrol:
+            return chosen.Count == 0 ? null : new PatrolUnitsCommand { Units = chosen.ToArray(), Target = ToFP(world) };
+          case TapMode.Rally:
+            return Selection.Building == EntityRef.None ? null : new RallyCommand { Building = Selection.Building, Position = ToFP(world) };
+        }
+      }
 
       var unit = PickUnit(frame, world);
       if (unit != EntityRef.None) {
@@ -181,6 +203,46 @@ namespace FactoryWars.View {
       Selection.Prune(frame);
       var units = SelectedUnits(frame);
       return units.Count == 0 ? null : new MoveUnitsCommand { Units = units.ToArray(), Target = ToFP(world), AttackMove = true };
+    }
+
+    public DeterministicCommand Hold(Frame frame) {
+      Selection.Prune(frame);
+      var units = SelectedUnits(frame);
+      return units.Count == 0 ? null : new HoldUnitsCommand { Units = units.ToArray() };
+    }
+
+    int _idleCursor;
+
+    /// <summary>놀고 있는 공병을 하나씩 돌아가며 고른다. 고른 위치를 돌려준다(카메라 이동용).</summary>
+    public bool SelectIdleEngineer(Frame frame, PlayerRef player, out Vector3 position) {
+      var idle = new List<EntityRef>();
+      foreach (var pair in frame.GetComponentIterator<Worker>()) {
+        var unit = frame.Get<Unit>(pair.Entity);
+        if (unit.Owner == player && pair.Component.Task == WorkerTask.Idle && unit.Order == UnitOrder.Stop) {
+          idle.Add(pair.Entity);
+        }
+      }
+      position = default;
+      if (idle.Count == 0) {
+        return false;
+      }
+      var pick = idle[_idleCursor++ % idle.Count];
+      Selection.Clear();
+      Selection.SelectUnit(pick);
+      position = frame.Get<Transform3D>(pick).Position.ToUnityVector3();
+      return true;
+    }
+
+    /// <summary>공병·진지 안 분대를 뺀 내 전투 유닛 전부(최대 64기).</summary>
+    public int SelectArmy(Frame frame, PlayerRef player) {
+      Selection.Clear();
+      foreach (var pair in frame.GetComponentIterator<Unit>()) {
+        if (pair.Component.Owner == player && frame.Has<Worker>(pair.Entity) == false && pair.Component.Garrison == EntityRef.None
+            && frame.FindAsset(pair.Component.Spec).Attack != AttackType.None && Selection.Units.Count < MoveUnitsCommand.MaxUnits) {
+          Selection.Units.Add(pair.Entity);
+        }
+      }
+      return Selection.Units.Count;
     }
 
     public DeterministicCommand Stop(Frame frame) {

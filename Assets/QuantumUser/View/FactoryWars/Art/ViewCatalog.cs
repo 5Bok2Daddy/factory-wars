@@ -63,6 +63,12 @@ namespace FactoryWars.View {
 
     /// <summary>중립 머티리얼을 쓰는 자원·지형은 건드리지 않는다.</summary>
     public static void Apply(GameObject root, int color, bool powered = true) {
+      // 교체 모델(항목 30)은 슬롯의 팀 색 방식을 따른다.
+      var view = root.GetComponentInParent<ArtView>();
+      if (view != null && view.Slot != null && view.Model == root) {
+        view.ApplySlotColor(color, powered);
+        return;
+      }
       foreach (var renderer in root.GetComponentsInChildren<Renderer>(true)) {
         var current = renderer.sharedMaterial;
         if (current != null && current.name.StartsWith(TeamPrefix)) {

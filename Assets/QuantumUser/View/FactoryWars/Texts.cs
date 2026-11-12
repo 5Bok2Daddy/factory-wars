@@ -18,12 +18,60 @@ namespace FactoryWars.View {
       { "headquarters", "사령부" }, { "power_plant", "발전소" }, { "processor", "가공소" }, { "supply_depot", "보급창" }, { "barracks", "병영" },
       { "research_lab", "연구소" }, { "vehicle_factory", "군수공장" }, { "airfield", "비행장" }, { "heavy_works", "중공업 기지" },
       { "ground_tower", "지상 방어탑" }, { "air_defense", "방공포대" }, { "collection_yard", "집하장" },
+      { "shipyard", "조선소" }, { "scout_boat", "정찰선" }, { "artillery_ship", "포격함" },
       { "ff_engineer", "공병" }, { "ff_ranger_squad", "레인저 분대" }, { "ff_skyguard_squad", "스카이가드 분대" }, { "ff_eagle_tank", "이글 전차" },
       { "ff_hawk_gunship", "호크 공격헬기" }, { "ff_skyfortress_bomber", "스카이포트리스 폭격기" },
       { "cf_engineer", "공병" }, { "cf_militia", "민병대" }, { "cf_flame_squad", "화염방사 분대" }, { "cf_dragonscale_tank", "용린 전차" },
       { "cf_thunder_aa", "천둥 대공차" }, { "cf_longwall_mlrs", "만리 다연장포" },
       { "module_piercing_rounds", "관통탄" }, { "module_reactive_armor", "반응장갑" },
     };
+
+    static string SizeName(UnitSize size, bool air) => air ? "공중" : size == UnitSize.Large ? "대형 차량" : size == UnitSize.Medium ? "차량" : "보병";
+
+    static string AttackName(AttackType attack) => attack == AttackType.AntiInfantry ? "대보병" : attack == AttackType.AntiArmor ? "대전차" : attack == AttackType.AntiAir ? "대공" : "범위";
+
+    /// <summary>상성 한 줄(항목 30): "전차 · 강함: 차량 · 약함: 보병 · 조심: 대전차". 수치는 규칙의 상성표에서 읽는다.</summary>
+    public static string CounterTip(UnitSpec spec, GameRulesSpec rules) {
+      if (rules == null || rules.Matchups == null) {
+        return "";
+      }
+      var strong = new List<string>();
+      var weak = new List<string>();
+      foreach (var m in rules.Matchups) {
+        if (m.Attack != spec.Attack || spec.Attack == AttackType.None) {
+          continue;
+        }
+        void Judge(FP value, string name) {
+          if (value >= FP._1 + FP._0_25) {
+            strong.Add(name);
+          } else if (value <= FP._0_75) {
+            weak.Add(name);
+          }
+        }
+        Judge(m.VsSmall, "보병");
+        Judge(m.VsMedium, "차량");
+        Judge(m.VsLarge, "대형 차량");
+        Judge(m.VsAir, "공중");
+      }
+      var threats = new List<string>();
+      foreach (var m in rules.Matchups) {
+        var value = spec.IsAir ? m.VsAir : spec.Size == UnitSize.Large ? m.VsLarge : spec.Size == UnitSize.Medium ? m.VsMedium : m.VsSmall;
+        if (value >= FP._1 + FP._0_25) {
+          threats.Add(AttackName(m.Attack));
+        }
+      }
+      var parts = new List<string> { SizeName(spec.Size, spec.IsAir) };
+      if (strong.Count > 0) {
+        parts.Add("강함: " + string.Join("·", strong));
+      }
+      if (weak.Count > 0) {
+        parts.Add("약함: " + string.Join("·", weak));
+      }
+      if (threats.Count > 0) {
+        parts.Add("조심: " + string.Join("·", threats));
+      }
+      return string.Join("  ", parts);
+    }
 
     /// <summary>에셋 이름의 화면 표기. 건물 이름은 진영 접두어를 뺀다.</summary>
     public static string NameOf(string assetName) {

@@ -220,7 +220,8 @@ namespace Quantum.FactoryWars {
       var map = FactoryWarsUtil.MapInfo(f);
       state->Faction = factionRef;
       state->Stock = f.RuntimeConfig.OverrideStartingResources ? f.RuntimeConfig.StartingResources : map.StartingResources;
-      state->Team = team;
+      // 온라인 2대2(항목 30): 서버가 정한 플레이어 번호와 대기실 순서가 달라서, 팀을 본진 자리(대각선 0·2 대 1·3)로 정한다.
+      state->Team = f.RuntimeConfig.TeamMode && f.RuntimeConfig.TeamsBySeat ? FactoryWarsUtil.SeatOf(f, player) % 2 : team;
       state->ColorIndex = PickColor(f, color);
       state->Active = true;
 
@@ -593,7 +594,7 @@ namespace Quantum.FactoryWars {
         if (state->Defeated) {
           continue;
         }
-        if ((buildingMask & (1 << i)) == 0) {
+        if ((buildingMask & (1 << i)) == 0 || state->Forfeited) {
           state->Defeated = true;
           f.Events.PlayerDefeated(i);
           continue;
