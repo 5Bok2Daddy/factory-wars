@@ -18,5 +18,7 @@ namespace Quantum {
     public AssetRef<ModuleSpec>[] Modules;
     /// <summary>경기 시작 시 사령부 옆에 배치되는 유닛.</summary>
     public AssetRef<UnitSpec>[] StartingUnits;
+    /// <summary>연구소에서 할 수 있는 연구(항목 31). 순서가 PlayerState.ResearchDone 비트 번호다(최대 31개).</summary>
+    public AssetRef<ResearchSpec>[] Researches;
   }
 }

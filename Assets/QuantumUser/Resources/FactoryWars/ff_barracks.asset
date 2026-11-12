@@ -17,6 +17,7 @@ MonoBehaviour:
     Guid:
       Value: 430950125761090820
   Role: 4
+  RequiredTier: 1
   Cost:
     Iron:
       RawValue: 13107200

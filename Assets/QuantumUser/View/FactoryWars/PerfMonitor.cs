@@ -18,7 +18,8 @@ namespace FactoryWars.View {
     const string Header = "date,map,quality,device,gpu,seconds,avg_fps,min_fps,max_draw_calls,max_memory_mb";
 
     public static bool OverlayEnabled {
-      get => Debug.isDebugBuild && PlayerPrefs.GetInt(OverlayKey, 1) == 1;
+      // 항목 31: 기본은 끔(설정에서 켠다). 켜져 있어도 글자가 생기기 전에는 숨긴다(빈 어두운 상자 B5).
+      get => Debug.isDebugBuild && PlayerPrefs.GetInt(OverlayKey, 0) == 1;
       set => PlayerPrefs.SetInt(OverlayKey, value ? 1 : 0);
     }
 
@@ -51,13 +52,17 @@ namespace FactoryWars.View {
 
     public void Build(RectTransform parent) {
       var panel = Ui.Panel("Perf", parent, new Color(0f, 0f, 0f, 0.55f));
-      Ui.Place(panel, new Vector2(0f, 1f), new Vector2(20, -120), new Vector2(520, 150));
+      Ui.Place(panel, new Vector2(0f, 1f), new Vector2(20, -80), new Vector2(520, 150));
       panel.GetComponent<Image>().raycastTarget = false;
       _text = Ui.Label("PerfText", panel, "", 24, TextAnchor.UpperLeft);
       _text.raycastTarget = false;
       Ui.Stretch(_text.rectTransform);
-      panel.gameObject.SetActive(OverlayEnabled);
+      _panel = panel.gameObject;
+      panel.gameObject.SetActive(false);
     }
+
+    GameObject _panel;
+    public bool PanelVisible => _panel != null && _panel.activeSelf;
 
     void Update() {
       var dt = Time.unscaledDeltaTime;
@@ -80,7 +85,10 @@ namespace FactoryWars.View {
         _maxMemory = Math.Max(_maxMemory, _memory.LastValue);
       }
       AutoQuality.Observe(_elapsed, _frames);
-      if (_text != null && _text.transform.parent.gameObject.activeSelf && Time.unscaledTime >= _shownAt) {
+      if (_panel != null && _panel.activeSelf != (OverlayEnabled && _text.text.Length > 0)) {
+        _panel.SetActive(OverlayEnabled && _text.text.Length > 0);
+      }
+      if (_text != null && OverlayEnabled && Time.unscaledTime >= _shownAt) {
         _shownAt = Time.unscaledTime + 0.5f;
         var units = Controller != null && Controller.Frame != null ? Controller.Frame.ComponentCount<Quantum.Unit>() : 0;
         _text.text = $"FPS {1f / Mathf.Max(0.0001f, dt):0}  ({dt * 1000f:0.0}ms)\n"

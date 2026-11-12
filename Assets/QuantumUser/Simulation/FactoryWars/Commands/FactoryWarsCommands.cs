@@ -355,6 +355,34 @@ namespace Quantum.FactoryWars {
     }
   }
 
+  /// <summary>사령부를 다음 기지 단계로 올린다(항목 31). 비용은 시작할 때 낸다. 올리는 동안에도 사령부는 생산한다.</summary>
+  public unsafe class UpgradeBaseCommand : FactoryCommand {
+    public EntityRef Building;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Building);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      TechSystem.StartUpgrade(f, player, Building);
+    }
+  }
+
+  /// <summary>연구소에서 연구를 시작한다(항목 31). Index는 FactionSpec.Researches 번호.</summary>
+  public unsafe class ResearchCommand : FactoryCommand {
+    public EntityRef Building;
+    public int Index;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Building);
+      stream.Serialize(ref Index);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      TechSystem.StartResearch(f, player, Building, Index);
+    }
+  }
+
   /// <summary>기권. 다음 승패 판정에서 패배한다(항목 30).</summary>
   public unsafe class SurrenderCommand : FactoryCommand {
     public override void Serialize(BitStream stream) {

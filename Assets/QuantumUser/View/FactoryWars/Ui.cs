@@ -11,16 +11,17 @@ namespace FactoryWars.View {
     public const float MinButtonSize = 154f;
     public static readonly Vector2 ReferenceResolution = new Vector2(1920, 1080);
 
-    public static readonly Color PanelColor = new Color(0.96f, 0.98f, 1f, 0.92f);
-    public static readonly Color ButtonColor = new Color(1f, 1f, 1f, 1f);
-    public static readonly Color ButtonTextColor = new Color(0.16f, 0.20f, 0.30f, 1f);
-    public static readonly Color DisabledColor = new Color(0.82f, 0.86f, 0.92f, 0.72f);
+    // 항목 31: 색은 UiTheme 에셋에서 읽는다.
+    public static Color PanelColor => UiTheme.Current.Panel;
+    public static Color ButtonColor => UiTheme.Current.Button;
+    public static Color ButtonTextColor => UiTheme.Current.ButtonText;
+    public static Color DisabledColor => UiTheme.Current.ButtonDisabled;
 
     static Font _font;
 
     static readonly Dictionary<string, Sprite> Icons = new Dictionary<string, Sprite>();
 
-    public static Font Font => _font != null ? _font : _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+    public static Font Font => _font != null ? _font : _font = UiCatalog.FontOr(Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
 
     public static Canvas CreateCanvas(string name, int sortOrder = 0) {
       var root = new GameObject(name, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -91,7 +92,7 @@ namespace FactoryWars.View {
     public static RectTransform Panel(string name, Transform parent, Color? color = null) {
       var rect = Rect(name, parent);
       var img = rect.gameObject.AddComponent<Image>();
-      var sprite = UiSprite("panel_rectangle");
+      var sprite = UiCatalog.SpriteFor("panel");
       if (sprite != null) {
         img.sprite = sprite;
         img.type = Image.Type.Sliced;
@@ -103,7 +104,7 @@ namespace FactoryWars.View {
     public static RectTransform Capsule(string name, Transform parent, Color? color = null) {
       var rect = Rect(name, parent);
       var img = rect.gameObject.AddComponent<Image>();
-      var sprite = UiSprite("bar_round_large");
+      var sprite = UiCatalog.SpriteFor("tab");
       if (sprite != null) {
         img.sprite = sprite;
         img.type = Image.Type.Sliced;
@@ -130,7 +131,7 @@ namespace FactoryWars.View {
     public static Button Button(string name, Transform parent, string value, UnityAction onClick, int size = 28) {
       var rect = Rect(name, parent);
       var img = rect.gameObject.AddComponent<Image>();
-      var sprite = UiSprite("button_square_depth");
+      var sprite = UiCatalog.SpriteFor("button");
       if (sprite != null) {
         img.sprite = sprite;
         img.type = Image.Type.Sliced;
@@ -144,6 +145,10 @@ namespace FactoryWars.View {
       button.onClick.AddListener(() => GameAudio.Play(SoundEvent.Click));
       var label = Label("Label", rect, value, size, TextAnchor.MiddleCenter);
       label.color = ButtonTextColor;
+      // 항목 31: 긴 글자는 줄여서 칸 안에 넣는다(최소 14).
+      label.resizeTextForBestFit = true;
+      label.resizeTextMinSize = Mathf.Min(14, size);
+      label.resizeTextMaxSize = size;
       Stretch(label.rectTransform, 6f);
       return button;
     }
@@ -201,6 +206,25 @@ namespace FactoryWars.View {
     public static void SetEnabled(Button button, bool enabled) {
       button.interactable = enabled;
       button.GetComponent<Image>().color = enabled ? ButtonColor : DisabledColor;
+    }
+
+    /// <summary>항목 31: 잠긴 칸. 누를 수는 있고(이유 표시), 회색 바탕·흐린 글자·자물쇠.</summary>
+    public static void SetLocked(Button button, bool locked) {
+      button.interactable = true;
+      button.GetComponent<Image>().color = locked ? DisabledColor : ButtonColor;
+      var label = button.GetComponentInChildren<Text>();
+      if (label != null) {
+        label.color = locked ? UiTheme.Current.DisabledText : ButtonTextColor;
+      }
+      var mark = button.transform.Find("Lock");
+      if (mark == null && locked) {
+        var image = Icon("Lock", button.transform, "", new Vector2(1, 1), new Vector2(-6, -6), new Vector2(40, 40));
+        image.sprite = UiCatalog.SpriteFor("lock");
+        mark = image.transform;
+      }
+      if (mark != null) {
+        mark.gameObject.SetActive(locked);
+      }
     }
   }
 }

@@ -27,7 +27,7 @@ namespace FactoryWars.Tests {
     static QuantumGame Game => QuantumRunner.Default?.Game;
     static Frame Verified => Game.Frames.Verified;
 
-    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null, ResourceCost? stock = null, bool swapFactions = false, int truce = 0, int mirrorFaction = -1) {
+    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null, ResourceCost? stock = null, bool swapFactions = false, int truce = 0, int mirrorFaction = -1, int startingTier = 0) {
       Time.timeScale = TimeScale;
       // 씬 로드 직후, 러너의 Start 전에 규칙을 바꾼다.
       UnityEngine.Events.UnityAction<Scene, LoadSceneMode> onLoaded = (loaded, mode) => {
@@ -39,6 +39,7 @@ namespace FactoryWars.Tests {
         // 기본은 휴전 없음. 음수면 규칙의 기본값을 쓴다.
         runner.RuntimeConfig.OverrideTruce = truce >= 0;
         runner.RuntimeConfig.TruceSeconds = truce;
+        runner.RuntimeConfig.StartingTier = startingTier;
         var list = runner.LocalPlayers.ToList();
         while (list.Count < players) {
           list.Add(new RuntimePlayer { PlayerNickname = $"Extra{list.Count}", Faction = list[0].Faction, Team = list.Count });

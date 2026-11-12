@@ -21,7 +21,38 @@ namespace Quantum {
     public FP Height;
   }
 
+  /// <summary>유닛 크기 규칙(항목 31). 인구 범위는 데이터 시험이 확인한다.</summary>
+  [Serializable]
+  public struct SizeRuleSpec {
+    public UnitSize Size;
+    public FP MinPopulation;
+    public FP MaxPopulation;
+    /// <summary>한 플레이어가 동시에 가질 수 있는 수(대기열 포함). 0이면 제한 없음.</summary>
+    public int OwnedLimit;
+    /// <summary>공격 연구 단계마다 주는 피해 배율 증가(0.1 = +10%).</summary>
+    public FP AttackPerLevel;
+    /// <summary>방어 연구 단계마다 받는 피해 감소(0.1 = -10%).</summary>
+    public FP ArmorPerLevel;
+  }
+
+  /// <summary>기지 단계 업그레이드 하나(항목 31). Tier는 올라갈 단계.</summary>
+  [Serializable]
+  public struct BaseTierSpec {
+    public int Tier;
+    public ResourceCost Cost;
+    public FP Seconds;
+    /// <summary>모두 완공되어 있어야 하는 건물 역할.</summary>
+    public BuildingRole[] RequiredRoles;
+    /// <summary>AlternativeCount가 0보다 크면, RequiredRoles 대신 이 역할 건물 AlternativeCount개로도 된다.</summary>
+    public BuildingRole AlternativeRole;
+    public int AlternativeCount;
+  }
+
   public partial class GameRulesSpec : AssetObject {
+    /// <summary>항목 31 테크: 크기 규칙, 기지 단계 업그레이드, 사령부를 모두 잃으면 단계도 내려가는지.</summary>
+    public SizeRuleSpec[] SizeRules;
+    public BaseTierSpec[] BaseTiers;
+    public bool TierDropsWithHeadquarters = true;
     public string NavMeshName;
     /// <summary>배가 쓰는 수상 NavMesh 이름과 에이전트 설정(물 밖을 누르면 가까운 물 위로 보정하는 반경이 넓다). 항목 24.</summary>
     public string WaterNavMeshName;

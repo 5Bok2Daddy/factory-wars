@@ -3,6 +3,8 @@ namespace Quantum {
 
   public partial class UnitSpec : AssetObject {
     public UnitSize Size;
+    /// <summary>생산에 필요한 기지 단계(항목 31). 소형 1, 중형 2, 대형 3.</summary>
+    public int RequiredTier = 1;
     public bool IsAir;
     /// <summary>배(항목 24). 수상 NavMesh로만 다니고 점령은 못 한다. 대상으로는 지상과 같다(공중이 아니므로 지상 무기에 맞는다).</summary>
     public bool IsNaval;

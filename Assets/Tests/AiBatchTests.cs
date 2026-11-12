@@ -102,6 +102,7 @@ namespace FactoryWars.Tests {
       File.AppendAllLines(Path.Combine(AiFolder(), "lanes.csv"), LaneRows(map, run, players));
       File.AppendAllLines(Path.Combine(AiFolder(), "battlefield.csv"), BattlefieldRows(map, run, players));
       File.AppendAllLines(Path.Combine(AiFolder(), "naval.csv"), naval.Rows(map, run));
+      File.AppendAllLines(Path.Combine(AiFolder(), "tech.csv"), TechRows(map, run, players));
       Debug.Log($"[FW-AI] {row} real {F(Time.realtimeSinceStartup - realStart)}s");
       Assert.Greater(seconds, 0f);
     }
@@ -155,6 +156,35 @@ namespace FactoryWars.Tests {
       for (var p = 0; p < players; p++) {
         var state = Verified.Global->Players.GetPointer(p);
         rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{((winners >> p) & 1)},{state->Captures},{F(state->CaptureFrames / (float)Fps)},{state->CratesPicked},{state->HighGroundShots},{broken},{collapsed},{state->GarrisonEntries},{FactoryWarsUtil.SeatOf(Verified, p)}");
+      }
+      return rows;
+    }
+
+    /// <summary>
+    /// 항목 31: 자리별 단계 도달 시각(초, 못 가면 빈칸), 크기별 생산 수, 끝낸 연구 수, 끝 시점 비행장·중공업 기지 수.
+    /// 열: map,run,player,faction,seat,winner,tier2_s,tier3_s,small,medium,large,researches,airfields,heavy_works
+    /// </summary>
+    static unsafe IEnumerable<string> TechRows(string map, int run, int players) {
+      var rows = new List<string>();
+      var winners = Verified.Global->GameEnded ? Verified.Global->WinnerMask : 0;
+      for (var p = 0; p < players; p++) {
+        var state = Verified.Global->Players.GetPointer(p);
+        var tier2 = state->TierFrames[1] > 1 ? F(state->TierFrames[1] / (float)Fps) : "";
+        var tier3 = state->TierFrames[2] > 1 ? F(state->TierFrames[2] / (float)Fps) : "";
+        var researches = 0;
+        for (var bit = 0; bit < 31; bit++) {
+          researches += (state->ResearchDone >> bit) & 1;
+        }
+        var owner = p;
+        int Count(BuildingRole role) {
+          var count = 0;
+          foreach (var b in Verified.GetComponentIterator<Building>()) {
+            count += b.Component.Owner == owner && Verified.FindAsset(b.Component.Spec).Role == role ? 1 : 0;
+          }
+          return count;
+        }
+        rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{FactoryWarsUtil.SeatOf(Verified, p)},{((winners >> p) & 1)},{tier2},{tier3},"
+          + $"{state->ProducedBySize[(int)UnitSize.Small]},{state->ProducedBySize[(int)UnitSize.Medium]},{state->ProducedBySize[(int)UnitSize.Large]},{researches},{Count(BuildingRole.Airfield)},{Count(BuildingRole.HeavyWorks)}");
       }
       return rows;
     }

@@ -72,6 +72,8 @@ namespace Quantum {
     public FPVector3[] StartPositions;
     public ResourceCost StartingResources;
     public int StartingEngineers;
+    /// <summary>시작 기지 단계(항목 31). 0이면 1. 시험 맵은 3으로 모든 건물·유닛을 바로 쓴다.</summary>
+    public int StartingTier;
     /// <summary>true면 진영의 시작 전투 유닛도 배치한다. 테스트 맵에서만 쓴다.</summary>
     public bool SpawnFactionUnits;
     public ResourceNodePlacement[] ResourceNodes;

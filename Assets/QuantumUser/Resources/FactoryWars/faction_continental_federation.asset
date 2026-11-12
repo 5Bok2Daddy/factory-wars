@@ -29,7 +29,7 @@ MonoBehaviour:
   Engineer:
     Id:
       Value: 432119338306344411
-  AiSkipRoles: 07000000
+  AiSkipRoles: 
   AiEarlyRoles: 08000000
   Buildings:
   - Id:
@@ -66,11 +66,17 @@ MonoBehaviour:
   - Id:
       Value: 394273544367795017
   - Id:
+      Value: 496026920271408605
+  - Id:
       Value: 310411429557659117
   - Id:
       Value: 418627254601920637
   - Id:
+      Value: 534652888846165419
+  - Id:
       Value: 348477871482375792
+  - Id:
+      Value: 330467672929045291
   - Id:
       Value: 414552557689055005
   - Id:
@@ -87,3 +93,30 @@ MonoBehaviour:
       Value: 442872915998123145
   - Id:
       Value: 310411429557659117
+  Researches:
+  - Id:
+      Value: 299382373230097142
+  - Id:
+      Value: 520532135495849760
+  - Id:
+      Value: 504006020684554973
+  - Id:
+      Value: 383028802137243900
+  - Id:
+      Value: 297233888635177378
+  - Id:
+      Value: 277151725526098098
+  - Id:
+      Value: 286756639453145226
+  - Id:
+      Value: 452913678519384676
+  - Id:
+      Value: 405975158579797813
+  - Id:
+      Value: 522923137319931066
+  - Id:
+      Value: 283903808719312943
+  - Id:
+      Value: 475614925248474156
+  - Id:
+      Value: 451951797047902489

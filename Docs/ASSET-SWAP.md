@@ -97,3 +97,18 @@
 - 표: `VisualCatalog`(`Assets/QuantumUser/View/FactoryWars/Art/VisualCatalog.cs`). 화면 전용이며 시뮬레이션 판정(크기·사거리·충돌)과 무관합니다.
 - 연결 지점: 유닛·건물·철광산·다리 `ArtView.Create`, 소품·도시·지형 `KenneyAssetMap.Get`, 효과 `BattleFx`(muzzle·impact·explosion·flame·smoke).
 - 배치 모드: `-executeMethod FactoryWars.EditorTools.VisualCatalogTools.ScanBatch -packFolder Assets/…`, `ImportBatch -slotCsv 경로`, `ConvertBatch -packFolder Assets/…`.
+
+## 항목 31 새 유닛 칸 (임시 모델)
+
+새 유닛 6종은 아직 전용 모델이 없어 기존 모델을 빌려 크기만 바꿔 씁니다(`ViewCatalog.TemporaryModels`). 아래 칸을 채우면 그 모델이 나옵니다. 칸은 `1. Build Visual Slots`가 만듭니다(지금 표에 이미 있음).
+
+| 칸 | 이름(가칭) | 크기 | 지금 빌려 쓰는 모델 |
+| --- | --- | --- | --- |
+| `unit/ff_scout_buggy` | 정찰 버기 | 소형 | 천둥 대공차 x0.7 |
+| `unit/ff_field_support` | 야전 정비차 | 중형 | 만리 다연장포 x0.8 |
+| `unit/ff_bulwark_tank` | 방벽 중전차 | 대형 | 이글 전차 x1.3 |
+| `unit/cf_scout_bike` | 척후 오토바이 | 소형 | 이글 전차 x0.6 |
+| `unit/cf_gale_gunship` | 돌풍 공격헬기 | 중형(공중) | 호크 공격헬기 x0.9 |
+| `unit/cf_fortress_tank` | 요새 전차 | 대형 | 용린 전차 x1.3 |
+
+모델을 바꾼 뒤 `Tools > Factory Wars > UI > Capture Model Icons`로 HUD 아이콘을 다시 찍습니다(UI-SWAP.md 6번).

@@ -1,8 +1,24 @@
 namespace Quantum {
   using Photon.Deterministic;
 
+  /// <summary>AI 연구 우선순위 한 칸(항목 31). 정예화는 Size·Level을 보지 않는다.</summary>
+  [System.Serializable]
+  public struct ResearchPick {
+    public ResearchKind Kind;
+    public UnitSize Size;
+    public int Level;
+  }
+
   /// <summary>AI 난이도 하나의 행동 수치.</summary>
   public partial class AiSpec : AssetObject {
+    /// <summary>항목 31: 기지 단계 업그레이드를 시작하는 시각. [0]은 2단계, [1]은 3단계.</summary>
+    public FP[] TierSeconds;
+    /// <summary>연구를 시작하는 시각과 우선순위.</summary>
+    public FP ResearchStartSeconds;
+    public ResearchPick[] ResearchOrder;
+    /// <summary>군대 인구 중 크기별 목표 비율. [0] 소형, [1] 중형, [2] 대형. 목표 + SizeShareMargin을 넘는 크기는 다른 후보가 있으면 뽑지 않는다.</summary>
+    public FP[] SizeShares;
+    public FP SizeShareMargin;
     public FP ThinkSeconds;
     public int EngineerTarget;
     /// <summary>순서대로 짓는다. 같은 역할을 두 번 적으면 두 채 짓는다.</summary>

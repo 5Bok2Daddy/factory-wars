@@ -16,10 +16,31 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/ai_easy
     Guid:
       Value: 336900429687469725
+  TierSeconds:
+  - RawValue: 31457280
+  - RawValue: 58982400
+  ResearchStartSeconds:
+    RawValue: 31457280
+  ResearchOrder:
+  - Kind: 0
+    Size: 1
+    Level: 1
+  - Kind: 0
+    Size: 2
+    Level: 1
+  - Kind: 2
+    Size: 1
+    Level: 1
+  SizeShares:
+  - RawValue: 32768
+  - RawValue: 26214
+  - RawValue: 6553
+  SizeShareMargin:
+    RawValue: 13107
   ThinkSeconds:
     RawValue: 327680
   EngineerTarget: 6
-  BuildOrder: 030000000400000001000000020000000600000001000000
+  BuildOrder: 0300000004000000010000000200000005000000060000000100000008000000
   IronShareEarly:
     RawValue: 39321
   IronShareLate:

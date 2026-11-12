@@ -3,6 +3,8 @@ namespace Quantum {
 
   public partial class BuildingSpec : AssetObject {
     public BuildingRole Role;
+    /// <summary>짓는 데 필요한 기지 단계(항목 31).</summary>
+    public int RequiredTier = 1;
     public ResourceCost Cost;
     public FP BuildTimeSeconds;
     public FP MaxHealth;

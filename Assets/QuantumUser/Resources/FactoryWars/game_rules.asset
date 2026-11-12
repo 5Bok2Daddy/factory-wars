@@ -16,6 +16,69 @@ MonoBehaviour:
     Path: QuantumUser/Resources/FactoryWars/game_rules
     Guid:
       Value: 463454056923249890
+  SizeRules:
+  - Size: 1
+    MinPopulation:
+      RawValue: 32768
+    MaxPopulation:
+      RawValue: 65536
+    OwnedLimit: 0
+    AttackPerLevel:
+      RawValue: 6553
+    ArmorPerLevel:
+      RawValue: 6553
+  - Size: 2
+    MinPopulation:
+      RawValue: 131072
+    MaxPopulation:
+      RawValue: 196608
+    OwnedLimit: 0
+    AttackPerLevel:
+      RawValue: 6553
+    ArmorPerLevel:
+      RawValue: 6553
+  - Size: 3
+    MinPopulation:
+      RawValue: 327680
+    MaxPopulation:
+      RawValue: 393216
+    OwnedLimit: 4
+    AttackPerLevel:
+      RawValue: 6553
+    ArmorPerLevel:
+      RawValue: 6553
+  BaseTiers:
+  - Tier: 2
+    Cost:
+      Iron:
+        RawValue: 19660800
+      Wood:
+        RawValue: 13107200
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 6553600
+    Seconds:
+      RawValue: 4915200
+    RequiredRoles: 05000000
+    AlternativeRole: 0
+    AlternativeCount: 0
+  - Tier: 3
+    Cost:
+      Iron:
+        RawValue: 32768000
+      Wood:
+        RawValue: 13107200
+      Steel:
+        RawValue: 13107200
+      Power:
+        RawValue: 13107200
+    Seconds:
+      RawValue: 5898240
+    RequiredRoles: 08000000
+    AlternativeRole: 0
+    AlternativeCount: 0
+  TierDropsWithHeadquarters: 1
   NavMeshName: NavMesh
   WaterNavMeshName: WaterNavMesh
   NavalAgent:

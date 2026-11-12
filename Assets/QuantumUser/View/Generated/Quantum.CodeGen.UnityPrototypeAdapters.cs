@@ -113,6 +113,12 @@ namespace Quantum.Prototypes.Unity {
     public FP ProcessTimer;
     public QBoolean HasRally;
     public FPVector3 Rally;
+    public Int32 Tier;
+    public Int32 UpgradeTier;
+    public FP UpgradeRemaining;
+    public Quantum.Prototypes.ResourceCostPrototype UpgradePaid;
+    public Int32 Research;
+    public FP ResearchRemaining;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BuildingPrototype prototype);
     public override Quantum.Prototypes.BuildingPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BuildingPrototype();
@@ -131,6 +137,12 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.ProcessTimer, out result.ProcessTimer);
       converter.Convert(this.HasRally, out result.HasRally);
       converter.Convert(this.Rally, out result.Rally);
+      converter.Convert(this.Tier, out result.Tier);
+      converter.Convert(this.UpgradeTier, out result.UpgradeTier);
+      converter.Convert(this.UpgradeRemaining, out result.UpgradeRemaining);
+      converter.Convert(this.UpgradePaid, out result.UpgradePaid);
+      converter.Convert(this.Research, out result.Research);
+      converter.Convert(this.ResearchRemaining, out result.ResearchRemaining);
       ConvertUser(converter, ref result);
       return result;
     }

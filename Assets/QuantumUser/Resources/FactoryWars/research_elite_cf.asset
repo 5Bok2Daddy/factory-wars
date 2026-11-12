@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf63a0194e7e6f642ba6543a457acd64, type: 3}
+  m_Name: research_elite_cf
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/research_elite_cf
+    Guid:
+      Value: 451951797047902489
+  Kind: 2
+  Size: 1
+  Level: 1
+  Cost:
+    Iron:
+      RawValue: 13107200
+    Wood:
+      RawValue: 6553600
+    Steel:
+      RawValue: 6553600
+    Power:
+      RawValue: 3276800
+  Seconds:
+    RawValue: 3932160
+  RequiredTier: 2
+  Requires:
+    Id:
+      Value: 0
+  EliteUnit:
+    Id:
+      Value: 442872915998123145
+  EliteHealthMultiplier:
+    RawValue: 85196
+  EliteRangeBonus:
+    RawValue: 65536
+  EliteDamageMultiplier:
+    RawValue: 72089

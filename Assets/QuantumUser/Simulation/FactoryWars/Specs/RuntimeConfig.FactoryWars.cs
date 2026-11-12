@@ -43,6 +43,8 @@ namespace Quantum {
     public ResourceCost StartingResources;
     public ScenarioUnit[] ScenarioUnits;
     public ScenarioBuilding[] ScenarioBuildings;
+    /// <summary>0보다 크면 맵 대신 이 기지 단계로 시작한다(항목 31 시험·튜토리얼).</summary>
+    public int StartingTier;
   }
 
   public partial class RuntimePlayer {

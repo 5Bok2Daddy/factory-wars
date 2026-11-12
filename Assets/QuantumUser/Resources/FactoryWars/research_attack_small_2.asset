@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf63a0194e7e6f642ba6543a457acd64, type: 3}
+  m_Name: research_attack_small_2
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/research_attack_small_2
+    Guid:
+      Value: 520532135495849760
+  Kind: 0
+  Size: 1
+  Level: 2
+  Cost:
+    Iron:
+      RawValue: 14745600
+    Wood:
+      RawValue: 9830400
+    Steel:
+      RawValue: 4915200
+    Power:
+      RawValue: 4915200
+  Seconds:
+    RawValue: 4915200
+  RequiredTier: 3
+  Requires:
+    Id:
+      Value: 299382373230097142
+  EliteUnit:
+    Id:
+      Value: 0
+  EliteHealthMultiplier:
+    RawValue: 65536
+  EliteRangeBonus:
+    RawValue: 0
+  EliteDamageMultiplier:
+    RawValue: 65536

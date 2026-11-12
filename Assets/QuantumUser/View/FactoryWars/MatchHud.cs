@@ -9,47 +9,75 @@ namespace FactoryWars.View {
   using UnityEngine.UI;
   using Button = UnityEngine.UI.Button;
 
-  /// <summary>우하단 패널의 버튼 하나.</summary>
+  /// <summary>명령 카드의 칸 하나. Locked면 회색·자물쇠이고 누르거나 길게 누르면 Reason을 보인다.</summary>
   public struct ContextEntry {
     public string Label;
     public bool Enabled;
     public Action Action;
     public string Icon;
+    public bool Locked;
+    public string Reason;
+    /// <summary>길게 누를 때 보일 설명(잠기지 않은 칸).</summary>
+    public string Detail;
   }
 
-  /// <summary>대전 화면의 HUD. 시뮬레이션은 읽기만 하고 행동은 커맨드로 보낸다.</summary>
+  /// <summary>
+  /// 대전 화면 HUD(항목 31 재구성). 4구역: 상단 왼쪽 자원 한 줄, 상단 가운데 휴전·경고(없으면 그리지 않음), 상단 오른쪽 외교·메뉴 아이콘,
+  /// 하단 왼쪽 미니맵 + 빠른 버튼(유휴 공병·전체 군대·부대 1~3), 하단 가운데 선택 카드, 하단 오른쪽 3x3 명령 카드.
+  /// 시뮬레이션은 읽기만 하고 행동은 커맨드로 보낸다. 색·그림은 UiTheme·UiCatalog.
+  /// </summary>
   public unsafe class MatchHud : MonoBehaviour {
     const float RefreshSeconds = 0.2f;
     const float AlertSeconds = 3f;
     const float NoteSeconds = 3f;
-    // 29 2-5: 4열 3행 12슬롯 단일 화면 그리드 패널 (다음 페이지 넘김 버튼 제거, 화면 1/3 이하 보장, 9mm 규격)
-    const int ContextSlots = 16;
-    const int ContextColumns = 4;
-    const int ContextRows = 4;
+    const float TooltipSeconds = 3f;
+    const float FlashSeconds = 2f;
+    public const int ContextSlots = 9;
+    public const int ContextColumns = 3;
+    const float Cell = 154f;
+    const float Gap = 8f;
+    const float Pad = 12f;
+    const float HeaderHeight = 50f;
+    const int MaxTypeButtons = 4;
+    const int QueueIcons = 5;
 
     public readonly List<ContextEntry> Entries = new List<ContextEntry>();
     public readonly List<string> NoteInbox = new List<string>();
 
     public MatchController Controller;
     public bool BoxMode { get; private set; }
-    public int ContextPage { get; private set; }
-    /// <summary>4x3 12칸 단일 화면 구성으로 다음 쪽 버튼 없이 전 항목이 한눈에 보인다.</summary>
+    public int ContextPage => 0;
+    /// <summary>명령 카드는 한 화면(3x3)이다. 하위 메뉴(건설 단계·연구 크기)는 "뒤로"로 돌아온다.</summary>
     public int ContextPages => 1;
     public string TopBarText { get; private set; } = "";
     public int ResourceIcons => _resources.Count(r => r.Icon.sprite != null);
     public string AlertText => _alert.text;
     public string NoteText => _note.text;
     public string TruceText => _truce.text;
+    public string TooltipText => _tooltipText != null ? _tooltipText.text : "";
+    public string SelectionTitle => _cardTitle != null ? _cardTitle.text : "";
+    public string SelectionBadge => _cardBadgeText != null && _cardBadge.gameObject.activeSelf ? _cardBadgeText.text : "";
+    public string SelectionDetail => _cardDetail != null ? _cardDetail.text : "";
+    public int SelectionTypeButtons => _typeButtons.Count(b => b.gameObject.activeSelf);
+    public int IdleEngineers { get; private set; }
     public bool DiplomacyOpen => _diplomacy.gameObject.activeSelf;
     public RectTransform Root { get; private set; }
+    public string MenuName => _menu.ToString() + (_menu == Menu.Build ? _menuTier.ToString() : _menu == Menu.Research ? _menuSize.ToString() : "");
 
-    static readonly (string Icon, float X, float Width)[] ResourceSlots = {
-      ("res_iron", 12, 200), ("res_wood", 220, 200), ("res_steel", 428, 200), ("res_power", 636, 500), ("res_population", 1144, 220),
+    enum Menu { Root, Build, Research }
+
+    static readonly (string Icon, float Width)[] ResourceSlots = {
+      ("res_iron", 150), ("res_wood", 150), ("res_steel", 150), ("res_power", 280), ("res_population", 150),
     };
+    static readonly MissingResource[] ResourceBits = { MissingResource.Iron, MissingResource.Wood, MissingResource.Steel, MissingResource.Power, MissingResource.Population };
 
-    readonly List<(Image Icon, Text Value)> _resources = new List<(Image, Text)>();
+    readonly List<(Image Icon, Text Value, Image Back)> _resources = new List<(Image, Text, Image)>();
+    readonly float[] _flashUntil = new float[5];
+    RectTransform _truceBadge;
     RectTransform _alertBubble;
     RectTransform _noteBubble;
+    RectTransform _tooltip;
+    Text _tooltipText;
     Text _alert;
     Text _note;
     Text _status;
@@ -58,9 +86,20 @@ namespace FactoryWars.View {
     GameObject _contextPanel;
     Button[] _context;
     Button _boxButton;
-    Button _saveButton;
+    Button _idleButton;
+    Text _idleBadge;
     Button[] _groupButtons;
-    bool _saveMode;
+    RectTransform _card;
+    Image _cardIcon;
+    Text _cardTitle;
+    RectTransform _cardBadge;
+    Text _cardBadgeText;
+    RectTransform _cardHealth;
+    Image _cardHealthFill;
+    Text _cardDetail;
+    readonly List<Image> _queueIcons = new List<Image>();
+    readonly List<Button> _typeButtons = new List<Button>();
+    readonly List<AssetRef<UnitSpec>> _typeSpecs = new List<AssetRef<UnitSpec>>();
     RectTransform _diplomacy;
     Text _inbox;
     readonly List<(PlayerRef Player, Text Name, Button Propose, Button Accept, Button Reject, Button Break, Button Note)> _rows =
@@ -69,65 +108,90 @@ namespace FactoryWars.View {
     float _nextRefresh;
     float _alertUntil;
     float _noteUntil;
+    float _tooltipUntil;
+    Menu _menu;
+    int _menuTier = 1;
+    UnitSize _menuSize = UnitSize.Small;
+    string _selectionKey = "";
+
+    static float ContextWidth => ContextColumns * Cell + (ContextColumns - 1) * Gap + 2 * Pad;
+    static float ContextHeight => ContextColumns * Cell + (ContextColumns - 1) * Gap + 2 * Pad + HeaderHeight;
+    /// <summary>미니맵(300) + 빠른 버튼 2열의 오른쪽 끝.</summary>
+    const float LeftClusterWidth = 8 + 300 + 16 + 2 * 154 + 10 + 16;
 
     public void Build(Frame frame) {
+      var theme = UiTheme.Current;
       var canvas = Ui.CreateCanvas("MatchHud");
       canvas.transform.SetParent(transform, false);
       Root = Ui.SafeArea(canvas);
 
+      // 상단 왼쪽: 자원 한 줄.
       var top = Ui.Rect("TopBar", Root);
       top.anchorMin = new Vector2(0, 1);
-      top.anchorMax = Vector2.one;
-      top.pivot = new Vector2(0.5f, 1);
-      top.sizeDelta = new Vector2(0, 166);
+      top.anchorMax = new Vector2(0, 1);
+      top.pivot = new Vector2(0, 1);
+      top.anchoredPosition = new Vector2(12, -8);
+      top.sizeDelta = new Vector2(ResourceSlots.Sum(r => r.Width) + (ResourceSlots.Length - 1) * Gap, 60);
       _resources.Clear();
-      foreach (var (icon, x, width) in ResourceSlots) {
-        var capsule = Ui.Capsule($"{icon}_capsule", top, new Color(0.96f, 0.98f, 1f, 0.95f));
-        Ui.Place(capsule, new Vector2(0, 0.5f), new Vector2(x, -6), new Vector2(width, 56));
-        var image = Ui.Icon(icon, capsule, icon, new Vector2(0, 0.5f), new Vector2(6, 0), new Vector2(44, 44));
-        var value = Ui.Label($"{icon}_value", capsule, "", 30);
-        value.color = new Color(0.16f, 0.20f, 0.30f, 1f);
-        Ui.Place(value.rectTransform, new Vector2(0, 0.5f), new Vector2(54, 0), new Vector2(width - 58, 48));
-        _resources.Add((image, value));
+      var x = 0f;
+      foreach (var (icon, width) in ResourceSlots) {
+        var capsule = Ui.Capsule($"{icon}_capsule", top, theme.Panel);
+        Ui.Place(capsule, new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(width, 56));
+        var image = Ui.Icon(icon, capsule, icon, new Vector2(0, 0.5f), new Vector2(6, 0), new Vector2(42, 42));
+        var slot = UiCatalog.SpriteFor(icon);
+        if (slot != null) {
+          image.sprite = slot;
+        }
+        var value = Ui.Label($"{icon}_value", capsule, "", theme.FontMedium - 2);
+        value.color = theme.PanelText;
+        value.horizontalOverflow = HorizontalWrapMode.Overflow;
+        Ui.Place(value.rectTransform, new Vector2(0, 0.5f), new Vector2(52, 0), new Vector2(width - 56, 48));
+        _resources.Add((image, value, capsule.GetComponent<Image>()));
+        x += width + Gap;
       }
 
-      var diplomacyButton = Ui.Button("DiplomacyButton", top, "외교", ToggleDiplomacy);
-      Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-180, -6), new Vector2(160, 154));
-      var menuButton = Ui.Button("MenuButton", top, "메뉴", () => Controller.TogglePause());
-      Ui.Place((RectTransform)menuButton.transform, Vector2.one, new Vector2(-12, -6), new Vector2(160, 154));
+      // 상단 오른쪽: 외교·메뉴 아이콘 버튼.
+      var menuButton = IconButton("MenuButton", Root, "ui_menu", "메뉴", () => Controller.TogglePause());
+      Ui.Place((RectTransform)menuButton.transform, Vector2.one, new Vector2(-12, -8), new Vector2(Cell, Cell));
+      var diplomacyButton = IconButton("DiplomacyButton", Root, "ui_diplomacy", "외교", ToggleDiplomacy);
+      Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-12 - Cell - Gap, -8), new Vector2(Cell, Cell));
 
-      // 중앙 7분 휴전 타이머 캡슐 배지
-      var truceBadge = Ui.Capsule("TruceBadge", top, new Color(0.96f, 0.98f, 1f, 0.95f));
-      Ui.Place(truceBadge, new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(360, 56));
-      _truce = Ui.Label("Truce", truceBadge, "", 28, TextAnchor.MiddleCenter);
+      // 상단 가운데(자원 줄 아래): 휴전·연결 대기. 글자가 없으면 통째로 숨긴다(빈 막대 B5).
+      _truceBadge = Ui.Capsule("TruceBadge", Root, theme.Panel);
+      Ui.Place(_truceBadge, new Vector2(0.5f, 1), new Vector2(0, -76), new Vector2(560, 56));
+      _truce = Ui.Label("Truce", _truceBadge, "", theme.FontMedium, TextAnchor.MiddleCenter);
       Ui.Stretch(_truce.rectTransform);
-      _truce.color = new Color(0.16f, 0.20f, 0.30f, 1f);
+      _truce.color = theme.PanelText;
+      _truceBadge.gameObject.SetActive(false);
 
-      // 알림·쪽지: 둥근 말풍선 팝 캡슐
-      _alertBubble = Ui.Capsule("AlertBubble", Root, new Color(0.96f, 0.98f, 1f, 0.95f));
-      Ui.Place(_alertBubble, new Vector2(0.5f, 1), new Vector2(0, -136), new Vector2(800, 56));
-      _alert = Ui.Label("Alert", _alertBubble, "", 32, TextAnchor.MiddleCenter);
+      _alertBubble = Ui.Capsule("AlertBubble", Root, theme.Panel);
+      Ui.Place(_alertBubble, new Vector2(0.5f, 1), new Vector2(0, -140), new Vector2(800, 56));
+      _alert = Ui.Label("Alert", _alertBubble, "", theme.FontMedium + 2, TextAnchor.MiddleCenter);
+      _alert.resizeTextForBestFit = true;
+      _alert.resizeTextMinSize = theme.FontSmall - 4;
+      _alert.resizeTextMaxSize = theme.FontMedium + 2;
       Ui.Stretch(_alert.rectTransform, 4f);
-      _alert.color = new Color(0.16f, 0.20f, 0.30f, 1f);
+      _alert.color = theme.PanelText;
       _alertBubble.gameObject.SetActive(false);
       // 알림을 누르면 그 자리로 카메라가 간다(항목 30).
       _alertBubble.gameObject.AddComponent<ClickRelay>().OnClick = JumpToAlert;
 
-      // 위쪽: 유휴 공병·전체 군대(항목 30). 엄지가 닿는 오른쪽 위, 외교·메뉴 옆.
-      var idleButton = Ui.Button("IdleEngineerButton", top, "유휴\n공병", SelectIdleEngineer);
-      Ui.Place((RectTransform)idleButton.transform, Vector2.one, new Vector2(-516, -6), new Vector2(160, 154));
-      var armyButton = Ui.Button("ArmyButton", top, "전체\n군대", SelectArmy);
-      Ui.Place((RectTransform)armyButton.transform, Vector2.one, new Vector2(-348, -6), new Vector2(160, 154));
-
-      _noteBubble = Ui.Capsule("NoteBubble", Root, new Color(0.96f, 0.98f, 1f, 0.95f));
-      Ui.Place(_noteBubble, new Vector2(0.5f, 1), new Vector2(0, -198), new Vector2(800, 56));
-      _note = Ui.Label("Note", _noteBubble, "", 30, TextAnchor.MiddleCenter);
+      _noteBubble = Ui.Capsule("NoteBubble", Root, theme.Panel);
+      Ui.Place(_noteBubble, new Vector2(0.5f, 1), new Vector2(0, -204), new Vector2(800, 56));
+      _note = Ui.Label("Note", _noteBubble, "", theme.FontMedium, TextAnchor.MiddleCenter);
+      _note.resizeTextForBestFit = true;
+      _note.resizeTextMinSize = theme.FontSmall - 4;
+      _note.resizeTextMaxSize = theme.FontMedium;
       Ui.Stretch(_note.rectTransform, 4f);
-      _note.color = new Color(0.16f, 0.20f, 0.30f, 1f);
+      _note.color = theme.PanelText;
       _noteBubble.gameObject.SetActive(false);
 
-      // 왼쪽 아래 미니맵: 둥근 프레임 + 미니맵 (Kenney 둥근 팝 UI).
-      var mapFrame = Ui.Panel("MinimapFrame", Root, new Color(0.96f, 0.98f, 1f, 0.92f));
+      // 하단 왼쪽: 미니맵.
+      var mapFrame = Ui.Panel("MinimapFrame", Root, theme.Panel);
+      var frameSprite = UiCatalog.SpriteFor("minimap_frame");
+      if (frameSprite != null) {
+        mapFrame.GetComponent<Image>().sprite = frameSprite;
+      }
       Ui.Place(mapFrame, Vector2.zero, new Vector2(8, 8), new Vector2(308, 308));
       var map = Ui.Rect("Minimap", mapFrame);
       Ui.Place(map, Vector2.zero, new Vector2(4, 4), new Vector2(300, 300));
@@ -136,58 +200,33 @@ namespace FactoryWars.View {
       _minimap.Init(frame.FindAsset<MapSpec>(frame.Map.UserAsset));
       _minimap.OnPick = world => Controller.Camera.MoveTo(world);
 
-      // 왼쪽 아래 미니맵 오른쪽: 선택·부대 버튼 (동글동글한 팝 UI, 9mm 이상 규격, 2x3 배치로 태블릿/모바일 어떤 화면비에서도 ContextPanel과 겹침 없음).
+      // 화면 왼쪽 가장자리(미니맵 위): 범위 선택 토글.
+      _boxButton = IconButton("BoxButton", Root, "ui_box", "범위", ToggleBoxMode);
+      Ui.Place((RectTransform)_boxButton.transform, Vector2.zero, new Vector2(8, 8 + 308 + Gap), new Vector2(Cell, Cell));
+
+      // 미니맵 옆: 유휴 공병(숫자 배지)·전체 군대·부대 1~3(누르면 선택, 두 번 누르면 카메라, 길게 누르면 지정).
       var actions = Ui.Rect("Actions", Root);
-      Ui.Place(actions, Vector2.zero, new Vector2(324, 12), new Vector2(2 * 154 + 10, 3 * 154 + 20));
+      Ui.Place(actions, Vector2.zero, new Vector2(324, 8), new Vector2(2 * Cell + 10, 3 * Cell + 20));
       var grid = actions.gameObject.AddComponent<GridLayoutGroup>();
-      grid.cellSize = new Vector2(154, 154);
+      grid.cellSize = new Vector2(Cell, Cell);
       grid.spacing = new Vector2(10, 10);
+      grid.startCorner = GridLayoutGroup.Corner.LowerLeft;
+      grid.childAlignment = TextAnchor.LowerLeft;
       grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
       grid.constraintCount = 2;
-      _boxButton = Ui.Button("BoxButton", actions, "범위\n선택", ToggleBoxMode);
-      Ui.Button("StopButton", actions, "정지", () => Controller.Stop());
-      _saveButton = Ui.Button("SaveButton", actions, "부대\n지정", () => {
-        _saveMode = _saveMode == false;
-        Ui.SetLabel(_saveButton, _saveMode ? "번호를\n누르세요" : "부대\n지정");
-      });
       _groupButtons = new Button[SelectionModel.GroupCount];
       for (var i = 0; i < SelectionModel.GroupCount; i++) {
         var index = i;
-        _groupButtons[i] = Ui.Button($"Group{i + 1}", actions, $"{i + 1}부대", () => PressGroup(index));
+        _groupButtons[i] = IconButton($"Group{i + 1}", actions, "ui_group", $"{i + 1}부대", () => PressGroup(index));
+        LongPress.Attach(_groupButtons[i], () => AssignGroup(index));
       }
+      _idleButton = IconButton("IdleEngineerButton", actions, "ui_idle", "유휴 공병", SelectIdleEngineer);
+      _idleBadge = Badge(_idleButton.transform, theme.Danger);
+      IconButton("ArmyButton", actions, "ui_army", "전체 군대", SelectArmy);
+      // 그리드는 아래 왼쪽부터 채운다: 1층 1·2부대, 2층 3부대·유휴 공병, 3층 전체 군대.
 
-      // 오른쪽 아래: 한눈에 보기 건설·생산 패널 (화이트/파스텔 톤 둥근 패널, 4x3 12슬롯 단일 화면 그리드, 다음 쪽 버튼 없이 전 항목 노출, 1/3 초과 금지).
-      var panel = Ui.Panel("ContextPanel", Root, new Color(0.96f, 0.98f, 1f, 0.92f));
-      _contextPanel = panel.gameObject;
-      const float cellW = 154f;
-      const float cellH = 154f;
-      const float space = 8f;
-      const float padX = 24f;
-      const float padY = 64f;
-      var totalW = ContextColumns * cellW + (ContextColumns - 1) * space + padX;
-      var totalH = ContextRows * cellH + (ContextRows - 1) * space + padY;
-      Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 12), new Vector2(totalW, totalH));
-      _status = Ui.Label("Status", panel, "", 28);
-      _status.color = new Color(0.16f, 0.20f, 0.30f, 1f);
-      _status.rectTransform.anchorMin = new Vector2(0, 1);
-      _status.rectTransform.anchorMax = Vector2.one;
-      _status.rectTransform.pivot = new Vector2(0.5f, 1);
-      _status.rectTransform.sizeDelta = new Vector2(-24, 46);
-      _status.rectTransform.anchoredPosition = new Vector2(0, -6);
-      var slots = Ui.Rect("Slots", panel);
-      Ui.Place(slots, Vector2.zero, new Vector2(12, 12), new Vector2(totalW - padX, totalH - padY));
-      var slotGrid = slots.gameObject.AddComponent<GridLayoutGroup>();
-      slotGrid.cellSize = new Vector2(cellW, cellH);
-      slotGrid.spacing = new Vector2(space, space);
-      slotGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-      slotGrid.constraintCount = ContextColumns;
-      _context = new Button[ContextSlots];
-      for (var i = 0; i < ContextSlots; i++) {
-        var index = i;
-        _context[i] = Ui.Button($"Context{i}", slots, "", () => PressContext(index), 22);
-        ((RectTransform)_context[i].transform).sizeDelta = new Vector2(cellW, cellH);
-      }
-
+      BuildCard(theme);
+      BuildContext(theme);
       BuildDiplomacy(frame);
 
       QuantumEvent.Subscribe<EventActionRejected>(this, OnRejected);
@@ -201,6 +240,132 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventCratePicked>(this, OnCratePicked);
       QuantumEvent.Subscribe<EventCityBuildingCollapsed>(this, e => GameAudio.Play(SoundEvent.Collapse));
       QuantumEvent.Subscribe<EventPlayerConnection>(this, OnConnection);
+      QuantumEvent.Subscribe<EventBaseTierChanged>(this, e => {
+        if (e.Player == Controller.Player) {
+          ShowAlert($"{Texts.TierName(e.Tier)} 도달");
+        }
+      });
+      QuantumEvent.Subscribe<EventResearchCompleted>(this, e => {
+        if (e.Player == Controller.Player) {
+          var research = TechSystem.ResearchAt(e.Game.Frames.Verified, e.Player, e.Index);
+          ShowAlert(research != null ? $"연구 완료: {Texts.ResearchName(research, UnitName)}" : "연구 완료");
+        }
+      });
+    }
+
+    /// <summary>아이콘 위 + 짧은 글자 아래 버튼.</summary>
+    static Button IconButton(string name, Transform parent, string icon, string label, UnityEngine.Events.UnityAction onClick) {
+      var button = Ui.Button(name, parent, label, onClick, UiTheme.Current.FontSmall);
+      Ui.SetIcon(button, Ui.IconSprite(icon));
+      return button;
+    }
+
+    static Text Badge(Transform parent, Color color) {
+      var badge = Ui.Capsule("Badge", parent, color);
+      Ui.Place(badge, Vector2.one, new Vector2(-4, -4), new Vector2(52, 40));
+      var text = Ui.Label("Count", badge, "", UiTheme.Current.FontSmall, TextAnchor.MiddleCenter);
+      text.color = Color.white;
+      Ui.Stretch(text.rectTransform);
+      badge.gameObject.SetActive(false);
+      return text;
+    }
+
+    void BuildCard(UiTheme theme) {
+      _card = Ui.Panel("SelectionCard", Root, theme.Panel);
+      Ui.Place(_card, new Vector2(0.5f, 0), new Vector2(0, 8), new Vector2(660, Cell + 2 * Pad + 36));
+      var frame = Ui.Rect("IconFrame", _card);
+      var frameImage = frame.gameObject.AddComponent<Image>();
+      frameImage.sprite = UiCatalog.SpriteFor("icon_frame");
+      frameImage.type = Image.Type.Sliced;
+      frameImage.raycastTarget = false;
+      Ui.Place(frame, new Vector2(0, 0.5f), new Vector2(Pad, 0), new Vector2(150, 150));
+      _cardIcon = Ui.Icon("Icon", frame, "", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(124, 124));
+      _cardTitle = Ui.Label("Title", _card, "", theme.FontLarge - 2);
+      _cardTitle.color = theme.PanelText;
+      Ui.Place(_cardTitle.rectTransform, new Vector2(0, 1), new Vector2(176, -10), new Vector2(380, 44));
+      _cardBadge = Ui.Capsule("SizeBadge", _card, theme.Accent);
+      var badgeSprite = UiCatalog.SpriteFor("badge_small");
+      if (badgeSprite != null) {
+        _cardBadge.GetComponent<Image>().sprite = badgeSprite;
+      }
+      Ui.Place(_cardBadge, new Vector2(1, 1), new Vector2(-Pad, -12), new Vector2(92, 40));
+      _cardBadgeText = Ui.Label("Text", _cardBadge, "", theme.FontSmall, TextAnchor.MiddleCenter);
+      _cardBadgeText.color = Color.white;
+      Ui.Stretch(_cardBadgeText.rectTransform);
+      _cardHealth = Ui.Rect("HealthBar", _card);
+      var back = _cardHealth.gameObject.AddComponent<Image>();
+      back.sprite = UiCatalog.SpriteFor("health_bar");
+      back.type = Image.Type.Sliced;
+      back.color = new Color(0.2f, 0.22f, 0.26f, 0.6f);
+      back.raycastTarget = false;
+      Ui.Place(_cardHealth, new Vector2(0, 1), new Vector2(176, -60), new Vector2(460, 20));
+      var fill = Ui.Rect("Fill", _cardHealth);
+      _cardHealthFill = fill.gameObject.AddComponent<Image>();
+      _cardHealthFill.sprite = UiCatalog.SpriteFor("health_fill");
+      _cardHealthFill.type = Image.Type.Sliced;
+      _cardHealthFill.raycastTarget = false;
+      fill.anchorMin = Vector2.zero;
+      fill.anchorMax = new Vector2(1, 1);
+      fill.offsetMin = Vector2.zero;
+      fill.offsetMax = Vector2.zero;
+      _cardDetail = Ui.Label("Detail", _card, "", theme.FontSmall, TextAnchor.UpperLeft);
+      _cardDetail.color = theme.PanelText;
+      Ui.Place(_cardDetail.rectTransform, new Vector2(0, 1), new Vector2(176, -88), new Vector2(470, 100));
+      for (var i = 0; i < QueueIcons; i++) {
+        var icon = Ui.Icon($"Queue{i}", _card, "", new Vector2(0, 0), new Vector2(176 + i * 64, Pad), new Vector2(56, 56));
+        _queueIcons.Add(icon);
+      }
+      // 여러 종류 선택: 종류별 아이콘 + 개수. 누르면 그 종류만 남긴다.
+      for (var i = 0; i < MaxTypeButtons; i++) {
+        var index = i;
+        var button = Ui.Button($"Type{i}", _card, "", () => SelectType(index), theme.FontSmall);
+        Ui.Place((RectTransform)button.transform, new Vector2(0, 0.5f), new Vector2(Pad + i * (Cell + Gap), 0), new Vector2(Cell, Cell));
+        button.gameObject.SetActive(false);
+        _typeButtons.Add(button);
+      }
+      _card.gameObject.SetActive(false);
+    }
+
+    void BuildContext(UiTheme theme) {
+      var panel = Ui.Panel("ContextPanel", Root, theme.Panel);
+      _contextPanel = panel.gameObject;
+      Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 8), new Vector2(ContextWidth, ContextHeight));
+      _status = Ui.Label("Status", panel, "", theme.FontSmall + 2);
+      _status.color = theme.PanelText;
+      _status.horizontalOverflow = HorizontalWrapMode.Wrap;
+      _status.resizeTextForBestFit = true;
+      _status.resizeTextMinSize = theme.FontSmall - 4;
+      _status.resizeTextMaxSize = theme.FontSmall + 2;
+      _status.rectTransform.anchorMin = new Vector2(0, 1);
+      _status.rectTransform.anchorMax = Vector2.one;
+      _status.rectTransform.pivot = new Vector2(0.5f, 1);
+      _status.rectTransform.sizeDelta = new Vector2(-2 * Pad, HeaderHeight - 4);
+      _status.rectTransform.anchoredPosition = new Vector2(0, -6);
+      _context = new Button[ContextSlots];
+      for (var i = 0; i < ContextSlots; i++) {
+        var index = i;
+        _context[i] = Ui.Button($"Context{i}", panel, "", () => PressContext(index), theme.FontSmall);
+        var row = i / ContextColumns;
+        var column = i % ContextColumns;
+        // 빈 칸은 비워 둔다: 칸마다 고정 자리.
+        Ui.Place((RectTransform)_context[i].transform, new Vector2(0, 1), new Vector2(Pad + column * (Cell + Gap), -HeaderHeight - Pad - row * (Cell + Gap)), new Vector2(Cell, Cell));
+        ((RectTransform)_context[i].transform).pivot = new Vector2(0, 1);
+        LongPress.Attach(_context[i], () => LongPressContext(index));
+      }
+      _contextPanel.SetActive(false);
+
+      // 툴팁: 명령 카드 바로 위.
+      _tooltip = Ui.Panel("Tooltip", Root, new Color(0.12f, 0.15f, 0.22f, 0.94f));
+      var tooltipSprite = UiCatalog.SpriteFor("tooltip");
+      if (tooltipSprite != null) {
+        _tooltip.GetComponent<Image>().sprite = tooltipSprite;
+      }
+      Ui.Place(_tooltip, new Vector2(1, 0), new Vector2(-12, 8 + ContextHeight + Gap), new Vector2(ContextWidth, 96));
+      _tooltipText = Ui.Label("Text", _tooltip, "", theme.FontSmall + 2, TextAnchor.MiddleLeft);
+      _tooltipText.color = Color.white;
+      Ui.Stretch(_tooltipText.rectTransform, 14f);
+      _tooltip.GetComponent<Image>().raycastTarget = false;
+      _tooltip.gameObject.SetActive(false);
     }
 
     void OnBaseAttacked(EventBaseUnderAttack e) {
@@ -284,7 +449,7 @@ namespace FactoryWars.View {
 
     const float FloatSeconds = 1.4f;
     const float FloatRise = 70f;
-    readonly System.Collections.Generic.List<(Text Label, Vector3 World, float Start)> _floats = new System.Collections.Generic.List<(Text, Vector3, float)>();
+    readonly List<(Text Label, Vector3 World, float Start)> _floats = new List<(Text, Vector3, float)>();
 
     public int FloatCount => _floats.Count;
 
@@ -372,7 +537,8 @@ namespace FactoryWars.View {
 
     public void ToggleBoxMode() {
       BoxMode = BoxMode == false;
-      Ui.SetLabel(_boxButton, BoxMode ? "범위\n선택 중" : "범위\n선택");
+      Ui.SetLabel(_boxButton, BoxMode ? "범위 중" : "범위");
+      _boxButton.GetComponent<Image>().color = BoxMode ? UiTheme.Current.ButtonPressed : Ui.ButtonColor;
     }
 
     int _lastGroup = -1;
@@ -380,15 +546,16 @@ namespace FactoryWars.View {
     Vector3? _alertAt;
     public const float DoubleTapSeconds = 0.4f;
 
-    /// <summary>부대 버튼: 지정 모드면 저장, 아니면 선택. 같은 번호를 0.4초 안에 두 번 누르면 카메라가 그 부대로 간다.</summary>
+    /// <summary>부대 버튼 길게 누르기: 지금 선택을 그 번호에 지정한다.</summary>
+    public void AssignGroup(int index) {
+      var selection = Controller.Input.Selection;
+      selection.SaveGroup(index);
+      ShowAlert($"{index + 1}부대 지정: {selection.GroupSize(index)}기");
+    }
+
+    /// <summary>부대 버튼: 누르면 선택. 같은 번호를 0.4초 안에 두 번 누르면 카메라가 그 부대로 간다.</summary>
     public void PressGroup(int index) {
       var selection = Controller.Input.Selection;
-      if (_saveMode) {
-        selection.SaveGroup(index);
-        _saveMode = false;
-        Ui.SetLabel(_saveButton, "부대\n지정");
-        return;
-      }
       selection.RecallGroup(index);
       var now = Time.unscaledTime;
       if (_lastGroup == index && now - _lastGroupTime <= DoubleTapSeconds && selection.Units.Count > 0) {
@@ -426,6 +593,17 @@ namespace FactoryWars.View {
       }
     }
 
+    /// <summary>선택 카드의 종류 버튼: 그 종류만 남긴다.</summary>
+    public void SelectType(int index) {
+      var frame = Controller.Frame;
+      if (frame == null || index >= _typeSpecs.Count) {
+        return;
+      }
+      var spec = _typeSpecs[index];
+      Controller.Input.Selection.Units.RemoveAll(e => frame.Exists(e) == false || frame.Get<Unit>(e).Spec != spec);
+      _nextRefresh = 0f;
+    }
+
     void PingAlert(Vector3 position) {
       _minimap.Ping(position);
       _alertAt = position;
@@ -439,12 +617,40 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>패널의 칸 번호로 누른다. 12칸 단일 화면 구성으로 전 항목 직접 실행.</summary>
+    /// <summary>명령 카드의 칸을 누른다. 잠긴 칸은 이유를 보인다.</summary>
     public void PressContext(int slot) {
-      if (slot < Entries.Count && Entries[slot].Enabled) {
-        Entries[slot].Action?.Invoke();
-        _nextRefresh = 0f;
+      if (slot < 0 || slot >= Entries.Count) {
+        return;
       }
+      var entry = Entries[slot];
+      if (entry.Enabled) {
+        entry.Action?.Invoke();
+        _nextRefresh = 0f;
+        var frame = Controller.Frame;
+        if (frame != null) {
+          Refresh(frame);
+        }
+      } else if (string.IsNullOrEmpty(entry.Reason) == false) {
+        ShowTooltip(entry.Reason);
+      }
+    }
+
+    /// <summary>길게 누르기: 잠긴 칸은 이유, 아니면 설명.</summary>
+    public void LongPressContext(int slot) {
+      if (slot < 0 || slot >= Entries.Count) {
+        return;
+      }
+      var entry = Entries[slot];
+      var text = entry.Locked ? entry.Reason : entry.Detail;
+      if (string.IsNullOrEmpty(text) == false) {
+        ShowTooltip(text);
+      }
+    }
+
+    public void ShowTooltip(string text) {
+      _tooltipText.text = text;
+      _tooltip.gameObject.SetActive(string.IsNullOrEmpty(text) == false);
+      _tooltipUntil = Time.unscaledTime + TooltipSeconds;
     }
 
     public void ShowAlert(string text) {
@@ -460,8 +666,17 @@ namespace FactoryWars.View {
       if (e.Player == Controller.Player) {
         GameAudio.Play(SoundEvent.Warning);
         ShowAlert(Texts.Rejected(e.Reason, (MissingResource)e.Missing));
+        // 모자란 자원 칸을 빨갛게 깜빡인다.
+        for (var i = 0; i < ResourceBits.Length; i++) {
+          if ((e.Missing & (int)ResourceBits[i]) != 0) {
+            _flashUntil[i] = Time.unscaledTime + FlashSeconds;
+          }
+        }
       }
     }
+
+    /// <summary>깜빡이는 자원 칸 수(시험용).</summary>
+    public int FlashingResources => _flashUntil.Count(t => t > Time.unscaledTime);
 
     void OnNote(EventNoteReceived e) {
       if (e.Receiver != Controller.Player) {
@@ -479,6 +694,9 @@ namespace FactoryWars.View {
     void OnOutage(EventPowerOutage e) {
       if (e.Player == Controller.Player) {
         ShowAlert(e.Started ? "정전" : "전기 복구");
+        if (e.Started) {
+          _flashUntil[3] = Time.unscaledTime + FlashSeconds;
+        }
       }
     }
 
@@ -488,18 +706,23 @@ namespace FactoryWars.View {
       }
       if (_alert.text.Length > 0 && Time.unscaledTime >= _alertUntil) {
         _alert.text = "";
-        if (_alertBubble != null) {
-          _alertBubble.gameObject.SetActive(false);
-        }
+        _alertBubble.gameObject.SetActive(false);
+      }
+      if (_tooltip.gameObject.activeSelf && Time.unscaledTime >= _tooltipUntil) {
+        _tooltipText.text = "";
+        _tooltip.gameObject.SetActive(false);
       }
       if (_floats.Count > 0) {
         UpdateFloats();
       }
       if (_note.text.Length > 0 && Time.unscaledTime >= _noteUntil) {
         _note.text = "";
-        if (_noteBubble != null) {
-          _noteBubble.gameObject.SetActive(false);
-        }
+        _noteBubble.gameObject.SetActive(false);
+      }
+      var theme = UiTheme.Current;
+      for (var i = 0; i < _resources.Count; i++) {
+        var flashing = _flashUntil[i] > Time.unscaledTime && Mathf.Repeat(Time.unscaledTime * 4f, 1f) < 0.5f;
+        _resources[i].Back.color = flashing ? theme.Danger : theme.Panel;
       }
       if (Time.unscaledTime < _nextRefresh) {
         return;
@@ -525,6 +748,7 @@ namespace FactoryWars.View {
       if (waiting.Length > 0) {
         _truce.text = waiting;
       }
+      _truceBadge.gameObject.SetActive(_truce.text.Length > 0);
       if (_produced >= 0 && state->UnitsProduced > _produced) {
         GameAudio.Play(SoundEvent.ProductionDone);
       }
@@ -534,13 +758,230 @@ namespace FactoryWars.View {
       var selection = Controller.Input.Selection;
       selection.Prune(frame);
       for (var i = 0; i < _groupButtons.Length; i++) {
-        Ui.SetLabel(_groupButtons[i], selection.GroupSize(i) > 0 ? $"{i + 1}부대\n{selection.GroupSize(i)}기" : $"{i + 1}부대");
+        Ui.SetLabel(_groupButtons[i], selection.GroupSize(i) > 0 ? $"{i + 1}부대 {selection.GroupSize(i)}" : $"{i + 1}부대");
+      }
+      IdleEngineers = CountIdle(frame);
+      _idleBadge.text = IdleEngineers.ToString();
+      _idleBadge.transform.parent.gameObject.SetActive(IdleEngineers > 0);
+      var key = SelectionKey(selection);
+      if (key != _selectionKey) {
+        _selectionKey = key;
+        _menu = Menu.Root;
       }
       RefreshContext(frame, state);
+      RefreshCard(frame, state);
+      Layout();
       if (DiplomacyOpen) {
         RefreshDiplomacy(frame);
       }
     }
+
+    static string SelectionKey(SelectionModel selection) => selection.Building.ToString() + "|" + (selection.Units.Count > 0 ? selection.Units[0].ToString() : "") + "|" + selection.Units.Count;
+
+    int CountIdle(Frame frame) {
+      var count = 0;
+      foreach (var pair in frame.GetComponentIterator<Worker>()) {
+        var unit = frame.Get<Unit>(pair.Entity);
+        count += unit.Owner == Controller.Player && pair.Component.Task == WorkerTask.Idle && unit.Order == UnitOrder.Stop ? 1 : 0;
+      }
+      return count;
+    }
+
+    /// <summary>선택 카드를 미니맵 묶음과 명령 카드 사이에 둔다. 사이가 좁으면(4:3 등) 명령 카드 위로 올린다.</summary>
+    void Layout() {
+      var width = Root.rect.width;
+      var left = LeftClusterWidth;
+      var right = width - ContextWidth - 12 - 16;
+      var room = right - left;
+      var cardWidth = Mathf.Min(660f, room);
+      if (room >= 520f) {
+        _card.anchorMin = _card.anchorMax = _card.pivot = new Vector2(0, 0);
+        _card.anchoredPosition = new Vector2(left + (room - cardWidth) / 2f, 8);
+        _card.sizeDelta = new Vector2(cardWidth, _card.sizeDelta.y);
+      } else {
+        _card.anchorMin = _card.anchorMax = _card.pivot = new Vector2(1, 0);
+        _card.anchoredPosition = new Vector2(-12, 8 + ContextHeight + Gap + (_tooltip.gameObject.activeSelf ? 96 + Gap : 0));
+        _card.sizeDelta = new Vector2(Mathf.Max(ContextWidth, 600f), _card.sizeDelta.y);
+      }
+      var innerWidth = _card.sizeDelta.x - 176 - Pad;
+      _cardTitle.rectTransform.sizeDelta = new Vector2(Mathf.Max(120f, innerWidth - 100), 44);
+      _cardHealth.sizeDelta = new Vector2(innerWidth, 20);
+      _cardDetail.rectTransform.sizeDelta = new Vector2(innerWidth, 100);
+    }
+
+    // ───────────── 선택 카드 ─────────────
+
+    public static string UnitIcon(string id) {
+      if (Ui.IconSprite("model_" + id) != null) {
+        return "model_" + id;
+      }
+      if (Ui.IconSprite(id) != null) {
+        return id;
+      }
+      var borrowed = ViewCatalog.BorrowedId(id);
+      return borrowed != null && Ui.IconSprite(borrowed) != null ? borrowed : "ui_army";
+    }
+
+    public static string BuildingIcon(BuildingSpec spec) => Ui.IconSprite("model_" + spec.name) != null ? "model_" + spec.name : $"building_{spec.name.Substring(3)}";
+
+    string UnitName(AssetRef<UnitSpec> unit) {
+      var frame = Controller?.Frame;
+      var spec = frame?.FindAsset(unit);
+      return spec != null ? Texts.NameOf(spec.name) : "";
+    }
+
+    void ShowCard(bool single) {
+      _card.gameObject.SetActive(true);
+      _cardIcon.transform.parent.gameObject.SetActive(single);
+      _cardTitle.gameObject.SetActive(single);
+      _cardHealth.gameObject.SetActive(single);
+      _cardDetail.gameObject.SetActive(single);
+      if (single == false) {
+        _cardBadge.gameObject.SetActive(false);
+        foreach (var icon in _queueIcons) {
+          icon.gameObject.SetActive(false);
+        }
+      }
+      for (var i = 0; i < _typeButtons.Count; i++) {
+        _typeButtons[i].gameObject.SetActive(single == false && i < _typeSpecs.Count);
+      }
+    }
+
+    void SetHealth(float ratio) {
+      ratio = Mathf.Clamp01(ratio);
+      var fill = (RectTransform)_cardHealthFill.transform;
+      fill.anchorMax = new Vector2(Mathf.Max(0.02f, ratio), 1);
+      var theme = UiTheme.Current;
+      _cardHealthFill.color = Color.Lerp(theme.HealthLow, theme.HealthHigh, ratio);
+    }
+
+    void RefreshCard(Frame frame, PlayerState* state) {
+      var selection = Controller.Input.Selection;
+      _typeSpecs.Clear();
+      if (selection.Building != EntityRef.None && frame.Exists(selection.Building)) {
+        if (frame.Has<CityBuilding>(selection.Building)) {
+          var city = frame.Get<CityBuilding>(selection.Building);
+          var placement = frame.FindAsset<MapSpec>(frame.Map.UserAsset).CityBuildings[city.Index];
+          ShowCard(true);
+          _cardIcon.sprite = Ui.IconSprite("building_headquarters");
+          _cardTitle.text = Texts.CityName(placement);
+          _cardBadge.gameObject.SetActive(false);
+          SetHealth(city.Health.AsFloat / Mathf.Max(1f, city.MaxHealth.AsFloat));
+          _cardDetail.text = $"체력 {city.Health.AsInt}/{city.MaxHealth.AsInt}";
+          HideQueue();
+          return;
+        }
+        CardBuilding(frame, state, selection.Building);
+        return;
+      }
+      var units = selection.Units.Where(frame.Exists).ToList();
+      if (units.Count == 0) {
+        _card.gameObject.SetActive(false);
+        return;
+      }
+      var groups = units.GroupBy(e => frame.Get<Unit>(e).Spec).ToList();
+      if (groups.Count == 1 && units.Count == 1) {
+        CardUnit(frame, state, units[0]);
+        return;
+      }
+      if (groups.Count == 1) {
+        // 한 종류 여러 기: 한 기 카드에 수만 붙인다.
+        CardUnit(frame, state, units[0]);
+        _cardTitle.text += $"  x{units.Count}";
+        return;
+      }
+      foreach (var group in groups.Take(MaxTypeButtons)) {
+        _typeSpecs.Add(group.Key);
+      }
+      ShowCard(false);
+      for (var i = 0; i < _typeSpecs.Count; i++) {
+        var spec = frame.FindAsset(_typeSpecs[i]);
+        var count = groups[i].Count();
+        Ui.SetLabel(_typeButtons[i], $"{Texts.SizeBadge(spec.Size)} x{count}");
+        Ui.SetIcon(_typeButtons[i], Ui.IconSprite(UnitIcon(spec.name)));
+      }
+      if (groups.Count > MaxTypeButtons) {
+        Ui.SetLabel(_typeButtons[MaxTypeButtons - 1], $"외 {groups.Count - MaxTypeButtons + 1}종");
+      }
+    }
+
+    void HideQueue() {
+      foreach (var icon in _queueIcons) {
+        icon.gameObject.SetActive(false);
+      }
+    }
+
+    void CardUnit(Frame frame, PlayerState* state, EntityRef entity) {
+      var unit = frame.Get<Unit>(entity);
+      var spec = frame.FindAsset(unit.Spec);
+      ShowCard(true);
+      HideQueue();
+      _cardIcon.sprite = Ui.IconSprite(UnitIcon(spec.name));
+      var elite = TechSystem.Elite(frame, unit.Owner, unit.Spec) != null;
+      _cardTitle.text = (elite ? "★정예 " : "") + Texts.NameOf(spec.name);
+      var theme = UiTheme.Current;
+      _cardBadge.gameObject.SetActive(spec.Size != UnitSize.Engineer);
+      _cardBadgeText.text = spec.IsAir ? $"{Texts.SizeBadge(spec.Size)}·공중" : Texts.SizeBadge(spec.Size);
+      _cardBadge.GetComponent<Image>().color = theme.SizeColor(spec.Size);
+      var max = TechSystem.MaxHealth(frame, unit.Owner, unit.Spec);
+      SetHealth(unit.Health.AsFloat / Mathf.Max(1f, max.AsFloat));
+      var owner = frame.Global->Players.GetPointer(unit.Owner);
+      var size = (int)spec.Size;
+      var lines = $"체력 {unit.Health.AsInt}/{max.AsInt}";
+      if (spec.Size != UnitSize.Engineer) {
+        lines += $"   공격 +{owner->AttackLevels[size]}  방어 +{owner->ArmorLevels[size]}";
+        lines += "\n" + Texts.CounterTip(spec, frame.FindAsset(frame.RuntimeConfig.Rules));
+      }
+      _cardDetail.text = lines;
+    }
+
+    void CardBuilding(Frame frame, PlayerState* state, EntityRef entity) {
+      var building = frame.Get<Building>(entity);
+      var spec = frame.FindAsset(building.Spec);
+      ShowCard(true);
+      _cardIcon.sprite = Ui.IconSprite(BuildingIcon(spec));
+      _cardTitle.text = Texts.NameOf(spec.name);
+      var tierBadge = spec.Role == BuildingRole.Headquarters;
+      _cardBadge.gameObject.SetActive(tierBadge);
+      if (tierBadge) {
+        _cardBadgeText.text = $"{Mathf.Max(1, building.Tier)}단계";
+        _cardBadge.GetComponent<Image>().color = UiTheme.Current.Accent;
+      }
+      SetHealth(building.Health.AsFloat / Mathf.Max(1f, spec.MaxHealth.AsFloat));
+      var detail = $"체력 {building.Health.AsInt}/{spec.MaxHealth.AsInt}";
+      if (building.ConstructionRemaining > FP._0) {
+        detail += $"   건설 {Mathf.CeilToInt(building.ConstructionRemaining.AsFloat)}초 남음";
+      }
+      if (building.UpgradeTier > 0) {
+        detail += $"\n{Texts.TierName(building.UpgradeTier)}로 업그레이드 {Mathf.CeilToInt(building.UpgradeRemaining.AsFloat)}초";
+      }
+      if (building.Research > 0) {
+        var research = TechSystem.ResearchAt(frame, building.Owner, building.Research - 1);
+        if (research != null) {
+          detail += $"\n연구 중: {Texts.ResearchName(research, UnitName)} {Mathf.CeilToInt(building.ResearchRemaining.AsFloat)}초";
+        }
+      }
+      if (building.Paused != PauseReason.None) {
+        detail += "\n정전으로 멈춤";
+      }
+      if (spec.ProcessSeconds > FP._0) {
+        detail += building.ProcessorOff ? "   꺼짐" : "   변환 중";
+      }
+      _cardDetail.text = detail;
+      // 생산 대기열 5칸.
+      var producer = spec.Producible != null && spec.Producible.Length > 0;
+      for (var i = 0; i < _queueIcons.Count; i++) {
+        var used = producer && i < building.QueueCount;
+        _queueIcons[i].gameObject.SetActive(producer);
+        _queueIcons[i].sprite = used ? Ui.IconSprite(UnitIcon(frame.FindAsset(building.Queue[i].Unit).name)) : UiCatalog.SpriteFor("icon_frame");
+        _queueIcons[i].color = used ? Color.white : new Color(1, 1, 1, 0.35f);
+      }
+      if (producer && building.QueueCount > 0) {
+        _cardDetail.text += $"   대기열 {building.QueueCount}/{QueueIcons}";
+      }
+    }
+
+    // ───────────── 명령 카드 ─────────────
 
     void RefreshContext(Frame frame, PlayerState* state) {
       Entries.Clear();
@@ -548,26 +989,21 @@ namespace FactoryWars.View {
       var selection = input.Selection;
       var status = "";
       var showPanel = false;
-      if (selection.Building != EntityRef.None && frame.Has<CityBuilding>(selection.Building)) {
+      if (selection.Building != EntityRef.None && frame.Exists(selection.Building) && frame.Has<CityBuilding>(selection.Building)) {
         status = CityEntries(frame, selection.Building);
         showPanel = true;
-      } else if (selection.Building != EntityRef.None) {
+      } else if (selection.Building != EntityRef.None && frame.Exists(selection.Building)) {
         status = BuildingEntries(frame, state, selection.Building);
         showPanel = true;
       } else if (selection.Units.Count > 0) {
         var spec = frame.FindAsset(frame.Get<Unit>(selection.Units[0]).Spec);
-        status = selection.Units.Count == 1 ? $"{Texts.NameOf(spec.name)}  체력 {frame.Get<Unit>(selection.Units[0]).Health.AsInt}/{spec.MaxHealth.AsInt}" : $"유닛 {selection.Units.Count}기";
-        // 29 2-5: 건설 패널은 공병(Worker) 선택 시에만 열림
+        status = selection.Units.Count == 1 ? Texts.NameOf(spec.name) : $"유닛 {selection.Units.Count}기";
         if (selection.Units.Any(e => frame.Has<Worker>(e))) {
-          BuildEntries(frame, state);
+          status = EngineerEntries(frame, state);
           showPanel = true;
         } else {
-          // 전투 유닛: 명령 버튼(항목 30)과 상성 한 줄.
           UnitCommandEntries();
           showPanel = true;
-          if (selection.Units.Count == 1) {
-            status += "\n" + Texts.CounterTip(spec, frame.FindAsset(frame.RuntimeConfig.Rules));
-          }
         }
         if (input.Mode == MatchInput.TapMode.AttackMove) {
           status = "공격 이동: 목적지를 누르세요";
@@ -580,52 +1016,129 @@ namespace FactoryWars.View {
         showPanel = true;
       }
       _status.text = status;
-      var hasContext = showPanel && (Entries.Count > 0 || input.IsPlacing);
-      if (_contextPanel != null) {
-        _contextPanel.SetActive(hasContext);
+      if (Entries.Count > ContextSlots) {
+        Entries.RemoveRange(ContextSlots, Entries.Count - ContextSlots);
       }
-      if (ContextPage >= ContextPages) {
-        ContextPage = 0;
-      }
-      ApplyContextPage();
-    }
-
-    void ApplyContextPage() {
+      _contextPanel.SetActive(showPanel && (Entries.Count > 0 || input.IsPlacing));
       for (var i = 0; i < _context.Length; i++) {
-        var used = i < Entries.Count;
+        // 빈 칸(자리 맞춤용)은 그리지 않는다.
+        var used = i < Entries.Count && string.IsNullOrEmpty(Entries[i].Label) == false;
         _context[i].gameObject.SetActive(used);
         if (used) {
           Ui.SetLabel(_context[i], Entries[i].Label);
           Ui.SetIcon(_context[i], Entries[i].Icon != null ? Ui.IconSprite(Entries[i].Icon) : null);
-          Ui.SetEnabled(_context[i], Entries[i].Enabled);
+          Ui.SetLocked(_context[i], Entries[i].Enabled == false);
         }
       }
     }
 
     void UnitCommandEntries() {
       var input = Controller.Input;
-      Entries.Add(new ContextEntry { Label = input.Mode == MatchInput.TapMode.AttackMove ? "공격 이동\n(땅 누르기)" : "공격\n이동", Enabled = true,
+      Entries.Add(new ContextEntry { Label = input.Mode == MatchInput.TapMode.AttackMove ? "공격 이동 중" : "공격 이동", Icon = "ui_attack_move", Enabled = true,
+        Detail = "땅을 누르면 가는 길의 적을 공격하며 이동",
         Action = () => input.Mode = input.Mode == MatchInput.TapMode.AttackMove ? MatchInput.TapMode.None : MatchInput.TapMode.AttackMove });
-      Entries.Add(new ContextEntry { Label = "위치\n고수", Enabled = true, Action = () => Controller.Send(input.Hold(Controller.Frame)) });
-      Entries.Add(new ContextEntry { Label = input.Mode == MatchInput.TapMode.Patrol ? "순찰\n(땅 누르기)" : "순찰", Enabled = true,
+      Entries.Add(new ContextEntry { Label = "위치 고수", Icon = "ui_hold", Enabled = true, Detail = "제자리에서 사거리 안의 적만 쏩니다",
+        Action = () => Controller.Send(input.Hold(Controller.Frame)) });
+      Entries.Add(new ContextEntry { Label = input.Mode == MatchInput.TapMode.Patrol ? "순찰 지정 중" : "순찰", Icon = "ui_patrol", Enabled = true,
+        Detail = "지금 위치와 누른 곳 사이를 오가며 적을 공격",
         Action = () => input.Mode = input.Mode == MatchInput.TapMode.Patrol ? MatchInput.TapMode.None : MatchInput.TapMode.Patrol });
-      Entries.Add(new ContextEntry { Label = "정지", Enabled = true, Action = () => Controller.Stop() });
+      Entries.Add(new ContextEntry { Label = "정지", Icon = "ui_stop", Enabled = true, Detail = "하던 일을 멈춥니다", Action = () => Controller.Stop() });
     }
 
-    void BuildEntries(Frame frame, PlayerState* state) {
+    /// <summary>건물이 있는 단계 목록. 지금 단계 + 1까지만 보인다(2단계 이상 높으면 숨김).</summary>
+    List<int> BuildTiers(Frame frame, FactionSpec faction, int tier) {
+      return faction.Buildings.Select(b => Mathf.Max(1, frame.FindAsset(b).RequiredTier)).Distinct().OrderBy(t => t).Where(t => t <= tier + 1).ToList();
+    }
+
+    string EngineerEntries(Frame frame, PlayerState* state) {
       var faction = frame.FindAsset(state->Faction);
-      var stock = state->Stock;
-      foreach (var buildingRef in faction.Buildings) {
-        var spec = frame.FindAsset(buildingRef);
-        var unlocked = ProductionSystem.IsUnlocked(frame, Controller.Player, spec);
-        var target = buildingRef;
+      var tier = TechSystem.Tier(frame, Controller.Player);
+      if (_menu == Menu.Build) {
+        foreach (var buildingRef in faction.Buildings) {
+          var spec = frame.FindAsset(buildingRef);
+          if (Mathf.Max(1, spec.RequiredTier) != _menuTier) {
+            continue;
+          }
+          var target = buildingRef;
+          var reason = BuildingLock(frame, faction, spec, tier);
+          Entries.Add(new ContextEntry {
+            Label = $"{Texts.NameOf(spec.name)}\n{(reason == null ? Texts.Cost(spec.Cost, state->Stock) : Short(reason))}",
+            Icon = BuildingIcon(spec),
+            Enabled = reason == null,
+            Locked = reason != null,
+            Reason = reason,
+            Detail = $"{Texts.NameOf(spec.name)}: {Texts.Cost(spec.Cost, state->Stock)}  건설 {spec.BuildTimeSeconds.AsInt}초",
+            Action = () => Controller.Input.Placing = target,
+          });
+        }
+        PadTo(ContextSlots - 1);
+        Entries.Add(new ContextEntry { Label = "뒤로", Icon = "ui_back", Enabled = true, Action = () => _menu = Menu.Root });
+        return $"건설: {(_menuTier == 1 ? "기본" : $"{_menuTier}단계")} 건물";
+      }
+      foreach (var buildTier in BuildTiers(frame, faction, tier)) {
+        var value = buildTier;
+        var locked = buildTier > tier;
         Entries.Add(new ContextEntry {
-          Label = $"{Texts.NameOf(spec.name)}\n{(unlocked ? Texts.Cost(spec.Cost, stock) : "잠김")}",
-          Icon = $"building_{spec.name.Substring(3)}",
-          Enabled = unlocked,
-          Action = () => Controller.Input.Placing = target,
+          Label = buildTier == 1 ? "기본 건물" : $"{buildTier}단계 건물",
+          Icon = buildTier >= 3 ? "ui_build3" : buildTier == 2 ? "ui_build2" : "ui_build1",
+          // 잠긴 단계도 열어서 무엇이 있는지 볼 수 있다(칸마다 잠김 이유).
+          Enabled = true,
+          Detail = locked ? Texts.TierLock(buildTier) : null,
+          Action = () => {
+            _menu = Menu.Build;
+            _menuTier = value;
+          },
         });
       }
+      PadTo(ContextColumns);
+      Entries.Add(new ContextEntry { Label = "정지", Icon = "ui_stop", Enabled = true, Action = () => Controller.Stop() });
+      return $"공병  {Texts.TierName(tier)}";
+    }
+
+    /// <summary>빈 칸을 채워 다음 항목을 그 칸 번호부터 놓는다(빈 칸은 보이지 않는다).</summary>
+    void PadTo(int count) {
+      while (Entries.Count < count) {
+        Entries.Add(new ContextEntry { Label = "", Enabled = false, Icon = null, Action = null });
+      }
+    }
+
+    /// <summary>칸 안의 짧은 이유: 첫 이유만, "기지 " 접두어 없이("2단계 필요", "발전소 필요"). 전체는 툴팁.</summary>
+    static string Short(string reason) {
+      var first = reason.Split('/')[0].Trim();
+      if (first.StartsWith("기지 ")) {
+        first = first.Substring(3);
+      }
+      return first;
+    }
+
+    string BuildingLock(Frame frame, FactionSpec faction, BuildingSpec spec, int tier) {
+      var reasons = new List<string>();
+      if (spec.RequiredTier > tier) {
+        reasons.Add(Texts.TierLock(spec.RequiredTier));
+      }
+      var missing = new List<string>();
+      for (var i = 0; spec.Prerequisites != null && i < spec.Prerequisites.Length; i++) {
+        if (ProductionSystem.HasFinished(frame, Controller.Player, spec.Prerequisites[i]) == false) {
+          missing.Add(Texts.NameOf(frame.FindAsset(spec.Prerequisites[i]).name));
+        }
+      }
+      if (missing.Count > 0) {
+        reasons.Add(string.Join("·", missing) + " 필요");
+      }
+      return reasons.Count > 0 ? string.Join(" / ", reasons) : null;
+    }
+
+    string UnitLock(Frame frame, UnitSpec unit) {
+      if (TechSystem.CanProduce(frame, Controller.Player, unit, out var reason)) {
+        return null;
+      }
+      if (reason == RejectReason.TierLocked) {
+        return Texts.TierLock(unit.RequiredTier);
+      }
+      if (reason == RejectReason.SizeLimit && TechSystem.FindSizeRule(frame.FindAsset(frame.RuntimeConfig.Rules), unit.Size, out var rule)) {
+        return $"{Texts.SizeWord(unit.Size)} 보유 한도 {rule.OwnedLimit}";
+      }
+      return Texts.Rejected(reason, MissingResource.None);
     }
 
     /// <summary>도시 건물: 체력과, 내 분대가 들어 있으면 "모두 나가기".</summary>
@@ -637,12 +1150,15 @@ namespace FactoryWars.View {
       foreach (var pair in frame.GetComponentIterator<Unit>()) {
         mine += pair.Component.Garrison == entity && pair.Component.Owner == Controller.Player ? 1 : 0;
       }
-      var status = $"{Texts.CityName(placement)}  체력 {city.Health.AsInt}/{city.MaxHealth.AsInt}";
+      var status = Texts.CityName(placement);
       if (placement.Garrison) {
         status += $"  진지 {mine}";
         Entries.Add(new ContextEntry {
           Label = Texts.ExitGarrison,
+          Icon = "ui_back",
           Enabled = mine > 0,
+          Locked = mine == 0,
+          Reason = "들어가 있는 내 분대가 없습니다",
           Action = () => Controller.Send(new ExitGarrisonCommand { Building = entity }),
         });
       }
@@ -652,39 +1168,50 @@ namespace FactoryWars.View {
     string BuildingEntries(Frame frame, PlayerState* state, EntityRef entity) {
       var building = frame.Get<Building>(entity);
       var spec = frame.FindAsset(building.Spec);
-      var status = $"{Texts.NameOf(spec.name)}  체력 {building.Health.AsInt}/{spec.MaxHealth.AsInt}";
-      if (building.ConstructionRemaining > FP._0) {
-        return status + $"  건설 {Mathf.CeilToInt(building.ConstructionRemaining.AsFloat)}초 남음";
+      var status = Texts.NameOf(spec.name);
+      if (building.Owner != Controller.Player) {
+        return status;
       }
-      if (building.Paused != PauseReason.None) {
-        status += "  정전으로 멈춤";
+      if (building.ConstructionRemaining > FP._0) {
+        return status + "  건설 중";
+      }
+      var tier = TechSystem.Tier(frame, Controller.Player);
+      if (spec.Role == BuildingRole.ResearchLab) {
+        return ResearchEntries(frame, state, entity, building, tier);
       }
 
       var stock = state->Stock;
       foreach (var unitRef in spec.Producible ?? Array.Empty<AssetRef<UnitSpec>>()) {
         var unit = frame.FindAsset(unitRef);
+        if (unit.RequiredTier >= tier + 2) {
+          continue;
+        }
         var target = unitRef;
+        var reason = UnitLock(frame, unit);
         Entries.Add(new ContextEntry {
-          Label = $"{Texts.NameOf(unit.name)}\n{Texts.Cost(unit.Cost, stock)}",
-          Icon = unit.name,
-          Enabled = true,
+          Label = $"{Texts.NameOf(unit.name)}\n{(reason == null ? Texts.Cost(unit.Cost, stock) : Short(reason))}",
+          Icon = UnitIcon(unit.name),
+          Enabled = reason == null,
+          Locked = reason != null,
+          Reason = reason,
+          Detail = $"{Texts.NameOf(unit.name)} [{Texts.SizeWord(unit.Size)}] {Texts.Cost(unit.Cost, stock)}\n{Texts.CounterTip(unit, frame.FindAsset(frame.RuntimeConfig.Rules))}",
           Action = () => Controller.Send(new ProduceCommand { Building = entity, Unit = target, Count = 1 }),
         });
       }
       if (building.QueueCount > 0) {
         var last = building.Queue[building.QueueCount - 1].Unit;
-        status += $"  대기열 {building.QueueCount}";
         Entries.Add(new ContextEntry {
-          Label = "생산\n취소",
-          Enabled = true,
+          Label = "생산 취소", Icon = "ui_cancel", Enabled = true, Detail = "대기열 맨 뒤를 취소하고 환불",
           Action = () => Controller.Send(new ProduceCommand { Building = entity, Unit = last, Count = 1, Cancel = true }),
         });
       }
+      if (spec.Role == BuildingRole.Headquarters) {
+        UpgradeEntry(frame, state, entity, building, tier);
+      }
       if (spec.ProcessSeconds > FP._0) {
         var off = (bool)building.ProcessorOff;
-        status += off ? "  꺼짐" : "  변환 중";
         Entries.Add(new ContextEntry {
-          Label = off ? "가공소\n켜기" : "가공소\n끄기",
+          Label = off ? "가공소 켜기" : "가공소 끄기", Icon = off ? "ui_upgrade" : "ui_stop",
           Enabled = true,
           Action = () => Controller.Send(new SetProcessorCommand { Building = entity, Enabled = off }),
         });
@@ -692,12 +1219,12 @@ namespace FactoryWars.View {
       if (spec.Producible != null && spec.Producible.Length > 0) {
         var input = Controller.Input;
         Entries.Add(new ContextEntry {
-          Label = input.Mode == MatchInput.TapMode.Rally ? "집결 지점\n(땅 누르기)" : "집결\n지점", Enabled = true,
+          Label = input.Mode == MatchInput.TapMode.Rally ? "집결 지정 중" : "집결 지점", Icon = "ui_rally", Enabled = true,
+          Detail = "새 유닛이 모일 곳을 땅에서 누릅니다",
           Action = () => input.Mode = input.Mode == MatchInput.TapMode.Rally ? MatchInput.TapMode.None : MatchInput.TapMode.Rally,
         });
         if (building.HasRally) {
-          status += "  집결 지점 있음";
-          Entries.Add(new ContextEntry { Label = "집결\n해제", Enabled = true, Action = () => Controller.Send(new RallyCommand { Building = entity, Clear = true }) });
+          Entries.Add(new ContextEntry { Label = "집결 해제", Icon = "ui_rally_clear", Enabled = true, Action = () => Controller.Send(new RallyCommand { Building = entity, Clear = true }) });
         }
         if (input.Mode == MatchInput.TapMode.Rally) {
           status = "집결 지점: 땅을 누르세요";
@@ -709,6 +1236,117 @@ namespace FactoryWars.View {
       return status;
     }
 
+    void UpgradeEntry(Frame frame, PlayerState* state, EntityRef entity, Building building, int tier) {
+      if (building.UpgradeTier > 0) {
+        Entries.Add(new ContextEntry {
+          Label = $"업그레이드 중\n{Mathf.CeilToInt(building.UpgradeRemaining.AsFloat)}초", Icon = "ui_upgrade", Enabled = false, Locked = true,
+          Reason = $"{Texts.TierName(building.UpgradeTier)}로 올리는 중",
+        });
+        return;
+      }
+      var rules = frame.FindAsset(frame.RuntimeConfig.Rules);
+      if (tier >= TechSystem.MaxTier || TechSystem.FindTierSpec(rules, tier + 1, out var next) == false) {
+        return;
+      }
+      string reason = null;
+      if (TechSystem.MeetsTierRequirement(frame, Controller.Player, next, out var missingRole) == false) {
+        var faction = frame.FindAsset(state->Faction);
+        var role = faction.Buildings.Select(b => frame.FindAsset(b)).FirstOrDefault(b => b.Role == missingRole);
+        reason = $"{(role != null ? Texts.NameOf(role.name) : missingRole.ToString())} 필요";
+      }
+      var name = next.Tier == 2 ? "연대 본부" : "사단 본부";
+      Entries.Add(new ContextEntry {
+        Label = $"{name}\n{(reason == null ? Texts.Cost(next.Cost, state->Stock) : reason)}",
+        Icon = "ui_upgrade",
+        Enabled = reason == null,
+        Locked = reason != null,
+        Reason = reason != null ? $"{Texts.TierName(next.Tier)}: {reason}" : null,
+        Detail = $"{Texts.TierName(next.Tier)}로 업그레이드: {Texts.Cost(next.Cost, state->Stock)}  {next.Seconds.AsInt}초 (그동안 생산 계속)",
+        Action = () => Controller.Send(new UpgradeBaseCommand { Building = entity }),
+      });
+    }
+
+    string ResearchEntries(Frame frame, PlayerState* state, EntityRef entity, Building building, int tier) {
+      var faction = frame.FindAsset(state->Faction);
+      var list = faction.Researches ?? Array.Empty<AssetRef<ResearchSpec>>();
+      var status = "연구소";
+      if (_menu == Menu.Research) {
+        foreach (var kind in new[] { ResearchKind.Attack, ResearchKind.Armor }) {
+          // 크기·종류별로 아직 안 한 가장 낮은 단계 하나만 보인다.
+          var index = -1;
+          for (var i = 0; i < list.Length; i++) {
+            var r = frame.FindAsset(list[i]);
+            if (r.Kind == kind && r.Size == _menuSize && TechSystem.IsResearched(frame, Controller.Player, i) == false
+                && (index < 0 || r.Level < frame.FindAsset(list[index]).Level)) {
+              index = i;
+            }
+          }
+          if (index < 0) {
+            Entries.Add(new ContextEntry { Label = $"{Texts.SizeWord(_menuSize)} {(kind == ResearchKind.Attack ? "공격" : "방어")}\n완료", Icon = kind == ResearchKind.Attack ? "ui_attack" : "ui_armor", Enabled = false, Locked = true, Reason = "모든 단계를 끝냈습니다" });
+            continue;
+          }
+          AddResearch(frame, state, entity, building, list, index, tier);
+        }
+        PadTo(ContextSlots - 1);
+        Entries.Add(new ContextEntry { Label = "뒤로", Icon = "ui_back", Enabled = true, Action = () => _menu = Menu.Root });
+        return $"{Texts.SizeWord(_menuSize)} 연구";
+      }
+      foreach (var size in new[] { UnitSize.Small, UnitSize.Medium, UnitSize.Large }) {
+        var specs = list.Select(r => frame.FindAsset(r)).Where(r => r.Kind != ResearchKind.Elite && r.Size == size).ToList();
+        if (specs.Count == 0 || specs.Min(r => r.RequiredTier) >= tier + 2) {
+          continue;
+        }
+        var value = size;
+        var minTier = specs.Min(r => r.RequiredTier);
+        Entries.Add(new ContextEntry {
+          Label = $"{Texts.SizeWord(size)} 연구", Icon = "ui_research", Enabled = true,
+          Detail = minTier > tier ? Texts.TierLock(minTier) : $"{Texts.SizeWord(size)} 유닛 공격·방어 강화",
+          Action = () => {
+            _menu = Menu.Research;
+            _menuSize = value;
+          },
+        });
+      }
+      for (var i = 0; i < list.Length; i++) {
+        if (frame.FindAsset(list[i]).Kind == ResearchKind.Elite && frame.FindAsset(list[i]).RequiredTier < tier + 2) {
+          AddResearch(frame, state, entity, building, list, i, tier);
+        }
+      }
+      if (building.Research > 0) {
+        var current = TechSystem.ResearchAt(frame, Controller.Player, building.Research - 1);
+        if (current != null) {
+          status += $"  연구 중: {Texts.ResearchName(current, UnitName)}";
+        }
+      }
+      return status;
+    }
+
+    void AddResearch(Frame frame, PlayerState* state, EntityRef entity, Building building, AssetRef<ResearchSpec>[] list, int index, int tier) {
+      var research = frame.FindAsset(list[index]);
+      string reason = null;
+      if (TechSystem.IsResearched(frame, Controller.Player, index)) {
+        reason = "완료";
+      } else if (TechSystem.IsResearching(frame, Controller.Player, index)) {
+        reason = "연구 중";
+      } else if (research.RequiredTier > tier) {
+        reason = Texts.TierLock(research.RequiredTier);
+      } else if (research.Requires.IsValid && TechSystem.IsResearched(frame, Controller.Player, TechSystem.IndexOf(frame, Controller.Player, research.Requires)) == false) {
+        reason = "앞 단계 연구 필요";
+      } else if (building.Research > 0) {
+        reason = "다른 연구 중";
+      }
+      var target = index;
+      Entries.Add(new ContextEntry {
+        Label = $"{Texts.ResearchName(research, UnitName)}\n{(reason == null ? Texts.Cost(research.Cost, state->Stock) : reason)}",
+        Icon = research.Kind == ResearchKind.Elite ? "ui_elite" : research.Kind == ResearchKind.Attack ? "ui_attack" : "ui_armor",
+        Enabled = reason == null,
+        Locked = reason != null,
+        Reason = reason != null ? $"{Texts.ResearchName(research, UnitName)}: {reason}" : null,
+        Detail = $"{Texts.ResearchName(research, UnitName)}: {Texts.Cost(research.Cost, state->Stock)}  {research.Seconds.AsInt}초 (연구 중 전기 사용)",
+        Action = () => Controller.Send(new ResearchCommand { Building = entity, Index = target }),
+      });
+    }
+
     void PresetEntries(Frame frame, PlayerState* state, EntityRef entity, Building building) {
       var modules = frame.FindAsset(state->Faction).Modules ?? Array.Empty<AssetRef<ModuleSpec>>();
       var slots = new[] { building.Preset[0], building.Preset[1], building.Preset[2] };
@@ -717,7 +1355,9 @@ namespace FactoryWars.View {
         var current = frame.FindAsset(slots[i]);
         Entries.Add(new ContextEntry {
           Label = $"프리셋 {i + 1}\n{(current != null ? Texts.NameOf(current.name) : "없음")}",
+          Icon = current != null ? (current.Effect == ModuleEffect.ReactiveArmor ? "ui_armor" : "ui_attack") : "ui_upgrade",
           Enabled = true,
+          Detail = "새 유닛에 달 모듈을 바꿉니다(누를 때마다 다음 모듈)",
           Action = () => {
             var next = (Array.IndexOf(modules, slots[index]) + 2) % (modules.Length + 1) - 1;
             var preset = (AssetRef<ModuleSpec>[])slots.Clone();

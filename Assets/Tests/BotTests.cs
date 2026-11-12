@@ -44,7 +44,8 @@ namespace FactoryWars.Tests {
       Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.Barracks), 1, "병영");
       Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.PowerPlant), 1, "발전소");
       Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.Processor), 1, "가공소");
-      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.VehicleFactory), 1, "군수공장");
+      // 항목 31: 군수공장은 기지 2단계(5.5분 이후)라 5분까지는 2단계 조건인 연구소를 짓는다.
+      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.ResearchLab), 1, "연구소");
       Assert.Greater(StateOf(1).Earned.Iron.AsFloat, 0f, "철 수입");
       Assert.Greater(StateOf(1).Earned.Wood.AsFloat, 0f, "목재 수입");
       Assert.Greater(StateOf(1).Earned.Steel.AsFloat, 0f, "강철 생산");
@@ -56,9 +57,20 @@ namespace FactoryWars.Tests {
       yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal });
       yield return Sim(240);
       Assert.Greater(StateOf(1).UnitsProduced, 5, "유닛 생산");
-      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.VehicleFactory), 1, "군수공장");
+      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.Barracks), 1, "병영");
       Debug.Log($"[FW-TEST] normal bot 240s: produced {StateOf(1).UnitsProduced}, army {Army(1, true).Count}, earned {StateOf(1).Earned.Iron}");
       Debug.Log($"[FW-TEST] normal bot 240s power: stock {StateOf(1).Stock.Power}/{StateOf(1).PowerCap}, rate {StateOf(1).PowerRate}, generated {StateOf(1).Earned.Power}, outages {StateOf(1).OutageCount}, plants {BuildingCount(1, BuildingRole.PowerPlant)}, steel {StateOf(1).Stock.Steel}");
+    }
+
+    /// <summary>항목 31: 보통 AI는 연구소 → 연대 본부(2단계) → 군수공장·중형 생산으로 간다.</summary>
+    [UnityTest, Timeout(600000)]
+    public IEnumerator Bot_ReachesTierTwoAndBuildsFactory() {
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal });
+      yield return Sim(540);
+      Debug.Log($"[FW-TEST] normal bot 540s tier {StateOf(1).BaseTier} factory {BuildingCount(1, BuildingRole.VehicleFactory)} lab {BuildingCount(1, BuildingRole.ResearchLab)} research {StateOf(1).ResearchDone}");
+      Assert.GreaterOrEqual(StateOf(1).BaseTier, 2, "2단계 도달");
+      Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.VehicleFactory), 1, "군수공장");
+      Assert.Greater(StateOf(1).ResearchDone, 0, "연구 1개 이상");
     }
 
     [UnityTest]

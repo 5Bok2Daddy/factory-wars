@@ -62,6 +62,7 @@ MonoBehaviour:
     Power:
       RawValue: 13107200
   StartingEngineers: 1
+  StartingTier: 3
   SpawnFactionUnits: 1
   ResourceNodes:
   - Kind: 0

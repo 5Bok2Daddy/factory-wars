@@ -23,10 +23,30 @@ namespace FactoryWars.View {
       { "ff_hawk_gunship", "호크 공격헬기" }, { "ff_skyfortress_bomber", "스카이포트리스 폭격기" },
       { "cf_engineer", "공병" }, { "cf_militia", "민병대" }, { "cf_flame_squad", "화염방사 분대" }, { "cf_dragonscale_tank", "용린 전차" },
       { "cf_thunder_aa", "천둥 대공차" }, { "cf_longwall_mlrs", "만리 다연장포" },
+      // 항목 31 새 유닛(가칭, 실존 무기명과 무관)
+      { "ff_scout_buggy", "정찰 버기" }, { "ff_field_support", "야전 정비차" }, { "ff_bulwark_tank", "방벽 중전차" },
+      { "cf_scout_bike", "척후 오토바이" }, { "cf_gale_gunship", "돌풍 공격헬기" }, { "cf_fortress_tank", "요새 전차" },
       { "module_piercing_rounds", "관통탄" }, { "module_reactive_armor", "반응장갑" },
     };
 
-    static string SizeName(UnitSize size, bool air) => air ? "공중" : size == UnitSize.Large ? "대형 차량" : size == UnitSize.Medium ? "차량" : "보병";
+    /// <summary>크기 배지 글자(항목 31).</summary>
+    public static string SizeBadge(UnitSize size) => size == UnitSize.Large ? "대" : size == UnitSize.Medium ? "중" : size == UnitSize.Small ? "소" : "공병";
+
+    public static string SizeWord(UnitSize size) => size == UnitSize.Large ? "대형" : size == UnitSize.Medium ? "중형" : size == UnitSize.Small ? "소형" : "공병";
+
+    static string SizeName(UnitSize size, bool air) => air ? $"{SizeWord(size)} 공중" : SizeWord(size);
+
+    public static string TierName(int tier) => tier >= 3 ? "사단 본부(3단계)" : tier == 2 ? "연대 본부(2단계)" : "기지 1단계";
+
+    /// <summary>연구 이름: "소형 공격 +1", "정예 레인저 분대".</summary>
+    public static string ResearchName(ResearchSpec spec, System.Func<AssetRef<UnitSpec>, string> unitName = null) {
+      if (spec.Kind == ResearchKind.Elite) {
+        return "정예화: " + (unitName != null ? unitName(spec.EliteUnit) : "소형");
+      }
+      return $"{SizeWord(spec.Size)} {(spec.Kind == ResearchKind.Attack ? "공격" : "방어")} +{spec.Level}";
+    }
+
+    public static string TierLock(int tier) => $"기지 {tier}단계 필요";
 
     static string AttackName(AttackType attack) => attack == AttackType.AntiInfantry ? "대보병" : attack == AttackType.AntiArmor ? "대전차" : attack == AttackType.AntiAir ? "대공" : "범위";
 
@@ -48,9 +68,9 @@ namespace FactoryWars.View {
             weak.Add(name);
           }
         }
-        Judge(m.VsSmall, "보병");
-        Judge(m.VsMedium, "차량");
-        Judge(m.VsLarge, "대형 차량");
+        Judge(m.VsSmall, "소형");
+        Judge(m.VsMedium, "중형");
+        Judge(m.VsLarge, "대형");
         Judge(m.VsAir, "공중");
       }
       var threats = new List<string>();
@@ -115,7 +135,7 @@ namespace FactoryWars.View {
     /// <summary>상단 바의 아이콘 옆 숫자. 철, 목재, 강철, 전기, 인구 순서다.</summary>
     public static string[] TopBarValues(PlayerState state) {
       var stock = state.Stock;
-      var power = $"{stock.Power.AsInt}/{state.PowerCap.AsInt} ({state.PowerRate.AsFloat:+0.0;-0.0;0}/초)";
+      var power = $"{stock.Power.AsInt}/{state.PowerCap.AsInt} {state.PowerRate.AsFloat:+0.0;-0.0;0}";
       if (state.Outage) {
         power = $"<color={Red}>{power} 정전</color>";
       }
@@ -197,6 +217,9 @@ namespace FactoryWars.View {
         case RejectReason.BlockedLocation: return "건설 불가 지형";
         case RejectReason.Locked: return "해금되지 않았습니다";
         case RejectReason.Truce: return "휴전 중입니다";
+        case RejectReason.TierLocked: return "기지 단계가 부족합니다";
+        case RejectReason.SizeLimit: return "대형 유닛 보유 한도";
+        case RejectReason.Busy: return "이미 진행 중입니다";
         default: return "할 수 없습니다";
       }
     }

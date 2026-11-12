@@ -230,7 +230,14 @@ namespace Quantum.FactoryWars {
       }
 
       var start = StartPosition(f, player);
-      ProductionSystem.CreateFinishedBuilding(f, player, faction.Headquarters, start);
+      var headquarters = ProductionSystem.CreateFinishedBuilding(f, player, faction.Headquarters, start);
+      // 항목 31: 시작 기지 단계(보통 1, 시험 맵 3).
+      var tier = TechSystem.StartingTier(f);
+      f.Unsafe.GetPointer<Building>(headquarters)->Tier = tier;
+      state->BaseTier = tier;
+      for (var t = 0; t < tier; t++) {
+        state->TierFrames[t] = 1;
+      }
       for (var i = 0; i < map.StartingEngineers; i++) {
         ProductionSystem.SpawnUnit(f, player, faction.Engineer, start, i, null);
       }

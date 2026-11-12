@@ -26,10 +26,40 @@ namespace FactoryWars.View {
 
     public Entry[] Entries;
 
+    /// <summary>
+    /// 항목 31 새 유닛의 임시 모델: 기존 모델을 빌려 크기만 바꾼다. 에셋 팩으로 VisualCatalog 칸(unit/새 id)을 채우면 그 모델이 우선한다.
+    /// </summary>
+    public static readonly (string Id, string Borrow, float Scale)[] TemporaryModels = {
+      ("ff_scout_buggy", "cf_thunder_aa", 0.7f),
+      ("ff_field_support", "cf_longwall_mlrs", 0.8f),
+      ("ff_bulwark_tank", "ff_eagle_tank", 1.3f),
+      ("cf_scout_bike", "ff_eagle_tank", 0.6f),
+      ("cf_gale_gunship", "ff_hawk_gunship", 0.9f),
+      ("cf_fortress_tank", "cf_dragonscale_tank", 1.3f),
+    };
+
+    public static string BorrowedId(string id) {
+      foreach (var model in TemporaryModels) {
+        if (model.Id == id) {
+          return model.Borrow;
+        }
+      }
+      return null;
+    }
+
     public bool TryGet(string id, out Entry found) {
       foreach (var entry in Entries) {
         if (entry.Id == id) {
           found = entry;
+          return true;
+        }
+      }
+      foreach (var model in TemporaryModels) {
+        if (model.Id == id && TryGet(model.Borrow, out found)) {
+          found.Id = id;
+          found.DisplayScale *= model.Scale;
+          found.RingRadius *= model.Scale;
+          found.BarHeight *= model.Scale;
           return true;
         }
       }

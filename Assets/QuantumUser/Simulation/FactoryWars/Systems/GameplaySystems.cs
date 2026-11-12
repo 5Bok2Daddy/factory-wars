@@ -58,7 +58,7 @@ namespace Quantum.FactoryWars {
       var unit = new Unit {
         Owner = owner,
         Spec = specRef,
-        Health = spec.MaxHealth,
+        Health = TechSystem.MaxHealth(f, owner, specRef),
         Order = UnitOrder.Stop,
       };
       if (source != null) {
@@ -100,6 +100,10 @@ namespace Quantum.FactoryWars {
         f.Events.ActionRejected(player, ActionKind.Build, RejectReason.BlockedLocation, 0);
         return;
       }
+      if (spec.RequiredTier > TechSystem.Tier(f, player)) {
+        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.TierLocked, 0);
+        return;
+      }
       if (IsUnlocked(f, player, spec) == false) {
         f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Locked, 0);
         return;
@@ -113,8 +117,11 @@ namespace Quantum.FactoryWars {
       WorkerSystem.Assign(f, engineer, WorkerTask.Build, CreateBuilding(f, player, specRef, position));
     }
 
-    /// <summary>선행 건물을 모두 완공했으면 true.</summary>
+    /// <summary>기지 단계가 되고 선행 건물을 모두 완공했으면 true.</summary>
     public static bool IsUnlocked(Frame f, PlayerRef player, BuildingSpec spec) {
+      if (spec.RequiredTier > TechSystem.Tier(f, player)) {
+        return false;
+      }
       for (var i = 0; spec.Prerequisites != null && i < spec.Prerequisites.Length; i++) {
         if (HasFinished(f, player, spec.Prerequisites[i]) == false) {
           return false;
@@ -123,7 +130,7 @@ namespace Quantum.FactoryWars {
       return true;
     }
 
-    static bool HasFinished(Frame f, PlayerRef player, AssetRef<BuildingSpec> specRef) {
+    public static bool HasFinished(Frame f, PlayerRef player, AssetRef<BuildingSpec> specRef) {
       var buildings = f.Filter<Building>();
       while (buildings.NextUnsafe(out _, out var building)) {
         if (building->Owner == player && building->Spec == specRef && building->ConstructionRemaining <= FP._0) {
@@ -256,6 +263,11 @@ namespace Quantum.FactoryWars {
       var cost = unit.Cost + PresetCost(f, building, unit);
       var population = unit.Population * unit.SpawnCount;
       for (var i = 0; i < count && building->QueueCount < building->Queue.Length; i++) {
+        // 항목 31: 기지 단계와 크기별 보유 상한.
+        if (TechSystem.CanProduce(f, player, unit, out var locked) == false) {
+          f.Events.ActionRejected(player, ActionKind.Produce, locked, 0);
+          return;
+        }
         var missing = state->Stock.Missing(cost);
         // 대기열에 든 유닛의 인구도 이미 쓴 것으로 본다.
         if (state->PopulationUsed + QueuedPopulation(f, player) + population > state->PopulationCap) {
@@ -375,6 +387,7 @@ namespace Quantum.FactoryWars {
           }
         }
         state->PopulationUsed += population;
+        state->ProducedBySize[(int)unit.Size] += unit.SpawnCount;
         RemoveOrder(building, 0);
       }
     }
@@ -593,7 +606,8 @@ namespace Quantum.FactoryWars {
 
     public static FP EffectiveRange(Frame f, Unit* unit, UnitSpec spec) {
       var faction = f.FindAsset(FactoryWarsUtil.Player(f, unit->Owner)->Faction);
-      return spec.IsRanged ? spec.Range * faction.RangedRangeMultiplier : spec.Range;
+      var range = spec.Range + TechSystem.RangeBonus(f, unit->Owner, unit->Spec);
+      return spec.IsRanged ? range * faction.RangedRangeMultiplier : range;
     }
 
     static bool FindMatchup(GameRulesSpec rules, AttackType attack, out DamageMatchup matchup) {
@@ -641,6 +655,8 @@ namespace Quantum.FactoryWars {
         amount *= unit->DesignatedBonus;
       }
       amount = ModuleSystem.ApplyOutgoing(f, weapon.Unit, spec, amount);
+      // 항목 31: 방어 연구.
+      amount *= TechSystem.IncomingMultiplier(f, unit->Owner, spec);
       unit->Health -= ModuleSystem.ApplyIncoming(f, unit, amount);
 
       if (unit->Health <= FP._0) {
@@ -765,13 +781,37 @@ namespace Quantum.FactoryWars {
       }
       if (count >= spec.AbilityCount) {
         unit->AbilityCooldown = spec.AbilityCooldownSeconds;
-        DamageArea(f, weapon, position, spec.AbilityRadius, spec.Damage * spec.AbilityMultiplier);
+        DamageArea(f, weapon, position, spec.AbilityRadius, spec.Damage * spec.AbilityMultiplier * TechSystem.OutgoingMultiplier(f, unit->Owner, unit, spec));
+      }
+    }
+
+    /// <summary>야전 정비(항목 31): 주변 아군 지상 차량(중·대형)의 체력을 초당 AbilityMultiplier만큼 채운다. 자기 자신은 빼고, 최대 AbilityCount대.</summary>
+    static void FieldRepair(Frame f, EntityRef self, Unit* unit, UnitSpec spec, FPVector3 position) {
+      var radiusSqr = spec.AbilityRadius * spec.AbilityRadius;
+      var heal = spec.AbilityMultiplier * f.DeltaTime;
+      var remaining = spec.AbilityCount > 0 ? spec.AbilityCount : 1;
+      var units = f.Filter<Transform3D, Unit>();
+      while (remaining > 0 && units.NextUnsafe(out var entity, out var transform, out var other)) {
+        if (entity == self || other->Owner != unit->Owner || other->Health <= FP._0) {
+          continue;
+        }
+        var otherSpec = f.FindAsset(other->Spec);
+        if (otherSpec.IsAir || otherSpec.IsNaval || otherSpec.Size < UnitSize.Medium
+            || FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) > radiusSqr) {
+          continue;
+        }
+        var max = TechSystem.MaxHealth(f, other->Owner, other->Spec);
+        if (other->Health < max) {
+          other->Health = FPMath.Min(max, other->Health + heal);
+          remaining--;
+        }
       }
     }
 
     static void Fire(Frame f, in Weapon weapon, Unit* unit, EntityRef target, FPVector3 position, FPVector3 targetPosition, FP range) {
       var spec = weapon.Spec;
-      var amount = spec.Damage;
+      // 항목 31: 공격 연구와 정예화.
+      var amount = spec.Damage * TechSystem.OutgoingMultiplier(f, unit->Owner, unit, spec);
       if (spec.Ability == SpecialAbility.FirstShotDouble) {
         if (f.Number >= unit->EngagedUntilFrame) {
           amount *= spec.AbilityMultiplier;
@@ -801,6 +841,9 @@ namespace Quantum.FactoryWars {
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
         var spec = f.FindAsset(unit->Spec);
+        if (spec.Ability == SpecialAbility.FieldRepair && unit->Health > FP._0) {
+          FieldRepair(f, entity, unit, spec, transform->Position);
+        }
         if (unit->Health <= FP._0 || spec.Attack == AttackType.None) {
           continue;
         }

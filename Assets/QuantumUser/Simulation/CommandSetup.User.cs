@@ -24,6 +24,8 @@ namespace Quantum
             factories.Add(new FactoryWars.HoldUnitsCommand());
             factories.Add(new FactoryWars.PatrolUnitsCommand());
             factories.Add(new FactoryWars.RallyCommand());
+            factories.Add(new FactoryWars.UpgradeBaseCommand());
+            factories.Add(new FactoryWars.ResearchCommand());
         }
     }
 }

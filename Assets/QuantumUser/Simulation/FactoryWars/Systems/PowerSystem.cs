@@ -40,7 +40,8 @@ namespace Quantum.FactoryWars {
       switch (spec.Upkeep) {
         case UpkeepMode.Always: return true;
         case UpkeepMode.WhileProducing: return ProductionSystem.IsProducing(f, building, state);
-        // 연구는 챕터 5에서 들어온다.
+        // 항목 31: 연구소는 연구 중에만 전기를 쓴다.
+        case UpkeepMode.WhileResearching: return building->Research > 0;
         default: return false;
       }
     }

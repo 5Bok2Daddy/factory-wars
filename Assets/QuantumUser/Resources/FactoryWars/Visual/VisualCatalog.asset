@@ -761,6 +761,108 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+  - Id: unit/ff_scout_buggy
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/ff_field_support
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/ff_bulwark_tank
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/cf_scout_bike
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/cf_gale_gunship
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/cf_fortress_tank
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
   - Id: dress/Conifer
     Category: 4
     Prefabs: []

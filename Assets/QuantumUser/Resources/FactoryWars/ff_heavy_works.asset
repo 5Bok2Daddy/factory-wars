@@ -17,6 +17,7 @@ MonoBehaviour:
     Guid:
       Value: 458662434573243038
   Role: 8
+  RequiredTier: 2
   Cost:
     Iron:
       RawValue: 32768000
@@ -64,7 +65,9 @@ MonoBehaviour:
   - Id:
       Value: 470491905758002394
   IsCoreBuilding: 1
-  Producible: []
+  Producible:
+  - Id:
+      Value: 419144915428093262
   Attack: 0
   GroundOnly: 0
   Damage:

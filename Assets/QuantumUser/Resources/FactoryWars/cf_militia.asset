@@ -17,6 +17,7 @@ MonoBehaviour:
     Guid:
       Value: 442872915998123145
   Size: 1
+  RequiredTier: 1
   IsAir: 0
   IsNaval: 0
   Cost:

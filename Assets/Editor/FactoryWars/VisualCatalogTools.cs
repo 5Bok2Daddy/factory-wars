@@ -70,6 +70,10 @@ namespace FactoryWars.EditorTools {
         var team = category == VisualCategory.Unit || category == VisualCategory.Building ? TeamColorMode.MaterialName : TeamColorMode.None;
         yield return (id, category, team);
       }
+      // 항목 31 새 유닛: 지금은 기존 모델을 빌려 쓰지만(ViewCatalog.TemporaryModels) 칸은 따로 둔다.
+      foreach (var model in ViewCatalog.TemporaryModels) {
+        yield return (VisualCatalog.UnitId(model.Id), VisualCategory.Unit, TeamColorMode.MaterialName);
+      }
       foreach (DressKind kind in Enum.GetValues(typeof(DressKind))) {
         yield return (VisualCatalog.DressId(kind), DressCategory(kind), TeamColorMode.None);
       }

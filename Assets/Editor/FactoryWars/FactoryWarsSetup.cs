@@ -261,32 +261,48 @@ namespace FactoryWars.EditorTools {
       public double AbilityMultiplier, AbilitySeconds, AbilityRadius, AbilityCooldown;
       public int AbilityCount;
       public int Population;
+      /// <summary>생산 건물 id 뒷부분(barracks, vehicle_factory, airfield, heavy_works, shipyard, headquarters). 항목 31.</summary>
+      public string At;
     }
 
     // 비용은 DESIGN-RESOURCE-TERRAIN.md 5장. 생산·체력·공격 유형은 GDD. 피해·사거리·간격·속도는 임시값(SETUP-REPORT.md 참조).
     static readonly UnitRow[] Units = {
-      new UnitRow { Id = "ff_engineer", Size = UnitSize.Engineer, Cost = R(100), Build = 10, Health = 80, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
-      new UnitRow { Id = "ff_ranger_squad", Size = UnitSize.Small, Cost = R(70, 50), Build = 15, Health = 140, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
-      new UnitRow { Id = "ff_skyguard_squad", Size = UnitSize.Small, Cost = R(80, 50, 0, 20), Build = 18, Health = 120, Attack = AttackType.AntiAir, Damage = 20, Range = 8, Interval = 1, Speed = 4, Ability = SpecialAbility.AirPriority },
-      new UnitRow { Id = "ff_eagle_tank", Size = UnitSize.Medium, Cost = R(250, 0, 80, 60), Build = 35, Health = 700, Attack = AttackType.AntiArmor, Damage = 60, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble, AbilityMultiplier = 2, AbilitySeconds = 8 },
-      new UnitRow { Id = "ff_hawk_gunship", Size = UnitSize.Medium, Air = true, Cost = R(250, 0, 100, 100), Build = 40, Health = 450, Attack = AttackType.AntiArmor, Damage = 55, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
-      new UnitRow { Id = "ff_skyfortress_bomber", Size = UnitSize.Large, Air = true, Cost = R(500, 0, 250, 350), Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, Ability = SpecialAbility.CarpetBomb, AbilityMultiplier = 1.5, AbilityRadius = 8, AbilityCount = 5, AbilityCooldown = 45 },
-      new UnitRow { Id = "cf_engineer", Size = UnitSize.Engineer, Cost = R(80), Build = 8, Health = 70, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
+      new UnitRow { Id = "ff_engineer", At = "headquarters", Size = UnitSize.Engineer, Cost = R(100), Build = 10, Health = 80, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
+      new UnitRow { Id = "ff_ranger_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 50), Build = 15, Health = 140, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
+      new UnitRow { Id = "ff_skyguard_squad", At = "barracks", Size = UnitSize.Small, Cost = R(80, 50, 0, 20), Build = 18, Health = 120, Attack = AttackType.AntiAir, Damage = 20, Range = 8, Interval = 1, Speed = 4, Ability = SpecialAbility.AirPriority },
+      // 항목 31 새 소형: 군수공장의 빠른 정찰차.
+      new UnitRow { Id = "ff_scout_buggy", At = "vehicle_factory", Size = UnitSize.Small, Cost = R(90, 30, 0, 10), Build = 14, Health = 160, Attack = AttackType.AntiInfantry, Damage = 12, Range = 7, Interval = 1, Speed = 7.5 },
+      new UnitRow { Id = "ff_eagle_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(250, 0, 80, 60), Build = 35, Health = 700, Attack = AttackType.AntiArmor, Damage = 60, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble, AbilityMultiplier = 2, AbilitySeconds = 8 },
+      // 항목 31 새 중형: 주변 아군 차량을 고치는 야전 정비차(가벼운 기관총).
+      new UnitRow { Id = "ff_field_support", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(200, 50, 60, 40), Build = 30, Health = 500, Attack = AttackType.AntiInfantry, Damage = 8, Range = 6, Interval = 1, Speed = 5, Population = 2, Ability = SpecialAbility.FieldRepair, AbilityMultiplier = 15, AbilityRadius = 7, AbilityCount = 3 },
+      new UnitRow { Id = "ff_hawk_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(250, 0, 100, 100), Build = 40, Health = 450, Attack = AttackType.AntiArmor, Damage = 55, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
+      new UnitRow { Id = "ff_skyfortress_bomber", At = "airfield", Size = UnitSize.Large, Air = true, Cost = R(500, 0, 250, 350), Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, Ability = SpecialAbility.CarpetBomb, AbilityMultiplier = 1.5, AbilityRadius = 8, AbilityCount = 5, AbilityCooldown = 45 },
+      // 항목 31 새 대형: 중공업 기지의 중전차(B1: 자유 연방 중공업 기지가 만들 것이 없던 문제).
+      new UnitRow { Id = "ff_bulwark_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(450, 0, 200, 150), Build = 60, Health = 1800, Attack = AttackType.AntiArmor, Damage = 110, Range = 9, Interval = 2.5, Speed = 3.5 },
+      new UnitRow { Id = "cf_engineer", At = "headquarters", Size = UnitSize.Engineer, Cost = R(80), Build = 8, Health = 70, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
       // 항목 30 밸런스(AI 40판: 자유 연방 75~85%): 대륙 연방 보병·용린 전차 체력·사거리 보강
-      new UnitRow { Id = "cf_militia", Size = UnitSize.Small, Cost = R(40, 50), Build = 12, Health = 90, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
-      new UnitRow { Id = "cf_flame_squad", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 145, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
-      new UnitRow { Id = "cf_dragonscale_tank", Size = UnitSize.Medium, Cost = R(190, 0, 50, 60), Build = 28, Health = 570, Attack = AttackType.AntiArmor, Damage = 45, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
-      new UnitRow { Id = "cf_thunder_aa", Size = UnitSize.Medium, Cost = R(170, 0, 50, 60), Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
-      new UnitRow { Id = "cf_longwall_mlrs", Size = UnitSize.Large, Cost = R(400, 0, 200, 200), Build = 55, Health = 1000, Attack = AttackType.Area, Damage = 120, Range = 18, MinRange = 6, Splash = 4, Interval = 6, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
-      new UnitRow { Id = "ff_scout_boat", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
-      new UnitRow { Id = "ff_artillery_ship", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
-      new UnitRow { Id = "cf_scout_boat", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
-      new UnitRow { Id = "cf_artillery_ship", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
+      new UnitRow { Id = "cf_militia", At = "barracks", Size = UnitSize.Small, Cost = R(40, 50), Build = 12, Health = 90, Attack = AttackType.AntiInfantry, Damage = 10, Range = 7, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
+      new UnitRow { Id = "cf_flame_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 145, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
+      // 항목 31 새 소형: 군수공장의 싸고 빠른 척후 오토바이.
+      new UnitRow { Id = "cf_scout_bike", At = "vehicle_factory", Size = UnitSize.Small, Cost = R(60, 30), Build = 10, Health = 110, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 0.8, Speed = 8 },
+      new UnitRow { Id = "cf_dragonscale_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(190, 0, 50, 60), Build = 28, Health = 570, Attack = AttackType.AntiArmor, Damage = 45, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
+      new UnitRow { Id = "cf_thunder_aa", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(170, 0, 50, 60), Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
+      // 항목 31 새 중형 공중: 비행장의 공격헬기(B2: 대륙 연방 비행장이 만들 것이 없던 문제).
+      new UnitRow { Id = "cf_gale_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(210, 0, 80, 80), Build = 34, Health = 400, Attack = AttackType.AntiArmor, Damage = 45, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
+      new UnitRow { Id = "cf_longwall_mlrs", At = "heavy_works", Size = UnitSize.Large, Cost = R(400, 0, 200, 200), Build = 55, Health = 1000, Attack = AttackType.Area, Damage = 120, Range = 18, MinRange = 6, Splash = 4, Interval = 6, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
+      // 항목 31 새 대형: 중공업 기지의 요새 전차(물량형이라 자유 연방 중전차보다 싸고 약하다).
+      new UnitRow { Id = "cf_fortress_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(380, 0, 160, 120), Build = 50, Health = 1500, Attack = AttackType.AntiArmor, Damage = 90, Range = 9, Interval = 2.5, Speed = 3.5, Population = 5 },
+      new UnitRow { Id = "ff_scout_boat", At = "shipyard", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
+      new UnitRow { Id = "ff_artillery_ship", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
+      new UnitRow { Id = "cf_scout_boat", At = "shipyard", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
+      new UnitRow { Id = "cf_artillery_ship", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
     };
 
     static UnitSpec BuildUnit(UnitRow row) {
       var spec = Asset<UnitSpec>(row.Id);
       spec.Size = row.Size;
+      // 항목 31: 소형 1단계, 중형 2단계, 대형 3단계(공병은 1).
+      spec.RequiredTier = row.Size == UnitSize.Large ? 3 : row.Size == UnitSize.Medium ? 2 : 1;
       spec.IsAir = row.Air;
       spec.Cost = row.Cost;
       spec.BuildTimeSeconds = row.Build;
@@ -329,31 +345,38 @@ namespace FactoryWars.EditorTools {
       return spec;
     }
 
-    static FactionSpec BuildFaction(string factionId, string prefix, Dictionary<string, UnitSpec> units, double ranged, double smallBuild, double populationCap, string[] startingUnits, AssetRef<ModuleSpec>[] modules) {
+    static FactionSpec BuildFaction(string factionId, string prefix, Dictionary<string, UnitSpec> units, double ranged, double smallBuild, double populationCap, string[] startingUnits, AssetRef<ModuleSpec>[] modules,
+        AssetRef<ResearchSpec>[] researches) {
       UnitSpec U(string id) => units[$"{prefix}_{id}"];
       var ids = units.Keys.Where(k => k.StartsWith(prefix + "_")).ToArray();
       var engineer = units[$"{prefix}_engineer"];
-      var small = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Small && u.IsNaval == false).ToArray();
-      var mediumGround = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Medium && u.IsAir == false && u.IsNaval == false).ToArray();
-      var air = ids.Select(k => units[k]).Where(u => u.IsAir).ToArray();
-      var large = ids.Select(k => units[k]).Where(u => u.Size == UnitSize.Large && u.IsAir == false && u.IsNaval == false).ToArray();
-      var naval = ids.Select(k => units[k]).Where(u => u.IsNaval).ToArray();
+      // 항목 31: 생산 건물은 유닛 표의 At으로 정한다(표 순서 = 생산 패널 순서).
+      UnitSpec[] At(string building) => Units.Where(row => row.Id.StartsWith(prefix + "_") && row.At == building).Select(row => units[row.Id]).ToArray();
 
       var buildings = new[] {
-        BuildBuilding($"{prefix}_headquarters", R(400, 300), 60, 3000, 10, 0, engineer),
+        BuildBuilding($"{prefix}_headquarters", R(400, 300), 60, 3000, 10, 0, At("headquarters")),
         BuildBuilding($"{prefix}_power_plant", R(150, 150), 15, 600, 0, 0),
         BuildBuilding($"{prefix}_processor", R(250, 150, 0, 100), 20, 800, 0, 0),
         BuildBuilding($"{prefix}_supply_depot", R(100, 200), 15, 500, 20, 0),
-        BuildBuilding($"{prefix}_barracks", R(200, 200), 20, 800, 0, 0, small),
+        BuildBuilding($"{prefix}_barracks", R(200, 200), 20, 800, 0, 0, At("barracks")),
         BuildBuilding($"{prefix}_research_lab", R(250, 200, 0, 150), 25, 700, 0, 0),
-        BuildBuilding($"{prefix}_vehicle_factory", R(400, 200, 0, 200), 30, 1200, 0, 0, mediumGround),
-        BuildBuilding($"{prefix}_airfield", R(400, 0, 100, 300), 35, 1000, 0, 0, air),
-        BuildBuilding($"{prefix}_heavy_works", R(500, 0, 200, 400), 45, 1600, 0, 0, large),
+        BuildBuilding($"{prefix}_vehicle_factory", R(400, 200, 0, 200), 30, 1200, 0, 0, At("vehicle_factory")),
+        BuildBuilding($"{prefix}_airfield", R(400, 0, 100, 300), 35, 1000, 0, 0, At("airfield")),
+        BuildBuilding($"{prefix}_heavy_works", R(500, 0, 200, 400), 45, 1600, 0, 0, At("heavy_works")),
         BuildBuilding($"{prefix}_ground_tower", R(250, 100, 0, 100), 20, 700, 0, 1),
         BuildBuilding($"{prefix}_collection_yard", R(0, 150), 15, 500, 0, 0),
         BuildBuilding($"{prefix}_air_defense", R(200, 100, 30, 100), 20, 700, 0, 1),
-        BuildBuilding($"{prefix}_shipyard", R(350, 150, 0, 150), 25, 1000, 0, 0, naval),
+        BuildBuilding($"{prefix}_shipyard", R(350, 150, 0, 150), 25, 1000, 0, 0, At("shipyard")),
       };
+      // 항목 31 기지 단계: 군수공장·비행장·중공업 기지·방공포대·조선소는 2단계.
+      foreach (var tier2 in new[] { 6, 7, 8, 11, 12 }) {
+        buildings[tier2].RequiredTier = 2;
+      }
+      for (var i = 0; i < buildings.Length; i++) {
+        if (System.Array.IndexOf(new[] { 6, 7, 8, 11, 12 }, i) < 0) {
+          buildings[i].RequiredTier = 1;
+        }
+      }
       void Requires(int building, params int[] prerequisites) {
         buildings[building].Prerequisites = prerequisites.Select(i => Ref(buildings[i])).ToArray();
       }
@@ -426,17 +449,78 @@ namespace FactoryWars.EditorTools {
       faction.Buildings = buildings.Skip(1).Concat(buildings.Take(1)).Select(Ref).ToArray();
       faction.Units = ids.Select(k => Ref(units[k])).ToArray();
       faction.StartingUnits = startingUnits.Select(id => Ref(U(id))).ToArray();
-      // 항목 22: 공중 유닛이 없는 진영은 AI가 비행장을 짓지 않는다. 대륙 연방은 물량형이라 중공업 기지를 차량 공장 바로 다음에 짓는다.
+      // 항목 22: 공중 유닛이 없는 진영은 AI가 비행장을 짓지 않는다(항목 31부터 두 진영 모두 공중이 있다). 대륙 연방은 물량형이라 중공업 기지를 차량 공장 바로 다음에 짓는다.
       faction.AiSkipRoles = ids.Any(k => units[k].IsAir) ? new BuildingRole[0] : new[] { BuildingRole.Airfield };
+      faction.Researches = researches;
       faction.AiEarlyRoles = factionId == "continental_federation" ? new[] { BuildingRole.HeavyWorks } : new BuildingRole[0];
       faction.Modules = modules;
       EditorUtility.SetDirty(faction);
       return faction;
     }
 
+    static ResearchSpec Research(string id, ResearchKind kind, UnitSize size, int level, ResourceCost cost, int seconds, int tier) {
+      var spec = Asset<ResearchSpec>(id);
+      spec.Kind = kind;
+      spec.Size = size;
+      spec.Level = level;
+      spec.Cost = cost;
+      spec.Seconds = seconds;
+      spec.RequiredTier = tier;
+      spec.Requires = default;
+      spec.EliteUnit = default;
+      spec.EliteHealthMultiplier = 1;
+      spec.EliteRangeBonus = 0;
+      spec.EliteDamageMultiplier = 1;
+      EditorUtility.SetDirty(spec);
+      return spec;
+    }
+
+    /// <summary>정예화: 체력 +30%, 사거리 +1, 피해 +10%.</summary>
+    static void Elite(ResearchSpec spec) {
+      spec.EliteHealthMultiplier = N(1.3);
+      spec.EliteRangeBonus = 1;
+      spec.EliteDamageMultiplier = N(1.1);
+      EditorUtility.SetDirty(spec);
+    }
+
+    /// <summary>
+    /// 항목 31 공통 연구 12개: 크기(소·중·대) x 공격·방어 x 1·2단계. 1단계는 그 크기를 만들 수 있는 기지 단계,
+    /// 2단계는 1단계 연구가 끝나야 하고 기지 3단계가 필요하다. 순서가 FactionSpec.Researches 앞부분이다.
+    /// </summary>
+    static AssetRef<ResearchSpec>[] BuildResearches() {
+      var list = new List<AssetRef<ResearchSpec>>();
+      var sizes = new[] { (UnitSize.Small, "small", 1, R(150, 100, 50, 50)), (UnitSize.Medium, "medium", 2, R(200, 0, 100, 80)), (UnitSize.Large, "large", 3, R(250, 0, 150, 100)) };
+      foreach (var (size, name, tier, cost) in sizes) {
+        foreach (var kind in new[] { ResearchKind.Attack, ResearchKind.Armor }) {
+          var prefix = kind == ResearchKind.Attack ? "attack" : "armor";
+          var first = Research($"research_{prefix}_{name}_1", kind, size, 1, cost, 45, tier);
+          var second = Research($"research_{prefix}_{name}_2", kind, size, 2, cost * N(1.5), 75, 3);
+          second.Requires = Ref(first);
+          EditorUtility.SetDirty(second);
+          list.Add(Ref(first));
+          list.Add(Ref(second));
+        }
+      }
+      return list.ToArray();
+    }
+
     static AiSpec BuildAi(string id, double think, int engineers, int variety, int maxYards, int maxHeadquarters, int maxProcessors, double lateExpansion, double firstAttack, double repeat,
         int wave, int growth, int maxWave, bool strategic, BuildingRole[] order) {
       var ai = Asset<AiSpec>(id);
+      // 항목 31 테크: 보통은 5.5분에 2단계, 10분에 3단계를 시작한다. 쉬움은 늦게.
+      var normal = id == "ai_normal";
+      ai.TierSeconds = normal ? new FP[] { 330, 600 } : new FP[] { 480, 900 };
+      ai.ResearchStartSeconds = normal ? 240 : 480;
+      ResearchPick P(ResearchKind kind, UnitSize size = UnitSize.Small, int level = 1) => new ResearchPick { Kind = kind, Size = size, Level = level };
+      ai.ResearchOrder = normal
+        ? new[] {
+          P(ResearchKind.Attack), P(ResearchKind.Armor), P(ResearchKind.Elite), P(ResearchKind.Attack, UnitSize.Medium), P(ResearchKind.Armor, UnitSize.Medium),
+          P(ResearchKind.Attack, UnitSize.Large), P(ResearchKind.Attack, UnitSize.Medium, 2), P(ResearchKind.Armor, UnitSize.Medium, 2), P(ResearchKind.Armor, UnitSize.Large),
+          P(ResearchKind.Attack, UnitSize.Small, 2), P(ResearchKind.Armor, UnitSize.Small, 2), P(ResearchKind.Attack, UnitSize.Large, 2), P(ResearchKind.Armor, UnitSize.Large, 2),
+        }
+        : new[] { P(ResearchKind.Attack), P(ResearchKind.Attack, UnitSize.Medium), P(ResearchKind.Elite) };
+      ai.SizeShares = normal ? new[] { N(0.35), N(0.45), N(0.2) } : new[] { N(0.5), N(0.4), N(0.1) };
+      ai.SizeShareMargin = normal ? N(0.15) : N(0.2);
       ai.ThinkSeconds = N(think);
       ai.EngineerTarget = engineers;
       ai.BuildOrder = order;
@@ -537,8 +621,15 @@ namespace FactoryWars.EditorTools {
       EditorUtility.SetDirty(reactive);
 
       var modules = new[] { Ref(piercing), Ref(reactive) };
-      BuildFaction("free_federation", "ff", units, 1.1, 1, 1, new[] { "ranger_squad", "ranger_squad", "eagle_tank" }, modules);
-      BuildFaction("continental_federation", "cf", units, 1, 0.75, 1.2, new[] { "militia", "militia", "dragonscale_tank" }, modules);
+      var shared = BuildResearches();
+      var ffElite = Research("research_elite_ff", ResearchKind.Elite, UnitSize.Small, 1, R(200, 100, 100, 50), 60, 2);
+      ffElite.EliteUnit = Ref(units["ff_ranger_squad"]);
+      Elite(ffElite);
+      var cfElite = Research("research_elite_cf", ResearchKind.Elite, UnitSize.Small, 1, R(200, 100, 100, 50), 60, 2);
+      cfElite.EliteUnit = Ref(units["cf_militia"]);
+      Elite(cfElite);
+      BuildFaction("free_federation", "ff", units, 1.1, 1, 1, new[] { "ranger_squad", "ranger_squad", "eagle_tank" }, modules, shared.Append(Ref(ffElite)).ToArray());
+      BuildFaction("continental_federation", "cf", units, 1, 0.75, 1.2, new[] { "militia", "militia", "dragonscale_tank" }, modules, shared.Append(Ref(cfElite)).ToArray());
 
       var rules = Asset<GameRulesSpec>("game_rules");
       rules.NavMeshName = "NavMesh";
@@ -604,6 +695,18 @@ namespace FactoryWars.EditorTools {
       rules.PowerResumeLevel = 5;
       rules.OutageTowerIntervalMultiplier = 2;
       rules.SpawnOffset = 6;
+      // 항목 31 크기 규칙: 소형 인구 0.5~1, 중형 2~3, 대형 5~6·동시 4대. 공격·방어 연구는 단계마다 10%.
+      rules.SizeRules = new[] {
+        new SizeRuleSpec { Size = UnitSize.Small, MinPopulation = N(0.5), MaxPopulation = 1, AttackPerLevel = N(0.1), ArmorPerLevel = N(0.1) },
+        new SizeRuleSpec { Size = UnitSize.Medium, MinPopulation = 2, MaxPopulation = 3, AttackPerLevel = N(0.1), ArmorPerLevel = N(0.1) },
+        new SizeRuleSpec { Size = UnitSize.Large, MinPopulation = 5, MaxPopulation = 6, OwnedLimit = 4, AttackPerLevel = N(0.1), ArmorPerLevel = N(0.1) },
+      };
+      // 항목 31 기지 단계: 2단계 "연대 본부"는 연구소, 3단계 "사단 본부"는 중공업 기지가 있어야 한다.
+      rules.BaseTiers = new[] {
+        new BaseTierSpec { Tier = 2, Cost = R(300, 200, 0, 100), Seconds = 75, RequiredRoles = new[] { BuildingRole.ResearchLab } },
+        new BaseTierSpec { Tier = 3, Cost = R(500, 200, 200, 200), Seconds = 90, RequiredRoles = new[] { BuildingRole.HeavyWorks } },
+      };
+      rules.TierDropsWithHeadquarters = true;
       rules.ShipSpawnGap = 3;
       rules.ShipyardWaterReach = 3;
       rules.DisconnectBotDifficulty = BotDifficulty.Normal;
@@ -627,11 +730,13 @@ namespace FactoryWars.EditorTools {
       rules.BuildingGap = N(2);
       // 항목 17B: 2·3인 경기의 빈 본진 자원은 70%만 둔다(중립 대형 확장지).
       rules.EmptyBaseResourceRatio = N(0.7);
+      // 항목 31: 2단계 건물(군수공장 등)은 단계가 오를 때까지 건너뛰므로 연구소를 앞에 둔다. 쉬움도 연구소·중공업 기지를 짓는다.
       rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 2, 2, 0, 420, 90, 6, 2, 12, false, new[] {
-        BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
+        BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.ResearchLab, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
+        BuildingRole.HeavyWorks,
       }));
       rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 4, 3, 5, 600, 300, 60, 8, 3, 24, true, new[] {
-        BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.VehicleFactory, BuildingRole.ResearchLab,
+        BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.ResearchLab, BuildingRole.VehicleFactory,
         BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Shipyard, BuildingRole.Airfield, BuildingRole.HeavyWorks, BuildingRole.GroundTower, BuildingRole.AirDefense, BuildingRole.SupplyDepot,
       }));
       rules.UnitClearance = N(0.5);
@@ -654,6 +759,8 @@ namespace FactoryWars.EditorTools {
       // 테스트 맵은 건설·외교 시험을 위해 넉넉히 준다.
       testMap.StartingResources = R(5000, 10000, 5000, 200);
       testMap.StartingEngineers = 1;
+      // 항목 31: 시험 맵은 3단계로 시작해 기존 건설·생산 시험이 단계에 막히지 않는다. 단계 시험은 RuntimeConfig.StartingTier로 1부터 한다.
+      testMap.StartingTier = 3;
       testMap.SpawnFactionUnits = true;
       testMap.ResourceNodes = new[] {
         Mine(-30, 14, 5000),

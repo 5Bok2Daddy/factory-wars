@@ -35,7 +35,7 @@ namespace FactoryWars.View {
       new Step { Text = "1/7 화면을 손가락으로 끌어 카메라를 움직여 보세요", Done = (t, f) => (t.Controller.Camera.Focus - t._cameraStart).magnitude > 12f },
       new Step { Text = "2/7 공병(노란 안전모)을 눌러 고르세요", Done = (t, f) => t.Controller.Input.Selection.Units.Any(e => f.Exists(e) && f.Has<Worker>(e)) },
       new Step { Text = "3/7 공병을 고른 채 철광산(주황 바위)을 눌러 채집시키세요", Done = (t, f) => Any<Worker>(f, t.Controller.Player, w => w.Task == WorkerTask.Gather || w.Task == WorkerTask.Deliver) },
-      new Step { Text = "4/7 공병을 고르고 오른쪽 아래 패널에서 보급창을 고른 뒤 땅을 눌러 지으세요", Target = "ContextPanel", Done = (t, f) => t.Buildings(f) > t._buildingsStart },
+      new Step { Text = "4/7 공병을 고르고 오른쪽 아래 '기본 건물'에서 보급창을 고른 뒤 땅을 눌러 지으세요", Target = "ContextPanel", Done = (t, f) => t.Buildings(f) > t._buildingsStart },
       new Step { Text = "5/7 병영을 눌러 고르고 패널에서 보병을 생산하세요", Target = "ContextPanel", Done = (t, f) => f.Global->Players.GetPointer(t.Controller.Player)->UnitsProduced > t._producedStart },
       new Step { Text = "6/7 전투 유닛을 고르고 \"부대 지정\" → \"1부대\"를 누르세요. 그다음 \"공격 이동\"을 누르고 땅을 누르세요", Target = "SaveButton",
         Done = (t, f) => t.Controller.Input.Selection.GroupSize(0) > 0 && AnyUnit(f, t.Controller.Player, u => u.Order == UnitOrder.AttackMove || u.Order == UnitOrder.Patrol) },

@@ -144,6 +144,12 @@ namespace Quantum.Prototypes {
     public FP ProcessTimer;
     public QBoolean HasRally;
     public FPVector3 Rally;
+    public Int32 Tier;
+    public Int32 UpgradeTier;
+    public FP UpgradeRemaining;
+    public Quantum.Prototypes.ResourceCostPrototype UpgradePaid;
+    public Int32 Research;
+    public FP ResearchRemaining;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Building component = default;
         Materialize((Frame)f, ref component, in context);
@@ -169,6 +175,12 @@ namespace Quantum.Prototypes {
         result.ProcessTimer = this.ProcessTimer;
         result.HasRally = this.HasRally;
         result.Rally = this.Rally;
+        result.Tier = this.Tier;
+        result.UpgradeTier = this.UpgradeTier;
+        result.UpgradeRemaining = this.UpgradeRemaining;
+        this.UpgradePaid.Materialize(frame, ref result.UpgradePaid, in context);
+        result.Research = this.Research;
+        result.ResearchRemaining = this.ResearchRemaining;
     }
   }
   [System.SerializableAttribute()]
@@ -338,6 +350,16 @@ namespace Quantum.Prototypes {
     public QBoolean Forfeited;
     public Int32 UnitsKilled;
     public Int32 BuildingsDestroyed;
+    public Int32 BaseTier;
+    [ArrayLengthAttribute(3)]
+    public Int32[] TierFrames = new Int32[3];
+    public Int32 ResearchDone;
+    [ArrayLengthAttribute(4)]
+    public Byte[] AttackLevels = new Byte[4];
+    [ArrayLengthAttribute(4)]
+    public Byte[] ArmorLevels = new Byte[4];
+    [ArrayLengthAttribute(4)]
+    public Int32[] ProducedBySize = new Int32[4];
     partial void MaterializeUser(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context = default) {
         result.Faction = this.Faction;
@@ -370,6 +392,20 @@ namespace Quantum.Prototypes {
         result.Forfeited = this.Forfeited;
         result.UnitsKilled = this.UnitsKilled;
         result.BuildingsDestroyed = this.BuildingsDestroyed;
+        result.BaseTier = this.BaseTier;
+        for (int i = 0, count = PrototypeValidator.CheckLength(TierFrames, 3, in context); i < count; ++i) {
+          result.TierFrames[i] = this.TierFrames[i];
+        }
+        result.ResearchDone = this.ResearchDone;
+        for (int i = 0, count = PrototypeValidator.CheckLength(AttackLevels, 4, in context); i < count; ++i) {
+          result.AttackLevels[i] = this.AttackLevels[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(ArmorLevels, 4, in context); i < count; ++i) {
+          result.ArmorLevels[i] = this.ArmorLevels[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(ProducedBySize, 4, in context); i < count; ++i) {
+          result.ProducedBySize[i] = this.ProducedBySize[i];
+        }
         MaterializeUser(frame, ref result, in context);
     }
   }

@@ -118,6 +118,8 @@ namespace Quantum.FactoryWars {
       // 싸울 상대가 없어진 동맹을 끊을 철을 먼저 모은다. 안 그러면 서로 공격하지 못한 채 경기가 끝나지 않는다.
       if (state->Stock.Iron >= breakCost || idleAlliance == false) {
         var reserve = building < ai.ConcurrentBuilds ? BuildNext(f, player, state, bot, ai, faction, counts) : default;
+        // 항목 31: 단계 업그레이드(때가 되면 비용을 남겨 둔다)와 연구.
+        reserve = reserve + ManageTech(f, player, state, ai);
         // 철이 바닥나 가면 나중에 동맹을 끊을 돈이 없어진다. 동맹이 있는 동안 파기 비용을 쓰지 않는다.
         if (HasAlly(f, player) && RemainingIron(f) < ai.BreakReserveIronLeft) {
           reserve.Iron += breakCost;
@@ -128,6 +130,62 @@ namespace Quantum.FactoryWars {
       CollectCrates(f, player, bot);
       PlayBattlefield(f, player, bot, ai);
       Negotiate(f, player, state, bot, ai);
+    }
+
+    /// <summary>
+    /// 항목 31 테크. TierSeconds가 지나면 사령부를 올리고(자원이 모자라면 그 비용을 남겨 둘 몫으로 돌려준다),
+    /// ResearchStartSeconds가 지나면 쉬는 연구소에서 ResearchOrder 순서로 가능한 첫 연구를 시작한다.
+    /// </summary>
+    static ResourceCost ManageTech(Frame f, PlayerRef player, PlayerState* state, AiSpec ai) {
+      var reserve = default(ResourceCost);
+      var tier = TechSystem.Tier(f, player);
+      var rules = FactoryWarsUtil.Rules(f);
+      if (ai.TierSeconds != null && tier < TechSystem.MaxTier && tier - 1 < ai.TierSeconds.Length
+          && f.Number >= FactoryWarsUtil.SecondsToFrames(f, ai.TierSeconds[tier - 1])
+          && TechSystem.FindTierSpec(rules, tier + 1, out var next) && TechSystem.MeetsTierRequirement(f, player, next, out _)) {
+        var buildings = f.Filter<Building>();
+        while (buildings.NextUnsafe(out var entity, out var building)) {
+          if (building->Owner != player || f.FindAsset(building->Spec).Role != BuildingRole.Headquarters) {
+            continue;
+          }
+          if (TechSystem.CanUpgrade(f, player, entity, out var reason, out _)) {
+            TechSystem.StartUpgrade(f, player, entity);
+            break;
+          }
+          if (reason == RejectReason.InsufficientResources) {
+            reserve = next.Cost;
+            break;
+          }
+          if (reason == RejectReason.Busy) {
+            break;
+          }
+        }
+      }
+      if (ai.ResearchOrder == null || f.Number < FactoryWarsUtil.SecondsToFrames(f, ai.ResearchStartSeconds)) {
+        return reserve;
+      }
+      var labs = f.Filter<Building>();
+      while (labs.NextUnsafe(out var entity, out var lab)) {
+        if (lab->Owner != player || lab->Research > 0 || lab->ConstructionRemaining > FP._0 || f.FindAsset(lab->Spec).Role != BuildingRole.ResearchLab) {
+          continue;
+        }
+        var list = f.FindAsset(state->Faction).Researches;
+        for (var p = 0; list != null && p < ai.ResearchOrder.Length; p++) {
+          var pick = ai.ResearchOrder[p];
+          for (var i = 0; i < list.Length; i++) {
+            var spec = f.FindAsset(list[i]);
+            if (spec.Kind != pick.Kind || (pick.Kind != ResearchKind.Elite && (spec.Size != pick.Size || spec.Level != pick.Level))) {
+              continue;
+            }
+            if (TechSystem.CanResearch(f, player, i, out _) && CanSpend(state->Stock, spec.Cost, reserve)) {
+              TechSystem.StartResearch(f, player, entity, i);
+              return reserve;
+            }
+          }
+        }
+        break;
+      }
+      return reserve;
     }
 
     static bool HasIdleAlliance(Frame f, PlayerRef player) {
@@ -278,14 +336,21 @@ namespace Quantum.FactoryWars {
       var faction = f.FindAsset(state->Faction);
       if (faction.AiEarlyRoles != null && counts[(int)BuildingRole.VehicleFactory] > 0) {
         foreach (var early in faction.AiEarlyRoles) {
-          if (counts[(int)early] == 0) {
+          var earlySpec = f.FindAsset(FindRole(f, faction, early));
+          if (counts[(int)early] == 0 && (earlySpec == null || earlySpec.RequiredTier <= TechSystem.Tier(f, player))) {
             role = early;
             return true;
           }
         }
       }
+      var tier = TechSystem.Tier(f, player);
       for (var i = 0; i < ai.BuildOrder.Length; i++) {
         if (faction.AiSkipRoles != null && System.Array.IndexOf(faction.AiSkipRoles, ai.BuildOrder[i]) >= 0) {
+          continue;
+        }
+        // 항목 31: 아직 단계가 안 된 건물은 건너뛰고 다음 것을 짓는다(단계가 오르면 다시 차례가 온다).
+        var roleSpec = f.FindAsset(FindRole(f, faction, ai.BuildOrder[i]));
+        if (roleSpec != null && roleSpec.RequiredTier > tier) {
           continue;
         }
         var index = (int)ai.BuildOrder[i];
@@ -581,7 +646,12 @@ namespace Quantum.FactoryWars {
         if (spec.Role == BuildingRole.Shipyard && Ships(f, player) + building->QueueCount >= ai.MaxShips) {
           continue;
         }
-        var unitRef = ai.CounterPicks ? CounterPick(f, player, ai, spec.Producible) : spec.Producible[f.RNG->Next(0, System.Math.Min(ai.UnitVariety, spec.Producible.Length))];
+        // 항목 31: 단계·크기 상한으로 막힌 유닛과 목표 비율을 넘은 크기는 뺀다(다른 후보가 없으면 비율은 무시).
+        var allowed = AllowedMask(f, player, ai, spec.Producible);
+        if (allowed == 0) {
+          continue;
+        }
+        var unitRef = ai.CounterPicks ? CounterPick(f, player, ai, spec.Producible, allowed) : RandomPick(f, ai, spec.Producible, allowed);
         var unit = f.FindAsset(unitRef);
         var population = unit.Population * unit.SpawnCount;
         if (room >= population && CanSpend(state->Stock, unit.Cost, reserve)) {
@@ -589,6 +659,73 @@ namespace Quantum.FactoryWars {
           room -= population;
         }
       }
+    }
+
+    static AssetRef<UnitSpec> RandomPick(Frame f, AiSpec ai, AssetRef<UnitSpec>[] producible, int allowed) {
+      var limit = System.Math.Min(ai.UnitVariety, producible.Length);
+      var choices = 0;
+      for (var i = 0; i < limit; i++) {
+        choices += (allowed & (1 << i)) != 0 ? 1 : 0;
+      }
+      if (choices == 0) {
+        // 앞쪽 UnitVariety개가 모두 막혔으면 뒤쪽 후보에서 고른다.
+        limit = producible.Length;
+        for (var i = 0; i < limit; i++) {
+          choices += (allowed & (1 << i)) != 0 ? 1 : 0;
+        }
+      }
+      var pick = f.RNG->Next(0, System.Math.Max(1, choices));
+      for (var i = 0; i < limit; i++) {
+        if ((allowed & (1 << i)) != 0 && pick-- == 0) {
+          return producible[i];
+        }
+      }
+      return producible[0];
+    }
+
+    /// <summary>뽑을 수 있는 후보 비트. 단계·크기 상한은 반드시 지키고, 목표 비율 초과 크기는 다른 후보가 남을 때만 뺀다.</summary>
+    static int AllowedMask(Frame f, PlayerRef player, AiSpec ai, AssetRef<UnitSpec>[] producible) {
+      var allowed = 0;
+      for (var i = 0; i < producible.Length && i < 30; i++) {
+        if (TechSystem.CanProduce(f, player, f.FindAsset(producible[i]), out _)) {
+          allowed |= 1 << i;
+        }
+      }
+      if (allowed == 0 || ai.SizeShares == null || ai.SizeShares.Length < 3) {
+        return allowed;
+      }
+      var bySize = stackalloc long[4];
+      for (var i = 0; i < 4; i++) {
+        bySize[i] = 0;
+      }
+      FP total = 0;
+      var units = f.Filter<Unit>();
+      while (units.NextUnsafe(out _, out var unit)) {
+        if (unit->Owner != player) {
+          continue;
+        }
+        var spec = f.FindAsset(unit->Spec);
+        if (spec.Size == UnitSize.Engineer || spec.IsNaval) {
+          continue;
+        }
+        bySize[(int)spec.Size] += spec.Population.RawValue;
+        total += spec.Population;
+      }
+      if (total <= FP._0) {
+        return allowed;
+      }
+      var trimmed = allowed;
+      for (var i = 0; i < producible.Length && i < 30; i++) {
+        var spec = f.FindAsset(producible[i]);
+        if ((allowed & (1 << i)) == 0 || spec.Size == UnitSize.Engineer || spec.IsNaval) {
+          continue;
+        }
+        var share = FP.FromRaw(bySize[(int)spec.Size]) / total;
+        if (share > ai.SizeShares[(int)spec.Size - 1] + ai.SizeShareMargin) {
+          trimmed &= ~(1 << i);
+        }
+      }
+      return trimmed != 0 ? trimmed : allowed;
     }
 
     static int Ships(Frame f, PlayerRef player) {
@@ -607,7 +744,7 @@ namespace Quantum.FactoryWars {
     /// 후보마다 (내 공격이 적 구성에 주는 상성 배율 평균) ÷ (적 공격이 나에게 주는 상성 배율 평균)으로 점수를 매긴다.
     /// 상대 공중이 적으면 대공 유닛은 몇 기까지만 둔다. 상위 CounterTop개 중 RNG로 고른다. 수치는 규칙의 상성표와 AiSpec에만 있다.
     /// </summary>
-    static AssetRef<UnitSpec> CounterPick(Frame f, PlayerRef player, AiSpec ai, AssetRef<UnitSpec>[] producible) {
+    static AssetRef<UnitSpec> CounterPick(Frame f, PlayerRef player, AiSpec ai, AssetRef<UnitSpec>[] producible, int allowed) {
       var rules = FactoryWarsUtil.Rules(f);
       FP small = 0, medium = 0, large = 0, air = 0, total = 0;
       FP antiInfantry = 0, antiArmor = 0, antiAir = 0, area = 0;
@@ -663,7 +800,7 @@ namespace Quantum.FactoryWars {
           score = FP._0;
         }
         // 정렬용 정수(동점은 앞 순서). 결정론: FP 원값만 쓴다.
-        scores[i] = score.RawValue;
+        scores[i] = (allowed & (1 << i)) != 0 ? score.RawValue : -1;
       }
       var top = System.Math.Max(1, System.Math.Min(ai.CounterTop, count));
       var picked = stackalloc int[top];

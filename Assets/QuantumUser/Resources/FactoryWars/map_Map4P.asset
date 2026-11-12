@@ -62,6 +62,7 @@ MonoBehaviour:
     Power:
       RawValue: 0
   StartingEngineers: 4
+  StartingTier: 0
   SpawnFactionUnits: 0
   ResourceNodes:
   - Kind: 0

@@ -275,8 +275,17 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(5, hud.ResourceIcons, "자원 5종");
       Controller().Input.Selection.SelectUnit(Engineers(0)[0]);
       hud.Refresh(Controller().Frame);
-      foreach (var entry in hud.Entries) {
-        Assert.IsNotNull(Ui.IconSprite(entry.Icon), entry.Label);
+      foreach (var menu in new[] { -1, 0, 1 }) {
+        if (menu >= 0) {
+          hud.Refresh(Controller().Frame);
+          hud.PressContext(menu);
+        }
+        foreach (var entry in hud.Entries.Where(e => e.Label.Length > 0)) {
+          Assert.IsNotNull(Ui.IconSprite(entry.Icon), entry.Label);
+        }
+        if (menu >= 0) {
+          hud.PressContext(hud.Entries.FindIndex(e => e.Label == "뒤로"));
+        }
       }
     }
 
