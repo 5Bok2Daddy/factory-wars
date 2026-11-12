@@ -24,9 +24,9 @@ MonoBehaviour:
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 13107200
+      RawValue: 9830400
     Power:
-      RawValue: 26214400
+      RawValue: 16384000
   BuildTimeSeconds:
     RawValue: 2949120
   MaxHealth:

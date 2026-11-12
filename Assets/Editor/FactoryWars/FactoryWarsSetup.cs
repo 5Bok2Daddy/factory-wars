@@ -268,7 +268,7 @@ namespace FactoryWars.EditorTools {
     // 비용은 DESIGN-RESOURCE-TERRAIN.md 5장. 생산·체력·공격 유형은 GDD. 피해·사거리·간격·속도는 임시값(SETUP-REPORT.md 참조).
     static readonly UnitRow[] Units = {
       new UnitRow { Id = "ff_engineer", At = "headquarters", Size = UnitSize.Engineer, Cost = R(100), Build = 10, Health = 80, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
-      new UnitRow { Id = "ff_ranger_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 50), Build = 15, Health = 140, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
+      new UnitRow { Id = "ff_ranger_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 50), Build = 15, Health = 150, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
       new UnitRow { Id = "ff_skyguard_squad", At = "barracks", Size = UnitSize.Small, Cost = R(80, 50, 0, 20), Build = 18, Health = 120, Attack = AttackType.AntiAir, Damage = 20, Range = 8, Interval = 1, Speed = 4, Ability = SpecialAbility.AirPriority },
       // 항목 31 새 소형: 군수공장의 빠른 정찰차.
       new UnitRow { Id = "ff_scout_buggy", At = "vehicle_factory", Size = UnitSize.Small, Cost = R(90, 30, 0, 10), Build = 14, Health = 160, Attack = AttackType.AntiInfantry, Damage = 12, Range = 7, Interval = 1, Speed = 7.5 },
@@ -280,9 +280,10 @@ namespace FactoryWars.EditorTools {
       // 항목 31 새 대형: 중공업 기지의 중전차(B1: 자유 연방 중공업 기지가 만들 것이 없던 문제).
       new UnitRow { Id = "ff_bulwark_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(450, 0, 200, 150), Build = 60, Health = 1800, Attack = AttackType.AntiArmor, Damage = 110, Range = 9, Interval = 2.5, Speed = 3.5 },
       new UnitRow { Id = "cf_engineer", At = "headquarters", Size = UnitSize.Engineer, Cost = R(80), Build = 8, Health = 70, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
-      // 항목 30 밸런스(AI 40판: 자유 연방 75~85%): 대륙 연방 보병·용린 전차 체력·사거리 보강
-      new UnitRow { Id = "cf_militia", At = "barracks", Size = UnitSize.Small, Cost = R(40, 50), Build = 12, Health = 90, Attack = AttackType.AntiInfantry, Damage = 10, Range = 7, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
-      new UnitRow { Id = "cf_flame_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 145, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
+      // 항목 30 밸런스(AI 40판: 자유 연방 75~85%): 용린 전차 체력·사거리 보강. 항목 31: 테크 단계로 자유 연방 전차가 2단계로 늦어져
+      // 대륙 연방이 94%를 이겨(ai-31-2p-v1) 민병대 90→80·사거리 7→6, 화염 145→130으로 되돌림. v4(대륙 80%)에서 민병대 비용 철 40→50·목재 50→55, v5(자유 67%)에서 철 45·목재 50으로 중간값.
+      new UnitRow { Id = "cf_militia", At = "barracks", Size = UnitSize.Small, Cost = R(45, 50), Build = 12, Health = 80, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
+      new UnitRow { Id = "cf_flame_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 130, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
       // 항목 31 새 소형: 군수공장의 싸고 빠른 척후 오토바이.
       new UnitRow { Id = "cf_scout_bike", At = "vehicle_factory", Size = UnitSize.Small, Cost = R(60, 30), Build = 10, Health = 110, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 0.8, Speed = 8 },
       new UnitRow { Id = "cf_dragonscale_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(190, 0, 50, 60), Build = 28, Health = 570, Attack = AttackType.AntiArmor, Damage = 45, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
@@ -362,7 +363,8 @@ namespace FactoryWars.EditorTools {
         BuildBuilding($"{prefix}_research_lab", R(250, 200, 0, 150), 25, 700, 0, 0),
         BuildBuilding($"{prefix}_vehicle_factory", R(400, 200, 0, 200), 30, 1200, 0, 0, At("vehicle_factory")),
         BuildBuilding($"{prefix}_airfield", R(400, 0, 100, 300), 35, 1000, 0, 0, At("airfield")),
-        BuildBuilding($"{prefix}_heavy_works", R(500, 0, 200, 400), 45, 1600, 0, 0, At("heavy_works")),
+        // 항목 31: 3단계 조건이라 전기 400→250·강철 200→150(ai-31-2p-v3: 군수공장보다 5분 늦게 지어짐).
+        BuildBuilding($"{prefix}_heavy_works", R(500, 0, 150, 250), 45, 1600, 0, 0, At("heavy_works")),
         BuildBuilding($"{prefix}_ground_tower", R(250, 100, 0, 100), 20, 700, 0, 1),
         BuildBuilding($"{prefix}_collection_yard", R(0, 150), 15, 500, 0, 0),
         BuildBuilding($"{prefix}_air_defense", R(200, 100, 30, 100), 20, 700, 0, 1),
@@ -509,8 +511,9 @@ namespace FactoryWars.EditorTools {
       var ai = Asset<AiSpec>(id);
       // 항목 31 테크: 보통은 5.5분에 2단계, 10분에 3단계를 시작한다. 쉬움은 늦게.
       var normal = id == "ai_normal";
-      ai.TierSeconds = normal ? new FP[] { 330, 600 } : new FP[] { 480, 900 };
+      ai.TierSeconds = normal ? new FP[] { 330, 540 } : new FP[] { 480, 840 };
       ai.ResearchStartSeconds = normal ? 240 : 480;
+      ai.TierLeadSeconds = 120;
       ResearchPick P(ResearchKind kind, UnitSize size = UnitSize.Small, int level = 1) => new ResearchPick { Kind = kind, Size = size, Level = level };
       ai.ResearchOrder = normal
         ? new[] {
@@ -704,7 +707,7 @@ namespace FactoryWars.EditorTools {
       // 항목 31 기지 단계: 2단계 "연대 본부"는 연구소, 3단계 "사단 본부"는 중공업 기지가 있어야 한다.
       rules.BaseTiers = new[] {
         new BaseTierSpec { Tier = 2, Cost = R(300, 200, 0, 100), Seconds = 75, RequiredRoles = new[] { BuildingRole.ResearchLab } },
-        new BaseTierSpec { Tier = 3, Cost = R(500, 200, 200, 200), Seconds = 90, RequiredRoles = new[] { BuildingRole.HeavyWorks } },
+        new BaseTierSpec { Tier = 3, Cost = R(450, 200, 150, 150), Seconds = 75, RequiredRoles = new[] { BuildingRole.HeavyWorks } },
       };
       rules.TierDropsWithHeadquarters = true;
       rules.ShipSpawnGap = 3;
@@ -731,13 +734,14 @@ namespace FactoryWars.EditorTools {
       // 항목 17B: 2·3인 경기의 빈 본진 자원은 70%만 둔다(중립 대형 확장지).
       rules.EmptyBaseResourceRatio = N(0.7);
       // 항목 31: 2단계 건물(군수공장 등)은 단계가 오를 때까지 건너뛰므로 연구소를 앞에 둔다. 쉬움도 연구소·중공업 기지를 짓는다.
+      // 3단계 조건인 중공업 기지는 군수공장 바로 뒤(ai-31-2p-v2: 3단계 평균 15분, 40자리 중 26). 보통 공격 간격 60→50초, 파도 증가 3→4·상한 24→30(경기 22분).
       rules.EasyAi = Ref(BuildAi("ai_easy", 5, 6, 1, 1, 2, 2, 0, 420, 90, 6, 2, 12, false, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.ResearchLab, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
         BuildingRole.HeavyWorks,
       }));
-      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 4, 3, 5, 600, 300, 60, 8, 3, 24, true, new[] {
+      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 4, 3, 5, 600, 300, 50, 8, 4, 30, true, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.ResearchLab, BuildingRole.VehicleFactory,
-        BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Shipyard, BuildingRole.Airfield, BuildingRole.HeavyWorks, BuildingRole.GroundTower, BuildingRole.AirDefense, BuildingRole.SupplyDepot,
+        BuildingRole.HeavyWorks, BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Shipyard, BuildingRole.Airfield, BuildingRole.GroundTower, BuildingRole.AirDefense, BuildingRole.SupplyDepot,
       }));
       rules.UnitClearance = N(0.5);
       rules.SlideMemorySeconds = 1;

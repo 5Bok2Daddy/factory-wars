@@ -22,7 +22,7 @@ MonoBehaviour:
   IsNaval: 0
   Cost:
     Iron:
-      RawValue: 2621440
+      RawValue: 2949120
     Wood:
       RawValue: 3276800
     Steel:
@@ -32,12 +32,12 @@ MonoBehaviour:
   BuildTimeSeconds:
     RawValue: 786432
   MaxHealth:
-    RawValue: 5898240
+    RawValue: 5242880
   Attack: 1
   Damage:
     RawValue: 655360
   Range:
-    RawValue: 458752
+    RawValue: 393216
   MinRange:
     RawValue: 0
   SplashRadius:

@@ -18,7 +18,9 @@ MonoBehaviour:
       Value: 336900429687469725
   TierSeconds:
   - RawValue: 31457280
-  - RawValue: 58982400
+  - RawValue: 55050240
+  TierLeadSeconds:
+    RawValue: 7864320
   ResearchStartSeconds:
     RawValue: 31457280
   ResearchOrder:

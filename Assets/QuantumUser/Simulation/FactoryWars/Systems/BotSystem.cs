@@ -164,6 +164,8 @@ namespace Quantum.FactoryWars {
       if (ai.ResearchOrder == null || f.Number < FactoryWarsUtil.SecondsToFrames(f, ai.ResearchStartSeconds)) {
         return reserve;
       }
+      // 연구가 다음 건물(예: 군수공장 전기 200)을 굶기지 않게, 건설 순서상 다음 건물 비용을 남겨 두고 연구한다.
+      var researchReserve = reserve + NextOrderCost(f, player, state, ai);
       var labs = f.Filter<Building>();
       while (labs.NextUnsafe(out var entity, out var lab)) {
         if (lab->Owner != player || lab->Research > 0 || lab->ConstructionRemaining > FP._0 || f.FindAsset(lab->Spec).Role != BuildingRole.ResearchLab) {
@@ -177,7 +179,7 @@ namespace Quantum.FactoryWars {
             if (spec.Kind != pick.Kind || (pick.Kind != ResearchKind.Elite && (spec.Size != pick.Size || spec.Level != pick.Level))) {
               continue;
             }
-            if (TechSystem.CanResearch(f, player, i, out _) && CanSpend(state->Stock, spec.Cost, reserve)) {
+            if (TechSystem.CanResearch(f, player, i, out _) && CanSpend(state->Stock, spec.Cost, researchReserve)) {
               TechSystem.StartResearch(f, player, entity, i);
               return reserve;
             }
@@ -186,6 +188,38 @@ namespace Quantum.FactoryWars {
         break;
       }
       return reserve;
+    }
+
+    /// <summary>건설 순서에서 아직 없는 첫 건물(단계·선행 조건을 채운 것)의 비용. 없으면 0.</summary>
+    static ResourceCost NextOrderCost(Frame f, PlayerRef player, PlayerState* state, AiSpec ai) {
+      var faction = f.FindAsset(state->Faction);
+      var seen = stackalloc int[RoleCount];
+      var counts = stackalloc int[RoleCount];
+      for (var i = 0; i < RoleCount; i++) {
+        seen[i] = 0;
+        counts[i] = 0;
+      }
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var building)) {
+        if (building->Owner == player) {
+          counts[(int)f.FindAsset(building->Spec).Role]++;
+        }
+      }
+      for (var i = 0; ai.BuildOrder != null && i < ai.BuildOrder.Length; i++) {
+        var role = ai.BuildOrder[i];
+        if (faction.AiSkipRoles != null && System.Array.IndexOf(faction.AiSkipRoles, role) >= 0) {
+          continue;
+        }
+        seen[(int)role]++;
+        if (counts[(int)role] >= seen[(int)role]) {
+          continue;
+        }
+        var spec = f.FindAsset(FindRole(f, faction, role));
+        if (spec != null && ProductionSystem.IsUnlocked(f, player, spec)) {
+          return spec.Cost;
+        }
+      }
+      return default;
     }
 
     static bool HasIdleAlliance(Frame f, PlayerRef player) {
@@ -262,6 +296,17 @@ namespace Quantum.FactoryWars {
           WorkerSystem.Assign(f, entity, WorkerTask.Gather, node);
           iron += kind == ResourceKind.Iron ? 1 : 0;
           wood += kind == ResourceKind.Wood ? 1 : 0;
+        }
+      }
+
+      // 항목 31: 짓다 만 건물에 일꾼이 없고 노는 공병도 없으면 채집 중인 공병 하나를 데려온다(군수공장 기초가 멈춰 2단계 생산이 막혔다).
+      if (needsBuilder) {
+        workers = f.Filter<Unit, Worker>();
+        while (workers.NextUnsafe(out var entity, out var unit, out var worker)) {
+          if (unit->Owner == player && entity != runner && (worker->Task == WorkerTask.Gather || worker->Task == WorkerTask.Deliver)) {
+            WorkerSystem.AssignToBuilding(f, entity, foundation);
+            break;
+          }
         }
       }
 
@@ -368,16 +413,24 @@ namespace Quantum.FactoryWars {
     static ResourceCost BuildNext(Frame f, PlayerRef player, PlayerState* state, BotState* bot, AiSpec ai, FactionSpec faction, int* counts) {
       var center = bot->Home;
       var hasRole = NextRole(player, state, ai, counts, f, out var role);
+      var orderRole = role;
+      var hasOrder = hasRole;
+      // 항목 31: 다음 단계 시각이 TierLeadSeconds 안으로 다가오면 그 단계 조건 건물(연구소·중공업 기지)을 확장보다 먼저 짓는다.
+      var techFirst = TierPrerequisite(f, player, ai, out var techRole);
+      if (techFirst) {
+        role = techRole;
+        hasRole = true;
+      }
 
       // 계획된 확장: 앞마당은 모자란 자원 쪽부터, 공유 확장과 중앙은 중반 이후에 잡는다.
-      if (FactoryWarsUtil.InTruce(f) == false && counts[(int)BuildingRole.PowerPlant] > 0 && counts[(int)BuildingRole.CollectionYard] < ai.MaxYards
+      if (techFirst == false && FactoryWarsUtil.InTruce(f) == false && counts[(int)BuildingRole.PowerPlant] > 0 && counts[(int)BuildingRole.CollectionYard] < ai.MaxYards
           && FindExpansion(f, player, state, bot, ai, out var planned)) {
         role = BuildingRole.CollectionYard;
         hasRole = true;
         center = planned;
       }
       // 확장: 멀리 일하러 간 공병 옆에 사령부나 집하장을 둔다.
-      else if (FindDistantNode(f, player, ai, out var distant)) {
+      else if (techFirst == false && FindDistantNode(f, player, ai, out var distant)) {
         var room = state->PopulationCap - state->PopulationUsed - ProductionSystem.QueuedPopulation(f, player);
         var reserves = NearbyReserves(f, distant, ai.ExpandReserveRadius);
         if (FactoryWarsUtil.InTruce(f) == false && ExpandsWithHeadquarters(ai, state->Stock, reserves, room, counts[(int)BuildingRole.Headquarters])) {
@@ -394,6 +447,17 @@ namespace Quantum.FactoryWars {
         return default;
       }
 
+      var result = TryBuildRole(f, player, state, ai, faction, role, center, out var built);
+      // 항목 31: 확장(집하장·사령부) 자리를 못 찾거나 짓지 못하면 그 시도만 반복하느라 건설 순서가 막혔다(휴전 없는 경기에서 군수공장 0).
+      // 그때는 건설 순서의 건물을 짓는다.
+      if (built == false && hasOrder && (role != orderRole || center != bot->Home)) {
+        return TryBuildRole(f, player, state, ai, faction, orderRole, bot->Home, out _);
+      }
+      return result;
+    }
+
+    static ResourceCost TryBuildRole(Frame f, PlayerRef player, PlayerState* state, AiSpec ai, FactionSpec faction, BuildingRole role, FPVector3 center, out bool built) {
+      built = false;
       var specRef = FindRole(f, faction, role);
       var spec = f.FindAsset(specRef);
       if (spec == null || ProductionSystem.IsUnlocked(f, player, spec) == false) {
@@ -403,9 +467,36 @@ namespace Quantum.FactoryWars {
         return spec.Cost;
       }
       if (FindSite(f, player, ai, spec, center, out var site) && FindBuilder(f, player, site, out var engineer)) {
+        var before = f.ComponentCount<Building>();
         ProductionSystem.TryBuild(f, player, engineer, specRef, site);
+        built = f.ComponentCount<Building>() > before;
       }
       return default;
+    }
+
+    /// <summary>다음 단계 조건 중 아직 없는(짓는 중도 아닌) 역할. 그 단계 시각 - TierLeadSeconds부터 true.</summary>
+    static bool TierPrerequisite(Frame f, PlayerRef player, AiSpec ai, out BuildingRole role) {
+      role = default;
+      var tier = TechSystem.Tier(f, player);
+      if (ai.TierSeconds == null || tier >= TechSystem.MaxTier || tier - 1 >= ai.TierSeconds.Length
+          || f.Number < FactoryWarsUtil.SecondsToFrames(f, FPMath.Max(FP._0, ai.TierSeconds[tier - 1] - ai.TierLeadSeconds))
+          || TechSystem.FindTierSpec(FactoryWarsUtil.Rules(f), tier + 1, out var next) == false
+          || TechSystem.MeetsTierRequirement(f, player, next, out role)) {
+        return false;
+      }
+      // 선행 건물이 없어 아직 못 짓는 것이면 평소 순서대로 짓는다(그 선행 건물이 순서에 있다).
+      var spec = f.FindAsset(FindRole(f, f.FindAsset(FactoryWarsUtil.Player(f, player)->Faction), role));
+      if (spec == null || ProductionSystem.IsUnlocked(f, player, spec) == false) {
+        return false;
+      }
+      // 이미 짓는 중이면 기다린다.
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var building)) {
+        if (building->Owner == player && f.FindAsset(building->Spec).Role == role) {
+          return false;
+        }
+      }
+      return true;
     }
 
     /// <summary>철이 목재보다 적으면 철 앞마당, 아니면 숲 앞마당이 먼저다.</summary>
@@ -647,7 +738,7 @@ namespace Quantum.FactoryWars {
           continue;
         }
         // 항목 31: 단계·크기 상한으로 막힌 유닛과 목표 비율을 넘은 크기는 뺀다(다른 후보가 없으면 비율은 무시).
-        var allowed = AllowedMask(f, player, ai, spec.Producible);
+        var allowed = AllowedMask(f, player, ai, spec.Producible, out var overShare);
         if (allowed == 0) {
           continue;
         }
@@ -684,7 +775,8 @@ namespace Quantum.FactoryWars {
     }
 
     /// <summary>뽑을 수 있는 후보 비트. 단계·크기 상한은 반드시 지키고, 목표 비율 초과 크기는 다른 후보가 남을 때만 뺀다.</summary>
-    static int AllowedMask(Frame f, PlayerRef player, AiSpec ai, AssetRef<UnitSpec>[] producible) {
+    static int AllowedMask(Frame f, PlayerRef player, AiSpec ai, AssetRef<UnitSpec>[] producible, out bool overShare) {
+      overShare = false;
       var allowed = 0;
       for (var i = 0; i < producible.Length && i < 30; i++) {
         if (TechSystem.CanProduce(f, player, f.FindAsset(producible[i]), out _)) {
@@ -725,6 +817,7 @@ namespace Quantum.FactoryWars {
           trimmed &= ~(1 << i);
         }
       }
+      overShare = trimmed == 0;
       return trimmed != 0 ? trimmed : allowed;
     }
 

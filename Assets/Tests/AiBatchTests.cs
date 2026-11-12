@@ -29,7 +29,9 @@ namespace FactoryWars.Tests {
     static readonly int[] AiRuns = Enumerable.Range(0, 20).ToArray();
 
     static string AiFolder() {
-      var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Game-logs", "ai"));
+      // 항목 31: FW_AI_FOLDER로 측정마다 다른 폴더(Game-logs/ai-31-*)에 쓴다. 없으면 Game-logs/ai.
+      var name = System.Environment.GetEnvironmentVariable("FW_AI_FOLDER");
+      var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Game-logs", string.IsNullOrEmpty(name) ? "ai" : name));
       Directory.CreateDirectory(folder);
       return folder;
     }

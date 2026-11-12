@@ -127,12 +127,12 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Tech_FieldSupportRepairsDamagedVehicles() {
       // 정비차는 멀리 두고, 전차가 민병대에게 맞은 뒤 정비차를 옆으로 보낸다.
-      yield return StartMatch(units: new[] { (0, "ff_field_support", -20, 40), (0, "ff_eagle_tank", 6, 30), (1, "cf_militia", 13, 30), (1, "cf_militia", 13, 32) });
+      yield return StartMatch(units: new[] { (0, "ff_field_support", -20, 40), (0, "ff_eagle_tank", 6, 30), (1, "cf_militia", 11, 30), (1, "cf_militia", 11, 32) });
       var tank = UnitsNamed(0, "ff_eagle_tank").OrderBy(u => (Verified.Get<Transform3D>(u).Position - V(6, 30)).SqrMagnitude).First();
       var support = UnitsNamed(0, "ff_field_support")[0];
       var max = Verified.FindAsset(Verified.Get<Unit>(tank).Spec).MaxHealth;
       yield return WaitFor(() => Verified.Get<Unit>(tank).Health < max, 30f, "전차가 맞음");
-      yield return WaitFor(() => UnitsNamed(1, "cf_militia").All(u => (Verified.Get<Transform3D>(u).Position - V(13, 30)).Magnitude > 20), 60f, "민병대 정리");
+      yield return WaitFor(() => UnitsNamed(1, "cf_militia").All(u => (Verified.Get<Transform3D>(u).Position - V(11, 30)).Magnitude > 20), 60f, "민병대 정리");
       var hurt = Verified.Get<Unit>(tank).Health;
       Assert.Less(hurt.AsFloat, max.AsFloat, "정비 전에는 깎인 채");
       yield return Send(0, new MoveUnitsCommand { Units = new[] { support }, Target = V(3, 30) });

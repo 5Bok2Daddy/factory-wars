@@ -66,15 +66,15 @@ MonoBehaviour:
   - Tier: 3
     Cost:
       Iron:
-        RawValue: 32768000
+        RawValue: 29491200
       Wood:
         RawValue: 13107200
       Steel:
-        RawValue: 13107200
+        RawValue: 9830400
       Power:
-        RawValue: 13107200
+        RawValue: 9830400
     Seconds:
-      RawValue: 5898240
+      RawValue: 4915200
     RequiredRoles: 08000000
     AlternativeRole: 0
     AlternativeCount: 0

@@ -13,6 +13,8 @@ namespace Quantum {
   public partial class AiSpec : AssetObject {
     /// <summary>항목 31: 기지 단계 업그레이드를 시작하는 시각. [0]은 2단계, [1]은 3단계.</summary>
     public FP[] TierSeconds;
+    /// <summary>단계 시각보다 이만큼 먼저 그 단계 조건 건물을 확장보다 우선해 짓는다.</summary>
+    public FP TierLeadSeconds;
     /// <summary>연구를 시작하는 시각과 우선순위.</summary>
     public FP ResearchStartSeconds;
     public ResearchPick[] ResearchOrder;

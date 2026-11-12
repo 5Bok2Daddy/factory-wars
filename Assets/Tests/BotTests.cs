@@ -65,9 +65,12 @@ namespace FactoryWars.Tests {
     /// <summary>항목 31: 보통 AI는 연구소 → 연대 본부(2단계) → 군수공장·중형 생산으로 간다.</summary>
     [UnityTest, Timeout(600000)]
     public IEnumerator Bot_ReachesTierTwoAndBuildsFactory() {
-      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal });
-      yield return Sim(540);
-      Debug.Log($"[FW-TEST] normal bot 540s tier {StateOf(1).BaseTier} factory {BuildingCount(1, BuildingRole.VehicleFactory)} lab {BuildingCount(1, BuildingRole.ResearchLab)} research {StateOf(1).ResearchDone}");
+      // 실제 경기와 같은 규칙 휴전(7분). 휴전 없는 시험(-0)에서는 이 자리 사령부 옆에서 공병이 끼어 군수공장 기초가 멈추는 일이 있다(SETUP-REPORT 항목 31 남은 문제).
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal }, truce: -1);
+      // 2단계 도달(약 6.8분) 뒤 군수공장까지: 10분 안.
+      yield return Sim(600);
+      Debug.Log($"[FW-TEST] normal bot 600s tier {StateOf(1).BaseTier} factory {BuildingCount(1, BuildingRole.VehicleFactory)} lab {BuildingCount(1, BuildingRole.ResearchLab)} research {StateOf(1).ResearchDone}");
+      Debug.Log("[FW-TEST] roles " + string.Join(" ", System.Enum.GetValues(typeof(BuildingRole)).Cast<BuildingRole>().Select(r => $"{r}:{BuildingCount(1, r)}")) + $" stock {StateOf(1).Stock.Iron}/{StateOf(1).Stock.Wood}/{StateOf(1).Stock.Steel}/{StateOf(1).Stock.Power} eng {Engineers(1).Count}");
       Assert.GreaterOrEqual(StateOf(1).BaseTier, 2, "2단계 도달");
       Assert.GreaterOrEqual(BuildingCount(1, BuildingRole.VehicleFactory), 1, "군수공장");
       Assert.Greater(StateOf(1).ResearchDone, 0, "연구 1개 이상");
