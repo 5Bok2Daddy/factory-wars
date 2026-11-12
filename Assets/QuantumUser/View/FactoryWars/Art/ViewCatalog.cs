@@ -36,6 +36,21 @@ namespace FactoryWars.View {
       ("cf_scout_bike", "ff_eagle_tank", 0.6f),
       ("cf_gale_gunship", "ff_hawk_gunship", 0.9f),
       ("cf_fortress_tank", "cf_dragonscale_tank", 1.3f),
+      // 항목 32 새 건물(모델 없음, 에셋 팩이 없어 기존 건물을 빌림)
+      ("ff_sandbags", "ff_collection_yard", 0.55f),
+      ("ff_bunker", "ff_ground_tower", 0.9f),
+      ("ff_medic_tent", "ff_supply_depot", 0.8f),
+      ("ff_repair_bay", "ff_vehicle_factory", 0.75f),
+      ("ff_radar", "ff_air_defense", 0.9f),
+      ("ff_helipad", "ff_airfield", 0.7f),
+      ("ff_artillery", "ff_ground_tower", 0.98f),
+      ("cf_sandbags", "cf_collection_yard", 0.55f),
+      ("cf_bunker", "cf_ground_tower", 0.9f),
+      ("cf_medic_tent", "cf_supply_depot", 0.8f),
+      ("cf_repair_bay", "cf_vehicle_factory", 0.75f),
+      ("cf_radar", "cf_air_defense", 0.9f),
+      ("cf_helipad", "cf_airfield", 0.7f),
+      ("cf_artillery", "cf_ground_tower", 0.98f),
     };
 
     public static string BorrowedId(string id) {

@@ -119,6 +119,7 @@ namespace Quantum.Prototypes.Unity {
     public Quantum.Prototypes.ResourceCostPrototype UpgradePaid;
     public Int32 Research;
     public FP ResearchRemaining;
+    public QBoolean CoverMade;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BuildingPrototype prototype);
     public override Quantum.Prototypes.BuildingPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BuildingPrototype();
@@ -143,6 +144,26 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.UpgradePaid, out result.UpgradePaid);
       converter.Convert(this.Research, out result.Research);
       converter.Convert(this.ResearchRemaining, out result.ResearchRemaining);
+      converter.Convert(this.CoverMade, out result.CoverMade);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
+  public unsafe partial class CoverSpotPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.CoverSpotPrototype> {
+    public FPVector3 Position;
+    public FPVector2 Facing;
+    public FP Reduction;
+    public Quantum.QuantumEntityPrototype Source;
+    public Quantum.QuantumEntityPrototype Occupant;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.CoverSpotPrototype prototype);
+    public override Quantum.Prototypes.CoverSpotPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.CoverSpotPrototype();
+      converter.Convert(this.Position, out result.Position);
+      converter.Convert(this.Facing, out result.Facing);
+      converter.Convert(this.Reduction, out result.Reduction);
+      converter.Convert(this.Source, out result.Source);
+      converter.Convert(this.Occupant, out result.Occupant);
       ConvertUser(converter, ref result);
       return result;
     }
@@ -173,6 +194,8 @@ namespace Quantum.Prototypes.Unity {
     public Quantum.QuantumEntityPrototype Garrison;
     public Quantum.QuantumEntityPrototype GarrisonTarget;
     public FPVector3 PatrolOrigin;
+    public Quantum.QuantumEntityPrototype Cover;
+    public QBoolean InCover;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
     public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.UnitPrototype();
@@ -199,6 +222,8 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Garrison, out result.Garrison);
       converter.Convert(this.GarrisonTarget, out result.GarrisonTarget);
       converter.Convert(this.PatrolOrigin, out result.PatrolOrigin);
+      converter.Convert(this.Cover, out result.Cover);
+      converter.Convert(this.InCover, out result.InCover);
       ConvertUser(converter, ref result);
       return result;
     }

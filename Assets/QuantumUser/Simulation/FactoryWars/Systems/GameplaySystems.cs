@@ -487,6 +487,10 @@ namespace Quantum.FactoryWars {
     public bool GroundOnly;
     public Unit* Unit;
     public UnitSpec Spec;
+    /// <summary>항목 32: 쏜 자리(엄폐 방향 판정).</summary>
+    public FPVector3 Origin;
+    /// <summary>범위 공격(포격·폭격·화염): 엄폐 효과가 CoverAreaFactor배.</summary>
+    public bool Area;
 
     public SpecialAbility Ability => Spec != null ? Spec.Ability : SpecialAbility.None;
   }
@@ -655,8 +659,9 @@ namespace Quantum.FactoryWars {
         amount *= unit->DesignatedBonus;
       }
       amount = ModuleSystem.ApplyOutgoing(f, weapon.Unit, spec, amount);
-      // 항목 31: 방어 연구.
+      // 항목 31: 방어 연구. 항목 32: 엄폐.
       amount *= TechSystem.IncomingMultiplier(f, unit->Owner, spec);
+      amount *= CoverSystem.DamageMultiplier(f, unit, weapon.Origin, weapon.Area);
       unit->Health -= ModuleSystem.ApplyIncoming(f, unit, amount);
 
       if (unit->Health <= FP._0) {
@@ -851,6 +856,7 @@ namespace Quantum.FactoryWars {
 
         var weapon = new Weapon {
           Owner = unit->Owner, Attack = spec.Attack, IsAir = spec.IsAir, IsRanged = spec.IsRanged, Unit = unit, Spec = spec,
+          Origin = transform->Position, Area = spec.Attack == AttackType.Area || spec.Ability == SpecialAbility.FlameBurst,
         };
         var range = EffectiveRange(f, unit, spec);
         if (unit->Garrison != EntityRef.None) {
@@ -914,12 +920,17 @@ namespace Quantum.FactoryWars {
           continue;
         }
 
-        var weapon = new Weapon { Owner = building->Owner, Attack = spec.Attack, IsRanged = true, GroundOnly = spec.GroundOnly };
-        var target = FindTarget(f, weapon, transform->Position, FP._0, spec.Range);
+        var weapon = new Weapon { Owner = building->Owner, Attack = spec.Attack, IsRanged = true, GroundOnly = spec.GroundOnly, Origin = transform->Position, Area = spec.Attack == AttackType.Area };
+        var target = FindTarget(f, weapon, transform->Position, spec.MinRange, spec.Range);
         if (target != EntityRef.None) {
           building->TargetEntity = target;
           building->AttackCooldown = spec.AttackInterval;
-          Damage(f, weapon, target, spec.Damage);
+          // 항목 32 포병 진지: 범위 피해.
+          if (spec.SplashRadius > FP._0) {
+            DamageArea(f, weapon, f.Unsafe.GetPointer<Transform3D>(target)->Position, spec.SplashRadius, spec.Damage);
+          } else {
+            Damage(f, weapon, target, spec.Damage);
+          }
         }
       }
     }
@@ -928,6 +939,10 @@ namespace Quantum.FactoryWars {
   /// <summary>지상은 Quantum NavMesh, 공중은 직선 이동.</summary>
   public unsafe class MovementSystem : SystemMainThread, ISignalOnNavMeshWaypointReached, ISignalOnNavMeshSearchFailed {
     public static void Order(Frame f, EntityRef entity, Unit* unit, UnitOrder order, FPVector3 target) {
+      // 항목 32: 명령이 엄폐보다 우선한다. 공격 이동을 다시 받는 것(AI 파도)은 엄폐를 유지한다.
+      if (order != UnitOrder.AttackMove || unit->Order != UnitOrder.AttackMove) {
+        CoverSystem.Release(f, unit);
+      }
       unit->Order = order;
       unit->TargetPosition = target;
       unit->TargetEntity = EntityRef.None;
@@ -938,6 +953,7 @@ namespace Quantum.FactoryWars {
     }
 
     public static void Stop(Frame f, EntityRef entity, Unit* unit) {
+      CoverSystem.Release(f, unit);
       unit->Order = UnitOrder.Stop;
       unit->TargetEntity = EntityRef.None;
       if (f.Unsafe.TryGetPointer<Worker>(entity, out var worker)) {
@@ -999,6 +1015,10 @@ namespace Quantum.FactoryWars {
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
         if (unit->Garrison != EntityRef.None) {
+          continue;
+        }
+        // 항목 32: 엄폐로 가는 중이거나 엄폐 중이면 엄폐가 이동을 맡는다.
+        if (unit->Cover != EntityRef.None && CoverSystem.Steer(f, entity, transform, unit)) {
           continue;
         }
         var spec = f.FindAsset(unit->Spec);

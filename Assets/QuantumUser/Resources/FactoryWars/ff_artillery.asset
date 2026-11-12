@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2878a441c035e894a9b579e4615c4cf1, type: 3}
+  m_Name: ff_artillery
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ff_artillery
+    Guid:
+      Value: 398795238017973577
+  Role: 19
+  RequiredTier: 3
+  Cost:
+    Iron:
+      RawValue: 22937600
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 9830400
+    Power:
+      RawValue: 9830400
+  BuildTimeSeconds:
+    RawValue: 2293760
+  MaxHealth:
+    RawValue: 78643200
+  PowerOutput:
+    RawValue: 0
+  PowerStorage:
+    RawValue: 0
+  PowerUpkeep:
+    RawValue: 65536
+  Upkeep: 3
+  ProcessSeconds:
+    RawValue: 0
+  ProcessInput:
+    Iron:
+      RawValue: 0
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  ProcessSteel:
+    RawValue: 0
+  PopulationCapBonus:
+    RawValue: 0
+  ModuleSlots: 0
+  FootprintRadius:
+    RawValue: 196608
+  IsDropOff: 0
+  Prerequisites:
+  - Id:
+      Value: 458662434573243038
+  IsCoreBuilding: 0
+  Producible: []
+  Attack: 4
+  GroundOnly: 1
+  Damage:
+    RawValue: 4587520
+  Range:
+    RawValue: 1441792
+  AttackInterval:
+    RawValue: 393216
+  MinRange:
+    RawValue: 524288
+  SplashRadius:
+    RawValue: 196608
+  CoverSpots: 0
+  CoverReduction:
+    RawValue: 0
+  Heals: 0
+  HealRadius:
+    RawValue: 0
+  HealPerSecond:
+    RawValue: 0
+  HealCount: 0
+  RevealRadius:
+    RawValue: 0
+  Defensive: 0

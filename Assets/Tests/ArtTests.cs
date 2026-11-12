@@ -88,7 +88,8 @@ namespace FactoryWars.Tests {
     [Test]
     public void Art_EveryBuildingSpecHasAModelInsideItsFootprint() {
       var specs = Resources.LoadAll<Quantum.BuildingSpec>("FactoryWars");
-      Assert.AreEqual(26, specs.Length, "진영당 13개");
+      // 항목 32: 진영당 20개(새 7종은 기존 모델을 빌려 크기만 바꾼다, ViewCatalog.TemporaryModels).
+      Assert.AreEqual(40, specs.Length, "진영당 20개");
       var problems = new List<string>();
       foreach (var spec in specs) {
         var id = spec.name;
@@ -100,7 +101,8 @@ namespace FactoryWars.Tests {
           bounds.Encapsulate(renderer.bounds);
         }
         var radius = spec.FootprintRadius.AsFloat + 0.01f;
-        var reach = Mathf.Max(bounds.max.x, -bounds.min.x, bounds.max.z, -bounds.min.z);
+        var borrowed = ViewCatalog.TemporaryModels.Where(m => m.Id == id).Select(m => m.Scale).DefaultIfEmpty(1f).First();
+        var reach = Mathf.Max(bounds.max.x, -bounds.min.x, bounds.max.z, -bounds.min.z) * borrowed;
         if (reach > radius) {
           problems.Add($"{id} 칸 초과 {reach:0.00}");
         }

@@ -252,6 +252,7 @@ namespace FactoryWars.EditorTools {
       public UnitSize Size;
       public bool Air;
       public bool Naval;
+      public bool Vehicle;
       public ResourceCost Cost;
       public int Build, Health;
       public AttackType Attack;
@@ -271,7 +272,7 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "ff_ranger_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 50), Build = 15, Health = 150, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
       new UnitRow { Id = "ff_skyguard_squad", At = "barracks", Size = UnitSize.Small, Cost = R(80, 50, 0, 20), Build = 18, Health = 120, Attack = AttackType.AntiAir, Damage = 20, Range = 8, Interval = 1, Speed = 4, Ability = SpecialAbility.AirPriority },
       // 항목 31 새 소형: 군수공장의 빠른 정찰차.
-      new UnitRow { Id = "ff_scout_buggy", At = "vehicle_factory", Size = UnitSize.Small, Cost = R(90, 30, 0, 10), Build = 14, Health = 160, Attack = AttackType.AntiInfantry, Damage = 12, Range = 7, Interval = 1, Speed = 7.5 },
+      new UnitRow { Id = "ff_scout_buggy", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Small, Cost = R(90, 30, 0, 10), Build = 14, Health = 160, Attack = AttackType.AntiInfantry, Damage = 12, Range = 7, Interval = 1, Speed = 7.5 },
       new UnitRow { Id = "ff_eagle_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(250, 0, 80, 60), Build = 35, Health = 700, Attack = AttackType.AntiArmor, Damage = 60, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble, AbilityMultiplier = 2, AbilitySeconds = 8 },
       // 항목 31 새 중형: 주변 아군 차량을 고치는 야전 정비차(가벼운 기관총).
       new UnitRow { Id = "ff_field_support", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(200, 50, 60, 40), Build = 30, Health = 500, Attack = AttackType.AntiInfantry, Damage = 8, Range = 6, Interval = 1, Speed = 5, Population = 2, Ability = SpecialAbility.FieldRepair, AbilityMultiplier = 15, AbilityRadius = 7, AbilityCount = 3 },
@@ -285,7 +286,7 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "cf_militia", At = "barracks", Size = UnitSize.Small, Cost = R(45, 50), Build = 12, Health = 80, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
       new UnitRow { Id = "cf_flame_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 130, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
       // 항목 31 새 소형: 군수공장의 싸고 빠른 척후 오토바이.
-      new UnitRow { Id = "cf_scout_bike", At = "vehicle_factory", Size = UnitSize.Small, Cost = R(60, 30), Build = 10, Health = 110, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 0.8, Speed = 8 },
+      new UnitRow { Id = "cf_scout_bike", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Small, Cost = R(60, 30), Build = 10, Health = 110, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 0.8, Speed = 8 },
       new UnitRow { Id = "cf_dragonscale_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(190, 0, 50, 60), Build = 28, Health = 570, Attack = AttackType.AntiArmor, Damage = 45, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
       new UnitRow { Id = "cf_thunder_aa", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(170, 0, 50, 60), Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
       // 항목 31 새 중형 공중: 비행장의 공격헬기(B2: 대륙 연방 비행장이 만들 것이 없던 문제).
@@ -318,6 +319,7 @@ namespace FactoryWars.EditorTools {
       spec.MoveSpeed = N(row.Speed);
       spec.SpawnCount = row.Spawn > 0 ? row.Spawn : 1;
       spec.IsNaval = row.Naval;
+      spec.IsVehicle = row.Vehicle;
       var population = row.Population > 0 ? row.Population : (row.Size == UnitSize.Large ? 6 : row.Size == UnitSize.Medium ? 3 : 1);
       spec.Population = N((double)population / spec.SpawnCount);
       spec.ModuleSlots = row.Size == UnitSize.Large ? 3 : row.Size == UnitSize.Medium ? 2 : row.Size == UnitSize.Small ? 1 : 0;
@@ -369,16 +371,45 @@ namespace FactoryWars.EditorTools {
         BuildBuilding($"{prefix}_collection_yard", R(0, 150), 15, 500, 0, 0),
         BuildBuilding($"{prefix}_air_defense", R(200, 100, 30, 100), 20, 700, 0, 1),
         BuildBuilding($"{prefix}_shipyard", R(350, 150, 0, 150), 25, 1000, 0, 0, At("shipyard")),
+        // 항목 32 새 건물(13~19): 모래주머니 진지, 벙커, 의무대, 정비소, 레이더 기지, 헬기장, 포병 진지.
+        BuildBuilding($"{prefix}_sandbags", R(60, 40), 8, 400, 0, 0),
+        BuildBuilding($"{prefix}_bunker", R(200, 50, 30), 20, 1400, 0, 0),
+        BuildBuilding($"{prefix}_medic_tent", R(150, 100, 0, 50), 20, 600, 0, 0),
+        BuildBuilding($"{prefix}_repair_bay", R(200, 50, 40, 60), 25, 900, 0, 0),
+        BuildBuilding($"{prefix}_radar", R(200, 0, 60, 120), 25, 700, 0, 0),
+        BuildBuilding($"{prefix}_helipad", R(250, 0, 60, 150), 25, 800, 0, 0, At("airfield").Where(u => u.IsAir && u.Size == UnitSize.Medium).ToArray()),
+        BuildBuilding($"{prefix}_artillery", R(350, 0, 150, 150), 35, 1200, 0, 0),
       };
-      // 항목 31 기지 단계: 군수공장·비행장·중공업 기지·방공포대·조선소는 2단계.
-      foreach (var tier2 in new[] { 6, 7, 8, 11, 12 }) {
-        buildings[tier2].RequiredTier = 2;
-      }
+      // 항목 31 기지 단계: 군수공장·비행장·중공업 기지·방공포대·조선소는 2단계. 항목 32: 의무대·정비소·레이더·헬기장 2단계, 포병 진지 3단계.
+      var tiers = new Dictionary<int, int> { { 6, 2 }, { 7, 2 }, { 8, 2 }, { 11, 2 }, { 12, 2 }, { 15, 2 }, { 16, 2 }, { 17, 2 }, { 18, 2 }, { 19, 3 } };
       for (var i = 0; i < buildings.Length; i++) {
-        if (System.Array.IndexOf(new[] { 6, 7, 8, 11, 12 }, i) < 0) {
-          buildings[i].RequiredTier = 1;
-        }
+        buildings[i].RequiredTier = tiers.TryGetValue(i, out var tier) ? tier : 1;
+        buildings[i].Defensive = i == 9 || i == 11 || i == 13 || i == 14;
+        buildings[i].MinRange = 0;
+        buildings[i].SplashRadius = 0;
+        buildings[i].CoverSpots = 0;
+        buildings[i].CoverReduction = 0;
+        buildings[i].Heals = HealTarget.None;
+        buildings[i].HealRadius = 0;
+        buildings[i].HealPerSecond = 0;
+        buildings[i].HealCount = 0;
+        buildings[i].RevealRadius = 0;
       }
+      // 모래주머니: 작고 낮은 엄폐(25%) 4칸. 벙커: 높은 엄폐(50%) 4칸, 튼튼하다.
+      buildings[13].FootprintRadius = 2;
+      buildings[13].CoverSpots = 4;
+      buildings[13].CoverReduction = N(0.25);
+      buildings[14].CoverSpots = 4;
+      buildings[14].CoverReduction = N(0.5);
+      buildings[15].Heals = HealTarget.Infantry;
+      buildings[15].HealRadius = 10;
+      buildings[15].HealPerSecond = 6;
+      buildings[15].HealCount = 6;
+      buildings[16].Heals = HealTarget.Vehicles;
+      buildings[16].HealRadius = 10;
+      buildings[16].HealPerSecond = 12;
+      buildings[16].HealCount = 3;
+      buildings[17].RevealRadius = 40;
       void Requires(int building, params int[] prerequisites) {
         buildings[building].Prerequisites = prerequisites.Select(i => Ref(buildings[i])).ToArray();
       }
@@ -396,6 +427,13 @@ namespace FactoryWars.EditorTools {
       Requires(10, 0);
       Requires(11, 4, 1);
       Requires(12, 6, 1);
+      Requires(13, 0);
+      Requires(14, 4);
+      Requires(15, 4);
+      Requires(16, 6);
+      Requires(17, 1);
+      Requires(18, 6, 1);
+      Requires(19, 8);
       void Power(int building, int output, int storage, double upkeep, UpkeepMode mode) {
         buildings[building].PowerOutput = output;
         buildings[building].PowerStorage = storage;
@@ -414,10 +452,15 @@ namespace FactoryWars.EditorTools {
       Power(9, 0, 0, 0.5, UpkeepMode.Always);
       Power(11, 0, 0, 0.5, UpkeepMode.Always);
       Power(12, 0, 0, 1, UpkeepMode.WhileProducing);
+      Power(15, 0, 0, 0.5, UpkeepMode.Always);
+      Power(16, 0, 0, 1, UpkeepMode.Always);
+      Power(17, 0, 0, 1, UpkeepMode.Always);
+      Power(18, 0, 0, 1.5, UpkeepMode.WhileProducing);
+      Power(19, 0, 0, 1, UpkeepMode.Always);
       for (var i = 0; i < buildings.Length; i++) {
         buildings[i].Role = (BuildingRole)i;
       }
-      foreach (var core in new[] { 0, 4, 6, 7, 8, 12 }) {
+      foreach (var core in new[] { 0, 4, 6, 7, 8, 12, 18 }) {
         buildings[core].IsCoreBuilding = true;
       }
       foreach (var building in buildings) {
@@ -439,6 +482,25 @@ namespace FactoryWars.EditorTools {
       airDefense.Range = 14;
       airDefense.AttackInterval = N(1.5);
       EditorUtility.SetDirty(airDefense);
+
+      // 항목 32 포병 진지: 장거리 범위 포격, 최소 사거리 안은 못 쏜다. 지상만.
+      var artillery = buildings[19];
+      artillery.Attack = AttackType.Area;
+      artillery.GroundOnly = true;
+      artillery.Damage = 70;
+      artillery.Range = 22;
+      artillery.MinRange = 8;
+      artillery.SplashRadius = 3;
+      artillery.AttackInterval = 6;
+      EditorUtility.SetDirty(artillery);
+      // 벙커: 안쪽 기관총(소형 보병 상대).
+      var bunker = buildings[14];
+      bunker.Attack = AttackType.AntiInfantry;
+      bunker.GroundOnly = true;
+      bunker.Damage = 14;
+      bunker.Range = 8;
+      bunker.AttackInterval = 1;
+      EditorUtility.SetDirty(bunker);
 
       var faction = Asset<FactionSpec>($"faction_{factionId}");
       faction.FactionId = factionId;
@@ -698,6 +760,15 @@ namespace FactoryWars.EditorTools {
       rules.PowerResumeLevel = 5;
       rules.OutageTowerIntervalMultiplier = 2;
       rules.SpawnOffset = 6;
+      // 항목 32 엄폐: 10m 안에서 찾고, 막는 방향 ±60도(cos 0.5) 안의 사격만 줄인다. 광역(포격·폭격·화염)은 절반 효과.
+      rules.CoverSearchRadius = 10;
+      rules.CoverFacingCos = N(0.5);
+      rules.CoverAreaFactor = N(0.5);
+      rules.CoverArrival = N(1.2);
+      rules.CoverSearchPerTick = 8;
+      rules.CoverOffset = N(1.2);
+      rules.CoverHighReduction = N(0.5);
+      rules.RadarAlertSeconds = 30;
       // 항목 31 크기 규칙: 소형 인구 0.5~1, 중형 2~3, 대형 5~6·동시 4대. 공격·방어 연구는 단계마다 10%.
       rules.SizeRules = new[] {
         new SizeRuleSpec { Size = UnitSize.Small, MinPopulation = N(0.5), MaxPopulation = 1, AttackPerLevel = N(0.1), ArmorPerLevel = N(0.1) },
@@ -741,7 +812,8 @@ namespace FactoryWars.EditorTools {
       }));
       rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 4, 3, 5, 600, 300, 50, 8, 4, 30, true, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.ResearchLab, BuildingRole.VehicleFactory,
-        BuildingRole.HeavyWorks, BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.Shipyard, BuildingRole.Airfield, BuildingRole.GroundTower, BuildingRole.AirDefense, BuildingRole.SupplyDepot,
+        BuildingRole.HeavyWorks, BuildingRole.RepairBay, BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.MedicTent, BuildingRole.Radar,
+        BuildingRole.Bunker, BuildingRole.Shipyard, BuildingRole.Airfield, BuildingRole.Artillery, BuildingRole.Helipad, BuildingRole.Sandbags, BuildingRole.GroundTower, BuildingRole.AirDefense, BuildingRole.SupplyDepot,
       }));
       rules.UnitClearance = N(0.5);
       rules.SlideMemorySeconds = 1;

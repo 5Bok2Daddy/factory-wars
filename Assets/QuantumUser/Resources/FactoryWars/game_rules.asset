@@ -47,6 +47,21 @@ MonoBehaviour:
       RawValue: 6553
     ArmorPerLevel:
       RawValue: 6553
+  CoverSearchRadius:
+    RawValue: 655360
+  CoverFacingCos:
+    RawValue: 32768
+  CoverAreaFactor:
+    RawValue: 32768
+  CoverArrival:
+    RawValue: 78643
+  CoverSearchPerTick: 8
+  CoverOffset:
+    RawValue: 78643
+  CoverHighReduction:
+    RawValue: 32768
+  RadarAlertSeconds:
+    RawValue: 1966080
   BaseTiers:
   - Tier: 2
     Cost:

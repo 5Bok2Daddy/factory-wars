@@ -3,7 +3,7 @@ namespace Quantum.FactoryWars {
 
   /// <summary>규칙 기반 AI. 사람과 같은 함수로 행동해 비용과 제한을 그대로 받는다.</summary>
   public unsafe class BotSystem : SystemMainThread, ISignalOnPlayerDisconnected, ISignalOnPlayerConnected {
-    const int RoleCount = 13;
+    const int RoleCount = 20;
     const int MaxOrder = MoveUnitsCommand.MaxUnits;
 
     /// <summary>

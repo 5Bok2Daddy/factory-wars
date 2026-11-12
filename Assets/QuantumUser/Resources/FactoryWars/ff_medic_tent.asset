@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2878a441c035e894a9b579e4615c4cf1, type: 3}
+  m_Name: ff_medic_tent
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ff_medic_tent
+    Guid:
+      Value: 330231786954375469
+  Role: 15
+  RequiredTier: 2
+  Cost:
+    Iron:
+      RawValue: 9830400
+    Wood:
+      RawValue: 6553600
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 3276800
+  BuildTimeSeconds:
+    RawValue: 1310720
+  MaxHealth:
+    RawValue: 39321600
+  PowerOutput:
+    RawValue: 0
+  PowerStorage:
+    RawValue: 0
+  PowerUpkeep:
+    RawValue: 32768
+  Upkeep: 3
+  ProcessSeconds:
+    RawValue: 0
+  ProcessInput:
+    Iron:
+      RawValue: 0
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  ProcessSteel:
+    RawValue: 0
+  PopulationCapBonus:
+    RawValue: 0
+  ModuleSlots: 0
+  FootprintRadius:
+    RawValue: 196608
+  IsDropOff: 0
+  Prerequisites:
+  - Id:
+      Value: 430950125761090820
+  IsCoreBuilding: 0
+  Producible: []
+  Attack: 0
+  GroundOnly: 0
+  Damage:
+    RawValue: 0
+  Range:
+    RawValue: 0
+  AttackInterval:
+    RawValue: 0
+  MinRange:
+    RawValue: 0
+  SplashRadius:
+    RawValue: 0
+  CoverSpots: 0
+  CoverReduction:
+    RawValue: 0
+  Heals: 1
+  HealRadius:
+    RawValue: 655360
+  HealPerSecond:
+    RawValue: 393216
+  HealCount: 6
+  RevealRadius:
+    RawValue: 0
+  Defensive: 0

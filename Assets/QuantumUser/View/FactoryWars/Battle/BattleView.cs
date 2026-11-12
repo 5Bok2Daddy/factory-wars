@@ -49,6 +49,11 @@ namespace FactoryWars.View {
       public GameObject Scaffold;
       public GameObject Dressing;
       public float Height;
+      // 항목 32 움직임: 속도(가감속 기울기), 기울기, 엄폐 표시.
+      public Vector3 Velocity;
+      public float Pitch;
+      public float Roll;
+      public GameObject Shield;
     }
 
     class BaseWorker {
@@ -435,7 +440,7 @@ namespace FactoryWars.View {
       goal.y = 0f;
       var moved = goal - actor.Position;
       var before = actor.Position;
-      actor.Position += moved * (1f - Mathf.Exp(-FollowRate * dt));
+      actor.Position += moved * (1f - Mathf.Exp(-VisualProfile.Current.FollowRate * dt));
       var hover = spec.IsAir ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.12f : 0f;
       actor.View.transform.position = spec.IsAir ? actor.Position : actor.Position + Vector3.up * TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z);
       actor.View.Turn.localPosition = Vector3.up * (actor.View.Entry.Altitude + hover);
@@ -447,7 +452,9 @@ namespace FactoryWars.View {
         actor.HullYaw = Mathf.MoveTowardsAngle(actor.HullYaw, YawTo(actor.Position, target), TurnRate * dt);
       }
       actor.View.SetYaw(actor.HullYaw);
+      Tilt(actor, spec, before, dt);
       Aim(actor, hasTarget, target, air, dt);
+      UpdateShield(actor, unit->InCover);
 
       var cooldown = unit->AttackCooldown.AsFloat;
       if (cooldown > actor.Cooldown + 0.05f && spec.Attack != AttackType.None) {
@@ -460,6 +467,57 @@ namespace FactoryWars.View {
       if (actor.View.Animation != null) {
         var speed = dt > 0f ? (actor.Position - before).magnitude / dt : 0f;
         actor.View.Animation.Set(AnimState(speed, hasTarget, working ? worker->Task : WorkerTask.Idle), speed);
+      }
+    }
+
+    /// <summary>
+    /// 항목 32: 차량은 가감속에 따라 앞뒤로, 헬기·비행기는 선회 방향으로 옆으로 기울고 속도만큼 앞으로 숙인다. 보병·배는 그대로.
+    /// 값은 VisualProfile(화면 전용). 시뮬레이션은 읽기만 한다.
+    /// </summary>
+    void Tilt(Actor actor, UnitSpec spec, Vector3 before, float dt) {
+      if (dt <= 0f || spec.IsNaval || (spec.Size == UnitSize.Small && spec.IsVehicle == false && spec.IsAir == false) || spec.Size == UnitSize.Engineer) {
+        return;
+      }
+      var profile = VisualProfile.Current;
+      var velocity = (actor.Position - before) / dt;
+      var accel = (velocity - actor.Velocity) / dt;
+      actor.Velocity = Vector3.Lerp(actor.Velocity, velocity, 1f - Mathf.Exp(-8f * dt));
+      var forward = Quaternion.Euler(0, actor.HullYaw, 0) * Vector3.forward;
+      float pitch, roll = 0f;
+      if (spec.IsAir) {
+        var speed = Vector3.Dot(actor.Velocity, forward);
+        var right = Quaternion.Euler(0, actor.HullYaw, 0) * Vector3.right;
+        var turn = Vector3.Dot(accel, right);
+        pitch = Mathf.Clamp(speed * profile.AirPitchPerSpeed, -profile.AirMaxBank * 0.5f, profile.AirMaxBank * 0.5f);
+        roll = Mathf.Clamp(-turn * profile.AirBankPerTurn * 4f, -profile.AirMaxBank, profile.AirMaxBank);
+      } else {
+        // 출발하면 뒤로, 멈추면 앞으로 숙는다.
+        pitch = Mathf.Clamp(-Vector3.Dot(accel, forward) * profile.VehicleTiltPerAccel, -profile.VehicleMaxTilt, profile.VehicleMaxTilt);
+      }
+      var k = 1f - Mathf.Exp(-profile.TiltRate * dt);
+      actor.Pitch = Mathf.Lerp(actor.Pitch, pitch, k);
+      actor.Roll = Mathf.Lerp(actor.Roll, roll, k);
+      actor.View.Turn.localRotation = Quaternion.Euler(0, actor.HullYaw, 0) * Quaternion.Euler(actor.Pitch, 0, actor.Roll);
+    }
+
+    /// <summary>항목 32: 엄폐 중인 보병 머리 위 작은 방패.</summary>
+    void UpdateShield(Actor actor, bool inCover) {
+      if (inCover && actor.Shield == null) {
+        actor.Shield = new GameObject("CoverShield");
+        actor.Shield.transform.SetParent(actor.View.transform, false);
+        actor.Shield.transform.localPosition = Vector3.up * (actor.View.Entry.BarHeight + 0.9f);
+        actor.Shield.transform.localScale = Vector3.one * 0.9f;
+        var sprite = actor.Shield.AddComponent<SpriteRenderer>();
+        sprite.sprite = Ui.IconSprite("ui_armor");
+      }
+      if (actor.Shield != null) {
+        if (actor.Shield.activeSelf != inCover) {
+          actor.Shield.SetActive(inCover);
+        }
+        var camera = Camera.main;
+        if (inCover && camera != null) {
+          actor.Shield.transform.rotation = camera.transform.rotation;
+        }
       }
     }
 

@@ -219,12 +219,14 @@ namespace FactoryWars.Tests {
       hud.Refresh(Controller().Frame);
       // 항목 31: 공병 명령 카드는 단계별 건설 메뉴(기본·2단계)로 나뉜다. 두 메뉴를 합치면 사령부를 포함한 건물 전부.
       var all = new List<ContextEntry>();
-      foreach (var menu in new[] { "기본 건물", "2단계 건물" }) {
+      // 항목 32: 방어 건물 묶음과 3단계(포병 진지)가 더해졌다. 시험 맵은 3단계로 시작한다.
+      foreach (var menu in new[] { "기본 건물", "2단계 건물", "3단계 건물", "방어 건물" }) {
+        Assert.GreaterOrEqual(hud.Entries.FindIndex(e => e.Label == menu), 0, menu);
         hud.PressContext(hud.Entries.FindIndex(e => e.Label == menu));
         all.AddRange(hud.Entries.Where(e => e.Label.Length > 0 && e.Label != "뒤로"));
         hud.PressContext(hud.Entries.FindIndex(e => e.Label == "뒤로"));
       }
-      Assert.AreEqual(13, all.Count, "사령부를 포함한 건물 전부");
+      Assert.AreEqual(Verified.FindAsset(StateOf(0).Faction).Buildings.Length, all.Count, "사령부를 포함한 건물 전부");
       var depot = all.First(e => e.Label.StartsWith("보급창"));
       Assert.IsTrue(depot.Enabled);
       Assert.IsTrue(depot.Label.Contains("철 100"), depot.Label);

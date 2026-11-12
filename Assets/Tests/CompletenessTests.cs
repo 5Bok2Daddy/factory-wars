@@ -90,8 +90,13 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Build_PanelFitsAllFactionBuildings() {
+      // 항목 31·32: 명령 카드 3x3에서 건설 하위 메뉴(기본·2단계·3단계·방어)마다 8칸 + 뒤로.
+      var all = Resources.LoadAll<BuildingSpec>("FactoryWars");
       foreach (var faction in Resources.LoadAll<FactionSpec>("FactoryWars")) {
-        Assert.LessOrEqual(faction.Buildings.Length, 16, $"{faction.name} 건물이 건설 패널(16칸)에 다 들어감");
+        var specs = faction.Buildings.Select(b => all.First(s => s.Guid == b.Id)).ToList();
+        foreach (var group in specs.GroupBy(s => s.Defensive ? 0 : Mathf.Max(1, s.RequiredTier))) {
+          Assert.LessOrEqual(group.Count(), 8, $"{faction.name} 묶음 {group.Key}");
+        }
       }
     }
 

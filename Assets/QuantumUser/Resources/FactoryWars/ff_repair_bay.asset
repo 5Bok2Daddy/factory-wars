@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2878a441c035e894a9b579e4615c4cf1, type: 3}
+  m_Name: ff_repair_bay
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ff_repair_bay
+    Guid:
+      Value: 319598866960975440
+  Role: 16
+  RequiredTier: 2
+  Cost:
+    Iron:
+      RawValue: 13107200
+    Wood:
+      RawValue: 3276800
+    Steel:
+      RawValue: 2621440
+    Power:
+      RawValue: 3932160
+  BuildTimeSeconds:
+    RawValue: 1638400
+  MaxHealth:
+    RawValue: 58982400
+  PowerOutput:
+    RawValue: 0
+  PowerStorage:
+    RawValue: 0
+  PowerUpkeep:
+    RawValue: 65536
+  Upkeep: 3
+  ProcessSeconds:
+    RawValue: 0
+  ProcessInput:
+    Iron:
+      RawValue: 0
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  ProcessSteel:
+    RawValue: 0
+  PopulationCapBonus:
+    RawValue: 0
+  ModuleSlots: 0
+  FootprintRadius:
+    RawValue: 196608
+  IsDropOff: 0
+  Prerequisites:
+  - Id:
+      Value: 349535828948866217
+  IsCoreBuilding: 0
+  Producible: []
+  Attack: 0
+  GroundOnly: 0
+  Damage:
+    RawValue: 0
+  Range:
+    RawValue: 0
+  AttackInterval:
+    RawValue: 0
+  MinRange:
+    RawValue: 0
+  SplashRadius:
+    RawValue: 0
+  CoverSpots: 0
+  CoverReduction:
+    RawValue: 0
+  Heals: 2
+  HealRadius:
+    RawValue: 655360
+  HealPerSecond:
+    RawValue: 786432
+  HealCount: 3
+  RevealRadius:
+    RawValue: 0
+  Defensive: 0

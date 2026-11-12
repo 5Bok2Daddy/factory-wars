@@ -80,6 +80,9 @@ struct PlayerState {
     array<Byte>[4] ArmorLevels;
     // 크기별 생산 수(측정용).
     array<Int32>[4] ProducedBySize;
+    // 항목 32: 보병이 엄폐에 들어간 횟수(측정용), 레이더 접근 경고 간격.
+    Int32 CoverEntries;
+    Int32 NextRadarAlertFrame;
 }
 
 struct BotState {
@@ -127,6 +130,8 @@ global {
     QBoolean DropAnnounced;
     // 도시 건물 붕괴 비트. 번호는 MapSpec.CityBuildings의 순서다.
     array<Int32>[8] CityCollapsed;
+    // 항목 32: 맵 엄폐점(바리케이드·도시 건물)을 만들었는지.
+    QBoolean CoverReady;
 }
 
 component Unit {
@@ -156,6 +161,18 @@ component Unit {
     entity_ref GarrisonTarget;
     // 순찰 출발점(항목 30).
     FPVector3 PatrolOrigin;
+    // 항목 32 엄폐: 잡은 엄폐점과 도착 여부.
+    entity_ref Cover;
+    QBoolean InCover;
+}
+
+// 항목 32: 보병 엄폐점. Facing은 막아 주는 방향(그쪽에서 오는 사격을 줄인다). Source가 사라지면 점도 사라진다.
+component CoverSpot {
+    FPVector3 Position;
+    FPVector2 Facing;
+    FP Reduction;
+    entity_ref Source;
+    entity_ref Occupant;
 }
 
 component Worker {
@@ -193,6 +210,8 @@ component Building {
     // 연구소의 진행 중 연구. FactionSpec.Researches 번호 + 1이다(0이면 없음).
     Int32 Research;
     FP ResearchRemaining;
+    // 항목 32: 엄폐점을 만들었는지(모래주머니·벙커).
+    QBoolean CoverMade;
 }
 
 component ResourceNode {
@@ -277,6 +296,8 @@ synced event GameOver { Int32 WinnerMask; }
 // 항목 31: 기지 단계가 바뀜(올라가거나 사령부를 잃어 내려감), 연구 완료.
 synced event BaseTierChanged { player_ref Player; Int32 Tier; }
 synced event ResearchCompleted { player_ref Player; Int32 Index; }
+// 항목 32: 레이더 범위에 적이 들어옴.
+synced event RadarContact { player_ref Player; FPVector3 Position; }
 // 항목 27: 범위 피해가 난 자리(포격·폭격·폭발). 화면 손상 지도·크레이터용.
 synced event AreaImpact { FPVector3 Position; FP Radius; }
 // 항목 27: 유닛·건물이 부서진 자리. Size는 유닛이면 UnitSize 값, 건물이면 -1이고 Footprint가 반지름이다.

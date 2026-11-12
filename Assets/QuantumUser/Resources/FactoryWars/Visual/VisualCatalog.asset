@@ -863,6 +863,244 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+  - Id: building/ff_sandbags
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/ff_bunker
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/ff_medic_tent
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/ff_repair_bay
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/ff_radar
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/ff_helipad
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/ff_artillery
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/cf_sandbags
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/cf_bunker
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/cf_medic_tent
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/cf_repair_bay
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/cf_radar
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/cf_helipad
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: building/cf_artillery
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
   - Id: dress/Conifer
     Category: 4
     Prefabs: []
@@ -1797,5 +2035,243 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
+    Notes: 
+  - Id: unit/ff_sandbags
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/ff_bunker
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/ff_medic_tent
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/ff_repair_bay
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/ff_radar
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/ff_helipad
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/ff_artillery
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/cf_sandbags
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/cf_bunker
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/cf_medic_tent
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/cf_repair_bay
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/cf_radar
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/cf_helipad
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+  - Id: unit/cf_artillery
+    Category: 0
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
     Notes: 
   Enabled: 1

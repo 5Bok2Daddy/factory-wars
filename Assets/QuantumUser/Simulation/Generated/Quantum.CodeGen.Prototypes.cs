@@ -150,6 +150,7 @@ namespace Quantum.Prototypes {
     public Quantum.Prototypes.ResourceCostPrototype UpgradePaid;
     public Int32 Research;
     public FP ResearchRemaining;
+    public QBoolean CoverMade;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Building component = default;
         Materialize((Frame)f, ref component, in context);
@@ -181,6 +182,7 @@ namespace Quantum.Prototypes {
         this.UpgradePaid.Materialize(frame, ref result.UpgradePaid, in context);
         result.Research = this.Research;
         result.ResearchRemaining = this.ResearchRemaining;
+        result.CoverMade = this.CoverMade;
     }
   }
   [System.SerializableAttribute()]
@@ -231,6 +233,27 @@ namespace Quantum.Prototypes {
         result.Stage = this.Stage;
         result.Occupant = this.Occupant;
         MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.CoverSpot))]
+  public unsafe class CoverSpotPrototype : ComponentPrototype<Quantum.CoverSpot> {
+    public FPVector3 Position;
+    public FPVector2 Facing;
+    public FP Reduction;
+    public MapEntityId Source;
+    public MapEntityId Occupant;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.CoverSpot component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.CoverSpot result, in PrototypeMaterializationContext context = default) {
+        result.Position = this.Position;
+        result.Facing = this.Facing;
+        result.Reduction = this.Reduction;
+        PrototypeValidator.FindMapEntity(this.Source, in context, out result.Source);
+        PrototypeValidator.FindMapEntity(this.Occupant, in context, out result.Occupant);
     }
   }
   [System.SerializableAttribute()]
@@ -360,6 +383,8 @@ namespace Quantum.Prototypes {
     public Byte[] ArmorLevels = new Byte[4];
     [ArrayLengthAttribute(4)]
     public Int32[] ProducedBySize = new Int32[4];
+    public Int32 CoverEntries;
+    public Int32 NextRadarAlertFrame;
     partial void MaterializeUser(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context = default) {
         result.Faction = this.Faction;
@@ -406,6 +431,8 @@ namespace Quantum.Prototypes {
         for (int i = 0, count = PrototypeValidator.CheckLength(ProducedBySize, 4, in context); i < count; ++i) {
           result.ProducedBySize[i] = this.ProducedBySize[i];
         }
+        result.CoverEntries = this.CoverEntries;
+        result.NextRadarAlertFrame = this.NextRadarAlertFrame;
         MaterializeUser(frame, ref result, in context);
     }
   }
@@ -500,6 +527,8 @@ namespace Quantum.Prototypes {
     public MapEntityId Garrison;
     public MapEntityId GarrisonTarget;
     public FPVector3 PatrolOrigin;
+    public MapEntityId Cover;
+    public QBoolean InCover;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Unit component = default;
         Materialize((Frame)f, ref component, in context);
@@ -531,6 +560,8 @@ namespace Quantum.Prototypes {
         PrototypeValidator.FindMapEntity(this.Garrison, in context, out result.Garrison);
         PrototypeValidator.FindMapEntity(this.GarrisonTarget, in context, out result.GarrisonTarget);
         result.PatrolOrigin = this.PatrolOrigin;
+        PrototypeValidator.FindMapEntity(this.Cover, in context, out result.Cover);
+        result.InCover = this.InCover;
     }
   }
   [System.SerializableAttribute()]

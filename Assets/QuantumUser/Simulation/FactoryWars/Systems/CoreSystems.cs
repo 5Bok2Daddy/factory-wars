@@ -110,6 +110,10 @@ namespace Quantum.FactoryWars {
       if (unit->LastFiredFrame > 0 && f.Number - unit->LastFiredFrame < SecondsToFrames(f, rules.HighGroundRevealSeconds)) {
         return true;
       }
+      // 항목 32: 레이더 반경 안이면 보인다.
+      if (SupportSystem.InRadar(f, player, position)) {
+        return true;
+      }
       var near = rules.HighGroundRevealDistance * rules.HighGroundRevealDistance;
       var air = rules.HighGroundAirRevealDistance * rules.HighGroundAirRevealDistance;
       var units = f.Filter<Transform3D, Unit>();

@@ -32,7 +32,8 @@ namespace Quantum.FactoryWars {
       return ratio > rules.CityCrackedFraction ? 0 : ratio > rules.CityBurningFraction ? 1 : 2;
     }
 
-    public static bool IsInfantry(UnitSpec spec) => spec.Size == UnitSize.Small && spec.IsAir == false && spec.Attack != AttackType.None;
+    /// <summary>소형 보병(분대). 항목 32: 소형 차량(IsVehicle)과 배는 뺀다(31에서 버기·오토바이가 진지에 들어갈 수 있었다).</summary>
+    public static bool IsInfantry(UnitSpec spec) => spec.Size == UnitSize.Small && spec.IsAir == false && spec.IsNaval == false && spec.IsVehicle == false && spec.Attack != AttackType.None;
 
     public static int Occupants(Frame f, EntityRef building) {
       var count = 0;

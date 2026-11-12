@@ -20,6 +20,7 @@ MonoBehaviour:
   RequiredTier: 2
   IsAir: 0
   IsNaval: 0
+  IsVehicle: 0
   Cost:
     Iron:
       RawValue: 12451840

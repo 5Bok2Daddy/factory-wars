@@ -2,8 +2,13 @@ namespace Quantum {
   public enum UnitSize { Engineer, Small, Medium, Large }
 
   public enum BuildingRole {
-    Headquarters, PowerPlant, Processor, SupplyDepot, Barracks, ResearchLab, VehicleFactory, Airfield, HeavyWorks, GroundTower, CollectionYard, AirDefense, Shipyard
+    Headquarters, PowerPlant, Processor, SupplyDepot, Barracks, ResearchLab, VehicleFactory, Airfield, HeavyWorks, GroundTower, CollectionYard, AirDefense, Shipyard,
+    // 항목 32
+    Sandbags, Bunker, MedicTent, RepairBay, Radar, Helipad, Artillery
   }
+
+  /// <summary>항목 32: 건물이 주변 유닛을 고치는 대상.</summary>
+  public enum HealTarget { None, Infantry, Vehicles }
 
   /// <summary>ActionRejected.Missing의 비트.</summary>
   [System.Flags]

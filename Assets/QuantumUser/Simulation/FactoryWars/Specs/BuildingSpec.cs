@@ -37,5 +37,20 @@ namespace Quantum {
     public FP Damage;
     public FP Range;
     public FP AttackInterval;
+    /// <summary>항목 32 포병 진지: 최소 사거리와 범위 피해 반지름.</summary>
+    public FP MinRange;
+    public FP SplashRadius;
+    /// <summary>항목 32: 완공 시 둘레에 만드는 보병 엄폐점 수와 피해 감소율(0.25 낮음, 0.5 높음).</summary>
+    public int CoverSpots;
+    public FP CoverReduction;
+    /// <summary>항목 32 의무대·정비소: 반경 안 아군을 초당 HealPerSecond만큼 HealCount기까지 고친다.</summary>
+    public HealTarget Heals;
+    public FP HealRadius;
+    public FP HealPerSecond;
+    public int HealCount;
+    /// <summary>항목 32 레이더: 이 반경 안의 적은 고지대에 있어도 보이고, 들어오면 경고한다.</summary>
+    public FP RevealRadius;
+    /// <summary>건설 메뉴에서 "방어 건물" 묶음에 넣는다(화면 전용 분류).</summary>
+    public bool Defensive;
   }
 }

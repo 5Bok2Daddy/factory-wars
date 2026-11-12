@@ -164,7 +164,8 @@ namespace FactoryWars.Tests {
 
     /// <summary>
     /// 항목 31: 자리별 단계 도달 시각(초, 못 가면 빈칸), 크기별 생산 수, 끝낸 연구 수, 끝 시점 비행장·중공업 기지 수.
-    /// 열: map,run,player,faction,seat,winner,tier2_s,tier3_s,small,medium,large,researches,airfields,heavy_works
+    /// 열: map,run,player,faction,seat,winner,tier2_s,tier3_s,small,medium,large,researches,airfields,heavy_works,
+    /// (항목 32) cover_entries,sandbags,bunker,medic,repair,radar,helipad,artillery
     /// </summary>
     static unsafe IEnumerable<string> TechRows(string map, int run, int players) {
       var rows = new List<string>();
@@ -186,7 +187,8 @@ namespace FactoryWars.Tests {
           return count;
         }
         rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{FactoryWarsUtil.SeatOf(Verified, p)},{((winners >> p) & 1)},{tier2},{tier3},"
-          + $"{state->ProducedBySize[(int)UnitSize.Small]},{state->ProducedBySize[(int)UnitSize.Medium]},{state->ProducedBySize[(int)UnitSize.Large]},{researches},{Count(BuildingRole.Airfield)},{Count(BuildingRole.HeavyWorks)}");
+          + $"{state->ProducedBySize[(int)UnitSize.Small]},{state->ProducedBySize[(int)UnitSize.Medium]},{state->ProducedBySize[(int)UnitSize.Large]},{researches},{Count(BuildingRole.Airfield)},{Count(BuildingRole.HeavyWorks)},"
+          + $"{state->CoverEntries},{Count(BuildingRole.Sandbags)},{Count(BuildingRole.Bunker)},{Count(BuildingRole.MedicTent)},{Count(BuildingRole.RepairBay)},{Count(BuildingRole.Radar)},{Count(BuildingRole.Helipad)},{Count(BuildingRole.Artillery)}");
       }
       return rows;
     }

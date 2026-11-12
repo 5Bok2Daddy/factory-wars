@@ -51,6 +51,15 @@ namespace Quantum {
   public partial class GameRulesSpec : AssetObject {
     /// <summary>항목 31 테크: 크기 규칙, 기지 단계 업그레이드, 사령부를 모두 잃으면 단계도 내려가는지.</summary>
     public SizeRuleSpec[] SizeRules;
+    /// <summary>항목 32 엄폐: 찾는 반경, 방향 판정 코사인, 광역 공격에 대한 효과 배율, 도착 거리, 틱당 탐색 수, 점과 엄폐물 사이 간격, 맵 엄폐물(바리케이드·도시 건물) 감소율.</summary>
+    public FP CoverSearchRadius;
+    public FP CoverFacingCos;
+    public FP CoverAreaFactor;
+    public FP CoverArrival;
+    public int CoverSearchPerTick;
+    public FP CoverOffset;
+    public FP CoverHighReduction;
+    public FP RadarAlertSeconds;
     public BaseTierSpec[] BaseTiers;
     public bool TierDropsWithHeadquarters = true;
     public string NavMeshName;

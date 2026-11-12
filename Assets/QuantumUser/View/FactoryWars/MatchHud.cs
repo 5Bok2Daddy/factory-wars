@@ -240,6 +240,13 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventCratePicked>(this, OnCratePicked);
       QuantumEvent.Subscribe<EventCityBuildingCollapsed>(this, e => GameAudio.Play(SoundEvent.Collapse));
       QuantumEvent.Subscribe<EventPlayerConnection>(this, OnConnection);
+      QuantumEvent.Subscribe<EventRadarContact>(this, e => {
+        if (e.Player == Controller.Player) {
+          GameAudio.Play(SoundEvent.Warning);
+          ShowAlert("레이더: 적이 접근합니다");
+          PingAlert(e.Position.ToUnityVector3());
+        }
+      });
       QuantumEvent.Subscribe<EventBaseTierChanged>(this, e => {
         if (e.Player == Controller.Player) {
           ShowAlert($"{Texts.TierName(e.Tier)} 도달");
@@ -1047,8 +1054,11 @@ namespace FactoryWars.View {
 
     /// <summary>건물이 있는 단계 목록. 지금 단계 + 1까지만 보인다(2단계 이상 높으면 숨김).</summary>
     List<int> BuildTiers(Frame frame, FactionSpec faction, int tier) {
-      return faction.Buildings.Select(b => Mathf.Max(1, frame.FindAsset(b).RequiredTier)).Distinct().OrderBy(t => t).Where(t => t <= tier + 1).ToList();
+      return faction.Buildings.Select(b => frame.FindAsset(b)).Where(b => b.Defensive == false).Select(b => Mathf.Max(1, b.RequiredTier)).Distinct().OrderBy(t => t).Where(t => t <= tier + 1).ToList();
     }
+
+    /// <summary>건설 하위 메뉴의 건물인가. 묶음 0은 방어 건물(항목 32), 1~3은 그 단계의 방어 아닌 건물.</summary>
+    static bool InBuildMenu(BuildingSpec spec, int menu) => menu == 0 ? spec.Defensive : spec.Defensive == false && Mathf.Max(1, spec.RequiredTier) == menu;
 
     string EngineerEntries(Frame frame, PlayerState* state) {
       var faction = frame.FindAsset(state->Faction);
@@ -1056,7 +1066,7 @@ namespace FactoryWars.View {
       if (_menu == Menu.Build) {
         foreach (var buildingRef in faction.Buildings) {
           var spec = frame.FindAsset(buildingRef);
-          if (Mathf.Max(1, spec.RequiredTier) != _menuTier) {
+          if (InBuildMenu(spec, _menuTier) == false || spec.RequiredTier >= tier + 2) {
             continue;
           }
           var target = buildingRef;
@@ -1073,7 +1083,7 @@ namespace FactoryWars.View {
         }
         PadTo(ContextSlots - 1);
         Entries.Add(new ContextEntry { Label = "뒤로", Icon = "ui_back", Enabled = true, Action = () => _menu = Menu.Root });
-        return $"건설: {(_menuTier == 1 ? "기본" : $"{_menuTier}단계")} 건물";
+        return $"건설: {(_menuTier == 0 ? "방어" : _menuTier == 1 ? "기본" : $"{_menuTier}단계")} 건물";
       }
       foreach (var buildTier in BuildTiers(frame, faction, tier)) {
         var value = buildTier;
@@ -1090,7 +1100,16 @@ namespace FactoryWars.View {
           },
         });
       }
-      PadTo(ContextColumns);
+      if (faction.Buildings.Any(b => frame.FindAsset(b).Defensive)) {
+        Entries.Add(new ContextEntry {
+          Label = "방어 건물", Icon = "ui_hold", Enabled = true, Detail = "방어탑·방공포대·모래주머니 진지·벙커",
+          Action = () => {
+            _menu = Menu.Build;
+            _menuTier = 0;
+          },
+        });
+      }
+      PadTo(ContextColumns + (Entries.Count > ContextColumns ? ContextColumns : 0));
       Entries.Add(new ContextEntry { Label = "정지", Icon = "ui_stop", Enabled = true, Action = () => Controller.Stop() });
       return $"공병  {Texts.TierName(tier)}";
     }

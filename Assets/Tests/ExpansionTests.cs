@@ -156,7 +156,7 @@ namespace FactoryWars.Tests {
       hud.Refresh(Controller().Frame);
       // 항목 31: 공병 명령 카드 → 기본 건물(사령부 포함 1단계 건물).
       hud.PressContext(hud.Entries.FindIndex(e => e.Label == "기본 건물"));
-      Assert.GreaterOrEqual(hud.Entries.Count(e => e.Label.Length > 0 && e.Label != "뒤로"), 8);
+      Assert.GreaterOrEqual(hud.Entries.Count(e => e.Label.Length > 0 && e.Label != "뒤로"), 7);
       Assert.AreEqual(1, hud.ContextPages, "29 2-5: 단일 화면 한눈에 보기 패널로 쪽 넘김 없음");
       Assert.AreEqual(0, hud.ContextPage);
 

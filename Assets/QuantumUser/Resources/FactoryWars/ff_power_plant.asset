@@ -70,3 +70,19 @@ MonoBehaviour:
     RawValue: 0
   AttackInterval:
     RawValue: 0
+  MinRange:
+    RawValue: 0
+  SplashRadius:
+    RawValue: 0
+  CoverSpots: 0
+  CoverReduction:
+    RawValue: 0
+  Heals: 0
+  HealRadius:
+    RawValue: 0
+  HealPerSecond:
+    RawValue: 0
+  HealCount: 0
+  RevealRadius:
+    RawValue: 0
+  Defensive: 0

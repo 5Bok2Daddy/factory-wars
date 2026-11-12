@@ -28,6 +28,18 @@ namespace FactoryWars.View {
     [Header("표시 크기")]
     /// <summary>유닛 표시 배율에 곱한다. 선택 반경과 체력바 높이도 따라간다.</summary>
     public float UnitScale = 1f;
+    [Header("움직임 (항목 32, 화면 전용)")]
+    [Tooltip("시뮬레이션 위치를 따라가는 속도(클수록 빠르게 붙는다). 20Hz 틱 사이를 부드럽게 잇는다.")]
+    public float FollowRate = 16f;
+    [Tooltip("차량 가감속 1m/s²당 앞뒤 기울기(도)와 최대값.")]
+    public float VehicleTiltPerAccel = 1.2f;
+    public float VehicleMaxTilt = 5f;
+    [Tooltip("헬기·비행기: 선회 1도/초당 옆 기울기(도), 최대값, 속도 1m/s당 앞 숙임(도).")]
+    public float AirBankPerTurn = 0.25f;
+    public float AirMaxBank = 25f;
+    public float AirPitchPerSpeed = 1.5f;
+    [Tooltip("기울기가 목표로 따라가는 속도.")]
+    public float TiltRate = 6f;
     /// <summary>건물 본체를 칸 크기의 이 비율로 줄이고 바닥판을 깐다. 1이면 바닥판이 없다.</summary>
     public float BuildingBody = 1f;
     public float PlateScale = 1.05f;

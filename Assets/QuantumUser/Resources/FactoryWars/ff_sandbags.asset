@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2878a441c035e894a9b579e4615c4cf1, type: 3}
+  m_Name: ff_sandbags
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ff_sandbags
+    Guid:
+      Value: 470946556055836762
+  Role: 13
+  RequiredTier: 1
+  Cost:
+    Iron:
+      RawValue: 3932160
+    Wood:
+      RawValue: 2621440
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  BuildTimeSeconds:
+    RawValue: 524288
+  MaxHealth:
+    RawValue: 26214400
+  PowerOutput:
+    RawValue: 0
+  PowerStorage:
+    RawValue: 0
+  PowerUpkeep:
+    RawValue: 0
+  Upkeep: 0
+  ProcessSeconds:
+    RawValue: 0
+  ProcessInput:
+    Iron:
+      RawValue: 0
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  ProcessSteel:
+    RawValue: 0
+  PopulationCapBonus:
+    RawValue: 0
+  ModuleSlots: 0
+  FootprintRadius:
+    RawValue: 131072
+  IsDropOff: 0
+  Prerequisites:
+  - Id:
+      Value: 532047452687447102
+  IsCoreBuilding: 0
+  Producible: []
+  Attack: 0
+  GroundOnly: 0
+  Damage:
+    RawValue: 0
+  Range:
+    RawValue: 0
+  AttackInterval:
+    RawValue: 0
+  MinRange:
+    RawValue: 0
+  SplashRadius:
+    RawValue: 0
+  CoverSpots: 4
+  CoverReduction:
+    RawValue: 16384
+  Heals: 0
+  HealRadius:
+    RawValue: 0
+  HealPerSecond:
+    RawValue: 0
+  HealCount: 0
+  RevealRadius:
+    RawValue: 0
+  Defensive: 1
