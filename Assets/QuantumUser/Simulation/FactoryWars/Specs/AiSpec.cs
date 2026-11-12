@@ -66,6 +66,11 @@ namespace Quantum {
     public int IdleAntiAir;
     /// <summary>상위 몇 개 안에서 RNG로 고를지(다양성).</summary>
     public int CounterTop;
+    /// <summary>조선소 부지 찾기: 격자를 이 값으로 나눠 촘촘히, 고리 수는 이 배수만큼 넓게(물가가 본진에서 멀다). 항목 24·30.</summary>
+    public int ShipyardGridDivisor;
+    public int ShipyardRingMultiplier;
+    /// <summary>AI가 유지하는 배 수 상한(대기열 포함). 항목 30.</summary>
+    public int MaxShips;
     public FP FirstAttackSeconds;
     public FP AttackRepeatSeconds;
     public int WaveSize;

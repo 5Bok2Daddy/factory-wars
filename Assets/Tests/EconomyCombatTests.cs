@@ -752,7 +752,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Repair_ChargesEveryResource() {
-      yield return StartMatch(units: new[] { (1, "cf_dragonscale_tank", -8, 10), (1, "cf_dragonscale_tank", -8, 13), (1, "cf_dragonscale_tank", -8, 7) });
+      yield return StartMatch(units: new[] { (1, "cf_dragonscale_tank", -2, 10), (1, "cf_dragonscale_tank", -2, 13), (1, "cf_dragonscale_tank", -2, 7) });
       var position = V(-20, 10);
       yield return BuildAndFinish(0, "_power_plant", position);
       var plant = BuildingAt(position);
@@ -781,7 +781,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Repair_StopsWhenOneResourceRunsOut() {
-      var tanks = new[] { (1, "cf_dragonscale_tank", -8, 10), (1, "cf_dragonscale_tank", -8, 13), (1, "cf_dragonscale_tank", -8, 7) };
+      var tanks = new[] { (1, "cf_dragonscale_tank", -2, 10), (1, "cf_dragonscale_tank", -2, 13), (1, "cf_dragonscale_tank", -2, 7) };
       // 발전소 목재 150을 내면 2가 남는다. 철은 충분하다.
       yield return StartMatch(units: tanks, stock: Stock(3000, 152, 0, 0));
       var position = V(-20, 10);
@@ -883,7 +883,7 @@ namespace FactoryWars.Tests {
       var militia = UnitsNamed(1, "cf_militia").First(e => Verified.Get<Transform3D>(e).Position.Z > 30);
       var hawk = UnitsNamed(1, "ff_hawk_gunship")[0];
       yield return WaitFor(() => Health(hawk) < 450f, 30f, "공중 우선");
-      Assert.AreEqual(80f, Health(militia), Tolerance, "더 가까운 지상을 두고 공중을 쏨");
+      Assert.AreEqual(Verified.FindAsset(Verified.Get<Unit>(militia).Spec).MaxHealth.AsFloat, Health(militia), Tolerance, "더 가까운 지상을 두고 공중을 쏨");
     }
 
     [UnityTest]

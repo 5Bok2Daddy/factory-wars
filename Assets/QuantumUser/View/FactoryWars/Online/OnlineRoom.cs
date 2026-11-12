@@ -190,7 +190,8 @@ namespace FactoryWars.View {
         return false;
       }
       SetMine(local.FactionIndex, local.Color, false);
-      Client.NickName = $"지휘관 {Client.LocalPlayer.ActorNumber}";
+      // 자동 이름만 쓴다(자유 닉네임 없음, 로드맵 챕터 4).
+      Client.NickName = $"지휘관 {UnityEngine.Random.Range(1000, 10000)}";
       Stage = RoomStage.Lobby;
       return true;
     }

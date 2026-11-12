@@ -272,9 +272,10 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "ff_hawk_gunship", Size = UnitSize.Medium, Air = true, Cost = R(250, 0, 100, 100), Build = 40, Health = 450, Attack = AttackType.AntiArmor, Damage = 55, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
       new UnitRow { Id = "ff_skyfortress_bomber", Size = UnitSize.Large, Air = true, Cost = R(500, 0, 250, 350), Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, Ability = SpecialAbility.CarpetBomb, AbilityMultiplier = 1.5, AbilityRadius = 8, AbilityCount = 5, AbilityCooldown = 45 },
       new UnitRow { Id = "cf_engineer", Size = UnitSize.Engineer, Cost = R(80), Build = 8, Health = 70, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
-      new UnitRow { Id = "cf_militia", Size = UnitSize.Small, Cost = R(40, 50), Build = 12, Health = 80, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
-      new UnitRow { Id = "cf_flame_squad", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 130, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
-      new UnitRow { Id = "cf_dragonscale_tank", Size = UnitSize.Medium, Cost = R(190, 0, 50, 60), Build = 28, Health = 520, Attack = AttackType.AntiArmor, Damage = 45, Range = 8, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
+      // 항목 30 밸런스(AI 40판: 자유 연방 75~85%): 대륙 연방 보병·용린 전차 체력·사거리 보강
+      new UnitRow { Id = "cf_militia", Size = UnitSize.Small, Cost = R(40, 50), Build = 12, Health = 90, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
+      new UnitRow { Id = "cf_flame_squad", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 145, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
+      new UnitRow { Id = "cf_dragonscale_tank", Size = UnitSize.Medium, Cost = R(190, 0, 50, 60), Build = 28, Health = 570, Attack = AttackType.AntiArmor, Damage = 45, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
       new UnitRow { Id = "cf_thunder_aa", Size = UnitSize.Medium, Cost = R(170, 0, 50, 60), Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
       new UnitRow { Id = "cf_longwall_mlrs", Size = UnitSize.Large, Cost = R(400, 0, 200, 200), Build = 55, Health = 1000, Attack = AttackType.Area, Damage = 120, Range = 18, MinRange = 6, Splash = 4, Interval = 6, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
       new UnitRow { Id = "ff_scout_boat", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
@@ -476,6 +477,9 @@ namespace FactoryWars.EditorTools {
       ai.UnitVariety = variety;
       // 항목 22: 보통은 상대 구성 대응 생산(상위 2개 중 RNG), 쉬움은 기존 무작위.
       ai.CounterPicks = id == "ai_normal";
+      ai.ShipyardGridDivisor = 2;
+      ai.ShipyardRingMultiplier = 2;
+      ai.MaxShips = id == "ai_normal" ? 4 : 2;
       ai.AirShareForAntiAir = N(0.1);
       ai.IdleAntiAir = 2;
       ai.CounterTop = 2;

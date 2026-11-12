@@ -205,7 +205,7 @@ namespace FactoryWars.Tests {
       if (Verified.Exists(victim)) {
         var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
         Assert.Greater(spec.CityBuildings[1].FallZone.Distance(Verified.Get<Transform3D>(victim).Position).AsFloat, 0f, "밀려남");
-        Assert.LessOrEqual(Health(victim), 520f - 600f + 0.01f + 600f, "피해");
+        Assert.Less(Health(victim), Verified.FindAsset(Verified.Get<Unit>(victim).Spec).MaxHealth.AsFloat, "피해");
       }
     }
 

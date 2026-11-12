@@ -25,7 +25,7 @@ namespace FactoryWars.Tests {
     const float ArrivedDistance = 8f;
     const float RiverReach = 15f;
 
-    // 항목 30: 20판(짝·홀 판이 진영을 바꿔 자리 교대).
+    // 항목 30: 20판. 시드 홀짝이 대각선 쌍(0·2 / 1·3)을, (판/2) 홀짝이 진영 교대를 정해 자리와 진영이 섞이지 않는다.
     static readonly int[] AiRuns = Enumerable.Range(0, 20).ToArray();
 
     static string AiFolder() {
@@ -56,7 +56,7 @@ namespace FactoryWars.Tests {
 
     IEnumerator PlayAiMatch(string scene, string map, int players, int run, int mirror = -1) {
       var bots = Enumerable.Repeat(BotDifficulty.Normal, players).ToArray();
-      yield return StartMatch(scene, players, bots: bots, seed: (mirror >= 0 ? 8000 : 7000) + run, swapFactions: mirror < 0 && run % 2 == 1, truce: -1, mirrorFaction: mirror);
+      yield return StartMatch(scene, players, bots: bots, seed: (mirror >= 0 ? 8000 : 7000) + run, swapFactions: mirror < 0 && (run / 2) % 2 == 1, truce: -1, mirrorFaction: mirror);
       Time.timeScale = AiTimeScale;
       var view = Object.FindAnyObjectByType<FactoryWars.View.BattleView>();
       if (view != null) {

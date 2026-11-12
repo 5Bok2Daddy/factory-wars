@@ -71,6 +71,9 @@ MonoBehaviour:
     RawValue: 6553
   IdleAntiAir: 2
   CounterTop: 2
+  ShipyardGridDivisor: 2
+  ShipyardRingMultiplier: 2
+  MaxShips: 4
   FirstAttackSeconds:
     RawValue: 19660800
   AttackRepeatSeconds:

@@ -507,8 +507,8 @@ namespace Quantum.FactoryWars {
     /// <summary>중심에서 바깥으로 격자를 돌며 지을 수 있는 첫 칸을 찾는다.</summary>
     static bool FindSite(Frame f, PlayerRef player, AiSpec ai, BuildingSpec spec, FPVector3 center, out FPVector3 site) {
       var isShipyard = spec.Role == BuildingRole.Shipyard;
-      var step = isShipyard ? ai.SiteGrid / 2 : ai.SiteGrid;
-      var rings = isShipyard ? ai.SiteRings * 2 : ai.SiteRings;
+      var step = isShipyard ? ai.SiteGrid / System.Math.Max(1, ai.ShipyardGridDivisor) : ai.SiteGrid;
+      var rings = isShipyard ? ai.SiteRings * System.Math.Max(1, ai.ShipyardRingMultiplier) : ai.SiteRings;
       for (var ring = 1; ring <= rings; ring++) {
         for (var x = -ring; x <= ring; x++) {
           for (var z = -ring; z <= ring; z++) {
@@ -577,6 +577,10 @@ namespace Quantum.FactoryWars {
         if (spec.Upkeep != UpkeepMode.None && state->Stock.Power < ai.PowerReserve) {
           continue;
         }
+        // 배는 MaxShips척까지만(대기열 포함). 인구를 배가 다 차지하면 지상군이 못 큰다.
+        if (spec.Role == BuildingRole.Shipyard && Ships(f, player) + building->QueueCount >= ai.MaxShips) {
+          continue;
+        }
         var unitRef = ai.CounterPicks ? CounterPick(f, player, ai, spec.Producible) : spec.Producible[f.RNG->Next(0, System.Math.Min(ai.UnitVariety, spec.Producible.Length))];
         var unit = f.FindAsset(unitRef);
         var population = unit.Population * unit.SpawnCount;
@@ -585,6 +589,17 @@ namespace Quantum.FactoryWars {
           room -= population;
         }
       }
+    }
+
+    static int Ships(Frame f, PlayerRef player) {
+      var count = 0;
+      var units = f.Filter<Unit>();
+      while (units.NextUnsafe(out _, out var unit)) {
+        if (unit->Owner == player && f.FindAsset(unit->Spec).IsNaval) {
+          count++;
+        }
+      }
+      return count;
     }
 
     /// <summary>
@@ -878,7 +893,9 @@ namespace Quantum.FactoryWars {
       enemyArmy = 0;
       var units = f.Filter<Unit>();
       while (units.NextUnsafe(out var entity, out var unit)) {
-        if (f.FindAsset(unit->Spec).Attack == AttackType.None) {
+        var spec = f.FindAsset(unit->Spec);
+        // 배는 지상 웨이브에 끼지 못하므로 웨이브·소탕 판단에서 뺀다(항목 30: 배만 쌓여 웨이브가 안 나가던 교착).
+        if (spec.Attack == AttackType.None || spec.IsNaval) {
           continue;
         }
         if (unit->Owner == player) {
