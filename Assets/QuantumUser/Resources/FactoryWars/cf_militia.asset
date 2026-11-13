@@ -38,13 +38,13 @@ MonoBehaviour:
   Damage:
     RawValue: 655360
   Range:
-    RawValue: 393216
+    RawValue: 458752
   MinRange:
     RawValue: 0
   SplashRadius:
     RawValue: 0
   AttackInterval:
-    RawValue: 65536
+    RawValue: 58982
   IsRanged: 1
   MoveSpeed:
     RawValue: 262144

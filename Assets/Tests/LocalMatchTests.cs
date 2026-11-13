@@ -223,8 +223,9 @@ namespace FactoryWars.Tests {
     [TearDown]
     public void TearDown() {
       Time.timeScale = 1f;
-      foreach (var restore in Restores) {
-        restore();
+      // 나중에 바꾼 것부터 되돌린다(같은 값을 두 번 바꿨어도 처음 값으로 돌아간다).
+      for (var i = Restores.Count - 1; i >= 0; i--) {
+        Restores[i]();
       }
       Restores.Clear();
       if (_listener != null) {

@@ -16,12 +16,43 @@ namespace FactoryWars.Tests {
   /// </summary>
   public unsafe partial class LocalMatchTests {
     static readonly (string Name, (string Unit, int Count)[] Free, (string Unit, int Count)[] Continental)[] MatchupCases = {
-      ("레인저 20 대 민병대 40(인구 20:20)", new[] { ("ff_ranger_squad", 20) }, new[] { ("cf_militia", 40) }),
-      ("레인저 20 대 민병대 24+화염 8(인구 20:20)", new[] { ("ff_ranger_squad", 20) }, new[] { ("cf_militia", 24), ("cf_flame_squad", 8) }),
-      ("레인저 14+버기 6 대 민병대 24+오토바이 8(인구 20:20)", new[] { ("ff_ranger_squad", 14), ("ff_scout_buggy", 6) }, new[] { ("cf_militia", 24), ("cf_scout_bike", 8) }),
-      ("이글 전차 6 대 용린 전차 6(인구 18:18)", new[] { ("ff_eagle_tank", 6) }, new[] { ("cf_dragonscale_tank", 6) }),
-      ("레인저 20 대 민병대 60(인구 20:30, 대륙 인구 한도 1.2배·값 비슷)", new[] { ("ff_ranger_squad", 20) }, new[] { ("cf_militia", 60) }),
+      ("같은 인구: 레인저 20 대 민병대 40", new[] { ("ff_ranger_squad", 20) }, new[] { ("cf_militia", 40) }),
+      ("같은 값: 레인저 20(2400) 대 민병대 50(2375)", new[] { ("ff_ranger_squad", 20) }, new[] { ("cf_militia", 50) }),
+      ("같은 값: 레인저 14+버기 6(2460) 대 민병대 30+화염 8(2465)", new[] { ("ff_ranger_squad", 14), ("ff_scout_buggy", 6) }, new[] { ("cf_militia", 30), ("cf_flame_squad", 8) }),
+      ("같은 값: 이글 전차 6(3300) 대 용린 전차 9(3330)", new[] { ("ff_eagle_tank", 6) }, new[] { ("cf_dragonscale_tank", 9) }),
+      ("같은 값: 레인저 10+이글 4(3400) 대 민병대 30+용린 5+화염 1(3405)", new[] { ("ff_ranger_squad", 10), ("ff_eagle_tank", 4) }, new[] { ("cf_militia", 30), ("cf_dragonscale_tank", 5), ("cf_flame_squad", 1) }),
+      ("같은 인구: 이글 전차 6 대 용린 전차 6", new[] { ("ff_eagle_tank", 6) }, new[] { ("cf_dragonscale_tank", 6) }),
     };
+
+    /// <summary>
+    /// FW_PROBE로 유닛 수치를 메모리에서만 바꿔 본다(예: "cf_militia.Range=7;cf_militia.Health=90"). 칸: Health, Damage, Range, Interval, Speed.
+    /// </summary>
+    static string ApplyProbeOverrides() {
+      var text = System.Environment.GetEnvironmentVariable("FW_PROBE") ?? "";
+      foreach (var part in text.Split(new[] { ';' }, System.StringSplitOptions.RemoveEmptyEntries)) {
+        var pair = part.Split('=');
+        var key = pair[0].Split('.');
+        var unit = Resources.Load<UnitSpec>("FactoryWars/" + key[0]);
+        var value = Photon.Deterministic.FP.FromFloat_UNSAFE(float.Parse(pair[1], System.Globalization.CultureInfo.InvariantCulture));
+        var before = (unit.MaxHealth, unit.Damage, unit.Range, unit.AttackInterval, unit.MoveSpeed);
+        Restores.Add(() => {
+          unit.MaxHealth = before.Item1;
+          unit.Damage = before.Item2;
+          unit.Range = before.Item3;
+          unit.AttackInterval = before.Item4;
+          unit.MoveSpeed = before.Item5;
+        });
+        switch (key[1]) {
+          case "Health": unit.MaxHealth = value; break;
+          case "Damage": unit.Damage = value; break;
+          case "Range": unit.Range = value; break;
+          case "Interval": unit.AttackInterval = value; break;
+          case "Speed": unit.MoveSpeed = value; break;
+          default: Assert.Fail("모르는 칸: " + part); break;
+        }
+      }
+      return text;
+    }
 
     static IEnumerable<int> MatchupIndexes() => Enumerable.Range(0, MatchupCases.Length);
 
@@ -38,6 +69,7 @@ namespace FactoryWars.Tests {
     [UnityTest, Explicit, Category("Probe"), Timeout(600000)]
     public IEnumerator Probe_TierOneFieldBattle([ValueSource(nameof(MatchupIndexes))] int index) {
       var test = MatchupCases[index];
+      var overrides = ApplyProbeOverrides();
       var units = new List<(int, string, int, int)>();
       void Place(int owner, (string Unit, int Count)[] list, int x) {
         var slot = 0;
@@ -60,7 +92,7 @@ namespace FactoryWars.Tests {
       var after = (PopulationOf(0, 20), PopulationOf(1, 20));
       var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Game-logs", "probe"));
       Directory.CreateDirectory(folder);
-      var row = $"{test.Name},{before.Item1:0.#},{before.Item2:0.#},{after.Item1:0.#},{after.Item2:0.#},{(Verified.Number - start) / Fps}";
+      var row = $"{overrides},{test.Name},{before.Item1:0.#},{before.Item2:0.#},{after.Item1:0.#},{after.Item2:0.#},{(Verified.Number - start) / Fps}";
       File.AppendAllLines(Path.Combine(folder, "matchup.csv"), new[] { row });
       Debug.Log("[FW-Probe] " + row);
       Assert.Greater(before.Item1 + before.Item2, 0f);

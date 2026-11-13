@@ -123,6 +123,7 @@ MonoBehaviour:
   ShipyardGridDivisor: 2
   ShipyardRingMultiplier: 2
   MaxShips: 2
+  WaveByPopulation: 0
   FirstAttackSeconds:
     RawValue: 27525120
   AttackRepeatSeconds:
