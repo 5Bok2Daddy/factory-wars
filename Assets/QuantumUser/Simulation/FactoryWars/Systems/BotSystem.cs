@@ -1417,6 +1417,25 @@ namespace Quantum.FactoryWars {
       bot->ReadySinceFrame = 0;
       var safe = EnemyNear(f, player, bot->Home, ai.UltimateSafeRadius * ai.UltimateSafeRadius) == false;
 
+      // 0. 궁극 전력 연구는 3단계가 되면 전용 건물을 기다리지 않고 쉬는 연구소에서 바로 시작한다(전용 건물 건설과 겹쳐 시간을 줄인다).
+      var researchReserve = default(ResourceCost);
+      if (tier >= spec.RequiredTier && UltimateSystem.HasResearch(f, player, spec) == false) {
+        var index = TechSystem.IndexOf(f, player, spec.Research);
+        if (index >= 0 && TechSystem.IsResearching(f, player, index) == false) {
+          if (TechSystem.CanResearch(f, player, index, out var reason)) {
+            var labs = f.Filter<Building>();
+            while (labs.NextUnsafe(out var entity, out var lab)) {
+              if (lab->Owner == player && lab->Research == 0 && lab->ConstructionRemaining <= FP._0 && f.FindAsset(lab->Spec).Role == BuildingRole.ResearchLab) {
+                TechSystem.StartResearch(f, player, entity, index);
+                break;
+              }
+            }
+          } else if (reason == RejectReason.InsufficientResources && safe) {
+            researchReserve = f.FindAsset(spec.Research).Cost;
+          }
+        }
+      }
+
       // 1. 전용 건물. 선행 건물이 없으면 그것부터 짓는다. 선행 건물은 자기 단계만 되면 3단계 전에도 짓는다(3단계가 되자마자 전용 건물을 올리게).
       if (counts[(int)BuildingRole.UltimateSite] == 0) {
         if (canBuild == false) {
@@ -1434,34 +1453,26 @@ namespace Quantum.FactoryWars {
             break;
           }
         }
-        if (role == BuildingRole.UltimateSite && tier < spec.RequiredTier) {
-          // 선행 건물은 다 있다. 기지 단계가 오르기를 기다린다(단계 비용은 ManageTech가 남긴다).
+        if (tier < spec.RequiredTier) {
+          // 3단계 전에는 기지 단계 조건(중공업 기지)이 먼저다. 그 조건을 채운 뒤에만 남는 자원으로 선행 건물을 짓고, 비용을 따로 남기지 않는다
+          // (ai-33-2p-t2: 자유 연방이 비행장을 중공업 기지보다 먼저 지어 3단계가 13분 → 16.8분으로 늦어졌다).
+          if (role == BuildingRole.UltimateSite || TechSystem.FindTierSpec(FactoryWarsUtil.Rules(f), tier + 1, out var next) == false
+              || TechSystem.MeetsTierRequirement(f, player, next, out _) == false) {
+            return default;
+          }
+          TryBuildRole(f, player, state, ai, faction, role, bot->Home, out built);
           return default;
         }
         var cost = TryBuildRole(f, player, state, ai, faction, role, bot->Home, out built);
-        return safe ? cost : default;
+        return safe ? cost + researchReserve : default;
       }
       if (tier < spec.RequiredTier) {
         return default;
       }
 
-      // 2. 궁극 전력 연구(쉬는 연구소에서).
+      // 2. 연구가 끝나기를 기다린다(위 0번에서 시작했다).
       if (UltimateSystem.HasResearch(f, player, spec) == false) {
-        var index = TechSystem.IndexOf(f, player, spec.Research);
-        if (index < 0 || TechSystem.IsResearching(f, player, index)) {
-          return default;
-        }
-        if (TechSystem.CanResearch(f, player, index, out var reason)) {
-          var labs = f.Filter<Building>();
-          while (labs.NextUnsafe(out var entity, out var lab)) {
-            if (lab->Owner == player && lab->Research == 0 && lab->ConstructionRemaining <= FP._0 && f.FindAsset(lab->Spec).Role == BuildingRole.ResearchLab) {
-              TechSystem.StartResearch(f, player, entity, index);
-              break;
-            }
-          }
-          return default;
-        }
-        return reason == RejectReason.InsufficientResources && safe ? f.FindAsset(spec.Research).Cost : default;
+        return researchReserve;
       }
 
       // 3. 준비 시작.

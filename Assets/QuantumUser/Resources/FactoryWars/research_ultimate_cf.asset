@@ -29,7 +29,7 @@ MonoBehaviour:
     Power:
       RawValue: 13107200
   Seconds:
-    RawValue: 5898240
+    RawValue: 3932160
   RequiredTier: 3
   Requires:
     Id:

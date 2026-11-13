@@ -26,22 +26,22 @@ MonoBehaviour:
       Value: 460647318795114522
   Cost:
     Iron:
-      RawValue: 104857600
+      RawValue: 111411200
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 65536000
+      RawValue: 58982400
     Power:
       RawValue: 39321600
   PrepareSeconds:
     RawValue: 11796480
   RearmCost:
     Iron:
-      RawValue: 104857600
+      RawValue: 111411200
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 65536000
+      RawValue: 58982400
     Power:
       RawValue: 39321600
   RearmSeconds:

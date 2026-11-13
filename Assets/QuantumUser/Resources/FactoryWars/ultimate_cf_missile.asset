@@ -30,7 +30,7 @@ MonoBehaviour:
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 58982400
+      RawValue: 52428800
     Power:
       RawValue: 45875200
   PrepareSeconds:
