@@ -1,6 +1,12 @@
 # TASK-01 결과 보고서
 
 <!-- 밤사이 요약 시작 -->
+## 다음 단계 (2026-11-14 01:55, 사용량 한도로 멈춤) — 재개할 때 여기부터
+- 항목 33은 끝났다(커밋 5bdb4ea, 아래 "항목 33 결과"). 대기열 "20:55 이후 순서"의 1번 **에셋 들여오기**를 시작하기 직전에 멈췄다. 아직 아무것도 들여오지 않았다.
+- 확인한 것: `temp-assets/Synty/`에 zip 4개(POLYGON_Military_PACK 737MB, POLYGON_City_PACK 307MB, Battle Royale Pack 398MB, ANIMATION_Base_Locomotion 198MB). Kubold 소총 애니메이션·GUI Pro는 없다(건너뛰고 보고할 것). zip 안이 .unitypackage인지 원본 파일인지는 아직 안 봤다.
+- 할 일 순서: zip 내용 확인 → `Game/Docs/ASSET-SWAP.md` 순서(들여오기, URP 변환, `2. Scan Pack Folder`, CSV, 칸 연결, `Visual_*` 시험) → NEXT-TASK-32의 2절 애니메이션 → 항목 34 → 항목 35.
+- 측정용 작업 폴더 `FactoryWars/Game-measure`(git worktree)는 34·35 측정에 쓰려고 남겨 두었다.
+
 ## 항목 33 결과 (2026-11-13~14, Claude Fable 5.2) — 진영 궁극 전력 · 4인 쏠림 원인 · 경기 시간 · 벙커 수용
 
 ### 한눈에
