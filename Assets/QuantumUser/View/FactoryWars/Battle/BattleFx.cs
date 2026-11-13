@@ -221,6 +221,15 @@ namespace FactoryWars.View {
       }
     }
 
+    /// <summary>항목 33: 땅 위에 잠깐 머무는 고리(미사일 착탄 반경 예고). 주기적으로 다시 부르면 계속 보인다. 기존 빛 입자를 쓴다.</summary>
+    public void Ring(Vector3 position, Color color, float radius, float seconds) {
+      var count = Mathf.Max(24, Scaled(56));
+      for (var i = 0; i < count; i++) {
+        var angle = Mathf.PI * 2f * i / count;
+        Emit(_glow, position + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * radius + Vector3.up * 0.3f, Vector3.zero, 1.1f, seconds, color);
+      }
+    }
+
     /// <summary>큰 폭발의 화면 흔들림. 설정에서 끌 수 있다.</summary>
     public void Shake(float amount) {
       if (ScreenShake.Enabled) {

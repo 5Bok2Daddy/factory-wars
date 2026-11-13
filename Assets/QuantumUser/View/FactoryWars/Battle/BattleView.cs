@@ -243,11 +243,14 @@ namespace FactoryWars.View {
       World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
       // 항목 33: 날아오는 전략 미사일의 착탄 지점을 모든 플레이어에게 보인다(폭발 반경만큼 붉은 고리 + 연막 신호).
       if (Time.time >= _strikeAt) {
-        _strikeAt = Time.time + 0.6f;
+        _strikeAt = Time.time + 0.3f;
         StrikeMarks = 0;
         foreach (var pair in frame.GetComponentIterator<MissileStrike>()) {
           var target = pair.Component.Target.ToUnityVector3();
-          Fx.Pulse(target, StrikeColor, frame.FindAsset(pair.Component.Spec).BlastRadius.AsFloat);
+          var radius = frame.FindAsset(pair.Component.Spec).BlastRadius.AsFloat;
+          // 반경 가장자리에 머무는 고리 + 안쪽으로 조이는 느낌의 반쪽 고리 + 중심 연막.
+          Fx.Ring(target, StrikeColor, radius, 0.45f);
+          Fx.Ring(target, StrikeColor, radius * 0.5f, 0.45f);
           Fx.Signal(target);
           StrikeMarks++;
         }

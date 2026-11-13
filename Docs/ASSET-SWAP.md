@@ -119,8 +119,8 @@
 
 | 칸 | 이름(가칭) | 지금 빌려 쓰는 모델 |
 | --- | --- | --- |
-| `unit/ff_stormnest_carrier` | 스톰네스트 공중 항모 | 스카이포트리스 폭격기 x1.8 |
-| `unit/ff_nest_drone` | 둥지 드론(항모 함재) | 호크 공격헬기 x0.4 |
+| `unit/ff_stormnest_carrier` | 스톰네스트 공중 항모 | 스카이포트리스 폭격기 x1.3 |
+| `unit/ff_nest_drone` | 둥지 드론(항모 함재) | 호크 공격헬기 x0.5 |
 | `unit/tf_wavecrest_lander` | 파도머리 상륙정(차기 진영 예약) | 포격함 x0.9 |
 | `building/ff_carrier_yard` | 항모 조립창 | 비행장 x0.95 |
 | `building/cf_missile_silo` | 미사일 격납고 | 중공업 기지 x0.95 |
