@@ -35,9 +35,9 @@ MonoBehaviour:
     Level: 1
   UseUltimate: 0
   UltimateStartSeconds:
-    RawValue: 43253760
+    RawValue: 35389440
   UltimateSafeRadius:
-    RawValue: 2621440
+    RawValue: 1638400
   UltimateCheckSeconds:
     RawValue: 327680
   UltimateGuard: 0
@@ -123,6 +123,14 @@ MonoBehaviour:
   ShipyardGridDivisor: 2
   ShipyardRingMultiplier: 2
   MaxShips: 2
+  AttackRatio:
+    RawValue: 0
+  AttackRatioDecay:
+    RawValue: 9830
+  AttackRatioFloor:
+    RawValue: 39321
+  DefenseWeight:
+    RawValue: 32768
   WaveByPopulation: 0
   FirstAttackSeconds:
     RawValue: 27525120

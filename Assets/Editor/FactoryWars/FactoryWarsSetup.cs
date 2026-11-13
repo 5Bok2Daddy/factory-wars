@@ -284,12 +284,13 @@ namespace FactoryWars.EditorTools {
       // 항목 30 밸런스(AI 40판: 자유 연방 75~85%): 용린 전차 체력·사거리 보강. 항목 31: 테크 단계로 자유 연방 전차가 2단계로 늦어져
       // 대륙 연방이 94%를 이겨(ai-31-2p-v1) 민병대 90→80·사거리 7→6, 화염 145→130으로 되돌림. v4(대륙 80%)에서 민병대 비용 철 40→50·목재 50→55, v5(자유 67%)에서 철 45·목재 50으로 중간값. 항목 32(엄폐 후 2인 자유 67%·4인 79%, 대륙 중형 생산 적음): 용린 전차 철 190→175·강철 50→45.
       // 항목 33(4인 쏠림 원인 규명, Game-logs/probe/matchup.csv): 같은 값의 군대끼리 들판에서 붙이면 자유 연방이 60~70%를 남기고 이겼다(레인저 20 대 민병대 50).
-      // 민병대 사거리 6→7·공격 간격 1→0.9, 용린 전차 체력 570→620으로 같은 값 교전을 비슷하게 맞춘다(같은 인구로는 여전히 자유 연방이 이긴다).
-      new UnitRow { Id = "cf_militia", At = "barracks", Size = UnitSize.Small, Cost = R(45, 50), Build = 12, Health = 80, Attack = AttackType.AntiInfantry, Damage = 10, Range = 7, Interval = 0.9, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
+      // 1차(ai-33-*-t1): 민병대 사거리 6→7·공격 간격 1→0.9, 용린 전차 체력 570→620(같은 값 교전 2승 2패) → 2인 대륙 79%, 4인 자유 71%.
+      // 2차: 2인이 대륙으로 넘어가 간격 0.9→1, 용린 체력 620→570으로 되돌리고 사거리 7만 남긴다(같은 값 교전에서 자유 연방이 30~40% 남기고 이김).
+      new UnitRow { Id = "cf_militia", At = "barracks", Size = UnitSize.Small, Cost = R(45, 50), Build = 12, Health = 80, Attack = AttackType.AntiInfantry, Damage = 10, Range = 7, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
       new UnitRow { Id = "cf_flame_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 130, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
       // 항목 31 새 소형: 군수공장의 싸고 빠른 척후 오토바이.
       new UnitRow { Id = "cf_scout_bike", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Small, Cost = R(60, 30), Build = 10, Health = 110, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 0.8, Speed = 8 },
-      new UnitRow { Id = "cf_dragonscale_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(175, 0, 45, 60), Build = 28, Health = 620, Attack = AttackType.AntiArmor, Damage = 45, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
+      new UnitRow { Id = "cf_dragonscale_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(175, 0, 45, 60), Build = 28, Health = 570, Attack = AttackType.AntiArmor, Damage = 45, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
       new UnitRow { Id = "cf_thunder_aa", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(170, 0, 50, 60), Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
       // 항목 31 새 중형 공중: 비행장의 공격헬기(B2: 대륙 연방 비행장이 만들 것이 없던 문제).
       new UnitRow { Id = "cf_gale_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(210, 0, 80, 80), Build = 34, Health = 400, Attack = AttackType.AntiArmor, Damage = 45, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
@@ -306,7 +307,7 @@ namespace FactoryWars.EditorTools {
     // 비용 칸은 AI의 가치 계산용이다(실제 비용은 UltimateSpec). 인구는 BuildUltimates에서 따로 정한다.
     static readonly UnitRow[] UltimateUnits = {
       // 공중 항모 "스톰네스트": 매우 느리고 튼튼하다. 주포는 지상 중거리 범위 포격. 대공 무기에 1.5배로 맞는다(UltimateSpec).
-      new UnitRow { Id = "ff_stormnest_carrier", Size = UnitSize.Large, Air = true, Cost = R(1600, 0, 1000, 600), Build = 210, Health = 6000, Attack = AttackType.Area, Damage = 70, Range = 12, Splash = 3, Interval = 3, Speed = 2.2 },
+      new UnitRow { Id = "ff_stormnest_carrier", Size = UnitSize.Large, Air = true, Cost = R(1600, 0, 1000, 600), Build = 180, Health = 6000, Attack = AttackType.Area, Damage = 70, Range = 12, Splash = 3, Interval = 3, Speed = 2.2 },
       // 함재 드론 "둥지 드론": 소형 공중, 대전차 경무장. 항모 반경 안에서만 싸운다.
       new UnitRow { Id = "ff_nest_drone", Size = UnitSize.Small, Air = true, Cost = R(60, 0, 20, 20), Build = 12, Health = 160, Attack = AttackType.AntiArmor, Damage = 14, Range = 6, Interval = 1, Speed = 9 },
       // 상륙정 "파도머리": 탑재 부대를 해안에 내리고 포격 지원한다(차기 진영용, 시험 전용 진영에만 연결).
@@ -559,7 +560,7 @@ namespace FactoryWars.EditorTools {
     }
 
     /// <summary>
-    /// 항목 33 궁극 전력 데이터. 비용은 대형 유닛 4~5기 수준에 강철 비중을 크게, 준비 3분 20초~3분 30초.
+    /// 항목 33 궁극 전력 데이터. 비용은 대형 유닛 4~5기 수준에 강철 비중을 크게, 준비 3분(처음 210·200초에서 줄임: AI 첫 사용이 너무 늦었다).
     /// 자유 연방: 공중 항모. 대륙 연방: 전략 미사일. 시험 전용 진영(차기 진영 예약): 상륙 강습단.
     /// </summary>
     static void BuildUltimates(Dictionary<string, UnitSpec> units, FactionSpec free, FactionSpec continental, AssetRef<ModuleSpec>[] modules,
@@ -581,9 +582,9 @@ namespace FactoryWars.EditorTools {
       carrier.RequiredTier = 3;
       carrier.Research = Ref(freeResearch);
       carrier.Cost = R(1600, 0, 1000, 600);
-      carrier.PrepareSeconds = 210;
+      carrier.PrepareSeconds = 180;
       carrier.RearmCost = R(1600, 0, 1000, 600);
-      carrier.RearmSeconds = 210;
+      carrier.RearmSeconds = 180;
       carrier.OwnedLimit = 1;
       carrier.CooldownSeconds = 120;
       carrier.RefundFraction = N(0.5);
@@ -608,7 +609,7 @@ namespace FactoryWars.EditorTools {
       missile.RequiredTier = 3;
       missile.Research = Ref(continentalResearch);
       missile.Cost = R(1400, 0, 900, 700);
-      missile.PrepareSeconds = 200;
+      missile.PrepareSeconds = 180;
       missile.RearmCost = R(700, 0, 450, 350);
       missile.RearmSeconds = 120;
       missile.OwnedLimit = 1;
@@ -728,7 +729,8 @@ namespace FactoryWars.EditorTools {
       var ai = Asset<AiSpec>(id);
       // 항목 31 테크: 보통은 5.5분에 2단계, 10분에 3단계를 시작한다. 쉬움은 늦게.
       var normal = id == "ai_normal";
-      ai.TierSeconds = normal ? new FP[] { 330, 540 } : new FP[] { 480, 840 };
+      // 항목 33(ai-33-2p-v1: 궁극 전력을 20판 중 1판만 썼다. 강철이 모자라 전용 건물이 16~17분에야 섰다): 3단계 시작 9분→8분.
+      ai.TierSeconds = normal ? new FP[] { 330, 480 } : new FP[] { 480, 840 };
       ai.ResearchStartSeconds = normal ? 240 : 480;
       ai.TierLeadSeconds = 120;
       ResearchPick P(ResearchKind kind, UnitSize size = UnitSize.Small, int level = 1) => new ResearchPick { Kind = kind, Size = size, Level = level };
@@ -741,8 +743,9 @@ namespace FactoryWars.EditorTools {
         : new[] { P(ResearchKind.Attack), P(ResearchKind.Attack, UnitSize.Medium), P(ResearchKind.Elite) };
       // 항목 33 궁극 전력: 보통만 쓴다(쉬움은 준비하지 않고, 상대 알림에도 반응하지 않는다). 3단계 뒤 11분부터 전용 건물·연구·준비.
       ai.UseUltimate = normal;
-      ai.UltimateStartSeconds = 660;
-      ai.UltimateSafeRadius = 40;
+      // 9분부터 선행 건물(비행장·레이더 기지)을 짓고, 3단계가 되면 전용 건물·연구·준비 순으로 모은다. 본진 25m 안에 적이 보이면 모으기를 멈춘다.
+      ai.UltimateStartSeconds = 540;
+      ai.UltimateSafeRadius = 25;
       ai.UltimateCheckSeconds = 5;
       ai.UltimateGuard = normal ? 6 : 0;
       ai.UltimateGuardRadius = 12;
@@ -784,10 +787,11 @@ namespace FactoryWars.EditorTools {
       ai.BreakGarrisons = id == "ai_normal";
       ai.ToppleDefense = id == "ai_normal";
       ai.MaxProcessors = maxProcessors;
-      ai.SteelTarget = 500;
-      ai.IronSurplus = 300;
+      // 항목 33: 강철이 궁극 전력의 병목이라(15분까지 번 강철 1500~2000, 궁극 경로에 1450~1550) 가공소를 더 돌린다. 목표 500→1000, 상한 1500→2000, 철 여유 300→250.
+      ai.SteelTarget = normal ? 1000 : 500;
+      ai.IronSurplus = normal ? 250 : 300;
       ai.ProcessorIronFloor = 150;
-      ai.SteelCap = 1500;
+      ai.SteelCap = normal ? 2000 : 1500;
       ai.PowerReserve = 20;
       ai.ExpandDistance = 30;
       ai.MaxHeadquarters = maxHeadquarters;
@@ -807,6 +811,11 @@ namespace FactoryWars.EditorTools {
       ai.AirShareForAntiAir = N(0.1);
       ai.IdleAntiAir = 2;
       ai.CounterTop = 2;
+      // 항목 33: 보통 AI는 유리할 때만 먼저 친다(1.3배, 1분마다 0.15씩 0.6배까지 내려감, 방어 건물은 값의 절반으로 친다). 쉬움은 예전처럼 그냥 나간다.
+      ai.AttackRatio = normal ? N(1.3) : 0;
+      ai.AttackRatioDecay = N(0.15);
+      ai.AttackRatioFloor = N(0.6);
+      ai.DefenseWeight = N(0.5);
       ai.FirstAttackSeconds = N(firstAttack);
       ai.AttackRepeatSeconds = N(repeat);
       ai.WaveSize = wave;

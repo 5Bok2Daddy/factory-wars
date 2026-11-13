@@ -957,6 +957,10 @@ namespace Quantum.FactoryWars {
         var range = EffectiveRange(f, unit, spec);
         if (unit->Garrison != EntityRef.None) {
           range += FactoryWarsUtil.Rules(f).GarrisonRangeBonus;
+          // 항목 33 벙커: 안의 분대는 건물 한가운데에 있지만 가장자리 총안에서 쏘는 것으로 친다(공격하는 쪽도 건물 가장자리까지만 재므로 서로 닿는다).
+          if (f.Unsafe.TryGetPointer<Building>(unit->Garrison, out var host)) {
+            range += f.FindAsset(host->Spec).FootprintRadius;
+          }
         }
         var position = transform->Position;
 

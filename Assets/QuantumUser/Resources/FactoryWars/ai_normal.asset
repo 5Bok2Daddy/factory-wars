@@ -18,7 +18,7 @@ MonoBehaviour:
       Value: 414360037463059834
   TierSeconds:
   - RawValue: 21626880
-  - RawValue: 35389440
+  - RawValue: 31457280
   TierLeadSeconds:
     RawValue: 7864320
   ResearchStartSeconds:
@@ -65,9 +65,9 @@ MonoBehaviour:
     Level: 2
   UseUltimate: 1
   UltimateStartSeconds:
-    RawValue: 43253760
+    RawValue: 35389440
   UltimateSafeRadius:
-    RawValue: 2621440
+    RawValue: 1638400
   UltimateCheckSeconds:
     RawValue: 327680
   UltimateGuard: 6
@@ -153,6 +153,14 @@ MonoBehaviour:
   ShipyardGridDivisor: 2
   ShipyardRingMultiplier: 2
   MaxShips: 4
+  AttackRatio:
+    RawValue: 85196
+  AttackRatioDecay:
+    RawValue: 9830
+  AttackRatioFloor:
+    RawValue: 39321
+  DefenseWeight:
+    RawValue: 32768
   WaveByPopulation: 0
   FirstAttackSeconds:
     RawValue: 19660800
@@ -175,13 +183,13 @@ MonoBehaviour:
     RawValue: 1310720
   MaxProcessors: 5
   SteelTarget:
-    RawValue: 32768000
+    RawValue: 65536000
   IronSurplus:
-    RawValue: 19660800
+    RawValue: 16384000
   ProcessorIronFloor:
     RawValue: 9830400
   SteelCap:
-    RawValue: 98304000
+    RawValue: 131072000
   SiteGrid:
     RawValue: 524288
   SiteRings: 7

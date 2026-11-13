@@ -34,7 +34,7 @@ MonoBehaviour:
     Power:
       RawValue: 45875200
   PrepareSeconds:
-    RawValue: 13107200
+    RawValue: 11796480
   RearmCost:
     Iron:
       RawValue: 45875200

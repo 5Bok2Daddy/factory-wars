@@ -171,7 +171,7 @@ namespace Quantum.FactoryWars {
           }
         }
       }
-      if (ai.ResearchOrder == null || f.Number < FactoryWarsUtil.SecondsToFrames(f, ai.ResearchStartSeconds)) {
+      if (ai.ResearchOrder == null || f.Number < FactoryWarsUtil.SecondsToFrames(f, ai.ResearchStartSeconds) || UltimatePending(f, player, state, ai)) {
         return reserve;
       }
       // 연구가 다음 건물(예: 군수공장 전기 200)을 굶기지 않게, 건설 순서상 다음 건물 비용을 남겨 두고 연구한다.
@@ -366,7 +366,23 @@ namespace Quantum.FactoryWars {
       return default;
     }
 
-    static bool NextRole(PlayerRef player, PlayerState* state, AiSpec ai, int* counts, Frame f, out BuildingRole role) {
+    /// <summary>
+    /// 첫 궁극 전력을 모으는 중이면 true: 3단계이고, 시작 시각이 지났고, 아직 한 번도 준비를 시작하지 않았다.
+    /// 이동안 일반 연구와 건설 순서의 나머지를 미뤄 강철·전기를 모은다. 본진 근처에 적이 보이면 그만둔다(평소대로 싸운다).
+    /// </summary>
+    static bool UltimatePending(Frame f, PlayerRef player, PlayerState* state, AiSpec ai) {
+      if (ai.UseUltimate == false || state->UltimatePhase != UltimatePhase.None || state->UltimateStartFrame > 0
+          || f.Number < FactoryWarsUtil.SecondsToFrames(f, ai.UltimateStartSeconds)) {
+        return false;
+      }
+      var spec = UltimateSystem.SpecOf(f, player);
+      if (spec == null || TechSystem.Tier(f, player) < spec.RequiredTier) {
+        return false;
+      }
+      return EnemyNear(f, player, f.Global->Bots.GetPointer(player)->Home, ai.UltimateSafeRadius * ai.UltimateSafeRadius) == false;
+    }
+
+    static bool NextRole(PlayerRef player, PlayerState* state, AiSpec ai, int* counts, Frame f, bool urgentOnly, out BuildingRole role) {
       // 전기·인구·강철이 모자라면 순서보다 먼저 채운다.
       if (counts[(int)BuildingRole.PowerPlant] > 0 && state->PowerRate < ai.PowerMargin) {
         role = BuildingRole.PowerPlant;
@@ -384,6 +400,10 @@ namespace Quantum.FactoryWars {
         return true;
       }
 
+      if (urgentOnly) {
+        role = default;
+        return false;
+      }
       var seen = stackalloc int[RoleCount];
       for (var i = 0; i < RoleCount; i++) {
         seen[i] = 0;
@@ -423,7 +443,8 @@ namespace Quantum.FactoryWars {
     /// <summary>다음 건물을 짓는다. 자원을 모으는 중이면 남겨 둘 비용을 돌려준다.</summary>
     static ResourceCost BuildNext(Frame f, PlayerRef player, PlayerState* state, BotState* bot, AiSpec ai, FactionSpec faction, int* counts) {
       var center = bot->Home;
-      var hasRole = NextRole(player, state, ai, counts, f, out var role);
+      // 항목 33: 첫 궁극 전력을 준비할 때까지는 건설 순서의 나머지(의무대·정비소 등)를 미루고 급한 것(전기·인구·강철)만 짓는다.
+      var hasRole = NextRole(player, state, ai, counts, f, UltimatePending(f, player, state, ai), out var role);
       var orderRole = role;
       var hasOrder = hasRole;
       // 항목 31: 다음 단계 시각이 TierLeadSeconds 안으로 다가오면 그 단계 조건 건물(연구소·중공업 기지)을 확장보다 먼저 짓는다.
@@ -1120,6 +1141,45 @@ namespace Quantum.FactoryWars {
       }
     }
 
+    /// <summary>
+    /// 유리할 때만 먼저 친다(항목 33). 내 군대 가치가 목표 플레이어의 (보이는 군대 + 방어 건물 x DefenseWeight) 가치의 AttackRatio배 이상이어야 한다.
+    /// 기다릴수록 필요한 배율이 분당 AttackRatioDecay씩 AttackRatioFloor까지 내려가 언젠가는 나간다(휴전이 끝난 때와 공격 예정 시각 중 늦은 쪽부터 센다).
+    /// AI 대전에서 휴전이 끝나자마자 전군이 불리한 싸움에 들어가 2분 만에 유닛 40기를 잃던 것(ai-33-4p-t1)을 막는다.
+    /// </summary>
+    static bool Favorable(Frame f, PlayerRef player, BotState* bot, AiSpec ai, PlayerRef enemy) {
+      if (ai.AttackRatio <= FP._0 || FactoryWarsUtil.Player(f, enemy) == null) {
+        return true;
+      }
+      var own = FP._0;
+      var hostile = FP._0;
+      var units = f.Filter<Unit>();
+      while (units.NextUnsafe(out var entity, out var unit)) {
+        var spec = f.FindAsset(unit->Spec);
+        if (spec.Attack == AttackType.None || spec.IsNaval || f.Has<Drone>(entity)) {
+          continue;
+        }
+        if (unit->Owner == player) {
+          own += Worth(spec.Cost);
+        } else if (unit->Owner == enemy && FactoryWarsUtil.IsVisibleTo(f, player, entity)) {
+          hostile += Worth(spec.Cost);
+        }
+      }
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var building)) {
+        if (building->Owner != enemy || building->ConstructionRemaining > FP._0) {
+          continue;
+        }
+        var spec = f.FindAsset(building->Spec);
+        if (spec.Attack != AttackType.None && spec.Attack != AttackType.AntiAir) {
+          hostile += Worth(spec.Cost) * ai.DefenseWeight;
+        }
+      }
+      var due = System.Math.Max(bot->NextAttackFrame, f.Global->TruceEndFrame);
+      var waitedMinutes = (FP)System.Math.Max(0, f.Number - due) / (f.SessionConfig.UpdateFPS * 60);
+      var need = FPMath.Max(ai.AttackRatioFloor, ai.AttackRatio - ai.AttackRatioDecay * waitedMinutes);
+      return own >= hostile * need;
+    }
+
     /// <summary>모든 생산 대기열이 비어 있으면 true(생산 건물이 없어도 true).</summary>
     static bool ProductionIdle(Frame f, PlayerRef player) {
       var buildings = f.Filter<Building>();
@@ -1336,9 +1396,10 @@ namespace Quantum.FactoryWars {
     static ResourceCost ManageUltimate(Frame f, PlayerRef player, PlayerState* state, BotState* bot, AiSpec ai, FactionSpec faction, int* counts, bool canBuild, out bool built) {
       built = false;
       var spec = UltimateSystem.SpecOf(f, player);
-      if (ai.UseUltimate == false || spec == null || f.Number < FactoryWarsUtil.SecondsToFrames(f, ai.UltimateStartSeconds) || TechSystem.Tier(f, player) < spec.RequiredTier) {
+      if (ai.UseUltimate == false || spec == null || f.Number < FactoryWarsUtil.SecondsToFrames(f, ai.UltimateStartSeconds)) {
         return default;
       }
+      var tier = TechSystem.Tier(f, player);
       if (state->UltimatePhase == UltimatePhase.Ready) {
         FireUltimate(f, player, bot, ai, spec);
         return default;
@@ -1356,7 +1417,7 @@ namespace Quantum.FactoryWars {
       bot->ReadySinceFrame = 0;
       var safe = EnemyNear(f, player, bot->Home, ai.UltimateSafeRadius * ai.UltimateSafeRadius) == false;
 
-      // 1. 전용 건물. 선행 건물이 없으면 그것부터 짓는다.
+      // 1. 전용 건물. 선행 건물이 없으면 그것부터 짓는다. 선행 건물은 자기 단계만 되면 3단계 전에도 짓는다(3단계가 되자마자 전용 건물을 올리게).
       if (counts[(int)BuildingRole.UltimateSite] == 0) {
         if (canBuild == false) {
           return default;
@@ -1373,8 +1434,15 @@ namespace Quantum.FactoryWars {
             break;
           }
         }
+        if (role == BuildingRole.UltimateSite && tier < spec.RequiredTier) {
+          // 선행 건물은 다 있다. 기지 단계가 오르기를 기다린다(단계 비용은 ManageTech가 남긴다).
+          return default;
+        }
         var cost = TryBuildRole(f, player, state, ai, faction, role, bot->Home, out built);
         return safe ? cost : default;
+      }
+      if (tier < spec.RequiredTier) {
+        return default;
       }
 
       // 2. 궁극 전력 연구(쉬는 연구소에서).
@@ -1812,6 +1880,7 @@ namespace Quantum.FactoryWars {
       var lastStand = ai.LastStand && army > 0 && CannotRecover(f, player);
       FPVector3 target;
       PlayerRef enemy = default;
+      var forced = stalled || lastStand;
       if (sweeping) {
         if (FindCoreTarget(f, player, ArmyCenter(f, player, bot->Home), out target) == false) {
           return;
@@ -1820,8 +1889,13 @@ namespace Quantum.FactoryWars {
         // 상대가 궁극 전력을 준비 중이다: 웨이브의 절반만 모여도 그 전용 건물을 치러 간다.
         target = f.Unsafe.GetPointer<Transform3D>(bot->ThreatSite)->Position;
         enemy = bot->ThreatOwner;
+        forced = true;
       } else if ((stalled || lastStand || ShouldLaunch(army, bot->WaveSize, f.Number - bot->NextAttackFrame, FactoryWarsUtil.SecondsToFrames(f, ai.StaleWaveSeconds))) == false
           || FindEnemyTarget(f, player, bot->Home, ai, out target, out enemy) == false) {
+        return;
+      }
+      // 항목 33: 유리할 때만 먼저 친다(소탕·궁극 전력 대응·생산 정지·최후의 돌격은 그냥 나간다).
+      if (sweeping == false && forced == false && Favorable(f, player, bot, ai, enemy) == false) {
         return;
       }
 

@@ -44,7 +44,7 @@ MonoBehaviour:
   SplashRadius:
     RawValue: 0
   AttackInterval:
-    RawValue: 58982
+    RawValue: 65536
   IsRanged: 1
   MoveSpeed:
     RawValue: 262144

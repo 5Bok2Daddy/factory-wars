@@ -119,6 +119,14 @@ namespace Quantum {
     public int ShipyardRingMultiplier;
     /// <summary>AI가 유지하는 배 수 상한(대기열 포함). 항목 30.</summary>
     public int MaxShips;
+    /// <summary>
+    /// 유리할 때만 먼저 친다(항목 33). 내 군대 가치 >= 목표 플레이어의 (군대 + 방어 건물 x DefenseWeight) 가치 x AttackRatio일 때 웨이브를 낸다.
+    /// 기다린 1분마다 필요한 배율이 AttackRatioDecay씩 AttackRatioFloor까지 내려간다. AttackRatio가 0이면 쓰지 않는다.
+    /// </summary>
+    public FP AttackRatio;
+    public FP AttackRatioDecay;
+    public FP AttackRatioFloor;
+    public FP DefenseWeight;
     /// <summary>true면 WaveSize·WaveGrowth·MaxWaveSize·StalledWaveSize와 소탕 판단을 유닛 수가 아니라 인구로 센다(항목 33).</summary>
     public bool WaveByPopulation;
     public FP FirstAttackSeconds;

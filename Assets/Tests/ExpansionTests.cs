@@ -100,7 +100,7 @@ namespace FactoryWars.Tests {
       Assert.IsFalse(BotSystem.ProcessorsOff(ai, Stock(400, 0, 100, 0), breakCost, false), "평소에는 켬");
       Assert.IsTrue(BotSystem.ProcessorsOff(ai, Stock(400, 0, 100, 0), breakCost, true), "파기 비용을 모으는 중");
       Assert.IsFalse(BotSystem.ProcessorsOff(ai, Stock(600, 0, 100, 0), breakCost, true), "다 모았으면 켬");
-      Assert.IsTrue(BotSystem.ProcessorsOff(ai, Stock(200, 0, 900, 0), breakCost, false), "강철이 넉넉하고 철이 적음");
+      Assert.IsTrue(BotSystem.ProcessorsOff(ai, Stock(200, 0, 1100, 0), breakCost, false), "강철이 넉넉하고(목표 1000 이상) 철이 적음");
       Assert.IsFalse(BotSystem.ProcessorsOff(ai, Stock(200, 0, 100, 0), breakCost, false), "강철이 모자라면 계속");
     }
 
