@@ -114,6 +114,13 @@ namespace FactoryWars.View {
     UnitSize _menuSize = UnitSize.Small;
     string _selectionKey = "";
 
+    // 항목 33 궁극 전력: 상단 오른쪽(아이콘 버튼 아래) 진행 막대. 준비 중·발동 대기인 플레이어(자신·적 모두)와 날아오는 미사일 카운트다운.
+    const int MaxUltimateBars = 5;
+    readonly List<(RectTransform Root, RectTransform Fill, Image FillImage, Text Label)> _ultimateBars = new List<(RectTransform, RectTransform, Image, Text)>();
+    public int UltimateBars => _ultimateBars.Count(b => b.Root.gameObject.activeSelf);
+    public string UltimateBarText(int index) => _ultimateBars.Where(b => b.Root.gameObject.activeSelf).Select(b => b.Label.text).ElementAtOrDefault(index) ?? "";
+    public int MinimapUltimateMarks => _minimap.UltimateMarks;
+
     static float ContextWidth => ContextColumns * Cell + (ContextColumns - 1) * Gap + 2 * Pad;
     static float ContextHeight => ContextColumns * Cell + (ContextColumns - 1) * Gap + 2 * Pad + HeaderHeight;
     /// <summary>미니맵(300) + 빠른 버튼 2열의 오른쪽 끝.</summary>
@@ -227,7 +234,9 @@ namespace FactoryWars.View {
 
       BuildCard(theme);
       BuildContext(theme);
+      BuildUltimateBars(theme);
       BuildDiplomacy(frame);
+      QuantumEvent.Subscribe<EventUltimateNotice>(this, OnUltimateNotice);
 
       QuantumEvent.Subscribe<EventActionRejected>(this, OnRejected);
       QuantumEvent.Subscribe<EventNoteReceived>(this, OnNote);
@@ -257,6 +266,146 @@ namespace FactoryWars.View {
           var research = TechSystem.ResearchAt(e.Game.Frames.Verified, e.Player, e.Index);
           ShowAlert(research != null ? $"연구 완료: {Texts.ResearchName(research, UnitName)}" : "연구 완료");
         }
+      });
+    }
+
+    void BuildUltimateBars(UiTheme theme) {
+      _ultimateBars.Clear();
+      var width = 2 * Cell + Gap;
+      for (var i = 0; i < MaxUltimateBars; i++) {
+        var bar = Ui.Capsule($"UltimateBar{i}", Root, theme.Panel);
+        Ui.Place(bar, Vector2.one, new Vector2(-12, -8 - Cell - Gap - i * 52), new Vector2(width, 46));
+        var fill = Ui.Capsule("Fill", bar, theme.Warning);
+        fill.anchorMin = Vector2.zero;
+        fill.anchorMax = new Vector2(0, 1);
+        fill.pivot = new Vector2(0, 0.5f);
+        fill.offsetMin = Vector2.zero;
+        fill.offsetMax = Vector2.zero;
+        fill.GetComponent<Image>().raycastTarget = false;
+        var label = Ui.Label("Label", bar, "", theme.FontSmall, TextAnchor.MiddleCenter);
+        label.color = theme.PanelText;
+        label.resizeTextForBestFit = true;
+        label.resizeTextMinSize = theme.FontSmall - 8;
+        label.resizeTextMaxSize = theme.FontSmall;
+        Ui.Stretch(label.rectTransform, 6f);
+        bar.GetComponent<Image>().raycastTarget = false;
+        bar.gameObject.SetActive(false);
+        _ultimateBars.Add((bar, fill, fill.GetComponent<Image>(), label));
+      }
+    }
+
+    static string Who(Frame frame, PlayerRef player) {
+      var state = frame.Global->Players.GetPointer(player);
+      return $"플레이어 {(int)player + 1}({Texts.FactionName(frame.FindAsset(state->Faction).FactionId)})";
+    }
+
+    /// <summary>준비 중·발동 대기인 플레이어마다 한 줄, 날아오는 미사일마다 한 줄(착탄까지 남은 시간).</summary>
+    void RefreshUltimateBars(Frame frame) {
+      var theme = UiTheme.Current;
+      var used = 0;
+      void Show(string text, float ratio, Color color) {
+        if (used >= _ultimateBars.Count) {
+          return;
+        }
+        var bar = _ultimateBars[used++];
+        bar.Root.gameObject.SetActive(true);
+        bar.Label.text = text;
+        bar.Fill.anchorMax = new Vector2(Mathf.Clamp01(ratio), 1);
+        bar.FillImage.color = color;
+      }
+      foreach (var pair in frame.GetComponentIterator<MissileStrike>()) {
+        var left = Mathf.Max(0f, (pair.Component.ImpactFrame - frame.Number) / (float)frame.SessionConfig.UpdateFPS);
+        var total = Mathf.Max(1f, (pair.Component.ImpactFrame - pair.Component.LaunchFrame) / (float)frame.SessionConfig.UpdateFPS);
+        Show($"전략 미사일 착탄 {Mathf.CeilToInt(left)}초", 1f - left / total, theme.Danger);
+      }
+      for (var i = 0; i < frame.PlayerCount; i++) {
+        var state = frame.Global->Players.GetPointer(i);
+        var spec = UltimateSystem.SpecOf(frame, i);
+        if (state->Active == false || spec == null || (state->UltimatePhase != UltimatePhase.Preparing && state->UltimatePhase != UltimatePhase.Ready)) {
+          continue;
+        }
+        var color = (Color)Palette.Of(frame, i);
+        color.a = 0.55f;
+        var mine = i == (int)Controller.Player ? "내 " : $"{Who(frame, i)} ";
+        if (state->UltimatePhase == UltimatePhase.Ready) {
+          Show($"{mine}{Texts.UltimateName(spec.Kind)} 발동 대기", 1f, color);
+        } else {
+          var total = Mathf.Max(1f, state->UltimateTotal.AsFloat);
+          Show($"{mine}{Texts.UltimateName(spec.Kind)} 준비 {Mathf.CeilToInt(state->UltimateRemaining.AsFloat)}초", 1f - state->UltimateRemaining.AsFloat / total, color);
+        }
+      }
+      for (var i = used; i < _ultimateBars.Count; i++) {
+        _ultimateBars[i].Root.gameObject.SetActive(false);
+      }
+    }
+
+    /// <summary>궁극 전력 알림은 모든 플레이어에게 보인다(누가·무엇을·남은 시간). 알림을 누르면 그 자리로 간다.</summary>
+    void OnUltimateNotice(EventUltimateNotice e) {
+      var frame = e.Game.Frames.Verified;
+      var mine = e.Player == Controller.Player;
+      ShowAlert(Texts.UltimateNotice(Who(frame, e.Player), e.Stage, e.Kind, e.Value));
+      if (e.Stage != UltimateStage.Cancelled || e.Position != default) {
+        PingAlert(e.Position.ToUnityVector3());
+      }
+      if (mine == false || e.Stage == UltimateStage.Lost) {
+        GameAudio.Play(SoundEvent.Warning);
+      }
+      _nextRefresh = 0f;
+    }
+
+    /// <summary>
+    /// 명령 카드의 궁극 전력 칸(사령부와 전용 건물). 조건이 모자라면 자물쇠와 이유 목록, 준비 중이면 남은 시간과 취소,
+    /// 발동 대기면 목표 지정(미사일·상륙), 운용·대기 중이면 상태만 보인다.
+    /// </summary>
+    void UltimateEntries(Frame frame, PlayerState* state) {
+      var spec = UltimateSystem.SpecOf(frame, Controller.Player);
+      if (spec == null) {
+        return;
+      }
+      var name = Texts.UltimateName(spec.Kind);
+      var input = Controller.Input;
+      switch (state->UltimatePhase) {
+        case UltimatePhase.Preparing:
+          Entries.Add(new ContextEntry {
+            Label = $"{name}\n준비 {Mathf.CeilToInt(state->UltimateRemaining.AsFloat)}초", Icon = UltimateIcon(frame, spec), Enabled = false, Locked = true,
+            Reason = $"{name} 준비 중: 남은 {Mathf.CeilToInt(state->UltimateRemaining.AsFloat)}초. 전용 건물이 부서지면 취소되고 절반만 돌려받습니다",
+          });
+          Entries.Add(new ContextEntry {
+            Label = "준비 취소", Icon = "ui_cancel", Enabled = true, Detail = $"비용의 {Mathf.RoundToInt(spec.CancelRefundFraction.AsFloat * 100)}%를 돌려받습니다",
+            Action = () => Controller.Send(new CancelUltimateCommand()),
+          });
+          return;
+        case UltimatePhase.Ready:
+          var aiming = input.Mode == MatchInput.TapMode.Ultimate;
+          Entries.Add(new ContextEntry {
+            Label = aiming ? "목표 지정 중" : spec.Kind == UltimateKind.StrategicMissile ? $"{name}\n발사" : $"{name}\n출발", Icon = UltimateIcon(frame, spec), Enabled = true,
+            Detail = spec.Kind == UltimateKind.StrategicMissile ? $"땅을 누르면 발사. {spec.WarningSeconds.AsInt}초 뒤 착탄, 아군도 맞습니다" : "상륙할 해안을 누르면 상륙정이 출발합니다",
+            Action = () => input.Mode = aiming ? MatchInput.TapMode.None : MatchInput.TapMode.Ultimate,
+          });
+          return;
+        case UltimatePhase.Active:
+          Entries.Add(new ContextEntry { Label = $"{name}\n운용 중", Icon = UltimateIcon(frame, spec), Enabled = false, Locked = true, Reason = $"{name} 운용 중(보유 상한 {spec.OwnedLimit})" });
+          return;
+      }
+      var locks = UltimateSystem.Locks(frame, Controller.Player);
+      var cost = UltimateSystem.CostOf(frame, Controller.Player, spec);
+      var seconds = UltimateSystem.SecondsOf(frame, Controller.Player, spec);
+      var siteName = Texts.NameOf(frame.FindAsset(spec.Site).name);
+      var blocked = locks & ~UltimateLock.Resources;
+      string reason = null;
+      if (state->UltimatePhase == UltimatePhase.Cooldown) {
+        reason = $"{name}: 재사용 대기 {Mathf.CeilToInt(state->UltimateRemaining.AsFloat)}초";
+      } else if (blocked != UltimateLock.None) {
+        reason = $"{name}: {Texts.UltimateLocks(blocked, spec.RequiredTier, siteName)}";
+      }
+      Entries.Add(new ContextEntry {
+        Label = $"{name}\n{(reason == null ? Texts.Cost(cost, state->Stock) : state->UltimatePhase == UltimatePhase.Cooldown ? $"대기 {Mathf.CeilToInt(state->UltimateRemaining.AsFloat)}초" : "잠김")}",
+        Icon = UltimateIcon(frame, spec),
+        Enabled = reason == null,
+        Locked = reason != null,
+        Reason = reason,
+        Detail = $"{name} 준비: {Texts.Cost(cost, state->Stock)}  {seconds.AsInt}초. 시작·절반·완료가 모든 플레이어에게 알려집니다",
+        Action = () => Controller.Send(new StartUltimateCommand()),
       });
     }
 
@@ -777,6 +926,7 @@ namespace FactoryWars.View {
       }
       RefreshContext(frame, state);
       RefreshCard(frame, state);
+      RefreshUltimateBars(frame);
       Layout();
       if (DiplomacyOpen) {
         RefreshDiplomacy(frame);
@@ -825,11 +975,31 @@ namespace FactoryWars.View {
       if (Ui.IconSprite(id) != null) {
         return id;
       }
+      // 빌린 모델(ViewCatalog.TemporaryModels)의 아이콘을 쓴다.
       var borrowed = ViewCatalog.BorrowedId(id);
+      if (borrowed != null && Ui.IconSprite("model_" + borrowed) != null) {
+        return "model_" + borrowed;
+      }
       return borrowed != null && Ui.IconSprite(borrowed) != null ? borrowed : "ui_army";
     }
 
-    public static string BuildingIcon(BuildingSpec spec) => Ui.IconSprite("model_" + spec.name) != null ? "model_" + spec.name : $"building_{spec.name.Substring(3)}";
+    public static string BuildingIcon(BuildingSpec spec) {
+      if (Ui.IconSprite("model_" + spec.name) != null) {
+        return "model_" + spec.name;
+      }
+      var own = $"building_{spec.name.Substring(3)}";
+      var borrowed = ViewCatalog.BorrowedId(spec.name);
+      if (Ui.IconSprite(own) != null || borrowed == null) {
+        return own;
+      }
+      return Ui.IconSprite("model_" + borrowed) != null ? "model_" + borrowed : $"building_{borrowed.Substring(3)}";
+    }
+
+    /// <summary>궁극 전력 칸의 그림: 항모·상륙정은 그 유닛(빌린 모델) 그림, 미사일은 공격 그림.</summary>
+    static string UltimateIcon(Frame frame, UltimateSpec spec) {
+      return spec.Kind == UltimateKind.Carrier ? UnitIcon(frame.FindAsset(spec.Carrier).name)
+        : spec.Kind == UltimateKind.AmphibiousAssault ? UnitIcon(frame.FindAsset(spec.LandingCraft).name) : "ui_attack_move";
+    }
 
     string UnitName(AssetRef<UnitSpec> unit) {
       var frame = Controller?.Frame;
@@ -939,6 +1109,16 @@ namespace FactoryWars.View {
         lines += $"   공격 +{owner->AttackLevels[size]}  방어 +{owner->ArmorLevels[size]}";
         lines += "\n" + Texts.CounterTip(spec, frame.FindAsset(frame.RuntimeConfig.Rules));
       }
+      // 항목 33: 항모는 드론 수, 드론·상륙정은 직접 조종하지 못한다는 안내.
+      if (frame.TryGet<Carrier>(entity, out var carrier)) {
+        var flying = 0;
+        foreach (var pair in frame.GetComponentIterator<Drone>()) {
+          flying += pair.Component.Carrier == entity ? 1 : 0;
+        }
+        lines += $"\n드론 출격 {flying} · 격납 {carrier.Docked}  (대공 무기에 취약)";
+      } else if (UltimateSystem.IsAutonomous(frame, entity)) {
+        lines += "\n스스로 움직입니다(명령을 받지 않음)";
+      }
       _cardDetail.text = lines;
     }
 
@@ -1017,6 +1197,9 @@ namespace FactoryWars.View {
         } else if (input.Mode == MatchInput.TapMode.Patrol) {
           status = "순찰: 반대쪽 끝을 누르세요";
         }
+      }
+      if (input.Mode == MatchInput.TapMode.Ultimate) {
+        status = "궁극 전력: 목표 지점을 누르세요";
       }
       if (input.IsPlacing) {
         status = "건설할 곳을 누르세요";
@@ -1198,6 +1381,23 @@ namespace FactoryWars.View {
       if (spec.Role == BuildingRole.ResearchLab) {
         return ResearchEntries(frame, state, entity, building, tier);
       }
+      if (spec.Role == BuildingRole.UltimateSite) {
+        UltimateEntries(frame, state);
+        return status;
+      }
+      // 항목 33 벙커: 안의 분대를 내보낸다.
+      if (spec.GarrisonCapacity > 0) {
+        var inside = 0;
+        foreach (var pair in frame.GetComponentIterator<Unit>()) {
+          inside += pair.Component.Garrison == entity ? 1 : 0;
+        }
+        Entries.Add(new ContextEntry {
+          Label = $"내보내기\n{inside}/{spec.GarrisonCapacity}", Icon = "ui_rally_clear", Enabled = inside > 0, Locked = false,
+          Detail = "보병 분대를 고르고 벙커를 누르면 들어갑니다. 안에서는 맞지 않고, 벙커가 부서지면 튕겨 나옵니다",
+          Action = () => Controller.Send(new ExitGarrisonCommand { Building = entity }),
+        });
+        status += $"  수용 {inside}/{spec.GarrisonCapacity}";
+      }
 
       var stock = state->Stock;
       foreach (var unitRef in spec.Producible ?? Array.Empty<AssetRef<UnitSpec>>()) {
@@ -1226,6 +1426,10 @@ namespace FactoryWars.View {
       }
       if (spec.Role == BuildingRole.Headquarters) {
         UpgradeEntry(frame, state, entity, building, tier);
+        // 항목 33: 3단계가 가까워지면(2단계부터) 궁극 전력 칸을 보인다.
+        if (tier >= 2) {
+          UltimateEntries(frame, state);
+        }
       }
       if (spec.ProcessSeconds > FP._0) {
         var off = (bool)building.ProcessorOff;

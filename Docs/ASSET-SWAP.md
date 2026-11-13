@@ -112,3 +112,18 @@
 | `unit/cf_fortress_tank` | 요새 전차 | 대형 | 용린 전차 x1.3 |
 
 모델을 바꾼 뒤 `Tools > Factory Wars > UI > Capture Model Icons`로 HUD 아이콘을 다시 찍습니다(UI-SWAP.md 6번).
+
+## 항목 33 궁극 전력 칸 (임시 모델)
+
+궁극 전력 유닛 3종과 전용 건물 3종도 전용 모델이 없어 기존 모델을 빌려 씁니다(`ViewCatalog.TemporaryModels`). 칸은 `1. Build Visual Slots`로 이미 만들어 두었습니다.
+
+| 칸 | 이름(가칭) | 지금 빌려 쓰는 모델 |
+| --- | --- | --- |
+| `unit/ff_stormnest_carrier` | 스톰네스트 공중 항모 | 스카이포트리스 폭격기 x1.8 |
+| `unit/ff_nest_drone` | 둥지 드론(항모 함재) | 호크 공격헬기 x0.4 |
+| `unit/tf_wavecrest_lander` | 파도머리 상륙정(차기 진영 예약) | 포격함 x0.9 |
+| `building/ff_carrier_yard` | 항모 조립창 | 비행장 x0.95 |
+| `building/cf_missile_silo` | 미사일 격납고 | 중공업 기지 x0.95 |
+| `building/tf_assault_dock` | 강습 도크(차기 진영 예약) | 조선소 x0.95 |
+
+미사일 착탄 경고(붉은 고리·연막 신호)와 폭발은 기존 효과(`fx/explosion` 등)를 크게 쓴 것이라 따로 칸이 없습니다. 명령 카드의 궁극 전력 그림은 빌린 모델의 아이콘을 씁니다. 모델을 바꾼 뒤 `Capture Model Icons`를 다시 돌리면 전용 아이콘이 생깁니다.

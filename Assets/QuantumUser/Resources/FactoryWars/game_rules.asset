@@ -62,6 +62,9 @@ MonoBehaviour:
     RawValue: 32768
   RadarAlertSeconds:
     RawValue: 1966080
+  WaterSearchStep:
+    RawValue: 131072
+  WaterSearchDirections: 16
   BaseTiers:
   - Tier: 2
     Cost:

@@ -46,19 +46,40 @@ namespace Quantum.FactoryWars {
 
     static bool Friendly(Frame f, PlayerRef a, PlayerRef b) => a == b || DiplomacySystem.GetRelation(f, a, b) == Relation.Allied;
 
+    /// <summary>
+    /// 보병이 들어갈 수 있는 건물이면 true(항목 33에서 공통화). 도시 진지 건물은 규칙의 GarrisonCapacity,
+    /// 플레이어 건물(벙커)은 BuildingSpec.GarrisonCapacity를 쓴다. holder는 지금 주인(빈 도시 건물이면 없음)이다.
+    /// </summary>
+    public static bool TryHost(Frame f, EntityRef building, out MapShape shape, out int capacity, out PlayerRef holder) {
+      shape = default;
+      capacity = 0;
+      holder = PlayerRef.None;
+      if (f.Unsafe.TryGetPointer<CityBuilding>(building, out var city)) {
+        var placement = FactoryWarsUtil.MapInfo(f).CityBuildings[city->Index];
+        shape = placement.Shape;
+        capacity = placement.Garrison ? FactoryWarsUtil.Rules(f).GarrisonCapacity : 0;
+        holder = city->Occupant;
+        return capacity > 0;
+      }
+      if (f.Unsafe.TryGetPointer<Building>(building, out var own) && own->ConstructionRemaining <= FP._0) {
+        var spec = f.FindAsset(own->Spec);
+        shape = new MapShape { Center = f.Unsafe.GetPointer<Transform3D>(building)->Position, HalfLength = spec.FootprintRadius, HalfWidth = spec.FootprintRadius };
+        capacity = spec.GarrisonCapacity;
+        holder = own->Owner;
+        return capacity > 0;
+      }
+      return false;
+    }
+
     /// <summary>들어갈 수 있으면 true. 진지 표시, 붕괴 안 됨, 빈자리, 주인이 없거나 동맹, 휴전 중에는 자기 본진 안.</summary>
     public static bool CanEnter(Frame f, PlayerRef player, EntityRef building) {
-      if (f.Unsafe.TryGetPointer<CityBuilding>(building, out var city) == false) {
+      if (TryHost(f, building, out var shape, out var capacity, out var holder) == false || Occupants(f, building) >= capacity) {
         return false;
       }
-      var placement = FactoryWarsUtil.MapInfo(f).CityBuildings[city->Index];
-      if (placement.Garrison == false || Occupants(f, building) >= FactoryWarsUtil.Rules(f).GarrisonCapacity) {
+      if (holder.IsValid && Friendly(f, player, holder) == false) {
         return false;
       }
-      if (city->Occupant.IsValid && Friendly(f, player, city->Occupant) == false) {
-        return false;
-      }
-      return FactoryWarsUtil.IsReachable(f, player, placement.Shape.Center);
+      return FactoryWarsUtil.IsReachable(f, player, shape.Center);
     }
 
     public override void Update(Frame f) {
@@ -73,17 +94,17 @@ namespace Quantum.FactoryWars {
         if (unit->GarrisonTarget == EntityRef.None) {
           continue;
         }
-        if (f.Unsafe.TryGetPointer<CityBuilding>(unit->GarrisonTarget, out var city) == false) {
+        if (TryHost(f, unit->GarrisonTarget, out var shape, out _, out _) == false) {
           unit->GarrisonTarget = EntityRef.None;
           continue;
         }
-        if (map.CityBuildings[city->Index].Shape.Distance(transform->Position) > reach) {
+        if (shape.Distance(transform->Position) > reach) {
           continue;
         }
         var target = unit->GarrisonTarget;
         unit->GarrisonTarget = EntityRef.None;
         if (CanEnter(f, unit->Owner, target)) {
-          Enter(f, entity, unit, target, city);
+          Enter(f, entity, unit, target);
         } else {
           MovementSystem.Stop(f, entity, unit);
         }
@@ -91,7 +112,8 @@ namespace Quantum.FactoryWars {
       KeepBotsOutOfFallZones(f, map, rules);
     }
 
-    public static void Enter(Frame f, EntityRef entity, Unit* unit, EntityRef building, CityBuilding* city) {
+    public static void Enter(Frame f, EntityRef entity, Unit* unit, EntityRef building) {
+      CoverSystem.Release(f, unit);
       unit->Garrison = building;
       unit->Order = UnitOrder.Stop;
       unit->TargetEntity = EntityRef.None;
@@ -100,11 +122,17 @@ namespace Quantum.FactoryWars {
       f.Remove<NavMeshAvoidanceAgent>(entity);
       var center = f.Unsafe.GetPointer<Transform3D>(building)->Position;
       f.Unsafe.GetPointer<Transform3D>(entity)->Position = new FPVector3(center.X, FP._0, center.Z);
-      if (city->Occupant.IsValid == false) {
-        city->Occupant = unit->Owner;
+      var holder = unit->Owner;
+      if (f.Unsafe.TryGetPointer<CityBuilding>(building, out var city)) {
+        if (city->Occupant.IsValid == false) {
+          city->Occupant = unit->Owner;
+        }
+        holder = city->Occupant;
+      } else if (f.Unsafe.TryGetPointer<Building>(building, out var own)) {
+        holder = own->Owner;
       }
       FactoryWarsUtil.Player(f, unit->Owner)->GarrisonEntries++;
-      f.Events.GarrisonChanged(building, city->Occupant, Occupants(f, building));
+      f.Events.GarrisonChanged(building, holder, Occupants(f, building));
     }
 
     /// <summary>진지에서 나온다. 건물 둘레의 정해진 자리로 나오고, damageFraction만큼 최대 체력 피해를 입는다.</summary>
@@ -124,7 +152,8 @@ namespace Quantum.FactoryWars {
         city->Occupant = PlayerRef.None;
       }
       if (f.Exists(building)) {
-        var left = f.Unsafe.TryGetPointer<CityBuilding>(building, out var after) ? after->Occupant : PlayerRef.None;
+        var left = f.Unsafe.TryGetPointer<CityBuilding>(building, out var after) ? after->Occupant
+          : f.Unsafe.TryGetPointer<Building>(building, out var own) ? own->Owner : PlayerRef.None;
         f.Events.GarrisonChanged(building, left, Occupants(f, building));
       }
       if (damageFraction > FP._0) {
@@ -133,10 +162,15 @@ namespace Quantum.FactoryWars {
     }
 
     public static void ExitAll(Frame f, PlayerRef player, EntityRef building, FP damageFraction) {
-      if (f.Unsafe.TryGetPointer<CityBuilding>(building, out var city) == false) {
+      MapShape shape;
+      if (f.Unsafe.TryGetPointer<CityBuilding>(building, out var city)) {
+        shape = FactoryWarsUtil.MapInfo(f).CityBuildings[city->Index].Shape;
+      } else if (f.Unsafe.TryGetPointer<Building>(building, out var own)) {
+        var radius = f.FindAsset(own->Spec).FootprintRadius;
+        shape = new MapShape { Center = f.Unsafe.GetPointer<Transform3D>(building)->Position, HalfLength = radius, HalfWidth = radius };
+      } else {
         return;
       }
-      var shape = FactoryWarsUtil.MapInfo(f).CityBuildings[city->Index].Shape;
       var slot = 0;
       var units = f.Filter<Unit>();
       while (units.NextUnsafe(out var entity, out var unit)) {

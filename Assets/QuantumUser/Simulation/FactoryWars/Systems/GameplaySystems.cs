@@ -150,7 +150,7 @@ namespace Quantum.FactoryWars {
         return false;
       }
 
-      var isShipyard = spec.Role == BuildingRole.Shipyard;
+      var isShipyard = spec.Role == BuildingRole.Shipyard || spec.NeedsWater;
       var navMesh = f.Map.GetNavMesh(rules.NavMeshName);
       var mask = NavMeshRegionMask.Default;
       if (isShipyard) {
@@ -491,6 +491,10 @@ namespace Quantum.FactoryWars {
     public FPVector3 Origin;
     /// <summary>범위 공격(포격·폭격·화염): 엄폐 효과가 CoverAreaFactor배.</summary>
     public bool Area;
+    /// <summary>항목 33: 엄폐를 무시한다(전략 미사일).</summary>
+    public bool IgnoreCover;
+    /// <summary>항목 33: 궁극 전력의 공격(미사일·항모·드론·상륙정). 부순 핵심 건물을 따로 센다.</summary>
+    public bool Ultimate;
 
     public SpecialAbility Ability => Spec != null ? Spec.Ability : SpecialAbility.None;
   }
@@ -661,10 +665,20 @@ namespace Quantum.FactoryWars {
       amount = ModuleSystem.ApplyOutgoing(f, weapon.Unit, spec, amount);
       // 항목 31: 방어 연구. 항목 32: 엄폐.
       amount *= TechSystem.IncomingMultiplier(f, unit->Owner, spec);
-      amount *= CoverSystem.DamageMultiplier(f, unit, weapon.Origin, weapon.Area);
+      if (weapon.IgnoreCover == false) {
+        amount *= CoverSystem.DamageMultiplier(f, unit, weapon.Origin, weapon.Area);
+      }
+      // 항목 33: 공중 항모는 대공 무기에 더 크게 맞는다(카운터).
+      if (weapon.Attack == AttackType.AntiAir && f.Has<Carrier>(target)) {
+        var ultimate = UltimateSystem.SpecOf(f, unit->Owner);
+        if (ultimate != null) {
+          amount *= ultimate.AntiAirTakenMultiplier;
+        }
+      }
       unit->Health -= ModuleSystem.ApplyIncoming(f, unit, amount);
 
       if (unit->Health <= FP._0) {
+        UltimateSystem.OnUnitKilled(f, target, unit);
         f.Events.UnitDestroyed(target, unit->Owner, unit->Spec);
         f.Events.Wrecked(f.Unsafe.GetPointer<Transform3D>(target)->Position, (int)spec.Size, FP._0);
         FactoryWarsUtil.Player(f, unit->Owner)->UnitsLost++;
@@ -695,10 +709,23 @@ namespace Quantum.FactoryWars {
         }
         building->Health -= amount;
         if (building->Health <= FP._0) {
-          FactoryWarsUtil.Player(f, building->Owner)->BuildingsLost++;
+          var lost = f.FindAsset(building->Spec);
+          var loser = FactoryWarsUtil.Player(f, building->Owner);
+          loser->BuildingsLost++;
           var destroyer = FactoryWarsUtil.Player(f, weapon.Owner);
           if (destroyer != null) {
             destroyer->BuildingsDestroyed++;
+          }
+          // 항목 33: 핵심 건물 손실과, 그중 궁극 전력이 부순 수(측정).
+          if (lost.IsCoreBuilding) {
+            loser->CoreLost++;
+            if (weapon.Ultimate && destroyer != null && weapon.Owner != building->Owner) {
+              destroyer->UltimateCoreKills++;
+            }
+          }
+          // 벙커 안 병력은 튕겨 나오며 피해를 입는다.
+          if (lost.GarrisonCapacity > 0) {
+            CitySystem.ExitAll(f, PlayerRef.None, target, FactoryWarsUtil.Rules(f).GarrisonEjectFraction);
           }
           f.Events.Wrecked(f.Unsafe.GetPointer<Transform3D>(target)->Position, -1, f.FindAsset(building->Spec).FootprintRadius);
           f.Destroy(target);
@@ -753,6 +780,74 @@ namespace Quantum.FactoryWars {
           Damage(f, weapon, entity, amount);
         }
       }
+    }
+
+    static FP Falloff(FP distanceSqr, FP radius, FP edge) {
+      if (radius <= FP._0) {
+        return FP._1;
+      }
+      var ratio = FPMath.Clamp01(FPMath.Sqrt(FPMath.Max(FP._0, distanceSqr)) / radius);
+      return FP._1 - (FP._1 - edge) * ratio;
+    }
+
+    /// <summary>
+    /// 항목 33 전략 미사일: 중심에서 amount, 가장자리에서 amount x edge로 직선으로 줄어드는 광역 피해.
+    /// 공중 유닛과 건물 안 병력은 맞지 않는다. friendlyFire면 관계와 상관없이 전부 맞는다. 건물·도시 건물에는 배율이 붙는다.
+    /// </summary>
+    public static void Blast(Frame f, in Weapon weapon, FPVector3 center, FP radius, FP amount, FP edge, FP buildingMultiplier, FP cityMultiplier, bool friendlyFire) {
+      f.Events.AreaImpact(center, radius);
+      var radiusSqr = radius * radius;
+      var units = f.Filter<Transform3D, Unit>();
+      while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
+        var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, center);
+        if (distance > radiusSqr || unit->Garrison != EntityRef.None || f.FindAsset(unit->Spec).IsAir
+            || (friendlyFire == false && DiplomacySystem.CanAttack(f, weapon.Owner, unit->Owner) == false)) {
+          continue;
+        }
+        DamageUnit(f, weapon, entity, unit, amount * Falloff(distance, radius, edge));
+      }
+      var buildings = f.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out var entity, out var transform, out var building)) {
+        var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, center);
+        if (distance > radiusSqr || (friendlyFire == false && DiplomacySystem.CanAttack(f, weapon.Owner, building->Owner) == false)) {
+          continue;
+        }
+        Damage(f, weapon, entity, amount * Falloff(distance, radius, edge) * buildingMultiplier);
+      }
+      var barricades = f.Filter<Barricade>();
+      while (barricades.NextUnsafe(out var entity, out var barricade)) {
+        var distance = FPMath.Max(FP._0, barricade->Shape.Distance(center));
+        if (distance <= radius) {
+          BattlefieldSystem.HitBarricade(f, entity, barricade, amount * Falloff(distance * distance, radius, edge) * buildingMultiplier);
+        }
+      }
+      var map = FactoryWarsUtil.MapInfo(f);
+      var cities = f.Filter<CityBuilding>();
+      while (cities.NextUnsafe(out var entity, out var city)) {
+        var distance = FPMath.Max(FP._0, map.CityBuildings[city->Index].Shape.Distance(center));
+        if (distance <= radius) {
+          CitySystem.Hit(f, entity, city, amount * Falloff(distance * distance, radius, edge) * cityMultiplier);
+        }
+      }
+    }
+
+    static Weapon WeaponOf(PlayerRef owner, UnitSpec spec) {
+      return new Weapon { Owner = owner, Attack = spec.Attack, IsAir = spec.IsAir, IsRanged = spec.IsRanged, Spec = spec };
+    }
+
+    /// <summary>항목 33 항모 드론: position에서 range 안의, 이 유닛 종류가 맞힐 수 있는 가장 가까운 적.</summary>
+    public static EntityRef FindTargetFor(Frame f, PlayerRef owner, UnitSpec spec, FPVector3 position, FP range) {
+      var weapon = WeaponOf(owner, spec);
+      return FindTarget(f, weapon, position, FP._0, range);
+    }
+
+    /// <summary>target이 아직 살아 있고, 이 유닛 종류가 맞힐 수 있고, position에서 range 안이면 true.</summary>
+    public static bool CanEngage(Frame f, PlayerRef owner, UnitSpec spec, EntityRef target, FPVector3 position, FP range) {
+      if (f.Exists(target) == false || f.Unsafe.TryGetPointer<Transform3D>(target, out var transform) == false) {
+        return false;
+      }
+      var weapon = WeaponOf(owner, spec);
+      return IsValidTarget(f, weapon, target) && FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) <= ReachSqr(f, target, range);
     }
 
     /// <summary>주변 공중 적을 주 대상 포함 최대 AbilityCount기까지 동시에 맞힌다.</summary>
@@ -857,6 +952,7 @@ namespace Quantum.FactoryWars {
         var weapon = new Weapon {
           Owner = unit->Owner, Attack = spec.Attack, IsAir = spec.IsAir, IsRanged = spec.IsRanged, Unit = unit, Spec = spec,
           Origin = transform->Position, Area = spec.Attack == AttackType.Area || spec.Ability == SpecialAbility.FlameBurst,
+          Ultimate = UltimateSystem.IsUltimateUnit(f, entity),
         };
         var range = EffectiveRange(f, unit, spec);
         if (unit->Garrison != EntityRef.None) {

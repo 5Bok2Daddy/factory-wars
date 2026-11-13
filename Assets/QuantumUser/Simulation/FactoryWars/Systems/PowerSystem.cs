@@ -36,8 +36,10 @@ namespace Quantum.FactoryWars {
       }
     }
 
-    static bool WantsPower(Frame f, Building* building, BuildingSpec spec, PlayerState* state) {
+    static bool WantsPower(Frame f, EntityRef entity, Building* building, BuildingSpec spec, PlayerState* state) {
       switch (spec.Upkeep) {
+        // 항목 33: 궁극 전력 전용 건물은 준비·대기·보유 중에만 전기를 쓴다.
+        case UpkeepMode.WhileUltimate: return UltimateSystem.WantsPower(f, entity, building);
         case UpkeepMode.Always: return true;
         case UpkeepMode.WhileProducing: return ProductionSystem.IsProducing(f, building, state);
         // 항목 31: 연구소는 연구 중에만 전기를 쓴다.
@@ -101,7 +103,7 @@ namespace Quantum.FactoryWars {
           }
           continue;
         }
-        if (building->ConstructionRemaining > FP._0 || WantsPower(f, building, spec, state) == false) {
+        if (building->ConstructionRemaining > FP._0 || WantsPower(f, entity, building, spec, state) == false) {
           SetPaused(f, entity, building, PauseReason.None);
           continue;
         }

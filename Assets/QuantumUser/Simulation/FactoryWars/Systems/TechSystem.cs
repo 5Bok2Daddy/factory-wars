@@ -246,6 +246,8 @@ namespace Quantum.FactoryWars {
         if (elite != null) {
           multiplier *= elite.EliteDamageMultiplier;
         }
+        // 항목 33: 상륙 직후 보너스.
+        multiplier *= UltimateSystem.AssaultMultiplier(f, unit);
       }
       return multiplier;
     }

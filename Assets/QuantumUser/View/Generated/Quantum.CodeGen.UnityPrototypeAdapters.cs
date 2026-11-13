@@ -69,6 +69,12 @@ namespace Quantum.Prototypes.Unity {
     public Int32 RespondedDropFrame;
     public Int32 NextGarrisonFrame;
     public Int32 NextToppleFrame;
+    public Int32 ThreatFrame;
+    public Quantum.QuantumEntityPrototype ThreatSite;
+    public PlayerRef ThreatOwner;
+    public Int32 NextUltimateFrame;
+    public Int32 ReadySinceFrame;
+    public Int32 IdleSinceFrame;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BotStatePrototype prototype);
     public override Quantum.Prototypes.BotStatePrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BotStatePrototype();
@@ -90,6 +96,12 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.RespondedDropFrame, out result.RespondedDropFrame);
       converter.Convert(this.NextGarrisonFrame, out result.NextGarrisonFrame);
       converter.Convert(this.NextToppleFrame, out result.NextToppleFrame);
+      converter.Convert(this.ThreatFrame, out result.ThreatFrame);
+      converter.Convert(this.ThreatSite, out result.ThreatSite);
+      converter.Convert(this.ThreatOwner, out result.ThreatOwner);
+      converter.Convert(this.NextUltimateFrame, out result.NextUltimateFrame);
+      converter.Convert(this.ReadySinceFrame, out result.ReadySinceFrame);
+      converter.Convert(this.IdleSinceFrame, out result.IdleSinceFrame);
       ConvertUser(converter, ref result);
       return result;
     }
@@ -150,6 +162,25 @@ namespace Quantum.Prototypes.Unity {
     }
   }
   [System.SerializableAttribute()]
+  public unsafe partial class CarrierPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.CarrierPrototype> {
+    public Int32 Docked;
+    public FP BuildProgress;
+    public FP LaunchCooldown;
+    public Int32 LastContactFrame;
+    public Quantum.QuantumEntityPrototype Target;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.CarrierPrototype prototype);
+    public override Quantum.Prototypes.CarrierPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.CarrierPrototype();
+      converter.Convert(this.Docked, out result.Docked);
+      converter.Convert(this.BuildProgress, out result.BuildProgress);
+      converter.Convert(this.LaunchCooldown, out result.LaunchCooldown);
+      converter.Convert(this.LastContactFrame, out result.LastContactFrame);
+      converter.Convert(this.Target, out result.Target);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
   public unsafe partial class CoverSpotPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.CoverSpotPrototype> {
     public FPVector3 Position;
     public FPVector2 Facing;
@@ -164,6 +195,136 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Reduction, out result.Reduction);
       converter.Convert(this.Source, out result.Source);
       converter.Convert(this.Occupant, out result.Occupant);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
+  public unsafe partial class DronePrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.DronePrototype> {
+    public Quantum.QuantumEntityPrototype Carrier;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.DronePrototype prototype);
+    public override Quantum.Prototypes.DronePrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.DronePrototype();
+      converter.Convert(this.Carrier, out result.Carrier);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
+  public unsafe partial class PlayerStatePrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.PlayerStatePrototype> {
+    public AssetRef<FactionSpec> Faction;
+    public Quantum.Prototypes.ResourceCostPrototype Stock;
+    public FP PowerCap;
+    public FP PowerRate;
+    public QBoolean Outage;
+    public FP OutageSeconds;
+    public Int32 OutageCount;
+    public FP PopulationUsed;
+    public FP PopulationCap;
+    public Int32 Team;
+    public Int32 ColorIndex;
+    public Int32 NextNoteFrame;
+    public QBoolean Active;
+    public QBoolean Defeated;
+    public QBoolean IsBot;
+    public Quantum.QEnum8<BotDifficulty> Difficulty;
+    public Int32 UnitsProduced;
+    public Int32 UnitsLost;
+    public Int32 BuildingsLost;
+    public Quantum.Prototypes.ResourceCostPrototype Earned;
+    public Int32 NextBaseAlertFrame;
+    public Int32 Captures;
+    public Int32 CaptureFrames;
+    public Int32 CratesPicked;
+    public Int32 HighGroundShots;
+    public Int32 GarrisonEntries;
+    public Int32 DisconnectedFrame;
+    public QBoolean Forfeited;
+    public Int32 UnitsKilled;
+    public Int32 BuildingsDestroyed;
+    public Int32 BaseTier;
+    [ArrayLengthAttribute(3)]
+    public Int32[] TierFrames = new Int32[3];
+    public Int32 ResearchDone;
+    [ArrayLengthAttribute(4)]
+    public Byte[] AttackLevels = new Byte[4];
+    [ArrayLengthAttribute(4)]
+    public Byte[] ArmorLevels = new Byte[4];
+    [ArrayLengthAttribute(4)]
+    public Int32[] ProducedBySize = new Int32[4];
+    public Int32 CoverEntries;
+    public Int32 NextRadarAlertFrame;
+    public Quantum.QEnum8<UltimatePhase> UltimatePhase;
+    public FP UltimateRemaining;
+    public FP UltimateTotal;
+    public Quantum.Prototypes.ResourceCostPrototype UltimatePaid;
+    public Quantum.QuantumEntityPrototype UltimateSite;
+    public QBoolean UltimateHalf;
+    public Int32 UltimateUses;
+    public Int32 UltimateStartFrame;
+    public Int32 UltimateReadyFrame;
+    public Int32 UltimateUseFrame;
+    public Int32 UltimateIntercepted;
+    public Int32 UltimateLost;
+    public Int32 UltimateSitesLost;
+    public Int32 UltimateCoreKills;
+    public Int32 CoreLost;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.PlayerStatePrototype prototype);
+    public override Quantum.Prototypes.PlayerStatePrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.PlayerStatePrototype();
+      converter.Convert(this.Faction, out result.Faction);
+      converter.Convert(this.Stock, out result.Stock);
+      converter.Convert(this.PowerCap, out result.PowerCap);
+      converter.Convert(this.PowerRate, out result.PowerRate);
+      converter.Convert(this.Outage, out result.Outage);
+      converter.Convert(this.OutageSeconds, out result.OutageSeconds);
+      converter.Convert(this.OutageCount, out result.OutageCount);
+      converter.Convert(this.PopulationUsed, out result.PopulationUsed);
+      converter.Convert(this.PopulationCap, out result.PopulationCap);
+      converter.Convert(this.Team, out result.Team);
+      converter.Convert(this.ColorIndex, out result.ColorIndex);
+      converter.Convert(this.NextNoteFrame, out result.NextNoteFrame);
+      converter.Convert(this.Active, out result.Active);
+      converter.Convert(this.Defeated, out result.Defeated);
+      converter.Convert(this.IsBot, out result.IsBot);
+      converter.Convert(this.Difficulty, out result.Difficulty);
+      converter.Convert(this.UnitsProduced, out result.UnitsProduced);
+      converter.Convert(this.UnitsLost, out result.UnitsLost);
+      converter.Convert(this.BuildingsLost, out result.BuildingsLost);
+      converter.Convert(this.Earned, out result.Earned);
+      converter.Convert(this.NextBaseAlertFrame, out result.NextBaseAlertFrame);
+      converter.Convert(this.Captures, out result.Captures);
+      converter.Convert(this.CaptureFrames, out result.CaptureFrames);
+      converter.Convert(this.CratesPicked, out result.CratesPicked);
+      converter.Convert(this.HighGroundShots, out result.HighGroundShots);
+      converter.Convert(this.GarrisonEntries, out result.GarrisonEntries);
+      converter.Convert(this.DisconnectedFrame, out result.DisconnectedFrame);
+      converter.Convert(this.Forfeited, out result.Forfeited);
+      converter.Convert(this.UnitsKilled, out result.UnitsKilled);
+      converter.Convert(this.BuildingsDestroyed, out result.BuildingsDestroyed);
+      converter.Convert(this.BaseTier, out result.BaseTier);
+      converter.Convert(this.TierFrames, out result.TierFrames);
+      converter.Convert(this.ResearchDone, out result.ResearchDone);
+      converter.Convert(this.AttackLevels, out result.AttackLevels);
+      converter.Convert(this.ArmorLevels, out result.ArmorLevels);
+      converter.Convert(this.ProducedBySize, out result.ProducedBySize);
+      converter.Convert(this.CoverEntries, out result.CoverEntries);
+      converter.Convert(this.NextRadarAlertFrame, out result.NextRadarAlertFrame);
+      converter.Convert(this.UltimatePhase, out result.UltimatePhase);
+      converter.Convert(this.UltimateRemaining, out result.UltimateRemaining);
+      converter.Convert(this.UltimateTotal, out result.UltimateTotal);
+      converter.Convert(this.UltimatePaid, out result.UltimatePaid);
+      converter.Convert(this.UltimateSite, out result.UltimateSite);
+      converter.Convert(this.UltimateHalf, out result.UltimateHalf);
+      converter.Convert(this.UltimateUses, out result.UltimateUses);
+      converter.Convert(this.UltimateStartFrame, out result.UltimateStartFrame);
+      converter.Convert(this.UltimateReadyFrame, out result.UltimateReadyFrame);
+      converter.Convert(this.UltimateUseFrame, out result.UltimateUseFrame);
+      converter.Convert(this.UltimateIntercepted, out result.UltimateIntercepted);
+      converter.Convert(this.UltimateLost, out result.UltimateLost);
+      converter.Convert(this.UltimateSitesLost, out result.UltimateSitesLost);
+      converter.Convert(this.UltimateCoreKills, out result.UltimateCoreKills);
+      converter.Convert(this.CoreLost, out result.CoreLost);
       ConvertUser(converter, ref result);
       return result;
     }
@@ -196,6 +357,7 @@ namespace Quantum.Prototypes.Unity {
     public FPVector3 PatrolOrigin;
     public Quantum.QuantumEntityPrototype Cover;
     public QBoolean InCover;
+    public Int32 AssaultUntilFrame;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
     public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.UnitPrototype();
@@ -224,6 +386,7 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.PatrolOrigin, out result.PatrolOrigin);
       converter.Convert(this.Cover, out result.Cover);
       converter.Convert(this.InCover, out result.InCover);
+      converter.Convert(this.AssaultUntilFrame, out result.AssaultUntilFrame);
       ConvertUser(converter, ref result);
       return result;
     }

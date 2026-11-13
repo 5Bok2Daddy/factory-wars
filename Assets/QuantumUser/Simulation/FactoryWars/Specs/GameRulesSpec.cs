@@ -60,6 +60,9 @@ namespace Quantum {
     public FP CoverOffset;
     public FP CoverHighReduction;
     public FP RadarAlertSeconds;
+    /// <summary>항목 33: 물가 찾기(상륙 접안, 배의 지원 위치). 고리 간격과 방향 수.</summary>
+    public FP WaterSearchStep;
+    public int WaterSearchDirections;
     public BaseTierSpec[] BaseTiers;
     public bool TierDropsWithHeadquarters = true;
     public string NavMeshName;

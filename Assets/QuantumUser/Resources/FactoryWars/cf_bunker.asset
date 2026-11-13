@@ -74,9 +74,9 @@ MonoBehaviour:
     RawValue: 0
   SplashRadius:
     RawValue: 0
-  CoverSpots: 4
+  CoverSpots: 0
   CoverReduction:
-    RawValue: 32768
+    RawValue: 0
   Heals: 0
   HealRadius:
     RawValue: 0
@@ -86,3 +86,5 @@ MonoBehaviour:
   RevealRadius:
     RawValue: 0
   Defensive: 1
+  NeedsWater: 0
+  GarrisonCapacity: 4

@@ -88,6 +88,11 @@ namespace FactoryWars.View {
       return null;
     }
 
+    static readonly Color StrikeColor = new Color(1f, 0.25f, 0.15f);
+    float _strikeAt;
+    /// <summary>지금 화면에 그리는 미사일 착탄 예고 수(시험용).</summary>
+    public int StrikeMarks { get; private set; }
+
     Transform _stage;
     readonly List<(Vector3 Position, float Until)> _signals = new List<(Vector3, float)>();
     float _signalAt;
@@ -126,6 +131,14 @@ namespace FactoryWars.View {
         var frame = e.Game.Frames.Verified;
         if (e.Next.IsValid && frame != null && frame.Exists(e.Site)) {
           Fx.Pulse(frame.Get<Transform3D>(e.Site).Position.ToUnityVector3(), Palette.Of(frame, e.Next), frame.Get<CaptureSite>(e.Site).Radius.AsFloat);
+        }
+      });
+      // 항목 33: 미사일 착탄·항모 격추는 기존 폭발 효과를 크게 쓴다(새 그래픽 없음).
+      QuantumEvent.Subscribe<EventUltimateNotice>(this, e => {
+        if (e.Stage == UltimateStage.Impact) {
+          Fx.Explosion(e.Position.ToUnityVector3(), 4f);
+        } else if (e.Stage == UltimateStage.Lost) {
+          Fx.Explosion(e.Position.ToUnityVector3(), 2.5f);
         }
       });
       City = new CityView(_stage, frame.FindAsset<MapSpec>(frame.Map.UserAsset)) { Fx = Fx };
@@ -228,6 +241,17 @@ namespace FactoryWars.View {
         }
       }
       World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
+      // 항목 33: 날아오는 전략 미사일의 착탄 지점을 모든 플레이어에게 보인다(폭발 반경만큼 붉은 고리 + 연막 신호).
+      if (Time.time >= _strikeAt) {
+        _strikeAt = Time.time + 0.6f;
+        StrikeMarks = 0;
+        foreach (var pair in frame.GetComponentIterator<MissileStrike>()) {
+          var target = pair.Component.Target.ToUnityVector3();
+          Fx.Pulse(target, StrikeColor, frame.FindAsset(pair.Component.Spec).BlastRadius.AsFloat);
+          Fx.Signal(target);
+          StrikeMarks++;
+        }
+      }
 
       _seen.Clear();
       var units = frame.Filter<Transform3D, Unit>();

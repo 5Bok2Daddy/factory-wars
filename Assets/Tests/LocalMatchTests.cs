@@ -27,7 +27,10 @@ namespace FactoryWars.Tests {
     static QuantumGame Game => QuantumRunner.Default?.Game;
     static Frame Verified => Game.Frames.Verified;
 
-    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null, ResourceCost? stock = null, bool swapFactions = false, int truce = 0, int mirrorFaction = -1, int startingTier = 0) {
+    /// <summary>테스트가 메모리에서 바꾼 데이터 에셋 값을 되돌리는 동작. TearDown이 실행한다(디스크에는 저장하지 않는다).</summary>
+    static readonly List<System.Action> Restores = new List<System.Action>();
+
+    IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null, ResourceCost? stock = null, bool swapFactions = false, int truce = 0, int mirrorFaction = -1, int startingTier = 0, int[] factionLayout = null, string[] factionNames = null) {
       Time.timeScale = TimeScale;
       // 씬 로드 직후, 러너의 Start 전에 규칙을 바꾼다.
       UnityEngine.Events.UnityAction<Scene, LoadSceneMode> onLoaded = (loaded, mode) => {
@@ -58,6 +61,22 @@ namespace FactoryWars.Tests {
           var original = list.Select(p => p.Faction).ToArray();
           for (var i = 0; i < list.Count; i++) {
             list[i].Faction = original[(i + 1) % original.Length];
+          }
+        }
+        if (factionLayout != null) {
+          // 항목 33 측정: 자리별 진영을 직접 정한다(값은 씬의 진영 순서 번호).
+          var original = list.Select(p => p.Faction).ToArray();
+          for (var i = 0; i < list.Count; i++) {
+            list[i].Faction = original[factionLayout[i % factionLayout.Length] % original.Length];
+          }
+        }
+        if (factionNames != null) {
+          // 항목 33: 씬에 없는 진영(시험 전용 진영)을 이름으로 고른다. null 칸은 그대로 둔다.
+          var all = Resources.LoadAll<FactionSpec>("FactoryWars");
+          for (var i = 0; i < list.Count && i < factionNames.Length; i++) {
+            if (factionNames[i] != null) {
+              list[i].Faction = new AssetRef<FactionSpec>(all.First(s => s.name == factionNames[i]).Guid);
+            }
           }
         }
         // 뒤쪽 자리를 AI에게 준다.
@@ -204,6 +223,10 @@ namespace FactoryWars.Tests {
     [TearDown]
     public void TearDown() {
       Time.timeScale = 1f;
+      foreach (var restore in Restores) {
+        restore();
+      }
+      Restores.Clear();
       if (_listener != null) {
         QuantumEvent.UnsubscribeListener(_listener);
         Object.Destroy(_listener);

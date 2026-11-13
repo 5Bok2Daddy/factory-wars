@@ -51,6 +51,13 @@ namespace FactoryWars.View {
       ("cf_radar", "cf_air_defense", 0.9f),
       ("cf_helipad", "cf_airfield", 0.7f),
       ("cf_artillery", "cf_ground_tower", 0.98f),
+      // 항목 33 궁극 전력(그래픽 작업 없음: 기존 절차 모델을 빌리고 칸만 만든다)
+      ("ff_stormnest_carrier", "ff_skyfortress_bomber", 1.8f),
+      ("ff_nest_drone", "ff_hawk_gunship", 0.4f),
+      ("tf_wavecrest_lander", "ff_artillery_ship", 0.9f),
+      ("ff_carrier_yard", "ff_airfield", 0.95f),
+      ("cf_missile_silo", "cf_heavy_works", 0.95f),
+      ("tf_assault_dock", "ff_shipyard", 0.95f),
     };
 
     public static string BorrowedId(string id) {

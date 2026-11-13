@@ -28,8 +28,56 @@ namespace FactoryWars.View {
       // 항목 31 새 유닛(가칭, 실존 무기명과 무관)
       { "ff_scout_buggy", "정찰 버기" }, { "ff_field_support", "야전 정비차" }, { "ff_bulwark_tank", "방벽 중전차" },
       { "cf_scout_bike", "척후 오토바이" }, { "cf_gale_gunship", "돌풍 공격헬기" }, { "cf_fortress_tank", "요새 전차" },
+      // 항목 33 궁극 전력(가칭, 실존 함정·항공기·미사일 이름과 무관)
+      { "ff_stormnest_carrier", "스톰네스트 공중 항모" }, { "ff_nest_drone", "둥지 드론" }, { "tf_wavecrest_lander", "파도머리 상륙정" },
+      { "ff_carrier_yard", "항모 조립창" }, { "cf_missile_silo", "미사일 격납고" }, { "tf_assault_dock", "강습 도크" },
       { "module_piercing_rounds", "관통탄" }, { "module_reactive_armor", "반응장갑" },
     };
+
+    /// <summary>진영 이름.</summary>
+    public static string FactionName(string factionId) => factionId == "free_federation" ? "자유 연방" : factionId == "continental_federation" ? "대륙 연방" : "시험 진영";
+
+    /// <summary>궁극 전력 이름(항목 33).</summary>
+    public static string UltimateName(UltimateKind kind) => kind == UltimateKind.Carrier ? "공중 항모" : kind == UltimateKind.StrategicMissile ? "전략 미사일" : "상륙 강습단";
+
+    /// <summary>궁극 전력을 시작하지 못하는 이유 목록(자물쇠 설명). siteName은 전용 건물 이름.</summary>
+    public static string UltimateLocks(UltimateLock locks, int tier, string siteName) {
+      var parts = new List<string>();
+      if ((locks & UltimateLock.Busy) != 0) {
+        parts.Add("이미 준비했거나 운용 중");
+      }
+      if ((locks & UltimateLock.Cooldown) != 0) {
+        parts.Add("재사용 대기 중");
+      }
+      if ((locks & UltimateLock.Tier) != 0) {
+        parts.Add(TierLock(tier));
+      }
+      if ((locks & UltimateLock.Site) != 0) {
+        parts.Add($"{siteName} 필요");
+      }
+      if ((locks & UltimateLock.Research) != 0) {
+        parts.Add("궁극 전력 연구 필요");
+      }
+      if ((locks & UltimateLock.Resources) != 0) {
+        parts.Add("자원 부족");
+      }
+      return string.Join(" · ", parts);
+    }
+
+    /// <summary>모든 플레이어에게 가는 궁극 전력 알림 문구. who는 "플레이어 2(대륙 연방)" 같은 주체.</summary>
+    public static string UltimateNotice(string who, UltimateStage stage, UltimateKind kind, int value) {
+      var name = UltimateName(kind);
+      switch (stage) {
+        case UltimateStage.Started: return $"{who}: {name} 준비 시작 ({value}초)";
+        case UltimateStage.Half: return $"{who}: {name} 준비 절반 (남은 {value}초)";
+        case UltimateStage.Ready: return kind == UltimateKind.Carrier ? $"{who}: {name} 출격" : $"{who}: {name} 준비 완료";
+        case UltimateStage.Cancelled: return value > 0 ? $"{who}: 전용 건물 파괴로 {name} 취소" : $"{who}: {name} 취소";
+        case UltimateStage.Launched: return kind == UltimateKind.StrategicMissile ? $"{who}: {name} 발사! {value}초 뒤 착탄" : $"{who}: {name} 출발";
+        case UltimateStage.Impact: return value > 0 ? $"{name} 착탄 (요격 {value}단계)" : $"{name} 착탄";
+        case UltimateStage.Landed: return $"{who}: 상륙 부대 {value}기 하선";
+        default: return kind == UltimateKind.Carrier ? $"{who}: {name} 격추" : $"{who}: 상륙정 격침";
+      }
+    }
 
     /// <summary>크기 배지 글자(항목 31).</summary>
     public static string SizeBadge(UnitSize size) => size == UnitSize.Large ? "대" : size == UnitSize.Medium ? "중" : size == UnitSize.Small ? "소" : "공병";
@@ -44,6 +92,9 @@ namespace FactoryWars.View {
     public static string ResearchName(ResearchSpec spec, System.Func<AssetRef<UnitSpec>, string> unitName = null) {
       if (spec.Kind == ResearchKind.Elite) {
         return "정예화: " + (unitName != null ? unitName(spec.EliteUnit) : "소형");
+      }
+      if (spec.Kind == ResearchKind.Ultimate) {
+        return "궁극 전력 연구";
       }
       return $"{SizeWord(spec.Size)} {(spec.Kind == ResearchKind.Attack ? "공격" : "방어")} +{spec.Level}";
     }

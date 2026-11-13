@@ -1,0 +1,125 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e250a048520cb14291c57e62e923d24, type: 3}
+  m_Name: ultimate_cf_missile
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ultimate_cf_missile
+    Guid:
+      Value: 311847809810784497
+  Kind: 1
+  Site:
+    Id:
+      Value: 446269914903541314
+  RequiredTier: 3
+  Research:
+    Id:
+      Value: 292304934711439803
+  Cost:
+    Iron:
+      RawValue: 91750400
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 58982400
+    Power:
+      RawValue: 45875200
+  PrepareSeconds:
+    RawValue: 13107200
+  RearmCost:
+    Iron:
+      RawValue: 45875200
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 29491200
+    Power:
+      RawValue: 22937600
+  RearmSeconds:
+    RawValue: 7864320
+  OwnedLimit: 1
+  CooldownSeconds:
+    RawValue: 3932160
+  RefundFraction:
+    RawValue: 32768
+  CancelRefundFraction:
+    RawValue: 49152
+  Carrier:
+    Id:
+      Value: 0
+  Drone:
+    Id:
+      Value: 0
+  DroneCount: 0
+  DroneRadius:
+    RawValue: 0
+  DroneLaunchSeconds:
+    RawValue: 0
+  DroneBuildSeconds:
+    RawValue: 0
+  DroneCost:
+    Iron:
+      RawValue: 0
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  DroneRecoverSeconds:
+    RawValue: 0
+  DroneDockDistance:
+    RawValue: 0
+  AntiAirTakenMultiplier:
+    RawValue: 65536
+  WarningSeconds:
+    RawValue: 655360
+  BlastRadius:
+    RawValue: 917504
+  BlastDamage:
+    RawValue: 98304000
+  BlastEdgeFraction:
+    RawValue: 22937
+  BlastBuildingMultiplier:
+    RawValue: 104857
+  BlastCityMultiplier:
+    RawValue: 131072
+  FriendlyFire: 1
+  InterceptRadius:
+    RawValue: 1966080
+  InterceptPerAirDefense: 2
+  InterceptRadarBonus: 2
+  InterceptSteps:
+  - Score: 2
+    DamageMultiplier:
+      RawValue: 45875
+  - Score: 4
+    DamageMultiplier:
+      RawValue: 29491
+  - Score: 6
+    DamageMultiplier:
+      RawValue: 16384
+  LandingCraft:
+    Id:
+      Value: 0
+  CraftCount: 0
+  Cargo: []
+  LandedBonusSeconds:
+    RawValue: 0
+  LandedDamageMultiplier:
+    RawValue: 65536
+  SupportSeconds:
+    RawValue: 0
+  LandingReach:
+    RawValue: 0
+  UnloadDistance:
+    RawValue: 0

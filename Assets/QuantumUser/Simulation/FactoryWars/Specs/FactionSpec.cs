@@ -20,5 +20,7 @@ namespace Quantum {
     public AssetRef<UnitSpec>[] StartingUnits;
     /// <summary>연구소에서 할 수 있는 연구(항목 31). 순서가 PlayerState.ResearchDone 비트 번호다(최대 31개).</summary>
     public AssetRef<ResearchSpec>[] Researches;
+    /// <summary>진영 궁극 전력(항목 33). 비어 있으면 없다.</summary>
+    public AssetRef<UltimateSpec> Ultimate;
   }
 }

@@ -300,6 +300,17 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "cf_artillery_ship", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
     };
 
+    // 항목 33 궁극 전력 유닛(가칭, 실존 함정·항공기 이름과 무관). 진영 유닛 목록(FactionSpec.Units)에는 넣지 않고 UltimateSpec에서만 가리킨다.
+    // 비용 칸은 AI의 가치 계산용이다(실제 비용은 UltimateSpec). 인구는 BuildUltimates에서 따로 정한다.
+    static readonly UnitRow[] UltimateUnits = {
+      // 공중 항모 "스톰네스트": 매우 느리고 튼튼하다. 주포는 지상 중거리 범위 포격. 대공 무기에 1.5배로 맞는다(UltimateSpec).
+      new UnitRow { Id = "ff_stormnest_carrier", Size = UnitSize.Large, Air = true, Cost = R(1600, 0, 1000, 600), Build = 210, Health = 6000, Attack = AttackType.Area, Damage = 70, Range = 12, Splash = 3, Interval = 3, Speed = 2.2 },
+      // 함재 드론 "둥지 드론": 소형 공중, 대전차 경무장. 항모 반경 안에서만 싸운다.
+      new UnitRow { Id = "ff_nest_drone", Size = UnitSize.Small, Air = true, Cost = R(60, 0, 20, 20), Build = 12, Health = 160, Attack = AttackType.AntiArmor, Damage = 14, Range = 6, Interval = 1, Speed = 9 },
+      // 상륙정 "파도머리": 탑재 부대를 해안에 내리고 포격 지원한다(차기 진영용, 시험 전용 진영에만 연결).
+      new UnitRow { Id = "tf_wavecrest_lander", Size = UnitSize.Medium, Naval = true, Cost = R(300, 0, 150, 100), Build = 30, Health = 900, Attack = AttackType.Area, Damage = 50, Range = 14, Splash = 3, Interval = 4, Speed = 5 },
+    };
+
     static UnitSpec BuildUnit(UnitRow row) {
       var spec = Asset<UnitSpec>(row.Id);
       spec.Size = row.Size;
@@ -349,7 +360,7 @@ namespace FactoryWars.EditorTools {
     }
 
     static FactionSpec BuildFaction(string factionId, string prefix, Dictionary<string, UnitSpec> units, double ranged, double smallBuild, double populationCap, string[] startingUnits, AssetRef<ModuleSpec>[] modules,
-        AssetRef<ResearchSpec>[] researches) {
+        AssetRef<ResearchSpec>[] researches, string siteId, int[] sitePrerequisites) {
       UnitSpec U(string id) => units[$"{prefix}_{id}"];
       var ids = units.Keys.Where(k => k.StartsWith(prefix + "_")).ToArray();
       var engineer = units[$"{prefix}_engineer"];
@@ -379,9 +390,11 @@ namespace FactoryWars.EditorTools {
         BuildBuilding($"{prefix}_radar", R(200, 0, 60, 120), 25, 700, 0, 0),
         BuildBuilding($"{prefix}_helipad", R(250, 0, 60, 150), 25, 800, 0, 0, At("airfield").Where(u => u.IsAir && u.Size == UnitSize.Medium).ToArray()),
         BuildBuilding($"{prefix}_artillery", R(350, 0, 150, 150), 35, 1200, 0, 0),
+        // 항목 33 궁극 전력 전용 건물(20): 항모 조립창 / 미사일 격납고. 3단계, 준비·보유 중에만 전기 4/초.
+        BuildBuilding(siteId, R(600, 0, 300, 300), 45, 2200, 0, 0),
       };
       // 항목 31 기지 단계: 군수공장·비행장·중공업 기지·방공포대·조선소는 2단계. 항목 32: 의무대·정비소·레이더·헬기장 2단계, 포병 진지 3단계.
-      var tiers = new Dictionary<int, int> { { 6, 2 }, { 7, 2 }, { 8, 2 }, { 11, 2 }, { 12, 2 }, { 15, 2 }, { 16, 2 }, { 17, 2 }, { 18, 2 }, { 19, 3 } };
+      var tiers = new Dictionary<int, int> { { 6, 2 }, { 7, 2 }, { 8, 2 }, { 11, 2 }, { 12, 2 }, { 15, 2 }, { 16, 2 }, { 17, 2 }, { 18, 2 }, { 19, 3 }, { 20, 3 } };
       for (var i = 0; i < buildings.Length; i++) {
         buildings[i].RequiredTier = tiers.TryGetValue(i, out var tier) ? tier : 1;
         buildings[i].Defensive = i == 9 || i == 11 || i == 13 || i == 14;
@@ -394,13 +407,15 @@ namespace FactoryWars.EditorTools {
         buildings[i].HealPerSecond = 0;
         buildings[i].HealCount = 0;
         buildings[i].RevealRadius = 0;
+        buildings[i].NeedsWater = false;
+        buildings[i].GarrisonCapacity = 0;
       }
-      // 모래주머니: 작고 낮은 엄폐(25%) 4칸. 벙커: 높은 엄폐(50%) 4칸, 튼튼하다.
+      // 모래주머니: 작고 낮은 엄폐(25%) 4칸.
       buildings[13].FootprintRadius = 2;
       buildings[13].CoverSpots = 4;
       buildings[13].CoverReduction = N(0.25);
-      buildings[14].CoverSpots = 4;
-      buildings[14].CoverReduction = N(0.5);
+      // 벙커(항목 33): 보병 분대 4개가 실제로 들어가 안에서 쏜다. 안에서는 맞지 않고 벙커가 대신 맞는다. 둘레 엄폐점은 없앴다(항목 32의 임시 구현).
+      buildings[14].GarrisonCapacity = 4;
       buildings[15].Heals = HealTarget.Infantry;
       buildings[15].HealRadius = 10;
       buildings[15].HealPerSecond = 6;
@@ -434,6 +449,7 @@ namespace FactoryWars.EditorTools {
       Requires(17, 1);
       Requires(18, 6, 1);
       Requires(19, 8);
+      Requires(20, sitePrerequisites);
       void Power(int building, int output, int storage, double upkeep, UpkeepMode mode) {
         buildings[building].PowerOutput = output;
         buildings[building].PowerStorage = storage;
@@ -457,6 +473,7 @@ namespace FactoryWars.EditorTools {
       Power(17, 0, 0, 1, UpkeepMode.Always);
       Power(18, 0, 0, 1.5, UpkeepMode.WhileProducing);
       Power(19, 0, 0, 1, UpkeepMode.Always);
+      Power(20, 0, 0, 4, UpkeepMode.WhileUltimate);
       for (var i = 0; i < buildings.Length; i++) {
         buildings[i].Role = (BuildingRole)i;
       }
@@ -539,6 +556,142 @@ namespace FactoryWars.EditorTools {
       return spec;
     }
 
+    /// <summary>
+    /// 항목 33 궁극 전력 데이터. 비용은 대형 유닛 4~5기 수준에 강철 비중을 크게, 준비 3분 20초~3분 30초.
+    /// 자유 연방: 공중 항모. 대륙 연방: 전략 미사일. 시험 전용 진영(차기 진영 예약): 상륙 강습단.
+    /// </summary>
+    static void BuildUltimates(Dictionary<string, UnitSpec> units, FactionSpec free, FactionSpec continental, AssetRef<ModuleSpec>[] modules,
+        ResearchSpec freeResearch, ResearchSpec continentalResearch, ResearchSpec assaultResearch) {
+      var extra = UltimateUnits.ToDictionary(row => row.Id, BuildUnit);
+      // 항모 인구 8, 드론·상륙정은 인구를 쓰지 않는다(항모·강습단에 딸린 것).
+      extra["ff_stormnest_carrier"].Population = 8;
+      extra["ff_nest_drone"].Population = 0;
+      extra["tf_wavecrest_lander"].Population = 0;
+      foreach (var unit in extra.Values) {
+        unit.ModuleSlots = 0;
+        EditorUtility.SetDirty(unit);
+      }
+      BuildingSpec Site(FactionSpec faction) => faction.Buildings.Select(AssetOf).First(b => b.Role == BuildingRole.UltimateSite);
+
+      var carrier = Asset<UltimateSpec>("ultimate_ff_carrier");
+      carrier.Kind = UltimateKind.Carrier;
+      carrier.Site = Ref(Site(free));
+      carrier.RequiredTier = 3;
+      carrier.Research = Ref(freeResearch);
+      carrier.Cost = R(1600, 0, 1000, 600);
+      carrier.PrepareSeconds = 210;
+      carrier.RearmCost = R(1600, 0, 1000, 600);
+      carrier.RearmSeconds = 210;
+      carrier.OwnedLimit = 1;
+      carrier.CooldownSeconds = 120;
+      carrier.RefundFraction = N(0.5);
+      carrier.CancelRefundFraction = N(0.75);
+      carrier.Carrier = Ref(extra["ff_stormnest_carrier"]);
+      carrier.Drone = Ref(extra["ff_nest_drone"]);
+      carrier.DroneCount = 8;
+      carrier.DroneRadius = 16;
+      carrier.DroneLaunchSeconds = N(1.5);
+      carrier.DroneBuildSeconds = 12;
+      carrier.DroneCost = R(60, 0, 20, 20);
+      carrier.DroneRecoverSeconds = 8;
+      carrier.DroneDockDistance = 2;
+      carrier.AntiAirTakenMultiplier = N(1.5);
+      EditorUtility.SetDirty(carrier);
+      free.Ultimate = Ref(carrier);
+      EditorUtility.SetDirty(free);
+
+      var missile = Asset<UltimateSpec>("ultimate_cf_missile");
+      missile.Kind = UltimateKind.StrategicMissile;
+      missile.Site = Ref(Site(continental));
+      missile.RequiredTier = 3;
+      missile.Research = Ref(continentalResearch);
+      missile.Cost = R(1400, 0, 900, 700);
+      missile.PrepareSeconds = 200;
+      missile.RearmCost = R(700, 0, 450, 350);
+      missile.RearmSeconds = 120;
+      missile.OwnedLimit = 1;
+      missile.CooldownSeconds = 60;
+      missile.RefundFraction = N(0.5);
+      missile.CancelRefundFraction = N(0.75);
+      missile.WarningSeconds = 10;
+      missile.BlastRadius = 14;
+      missile.BlastDamage = 1500;
+      missile.BlastEdgeFraction = N(0.35);
+      missile.BlastBuildingMultiplier = N(1.6);
+      missile.BlastCityMultiplier = 2;
+      missile.FriendlyFire = true;
+      // 요격: 착탄 지점 30m 안의 방공포대 하나당 2점, 방공포대가 있을 때 레이더 기지가 있으면 +2점. 2점 70%, 4점 45%, 6점 25% 피해.
+      missile.InterceptRadius = 30;
+      missile.InterceptPerAirDefense = 2;
+      missile.InterceptRadarBonus = 2;
+      missile.InterceptSteps = new[] {
+        new InterceptStep { Score = 2, DamageMultiplier = N(0.7) },
+        new InterceptStep { Score = 4, DamageMultiplier = N(0.45) },
+        new InterceptStep { Score = 6, DamageMultiplier = N(0.25) },
+      };
+      EditorUtility.SetDirty(missile);
+      continental.Ultimate = Ref(missile);
+      EditorUtility.SetDirty(continental);
+
+      // 시험 전용 진영(차기 진영 예약): 자유 연방 데이터를 빌리고 전용 건물·연구·궁극 전력만 상륙 강습으로 바꾼다. 메뉴·AI 대전에는 나오지 않는다.
+      var dock = BuildBuilding("tf_assault_dock", R(600, 0, 300, 300), 45, 2200, 0, 0);
+      var freeSite = Site(free);
+      dock.Role = BuildingRole.UltimateSite;
+      dock.RequiredTier = 3;
+      dock.NeedsWater = true;
+      dock.Prerequisites = new[] { free.Buildings.First(b => AssetOf(b).Role == BuildingRole.Shipyard), free.Buildings.First(b => AssetOf(b).Role == BuildingRole.VehicleFactory) };
+      dock.PowerUpkeep = freeSite.PowerUpkeep;
+      dock.Upkeep = UpkeepMode.WhileUltimate;
+      EditorUtility.SetDirty(dock);
+
+      var assault = Asset<UltimateSpec>("ultimate_tf_assault");
+      assault.Kind = UltimateKind.AmphibiousAssault;
+      assault.Site = Ref(dock);
+      assault.RequiredTier = 3;
+      assault.Research = Ref(assaultResearch);
+      assault.Cost = R(1700, 0, 1000, 500);
+      assault.PrepareSeconds = 200;
+      assault.RearmCost = R(1000, 0, 600, 300);
+      assault.RearmSeconds = 150;
+      assault.OwnedLimit = 1;
+      assault.CooldownSeconds = 60;
+      assault.RefundFraction = N(0.5);
+      assault.CancelRefundFraction = N(0.75);
+      assault.LandingCraft = Ref(extra["tf_wavecrest_lander"]);
+      assault.CraftCount = 2;
+      // 탑재 부대: 중형 기갑 4 + 소형 보병 4(상륙정 두 척에 번갈아 싣는다).
+      var tank = Ref(units["ff_eagle_tank"]);
+      var squad = Ref(units["ff_ranger_squad"]);
+      assault.Cargo = new[] { tank, tank, squad, squad, tank, tank, squad, squad };
+      assault.LandedBonusSeconds = 30;
+      assault.LandedDamageMultiplier = N(1.25);
+      assault.SupportSeconds = 25;
+      assault.LandingReach = 20;
+      assault.UnloadDistance = 6;
+      EditorUtility.SetDirty(assault);
+
+      var test = Asset<FactionSpec>("faction_test_assault");
+      test.FactionId = "test_assault";
+      test.RangedRangeMultiplier = free.RangedRangeMultiplier;
+      test.SmallBuildTimeMultiplier = free.SmallBuildTimeMultiplier;
+      test.PopulationCapMultiplier = free.PopulationCapMultiplier;
+      test.Headquarters = free.Headquarters;
+      test.Engineer = free.Engineer;
+      test.AiSkipRoles = free.AiSkipRoles;
+      test.AiEarlyRoles = free.AiEarlyRoles;
+      test.Buildings = free.Buildings.Select(b => b == Ref(freeSite) ? Ref(dock) : b).ToArray();
+      test.Units = free.Units;
+      test.Modules = modules;
+      test.StartingUnits = free.StartingUnits;
+      test.Researches = free.Researches.Select(r => r == Ref(freeResearch) ? Ref(assaultResearch) : r).ToArray();
+      test.Ultimate = Ref(assault);
+      EditorUtility.SetDirty(test);
+    }
+
+    static BuildingSpec AssetOf(AssetRef<BuildingSpec> reference) {
+      return AssetDatabase.FindAssets("t:BuildingSpec", new[] { DataRoot }).Select(guid => AssetDatabase.LoadAssetAtPath<BuildingSpec>(AssetDatabase.GUIDToAssetPath(guid))).First(asset => Ref(asset) == reference);
+    }
+
     /// <summary>정예화: 체력 +30%, 사거리 +1, 피해 +10%.</summary>
     static void Elite(ResearchSpec spec) {
       spec.EliteHealthMultiplier = N(1.3);
@@ -584,6 +737,26 @@ namespace FactoryWars.EditorTools {
           P(ResearchKind.Attack, UnitSize.Small, 2), P(ResearchKind.Armor, UnitSize.Small, 2), P(ResearchKind.Attack, UnitSize.Large, 2), P(ResearchKind.Armor, UnitSize.Large, 2),
         }
         : new[] { P(ResearchKind.Attack), P(ResearchKind.Attack, UnitSize.Medium), P(ResearchKind.Elite) };
+      // 항목 33 궁극 전력: 보통만 쓴다(쉬움은 준비하지 않고, 상대 알림에도 반응하지 않는다). 3단계 뒤 11분부터 전용 건물·연구·준비.
+      ai.UseUltimate = normal;
+      ai.UltimateStartSeconds = 660;
+      ai.UltimateSafeRadius = 40;
+      ai.UltimateCheckSeconds = 5;
+      ai.UltimateGuard = normal ? 6 : 0;
+      ai.UltimateGuardRadius = 12;
+      ai.CounterUltimate = normal;
+      ai.ThreatAntiAir = 6;
+      ai.ThreatAirDefense = 2;
+      ai.EvacuateBlast = normal;
+      ai.MissileMinValue = 2500;
+      ai.UltimateHoldSeconds = 45;
+      // 항목 33 소탕·후반: 사령부 없이 핵심 건물 2채 이하인 적을 먼저 끝낸다. 생산이 20초 넘게 멈췄으면 10기만 있어도 나간다.
+      ai.FinishCoreBuildings = 2;
+      ai.FinishDistanceFactor = N(0.1);
+      ai.StalledWaveSize = normal ? 10 : 0;
+      ai.StalledSeconds = 20;
+      ai.LastStand = true;
+      ai.BunkerSquads = normal ? 2 : 1;
       ai.SizeShares = normal ? new[] { N(0.35), N(0.45), N(0.2) } : new[] { N(0.5), N(0.4), N(0.1) };
       ai.SizeShareMargin = normal ? N(0.15) : N(0.2);
       ai.ThinkSeconds = N(think);
@@ -693,8 +866,17 @@ namespace FactoryWars.EditorTools {
       var cfElite = Research("research_elite_cf", ResearchKind.Elite, UnitSize.Small, 1, R(200, 100, 100, 50), 60, 2);
       cfElite.EliteUnit = Ref(units["cf_militia"]);
       Elite(cfElite);
-      BuildFaction("free_federation", "ff", units, 1.1, 1, 1, new[] { "ranger_squad", "ranger_squad", "eagle_tank" }, modules, shared.Append(Ref(ffElite)).ToArray());
-      BuildFaction("continental_federation", "cf", units, 1, 0.75, 1.2, new[] { "militia", "militia", "dragonscale_tank" }, modules, shared.Append(Ref(cfElite)).ToArray());
+      // 항목 33 궁극 전력 연구(진영마다 하나, 3단계). 순서: 공통 12 + 정예화 + 궁극.
+      ResearchSpec UltimateResearch(string id) => Research(id, ResearchKind.Ultimate, UnitSize.Large, 1, R(400, 0, 250, 200), 90, 3);
+      var ffUltimate = UltimateResearch("research_ultimate_ff");
+      var cfUltimate = UltimateResearch("research_ultimate_cf");
+      var tfUltimate = UltimateResearch("research_ultimate_tf");
+      // 전용 건물 선행: 항모 조립창 = 비행장(7) + 중공업 기지(8), 미사일 격납고 = 중공업 기지(8) + 레이더 기지(17).
+      var free = BuildFaction("free_federation", "ff", units, 1.1, 1, 1, new[] { "ranger_squad", "ranger_squad", "eagle_tank" }, modules, shared.Append(Ref(ffElite)).Append(Ref(ffUltimate)).ToArray(),
+        "ff_carrier_yard", new[] { 7, 8 });
+      var continental = BuildFaction("continental_federation", "cf", units, 1, 0.75, 1.2, new[] { "militia", "militia", "dragonscale_tank" }, modules, shared.Append(Ref(cfElite)).Append(Ref(cfUltimate)).ToArray(),
+        "cf_missile_silo", new[] { 8, 17 });
+      BuildUltimates(units, free, continental, modules, ffUltimate, cfUltimate, tfUltimate);
 
       var rules = Asset<GameRulesSpec>("game_rules");
       rules.NavMeshName = "NavMesh";
@@ -769,6 +951,9 @@ namespace FactoryWars.EditorTools {
       rules.CoverOffset = N(1.2);
       rules.CoverHighReduction = N(0.5);
       rules.RadarAlertSeconds = 30;
+      // 항목 33: 물가 찾기(상륙 접안, 배의 지원 위치)는 2m 고리, 16방향.
+      rules.WaterSearchStep = 2;
+      rules.WaterSearchDirections = 16;
       // 항목 31 크기 규칙: 소형 인구 0.5~1, 중형 2~3, 대형 5~6·동시 4대. 공격·방어 연구는 단계마다 10%.
       rules.SizeRules = new[] {
         new SizeRuleSpec { Size = UnitSize.Small, MinPopulation = N(0.5), MaxPopulation = 1, AttackPerLevel = N(0.1), ArmorPerLevel = N(0.1) },

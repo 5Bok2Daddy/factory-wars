@@ -32,7 +32,7 @@ namespace FactoryWars.View {
     public bool IsPlacing => Placing != default;
 
     /// <summary>다음 땅 탭의 뜻(항목 30). 버튼으로 켜고, 탭 한 번에 꺼진다.</summary>
-    public enum TapMode { None, AttackMove, Patrol, Rally }
+    public enum TapMode { None, AttackMove, Patrol, Rally, Ultimate }
 
     public TapMode Mode;
 
@@ -128,6 +128,9 @@ namespace FactoryWars.View {
             return chosen.Count == 0 ? null : new PatrolUnitsCommand { Units = chosen.ToArray(), Target = ToFP(world) };
           case TapMode.Rally:
             return Selection.Building == EntityRef.None ? null : new RallyCommand { Building = Selection.Building, Position = ToFP(world) };
+          case TapMode.Ultimate:
+            // 항목 33: 궁극 전력 목표 지정(미사일 착탄 지점, 상륙 해안).
+            return new LaunchUltimateCommand { Target = ToFP(world) };
         }
       }
 
@@ -155,6 +158,13 @@ namespace FactoryWars.View {
         var needsWork = state.ConstructionRemaining > FP._0 || state.Health < frame.FindAsset(state.Spec).MaxHealth;
         if (builders.Count > 0 && needsWork) {
           return new RepairCommand { Units = builders.ToArray(), Target = building };
+        }
+        // 항목 33: 보병을 고른 채 자기 벙커를 누르면 들어간다.
+        if (state.ConstructionRemaining <= FP._0 && frame.FindAsset(state.Spec).GarrisonCapacity > 0) {
+          var squads = SelectedUnits(frame).Where(e => CitySystem.IsInfantry(frame.FindAsset(frame.Get<Unit>(e).Spec))).ToList();
+          if (squads.Count > 0) {
+            return new EnterGarrisonCommand { Units = squads.ToArray(), Building = building };
+          }
         }
         Selection.SelectBuilding(building);
         return null;
@@ -237,7 +247,9 @@ namespace FactoryWars.View {
     public int SelectArmy(Frame frame, PlayerRef player) {
       Selection.Clear();
       foreach (var pair in frame.GetComponentIterator<Unit>()) {
+        // 항목 33: 스스로 움직이는 드론·상륙정은 뺀다.
         if (pair.Component.Owner == player && frame.Has<Worker>(pair.Entity) == false && pair.Component.Garrison == EntityRef.None
+            && UltimateSystem.IsAutonomous(frame, pair.Entity) == false
             && frame.FindAsset(pair.Component.Spec).Attack != AttackType.None && Selection.Units.Count < MoveUnitsCommand.MaxUnits) {
           Selection.Units.Add(pair.Entity);
         }

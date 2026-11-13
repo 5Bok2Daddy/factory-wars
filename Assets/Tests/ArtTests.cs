@@ -89,7 +89,8 @@ namespace FactoryWars.Tests {
     public void Art_EveryBuildingSpecHasAModelInsideItsFootprint() {
       var specs = Resources.LoadAll<Quantum.BuildingSpec>("FactoryWars");
       // 항목 32: 진영당 20개(새 7종은 기존 모델을 빌려 크기만 바꾼다, ViewCatalog.TemporaryModels).
-      Assert.AreEqual(40, specs.Length, "진영당 20개");
+      // 항목 33: 궁극 전력 전용 건물 3개(항모 조립창·미사일 격납고·강습 도크)도 모델을 빌린다.
+      Assert.AreEqual(43, specs.Length, "진영당 20개 + 전용 건물 3개");
       var problems = new List<string>();
       foreach (var spec in specs) {
         var id = spec.name;

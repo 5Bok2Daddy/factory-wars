@@ -3,7 +3,7 @@ namespace Quantum.FactoryWars {
 
   /// <summary>규칙 기반 AI. 사람과 같은 함수로 행동해 비용과 제한을 그대로 받는다.</summary>
   public unsafe class BotSystem : SystemMainThread, ISignalOnPlayerDisconnected, ISignalOnPlayerConnected {
-    const int RoleCount = 20;
+    const int RoleCount = 21;
     const int MaxOrder = MoveUnitsCommand.MaxUnits;
 
     /// <summary>
@@ -116,8 +116,14 @@ namespace Quantum.FactoryWars {
       var idleAlliance = HasIdleAlliance(f, player);
       ManageProcessors(f, player, ProcessorsOff(ai, state->Stock, breakCost, idleAlliance));
       // 싸울 상대가 없어진 동맹을 끊을 철을 먼저 모은다. 안 그러면 서로 공격하지 못한 채 경기가 끝나지 않는다.
+      if (ai.EvacuateBlast) {
+        Evacuate(f, player);
+      }
       if (state->Stock.Iron >= breakCost || idleAlliance == false) {
-        var reserve = building < ai.ConcurrentBuilds ? BuildNext(f, player, state, bot, ai, faction, counts) : default;
+        // 항목 33: 궁극 전력(전용 건물·연구·준비·발동). 건물을 지었으면 이번에는 건설 순서를 쉰다.
+        var ultimate = ManageUltimate(f, player, state, bot, ai, faction, counts, building < ai.ConcurrentBuilds, out var built);
+        var reserve = building < ai.ConcurrentBuilds && built == false ? BuildNext(f, player, state, bot, ai, faction, counts) : default;
+        reserve = reserve + ultimate;
         // 항목 31: 단계 업그레이드(때가 되면 비용을 남겨 둔다)와 연구.
         reserve = reserve + ManageTech(f, player, state, ai);
         // 철이 바닥나 가면 나중에 동맹을 끊을 돈이 없어진다. 동맹이 있는 동안 파기 비용을 쓰지 않는다.
@@ -125,6 +131,10 @@ namespace Quantum.FactoryWars {
           reserve.Iron += breakCost;
         }
         Produce(f, player, state, ai, faction, engineers, reserve);
+      }
+      // 항목 33: 자기 벙커는 휴전 중에도 채운다(분대 간격마다 한 번).
+      if (ai.BunkerSquads > 0 && f.Number % FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds) < FactoryWarsUtil.SecondsToFrames(f, ai.ThinkSeconds)) {
+        FillBunkers(f, player, ai);
       }
       Attack(f, player, bot, ai);
       CollectCrates(f, player, bot);
@@ -176,7 +186,7 @@ namespace Quantum.FactoryWars {
           var pick = ai.ResearchOrder[p];
           for (var i = 0; i < list.Length; i++) {
             var spec = f.FindAsset(list[i]);
-            if (spec.Kind != pick.Kind || (pick.Kind != ResearchKind.Elite && (spec.Size != pick.Size || spec.Level != pick.Level))) {
+            if (spec.Kind != pick.Kind || (pick.Kind != ResearchKind.Elite && pick.Kind != ResearchKind.Ultimate && (spec.Size != pick.Size || spec.Level != pick.Level))) {
               continue;
             }
             if (TechSystem.CanResearch(f, player, i, out _) && CanSpend(state->Stock, spec.Cost, researchReserve)) {
@@ -281,7 +291,8 @@ namespace Quantum.FactoryWars {
       workers = f.Filter<Unit, Worker>();
       var runner = f.Global->Bots.GetPointer(player)->CrateRunner;
       while (workers.NextUnsafe(out var entity, out var unit, out var worker)) {
-        if (unit->Owner != player || worker->Task != WorkerTask.Idle || entity == runner) {
+        // 항목 33: 미사일을 피해 나가는 중인 공병(ReservedUntilFrame)은 다시 일을 주지 않는다.
+        if (unit->Owner != player || worker->Task != WorkerTask.Idle || entity == runner || f.Number < unit->ReservedUntilFrame) {
           continue;
         }
         if (needsBuilder) {
@@ -420,6 +431,13 @@ namespace Quantum.FactoryWars {
       if (techFirst) {
         role = techRole;
         hasRole = true;
+      }
+
+      // 항목 33: 상대가 전략 미사일을 준비하면 본진에 방공포대(요격)를 먼저 늘린다.
+      if (CounterBuild(f, player, bot, ai, faction, counts, out var counterRole)) {
+        role = counterRole;
+        hasRole = true;
+        techFirst = true;
       }
 
       // 계획된 확장: 앞마당은 모자란 자원 쪽부터, 공유 확장과 중앙은 중반 이후에 잡는다.
@@ -713,6 +731,10 @@ namespace Quantum.FactoryWars {
 
     static void Produce(Frame f, PlayerRef player, PlayerState* state, AiSpec ai, FactionSpec faction, int engineers, ResourceCost reserve) {
       var room = state->PopulationCap - state->PopulationUsed - ProductionSystem.QueuedPopulation(f, player);
+      // 항목 33: 상대가 공중 항모를 준비하거나 띄웠으면 대공 유닛을 ThreatAntiAir기까지 먼저 뽑는다.
+      var bot = f.Global->Bots.GetPointer(player);
+      var needAntiAir = ai.CounterUltimate && Threat(f, player, bot, out var threatKind, out _) && threatKind == UltimateKind.Carrier
+        ? ai.ThreatAntiAir - CountAntiAir(f, player) : 0;
       var buildings = f.Filter<Building>();
       while (buildings.NextUnsafe(out var entity, out var building)) {
         if (building->Owner != player || building->ConstructionRemaining > FP._0) {
@@ -743,11 +765,20 @@ namespace Quantum.FactoryWars {
           continue;
         }
         var unitRef = ai.CounterPicks ? CounterPick(f, player, ai, spec.Producible, allowed) : RandomPick(f, ai, spec.Producible, allowed);
+        if (needAntiAir > 0) {
+          for (var i = 0; i < spec.Producible.Length; i++) {
+            if ((allowed & (1 << i)) != 0 && f.FindAsset(spec.Producible[i]).Attack == AttackType.AntiAir) {
+              unitRef = spec.Producible[i];
+              break;
+            }
+          }
+        }
         var unit = f.FindAsset(unitRef);
         var population = unit.Population * unit.SpawnCount;
         if (room >= population && CanSpend(state->Stock, unit.Cost, reserve)) {
           ProductionSystem.Enqueue(f, player, entity, unitRef, 1);
           room -= population;
+          needAntiAir -= unit.Attack == AttackType.AntiAir ? unit.SpawnCount : 0;
         }
       }
     }
@@ -966,21 +997,47 @@ namespace Quantum.FactoryWars {
       return found;
     }
 
-    public static bool FindEnemyTarget(Frame f, PlayerRef player, FPVector3 home, out FPVector3 target) => FindEnemyTarget(f, player, home, out target, out _);
+    public static bool FindEnemyTarget(Frame f, PlayerRef player, FPVector3 home, out FPVector3 target) => FindEnemyTarget(f, player, home, null, out target, out _);
 
-    static bool FindEnemyTarget(Frame f, PlayerRef player, FPVector3 home, out FPVector3 target, out PlayerRef owner) {
+    /// <summary>
+    /// 가장 가까운 적 건물(핵심 건물이 아니면 4배 멀게 친다). 항목 33 소탕: 사령부가 없고 핵심 건물이 FinishCoreBuildings 이하로 남은 적의
+    /// 핵심 건물은 거리 제곱에 FinishDistanceFactor를 곱해 먼저 끝낸다(재기 못 하는 적이 끝까지 남아 시간 초과가 나던 문제).
+    /// </summary>
+    static bool FindEnemyTarget(Frame f, PlayerRef player, FPVector3 home, AiSpec ai, out FPVector3 target, out PlayerRef owner) {
       var best = FP.MaxValue;
       var found = false;
       target = default;
       owner = default;
+      var finish = ai != null && ai.FinishCoreBuildings > 0;
+      var cores = stackalloc int[Constants.MAX_PLAYERS];
+      var headquarters = stackalloc int[Constants.MAX_PLAYERS];
+      for (var i = 0; i < Constants.MAX_PLAYERS; i++) {
+        cores[i] = 0;
+        headquarters[i] = 0;
+      }
+      if (finish) {
+        var all = f.Filter<Building>();
+        while (all.NextUnsafe(out _, out var counted)) {
+          var index = (int)counted->Owner;
+          if (index < 0 || index >= Constants.MAX_PLAYERS) {
+            continue;
+          }
+          var countedSpec = f.FindAsset(counted->Spec);
+          cores[index] += countedSpec.IsCoreBuilding ? 1 : 0;
+          headquarters[index] += countedSpec.Role == BuildingRole.Headquarters ? 1 : 0;
+        }
+      }
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out _, out var transform, out var building)) {
         if (DiplomacySystem.CanAttack(f, player, building->Owner) == false) {
           continue;
         }
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, home);
-        if (f.FindAsset(building->Spec).IsCoreBuilding == false) {
+        var core = f.FindAsset(building->Spec).IsCoreBuilding;
+        if (core == false) {
           distance *= 4;
+        } else if (finish && headquarters[(int)building->Owner] == 0 && cores[(int)building->Owner] <= ai.FinishCoreBuildings) {
+          distance *= ai.FinishDistanceFactor;
         }
         if (distance < best) {
           best = distance;
@@ -1044,11 +1101,348 @@ namespace Quantum.FactoryWars {
 
     static void OrderArmy(Frame f, PlayerRef player, FPVector3 target) {
       var ordered = 0;
+      var waterName = FactoryWarsUtil.Rules(f).WaterNavMeshName;
       var units = f.Filter<Unit>();
       while (ordered < MaxOrder && units.NextUnsafe(out var entity, out var unit)) {
-        if (unit->Owner == player && f.FindAsset(unit->Spec).Attack != AttackType.None && f.Number >= unit->ReservedUntilFrame && unit->Garrison == EntityRef.None) {
-          MovementSystem.Order(f, entity, unit, UnitOrder.AttackMove, target);
-          ordered++;
+        var spec = f.FindAsset(unit->Spec);
+        if (unit->Owner != player || spec.Attack == AttackType.None || f.Number < unit->ReservedUntilFrame || unit->Garrison != EntityRef.None) {
+          continue;
+        }
+        if (spec.IsNaval) {
+          // 항목 33: 배는 뭍의 목표로 공격 이동하지 않는다. 목표가 사거리에 드는 물가가 있을 때만 그 물 위로 가고, 없으면 제자리를 지킨다.
+          if (FactoryWarsUtil.FindNavPointNear(f, waterName, target, spec.Range, out var water)) {
+            MovementSystem.Order(f, entity, unit, UnitOrder.AttackMove, water);
+          }
+          continue;
+        }
+        MovementSystem.Order(f, entity, unit, UnitOrder.AttackMove, target);
+        ordered++;
+      }
+    }
+
+    /// <summary>모든 생산 대기열이 비어 있으면 true(생산 건물이 없어도 true).</summary>
+    static bool ProductionIdle(Frame f, PlayerRef player) {
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var building)) {
+        if (building->Owner == player && building->QueueCount > 0) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    /// <summary>사령부(짓는 중 포함)도 공병도 없으면 다시 일어설 수 없다.</summary>
+    static bool CannotRecover(Frame f, PlayerRef player) {
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var building)) {
+        if (building->Owner == player && f.FindAsset(building->Spec).Role == BuildingRole.Headquarters) {
+          return false;
+        }
+      }
+      var workers = f.Filter<Unit, Worker>();
+      while (workers.NextUnsafe(out _, out var unit, out _)) {
+        if (unit->Owner == player) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // ---------- 항목 33 궁극 전력 ----------
+
+    /// <summary>누가 궁극 전력 준비를 시작했다(UltimateSystem이 부른다). 그 플레이어를 공격할 수 있는 AI는 전용 건물을 기억해 두고 대응한다.</summary>
+    public static void OnUltimateStarted(Frame f, PlayerRef owner, EntityRef site) {
+      for (var i = 0; i < f.PlayerCount; i++) {
+        var state = f.Global->Players.GetPointer(i);
+        if (i == (int)owner || state->Active == false || state->IsBot == false || state->Defeated
+            || Spec(f, state->Difficulty).CounterUltimate == false || DiplomacySystem.CanAttack(f, i, owner) == false) {
+          continue;
+        }
+        var bot = f.Global->Bots.GetPointer(i);
+        bot->ThreatFrame = f.Number;
+        bot->ThreatSite = site;
+        bot->ThreatOwner = owner;
+      }
+    }
+
+    /// <summary>
+    /// 지금 대응할 상대 궁극 전력이 있으면 true. kind는 그 종류, siteAlive는 준비·대기 중인 전용 건물이 아직 서 있는지(공격 목표).
+    /// 상대가 졌거나, 동맹이 됐거나, 궁극 전력을 다 쓰고 재사용 대기에 들어갔으면 위협이 끝난 것으로 본다.
+    /// </summary>
+    static bool Threat(Frame f, PlayerRef player, BotState* bot, out UltimateKind kind, out bool siteAlive) {
+      kind = default;
+      siteAlive = false;
+      if (bot->ThreatFrame == 0) {
+        return false;
+      }
+      var owner = FactoryWarsUtil.Player(f, bot->ThreatOwner);
+      var spec = UltimateSystem.SpecOf(f, bot->ThreatOwner);
+      if (owner == null || spec == null || owner->Defeated || DiplomacySystem.CanAttack(f, player, bot->ThreatOwner) == false
+          || owner->UltimatePhase == UltimatePhase.None || owner->UltimatePhase == UltimatePhase.Cooldown) {
+        bot->ThreatFrame = 0;
+        bot->ThreatSite = EntityRef.None;
+        return false;
+      }
+      kind = spec.Kind;
+      siteAlive = owner->UltimatePhase != UltimatePhase.Active && f.Exists(bot->ThreatSite);
+      return true;
+    }
+
+    /// <summary>대공 유닛 수(대기열 포함).</summary>
+    static int CountAntiAir(Frame f, PlayerRef player) {
+      var count = 0;
+      var units = f.Filter<Unit>();
+      while (units.NextUnsafe(out _, out var unit)) {
+        count += unit->Owner == player && f.FindAsset(unit->Spec).Attack == AttackType.AntiAir ? 1 : 0;
+      }
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var building)) {
+        if (building->Owner != player) {
+          continue;
+        }
+        for (var i = 0; i < building->QueueCount; i++) {
+          var queued = f.FindAsset(building->Queue[i].Unit);
+          count += queued.Attack == AttackType.AntiAir ? queued.SpawnCount : 0;
+        }
+      }
+      return count;
+    }
+
+    /// <summary>상대의 전략 미사일에 대비해 방공포대를 ThreatAirDefense채까지, 레이더 기지를 하나 둔다(요격 점수).</summary>
+    static bool CounterBuild(Frame f, PlayerRef player, BotState* bot, AiSpec ai, FactionSpec faction, int* counts, out BuildingRole role) {
+      role = default;
+      if (ai.CounterUltimate == false || Threat(f, player, bot, out var kind, out _) == false || kind != UltimateKind.StrategicMissile) {
+        return false;
+      }
+      role = counts[(int)BuildingRole.AirDefense] < ai.ThreatAirDefense ? BuildingRole.AirDefense : BuildingRole.Radar;
+      if (role == BuildingRole.Radar && counts[(int)BuildingRole.Radar] > 0) {
+        return false;
+      }
+      var spec = f.FindAsset(FindRole(f, faction, role));
+      return spec != null && ProductionSystem.IsUnlocked(f, player, spec);
+    }
+
+    /// <summary>미사일 착탄 예고 범위 안의 내 지상 유닛을 밖으로 뺀다. 착탄 1초 뒤까지 다른 명령을 받지 않게 묶어 둔다.</summary>
+    static void Evacuate(Frame f, PlayerRef player) {
+      var strikes = f.Filter<MissileStrike>();
+      while (strikes.NextUnsafe(out _, out var strike)) {
+        var spec = f.FindAsset(strike->Spec);
+        var radius = spec.BlastRadius + FP._2;
+        var radiusSqr = radius * radius;
+        var until = strike->ImpactFrame + FactoryWarsUtil.SecondsToFrames(f, FP._1);
+        var units = f.Filter<Transform3D, Unit>();
+        while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
+          if (unit->Owner != player || unit->Garrison != EntityRef.None || f.FindAsset(unit->Spec).IsAir || UltimateSystem.IsAutonomous(f, entity)
+              || FactoryWarsUtil.FlatDistanceSqr(transform->Position, strike->Target) > radiusSqr) {
+            continue;
+          }
+          // 이미 밖으로 가는 중이면 그대로 둔다.
+          if (unit->Order == UnitOrder.Move && FactoryWarsUtil.FlatDistanceSqr(unit->TargetPosition, strike->Target) > radiusSqr) {
+            continue;
+          }
+          var away = transform->Position - strike->Target;
+          away.Y = FP._0;
+          if (away.SqrMagnitude <= FP._0_01) {
+            away = FPVector3.Right;
+          }
+          MovementSystem.Order(f, entity, unit, UnitOrder.Move, strike->Target + away.Normalized * (radius + FP._3));
+          if (unit->ReservedUntilFrame < until) {
+            unit->ReservedUntilFrame = until;
+          }
+        }
+      }
+    }
+
+    /// <summary>
+    /// 미사일 목표: 적 건물 하나하나를 중심 후보로 놓고, 폭발 반경 안의 적 건물(핵심 건물은 두 배)·보이는 적 지상 유닛 가치에서
+    /// 내 것·동맹 것 가치의 두 배를 뺀 뒤 요격 배율을 곱한 값이 가장 큰 곳.
+    /// </summary>
+    static bool FindMissileTarget(Frame f, PlayerRef player, UltimateSpec spec, out FPVector3 target, out FP best) {
+      target = default;
+      best = FP._0;
+      var found = false;
+      var radiusSqr = spec.BlastRadius * spec.BlastRadius;
+      var candidates = f.Filter<Transform3D, Building>();
+      while (candidates.NextUnsafe(out _, out var center, out var candidate)) {
+        if (DiplomacySystem.CanAttack(f, player, candidate->Owner) == false) {
+          continue;
+        }
+        var value = FP._0;
+        var buildings = f.Filter<Transform3D, Building>();
+        while (buildings.NextUnsafe(out _, out var transform, out var building)) {
+          if (FactoryWarsUtil.FlatDistanceSqr(transform->Position, center->Position) > radiusSqr) {
+            continue;
+          }
+          var buildingSpec = f.FindAsset(building->Spec);
+          var worth = Worth(buildingSpec.Cost);
+          value += DiplomacySystem.CanAttack(f, player, building->Owner) ? (buildingSpec.IsCoreBuilding ? worth * 2 : worth) : -worth * 2;
+        }
+        var units = f.Filter<Transform3D, Unit>();
+        while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
+          if (unit->Garrison != EntityRef.None || FactoryWarsUtil.FlatDistanceSqr(transform->Position, center->Position) > radiusSqr) {
+            continue;
+          }
+          var unitSpec = f.FindAsset(unit->Spec);
+          if (unitSpec.IsAir) {
+            continue;
+          }
+          if (DiplomacySystem.CanAttack(f, player, unit->Owner)) {
+            value += FactoryWarsUtil.IsVisibleTo(f, player, entity) ? Worth(unitSpec.Cost) : FP._0;
+          } else {
+            value -= Worth(unitSpec.Cost) * 2;
+          }
+        }
+        value *= UltimateSystem.InterceptMultiplier(spec, UltimateSystem.InterceptScore(f, player, center->Position, spec), out _);
+        if (found == false || value > best) {
+          best = value;
+          target = center->Position;
+          found = true;
+        }
+      }
+      return found;
+    }
+
+    /// <summary>준비가 끝난 궁극 전력을 쓴다. 미사일은 목표 값이 MissileMinValue 이상이거나 UltimateHoldSeconds를 기다렸으면 쏜다.</summary>
+    static void FireUltimate(Frame f, PlayerRef player, BotState* bot, AiSpec ai, UltimateSpec spec) {
+      if (bot->ReadySinceFrame == 0) {
+        bot->ReadySinceFrame = f.Number;
+      }
+      if (f.Number < bot->NextUltimateFrame || FactoryWarsUtil.InTruce(f)) {
+        return;
+      }
+      bot->NextUltimateFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.UltimateCheckSeconds);
+      if (spec.Kind == UltimateKind.StrategicMissile) {
+        if (FindMissileTarget(f, player, spec, out var target, out var value) == false) {
+          return;
+        }
+        var held = f.Number - bot->ReadySinceFrame >= FactoryWarsUtil.SecondsToFrames(f, ai.UltimateHoldSeconds);
+        if (value >= ai.MissileMinValue || held) {
+          UltimateSystem.Launch(f, player, target);
+          bot->ReadySinceFrame = 0;
+        }
+      } else if (spec.Kind == UltimateKind.AmphibiousAssault) {
+        if (FindEnemyTarget(f, player, bot->Home, ai, out var target, out _) && UltimateSystem.FindLanding(f, target, spec, out _, out _)) {
+          UltimateSystem.Launch(f, player, target);
+          bot->ReadySinceFrame = 0;
+        }
+      }
+    }
+
+    /// <summary>
+    /// 궁극 전력 관리. 3단계가 되고 UltimateStartSeconds가 지나면 전용 건물(선행 건물부터)을 짓고, 궁극 전력 연구를 하고, 준비를 시작한다.
+    /// 본진이 안전할 때만 그 비용을 남겨 둘 몫으로 돌려준다(유닛 생산보다 먼저 모은다). 준비 중에는 전용 건물 옆에 UltimateGuard기를 붙여 둔다.
+    /// built는 이번에 건물을 지었는지(건설 칸을 썼다).
+    /// </summary>
+    static ResourceCost ManageUltimate(Frame f, PlayerRef player, PlayerState* state, BotState* bot, AiSpec ai, FactionSpec faction, int* counts, bool canBuild, out bool built) {
+      built = false;
+      var spec = UltimateSystem.SpecOf(f, player);
+      if (ai.UseUltimate == false || spec == null || f.Number < FactoryWarsUtil.SecondsToFrames(f, ai.UltimateStartSeconds) || TechSystem.Tier(f, player) < spec.RequiredTier) {
+        return default;
+      }
+      if (state->UltimatePhase == UltimatePhase.Ready) {
+        FireUltimate(f, player, bot, ai, spec);
+        return default;
+      }
+      if (state->UltimatePhase == UltimatePhase.Preparing) {
+        if (ai.UltimateGuard > 0 && f.Number >= bot->NextUltimateFrame && f.Unsafe.TryGetPointer<Transform3D>(state->UltimateSite, out var site)) {
+          bot->NextUltimateFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
+          SendSquad(f, player, site->Position, ai.UltimateGuard, ai, FP._0);
+        }
+        return default;
+      }
+      if (state->UltimatePhase != UltimatePhase.None) {
+        return default;
+      }
+      bot->ReadySinceFrame = 0;
+      var safe = EnemyNear(f, player, bot->Home, ai.UltimateSafeRadius * ai.UltimateSafeRadius) == false;
+
+      // 1. 전용 건물. 선행 건물이 없으면 그것부터 짓는다.
+      if (counts[(int)BuildingRole.UltimateSite] == 0) {
+        if (canBuild == false) {
+          return default;
+        }
+        var role = BuildingRole.UltimateSite;
+        var siteSpec = f.FindAsset(spec.Site);
+        for (var i = 0; siteSpec.Prerequisites != null && i < siteSpec.Prerequisites.Length; i++) {
+          if (ProductionSystem.HasFinished(f, player, siteSpec.Prerequisites[i]) == false) {
+            role = f.FindAsset(siteSpec.Prerequisites[i]).Role;
+            if (counts[(int)role] > 0) {
+              // 짓는 중이다.
+              return default;
+            }
+            break;
+          }
+        }
+        var cost = TryBuildRole(f, player, state, ai, faction, role, bot->Home, out built);
+        return safe ? cost : default;
+      }
+
+      // 2. 궁극 전력 연구(쉬는 연구소에서).
+      if (UltimateSystem.HasResearch(f, player, spec) == false) {
+        var index = TechSystem.IndexOf(f, player, spec.Research);
+        if (index < 0 || TechSystem.IsResearching(f, player, index)) {
+          return default;
+        }
+        if (TechSystem.CanResearch(f, player, index, out var reason)) {
+          var labs = f.Filter<Building>();
+          while (labs.NextUnsafe(out var entity, out var lab)) {
+            if (lab->Owner == player && lab->Research == 0 && lab->ConstructionRemaining <= FP._0 && f.FindAsset(lab->Spec).Role == BuildingRole.ResearchLab) {
+              TechSystem.StartResearch(f, player, entity, index);
+              break;
+            }
+          }
+          return default;
+        }
+        return reason == RejectReason.InsufficientResources && safe ? f.FindAsset(spec.Research).Cost : default;
+      }
+
+      // 3. 준비 시작.
+      var locks = UltimateSystem.Locks(f, player);
+      if (locks == UltimateLock.None) {
+        UltimateSystem.Start(f, player);
+        return default;
+      }
+      return locks == UltimateLock.Resources && safe ? UltimateSystem.CostOf(f, player, spec) : default;
+    }
+
+    /// <summary>자기 벙커에 보병 분대를 BunkerSquads까지 넣는다(가까운 분대부터).</summary>
+    static void FillBunkers(Frame f, PlayerRef player, AiSpec ai) {
+      var buildings = f.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out var entity, out var transform, out var building)) {
+        if (building->Owner != player || building->ConstructionRemaining > FP._0) {
+          continue;
+        }
+        var capacity = f.FindAsset(building->Spec).GarrisonCapacity;
+        if (capacity <= 0 || CitySystem.TryHost(f, entity, out var shape, out _, out _) == false) {
+          continue;
+        }
+        var want = System.Math.Min(ai.BunkerSquads, capacity) - CitySystem.Occupants(f, entity);
+        var heading = f.Filter<Unit>();
+        while (heading.NextUnsafe(out _, out var walker)) {
+          want -= walker->GarrisonTarget == entity ? 1 : 0;
+        }
+        for (var n = 0; n < want; n++) {
+          var best = FP.MaxValue;
+          var pick = EntityRef.None;
+          var units = f.Filter<Transform3D, Unit>();
+          while (units.NextUnsafe(out var candidate, out var position, out var unit)) {
+            if (unit->Owner != player || unit->Garrison != EntityRef.None || unit->GarrisonTarget != EntityRef.None || f.Number < unit->ReservedUntilFrame
+                || CitySystem.IsInfantry(f.FindAsset(unit->Spec)) == false) {
+              continue;
+            }
+            var distance = FactoryWarsUtil.FlatDistanceSqr(position->Position, transform->Position);
+            if (distance < best) {
+              best = distance;
+              pick = candidate;
+            }
+          }
+          if (pick == EntityRef.None) {
+            return;
+          }
+          var chosen = f.Unsafe.GetPointer<Unit>(pick);
+          MovementSystem.Order(f, pick, chosen, UnitOrder.Move, shape.Approach(f.Unsafe.GetPointer<Transform3D>(pick)->Position, FP._1));
+          chosen->GarrisonTarget = entity;
+          chosen->ReservedUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
         }
       }
     }
@@ -1118,22 +1512,30 @@ namespace Quantum.FactoryWars {
     }
 
     /// <summary>은폐된 적은 AI도 모른다.</summary>
-    static void CountArmies(Frame f, PlayerRef player, out int army, out int enemyArmy) {
-      army = 0;
-      enemyArmy = 0;
+    /// <summary>
+    /// 웨이브·소탕 판단용 군대 크기. WaveByPopulation이면 인구 합(내림), 아니면 유닛 수다.
+    /// 항목 33: 유닛 수로 세면 인구 0.5짜리 민병대 8기와 전차 8대가 같은 웨이브라, 물량 진영이 약한 웨이브로 일찍 나가 계속 잃었다.
+    /// </summary>
+    static void CountArmies(Frame f, PlayerRef player, AiSpec ai, out int army, out int enemyArmy) {
+      var own = FP._0;
+      var hostile = FP._0;
       var units = f.Filter<Unit>();
       while (units.NextUnsafe(out var entity, out var unit)) {
         var spec = f.FindAsset(unit->Spec);
-        // 배는 지상 웨이브에 끼지 못하므로 웨이브·소탕 판단에서 뺀다(항목 30: 배만 쌓여 웨이브가 안 나가던 교착).
-        if (spec.Attack == AttackType.None || spec.IsNaval) {
+        // 배는 지상 웨이브에 끼지 못하므로 웨이브·소탕 판단에서 뺀다(항목 30: 배만 쌓여 웨이브가 안 나가던 교착). 항모 드론(항목 33)도 뺀다.
+        if (spec.Attack == AttackType.None || spec.IsNaval || f.Has<Drone>(entity)) {
           continue;
         }
+        var weight = ai.WaveByPopulation ? spec.Population : FP._1;
         if (unit->Owner == player) {
-          army++;
+          own += weight;
         } else if (DiplomacySystem.CanAttack(f, player, unit->Owner) && FactoryWarsUtil.IsVisibleTo(f, player, entity)) {
-          enemyArmy++;
+          hostile += weight;
         }
       }
+      army = FPMath.FloorToInt(own);
+      // 적이 조금이라도 보이면 0으로 내리지 않는다(소탕 판단).
+      enemyArmy = hostile > FP._0 ? System.Math.Max(1, FPMath.FloorToInt(hostile)) : 0;
     }
 
     /// <summary>본진 상자를 공병 하나가 돌며 줍는다.</summary>
@@ -1223,7 +1625,7 @@ namespace Quantum.FactoryWars {
         }
       }
       if (ai.CaptureSquad > 0 && f.Number >= bot->NextSquadFrame) {
-        CountArmies(f, player, out var army, out var enemyArmy);
+        CountArmies(f, player, ai, out var army, out var enemyArmy);
         var strong = army >= enemyArmy * ai.CenterArmyRatio;
         if ((strong && FindSite(f, player, bot->Home, CaptureKind.Comms, out var site)) || FindSite(f, player, bot->Home, CaptureKind.Relay, out site)) {
           SendSquad(f, player, site, ai.CaptureSquad, ai, FP._0);
@@ -1396,16 +1798,30 @@ namespace Quantum.FactoryWars {
       if (f.Number < bot->NextAttackFrame || FactoryWarsUtil.InTruce(f)) {
         return;
       }
-      CountArmies(f, player, out var army, out var enemyArmy);
+      CountArmies(f, player, ai, out var army, out var enemyArmy);
       var sweeping = IsSweeping(army, enemyArmy, ai);
+      // 항목 33: 생산이 멈춘 채(대기열이 StalledSeconds 동안 빔) 군대가 StalledWaveSize 이상이면 채울 수 없는 웨이브를 기다리지 않는다.
+      if (ProductionIdle(f, player) == false) {
+        bot->IdleSinceFrame = 0;
+      } else if (bot->IdleSinceFrame == 0) {
+        bot->IdleSinceFrame = f.Number;
+      }
+      var stalled = ai.StalledWaveSize > 0 && army >= ai.StalledWaveSize && bot->IdleSinceFrame > 0
+        && f.Number - bot->IdleSinceFrame >= FactoryWarsUtil.SecondsToFrames(f, ai.StalledSeconds);
+      // 사령부와 공병을 모두 잃었으면 남은 군대로 바로 나간다.
+      var lastStand = ai.LastStand && army > 0 && CannotRecover(f, player);
       FPVector3 target;
       PlayerRef enemy = default;
       if (sweeping) {
         if (FindCoreTarget(f, player, ArmyCenter(f, player, bot->Home), out target) == false) {
           return;
         }
-      } else if (ShouldLaunch(army, bot->WaveSize, f.Number - bot->NextAttackFrame, FactoryWarsUtil.SecondsToFrames(f, ai.StaleWaveSeconds)) == false
-          || FindEnemyTarget(f, player, bot->Home, out target, out enemy) == false) {
+      } else if (ai.CounterUltimate && army * 2 >= bot->WaveSize && Threat(f, player, bot, out _, out var siteAlive) && siteAlive) {
+        // 상대가 궁극 전력을 준비 중이다: 웨이브의 절반만 모여도 그 전용 건물을 치러 간다.
+        target = f.Unsafe.GetPointer<Transform3D>(bot->ThreatSite)->Position;
+        enemy = bot->ThreatOwner;
+      } else if ((stalled || lastStand || ShouldLaunch(army, bot->WaveSize, f.Number - bot->NextAttackFrame, FactoryWarsUtil.SecondsToFrames(f, ai.StaleWaveSeconds))) == false
+          || FindEnemyTarget(f, player, bot->Home, ai, out target, out enemy) == false) {
         return;
       }
 

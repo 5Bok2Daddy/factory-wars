@@ -107,6 +107,7 @@ namespace FactoryWars.View {
         Dot(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3(), 1, Palette.Of(frame, pair.Component.Owner));
       }
       DrawCity(frame);
+      DrawUltimates(frame);
       DrawBorder();
       DrawPings();
       _texture.SetPixels32(_pixels);
@@ -144,6 +145,51 @@ namespace FactoryWars.View {
             _pixels[y * Size + x] = color;
           }
         }
+      }
+    }
+
+    static readonly Color32 UltimateColor = new Color32(255, 255, 255, 255);
+    static readonly Color32 StrikeColor = new Color32(255, 60, 40, 255);
+
+    /// <summary>항목 33: 준비 중·발동 대기인 전용 건물 수 + 날아오는 미사일 수(지금 미니맵에 표시한 것).</summary>
+    public int UltimateMarks { get; private set; }
+
+    void Ring(Vector3 world, int radius, Color32 color) {
+      var cx = ToPixel(world.x, _min.x, _max.x);
+      var cy = ToPixel(world.z, _min.y, _max.y);
+      var steps = Mathf.Max(16, radius * 8);
+      for (var a = 0; a < steps; a++) {
+        var angle = a * Mathf.PI * 2f / steps;
+        var x = Mathf.Clamp(cx + Mathf.RoundToInt(Mathf.Cos(angle) * radius), 0, Size - 1);
+        var y = Mathf.Clamp(cy + Mathf.RoundToInt(Mathf.Sin(angle) * radius), 0, Size - 1);
+        _pixels[y * Size + x] = color;
+      }
+    }
+
+    /// <summary>
+    /// 궁극 전력 표시(모든 플레이어에게 보인다): 준비 중·발동 대기인 전용 건물에 흰 고리 + 주인 색 점, 미사일 착탄 지점에 폭발 반경만큼 붉은 고리.
+    /// </summary>
+    unsafe void DrawUltimates(Frame frame) {
+      UltimateMarks = 0;
+      for (var i = 0; i < frame.PlayerCount; i++) {
+        var state = frame.Global->Players.GetPointer(i);
+        if (state->Active == false || (state->UltimatePhase != UltimatePhase.Preparing && state->UltimatePhase != UltimatePhase.Ready)
+            || frame.Exists(state->UltimateSite) == false) {
+          continue;
+        }
+        var world = frame.Get<Transform3D>(state->UltimateSite).Position.ToUnityVector3();
+        Dot(world, 3, Palette.Of(frame, i));
+        Ring(world, 5, UltimateColor);
+        Ring(world, 6, UltimateColor);
+        UltimateMarks++;
+      }
+      foreach (var pair in frame.GetComponentIterator<MissileStrike>()) {
+        var spec = frame.FindAsset(pair.Component.Spec);
+        var radius = Mathf.Max(3, Mathf.RoundToInt(spec.BlastRadius.AsFloat / (_max.x - _min.x) * Size));
+        var world = pair.Component.Target.ToUnityVector3();
+        Ring(world, radius, StrikeColor);
+        Ring(world, Mathf.Max(1, radius - 1), StrikeColor);
+        UltimateMarks++;
       }
     }
 

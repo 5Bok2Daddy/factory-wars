@@ -33,6 +33,32 @@ MonoBehaviour:
   - Kind: 2
     Size: 1
     Level: 1
+  UseUltimate: 0
+  UltimateStartSeconds:
+    RawValue: 43253760
+  UltimateSafeRadius:
+    RawValue: 2621440
+  UltimateCheckSeconds:
+    RawValue: 327680
+  UltimateGuard: 0
+  UltimateGuardRadius:
+    RawValue: 786432
+  CounterUltimate: 0
+  ThreatAntiAir: 6
+  ThreatAirDefense: 2
+  EvacuateBlast: 0
+  MissileMinValue:
+    RawValue: 163840000
+  UltimateHoldSeconds:
+    RawValue: 2949120
+  FinishCoreBuildings: 2
+  FinishDistanceFactor:
+    RawValue: 6553
+  StalledWaveSize: 0
+  StalledSeconds:
+    RawValue: 1310720
+  LastStand: 1
+  BunkerSquads: 1
   SizeShares:
   - RawValue: 32768
   - RawValue: 26214

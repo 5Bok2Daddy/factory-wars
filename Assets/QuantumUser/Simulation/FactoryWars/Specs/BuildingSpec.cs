@@ -52,5 +52,9 @@ namespace Quantum {
     public FP RevealRadius;
     /// <summary>건설 메뉴에서 "방어 건물" 묶음에 넣는다(화면 전용 분류).</summary>
     public bool Defensive;
+    /// <summary>항목 33: 물가에만 지을 수 있다(조선소와 같은 규칙). 강습 도크.</summary>
+    public bool NeedsWater;
+    /// <summary>항목 33 벙커: 보병 분대가 이 수만큼 들어가 안에서 쏜다. 안에 있는 동안은 맞지 않고, 건물이 부서지면 튕겨 나온다.</summary>
+    public int GarrisonCapacity;
   }
 }

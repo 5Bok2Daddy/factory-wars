@@ -131,6 +131,38 @@ namespace Quantum.FactoryWars {
       return false;
     }
 
+    /// <summary>
+    /// position에서 가장 가까운, 이름이 navMeshName인 NavMesh 위의 점(항목 33: 상륙 접안, 배의 지원 위치).
+    /// 고리를 WaterSearchStep씩 넓혀 가며 WaterSearchDirections 방향을 본다. 닫힌 영역(수문 등)은 NavMesh가 아닌 것으로 친다.
+    /// </summary>
+    public static bool FindNavPointNear(Frame f, string navMeshName, FPVector3 position, FP reach, out FPVector3 point) {
+      point = position;
+      point.Y = FP._0;
+      var navMesh = string.IsNullOrEmpty(navMeshName) ? null : f.Map.GetNavMesh(navMeshName);
+      if (navMesh == null) {
+        return false;
+      }
+      var mask = *f.NavMeshRegionMask;
+      if (navMesh.Contains(point, mask, true)) {
+        return true;
+      }
+      var rules = Rules(f);
+      var step = FPMath.Max(FP._1, rules.WaterSearchStep);
+      var directions = System.Math.Max(4, rules.WaterSearchDirections);
+      var origin = point;
+      for (var radius = step; radius <= reach; radius += step) {
+        for (var d = 0; d < directions; d++) {
+          var angle = FP.PiTimes2 * d / directions;
+          var candidate = origin + new FPVector3(FPMath.Cos(angle), FP._0, FPMath.Sin(angle)) * radius;
+          if (navMesh.Contains(candidate, mask, true)) {
+            point = candidate;
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     public static PlayerState* Player(Frame f, PlayerRef player) {
       if (player.IsValid == false || (int)player >= f.PlayerCount) {
         return null;

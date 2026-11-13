@@ -19,6 +19,11 @@ namespace Quantum.FactoryWars {
     protected static bool IsOwnWorker(Frame f, PlayerRef player, EntityRef entity) {
       return f.Unsafe.TryGetPointer<Unit>(entity, out var unit) && unit->Owner == player && f.Has<Worker>(entity);
     }
+
+    /// <summary>내 유닛이고 명령을 받는 유닛이면 true. 항모 드론·상륙정은 스스로 움직인다(항목 33).</summary>
+    protected static bool IsOwnCommandable(Frame f, PlayerRef player, EntityRef entity, out Unit* unit) {
+      return f.Unsafe.TryGetPointer<Unit>(entity, out unit) && unit->Owner == player && UltimateSystem.IsAutonomous(f, entity) == false;
+    }
   }
 
   public unsafe class MoveUnitsCommand : FactoryCommand {
@@ -36,7 +41,7 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       for (var i = 0; i < Units.Length; i++) {
-        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) && unit->Owner == player) {
+        if (IsOwnCommandable(f, player, Units[i], out var unit)) {
           MovementSystem.Order(f, Units[i], unit, AttackMove ? UnitOrder.AttackMove : UnitOrder.Move, Target);
         }
       }
@@ -53,7 +58,7 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       for (var i = 0; i < Units.Length; i++) {
-        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) && unit->Owner == player) {
+        if (IsOwnCommandable(f, player, Units[i], out var unit)) {
           MovementSystem.Stop(f, Units[i], unit);
         }
       }
@@ -104,7 +109,7 @@ namespace Quantum.FactoryWars {
 
     void Order(Frame f, PlayerRef player) {
       for (var i = 0; i < Units.Length; i++) {
-        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) && unit->Owner == player) {
+        if (IsOwnCommandable(f, player, Units[i], out var unit)) {
           unit->TargetEntity = Target;
           unit->Order = UnitOrder.AttackTarget;
         }
@@ -112,7 +117,7 @@ namespace Quantum.FactoryWars {
     }
   }
 
-  /// <summary>보병 분대를 진지 건물로 보낸다. 닿으면 들어간다. 차량·공병·공중은 못 들어간다.</summary>
+  /// <summary>보병 분대를 진지 건물(도시 진지 건물, 벙커)로 보낸다. 닿으면 들어간다. 차량·공병·공중은 못 들어간다.</summary>
   public unsafe class EnterGarrisonCommand : FactoryCommand {
     public EntityRef[] Units = System.Array.Empty<EntityRef>();
     public EntityRef Building;
@@ -123,7 +128,7 @@ namespace Quantum.FactoryWars {
     }
 
     public override void Execute(Frame f, PlayerRef player) {
-      if (f.Unsafe.TryGetPointer<CityBuilding>(Building, out var city) == false) {
+      if (CitySystem.TryHost(f, Building, out var shape, out _, out _) == false) {
         f.Events.ActionRejected(player, ActionKind.Garrison, RejectReason.Invalid, 0);
         return;
       }
@@ -132,7 +137,6 @@ namespace Quantum.FactoryWars {
         f.Events.ActionRejected(player, ActionKind.Garrison, truce ? RejectReason.Truce : RejectReason.Invalid, 0);
         return;
       }
-      var shape = FactoryWarsUtil.MapInfo(f).CityBuildings[city->Index].Shape;
       for (var i = 0; i < Units.Length; i++) {
         if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) == false || unit->Owner != player || unit->Garrison != EntityRef.None
             || CitySystem.IsInfantry(f.FindAsset(unit->Spec)) == false) {
@@ -306,7 +310,7 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       for (var i = 0; i < Units.Length; i++) {
-        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) && unit->Owner == player) {
+        if (IsOwnCommandable(f, player, Units[i], out var unit)) {
           MovementSystem.Stop(f, Units[i], unit);
           unit->Order = UnitOrder.Hold;
         }
@@ -326,7 +330,7 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       for (var i = 0; i < Units.Length; i++) {
-        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) && unit->Owner == player && f.Has<Worker>(Units[i]) == false
+        if (IsOwnCommandable(f, player, Units[i], out var unit) && f.Has<Worker>(Units[i]) == false
             && f.Unsafe.TryGetPointer<Transform3D>(Units[i], out var transform)) {
           MovementSystem.Order(f, Units[i], unit, UnitOrder.Patrol, Target);
           unit->PatrolOrigin = transform->Position;
@@ -380,6 +384,39 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       TechSystem.StartResearch(f, player, Building, Index);
+    }
+  }
+
+  /// <summary>궁극 전력 준비를 시작한다(항목 33). 조건과 비용은 UltimateSystem.Locks가 본다.</summary>
+  public unsafe class StartUltimateCommand : FactoryCommand {
+    public override void Serialize(BitStream stream) {
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      UltimateSystem.Start(f, player);
+    }
+  }
+
+  /// <summary>준비가 끝난 궁극 전력을 목표 지점에 쓴다(전략 미사일 발사, 상륙 강습 출발).</summary>
+  public unsafe class LaunchUltimateCommand : FactoryCommand {
+    public FPVector3 Target;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Target);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      UltimateSystem.Launch(f, player, Target);
+    }
+  }
+
+  /// <summary>준비 중이거나 발동 대기 중인 궁극 전력을 취소한다. 비용 일부만 돌려받는다.</summary>
+  public unsafe class CancelUltimateCommand : FactoryCommand {
+    public override void Serialize(BitStream stream) {
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      UltimateSystem.Cancel(f, player);
     }
   }
 

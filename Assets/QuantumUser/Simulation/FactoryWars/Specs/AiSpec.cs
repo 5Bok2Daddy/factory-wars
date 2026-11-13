@@ -18,6 +18,36 @@ namespace Quantum {
     /// <summary>연구를 시작하는 시각과 우선순위.</summary>
     public FP ResearchStartSeconds;
     public ResearchPick[] ResearchOrder;
+    /// <summary>항목 33 궁극 전력. UseUltimate가 꺼져 있으면 준비하지 않는다(쉬움). UltimateStartSeconds 전에는 전용 건물·연구를 시작하지 않는다.</summary>
+    public bool UseUltimate;
+    public FP UltimateStartSeconds;
+    /// <summary>본진에서 이 반경 안에 보이는 적이 없을 때만 궁극 전력 비용을 남겨 둔다(안전하지 않으면 유닛 생산이 먼저다).</summary>
+    public FP UltimateSafeRadius;
+    /// <summary>발동 대기 중 목표를 다시 계산하는 간격.</summary>
+    public FP UltimateCheckSeconds;
+    /// <summary>준비 중 전용 건물 옆에 붙여 두는 유닛 수와 그 반경.</summary>
+    public int UltimateGuard;
+    public FP UltimateGuardRadius;
+    /// <summary>상대의 준비 알림에 반응한다: 전용 건물을 공격 목표로 삼고, 항모면 대공 유닛을 ThreatAntiAir기까지, 미사일이면 방공포대를 ThreatAirDefense채까지 늘린다.</summary>
+    public bool CounterUltimate;
+    public int ThreatAntiAir;
+    public int ThreatAirDefense;
+    /// <summary>미사일 착탄 예고 범위 안의 유닛을 밖으로 뺀다.</summary>
+    public bool EvacuateBlast;
+    /// <summary>미사일 목표 점수(반경 안 적 건물·유닛 가치 합 - 아군 가치 합)가 이 이상이어야 쏜다. UltimateHoldSeconds가 지나면 가장 좋은 곳에 그냥 쏜다.</summary>
+    public FP MissileMinValue;
+    public FP UltimateHoldSeconds;
+    /// <summary>항목 33 소탕: 사령부가 없고 핵심 건물이 이 수 이하인 적은 거리 계산에서 FinishDistanceFactor배 가깝게 쳐서 먼저 끝낸다.</summary>
+    public int FinishCoreBuildings;
+    public FP FinishDistanceFactor;
+    /// <summary>생산이 멈췄으면(모든 대기열이 빔) 군대가 이 수 이상일 때 웨이브 크기를 기다리지 않고 나간다. 0이면 쓰지 않는다. 경제가 무너진 후반에 채울 수 없는 웨이브를 기다리던 문제.</summary>
+    public int StalledWaveSize;
+    /// <summary>대기열이 이 시간 이상 계속 비어 있어야 생산이 멈춘 것으로 본다.</summary>
+    public FP StalledSeconds;
+    /// <summary>사령부와 공병을 모두 잃은 AI는 남은 군대로 바로 공격한다(재기할 수 없으므로).</summary>
+    public bool LastStand;
+    /// <summary>자기 벙커마다 넣어 둘 보병 분대 수.</summary>
+    public int BunkerSquads;
     /// <summary>군대 인구 중 크기별 목표 비율. [0] 소형, [1] 중형, [2] 대형. 목표 + SizeShareMargin을 넘는 크기는 다른 후보가 있으면 뽑지 않는다.</summary>
     public FP[] SizeShares;
     public FP SizeShareMargin;
@@ -89,6 +119,8 @@ namespace Quantum {
     public int ShipyardRingMultiplier;
     /// <summary>AI가 유지하는 배 수 상한(대기열 포함). 항목 30.</summary>
     public int MaxShips;
+    /// <summary>true면 WaveSize·WaveGrowth·MaxWaveSize·StalledWaveSize와 소탕 판단을 유닛 수가 아니라 인구로 센다(항목 33).</summary>
+    public bool WaveByPopulation;
     public FP FirstAttackSeconds;
     public FP AttackRepeatSeconds;
     public int WaveSize;

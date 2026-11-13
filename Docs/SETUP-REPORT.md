@@ -1,6 +1,12 @@
 # TASK-01 결과 보고서
 
 <!-- 밤사이 요약 시작 -->
+## 항목 33 진행 중 (2026-11-13, Claude Fable) — 재개할 때 여기부터
+- 지시: `NEXT-TASK-33-ULTIMATE-SYSTEMS.md` 끝까지. 그래픽 작업 없음. 커밋 머리말 `[claude-fable] 33-x`.
+- 끝난 것(커밋 33-1): 궁극 전력 시뮬레이션(UltimateSpec·UltimateSystem·명령 3개·항모/드론·미사일/요격·상륙), 벙커 실제 수용, AI(준비·대응·대피·소탕 집중·생산 정지 시 출격), HUD(궁극 칸·진행 막대·알림·미니맵), 시험 `Ultimate_*`·`Bunker_*`·`Ai_*`.
+- 측정 작업 폴더: `FactoryWars/Game-measure`(git worktree, 항목 32 커밋 기준). 가설 a~d 4인 20판씩을 여기서 돌린다. 결과 `Game-logs/ai-33-hyp-*`. 끝나면 `git worktree remove`로 지운다.
+- 남은 것: 가설 c·d 결과 정리, 가설 e(웨이브를 인구로 세기) 측정, 궁극 포함 2인·4인 측정과 데이터 조정(최대 3회), 30분 안정성 1판, 캡처(`screenshots/ultimate/`), 전체 PlayMode·금지어·온라인 2개, 보고서 "항목 33 결과", APK, 대기열 완료 표시.
+
 ## 항목 32 결과 (2026-11-13, Claude) — 에셋 적용(못 함: 패키지 없음) · 움직임 · 건물 7종 · 보병 엄폐
 
 ### 한눈에

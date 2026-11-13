@@ -347,11 +347,15 @@ namespace FactoryWars.View {
       };
     }
 
+    /// <summary>true면 BuildConfig가 시나리오 설정을 지우지 않는다. 모든 클라이언트가 같은 값을 써야 한다(시험 전용).</summary>
+    public bool KeepScenario;
+
     /// <summary>
     /// 방 속성 → RuntimeConfig. 모든 클라이언트가 같은 값을 만든다. 사람은 서버가 0번부터 차례로 PlayerRef를 주고,
     /// 봇은 그 뒤 번호를 쓴다. 팀전은 본진 자리로 팀을 정한다(TeamsBySeat).
     /// </summary>
     public RuntimeConfig BuildConfig(RuntimeConfig template, AssetRef<FactionSpec>[] factions) {
+      // KeepScenario: 본(template)의 시작 자원·시나리오 유닛·건물을 그대로 둔다(온라인 결정론 시험용. 실제 방에서는 쓰지 않는다).
       var config = new QuantumUnityJsonSerializer().CloneConfig(template);
       var humans = Humans;
       var bots = Bots;
@@ -363,9 +367,11 @@ namespace FactoryWars.View {
       config.JointVictory = Mode == MatchMode.FreeForAll;
       config.OverrideTruce = true;
       config.TruceSeconds = TruceMinutes * 60;
-      config.OverrideStartingResources = false;
-      config.ScenarioUnits = null;
-      config.ScenarioBuildings = null;
+      if (KeepScenario == false) {
+        config.OverrideStartingResources = false;
+        config.ScenarioUnits = null;
+        config.ScenarioBuildings = null;
+      }
       config.Bots = Enumerable.Range(0, bots.Length).Select(i => new BotSlot {
         Player = humans + i, Faction = factions[(i < botFactions.Length ? botFactions[i] : i) % factions.Length], Team = humans + i,
         Difficulty = (BotDifficulty)bots[i], ColorIndex = i < botColors.Length ? botColors[i] : i,

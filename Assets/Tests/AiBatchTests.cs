@@ -56,9 +56,54 @@ namespace FactoryWars.Tests {
       yield return PlayAiMatch(Map4PScene, "2PM", 2, run, mirror: run % 2);
     }
 
+    /// <summary>
+    /// 항목 33 가설 분리 측정(FW_AI_VARIANT). 데이터 에셋을 메모리에서만 바꾸고 TearDown이 되돌린다.
+    /// nodiplo: 외교 끔. adjacent: 같은 진영을 이웃 자리(0·1 대 2·3)에 둔다. noair: AI가 비행장·헬기장을 짓지 않는다.
+    /// moreaa: AI가 대공 유닛을 6기까지 미리 둔다(AiSpec이 진영 공통이라 두 진영 모두 적용). wavepop: 웨이브 크기를 인구로 센다.
+    /// </summary>
+    static int[] ApplyAiVariant(int run) {
+      var variant = System.Environment.GetEnvironmentVariable("FW_AI_VARIANT") ?? "";
+      if (variant == "nodiplo") {
+        var rules = Resources.Load<GameRulesSpec>("FactoryWars/game_rules");
+        var before = rules.MinDiplomacyPlayers;
+        rules.MinDiplomacyPlayers = 99;
+        Restores.Add(() => rules.MinDiplomacyPlayers = before);
+      } else if (variant == "noair") {
+        foreach (var faction in Resources.LoadAll<FactionSpec>("FactoryWars")) {
+          var target = faction;
+          var before = target.AiSkipRoles;
+          target.AiSkipRoles = (before ?? new BuildingRole[0]).Concat(new[] { BuildingRole.Airfield, BuildingRole.Helipad }).Distinct().ToArray();
+          Restores.Add(() => target.AiSkipRoles = before);
+        }
+      } else if (variant == "moreaa") {
+        var ai = Resources.Load<AiSpec>("FactoryWars/ai_normal");
+        var before = ai.IdleAntiAir;
+        ai.IdleAntiAir = 6;
+        Restores.Add(() => ai.IdleAntiAir = before);
+      } else if (variant == "wavepop") {
+        // 가설 e: 웨이브 크기를 인구로 센다(물량 진영이 약한 웨이브로 일찍 나가 잃는지).
+        var ai = Resources.Load<AiSpec>("FactoryWars/ai_normal");
+        var before = (ai.WaveByPopulation, ai.WaveSize, ai.WaveGrowth, ai.MaxWaveSize);
+        ai.WaveByPopulation = true;
+        ai.WaveSize = 10;
+        ai.WaveGrowth = 6;
+        ai.MaxWaveSize = 45;
+        Restores.Add(() => {
+          ai.WaveByPopulation = before.Item1;
+          ai.WaveSize = before.Item2;
+          ai.WaveGrowth = before.Item3;
+          ai.MaxWaveSize = before.Item4;
+        });
+      } else if (variant == "adjacent") {
+        return (run / 2) % 2 == 1 ? new[] { 1, 1, 0, 0 } : new[] { 0, 0, 1, 1 };
+      }
+      return null;
+    }
+
     IEnumerator PlayAiMatch(string scene, string map, int players, int run, int mirror = -1) {
       var bots = Enumerable.Repeat(BotDifficulty.Normal, players).ToArray();
-      yield return StartMatch(scene, players, bots: bots, seed: (mirror >= 0 ? 8000 : 7000) + run, swapFactions: mirror < 0 && (run / 2) % 2 == 1, truce: -1, mirrorFaction: mirror);
+      var layout = mirror < 0 ? ApplyAiVariant(run) : null;
+      yield return StartMatch(scene, players, bots: bots, seed: (mirror >= 0 ? 8000 : 7000) + run, swapFactions: layout == null && mirror < 0 && (run / 2) % 2 == 1, truce: -1, mirrorFaction: mirror, factionLayout: layout);
       Time.timeScale = AiTimeScale;
       var view = Object.FindAnyObjectByType<FactoryWars.View.BattleView>();
       if (view != null) {
@@ -105,6 +150,7 @@ namespace FactoryWars.Tests {
       File.AppendAllLines(Path.Combine(AiFolder(), "battlefield.csv"), BattlefieldRows(map, run, players));
       File.AppendAllLines(Path.Combine(AiFolder(), "naval.csv"), naval.Rows(map, run));
       File.AppendAllLines(Path.Combine(AiFolder(), "tech.csv"), TechRows(map, run, players));
+      File.AppendAllLines(Path.Combine(AiFolder(), "ultimate.csv"), UltimateRows(map, run, players));
       Debug.Log($"[FW-AI] {row} real {F(Time.realtimeSinceStartup - realStart)}s");
       Assert.Greater(seconds, 0f);
     }
@@ -189,6 +235,25 @@ namespace FactoryWars.Tests {
         rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{FactoryWarsUtil.SeatOf(Verified, p)},{((winners >> p) & 1)},{tier2},{tier3},"
           + $"{state->ProducedBySize[(int)UnitSize.Small]},{state->ProducedBySize[(int)UnitSize.Medium]},{state->ProducedBySize[(int)UnitSize.Large]},{researches},{Count(BuildingRole.Airfield)},{Count(BuildingRole.HeavyWorks)},"
           + $"{state->CoverEntries},{Count(BuildingRole.Sandbags)},{Count(BuildingRole.Bunker)},{Count(BuildingRole.MedicTent)},{Count(BuildingRole.RepairBay)},{Count(BuildingRole.Radar)},{Count(BuildingRole.Helipad)},{Count(BuildingRole.Artillery)}");
+      }
+      return rows;
+    }
+
+    /// <summary>
+    /// 항목 33 궁극 전력(ultimate.csv): map,run,player,faction,seat,won,defeated,kind,start_s,ready_s,use_s,uses,intercepted,lost,sites_lost,
+    /// ultimate_core_kills,core_lost,phase_at_end. 시각은 처음 준비 시작·완료·사용(초, 없으면 빈칸). intercepted는 내 미사일이 요격당한 횟수,
+    /// lost는 격추된 항모·격침된 상륙정 수, sites_lost는 준비 중 전용 건물을 잃은 횟수다.
+    /// </summary>
+    static unsafe IEnumerable<string> UltimateRows(string map, int run, int players) {
+      var rows = new List<string>();
+      var winners = Verified.Global->GameEnded ? Verified.Global->WinnerMask : 0;
+      for (var p = 0; p < players; p++) {
+        var state = Verified.Global->Players.GetPointer(p);
+        var spec = UltimateSystem.SpecOf(Verified, p);
+        string Seconds(int frame) => frame > 0 ? F(frame / (float)Fps) : "";
+        rows.Add($"{map},{run},{p},{FactionOf(p).FactionId},{FactoryWarsUtil.SeatOf(Verified, p)},{((winners >> p) & 1)},{(state->Defeated ? 1 : 0)},{(spec != null ? spec.Kind.ToString() : "")},"
+          + $"{Seconds(state->UltimateStartFrame)},{Seconds(state->UltimateReadyFrame)},{Seconds(state->UltimateUseFrame)},{state->UltimateUses},{state->UltimateIntercepted},{state->UltimateLost},{state->UltimateSitesLost},"
+          + $"{state->UltimateCoreKills},{state->CoreLost},{state->UltimatePhase}");
       }
       return rows;
     }

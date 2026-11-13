@@ -86,3 +86,5 @@ MonoBehaviour:
   RevealRadius:
     RawValue: 0
   Defensive: 1
+  NeedsWater: 0
+  GarrisonCapacity: 0
