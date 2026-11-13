@@ -271,9 +271,9 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(V(130, 130), Verified.Get<Transform3D>(Headquarters(1)).Position);
       Assert.AreEqual(-1, FactoryWarsUtil.PlayerAtSeat(Verified, 1), "남동(1)은 빈 본진");
       Assert.AreEqual(-1, FactoryWarsUtil.PlayerAtSeat(Verified, 3), "북서(3)는 빈 본진");
-      Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 5500), "점유 본진 철광산 100%(항목 33: 4000→5500)");
+      Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 4000), "점유 본진 철광산 100%");
       Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 6000), "점유 본진 숲 100%");
-      Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 3850), "빈 본진 중립 확장 철광산 70%");
+      Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 2800), "빈 본진 중립 확장 철광산 70%");
       Assert.AreEqual(2, NodeCount(ResourceKind.Wood, 4200), "빈 본진 중립 확장 숲 70%");
       Assert.AreEqual(4, All<SupplyCrate>().Count(p => p.Component.Seat >= 0), "점유 본진에만 시작 상자 스폰");
 
@@ -317,8 +317,8 @@ namespace FactoryWars.Tests {
       yield return StartMatch(Map4PScene, 3, truce: 0);
       Assert.AreEqual(3, Verified.ComponentCount<Building>(), "3인 대전은 사령부 3채");
       Assert.AreEqual(-1, FactoryWarsUtil.PlayerAtSeat(Verified, 3), "4번째 자리는 빈 본진 중립 확장");
-      Assert.AreEqual(6, NodeCount(ResourceKind.Iron, 5500), "점유 본진 3곳 철광산 100%");
-      Assert.AreEqual(2, NodeCount(ResourceKind.Iron, 3850), "빈 본진 1곳 철광산 70%");
+      Assert.AreEqual(6, NodeCount(ResourceKind.Iron, 4000), "점유 본진 3곳 철광산 100%");
+      Assert.AreEqual(2, NodeCount(ResourceKind.Iron, 2800), "빈 본진 1곳 철광산 70%");
       Assert.AreEqual(1, NodeCount(ResourceKind.Wood, 4200), "빈 본진 1곳 숲 70%");
     }
 

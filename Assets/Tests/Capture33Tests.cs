@@ -174,6 +174,8 @@ namespace FactoryWars.Tests {
         yield return null;
       }
       // 2. 화면 켬(보통 품질), 1배속: 프레임 시간.
+      GraphicsQuality.Apply(QualityTier.Medium);
+      Restores.Add(() => GraphicsQuality.Apply(GraphicsQuality.Default));
       view.enabled = true;
       Time.timeScale = 1f;
       yield return WaitFrames(Fps);
@@ -187,8 +189,9 @@ namespace FactoryWars.Tests {
       var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Game-logs", "perf"));
       Directory.CreateDirectory(folder);
       File.WriteAllLines(Path.Combine(folder, "ultimate-engagement.csv"), rows);
-      Debug.Log("[FW-Perf] " + string.Join(" | ", rows) + $" | quality {QualitySettings.names[QualitySettings.GetQualityLevel()]} max drones {maxDrones}");
-      Assert.Greater(maxDrones, 16, "드론이 실제로 떠서 싸우는 장면");
+      Debug.Log("[FW-Perf] " + string.Join(" | ", rows) + $" | quality {GraphicsQuality.Name(GraphicsQuality.Current)} max drones {maxDrones}");
+      // 네 진영 모두 대공 분대가 20개씩 있어 드론은 뜨는 대로 격추된다. 동시에 8기 이상 떠 있었으면 교전한 것으로 본다.
+      Assert.GreaterOrEqual(maxDrones, 8, "드론이 실제로 떠서 싸우는 장면");
       Assert.Less(all.Average(), 50f, "틱 시간 평균이 틱 간격(50ms)보다 짧다");
     }
 
