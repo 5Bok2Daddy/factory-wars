@@ -35,5 +35,7 @@ namespace Quantum {
     /// <summary>발동에 필요한 대수, 동시 공격 대수.</summary>
     public int AbilityCount;
     public FP AbilityCooldownSeconds;
+    /// <summary>항목 34: 시야 반경(m). 0이면 시야 없음.</summary>
+    public FP SightRange;
   }
 }

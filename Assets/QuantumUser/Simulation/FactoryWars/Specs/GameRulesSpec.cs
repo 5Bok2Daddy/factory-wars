@@ -97,6 +97,12 @@ namespace Quantum {
     public FP HighGroundRevealDistance;
     public FP HighGroundAirRevealDistance;
     public FP HighGroundRevealSeconds;
+    /// <summary>항목 34: 전장의 안개. 켜면 보이지 않는 칸의 적은 자동 표적·공격 명령 대상이 아니다. 기본 꺼짐(켜면 AI 밸런스를 다시 재야 한다).</summary>
+    public bool FogOfWar;
+    /// <summary>안개 갱신 간격(틱, 5틱 = 0.25초).</summary>
+    public int FogUpdateTicks = 5;
+    public FP FogHighGroundBonus;
+    public FP FogGarrisonBonus;
     public FP RoadSpeedMultiplier;
     public FP FordSpeedMultiplier;
     /// <summary>본진 공격 알림의 최소 간격.</summary>

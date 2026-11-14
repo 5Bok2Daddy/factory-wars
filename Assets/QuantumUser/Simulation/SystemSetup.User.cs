@@ -8,6 +8,7 @@ namespace Quantum
         static partial void AddSystemsUser(ICollection<SystemBase> systems, RuntimeConfig gameConfig, SimulationConfig simulationConfig, SystemsConfig systemsConfig)
         {
             systems.Add(new FactoryWars.BootstrapSystem());
+            systems.Add(new FactoryWars.FogSystem());
             systems.Add(new FactoryWars.TruceSystem());
             systems.Add(new FactoryWars.CommandSystem());
             systems.Add(new FactoryWars.BotSystem());

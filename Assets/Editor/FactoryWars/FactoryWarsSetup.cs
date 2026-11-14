@@ -335,6 +335,8 @@ namespace FactoryWars.EditorTools {
       spec.SpawnCount = row.Spawn > 0 ? row.Spawn : 1;
       spec.IsNaval = row.Naval;
       spec.IsVehicle = row.Vehicle;
+      // 항목 34 시야 반경(m): 보병 10, 차량·중형 9, 정찰 버기·오토바이 16, 정찰선 18, 공중 14. 값은 이 표가 원본이다.
+      spec.SightRange = N(row.Id.Contains("scout_boat") ? 18 : row.Id.Contains("scout") ? 16 : row.Air ? 14 : row.Naval ? 12 : row.Vehicle || row.Size != UnitSize.Small ? 9 : 10);
       var population = row.Population > 0 ? row.Population : (row.Size == UnitSize.Large ? 6 : row.Size == UnitSize.Medium ? 3 : 1);
       spec.Population = N((double)population / spec.SpawnCount);
       spec.ModuleSlots = row.Size == UnitSize.Large ? 3 : row.Size == UnitSize.Medium ? 2 : row.Size == UnitSize.Small ? 1 : 0;
@@ -356,6 +358,8 @@ namespace FactoryWars.EditorTools {
       spec.PopulationCapBonus = population;
       spec.ModuleSlots = slots;
       spec.FootprintRadius = 3;
+      // 항목 34: 건물 시야 8m, 레이더 기지 40m.
+      spec.SightRange = id.EndsWith("_radar") ? 40 : 8;
       spec.IsDropOff = id.EndsWith("_headquarters") || id.EndsWith("_collection_yard");
       spec.Producible = producible.Select(Ref).ToArray();
       spec.Attack = AttackType.None;
@@ -915,6 +919,10 @@ namespace FactoryWars.EditorTools {
       rules.HighGroundRevealDistance = 6;
       rules.HighGroundAirRevealDistance = 12;
       rules.HighGroundRevealSeconds = 3;
+      rules.FogOfWar = false;
+      rules.FogUpdateTicks = 5;
+      rules.FogHighGroundBonus = 4;
+      rules.FogGarrisonBonus = 6;
       rules.RoadSpeedMultiplier = N(1.1);
       rules.FordSpeedMultiplier = N(0.75);
       rules.BaseAlertSeconds = 30;

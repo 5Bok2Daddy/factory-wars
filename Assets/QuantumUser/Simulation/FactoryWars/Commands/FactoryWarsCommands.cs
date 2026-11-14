@@ -94,7 +94,14 @@ namespace Quantum.FactoryWars {
         Order(f, player);
         return;
       }
-      if (CombatSystem.TryGetOwner(f, Target, out var targetOwner) == false || FactoryWarsUtil.IsVisibleTo(f, player, Target) == false) {
+      if (CombatSystem.TryGetOwner(f, Target, out var targetOwner) == false) {
+        return;
+      }
+      if (FactoryWarsUtil.IsVisibleTo(f, player, Target) == false) {
+        // 항목 34: 안개 때문에 안 보이는 표적은 이유를 알려 준다. 고지대 은폐는 예전처럼 조용히 무시한다.
+        if (FogSystem.Enabled(f) && FogSystem.CanSee(f, player, Target) == false) {
+          f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.NoVision, 0);
+        }
         return;
       }
       if (FactoryWarsUtil.InTruce(f) && targetOwner != player) {

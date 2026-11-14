@@ -90,6 +90,7 @@ namespace Quantum {
     TierLocked,
     SizeLimit,
     Busy,
+    NoVision,
   }
   public enum Relation : byte {
     Enemy,
@@ -731,6 +732,28 @@ namespace Quantum {
         FPVector3.Serialize(&p->Home, serializer);
         FPVector3.Serialize(&p->LanePoint, serializer);
         FPVector3.Serialize(&p->LaneTarget, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct FogGrid {
+    public const Int32 SIZE = 2304;
+    public const Int32 ALIGNMENT = 1;
+    [FieldOffset(1152)]
+    public fixed Byte Visible[1152];
+    [FieldOffset(0)]
+    public fixed Byte Explored[1152];
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 13613;
+        fixed (Byte* p = Visible) hash = hash * 31 + HashCodeUtils.GetArrayHashCode(p, 1152);
+        fixed (Byte* p = Explored) hash = hash * 31 + HashCodeUtils.GetArrayHashCode(p, 1152);
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (FogGrid*)ptr;
+        serializer.Stream.SerializeBuffer(&p->Explored[0], 1152);
+        serializer.Stream.SerializeBuffer(&p->Visible[0], 1152);
     }
   }
   [StructLayout(LayoutKind.Explicit)]
@@ -1575,6 +1598,50 @@ namespace Quantum {
     }
   }
   [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct Fog : Quantum.IComponentSingleton {
+    public const Int32 SIZE = 9248;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(32)]
+    [FramePrinter.FixedArrayAttribute(typeof(FogGrid), 4)]
+    private fixed Byte _Grids_[9216];
+    [FieldOffset(8)]
+    public FP Cell;
+    [FieldOffset(16)]
+    public FP MinX;
+    [FieldOffset(24)]
+    public FP MinZ;
+    [FieldOffset(0)]
+    public Int32 NextUpdateFrame;
+    [FieldOffset(4)]
+    public Int32 Revision;
+    public readonly FixedArray<FogGrid> Grids {
+      get {
+        fixed (byte* p = _Grids_) { return new FixedArray<FogGrid>(p, 2304, 4); }
+      }
+    }
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 12653;
+        hash = hash * 31 + HashCodeUtils.GetArrayHashCode(Grids);
+        hash = hash * 31 + Cell.GetHashCode();
+        hash = hash * 31 + MinX.GetHashCode();
+        hash = hash * 31 + MinZ.GetHashCode();
+        hash = hash * 31 + NextUpdateFrame.GetHashCode();
+        hash = hash * 31 + Revision.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (Fog*)ptr;
+        serializer.Stream.Serialize(&p->NextUpdateFrame);
+        serializer.Stream.Serialize(&p->Revision);
+        FP.Serialize(&p->Cell, serializer);
+        FP.Serialize(&p->MinX, serializer);
+        FP.Serialize(&p->MinZ, serializer);
+        FixedArray.Serialize(p->Grids, serializer, Statics.SerializeFogGrid);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct LandingCraft : Quantum.IComponent {
     public const Int32 SIZE = 112;
     public const Int32 ALIGNMENT = 8;
@@ -1870,6 +1937,7 @@ namespace Quantum {
     public const Int32 MAX_PROPOSALS = 12;
     public const Int32 MAX_MODULES = 3;
     public const Int32 MAX_QUEUE = 5;
+    public const Int32 FOG_BYTES = 1152;
   }
   public unsafe partial class Frame {
     partial void AllocGen() {
@@ -1905,6 +1973,8 @@ namespace Quantum {
       BuildSignalsArrayOnComponentRemoved<Quantum.Diplomacy>();
       BuildSignalsArrayOnComponentAdded<Quantum.Drone>();
       BuildSignalsArrayOnComponentRemoved<Quantum.Drone>();
+      BuildSignalsArrayOnComponentAdded<Quantum.Fog>();
+      BuildSignalsArrayOnComponentRemoved<Quantum.Fog>();
       BuildSignalsArrayOnComponentAdded<Quantum.LandingCraft>();
       BuildSignalsArrayOnComponentRemoved<Quantum.LandingCraft>();
       BuildSignalsArrayOnComponentAdded<MapEntityLink>();
@@ -1975,6 +2045,7 @@ namespace Quantum {
     public static FrameSerializer.Delegate SerializeProductionOrder;
     public static FrameSerializer.Delegate SerializeAllianceProposal;
     public static FrameSerializer.Delegate SerializeRelation;
+    public static FrameSerializer.Delegate SerializeFogGrid;
     public static FrameSerializer.Delegate SerializeBotState;
     public static FrameSerializer.Delegate SerializePlayerState;
     public static FrameSerializer.Delegate SerializeInput;
@@ -1983,6 +2054,7 @@ namespace Quantum {
       SerializeProductionOrder = Quantum.ProductionOrder.Serialize;
       SerializeAllianceProposal = Quantum.AllianceProposal.Serialize;
       SerializeRelation = (v, s) => {{ s.Stream.Serialize((Byte*)v); }};
+      SerializeFogGrid = Quantum.FogGrid.Serialize;
       SerializeBotState = Quantum.BotState.Serialize;
       SerializePlayerState = Quantum.PlayerState.Serialize;
       SerializeInput = Quantum.Input.Serialize;
@@ -2030,6 +2102,8 @@ namespace Quantum {
       typeRegistry.Register(typeof(FPQuaternion), FPQuaternion.SIZE);
       typeRegistry.Register(typeof(FPVector2), FPVector2.SIZE);
       typeRegistry.Register(typeof(FPVector3), FPVector3.SIZE);
+      typeRegistry.Register(typeof(Quantum.Fog), Quantum.Fog.SIZE);
+      typeRegistry.Register(typeof(Quantum.FogGrid), Quantum.FogGrid.SIZE);
       typeRegistry.Register(typeof(FrameMetaData), FrameMetaData.SIZE);
       typeRegistry.Register(typeof(FrameTimer), FrameTimer.SIZE);
       typeRegistry.Register(typeof(HingeJoint), HingeJoint.SIZE);
@@ -2104,7 +2178,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(Quantum._globals_), Quantum._globals_.SIZE);
     }
     static partial void InitComponentTypeIdGen() {
-      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 14)
+      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 15)
         .AddBuiltInComponents()
         .Add<Quantum.Barricade>(Quantum.Barricade.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Building>(Quantum.Building.Serialize, null, null, ComponentFlags.None)
@@ -2114,6 +2188,7 @@ namespace Quantum {
         .Add<Quantum.CoverSpot>(Quantum.CoverSpot.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Diplomacy>(Quantum.Diplomacy.Serialize, null, null, ComponentFlags.Singleton)
         .Add<Quantum.Drone>(Quantum.Drone.Serialize, null, null, ComponentFlags.None)
+        .Add<Quantum.Fog>(Quantum.Fog.Serialize, null, null, ComponentFlags.Singleton)
         .Add<Quantum.LandingCraft>(Quantum.LandingCraft.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.MissileStrike>(Quantum.MissileStrike.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.ResourceNode>(Quantum.ResourceNode.Serialize, null, null, ComponentFlags.None)

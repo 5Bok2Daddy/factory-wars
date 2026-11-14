@@ -359,6 +359,52 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.Fog))]
+  public unsafe partial class FogPrototype : ComponentPrototype<Quantum.Fog> {
+    [ArrayLengthAttribute(4)]
+    public Quantum.Prototypes.FogGridPrototype[] Grids = new Quantum.Prototypes.FogGridPrototype[4];
+    public FP Cell;
+    public FP MinX;
+    public FP MinZ;
+    public Int32 NextUpdateFrame;
+    public Int32 Revision;
+    partial void MaterializeUser(Frame frame, ref Quantum.Fog result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.Fog component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.Fog result, in PrototypeMaterializationContext context = default) {
+        for (int i = 0, count = PrototypeValidator.CheckLength(Grids, 4, in context); i < count; ++i) {
+          this.Grids[i].Materialize(frame, ref *result.Grids.GetPointer(i), in context);
+        }
+        result.Cell = this.Cell;
+        result.MinX = this.MinX;
+        result.MinZ = this.MinZ;
+        result.NextUpdateFrame = this.NextUpdateFrame;
+        result.Revision = this.Revision;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.FogGrid))]
+  public unsafe partial class FogGridPrototype : StructPrototype {
+    [ArrayLengthAttribute(1152)]
+    public Byte[] Visible = new Byte[1152];
+    [ArrayLengthAttribute(1152)]
+    public Byte[] Explored = new Byte[1152];
+    partial void MaterializeUser(Frame frame, ref Quantum.FogGrid result, in PrototypeMaterializationContext context);
+    public void Materialize(Frame frame, ref Quantum.FogGrid result, in PrototypeMaterializationContext context = default) {
+        for (int i = 0, count = PrototypeValidator.CheckLength(Visible, 1152, in context); i < count; ++i) {
+          result.Visible[i] = this.Visible[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(Explored, 1152, in context); i < count; ++i) {
+          result.Explored[i] = this.Explored[i];
+        }
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.Input))]
   public unsafe partial class InputPrototype : StructPrototype {
     [HideInInspector()]

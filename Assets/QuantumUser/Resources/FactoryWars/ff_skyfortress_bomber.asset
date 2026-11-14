@@ -62,3 +62,5 @@ MonoBehaviour:
   AbilityCount: 5
   AbilityCooldownSeconds:
     RawValue: 2949120
+  SightRange:
+    RawValue: 917504

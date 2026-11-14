@@ -88,3 +88,5 @@ MonoBehaviour:
   Defensive: 1
   NeedsWater: 0
   GarrisonCapacity: 0
+  SightRange:
+    RawValue: 524288

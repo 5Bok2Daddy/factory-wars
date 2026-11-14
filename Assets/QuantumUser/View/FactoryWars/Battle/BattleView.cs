@@ -72,6 +72,10 @@ namespace FactoryWars.View {
     readonly List<Actor> _marked = new List<Actor>();
     ViewCatalog _catalog;
     MatchController _controller;
+    FogOverlay _fog;
+    /// <summary>시험용: 지금 안개 판.</summary>
+    public FogOverlay Fog => _fog;
+    static bool FactoryWars_FogOn(Frame frame) => Quantum.FactoryWars.FogSystem.Enabled(frame);
 
     public WorldView World { get; private set; }
     public BattlefieldView Field { get; private set; }
@@ -265,6 +269,14 @@ namespace FactoryWars.View {
       World.Update(frame, dt);
       Field.Update(frame, dt);
       City.Update(frame, _controller != null ? _controller.Player : PlayerRef.None, dt);
+      // 항목 34-A: 전장의 안개 판(안개가 꺼져 있으면 만들지 않는다).
+      if (FactoryWars_FogOn(frame)) {
+        _fog ??= new FogOverlay(_stage, frame);
+        _fog.Refresh(frame, _controller != null ? _controller.Player : PlayerRef.None);
+      } else if (_fog != null) {
+        _fog.Destroy();
+        _fog = null;
+      }
       if (_signals.Count > 0 && Time.time >= _signalAt) {
         _signalAt = Time.time + 0.18f / Mathf.Max(0.35f, GraphicsQuality.FxScale);
         _signals.RemoveAll(s => Time.time > s.Until || Field.CrateNear(s.Position));
@@ -702,6 +714,12 @@ namespace FactoryWars.View {
         actor.View.SetYaw(180f);
       }
 
+      // 항목 34-A: 안개 속 적 건물은 그리지 않는다(마지막으로 본 잔상은 아직 없다).
+      var buildingViewer = _controller != null ? _controller.Player : PlayerRef.None;
+      var buildingSeen = buildingViewer.IsValid == false || FactoryWarsUtil.IsVisibleTo(frame, buildingViewer, entity);
+      if (actor.View.gameObject.activeSelf != buildingSeen) {
+        actor.View.gameObject.SetActive(buildingSeen);
+      }
       var state = frame.Global->Players.GetPointer(building->Owner);
       var powered = state->Outage == false;
       if (state->ColorIndex != actor.Color || powered != actor.Powered) {

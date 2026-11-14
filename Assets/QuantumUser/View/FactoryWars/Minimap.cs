@@ -61,6 +61,40 @@ namespace FactoryWars.View {
       GetComponent<RawImage>().texture = _texture;
     }
 
+    byte[] _fogCells;
+    int _fogRevision = -1;
+    int _fogViewer = -2;
+
+    /// <summary>안개를 미니맵에도 입힌다. 격자 알파는 갱신 번호가 바뀔 때만 다시 만든다.</summary>
+    unsafe void DrawFog(Frame frame, PlayerRef viewer) {
+      var fog = frame.Unsafe.GetPointerSingleton<Quantum.Fog>();
+      if (_fogCells == null) {
+        _fogCells = new byte[Quantum.FactoryWars.FogSystem.Size * Quantum.FactoryWars.FogSystem.Size];
+      }
+      if (fog->Revision != _fogRevision || (int)viewer != _fogViewer) {
+        _fogRevision = fog->Revision;
+        _fogViewer = (int)viewer;
+        for (var cell = 0; cell < _fogCells.Length; cell++) {
+          _fogCells[cell] = FogOverlay.CellAlpha(fog, (int)viewer, cell);
+        }
+      }
+      var size = Quantum.FactoryWars.FogSystem.Size;
+      var minX = fog->MinX.AsFloat;
+      var minZ = fog->MinZ.AsFloat;
+      var cellSize = fog->Cell.AsFloat;
+      var dark = new Color32(8, 10, 14, 255);
+      for (var y = 0; y < Size; y++) {
+        var cz = Mathf.FloorToInt((_min.y + (y + 0.5f) / Size * (_max.y - _min.y) - minZ) / cellSize);
+        for (var x = 0; x < Size; x++) {
+          var cx = Mathf.FloorToInt((_min.x + (x + 0.5f) / Size * (_max.x - _min.x) - minX) / cellSize);
+          var alpha = cx < 0 || cx >= size || cz < 0 || cz >= size ? FogOverlay.AlphaOf(false, false) : _fogCells[cz * size + cx];
+          if (alpha > 0) {
+            _pixels[y * Size + x] = Color32.Lerp(_pixels[y * Size + x], dark, alpha / 255f);
+          }
+        }
+      }
+    }
+
     int ToPixel(float value, float min, float max) => Mathf.Clamp((int)((value - min) / (max - min) * Size), 0, Size - 1);
 
     Vector2 ToWorld(int x, int y) {
@@ -100,11 +134,23 @@ namespace FactoryWars.View {
         return;
       }
       Array.Copy(_base, _pixels, _base.Length);
+      // 항목 34-A: 안개가 켜져 있으면 보이지 않는 적은 점으로 찍지 않는다.
+      var fogOn = Quantum.FactoryWars.FogSystem.Enabled(frame);
+      var viewer = fogOn ? (FindAnyObjectByType<MatchController>() is var controller && controller != null ? controller.Player : PlayerRef.None) : PlayerRef.None;
       foreach (var pair in frame.GetComponentIterator<Building>()) {
+        if (fogOn && viewer.IsValid && Quantum.FactoryWars.FactoryWarsUtil.IsVisibleTo(frame, viewer, pair.Entity) == false) {
+          continue;
+        }
         Dot(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3(), 2, Palette.Of(frame, pair.Component.Owner));
       }
       foreach (var pair in frame.GetComponentIterator<Unit>()) {
+        if (fogOn && viewer.IsValid && Quantum.FactoryWars.FactoryWarsUtil.IsVisibleTo(frame, viewer, pair.Entity) == false) {
+          continue;
+        }
         Dot(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3(), 1, Palette.Of(frame, pair.Component.Owner));
+      }
+      if (fogOn && viewer.IsValid) {
+        DrawFog(frame, viewer);
       }
       DrawCity(frame);
       DrawUltimates(frame);

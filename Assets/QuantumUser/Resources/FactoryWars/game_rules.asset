@@ -159,6 +159,12 @@ MonoBehaviour:
     RawValue: 786432
   HighGroundRevealSeconds:
     RawValue: 196608
+  FogOfWar: 0
+  FogUpdateTicks: 5
+  FogHighGroundBonus:
+    RawValue: 262144
+  FogGarrisonBonus:
+    RawValue: 393216
   RoadSpeedMultiplier:
     RawValue: 72089
   FordSpeedMultiplier:

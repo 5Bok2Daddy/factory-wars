@@ -56,5 +56,7 @@ namespace Quantum {
     public bool NeedsWater;
     /// <summary>항목 33 벙커: 보병 분대가 이 수만큼 들어가 안에서 쏜다. 안에 있는 동안은 맞지 않고, 건물이 부서지면 튕겨 나온다.</summary>
     public int GarrisonCapacity;
-  }
+      /// <summary>항목 34: 시야 반경(m).</summary>
+    public FP SightRange;
+}
 }

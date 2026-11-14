@@ -97,6 +97,10 @@ namespace Quantum.FactoryWars {
     /// 같은 고지대에 유닛이 있거나, 가까이 있거나, 최근에 사격했으면 보인다.
     /// </summary>
     public static bool IsVisibleTo(Frame f, PlayerRef player, EntityRef entity) {
+      // 항목 34: 안개가 켜져 있으면 칸이 보여야 한다(아래 고지대 은폐는 "칸이 보임 AND 은폐 아님"으로 그대로 이어진다).
+      if (FogSystem.Enabled(f) && FogSystem.CanSee(f, player, entity) == false) {
+        return false;
+      }
       if (f.Unsafe.TryGetPointer<Unit>(entity, out var unit) == false || unit->Owner == player) {
         return true;
       }

@@ -6,13 +6,15 @@
 #define MAX_PROPOSALS 12
 #define MAX_MODULES 3
 #define MAX_QUEUE 5
+// 항목 34 전장의 안개: 96x96 칸(칸 크기 = 맵 긴 변 / 96, 360m 맵이면 3.75m), 칸마다 1비트.
+#define FOG_BYTES 1152
 
 
 enum Relation : Byte { Enemy, Allied, BreakPending }
 // Hold: 위치 고수(쫓지 않음). Patrol: TargetPosition과 PatrolOrigin 사이를 공격 이동으로 오간다(항목 30).
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget, Hold, Patrol }
 enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce, Attack, Garrison, Upgrade, Research, Ultimate }
-enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce, TierLocked, SizeLimit, Busy }
+enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce, TierLocked, SizeLimit, Busy, NoVision }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
 enum ResourceKind : Byte { Iron, Wood }
@@ -319,6 +321,22 @@ component CityBuilding {
 component SupplyCrate {
     Int32 Seat;
     ResourceCost Reward;
+}
+
+// 항목 34: 플레이어마다 지금 보이는 칸(Visible)과 본 적 있는 칸(Explored). 5틱마다 FogSystem이 다시 만든다.
+struct FogGrid {
+    array<Byte>[FOG_BYTES] Visible;
+    array<Byte>[FOG_BYTES] Explored;
+}
+
+singleton component Fog {
+    array<FogGrid>[MAX_PLAYERS] Grids;
+    FP Cell;
+    FP MinX;
+    FP MinZ;
+    Int32 NextUpdateFrame;
+    // 화면이 안개 텍스처를 다시 올릴지 아는 번호(갱신마다 1 증가).
+    Int32 Revision;
 }
 
 singleton component Diplomacy {

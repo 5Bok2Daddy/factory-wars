@@ -273,6 +273,7 @@ namespace FactoryWars.View {
         case RejectReason.TierLocked: return "기지 단계가 부족합니다";
         case RejectReason.SizeLimit: return "대형 유닛 보유 한도";
         case RejectReason.Busy: return "이미 진행 중입니다";
+        case RejectReason.NoVision: return "시야 없음";
         default: return "할 수 없습니다";
       }
     }
