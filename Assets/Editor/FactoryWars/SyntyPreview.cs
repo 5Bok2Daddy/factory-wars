@@ -24,8 +24,12 @@ namespace FactoryWars.EditorTools {
       var filters = Arg("-previewFilter", "Assets/ExternalAssets/Synty").Split('|');
       var exclude = Arg("-previewExclude", "").Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
       var name = Arg("-previewName", "pack");
-      var prefabs = AssetDatabase.FindAssets("t:Prefab", new[] { Arg("-previewRoot", "Assets/ExternalAssets/Synty") }).Select(AssetDatabase.GUIDToAssetPath)
-        .Where(p => filters.Any(f => p.StartsWith(f, StringComparison.Ordinal)) && exclude.Any(e => p.Contains(e)) == false)
+      var wanted = Arg("-previewNames", "").Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+      var all = AssetDatabase.FindAssets("t:Prefab", new[] { Arg("-previewRoot", "Assets/ExternalAssets/Synty") }).Select(AssetDatabase.GUIDToAssetPath).ToArray();
+      var prefabs = wanted.Length > 0
+        // 파일 이름(확장자 제외)으로 고른다. 순서는 준 순서 그대로(미리보기 번호와 맞춘다).
+        ? wanted.Select(w => all.FirstOrDefault(p => Path.GetFileNameWithoutExtension(p) == w)).Where(p => p != null).Take(96).ToArray()
+        : all.Where(p => filters.Any(f => p.StartsWith(f, StringComparison.Ordinal)) && exclude.Any(e => p.Contains(e)) == false)
         .OrderBy(p => p, StringComparer.Ordinal).Take(96).ToArray();
       var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Game-logs", "assets", "synty"));
       Directory.CreateDirectory(folder);

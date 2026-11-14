@@ -111,6 +111,11 @@ namespace FactoryWars.View {
     [Header("맵 경계")]
     /// <summary>0 고층 블록 벽, 1 층진 바위 절벽과 숲.</summary>
     public int Boundary = 0;
+    /// <summary>항목 36 시가지 장식(길가 엄폐 소품·신호등·맵 가장자리 건물 외벽·수로 둑)을 켠다. 구입한 팩이 없으면 켜도 아무것도 놓이지 않는다.</summary>
+    public bool UrbanDecor;
+    /// <summary>시가지 장식 남김 비율: 품질 낮음·보통(높음은 전부).</summary>
+    public float UrbanDensityLow = 0.4f;
+    public float UrbanDensityMedium = 0.7f;
 
     [Header("바닥 정점 색 (항목 25-1)")]
     /// <summary>true면 바닥 색을 정점마다 정해 부드럽게 섞는다(삼각형 체크무늬 제거). 색은 아래 값이다.</summary>

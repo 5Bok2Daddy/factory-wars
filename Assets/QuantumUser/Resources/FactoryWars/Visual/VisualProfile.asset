@@ -18,6 +18,13 @@ MonoBehaviour:
   MinHeight: 35
   MaxHeight: 140
   UnitScale: 1.2
+  FollowRate: 16
+  VehicleTiltPerAccel: 1.2
+  VehicleMaxTilt: 5
+  AirBankPerTurn: 0.25
+  AirMaxBank: 25
+  AirPitchPerSpeed: 1.5
+  TiltRate: 6
   BuildingBody: 0.78
   PlateScale: 1.05
   PlateHeight: 0.15
@@ -62,24 +69,27 @@ MonoBehaviour:
   ShadeNoise: 0.07
   Dressing: {fileID: 11400000, guid: 4a5414e68bc57034e8dbf72f5d9b1623, type: 2}
   Boundary: 1
+  UrbanDecor: 1
+  UrbanDensityLow: 0.4
+  UrbanDensityMedium: 0.7
   GroundVertexColors: 1
-  GroundGrass: {r: 0.48235294, g: 0.8980392, b: 0.7294118, a: 1}
-  GroundGrassLight: {r: 0.54901963, g: 0.93333334, b: 0.7764706, a: 1}
-  GroundGrassDark: {r: 0.41568628, g: 0.83137256, b: 0.65882355, a: 1}
-  GroundDirt: {r: 0.7607843, g: 0.79607844, b: 0.8509804, a: 1}
-  GroundDirtDark: {r: 0.65882355, g: 0.7019608, b: 0.77254903, a: 1}
+  GroundGrass: {r: 0.38431373, g: 0.40784314, b: 0.44313726, a: 1}
+  GroundGrassLight: {r: 0.41568628, g: 0.4392157, b: 0.4745098, a: 1}
+  GroundGrassDark: {r: 0.3529412, g: 0.3764706, b: 0.4117647, a: 1}
+  GroundDirt: {r: 0.45490196, g: 0.4392157, b: 0.40784314, a: 1}
+  GroundDirtDark: {r: 0.4, g: 0.38431373, b: 0.35686275, a: 1}
   KenneyMilitary: 0
   PaletteLift: 0.9
   WhiteLanes: 1
-  GroundPlaza: {r: 0.67058825, g: 0.7019608, b: 0.8, a: 1}
-  GroundPlazaDark: {r: 0.75686276, g: 0.7882353, b: 0.89411765, a: 1}
-  RoadColor: {r: 0.23529412, g: 0.24313726, b: 0.28235295, a: 1}
+  GroundPlaza: {r: 0.5019608, g: 0.5176471, b: 0.5529412, a: 1}
+  GroundPlazaDark: {r: 0.4509804, g: 0.46666667, b: 0.5019608, a: 1}
+  RoadColor: {r: 0.16470589, g: 0.1764706, b: 0.20784314, a: 1}
   SolidGround: 1
   BackgroundColor: {r: 0.69803923, g: 0.7294118, b: 0.8, a: 1}
   WaterColor: {r: 0.2901961, g: 0.6392157, b: 0.8392157, a: 1}
   CliffTierShade: 0
   PlateauTrees: 0.55
-  TreeDensity: 1
+  TreeDensity: 0.5
   ConiferRatio: 0.6
   AutumnRatio: 0.25
   LeafSet: 1

@@ -18,6 +18,13 @@ MonoBehaviour:
   MinHeight: 62
   MaxHeight: 250
   UnitScale: 1.2
+  FollowRate: 16
+  VehicleTiltPerAccel: 1.2
+  VehicleMaxTilt: 5
+  AirBankPerTurn: 0.25
+  AirMaxBank: 25
+  AirPitchPerSpeed: 1.5
+  TiltRate: 6
   BuildingBody: 0.78
   PlateScale: 1.05
   PlateHeight: 0.15
@@ -62,6 +69,9 @@ MonoBehaviour:
   ShadeNoise: 0.07
   Dressing: {fileID: 0}
   Boundary: 1
+  UrbanDecor: 0
+  UrbanDensityLow: 0.4
+  UrbanDensityMedium: 0.7
   GroundVertexColors: 1
   GroundGrass: {r: 0.35686275, g: 0.44705883, b: 0.2509804, a: 1}
   GroundGrassLight: {r: 0.42352942, g: 0.5058824, b: 0.2901961, a: 1}

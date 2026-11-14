@@ -333,27 +333,37 @@ namespace FactoryWars.View {
     }
 
     /// <summary>물 면, 경사 강변, 땅 위의 모래 띠. 강줄기 하나를 리본으로 잇는다.</summary>
-    public static void River(MeshKit k, List<RiverPoint> path, int seed, Rect land) {
+    public static void River(MeshKit k, List<RiverPoint> path, int seed, Rect land, MeshKit water = null) {
       Vector3 Edge(RiverPoint point, float side, float offset, float y) => Clip(Bank(point, side, offset, y), land);
+      // 항목 36: water를 주면 물 면과 가장자리 거품 띠를 따로 모은다(물 셰이더로 그린다).
+      var surface = water ?? k;
       for (var i = 0; i + 1 < path.Count; i++) {
         var a = path[i];
         var b = path[i + 1];
         if (land.Contains(a.Position) == false && land.Contains(b.Position) == false) {
           continue;
         }
-        k.Paint(Swatch.WaterDeep);
-        k.Quad(Edge(a, -1, SlopeInner, WaterLevel), Edge(a, 1, SlopeInner, WaterLevel), Edge(b, 1, SlopeInner, WaterLevel), Edge(b, -1, SlopeInner, WaterLevel), Vector3.up);
+        surface.Paint(Swatch.WaterDeep);
+        surface.Quad(Edge(a, -1, SlopeInner, WaterLevel), Edge(a, 1, SlopeInner, WaterLevel), Edge(b, 1, SlopeInner, WaterLevel), Edge(b, -1, SlopeInner, WaterLevel), Vector3.up);
+        if (water != null) {
+          surface.Paint(Swatch.White);
+          foreach (var foamSide in new[] { -1f, 1f }) {
+            surface.Quad(Edge(a, foamSide, SlopeInner - 1.3f, WaterLevel + 0.03f), Edge(a, foamSide, SlopeInner, WaterLevel + 0.03f), Edge(b, foamSide, SlopeInner, WaterLevel + 0.03f), Edge(b, foamSide, SlopeInner - 1.3f, WaterLevel + 0.03f), Vector3.up);
+          }
+        }
         foreach (var side in new[] { -1f, 1f }) {
           var middle = (BankY + WaterLevel) * 0.5f;
           var ledge = (BandInner + SlopeInner) * 0.5f;
-          k.Paint(MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.CanyonMid);
+          // 항목 36: 시가지는 흙 둑 대신 콘크리트 제방.
+          var urban = VisualProfile.Current.UrbanDecor;
+          k.Paint(urban ? Swatch.Concrete : MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.CanyonMid);
           k.Quad(Edge(a, side, BandInner, BankY), Edge(a, side, ledge, middle), Edge(b, side, ledge, middle), Edge(b, side, BandInner, BankY), Vector3.up);
-          k.Paint(Swatch.CanyonDark);
+          k.Paint(urban ? Swatch.ConcreteDark : Swatch.CanyonDark);
           k.Quad(Edge(a, side, ledge, middle), Edge(a, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, ledge, middle), Vector3.up);
           if (Folded(path, a, side) || Folded(path, b, side)) {
             continue;
           }
-          k.Paint(MeshKit.Hash(seed, i * 2 + 300 + (side > 0 ? 1 : 0)) < 0.55f ? Swatch.Sand : Swatch.Dirt);
+          k.Paint(urban ? Swatch.Concrete : MeshKit.Hash(seed, i * 2 + 300 + (side > 0 ? 1 : 0)) < 0.55f ? Swatch.Sand : Swatch.Dirt);
           k.Quad(Edge(a, side, BandOuter, BankY), Edge(a, side, BandInner, BankY), Edge(b, side, BandInner, BankY), Edge(b, side, BandOuter, BankY), Vector3.up);
         }
       }
@@ -705,7 +715,7 @@ namespace FactoryWars.View {
     }
 
     /// <summary>언덕·협곡·바위·강·줄무늬를 메쉬 하나로 모은다. 번호는 MapSpec.Terrain의 순서다.</summary>
-    public static void Features(MeshKit k, MapSpec map, bool roads = true) {
+    public static void Features(MeshKit k, MapSpec map, bool roads = true, MeshKit water = null) {
       _sites = map.CaptureSites;
       var profile = VisualProfile.Current;
       var paths = RiverPaths(map);
@@ -722,7 +732,7 @@ namespace FactoryWars.View {
         }
       }
       for (var i = 0; i < paths.Count; i++) {
-        River(k, paths[i], 40 + i, Land(map));
+        River(k, paths[i], 40 + i, Land(map), water);
         RiverRocks(k, paths[i], 70 + i, map);
       }
       if (roads) {

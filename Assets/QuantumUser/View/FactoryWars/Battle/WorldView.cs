@@ -142,6 +142,7 @@ namespace FactoryWars.View {
       if (GroundMaterial() != null) {
         var roads = new MeshKit();
         TerrainKit.Roads(roads, _map);
+        UrbanDecor.Crosswalks(roads, _map);
         if (roads.TriangleCount > 0) {
           var roadMesh = roads.ToMesh("world_roads");
           var uvs = roadMesh.uv;
@@ -158,9 +159,25 @@ namespace FactoryWars.View {
         }
       }
       var features = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
+      // 항목 36: 시가지 모드에서는 물 면을 따로 모아 물 셰이더로 그린다(우리 셰이더가 없으면 지금처럼 한 메쉬).
+      var water = VisualProfile.Current.UrbanDecor && UrbanDecor.WaterMaterial() != null ? new MeshKit() : null;
       Dressing.Begin();
-      TerrainKit.Features(features, _map, GroundMaterial() == null);
+      TerrainKit.Features(features, _map, GroundMaterial() == null, water);
       Dressing.End("world");
+      if (water != null && water.TriangleCount > 0) {
+        var waterMesh = water.ToMesh("world_water");
+        var uvs = waterMesh.uv;
+        var waterColors = new Color[uvs.Length];
+        for (var v = 0; v < uvs.Length; v++) {
+          var swatch = (Swatch)Mathf.Clamp(Mathf.FloorToInt(uvs[v].x * ArtPalette.Size), 0, ArtPalette.CellCount - 1);
+          waterColors[v] = swatch == Swatch.White ? new Color(1f, 0f, 0f, 1f) : new Color(0f, 0f, 0f, 1f);
+        }
+        waterMesh.colors = waterColors;
+        MeshObject(_root, "Water", waterMesh, false).GetComponent<MeshRenderer>().sharedMaterial = UrbanDecor.WaterMaterial();
+      }
+      Dressing.Begin();
+      UrbanDecor.Build(_map);
+      Dressing.End("urban");
       Dressing.Begin();
       Scatter.Fill(_map);
       Dressing.End("scatter");

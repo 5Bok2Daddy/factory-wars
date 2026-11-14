@@ -118,14 +118,18 @@ namespace FactoryWars.View {
       p.KenneyMilitary = false;
       p.PaletteLift = 0.9f;
       p.WhiteLanes = true;
-      p.GroundGrass = new Color32(0x7B, 0xE5, 0xBA, 0xFF);
-      p.GroundGrassLight = new Color32(0x8C, 0xEE, 0xC6, 0xFF);
-      p.GroundGrassDark = new Color32(0x6A, 0xD4, 0xA8, 0xFF);
-      p.GroundDirt = new Color32(0xC2, 0xCB, 0xD9, 0xFF);
-      p.GroundDirtDark = new Color32(0xA8, 0xB3, 0xC5, 0xFF);
-      p.GroundPlaza = new Color32(0xAB, 0xB3, 0xCC, 0xFF);
-      p.GroundPlazaDark = new Color32(0xC1, 0xC9, 0xE4, 0xFF);
-      p.RoadColor = new Color32(0x3C, 0x3E, 0x48, 0xFF);
+      p.UrbanDecor = true;
+      // 항목 36: 청록 잔디 바닥을 시가지 콘크리트·아스팔트 톤으로. 바닥은 중간 회색, 본진·광장은 밝은 보도색, 길은 짙은 아스팔트.
+      // 렌더 값은 이 색의 약 1.4배로 밝아진다(햇빛 1.05 + 환경광). 밝기 245 이상 픽셀 3% 이하가 되도록 낮게 둔다.
+      p.GroundGrass = new Color32(0x62, 0x68, 0x71, 0xFF);
+      p.GroundGrassLight = new Color32(0x6A, 0x70, 0x79, 0xFF);
+      p.GroundGrassDark = new Color32(0x5A, 0x60, 0x69, 0xFF);
+      p.GroundDirt = new Color32(0x74, 0x70, 0x68, 0xFF);
+      p.GroundDirtDark = new Color32(0x66, 0x62, 0x5B, 0xFF);
+      p.GroundPlaza = new Color32(0x80, 0x84, 0x8D, 0xFF);
+      p.GroundPlazaDark = new Color32(0x73, 0x77, 0x80, 0xFF);
+      p.RoadColor = new Color32(0x2A, 0x2D, 0x35, 0xFF);
+      p.TreeDensity = 0.5f;
       p.SolidGround = true;
       p.BackgroundColor = new Color32(0xB2, 0xBA, 0xCC, 0xFF);
       p.WaterColor = new Color32(0x4A, 0xA3, 0xD6, 0xFF);

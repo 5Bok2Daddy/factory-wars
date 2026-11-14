@@ -1766,8 +1766,14 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Conifer
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
+    - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
+    - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
+    - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
+    - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
+    - {fileID: 1200674478224756, guid: 9a825139bd2a13849bb88a515c3f099e, type: 3}
+    Scale: 3.2
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -1780,7 +1786,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Conifer"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -1790,8 +1796,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Autumn
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
+    - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
+    Scale: 2.8
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -1804,7 +1812,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Autumn"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -1814,8 +1822,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Broadleaf
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
+    - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
+    Scale: 3.4
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -1828,7 +1838,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Broadleaf"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -1838,8 +1848,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/TreeSparse
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
+    - {fileID: 1934626129697622, guid: 9ae4763466ac0d64bac66154f0cd7fd9, type: 3}
+    Scale: 2.4
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -1852,7 +1864,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 TreeSparse"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -1862,8 +1874,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Stump
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
+    - {fileID: 1934626129697622, guid: 9ae4763466ac0d64bac66154f0cd7fd9, type: 3}
+    Scale: 1.6
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -1876,7 +1890,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Stump"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -1886,8 +1900,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Bush
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1312355241603112, guid: bbbb24f5f90919b45a46ad0bfc79b609, type: 3}
+    - {fileID: 179988, guid: 5e9f23a0d535d65438771a89191d0f83, type: 3}
+    Scale: 1.0427071
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -1900,7 +1916,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Bush"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -1910,8 +1926,11 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/RockLarge
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1905880004936068, guid: aa510ff3d2aaac5429850d22a2941247, type: 3}
+    - {fileID: 1496012609270802, guid: 4b0ae1d9a12974f4e96ef8b030b8232e, type: 3}
+    - {fileID: 1261351562191764, guid: de34fe54c4230df43ab954ec2a4275b1, type: 3}
+    Scale: 0.7555726
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -1924,7 +1943,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RockLarge"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -1934,8 +1953,11 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/RockSmall
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1884103967180692, guid: 9c99fee505c7d934a8b17115316ac479, type: 3}
+    - {fileID: 1619999450751802, guid: ecf600911ecd2c2439de8c46e0ee296a, type: 3}
+    - {fileID: 1312355241603112, guid: bbbb24f5f90919b45a46ad0bfc79b609, type: 3}
+    Scale: 1.675708
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -1948,7 +1970,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RockSmall"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -1958,7 +1980,15 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Cliff
     Category: 4
-    Prefabs: []
+    Prefabs:
+    - {fileID: 8297608632156406597, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
+    - {fileID: 575081590277342107, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
+    - {fileID: 8792040827848394616, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
+    - {fileID: 3493899947417218082, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
+    - {fileID: 4226899481184644103, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
+    - {fileID: 1085884899669912155, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
+    - {fileID: 7930855639238481562, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
+    - {fileID: 703229651220241652, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -1972,7 +2002,8 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Cliff(\uC0C1\uC790\uD615 \uAC74\uBB3C
+      \uBE14\uB85D)"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -1982,7 +2013,15 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/CitySmall
     Category: 3
-    Prefabs: []
+    Prefabs:
+    - {fileID: 109168, guid: ade248290e90bae40b4a349101c343c8, type: 3}
+    - {fileID: 131012, guid: 694588147c2fd7e41b0105d7054a7f1a, type: 3}
+    - {fileID: 195682, guid: 6e1b6bb6069c8c446bf14668e5eda0b4, type: 3}
+    - {fileID: 192830, guid: 77dd7072ed0a2784d87c474eb9a288b7, type: 3}
+    - {fileID: 113012, guid: 1e70e6b05165f864f8c42dab5a2544f9, type: 3}
+    - {fileID: 165386, guid: 9384e4f7925dd0d47a003b910f826bf8, type: 3}
+    - {fileID: 104518, guid: 045266ddc5d5afd4bbceaaeda75189da, type: 3}
+    - {fileID: 185804, guid: 87e255ee7b2544c45a73880dc218dceb, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -1996,7 +2035,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 CitySmall"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2006,7 +2045,12 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/CityMedium
     Category: 3
-    Prefabs: []
+    Prefabs:
+    - {fileID: 126382, guid: e390f42c7625c914e9082218b571c91a, type: 3}
+    - {fileID: 151176, guid: c498c5a0f7820b142b3b929366f2cf35, type: 3}
+    - {fileID: 198584, guid: f9c5e344bb1131f4f83e34b3f8cae927, type: 3}
+    - {fileID: 143728, guid: ea45161d31d19c540af5f5091648f652, type: 3}
+    - {fileID: 115170, guid: 6c5d6f00dd2f1d34e8b206b956e60329, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -2020,7 +2064,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 CityMedium"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2030,7 +2074,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/CityIndustrial
     Category: 3
-    Prefabs: []
+    Prefabs:
+    - {fileID: 1953947631515658, guid: e927b4c822e05b1458cfdf087756b34a, type: 3}
+    - {fileID: 126382, guid: e390f42c7625c914e9082218b571c91a, type: 3}
+    - {fileID: 182348, guid: a2d22ce70dfdb254e9cf1a761853209a, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -2044,7 +2091,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 CityIndustrial"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2054,7 +2101,9 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/CityTower
     Category: 3
-    Prefabs: []
+    Prefabs:
+    - {fileID: 103440, guid: 4486deaa4d569bc4bb8e381c100ed2b0, type: 3}
+    - {fileID: 144178, guid: 62cc7a41de7e4c847869440070e2f6df, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -2068,7 +2117,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 CityTower"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2078,7 +2127,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/CityGarrison
     Category: 3
-    Prefabs: []
+    Prefabs:
+    - {fileID: 191268, guid: 8fb9d4c1e830a6742bda038e0f8c11a8, type: 3}
+    - {fileID: 154410, guid: 1a6cea8227331c841ba3a0f95dfbe662, type: 3}
+    - {fileID: 143728, guid: ea45161d31d19c540af5f5091648f652, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -2092,7 +2144,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 CityGarrison"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2102,8 +2154,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Container
     Category: 5
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1287357858214794, guid: bb5372a4488a7414abff91d36b3fcdec, type: 3}
+    - {fileID: 1808195246080866, guid: 84a99c98a26b5db42a6ae70961fcf1f0, type: 3}
+    Scale: 1.3288124
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2116,7 +2170,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Container"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2150,8 +2204,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Barrier
     Category: 5
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1517207481617098, guid: 51030280fa354ad4e91ced2c8e3303ce, type: 3}
+    - {fileID: 1581182679889712, guid: 2797a580b9e00f645a93cc2490226781, type: 3}
+    Scale: 1.187326
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2164,7 +2220,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Barrier"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2270,8 +2326,11 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Ruin
     Category: 3
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1744614386529138, guid: ede22754dfff7ab4ebabb7f7ee15a4d2, type: 3}
+    - {fileID: 1492862497905742, guid: ef8b2a52679ee0943ba1434a37ff8245, type: 3}
+    - {fileID: 1852689810406090, guid: a6a50af80667e5449b4b08a1bb9db9d6, type: 3}
+    Scale: 0.6947741
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2284,7 +2343,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Ruin"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2318,8 +2377,11 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Grass
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1490646748009286, guid: b3cdda3cca11aab4b831821407447d27, type: 3}
+    - {fileID: 1435898926375564, guid: 20d4d1d81be647842afbca4b0c65e82d, type: 3}
+    - {fileID: 1129552176155994, guid: dcc4f2b0304bbd04bb61515da38c14d7, type: 3}
+    Scale: 0.67293215
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2332,7 +2394,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Grass"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2342,8 +2404,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Wreck
     Category: 5
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1316948766749552, guid: 1f3a7fa169961a144ab0cb18f336c7b8, type: 3}
+    - {fileID: 1589240936164142, guid: 1722a7e7db835f84e99c793413b77078, type: 3}
+    Scale: 0.99045295
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2356,7 +2420,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Wreck"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2366,8 +2430,12 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Debris
     Category: 5
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1643107067259572, guid: f4c7fd58c660e5047a9b2147546c22d0, type: 3}
+    - {fileID: 1632500757930324, guid: 013fc719613d28b4999acd45d1bbe81c, type: 3}
+    - {fileID: 1812101774410662, guid: b077b1fb4f048d643a5a6a971587b6dd, type: 3}
+    - {fileID: 1312355241603112, guid: bbbb24f5f90919b45a46ad0bfc79b609, type: 3}
+    Scale: 1.0766855
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2380,7 +2448,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Debris"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2414,7 +2482,12 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/RoadProp
     Category: 5
-    Prefabs: []
+    Prefabs:
+    - {fileID: 164056, guid: 06a9858b4309bcf4cbe7ef09ae436c1d, type: 3}
+    - {fileID: 164056, guid: 06a9858b4309bcf4cbe7ef09ae436c1d, type: 3}
+    - {fileID: 118212, guid: 400c967e5d1329c4c9dd5bc47e49d545, type: 3}
+    - {fileID: 188538, guid: f738f6acdbb1d5844bd657732cb05e13, type: 3}
+    - {fileID: 190556, guid: 33b36afb51822b442b3a3f8accf3c199, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -2428,7 +2501,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RoadProp"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2534,8 +2607,9 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/BaseWall
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 159082, guid: cc10ce20cd2faea4ca8cb6505e5861d5, type: 3}
+    Scale: 0.96000004
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2548,7 +2622,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 BaseWall"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2582,8 +2656,10 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/Furniture
     Category: 3
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1174532382986712, guid: 2454dbbdbc43b9b47adf808647c27b47, type: 3}
+    - {fileID: 179172, guid: e4e5d2f7f155681449aca26cbdb2b635, type: 3}
+    Scale: 1.7722251
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2596,7 +2672,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Furniture"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -2774,8 +2850,9 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: dress/GroundPatch
     Category: 4
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 117160, guid: 430d14b744769134e831183525387e01, type: 3}
+    Scale: 0.8454855
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2788,7 +2865,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 GroundPatch"
     TurretPart: 
     BarrelPart: 
     SpinParts: []

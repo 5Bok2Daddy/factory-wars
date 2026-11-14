@@ -64,6 +64,14 @@ namespace FactoryWars.View {
 
     public static int CellCount => Cells.Length;
 
+    /// <summary>항목 36: 시가지에서는 잔디 칸을 콘크리트·아스팔트 칸으로 바꾼다(숲 바닥판, 통과 불가 대지 윗면).</summary>
+    public static Swatch Turf(Swatch swatch) {
+      if (VisualProfile.Current.UrbanDecor == false) {
+        return swatch;
+      }
+      return swatch == Swatch.Grass || swatch == Swatch.GrassLight ? Swatch.ConcreteDark : swatch == Swatch.GrassDark ? Swatch.Asphalt : swatch;
+    }
+
     /// <summary>칸의 기본색(팀·발광 보정 없음).</summary>
     public static Color ColorOf(Swatch swatch) => Cells[(int)swatch].Color;
 
@@ -678,10 +686,10 @@ namespace FactoryWars.View {
 
     public static void Forest(MeshKit kit, float halfLength, float halfWidth, int seed, float remaining, Matrix4x4? toWorld = null) {
       if (Dense(toWorld)) {
-        kit.Paint(Swatch.GrassDark).Chamfer(new Vector3(0, 0.05f, 0), new Vector3(halfLength * 2, 0.1f, halfWidth * 2), 1.4f);
+        kit.Paint(ArtPalette.Turf(Swatch.GrassDark)).Chamfer(new Vector3(0, 0.05f, 0), new Vector3(halfLength * 2, 0.1f, halfWidth * 2), 1.4f);
         kit.Paint(Swatch.ForestFloor).Chamfer(new Vector3(0, 0.09f, 0), new Vector3(Mathf.Max(2f, (halfLength - 2.2f) * 2), 0.16f, Mathf.Max(2f, (halfWidth - 2.2f) * 2)), 1.4f);
       } else {
-        kit.Paint(Swatch.Grass).Box(new Vector3(0, 0.08f, 0), new Vector3(halfLength * 2, 0.16f, halfWidth * 2));
+        kit.Paint(ArtPalette.Turf(Swatch.Grass)).Box(new Vector3(0, 0.08f, 0), new Vector3(halfLength * 2, 0.16f, halfWidth * 2));
       }
       kit.Paint(Swatch.Earth);
       var spots = new List<(Vector3 Position, float Edge, int Id)>();
@@ -702,10 +710,10 @@ namespace FactoryWars.View {
     public static void Grove(MeshKit kit, float radius, int seed, float remaining, Matrix4x4? toWorld = null) {
       var dense = Dense(toWorld);
       if (dense) {
-        kit.Paint(Swatch.GrassDark).Cylinder(new Vector3(0, 0, 0), radius, 0.1f, 20);
+        kit.Paint(ArtPalette.Turf(Swatch.GrassDark)).Cylinder(new Vector3(0, 0, 0), radius, 0.1f, 20);
         kit.Paint(Swatch.ForestFloor).Cylinder(new Vector3(0, 0.04f, 0), Mathf.Max(1.5f, radius - 2.2f), 0.14f, 20);
       } else {
-        kit.Paint(Swatch.Grass).Cylinder(new Vector3(0, 0, 0), radius, 0.16f, 12);
+        kit.Paint(ArtPalette.Turf(Swatch.Grass)).Cylinder(new Vector3(0, 0, 0), radius, 0.16f, 12);
       }
       kit.Paint(Swatch.Earth);
       var spots = new List<(Vector3 Position, float Edge, int Id)>();

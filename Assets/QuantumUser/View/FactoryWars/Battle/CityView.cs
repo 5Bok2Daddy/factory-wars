@@ -283,6 +283,10 @@ namespace FactoryWars.View {
 
     /// <summary>맵 경계 밖을 파괴 불가 고층 건물 벽으로 막는다. 경계 안은 그대로다.</summary>
     void BuildBoundary() {
+      // 항목 36: 시가지 모드는 맵 가장자리를 건물 외벽 열(UrbanDecor.Boundary)로 닫는다. 도시 건물 소품 칸이 비어 있으면 예전 경계를 쓴다.
+      if (VisualProfile.Current.UrbanDecor && Dressing.Has(DressKind.CityTower)) {
+        return;
+      }
       if (VisualProfile.Current.Boundary == 1) {
         BuildRockBoundary();
         return;

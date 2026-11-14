@@ -116,10 +116,15 @@ namespace FactoryWars.View {
 
     // 항목 33 궁극 전력: 상단 오른쪽(아이콘 버튼 아래) 진행 막대. 준비 중·발동 대기인 플레이어(자신·적 모두)와 날아오는 미사일 카운트다운.
     const int MaxUltimateBars = 5;
+    /// <summary>궁극 전력 막대 칠의 최대 불투명도(글자가 비치도록).</summary>
+    public const float UltimateFillAlpha = 0.6f;
     readonly List<(RectTransform Root, RectTransform Fill, Image FillImage, Text Label)> _ultimateBars = new List<(RectTransform, RectTransform, Image, Text)>();
     public int UltimateBars => _ultimateBars.Count(b => b.Root.gameObject.activeSelf);
     public string UltimateBarText(int index) => _ultimateBars.Where(b => b.Root.gameObject.activeSelf).Select(b => b.Label.text).ElementAtOrDefault(index) ?? "";
     public int MinimapUltimateMarks => _minimap.UltimateMarks;
+    /// <summary>시험용: 모든 궁극 전력 막대에서 글자가 칠(Fill)보다 위 칸이고 외곽선이 있으며 칠이 반투명인지.</summary>
+    public bool UltimateTextAboveFill => _ultimateBars.Count > 0 && _ultimateBars.All(b =>
+      b.Label.rectTransform.GetSiblingIndex() > b.Fill.GetSiblingIndex() && b.Label.GetComponent<Outline>() != null && b.Label.color.a > 0.9f && b.Label.color.r > 0.9f && UltimateFillAlpha <= 0.65f);
 
     static float ContextWidth => ContextColumns * Cell + (ContextColumns - 1) * Gap + 2 * Pad;
     static float ContextHeight => ContextColumns * Cell + (ContextColumns - 1) * Gap + 2 * Pad + HeaderHeight;
@@ -283,11 +288,16 @@ namespace FactoryWars.View {
         fill.offsetMax = Vector2.zero;
         fill.GetComponent<Image>().raycastTarget = false;
         var label = Ui.Label("Label", bar, "", theme.FontSmall, TextAnchor.MiddleCenter);
-        label.color = theme.PanelText;
+        // 항목 36-F: 막대의 빨간 칠이 글자를 가리던 문제. 칠은 배경(반투명), 글자는 흰색 + 검은 외곽선으로 항상 위에 또렷하게 보인다.
+        label.color = Color.white;
+        var outline = label.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
+        outline.effectDistance = new Vector2(1.5f, -1.5f);
         label.resizeTextForBestFit = true;
         label.resizeTextMinSize = theme.FontSmall - 8;
         label.resizeTextMaxSize = theme.FontSmall;
         Ui.Stretch(label.rectTransform, 6f);
+        label.rectTransform.SetAsLastSibling();
         bar.GetComponent<Image>().raycastTarget = false;
         bar.gameObject.SetActive(false);
         _ultimateBars.Add((bar, fill, fill.GetComponent<Image>(), label));
@@ -311,6 +321,8 @@ namespace FactoryWars.View {
         bar.Root.gameObject.SetActive(true);
         bar.Label.text = text;
         bar.Fill.anchorMax = new Vector2(Mathf.Clamp01(ratio), 1);
+        // 칠은 반투명: 글자(위 칸)를 가리지 않는다.
+        color.a = Mathf.Min(color.a, UltimateFillAlpha);
         bar.FillImage.color = color;
       }
       foreach (var pair in frame.GetComponentIterator<MissileStrike>()) {

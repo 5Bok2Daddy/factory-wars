@@ -146,7 +146,7 @@ namespace FactoryWars.View {
       // 윗면: 맨 위 고리를 가운데 점으로 덮는다.
       var last = rings[layers];
       var cap = new Vector3(center.x, height, center.y);
-      k.Paint(dark ? Swatch.RockFace : Swatch.Grass);
+      k.Paint(dark ? Swatch.RockFace : ArtPalette.Turf(Swatch.Grass));
       for (var i = 0; i < last.Length; i++) {
         var j = (i + 1) % last.Length;
         var top = height * (0.92f + 0.08f * MeshKit.Hash(seed, 900 + layers - 1));
@@ -299,7 +299,7 @@ namespace FactoryWars.View {
         var radius = ground.Radius.AsFloat + (dressed ? 0.2f : CliffThicknessView);
         const int Sides = 24;
         // 고지대 윗면: 깔끔한 민트 잔디(#7BE5BA)로 덮음
-        k.Paint(Swatch.Grass);
+        k.Paint(ArtPalette.Turf(Swatch.Grass));
         for (var i = 0; i < Sides; i++) {
           var a = Mathf.PI * 2f * i / Sides;
           var b = Mathf.PI * 2f * (i + 1) / Sides;

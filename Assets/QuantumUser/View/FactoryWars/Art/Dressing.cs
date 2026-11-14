@@ -76,6 +76,30 @@ namespace FactoryWars.View {
       return true;
     }
 
+    /// <summary>시가지 장식용: 품질별 남김 비율을 직접 정해 놓는다(낮음·보통에서 해시가 이 값보다 크면 그리지 않는다).</summary>
+    public static bool AddKept(DressKind kind, Vector3 position, int seed, float yaw, float lowKeep, float mediumKeep) {
+      if (_collector == null || Map == null) {
+        return false;
+      }
+      var entry = Map.Get(kind);
+      if (entry == null) {
+        return false;
+      }
+      var (variant, rotation, size) = KenneyAssetMap.Place(entry, seed);
+      rotation = Quaternion.Euler(0f, yaw, 0f);
+      _collector.Add(new Item {
+        Kind = kind,
+        Prefab = variant.Prefab,
+        World = KenneyAssetMap.Matrix(variant, position, rotation, Vector3.one * size),
+        Shadows = entry.Shadows,
+        Keep = MeshKit.Hash(seed, 77),
+        LowKeep = lowKeep,
+        MediumKeep = mediumKeep,
+        Tint = Color.white,
+      });
+      return true;
+    }
+
     /// <summary>정해진 칸(월드 길이 length × width, 회전 yaw)에 맞춰 놓는다. 건물 부지처럼 밖으로 튀어나오면 안 되는 곳에 쓴다.</summary>
     public static bool AddFitted(DressKind kind, Vector3 position, float yaw, float length, float width, int seed, float margin = 0.94f) {
       if (_collector == null || Map == null) {
@@ -308,6 +332,26 @@ namespace FactoryWars.View {
       _instancedDirty = true;
     }
 
+    static readonly Dictionary<Material, Material> InstancedCopies = new Dictionary<Material, Material>();
+
+    /// <summary>인스턴싱이 켜진 머티리얼. 이미 켜져 있으면 그대로, 아니면 원본마다 복사본 하나를 만들어 같이 쓴다.</summary>
+    static Material[] Instanced(Material[] sources) {
+      var result = new Material[sources.Length];
+      for (var i = 0; i < sources.Length; i++) {
+        var source = sources[i];
+        if (source == null || source.enableInstancing) {
+          result[i] = source;
+          continue;
+        }
+        if (InstancedCopies.TryGetValue(source, out var copy) == false || copy == null) {
+          copy = new Material(source) { name = source.name + "_instanced", enableInstancing = true };
+          InstancedCopies[source] = copy;
+        }
+        result[i] = copy;
+      }
+      return result;
+    }
+
     static Part[] PartsOf(GameObject prefab) {
       if (Parts.TryGetValue(prefab, out var parts)) {
         return parts;
@@ -319,7 +363,12 @@ namespace FactoryWars.View {
         if (filter.sharedMesh == null || renderer == null) {
           continue;
         }
-        list.Add(new Part { Mesh = filter.sharedMesh, Materials = KenneyLook.Resolve(renderer.sharedMaterials), Local = filter.transform.localToWorldMatrix });
+        var materials = KenneyLook.Resolve(renderer.sharedMaterials);
+        // 읽을 수 없는 메쉬(구입한 팩)는 GPU 인스턴싱으로 그린다. 팩 머티리얼은 인스턴싱이 꺼져 있으므로 메모리 안에서 복사본을 만들어 쓴다(팩 파일은 그대로).
+        if (filter.sharedMesh.isReadable == false) {
+          materials = Instanced(materials);
+        }
+        list.Add(new Part { Mesh = filter.sharedMesh, Materials = materials, Local = filter.transform.localToWorldMatrix });
       }
       parts = list.ToArray();
       Parts[prefab] = parts;
@@ -417,7 +466,7 @@ namespace FactoryWars.View {
       _instancedDirty = false;
       _batches.Clear();
       InstanceCount = 0;
-      var index = new Dictionary<(Mesh, Material, int, bool, int), Batch>();
+      var index = new Dictionary<(Mesh, Material, int, bool, int, int, int), Batch>();
       foreach (var group in _groups.Values) {
         foreach (var item in group) {
           if (Skip(item)) {
@@ -436,8 +485,11 @@ namespace FactoryWars.View {
               }
               var page = 0;
               Batch batch;
+              // 칸(60m)마다 묶음을 나눈다: RenderMeshInstanced는 묶음 전체를 한 번에 그리므로, 맵 전체를 덮는 묶음은 카메라 밖 개체도 전부 그린다.
+              var cellX = Mathf.FloorToInt(world.m03 / 60f);
+              var cellZ = Mathf.FloorToInt(world.m23 / 60f);
               while (true) {
-                var key = (part.Mesh, material, s, item.Shadows, page);
+                var key = (part.Mesh, material, s, item.Shadows, page, cellX, cellZ);
                 if (index.TryGetValue(key, out batch) == false) {
                   batch = new Batch { Mesh = part.Mesh, Material = material, Submesh = s, Shadows = item.Shadows, Bounds = new Bounds(world.MultiplyPoint3x4(part.Mesh.bounds.center), Vector3.zero) };
                   index[key] = batch;
