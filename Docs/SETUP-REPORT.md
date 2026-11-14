@@ -1,11 +1,86 @@
 # TASK-01 결과 보고서
 
 <!-- 밤사이 요약 시작 -->
-## 다음 단계 (2026-11-14, 에셋 들여오기 끝) — 재개할 때 여기부터
-- 에셋 들여오기(항목 32-0·1·2: 들여오기·칸 배정·애니메이션)는 끝났다. 결과는 바로 아래 "항목 32 결과 — 에셋 팩 적용". 사용자 지시("끝나면 전/후 캡처와 SETUP-REPORT를 쓰고 멈춰")대로 **여기서 멈췄다. 항목 34·35는 시작하지 않았다.** (커밋 e4d38fd 코드·시험, a1b7a1b 보고서, origin main에 push함)
-- 다음에 할 일: 사용자가 지시하면 `OVERNIGHT-QUEUE.md` "20:55 이후 순서"의 2번(항목 34) → 3번(항목 35). Kubold 소총·엄폐 애니메이션이나 GUI Pro를 넣어 주면 32의 사격·재장전·사망·엄폐 동작과 UI 교체를 이어서 한다.
-- 이 PC 상태: 팩은 `Game/Assets/ExternalAssets/Synty`(git 제외), 우리 변형·분대·애니메이션 컨트롤러는 `Game/Assets/FactoryWarsArt/Synty`(git 제외). 새 PC에서는 `Game/Docs/ASSET-SWAP.md`의 "항목 32 Synty 팩 적용" 순서대로 한다. 원본이 그대로인지는 `python Tools/pack_hashes.py check`.
+## 다음 단계 (2026-11-14, 항목 36 끝) — 재개할 때 여기부터
+- 사용자 지시(20:15): 순서는 **36 → 34 → 35**. 항목마다 보고서에 "에셋 반영 정리" 표. 36은 끝났다(바로 아래 "항목 36 결과"). **다음은 항목 34**(`NEXT-TASK-34-FOG-SNIPER-SORTIE.md`), 그다음 35.
+- 이 PC 상태: 팩은 `Game/Assets/ExternalAssets/Synty`(git 제외), 우리 틀·변형·컨트롤러는 `Game/Assets/FactoryWarsArt/Synty`(git 제외). 새 PC는 `Game/Docs/ASSET-SWAP.md`의 "항목 32 Synty 팩 적용" → `Tools/Factory Wars/Assets/5. Assign Synty Pack` → `6. Assign Urban Dressing`. 원본 확인은 `python Tools/pack_hashes.py check`.
+- APK는 34·35까지 끝낸 뒤 한 번에 빌드한다(36에서는 빌드 안 함).
 - 측정용 작업 폴더 `FactoryWars/Game-measure`(git worktree)는 34·35 측정에 쓰려고 남겨 두었다.
+
+## 항목 36 결과 — 시가전 배경 + 수로 (2026-11-14, Claude Sonnet 5.5, 구입한 Synty 팩만)
+
+### 한눈에
+- **숲·절벽·청록 바닥·주황 바위를 시가지로 바꿨다.** 바닥은 콘크리트·아스팔트 톤, 숲은 목재 하치장(상자·팔레트·드럼통 더미), 통과 불가 대지는 상자형 건물 블록, 맵 가장자리는 건물 외벽 열, 수로는 콘크리트 제방 + 우리 물 셰이더(흐르는 물결, 가장자리 거품). 전/후 캡처 7장면의 해시가 모두 다르다(`screenshots/urban36/`).
+- **원본 무수정:** 팩 파일 17,438개 해시가 이 항목 내내 그대로다(`Assets_PackFilesUnchanged`). 팩 모델은 칸 데이터(`VisualCatalog` `dress/*`)와 우리 폴더(`Assets/FactoryWarsArt/Synty/Urban`)의 1×1×1 틀(자식 배율만)로만 연결했다. 시뮬레이션·NavMesh·지형 판정·건설 부지·수로 영역(`WaterNavMesh`, `WaterGate*`)은 바꾸지 않았다(화면 전용).
+- **전략 미사일 경고 막대 글자 가림(36-F)을 고쳤다.** 칠은 반투명(최대 0.6), 글자는 흰색+검은 외곽선, 글자는 칠보다 위 칸(`Hud_WarningTextNotCovered`).
+- **못한 것(아래 "하지 않은 것"):** 신호등, 수문 열림 거품 효과(`FX_Waterfall_Foam`), 팩 다리 모델 교체, 부두·보트 묶음, 참고 그림 나란히 비교 한 장. 장식 삼각형은 보통 품질 십자로 시점에서 예산(20만)을 넘는다(아래 3절).
+
+### 1. 단계별 결과 (증거)
+| 단계 | 한 일 | 증거 |
+| --- | --- | --- |
+| 36-A 바닥·경계 | 바닥 색을 콘크리트·아스팔트 톤으로(`VisualPresets`, 렌더 값이 1.4배로 밝아지는 것을 보고 낮게 잡음: 밝기 245 이상 픽셀 0.3%, 한도 3%). 잔디 칸을 쓰던 숲 바닥판·통과 불가 대지 윗면·고지대 윗면은 콘크리트·아스팔트 칸(`ArtPalette.Turf`). 숲 나무 → 목재 하치장. 맵 가장자리는 강이 그려지는 땅(`Land`) 바깥에 건물 외벽 열(사무 건물·아파트 12.5m 간격, 강 위는 건너뜀). | `urban36/*_after.png`, `Urban_PropsStayOffWalkableAndPlots`(가장자리 건물 20개 이상, 모두 경기장 밖) |
+| 36-B 도로망 | 도로 메쉬는 그대로(차선·연석). 길이 만나는 교차로를 찾아 갈래마다 횡단보도 줄무늬를 깔았다(길이 실제로 뻗은 갈래만). 길가 가로등·소화전·쓰레기통·고깔은 기존 `RoadProp` 칸으로 팩 모델. NavMesh·콜라이더 없음 | `Urban_RoadsFollowPaths`, `urban36/crossroads_after.png`, `overview_after.png` |
+| 36-C 시가지 건물·엄폐 소품 | 도시 건물 5종(`CitySmall/Medium/Industrial/Tower/Garrison`)을 팩의 가게·아파트·사무·역 모델로(칸 크기에 맞춰 늘어나는 `Fit`, 무너지는 연출은 기존 코드 그대로). 길가 12m마다 42% 확률로 컨테이너·방벽·잔해·폐차를 비스듬히 놓았다(엄폐 시설이 아닌 장식임이 보이게). 본진·건물 부지·자원지·점령지·보급 낙하 자리·다리·물 위는 피한다 | `Urban_PropsStayOffWalkableAndPlots`(길 위 1.5m, 본진 2m, 도시 부지 2.5m, 자원지 4m, 다리 3m, 물가 7m 안에 0개) |
+| 36-D 수로 | 둑을 흙 → 콘크리트 제방. 물 면을 따로 모아 우리 셰이더 `FactoryWars/UrbanWater`로 그린다(공용 머티리얼 1개, 월드 좌표 노이즈로 천천히 흐르는 청록~파랑, 둑 가장자리 흰 거품 줄무늬가 흐름). 다리·방어 울타리는 시뮬레이션 상태 그대로(기존 `Barrier_*` 시험 + 새 시험) | `Urban_CanalEdgesContinuous`, `Urban_BridgeMatchesSimulationState`, `urban36/canal_after.png` |
+| 36-E 빛·색 | 환경광·해는 그대로(밝은 하늘색 환경광), 바닥을 낮춰 노출 과다 제거 | `urban36/brightness`: 245 이상 픽셀 평균 0.3%(전 장면 한도 3% 이하) |
+| 36-F 버그 | 막대 칠 반투명 + 흰 글자 외곽선, 글자 칸을 칠 위로 | `Hud_WarningTextNotCovered` |
+
+### 2. 전/후 캡처 (증거: `screenshots/urban36/`, `Game-logs/assets/urban/render-stats.csv`, 시험 `CaptureUrban_BeforeAfter`)
+| 장면 | 전 해시 | 후 해시 |
+| --- | --- | --- |
+| 본진 | `a31709e8e021` | `5d147740f4ac` |
+| 중앙 교차로 | `e0f5eb7fe011` | `afdb81e0d833` |
+| 자원지 | `ca6e7989788b` | `acc2d47c7c36` |
+| 수로 | `368f0fb0b71f` | `fa5b2ed779d9` |
+| 수문 | `d38a845bf859` | `dfc37d4d80f5` |
+| 보급 낙하 후보지 | `be5f46d81bd7` | `9ba9b74b9b7d` |
+| 맵 전체 | `5f4e3527990f` | `eceb0f535ad7` |
+"전"은 시가지 칸을 끄고(`VisualCatalog` 꺼짐) 옛 바닥 색·시가지 장식을 끈 같은 장면이다.
+
+### 3. 성능 (증거: `render-stats.csv`)
+| 시점 | 품질 | 보이는 렌더러×머티리얼(호출 추정) 전 → 후 | 장식 묶음 수 후 | 장식 삼각형 상한 후 |
+| --- | --- | --- | --- | --- |
+| 본진 | 높음 / 보통 / 낮음 | 90 → 154 / 130 / 123 | 55 / 40 / 34 | 16만 / 12.6만 / 9.6만 |
+| 중앙 교차로 | 높음 / 보통 / 낮음 | 144 → 260 / 200 / 152 | 139 / 121 / 95 | 61만 / 53만 / 43만 |
+| 자원지 | 높음 | 100 → 167 | 46 | 21만 |
+| 수로 | 높음 | 75 → 72 | 95 | 38만 |
+| 맵 전체(참고) | 높음 / 보통 / 낮음 | 218 → 329 / 301 / 276 | 444 / 393 / 322 | 204만 / 170만 / 136만 |
+- 장식 예산(보통 품질 150호출·20만 삼각형): **묶음 수는 본진 40·교차로 121로 예산 안**. **삼각형은 본진 12.6만으로 안, 교차로는 53만으로 넘는다.** 이 수치는 "카메라에 걸리는 묶음 칸(60m)의 모든 개체"를 센 상한이라 실제 보이는 삼각형은 그보다 적지만(칸 단위 과대 계산), 예산 안이라고는 주장하지 않는다. 줄이려고 한 것: 목재 하치장을 무거운 드럼통·팔레트 더미(1.4~1.7천 삼각형)에서 가벼운 상자(288)·팔레트(294) 위주로, 사무 건물은 가벼운 2종(3.6천·5.2천)만, 폐차는 가벼운 2종만. 더 줄이려면 하치장 밀도(`VisualProfile.TreeDensity` 0.5)나 가장자리 건물 간격을 키우면 된다.
+- 한 가지를 고쳤다: `RenderMeshInstanced`는 묶음 전체를 한 번에 그려 맵 전체를 덮는 묶음이면 카메라 밖 개체도 그렸다. 묶음을 60m 칸으로 나눠 컬링이 되게 했다(맵 전체 장식 삼각형 540만 → 204만).
+- 팩 머티리얼은 인스턴싱이 꺼져 있어 메모리 안에서 복사본(`*_instanced`)을 만들어 쓴다(팩 파일은 그대로, 원본마다 1개 공유).
+
+### 4. 시험 (증거: `Game-logs/t34/*.xml`)
+| 시험 | 확인하는 것 | 결과 |
+| --- | --- | --- |
+| `Urban_PropsStayOffWalkableAndPlots` | 길가 장식이 길 위·본진·도시 건물 부지·자원지·다리·물가에 없고, 맵 가장자리 건물이 20개 이상이며 모두 경기장 밖 | 통과 |
+| `Urban_RoadsFollowPaths` | 길이 만나는 교차로가 있고 두 길이 닿으며, 교차로마다 횡단보도 줄무늬 | 통과 |
+| `Urban_CanalEdgesContinuous` | 강줄기마다 물 면+거품 띠(양쪽)가 구간마다 한 벌, 양쪽 둑 면이 이어짐, 물 셰이더 있음 | 통과 |
+| `Urban_BridgeMatchesSimulationState` | 다리 모델 수 = 맵의 다리 수, 휴전 중 울타리가 서고 열리면 내려가 사라짐 | 통과 |
+| `Urban_DensityByQuality` | 장식 남김 비율 낮음 40%·보통 70%(오차 15%p), 그리는 쪽 규칙이 같은 데이터 | 통과 |
+| `Hud_WarningTextNotCovered` | 경고 막대의 글자가 칠 위 칸·외곽선·흰색, 칠은 반투명 | 통과 |
+| `Assets_PackFilesUnchanged` | 팩 17,438개 파일 해시 그대로 | 통과 |
+| `CaptureUrban_BeforeAfter`(따로 `-testCategory CaptureUrban`) | 7장면 전/후 해시 다름, 밝기 245 이상 픽셀 3% 이하, 품질별 수치 | 통과 |
+| 전체 PlayMode | **440개 중 342 통과·0 실패**, 98개는 따로 돌리는 시험(Explicit) | 통과 |
+| 온라인 실서버(`-testCategory Online`) | 2개 통과: 세션 체크섬 5,953회 일치·디싱크 0, 궁극 전력 8,561회 일치·디싱크 0 | 통과 |
+
+기존 시험은 고치지 않았다(바닥 색을 직접 재는 시험은 따로 돌리는 `Lookdev` 시험뿐이라 일반 실행에 영향 없음: 시가지 바닥은 사용자 지시로 옛 참고 이미지 색과 다르다). 금지어 검사: 새 파일 코드·문서에 실존 국가명·무기 상표 0건.
+
+### 5. 하지 않은 것
+- **신호등:** 팩 신호등 모델은 머리 부분(0.9m)뿐이고 기둥이 없다. 가로등은 `RoadProp`으로 놓았다. 기둥+머리를 합친 틀을 만들면 가능(승인 대기).
+- **수문 열림·닫힘 때 `FX_Waterfall_Foam`:** 거품 파티클 칸은 연결하지 않았다(수문 모델은 기존 그대로, 둘레를 `Port_Wall`로 꾸미지 않음).
+- **팩 다리 모델(`Bridge_*`) 교체와 부두(`Dock`)·보트 묶음(`Port_Boat_Tie`):** 다리는 시뮬레이션 상태와 맞추는 검사만 새로 넣고 모델은 기존 Kenney 다리를 유지했다.
+- **참고 그림 나란히 비교 한 장(`36_vs_target.png`):** 합성 도구가 없어 만들지 못했다. 참고 그림은 `concept-art/2026-11-14/target_urban_ui.png`.
+- **보급 낙하 후보지·미사일 경고 UI 전용 캡처:** 낙하 후보지 시점 캡처는 있고(`supply_*`), 미사일 경고 막대는 시험(`Hud_WarningTextNotCovered`)으로 확인했다.
+- **APK:** 이 항목에서는 빌드하지 않았다(34·35까지 끝낸 뒤 한 번에 빌드).
+
+### 6. 에셋 반영 정리 (사용자 지시 20:15: 적용한 것 / 대체한 것 / 빈 슬롯)
+| 구분 | 내용 |
+| --- | --- |
+| **적용한 것(팩 → 칸)** | 목재 하치장 `Conifer/Autumn/Broadleaf/TreeSparse/Stump`(상자·팔레트·드럼통 더미), 덤불 `Bush`·잡초 `Grass`·바위 `RockSmall/RockLarge`(자갈·콘크리트 더미), `GroundPatch`(도로 보수 자국), `Debris`·`Wreck`(잔해·폐차), `Ruin`(폐허), `Furniture`(종이 상자), `Container`(컨테이너), `Barrier`(방벽), `BaseWall`(울타리), `RoadProp`(가로등·소화전·쓰레기통·고깔), 도시 건물 `CitySmall/Medium/Industrial/Tower/Garrison`, `Cliff`(상자형 건물 블록 8종, 우리 폴더 1×1×1 틀) — 24칸 (`Game-logs/assets/urban/dress-slots.csv`에 모델·삼각형) |
+| **우리가 만든 것(팩 대체 아님)** | 물 셰이더 `FactoryWars/UrbanWater`(팩에 물 재질 없음), 횡단보도 줄무늬(도로 메쉬), 콘크리트 제방 색, 시가지 바닥 색, 가장자리 건물 외벽 배치(`UrbanDecor`) |
+| **대체한 것(옛 → 새)** | 숲 나무 → 목재 하치장 / 절벽 슬래브 → 건물 블록 / 청록 잔디 바닥 → 콘크리트·아스팔트 / 흙 둑 → 콘크리트 제방 / 맵 가장자리 바위 절벽·나무 → 건물 외벽 열 / 단색 파란 물 → 흐르는 물 / 도시 건물 Kenney → 팩 건물 / 주황 바위·청록 풀 → 잔해·자갈 |
+| **Kenney 그대로(팩 대체 후보가 있는 빈 슬롯)** | `BridgeDeck`·`BridgePillar`(후보 `Env_Bridge_01/02`, `Bridge_Pillar_01`), `SupplyCrate`(후보 `Crate_Ammo/Medical`, `Prop_Parachute`), `BaseTent`(후보 군용 텐트), `Crane`·`Hopper`·`Tank`·`Chimney`(후보 급수탑·가스탑·주유소), `GarrisonBoard`, `StreetMachine`·`SuburbanProp`(후보 ATM·벤치·버스 정류장), `Prop`, `SpaceProp/SpaceGate/SpaceFloor`(Kenney 우주 키트: 시가지에서 안 쓰임), `TrainTrack/TrainWreck`, `WorkVehicle`, `ScrapSkip`(후보 `Skip_01/02`) |
+| **빈 슬롯 = 나중에 살 것** | 모래주머니 더미(팩에 막사 둘레용 1종뿐 → 콘크리트 방벽·컨테이너로 대체), 수문(댐 게이트) 모델(팩에 없음), 신호등 기둥 일체형, 물 파티클·물결 텍스처, 부두·크레인 같은 항만 설비 일체형, 도시 건물 정면 디테일 조각(가게 정면 `Shop_Cover`·`Apartment_Door` 등은 모듈이라 합치는 작업이 필요) |
 
 ## 항목 32 결과 — 에셋 팩 적용 (2026-11-14, Claude Sonnet 5.5) — 들여오기 · 칸 배정 · 보병 애니메이션 · 전/후 캡처
 
