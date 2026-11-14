@@ -102,6 +102,18 @@ namespace FactoryWars.View {
       return _ring;
     }
 
+    static Mesh _ownerRing;
+
+    /// <summary>소유자 고리: 팀 색 칸(Swatch.Team)으로 칠한 얇은 고리. 팀 머티리얼의 팔레트에서 팀 색이 나온다.</summary>
+    static Mesh OwnerRingMesh() {
+      if (_ownerRing == null) {
+        var kit = new MeshKit().Paint(Swatch.Team);
+        kit.Annulus(Vector3.zero, 1f - RingWidth * 0.8f, 1f, 32);
+        _ownerRing = kit.ToMesh("marker_owner_ring");
+      }
+      return _ownerRing;
+    }
+
     static Mesh BarBackMesh() {
       if (_barBack == null) {
         var kit = new MeshKit().Paint(Swatch.Black);
@@ -144,7 +156,18 @@ namespace FactoryWars.View {
         }
       }
       VisualCatalog.ApplyTeamColor(Model, Slot, color, powered);
+      if (Slot.OwnerRing) {
+        if (_owner == null) {
+          _owner = Marker("OwnerRing", transform, OwnerRingMesh());
+          _owner.transform.localPosition = Vector3.up * (RingLift * 0.6f);
+          var radius = Entry.RingRadius * ScaleOf(Entry) * 0.88f;
+          _owner.transform.localScale = new Vector3(radius, 1, radius);
+        }
+        _owner.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(color, powered);
+      }
     }
+
+    GameObject _owner;
 
     public void SetYaw(float degrees) {
       Turn.localRotation = Quaternion.Euler(0, degrees, 0);
@@ -253,6 +276,17 @@ namespace FactoryWars.View {
       OutlineKit.Refresh(Model);
       if (Entry.Unit == false) {
         return;
+      }
+      // 분대 교체 모델: 품질이 낮으면 분대원을 덜 그린다(스킨드 메시 수 예산, 항목 32).
+      if (Slot != null && Slot.MembersByQuality != null && Slot.MembersByQuality.Length > (int)GraphicsQuality.Current) {
+        var keep = Slot.MembersByQuality[(int)GraphicsQuality.Current];
+        for (var i = 0; keep > 0; i++) {
+          var member = Model.transform.Find("Member" + i);
+          if (member == null) {
+            break;
+          }
+          member.gameObject.SetActive(i < keep);
+        }
       }
       var mode = GraphicsQuality.UnitShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
       foreach (var renderer in Model.GetComponentsInChildren<Renderer>(true)) {

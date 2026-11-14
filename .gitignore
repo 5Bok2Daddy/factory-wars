@@ -43,3 +43,12 @@ Thumbs.db
 # 빌드 직전에 BuildVersionTools가 만든다(항목 30)
 Assets/QuantumUser/Resources/FactoryWars/BuildVersion.txt
 Assets/QuantumUser/Resources/FactoryWars/BuildVersion.txt.meta
+
+# 산 에셋 팩(Synty). 저장소에 올리지 않는다. Tools/import_synty.py로 다시 넣는다(GUID는 팩의 .meta 그대로라 칸 연결이 유지된다).
+/Assets/ExternalAssets/Synty/
+/Assets/ExternalAssets/Synty.meta
+
+# 우리 쪽 에셋 변형·애니메이션 컨트롤러(팩 모델을 가리키므로 팩과 함께 올리지 않는다. Tools/Factory Wars/Assets/5. Assign Synty Pack으로 다시 만든다).
+/Assets/FactoryWarsArt/Synty/
+/Assets/FactoryWarsArt/Synty.meta
+/Assets/FactoryWarsArt.meta

@@ -58,6 +58,22 @@ namespace FactoryWars.View {
     public RealWorldCheck RealWorld = RealWorldCheck.Unchecked;
     /// <summary>후보 프리팹 경로·닮은 실물·변형 내용 등 메모.</summary>
     public string Notes;
+    /// <summary>
+    /// 에셋 팩 모델의 움직이는 부분(항목 32). 팩 파일은 고치지 않으므로, 모델 안 자식 이름에 이 글자가 들어 있는 것을 찾아 화면 코드가 움직인다.
+    /// 포탑(조준 회전), 포신(반동·포구), 돌아가는 부분(회전축은 메쉬가 가장 얇은 축).
+    /// </summary>
+    public string TurretPart;
+    public string BarrelPart;
+    public string[] SpinParts = new string[0];
+    /// <summary>사격 효과 위치. MuzzlePart가 비어 있으면 모델 원점 + MuzzleOffset(모델 좌표).</summary>
+    public string MuzzlePart;
+    public Vector3 MuzzleOffset;
+    /// <summary>품질(낮음·보통·높음)별로 보여 줄 분대원 수. 자식 이름이 Member0, Member1…인 분대 프리팹에만 쓴다. 비어 있으면 모두 보인다.</summary>
+    public int[] MembersByQuality = new int[0];
+    /// <summary>
+    /// 팩 모델은 팀 색을 칠하지 않으므로(사용자 결정 2026-11-14), 소유자를 알아볼 수 있게 바닥에 얇은 팀 색 고리를 둔다(모델 밖, 화면 전용).
+    /// </summary>
+    public bool OwnerRing;
 
     public GameObject Prefab => Prefabs != null && Prefabs.Count > 0 ? Prefabs[0] : null;
     public bool IsFilled => Prefabs != null && Prefabs.Exists(p => p != null);
@@ -229,8 +245,13 @@ namespace FactoryWars.View {
       entry.Prefab = slot.Prefab;
       entry.DisplayScale = scale;
       entry.Center = new Vector2(-offset.x, -offset.z);
-      entry.BarHeight = Mathf.Max(entry.BarHeight * 0.5f, size.y * scale + 0.6f);
+      // 공중 유닛은 모델이 고도만큼 떠 있으므로 체력바도 그 위에 둔다.
+      entry.BarHeight = Mathf.Max(entry.BarHeight * 0.5f, size.y * scale + entry.Altitude + 0.6f);
       entry.MuzzlePart = string.IsNullOrEmpty(entry.MuzzlePart) ? "" : entry.MuzzlePart;
+      // 팩 모델은 지금 모델의 포구·굴뚝 자리를 쓰지 않는다. 슬롯 값으로 바꾼다.
+      entry.MuzzlePart = slot.MuzzlePart ?? "";
+      entry.Muzzle = slot.MuzzleOffset;
+      entry.Smoke = new Vector3[0];
       return true;
     }
 

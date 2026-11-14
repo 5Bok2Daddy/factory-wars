@@ -15,123 +15,183 @@ MonoBehaviour:
   Slots:
   - Id: unit/ff_engineer
     Category: 0
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 1405196265326783271, guid: 28329563bc451014099c824037ab9c28, type: 3}
+    Scale: 1.3
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.00022959709, y: 0.098094344, z: 0.075918466}
+    Size: {x: 2.054722, y: 1.9199368, z: 0.6120258}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 chr_contractor_1 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
   - Id: unit/ff_ranger_squad
     Category: 0
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8384175977983998300, guid: a063c2525494c624187f3d0d7a4971ba, type: 3}
+    Scale: 1.25
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.0018060207, y: 0.09864581, z: -0.046159804}
+    Size: {x: 3.5333877, y: 1.9287113, z: 1.8054066}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 chr_soldier_1+chr_soldier_1+chr_soldier_1 / \uC0C9 \uBCC0\uD615
+      PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000200000003000000
+    OwnerRing: 1
   - Id: unit/ff_skyguard_squad
     Category: 0
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 2374866356338887470, guid: 2838f10fd95e28c4ca42e71ea1d29e39, type: 3}
+    Scale: 1.25
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.0018060207, y: 0.09864581, z: -0.046159804}
+    Size: {x: 3.5333877, y: 1.9287113, z: 1.8054066}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 chr_soldier_1+chr_soldier_1+chr_soldier_1 / \uC0C9 \uBCC0\uD615
+      PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000200000003000000
+    OwnerRing: 1
   - Id: unit/ff_eagle_tank
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 3369196142049433770, guid: 0930c06b8ce542648b89d608a4a3c9de, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.0010695457, z: -1.0690985}
+    Size: {x: 4.0441065, y: 2.830299, z: 9.977934}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 tank_c / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    TurretPart: Turret
+    BarrelPart: Barrel
+    SpinParts: []
+    MuzzlePart: Barrel
+    MuzzleOffset: {x: 0.06443353, y: -0.000000044703484, z: 3.9264102}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/ff_hawk_gunship
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 1122909871716784, guid: b108d85799ddb2148973fd94b0d538d6, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0.00000047683716, z: 1.7168303}
+    Size: {x: 13.629078, y: 4.4202275, z: 17.06274}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 heli_a / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts:
+    - Blades_Main
+    - Blades_Back
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.0941591, z: 7.678233}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/ff_skyfortress_bomber
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 1039083225813436, guid: 62adb5e2e2e9b78458385cff46277ff9, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0.6268501, z: 12.040503}
+    Size: {x: 47.028305, y: 14.898846, z: 48.88918}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 transport_plane / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 10.429192, z: 22.00013}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/ff_scout_boat
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 5730418232418077126, guid: 5667309d8ed277a4c80b69cafd6ad3d9, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.7729803, z: -0.25829124}
+    Size: {x: 3.4457119, y: 3.2280662, z: 8.348417}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 boat / \uC0C9 \uBCC0\uD615 PolygonBattleRoyale_Veh_06"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.2596464, z: 3.7567878}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/ff_artillery_ship
     Category: 0
     Prefabs: []
@@ -149,125 +209,189 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/cf_engineer
     Category: 0
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 4811038256306431610, guid: 390b5984c049c5643ad7692d2a395284, type: 3}
+    Scale: 1.3
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.0013849735, y: 0.10065687, z: 0.036304146}
+    Size: {x: 2.0533376, y: 1.931078, z: 0.5785455}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 chr_contractor_2 / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
   - Id: unit/cf_militia
     Category: 0
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 3256731659770017976, guid: ea4c97398e4d4994cb72009fbfbec33a, type: 3}
+    Scale: 1.25
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.013454199, y: 0.09864581, z: -0.063809305}
+    Size: {x: 3.080708, y: 1.9287112, z: 0.8255027}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 chr_soldier_2+chr_soldier_2 / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000200000002000000
+    OwnerRing: 1
   - Id: unit/cf_flame_squad
     Category: 0
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8446374398307594551, guid: 20de0af48fee9bb43b267c8e036cb6c7, type: 3}
+    Scale: 1.25
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.016000628, y: 0.115370035, z: -0.095878184}
+    Size: {x: 3.0827746, y: 1.9507282, z: 0.84744143}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 chr_bombsuit+chr_bombsuit / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000200000002000000
+    OwnerRing: 1
   - Id: unit/cf_dragonscale_tank
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 5783423610832717387, guid: e9fc862b3c9baf549b152465ef81655d, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 3.2934344, y: 2.9725466, z: 6.603936}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 tank_light / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: Turret
+    BarrelPart: Barrel
+    SpinParts: []
+    MuzzlePart: Barrel
+    MuzzleOffset: {x: 0, y: 0.019771047, z: 2.2164953}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/cf_thunder_aa
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 8392829531420575404, guid: f05378d6dd7b39d4d9e7be279a358349, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.15774262, y: -0, z: -0}
+    Size: {x: 3.6089196, y: 5.536131, z: 6.603936}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 radar_tank / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts:
+    - Radar_Base:Y
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.8752916, z: 2.9717712}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/cf_longwall_mlrs
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 636321772962820799, guid: b2f10a7d2d12ce142afd39b9f42461b9, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.026345849, z: 0.51599693}
+    Size: {x: 3.4850829, y: 3.588183, z: 9.291882}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 rocket_truck / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: _Base
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: Rocket_Battery
+    MuzzleOffset: {x: 0, y: 0.75078666, z: 5.011551}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/cf_scout_boat
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 3015390469760286500, guid: f6e6680a12409254dbd3748d5511a5fa, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.7729803, z: -0.25829124}
+    Size: {x: 3.4457119, y: 3.2280662, z: 8.348417}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 boat / \uC0C9 \uBCC0\uD615 PolygonBattleRoyale_Veh_02"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.2596464, z: 3.7567878}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/cf_artillery_ship
     Category: 0
     Prefabs: []
@@ -285,40 +409,63 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_headquarters
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 4427501052762922456, guid: 338e91990e104a64e8fbab367019220a, type: 3}
+    Scale: 0.559186
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 7.7986426, y: 4.181394, z: 13.948848}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_tent_sandbags / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.3451154, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_headquarters
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8766021350865308475, guid: ac7857d7f13720d41aa83858fdea4575, type: 3}
+    Scale: 0.5381478
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 7.7986426, y: 4.0720387, z: 14.49416}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_tent_entrance / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.257631, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: resource/iron_mine
     Category: 2
     Prefabs: []
@@ -336,6 +483,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: terrain/bridge
     Category: 4
     Prefabs: []
@@ -353,193 +507,288 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_collection_yard
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8866123189610772981, guid: 1638318ededf07d47ae3a8f333165996, type: 3}
+    Scale: 0.53198177
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.0000023841858, y: -0, z: -0}
+    Size: {x: 7.7986374, y: 4.0720387, z: 12.030488}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_tent_open / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.257631, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_supply_depot
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 3549837989587380964, guid: 3b1bc2101811b5c439f623f93207c77c, type: 3}
+    Scale: 0.79339445
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.5618925, z: 2.2145207}
+    Size: {x: 8.066606, y: 5.1260815, z: 6.2549663}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_shed / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 4.1008654, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_barracks
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8353973911569553091, guid: f12fe109a7581ac4986d93aff4386852, type: 3}
+    Scale: 0.47913274
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.00000023841858, y: 0.47663927, z: 5.9664164}
+    Size: {x: 7.4306374, y: 5.140084, z: 13.357468}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_barracks / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 4.112067, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_power_plant
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 1693376908474177033, guid: 5b26788f58616da4c9cd3ba7168fa50b, type: 3}
+    Scale: 0.47319752
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.0000047683716, y: -0, z: 0.000014305115}
+    Size: {x: 14.370302, y: 13.257719, z: 14.370321}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_gas_tower_2 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 10.606175, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_processor
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 9194337270955975060, guid: 230bd4ce560cdbf44bb4c1400f01a1cc, type: 3}
+    Scale: 0.23639876
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.000015258789, y: -0, z: 0.000020980835}
+    Size: {x: 33.841084, y: 10.97223, z: 33.841125}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_gas_tower_1 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 8.777784, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_research_lab
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 4028812005118472124, guid: a081459b0816302428fc8dbfa3ceebb6, type: 3}
+    Scale: 0.8821639
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.10955572, y: -0, z: -0}
+    Size: {x: 3.3158975, y: 4.074279, z: 7.254888}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_control_room / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.259423, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_vehicle_factory
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 3712596169463140328, guid: 350e97fd7a62a4d4a98c4597730fb8af, type: 3}
+    Scale: 0.24823485
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.62191296, z: -0.0000038146973}
+    Size: {x: 30.633259, y: 12.518859, z: 36.25599}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_hangar / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 10.015087, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_ground_tower
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 4436263109387349469, guid: f00dcb092abdecf45a219ed19c21703d, type: 3}
+    Scale: 0.9636346
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.026042938, z: 1.3654652}
+    Size: {x: 3.960774, y: 5.830022, z: 6.6415215}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_guard_tower_2 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 4.6640177, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_air_defense
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 5138757082893701561, guid: 000ac1bbc784a00409723adc7cb2c4d5, type: 3}
+    Scale: 1.2832234
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: 0.26493526}
+    Size: {x: 4.923404, y: 4.0946074, z: 4.98744}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 prop_launcher_2 / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.275686, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_airfield
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 7441147021084800817, guid: 292a3d9bb8912e842997372039f7e386, type: 3}
+    Scale: 0.3368278
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.42906952, y: -0, z: 0.17103481}
+    Size: {x: 9.718409, y: 29.688759, z: 9.349804}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_control_tower / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 23.751007, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_heavy_works
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8896657187960463552, guid: 26fcd1dcf208d8b458b1ab6969f8620c, type: 3}
+    Scale: 0.50424856
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.8036833, y: 0.73602104, z: 3.9488273}
+    Size: {x: 15.865192, y: 5.0265102, z: 10.7958555}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_gas_station / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 4.0212083, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_shipyard
     Category: 1
     Prefabs: []
@@ -557,193 +806,288 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_collection_yard
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 4971612904076242030, guid: 7a7aae9dc6758654790f5b3c5da0f70e, type: 3}
+    Scale: 0.53198177
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.0000023841858, y: -0, z: -0}
+    Size: {x: 7.7986374, y: 4.0720387, z: 12.030488}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_tent_open / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.257631, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_supply_depot
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 4398675562265385864, guid: 5142de4422598594397da49aa9cd71de, type: 3}
+    Scale: 0.79339445
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.5618925, z: 2.2145207}
+    Size: {x: 8.066606, y: 5.1260815, z: 6.2549663}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_shed / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 4.1008654, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_barracks
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 1206177164495889257, guid: 371e37758ce56a54cb57805ec0ecf18a, type: 3}
+    Scale: 0.47913274
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.00000023841858, y: 0.47663927, z: 5.9664164}
+    Size: {x: 7.4306374, y: 5.140084, z: 13.357468}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_barracks / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 4.112067, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_power_plant
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8445157068255495354, guid: 7fa1d92a18e0f2e40bdefdb0635a494f, type: 3}
+    Scale: 0.47319752
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.0000047683716, y: -0, z: 0.000014305115}
+    Size: {x: 14.370302, y: 13.257719, z: 14.370321}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_gas_tower_2 / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 10.606175, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_processor
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8374406734705985807, guid: 0090670e2b1c0884883885e4b98ae7b2, type: 3}
+    Scale: 0.23639876
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.000015258789, y: -0, z: 0.000020980835}
+    Size: {x: 33.841084, y: 10.97223, z: 33.841125}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_gas_tower_1 / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 8.777784, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_research_lab
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 1704556046557797381, guid: bb62ba9d5295f4148b4b7bcc3af002c1, type: 3}
+    Scale: 0.8821639
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.10955572, y: -0, z: -0}
+    Size: {x: 3.3158975, y: 4.074279, z: 7.254888}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_control_room / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.259423, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_vehicle_factory
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 1513397130420029191, guid: 5c6b7860b64b022459bbe9e6fc9ec9d6, type: 3}
+    Scale: 0.24823485
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.62191296, z: -0.0000038146973}
+    Size: {x: 30.633259, y: 12.518859, z: 36.25599}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_hangar / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 10.015087, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_ground_tower
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 7044088077132370354, guid: b7c879aec39b0394cb882bf9c42b2214, type: 3}
+    Scale: 0.9636346
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.026042938, z: 1.3654652}
+    Size: {x: 3.960774, y: 5.830022, z: 6.6415215}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_guard_tower_2 / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 4.6640177, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_air_defense
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 4563994066328498453, guid: 72aebdca33233ba4c92c7f5d4c502641, type: 3}
+    Scale: 1.2832234
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: 0.26493526}
+    Size: {x: 4.923404, y: 4.0946074, z: 4.98744}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 prop_launcher_2 / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.275686, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_airfield
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8711311453239230805, guid: dd018ea29931827458cec3941ba46387, type: 3}
+    Scale: 0.3368278
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.42906952, y: -0, z: 0.17103481}
+    Size: {x: 9.718409, y: 29.688759, z: 9.349804}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_control_tower / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 23.751007, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_heavy_works
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8150870754254268866, guid: 73fd41ac8627e56449cd0551889155ea, type: 3}
+    Scale: 0.50424856
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.8036833, y: 0.73602104, z: 3.9488273}
+    Size: {x: 15.865192, y: 5.0265102, z: 10.7958555}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_gas_station / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 4.0212083, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_shipyard
     Category: 1
     Prefabs: []
@@ -761,380 +1105,567 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/ff_scout_buggy
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 5131002028385628325, guid: 6339bf5bb9e4ec048b43d53440b07be9, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.0032628775, z: -0.11698818}
+    Size: {x: 2.3978348, y: 2.4355946, z: 4.790079}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 buggy / \uC0C9 \uBCC0\uD615 PolygonBattleRoyale_Veh_06"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.7049161, z: 2.1555355}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/ff_field_support
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 2914117935620362299, guid: c7cd5553a405faf4c82c0423c5322405, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: -0.037368774}
+    Size: {x: 3.3412054, y: 2.2348073, z: 5.255519}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 apc / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.564365, z: 2.3649836}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/ff_bulwark_tank
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 5532389567065161608, guid: 50e857af9e0da7c4ba1467621ea54384, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.0011259317, z: -0.7694583}
+    Size: {x: 3.7796276, y: 2.9938588, z: 10.561356}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 tank_a / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    TurretPart: Turret
+    BarrelPart: Barrel
+    SpinParts: []
+    MuzzlePart: Barrel
+    MuzzleOffset: {x: 0.00000009685755, y: 0.023358688, z: 4.2597957}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/cf_scout_bike
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 1447352390356361864, guid: b2868c18f7ba0ea48a16b26912ec4ac8, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.13952422, z: -0.14345908}
+    Size: {x: 0.824131, y: 1.5754669, z: 2.3167338}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bike / \uC0C9 \uBCC0\uD615 PolygonBattleRoyale_Veh_02"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.1028268, z: 1.0425302}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/cf_gale_gunship
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 6778787931164168130, guid: a75c0547adcad574fb80e5c9d656cd31, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.01392293, y: 0.012161255, z: 1.0140619}
+    Size: {x: 7.935976, y: 3.078089, z: 10.372702}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 heli_b / \uC0C9 \uBCC0\uD615 Helicopters_01_C"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts:
+    - Blades_Main
+    - Blades_Back
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.1546624, z: 4.6677155}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/cf_fortress_tank
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 7045301377191269494, guid: e0d39f758a29a334d980c85841eda709, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.0011259317, z: -1.5729933}
+    Size: {x: 4.330599, y: 2.7939706, z: 11.304995}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 tank_b / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: Turret
+    BarrelPart: Barrel
+    SpinParts: []
+    MuzzlePart: Barrel
+    MuzzleOffset: {x: 0, y: 0.01242134, z: 6.103814}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: building/ff_sandbags
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8745671199049712671, guid: 9b900393220998340a09fa1e92012a4a, type: 3}
+    Scale: 0.9306727
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: -0.0000011920929}
+    Size: {x: 5.8022547, y: 2.2176564, z: 3.4399586}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 prop_barrier_2 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.7741251, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_bunker
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 4841154553165498524, guid: eb460aaae2a8e7d46b2bd00d2be22b23, type: 3}
+    Scale: 1.5465959
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.00000023841858, y: -0, z: 0.00000011920929}
+    Size: {x: 2.9647574, y: 2.1243873, z: 2.974274}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 prop_barrier_1 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.6995099, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_medic_tent
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 5583728523141378504, guid: e3513d1c5b9a2e540b0172aac1879af7, type: 3}
+    Scale: 0.72610986
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.011358261, z: -0}
+    Size: {x: 5.937633, y: 2.9014342, z: 8.814094}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_tent_closed / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.3211474, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_repair_bay
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 4758211930238031308, guid: 3ee3f074c7add7b4984aca1df57e01b7, type: 3}
+    Scale: 0.6668281
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.016895533, y: 0.57867575, z: -0}
+    Size: {x: 7.7783027, y: 5.7953763, z: 9.597676}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_tent_shelter / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 4.636301, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_radar
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 724003826605615880, guid: 072ffe8411382a448a80c75e603820a6, type: 3}
+    Scale: 1.2999136
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: 0.7424216}
+    Size: {x: 4.923404, y: 3.79415, z: 4.0324674}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 prop_radar / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.03532, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_helipad
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 4514749824581645605, guid: 85899190e04f5a041b490c8a4e2f8cc8, type: 3}
+    Scale: 0.5822531
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.039574623, y: 0.22649145, z: -0}
+    Size: {x: 10.02902, y: 4.4653563, z: 10.991783}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_tent_cover / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.5722852, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_artillery
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 2988019856844477595, guid: 0021eab0915b1e14bb8a1ce65e893b2c, type: 3}
+    Scale: 1.2851117
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: 0.36503315}
+    Size: {x: 4.923404, y: 3.1663437, z: 4.980112}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 prop_launcher_1 / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.533075, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_sandbags
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 5876377199398469450, guid: 24a252d3808ebf94eb2339250499a13e, type: 3}
+    Scale: 0.9306727
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: -0.0000011920929}
+    Size: {x: 5.8022547, y: 2.2176564, z: 3.4399586}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 prop_barrier_2 / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.7741251, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_bunker
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 9127076477322572481, guid: b046caefa656d7845b02c3bd24177c95, type: 3}
+    Scale: 1.5465959
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 0.00000023841858, y: -0, z: 0.00000011920929}
+    Size: {x: 2.9647574, y: 2.1243873, z: 2.974274}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 prop_barrier_1 / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.6995099, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_medic_tent
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 2242055047471666573, guid: 4db38c9c6251a65428c0690617497f0d, type: 3}
+    Scale: 0.72610986
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.011358261, z: -0}
+    Size: {x: 5.937633, y: 2.9014342, z: 8.814094}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_tent_closed / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.3211474, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_repair_bay
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8824762307464850926, guid: d958eccd72304da4586127df9aa044ad, type: 3}
+    Scale: 0.6668281
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.016895533, y: 0.57867575, z: -0}
+    Size: {x: 7.7783027, y: 5.7953763, z: 9.597676}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_tent_shelter / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 4.636301, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_radar
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 5408711264584412196, guid: f3ead592f4ad3784c9ab1bc6af8a5fac, type: 3}
+    Scale: 1.2999136
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: 0.7424216}
+    Size: {x: 4.923404, y: 3.79415, z: 4.0324674}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 prop_radar / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.03532, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_helipad
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 2896180175658159828, guid: 44353ef4126d67a47be88f8cb23084f6, type: 3}
+    Scale: 0.5822531
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0.039574623, y: 0.22649145, z: -0}
+    Size: {x: 10.02902, y: 4.4653563, z: 10.991783}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_tent_cover / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.5722852, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_artillery
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 8006828839183595928, guid: 43e386c358a0afd4d8564bf2b8a18b17, type: 3}
+    Scale: 1.2851117
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0, z: 0.36503315}
+    Size: {x: 4.923404, y: 3.1663437, z: 4.980112}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 prop_launcher_1 / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.533075, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/ff_stormnest_carrier
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 1499464776196500, guid: acaaf9ebbaefe2744b8efca7ac70d859, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: -0.7757902, z: 1.7350693}
+    Size: {x: 44.03287, y: 12.284981, z: 33.276417}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 cargo_plane / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts:
+    - Prop_0
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 8.599486, z: 14.974387}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/ff_nest_drone
     Category: 0
-    Prefabs: []
+    Prefabs:
+    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
+    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts:
+    - Drone_Prop
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.6789272, z: 5.330518}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: unit/tf_wavecrest_lander
     Category: 0
     Prefabs: []
@@ -1152,40 +1683,63 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/ff_carrier_yard
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 9091997202999759684, guid: 06d78a796b5f2064c8cba2ca2c8dbefd, type: 3}
+    Scale: 0.24823485
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: -0, y: 0.62191296, z: -0.0000038146973}
+    Size: {x: 30.633257, y: 12.518859, z: 36.25599}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_hangar_open / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 10.015087, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/cf_missile_silo
     Category: 1
-    Prefabs: []
-    Scale: 1
-    AutoFit: 1
+    Prefabs:
+    - {fileID: 2864870304363292891, guid: dfc734fc6f3c3fc41b7172ad07f40c54, type: 3}
+    Scale: 0.36691737
+    AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 1
+    PivotOffset: {x: 4.9976363, y: 0.6707268, z: -5.3580203}
+    Size: {x: 10.147841, y: 27.254093, z: 11.111543}
+    TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
     Animator: {fileID: 0}
-    DeathSeconds: 1.5
+    DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 0
-    Notes: 
+    RealWorld: 1
+    Notes: "Synty \uD329 bld_oil_tower / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 21.803274, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: building/tf_assault_dock
     Category: 1
     Prefabs: []
@@ -1203,6 +1757,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Conifer
     Category: 4
     Prefabs: []
@@ -1220,6 +1781,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Autumn
     Category: 4
     Prefabs: []
@@ -1237,6 +1805,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Broadleaf
     Category: 4
     Prefabs: []
@@ -1254,6 +1829,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/TreeSparse
     Category: 4
     Prefabs: []
@@ -1271,6 +1853,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Stump
     Category: 4
     Prefabs: []
@@ -1288,6 +1877,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Bush
     Category: 4
     Prefabs: []
@@ -1305,6 +1901,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/RockLarge
     Category: 4
     Prefabs: []
@@ -1322,6 +1925,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/RockSmall
     Category: 4
     Prefabs: []
@@ -1339,6 +1949,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Cliff
     Category: 4
     Prefabs: []
@@ -1356,6 +1973,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/CitySmall
     Category: 3
     Prefabs: []
@@ -1373,6 +1997,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/CityMedium
     Category: 3
     Prefabs: []
@@ -1390,6 +2021,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/CityIndustrial
     Category: 3
     Prefabs: []
@@ -1407,6 +2045,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/CityTower
     Category: 3
     Prefabs: []
@@ -1424,6 +2069,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/CityGarrison
     Category: 3
     Prefabs: []
@@ -1441,6 +2093,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Container
     Category: 5
     Prefabs: []
@@ -1458,6 +2117,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Crystal
     Category: 2
     Prefabs: []
@@ -1475,6 +2141,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Barrier
     Category: 5
     Prefabs: []
@@ -1492,6 +2165,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Chimney
     Category: 5
     Prefabs: []
@@ -1509,6 +2189,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Tank
     Category: 5
     Prefabs: []
@@ -1526,6 +2213,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Crane
     Category: 5
     Prefabs: []
@@ -1543,6 +2237,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Hopper
     Category: 5
     Prefabs: []
@@ -1560,6 +2261,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Ruin
     Category: 3
     Prefabs: []
@@ -1577,6 +2285,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Prop
     Category: 5
     Prefabs: []
@@ -1594,6 +2309,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Grass
     Category: 4
     Prefabs: []
@@ -1611,6 +2333,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Wreck
     Category: 5
     Prefabs: []
@@ -1628,6 +2357,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Debris
     Category: 5
     Prefabs: []
@@ -1645,6 +2381,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Worker
     Category: 5
     Prefabs: []
@@ -1662,6 +2405,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/RoadProp
     Category: 5
     Prefabs: []
@@ -1679,6 +2429,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/BridgePillar
     Category: 4
     Prefabs: []
@@ -1696,6 +2453,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/BridgeDeck
     Category: 4
     Prefabs: []
@@ -1713,6 +2477,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/SpaceProp
     Category: 5
     Prefabs: []
@@ -1730,6 +2501,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/GarrisonBoard
     Category: 5
     Prefabs: []
@@ -1747,6 +2525,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/BaseWall
     Category: 4
     Prefabs: []
@@ -1764,6 +2549,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/SuburbanProp
     Category: 3
     Prefabs: []
@@ -1781,6 +2573,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/Furniture
     Category: 3
     Prefabs: []
@@ -1798,6 +2597,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/ScrapSkip
     Category: 5
     Prefabs: []
@@ -1815,6 +2621,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/SpaceGate
     Category: 5
     Prefabs: []
@@ -1832,6 +2645,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/SpaceFloor
     Category: 5
     Prefabs: []
@@ -1849,6 +2669,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/BuildIndicator
     Category: 5
     Prefabs: []
@@ -1866,6 +2693,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/RallyFlag
     Category: 5
     Prefabs: []
@@ -1883,6 +2717,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/HardHat
     Category: 5
     Prefabs: []
@@ -1900,6 +2741,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/GarageDoor
     Category: 5
     Prefabs: []
@@ -1917,6 +2765,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/GroundPatch
     Category: 4
     Prefabs: []
@@ -1934,6 +2789,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/BaseTent
     Category: 5
     Prefabs: []
@@ -1951,6 +2813,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/SupplyCrate
     Category: 5
     Prefabs: []
@@ -1968,6 +2837,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/StreetMachine
     Category: 5
     Prefabs: []
@@ -1985,6 +2861,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/WorkVehicle
     Category: 5
     Prefabs: []
@@ -2002,6 +2885,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/TrainTrack
     Category: 4
     Prefabs: []
@@ -2019,6 +2909,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/TrainWreck
     Category: 5
     Prefabs: []
@@ -2036,6 +2933,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress/AnimatedWorker
     Category: 5
     Prefabs: []
@@ -2053,6 +2957,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: fx/muzzle
     Category: 6
     Prefabs: []
@@ -2070,6 +2981,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: fx/impact
     Category: 6
     Prefabs: []
@@ -2087,6 +3005,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: fx/explosion
     Category: 6
     Prefabs: []
@@ -2104,6 +3029,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: fx/flame
     Category: 6
     Prefabs: []
@@ -2121,6 +3053,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: fx/smoke
     Category: 6
     Prefabs: []
@@ -2138,6 +3077,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/ff_sandbags
     Category: 0
     Prefabs: []
@@ -2155,6 +3101,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/ff_bunker
     Category: 0
     Prefabs: []
@@ -2172,6 +3125,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/ff_medic_tent
     Category: 0
     Prefabs: []
@@ -2189,6 +3149,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/ff_repair_bay
     Category: 0
     Prefabs: []
@@ -2206,6 +3173,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/ff_radar
     Category: 0
     Prefabs: []
@@ -2223,6 +3197,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/ff_helipad
     Category: 0
     Prefabs: []
@@ -2240,6 +3221,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/ff_artillery
     Category: 0
     Prefabs: []
@@ -2257,6 +3245,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/cf_sandbags
     Category: 0
     Prefabs: []
@@ -2274,6 +3269,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/cf_bunker
     Category: 0
     Prefabs: []
@@ -2291,6 +3293,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/cf_medic_tent
     Category: 0
     Prefabs: []
@@ -2308,6 +3317,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/cf_repair_bay
     Category: 0
     Prefabs: []
@@ -2325,6 +3341,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/cf_radar
     Category: 0
     Prefabs: []
@@ -2342,6 +3365,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/cf_helipad
     Category: 0
     Prefabs: []
@@ -2359,6 +3389,13 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/cf_artillery
     Category: 0
     Prefabs: []
@@ -2376,4 +3413,11 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 0
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   Enabled: 1

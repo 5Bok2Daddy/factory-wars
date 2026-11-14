@@ -139,7 +139,41 @@ namespace FactoryWars.Tests {
     }
 
     /// <summary>
-    /// 채운 슬롯 검사(팩을 넣은 뒤): 크기·삼각형·그리기 호출 예산, 실존 무기 확인. 빈 슬롯은 지금 모델의 예산만 기록한다.
+    /// 실존 무기 닮음(RealWorld 칸) 검사. 사용자 결정(2026-11-14): 실존 무기를 닮아도 되므로 이 검사는 끈다.
+    /// 시험과 칸은 남겨 두어, 나중에 다시 켜려면 이 값만 true로 바꾼다.
+    /// </summary>
+    const bool CheckRealWorld = false;
+
+    /// <summary>프리팹 자산 안에서 실제로 켜져 있는 렌더러(부모 체인이 모두 활성인 것). 팩 캐릭터는 바꿔 끼우는 메쉬 32개를 꺼 둔 채 들어 있다.</summary>
+    static IEnumerable<Renderer> ActiveRenderers(GameObject prefab) {
+      foreach (var renderer in prefab.GetComponentsInChildren<Renderer>(true)) {
+        var on = renderer.enabled;
+        for (var node = renderer.transform; node != null && on; node = node.parent) {
+          on = node.gameObject.activeSelf;
+        }
+        if (on) {
+          yield return renderer;
+        }
+      }
+    }
+
+    /// <summary>삼각형 수. 읽기 불가 메쉬(팩 FBX)도 인덱스 수로 센다.</summary>
+    static int TrianglesOf(IEnumerable<Renderer> renderers) {
+      var total = 0;
+      foreach (var renderer in renderers) {
+        var mesh = renderer is SkinnedMeshRenderer skinned ? skinned.sharedMesh : renderer.GetComponent<MeshFilter>() != null ? renderer.GetComponent<MeshFilter>().sharedMesh : null;
+        if (mesh == null) {
+          continue;
+        }
+        for (var i = 0; i < mesh.subMeshCount; i++) {
+          total += (int)mesh.GetIndexCount(i) / 3;
+        }
+      }
+      return total;
+    }
+
+    /// <summary>
+    /// 채운 슬롯 검사(팩을 넣은 뒤): 크기·삼각형·그리기 호출 예산. 빈 슬롯은 지금 모델의 예산만 기록한다.
     /// 결과는 Game-logs/assets/swap-check.csv.
     /// </summary>
     [Test]
@@ -147,10 +181,15 @@ namespace FactoryWars.Tests {
       var catalog = Resources.Load<VisualCatalog>(VisualCatalog.ResourcePath);
       Assert.IsNotNull(catalog);
       var view = Resources.Load<ViewCatalog>(ViewCatalog.ResourcePath);
+      // 절차 모델 기준 예산(분대 하나 4000삼각형·6호출). 팩 모델은 부품이 많아 팩 칸은 따로 둔다(분대는 분대원 수만큼).
       const int UnitTriangles = 4000;
       const int BuildingTriangles = 12000;
       const int UnitDrawCalls = 6;
       const int BuildingDrawCalls = 12;
+      const int PackUnitTriangles = 30000;
+      const int PackBuildingTriangles = 30000;
+      const int PackUnitDrawCalls = 60;
+      const int PackBuildingDrawCalls = 20;
       var rows = new List<string> { "Id,Filled,Triangles,DrawCalls,FootprintRatio,RealWorld" };
       var problems = new List<string>();
       foreach (var entry in view.Entries) {
@@ -161,9 +200,10 @@ namespace FactoryWars.Tests {
         if (prefab == null) {
           continue;
         }
-        var triangles = prefab.GetComponentsInChildren<MeshFilter>(true).Where(f => f.sharedMesh != null).Sum(f => f.sharedMesh.triangles.Length / 3)
-          + prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true).Where(s => s.sharedMesh != null).Sum(s => s.sharedMesh.triangles.Length / 3);
-        var draws = prefab.GetComponentsInChildren<Renderer>(true).Sum(r => r.sharedMaterials.Length);
+        var active = ActiveRenderers(prefab).ToArray();
+        var triangles = TrianglesOf(active);
+        var draws = active.Sum(r => r.sharedMaterials.Length);
+        var pack = filled && slot.Notes != null && slot.Notes.StartsWith("Synty");
         var ratio = 1f;
         if (filled) {
           var copy = entry;
@@ -173,17 +213,19 @@ namespace FactoryWars.Tests {
           if (ratio < 0.5f || ratio > 1.6f) {
             problems.Add($"{id}: 모델이 판정 크기의 {ratio:0.00}배");
           }
-          if (slot.RealWorld == RealWorldCheck.Rejected) {
+          if (CheckRealWorld && slot.RealWorld == RealWorldCheck.Rejected) {
             problems.Add($"{id}: 실존 무기와 닮아 사용 불가로 표시됨");
           }
-          if (slot.RealWorld == RealWorldCheck.Unchecked && (slot.Category == VisualCategory.Unit || slot.Category == VisualCategory.Building)) {
+          if (CheckRealWorld && slot.RealWorld == RealWorldCheck.Unchecked && (slot.Category == VisualCategory.Unit || slot.Category == VisualCategory.Building)) {
             problems.Add($"{id}: 실존 무기 닮음 확인 안 함(RealWorld 칸)");
           }
-          if (triangles > (entry.Unit ? UnitTriangles : BuildingTriangles)) {
-            problems.Add($"{id}: 삼각형 {triangles} (예산 {(entry.Unit ? UnitTriangles : BuildingTriangles)})");
+          var triangleBudget = pack ? (entry.Unit ? PackUnitTriangles : PackBuildingTriangles) : (entry.Unit ? UnitTriangles : BuildingTriangles);
+          var drawBudget = pack ? (entry.Unit ? PackUnitDrawCalls : PackBuildingDrawCalls) : (entry.Unit ? UnitDrawCalls : BuildingDrawCalls);
+          if (triangles > triangleBudget) {
+            problems.Add($"{id}: 삼각형 {triangles} (예산 {triangleBudget})");
           }
-          if (draws > (entry.Unit ? UnitDrawCalls : BuildingDrawCalls)) {
-            problems.Add($"{id}: 그리기 호출 {draws} (예산 {(entry.Unit ? UnitDrawCalls : BuildingDrawCalls)})");
+          if (draws > drawBudget) {
+            problems.Add($"{id}: 그리기 호출 {draws} (예산 {drawBudget})");
           }
         }
         rows.Add($"{id},{(filled ? 1 : 0)},{triangles},{draws},{ratio:0.00},{(slot != null ? slot.RealWorld.ToString() : "")}");

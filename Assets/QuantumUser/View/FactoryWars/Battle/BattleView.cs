@@ -79,6 +79,38 @@ namespace FactoryWars.View {
     public BattleFx Fx { get; private set; }
     public IReadOnlyDictionary<EntityRef, Actor> Actors => _actors;
 
+    /// <summary>이름이 같은 자식을, 없으면 이름에 글자가 들어 있는 첫 자식을 찾는다(에셋 팩 모델은 이름이 길어 일부만 적는다).</summary>
+    static Transform FindPart(Transform root, string text) {
+      if (string.IsNullOrEmpty(text)) {
+        return null;
+      }
+      var exact = FindDeep(root, text);
+      if (exact != null) {
+        return exact;
+      }
+      foreach (var child in root.GetComponentsInChildren<Transform>(true)) {
+        if (child.name.Contains(text)) {
+          return child;
+        }
+      }
+      return null;
+    }
+
+    /// <summary>돌리는 부분의 회전축: 자기 메쉬가 가장 얇은 축(날개·프로펠러는 얇은 쪽이 회전축). "이름:X" 꼴로 적으면 그 축을 쓴다.</summary>
+    static Vector3 SpinAxisOf(Transform part, char forced) {
+      switch (forced) {
+        case 'X': return Vector3.right;
+        case 'Y': return Vector3.up;
+        case 'Z': return Vector3.forward;
+      }
+      var filter = part.GetComponent<MeshFilter>();
+      if (filter == null || filter.sharedMesh == null) {
+        return Vector3.up;
+      }
+      var size = filter.sharedMesh.bounds.size;
+      return size.x <= size.y && size.x <= size.z ? Vector3.right : size.y <= size.z ? Vector3.up : Vector3.forward;
+    }
+
     static Transform FindDeep(Transform root, string name) {
       foreach (var child in root.GetComponentsInChildren<Transform>(true)) {
         if (child.name == name) {
@@ -309,10 +341,14 @@ namespace FactoryWars.View {
       var model = view.Model.transform;
       actor.Turret = FindDeep(model, "Turret") ?? FindDeep(model, "Launcher");
       actor.Barrel = FindDeep(model, "Barrel") ?? FindDeep(model, "Guns") ?? FindDeep(model, "Tubes");
+      if (view.Slot != null) {
+        actor.Turret = FindPart(model, view.Slot.TurretPart) ?? actor.Turret;
+        actor.Barrel = FindPart(model, view.Slot.BarrelPart) ?? actor.Barrel;
+      }
       if (actor.Barrel != null) {
         actor.BarrelHome = actor.Barrel.localPosition;
       }
-      actor.Muzzle = FindDeep(model, view.Entry.MuzzlePart) ?? model;
+      actor.Muzzle = (view.Slot != null ? FindPart(model, view.Entry.MuzzlePart) : FindDeep(model, view.Entry.MuzzlePart)) ?? model;
 
       void Spin(string name, Vector3 axis, float speed, bool needsPower) {
         var part = FindDeep(model, name);
@@ -342,6 +378,16 @@ namespace FactoryWars.View {
         Spin("Antenna", Vector3.up, 26f, true);
       } else {
         Spin("Radar", Vector3.up, 80f, false);
+      }
+      if (view.Slot != null && view.Slot.SpinParts != null) {
+        foreach (var entry in view.Slot.SpinParts) {
+          var split = entry.Split(':');
+          foreach (var part in model.GetComponentsInChildren<Transform>(true)) {
+            if (part.name.Contains(split[0])) {
+              actor.Spinners.Add((part, SpinAxisOf(part, split.Length > 1 && split[1].Length > 0 ? split[1][0] : ' '), 1100f, false));
+            }
+          }
+        }
       }
       Swing("Flag", 12f, 2.4f);
       Swing("Crane", 34f, 0.5f);
@@ -493,6 +539,7 @@ namespace FactoryWars.View {
       Animate(actor, dt, true, working);
       if (actor.View.Animation != null) {
         var speed = dt > 0f ? (actor.Position - before).magnitude / dt : 0f;
+        actor.View.Animation.Cover = unit->InCover;
         actor.View.Animation.Set(AnimState(speed, hasTarget, working ? worker->Task : WorkerTask.Idle), speed);
       }
     }

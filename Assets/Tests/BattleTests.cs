@@ -28,6 +28,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Battle_EveryEntityIsDrawnWithItsPrefab() {
+      UseProceduralModels();
       yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal }, seed: 5, truce: -1);
       yield return WaitForBattle();
       yield return WaitFrames(Fps);
@@ -48,6 +49,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Battle_UsesPlayerColorMaterial() {
+      UseProceduralModels();
       yield return StartMatch();
       yield return WaitForBattle();
       var color = PlayerOf(0).ColorIndex;
@@ -70,6 +72,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Battle_OutageSwapsBuildingsButNotUnits() {
+      UseProceduralModels();
       yield return StartMatch(buildings: new[] { (0, "ff_ground_tower", -42, 12) }, stock: Stock(1000, 1000, 0, 0));
       yield return WaitForBattle();
       yield return WaitFor(() => (bool)PlayerOf(0).Outage, 30f, "정전");

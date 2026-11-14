@@ -420,6 +420,10 @@ namespace FactoryWars.EditorTools {
       var count = 0;
       foreach (var guid in AssetDatabase.FindAssets("t:Material", new[] { folder })) {
         var path = AssetDatabase.GUIDToAssetPath(guid);
+        // 구입한 팩(Synty) 원본은 고치지 않는다(항목 32 사용자 결정). 팩 머티리얼은 Shader Graph라 URP에서 바로 그려진다.
+        if (path.StartsWith("Assets/ExternalAssets/Synty", StringComparison.Ordinal)) {
+          continue;
+        }
         var material = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (material == null || NeedsConversion(material) == false) {
           continue;

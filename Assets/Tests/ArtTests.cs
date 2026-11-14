@@ -217,7 +217,8 @@ namespace FactoryWars.Tests {
         var view = ArtView.Create(Catalog(), id, root, 1);
         foreach (var yaw in new[] { 0f, 45f, 90f, 180f, 270f }) {
           view.SetYaw(yaw);
-          var renderers = view.Model.GetComponentsInChildren<Renderer>(true);
+          // 켜져 있는 렌더러만 센다(팩 캐릭터는 바꿔 끼우는 꺼진 메쉬를 잔뜩 갖고 있다).
+          var renderers = view.Model.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled).ToArray();
           var bounds = renderers[0].bounds;
           foreach (var renderer in renderers) {
             bounds.Encapsulate(renderer.bounds);
