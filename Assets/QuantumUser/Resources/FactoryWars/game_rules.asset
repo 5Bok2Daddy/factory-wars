@@ -150,7 +150,34 @@ MonoBehaviour:
   DropIntervalSeconds:
     RawValue: 9830400
   DropWarningSeconds:
+    RawValue: 2293760
+  DropZoneRadius:
+    RawValue: 1966080
+  DropClosingSeconds:
+    RawValue: 655360
+  DropClosingRadius:
+    RawValue: 655360
+  DropFlareRadius:
+    RawValue: 983040
+  DropFlareSeconds:
     RawValue: 1310720
+  DropCaptureRadius:
+    RawValue: 196608
+  DropCaptureSeconds:
+    RawValue: 327680
+  DropRewardWeights:
+  - RawValue: 327680
+  - RawValue: 131072
+  - RawValue: 131072
+  - RawValue: 196608
+  DropReconSeconds:
+    RawValue: 983040
+  DropReconRadius:
+    RawValue: 983040
+  DropHealAmount:
+    RawValue: 3932160
+  DropHealRadius:
+    RawValue: 786432
   HighGroundRangeMultiplier:
     RawValue: 75366
   HighGroundRevealDistance:

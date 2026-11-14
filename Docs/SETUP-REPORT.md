@@ -1,11 +1,60 @@
 # TASK-01 결과 보고서
 
 <!-- 밤사이 요약 시작 -->
-## 다음 단계 (2026-11-14, 항목 36 끝) — 재개할 때 여기부터
-- 사용자 지시(20:15): 순서는 **36 → 34 → 35**. 항목마다 보고서에 "에셋 반영 정리" 표. 36은 끝났다(바로 아래 "항목 36 결과"). **다음은 항목 34**(`NEXT-TASK-34-FOG-SNIPER-SORTIE.md`), 그다음 35.
+## 다음 단계 (2026-11-14, 항목 34 부분 완료) — 재개할 때 여기부터
+- 사용자 지시(20:15): 순서 **36 → 34 → 35**. 36은 끝났다("항목 36 결과"). **34는 A 안개·B 보급 알람까지 끝났고(바로 아래 "항목 34 결과(부분)") C 저격수·D 항공 작전·E 밸런스는 남았다. 35(맵 5종)는 시작하지 않았다**(사용량 한도). 각 항목 보고서 끝에 "에셋 반영 정리" 표가 있다.
+- 다음에 할 일: 34-C 주둔 저격수 → 34-D 항공 작전 → 34-E 밸런스·APK → 35. 안개는 기본 꺼짐이라 켜기 전에 AI 재측정이 필요하다.
 - 이 PC 상태: 팩은 `Game/Assets/ExternalAssets/Synty`(git 제외), 우리 틀·변형·컨트롤러는 `Game/Assets/FactoryWarsArt/Synty`(git 제외). 새 PC는 `Game/Docs/ASSET-SWAP.md`의 "항목 32 Synty 팩 적용" → `Tools/Factory Wars/Assets/5. Assign Synty Pack` → `6. Assign Urban Dressing`. 원본 확인은 `python Tools/pack_hashes.py check`.
-- APK는 34·35까지 끝낸 뒤 한 번에 빌드한다(36에서는 빌드 안 함).
+- APK는 34·35까지 끝낸 뒤 한 번에 빌드한다(지금까지 빌드 안 함).
 - 측정용 작업 폴더 `FactoryWars/Game-measure`(git worktree)는 34·35 측정에 쓰려고 남겨 두었다.
+
+## 항목 34 결과(부분) — 전장의 안개(A) · 보급품 사전 알람(B) 완료, 저격수(C)·항공 작전(D)·AI·밸런스(E) 미착수 (2026-11-14, Claude Sonnet 5.5)
+
+### 한눈에
+- **A 전장의 안개와 B 보급품 사전 알람을 만들고 시험했다. C 주둔 저격수, D 정찰 연동 항공 작전, E 밸런스(AI 20판·CSV 열 추가)·APK는 하지 못했다.** 사용량 한도를 고려해 시뮬레이션 기반(안개)과 그것을 쓰는 가장 작은 기능(보급 알람)까지만 끝내고 멈췄다. C·D는 안개 시야·`SupplyDropStage` 이벤트 위에 얹으면 되도록 구조는 맞춰 두었다(아래 "다음에 할 일").
+- **안개는 기본 꺼짐이다**(`GameRulesSpec.FogOfWar = false`). AI가 전체 상태를 보고 움직이고 사거리 14인 무기(포병·다연장)가 시야 부족으로 달라져서, 켜면 AI 밸런스를 다시 재야 한다(사용자 결정 대기 28번). 시험은 데이터를 잠시 켜서 확인한다.
+- 커밋: `928ca36`(34-1 안개), 이어 34-2(보급 알람·캡처·보고서). 전체 PlayMode 450개 중 351 통과·1 실패(`Naval_BoatCollectsSupplyCrateOnWater`: 낙하 상자가 5초 획득·보상 표로 바뀐 것에 맞춰 시험을 고쳤고, 고친 시험과 안개·낙하 13개가 통과), 98개는 따로 돌리는 시험. 팩 원본 해시 변경 0.
+
+### 1. A 전장의 안개 (증거: `Systems/FogSystem.cs`, `FogOverlay.cs`, 시험 `Fog_*` 6개)
+| 항목 | 한 일 | 증거 |
+| --- | --- | --- |
+| 격자 | `Fog` 싱글턴: 96×96 칸(칸 크기 = 맵 긴 변/96, 360m 맵 3.75m, 4m 칸 지시를 맵 크기에 맞춰 일반화), 플레이어마다 `Visible`(지금 보임)·`Explored`(본 적 있음) 비트 배열, 5틱(0.25초)마다 다시 만듦 | `Fog_VisibleOnlyNearOwnAndAllied`, `Fog_ExploredPersists` |
+| 시야 원천·반경(데이터) | `UnitSpec.SightRange`·`BuildingSpec.SightRange`: 보병 10, 차량·중형 9, 정찰 버기·오토바이 16, 정찰선 18, 공중 14, 건물 8, 레이더 기지 40. 고지대 +4, 진지 주둔 +6(`GameRulesSpec`). 원본은 `FactoryWarsSetup` | 위 시험(8m 보임, 14m 안 보임) |
+| 동맹 시야 공유 | 순서에 상관없이 복사본을 합쳐 공유(팀전 시험) | `Fog_VisibleOnlyNearOwnAndAllied` |
+| 규칙 | **`FactoryWarsUtil.IsVisibleTo` 한 곳**에 건다: 자동 표적·공격 명령·AI·화면이 같은 판정. "칸이 보임 AND 고지대 은폐 아님". 안 보이는 표적 공격 명령은 `RejectReason.NoVision`("시야 없음") | `Fog_AttackRejectedOutsideVision`, `Fog_HighGroundConcealmentStillApplies`(칸이 보여도 은폐면 안 보이고 6m 안이면 보임) |
+| 결정론 | 격자가 상태에 들어 있어 체크섬에 반영된다. 같은 시드로 AI 대 AI 60초를 두 번 돌려 체크섬 일치 | `Fog_DeterministicOnline`(이름과 달리 온라인 실서버가 아니라 같은 시드 두 번 실행. **안개를 켠 실서버 시험은 하지 않았다**) |
+| 화면 | 안개 판: 격자를 96×96 텍스처 한 장으로 올려 땅 위에 반투명 검정(미탐색 0.92, 탐색됨 0.5, 보임 0), 쌍선형으로 가장자리 부드러움(우리 셰이더 `FactoryWars/Fog`). 안개 속 적 유닛·건물과 미니맵 점은 그리지 않고, 미니맵에도 안개를 입힘 | `Fog_ViewHidesUnseenEnemiesAndShowsOverlay`, `screenshots/fog-sniper-sortie/fog_*.png` |
+
+전/후 캡처(`screenshots/fog-sniper-sortie/`, 해시 서로 다름): `fog_before` `c0f15e98901c` → `fog_after` `b364ff4dc9b6` → 이동 뒤 `fog_after_moved` `9aa8dde7819d`.
+
+**알려진 한계(보고서 지시대로):** lockstep이라 모든 클라이언트가 전체 상태를 가진다(맵핵 가능, 대응 안 함). 안개 판은 땅 높이 한 장이라 **높은 건물·하치장·대지는 안개 위로 보인다**. 마지막으로 본 건물 잔상은 아직 없다(안개 속 적 건물은 그냥 안 그린다). 연막 시선 검사·AI의 안개 대응(정찰 먼저 보내기)은 없다.
+
+### 2. B 보급품 사전 알람 (증거: `BattlefieldSystem.cs`, `Drop_*` 4개)
+| 항목 | 한 일 | 증거 |
+| --- | --- | --- |
+| 단계별 공개 | 35초 전 반경 30m 경고 원 → 10초 전 반경 10m → 착지. 이벤트 `SupplyDropStage`(Zone·Closing·Landed·Captured). 원 중심은 **상자 자리마다** 정확한 자리에서 RNG로 반지름 절반 안쪽으로 벗어난 점이라 정확한 자리를 숨긴다. 2인전은 사람이 앉은 자리의 상자만 알린다. 기존 경고(`DropWarningSeconds`)를 20 → 35초로 | `Drop_ZoneAnnouncedBeforeExactPoint`(35초±1.5, 10초±1.5, 착지 전에 상자 없음, 원 중심≠정확한 자리) |
+| 신호탄 | 착지하면 상자 둘레 15m를 **모든 플레이어에게 20초** 보여 준다(안개의 `Flare*`) | `Drop_FlareRevealsToAll`(양쪽 모두 보임, 20초 뒤 꺼짐) |
+| 획득·쟁탈 | 낙하 상자는 3m 안에 5초 머물면 얻는다(지상 유닛, 공병 포함). 적대 관계인 편이 함께 있으면 진행이 멈춘다. 기지 상자는 예전처럼 즉시 | `Drop_ContestedPausesCapture` |
+| 보상 표(데이터) | 가중치 자원 5·긴급 출격권 2·정찰 사진 2·보급 3. 종류는 `frame.RNG`. 정찰 사진은 가장 가까운 적 사령부를 15초, 보급은 12m 안 보병을 60 회복. 긴급 출격권은 `PlayerState.SortieTickets`에 쌓인다(34-D 전까지 쓸 곳 없음) | `Drop_RewardTableDeterministic`(가중치 경계 8곳 + 같은 시드 같은 종류) |
+| 기록 | `PlayerState.DropCaptures`·`DropContests`(밸런스 CSV 열 후보) | 위 시험 |
+
+캡처: 35초 `drop_35s_zone` `2b146b1f4299`, 10초 `drop_10s_closing` `598256b1880c`, 착지 `drop_landed_flare` `2c80f9d2f921`.
+**하지 못한 B 부분:** 화면 밖 가장자리 화살표·남은 초, 경고 원을 안개 위에 그리는 화면, 미니맵 레이더 파동, `AudioCatalog` 칸(`drop_warning` 등)·진동, 알림 탭 → 카메라 이동, AI 경고 대응 확장(정찰 → 급파 → 항공 작전). 지금은 시뮬레이션 이벤트와 기존 알림 문구뿐이다.
+
+### 3. 하지 않은 것 (C·D·E)
+- **C 주둔 저격수:** 유닛·주둔 규칙(`GarrisonKind`)·은신·채굴 교란 장치·탐지·연막·돌입전 전부 미착수. 시험 8개(`Sniper_*`) 없음.
+- **D 항공 작전(Sortie):** 격납 칸 4개, `OrderSortie`, 결정론 비행 궤적, 기총소사·폭격·공수 투하, 대공 격추, AI 우선순위 미착수. 시험 9개(`Sortie_*`, `Ai_ScoutsThenCallsSortie`) 없음.
+- **E:** AI 2인·4인 20판 밸런스와 CSV 열 추가(보급 획득·쟁탈, 저격·교란, 작전, 탐지) 없음. 안개를 켠 AI 판정 영향도 재지 않았다. APK 미빌드.
+- **다음에 할 일:** (1) C는 `CitySystem.TryHost`(진지 주둔 공용 코드)에 `GarrisonKind`를 얹고 저격수 `UnitSpec`(주둔 전 사격 불가)을 추가, 시야는 `FogSystem`의 `Mark` 반경 데이터(26m)로. (2) D는 `OrderSortie` 명령이 `FogSystem.IsVisible`로 목표 칸을 검사하게 하고 궤적은 출격 프레임 기준 FP 누적 거리. (3) 안개를 기본으로 켜기 전에 AI 20판 재측정.
+
+### 4. 에셋 반영 정리 (사용자 지시 20:15)
+| 구분 | 내용 |
+| --- | --- |
+| **적용한 것** | 없음(이번 범위는 시뮬레이션·화면 장치). 안개 판은 우리 셰이더(`FactoryWars/Fog`) |
+| **우리가 만든 것(팩 대체 아님)** | 안개 판 텍스처·셰이더, 미니맵 안개, 시야 반경 데이터 |
+| **기존 모델 그대로** | 보급 상자·낙하 연출은 기존 Kenney `SupplyCrate`(칸 `dress/SupplyCrate`) |
+| **빈 슬롯 = 팩에서 고를 후보** | 보급 낙하산 → 팩 `Prop_Parachute_01`, 상자 → `Prop_Crate_Ammo/Medical`; 주둔 저격수 → 팩 `Ghillie` 캐릭터 + `Wep_Sniper_01`, 가건물 → `Bld_Plywood_Shed_01`, 감시탑 → `Bld_GuardTower_01`; 작전기(전투기·공격기·수송기) → 팩 `Veh_Jet_01/02`, `Veh_Jet_Attach_Bomb_01`, `Veh_TransportPlane_01`(수송기는 폭격기로 이미 연결됨), 낙하 병력 → `Prop_Parachute_01`; 오디오 칸 `drop_warning`·`drop_closing`·`drop_landed`·`drop_captured`(아직 칸 없음) |
+| **빈 슬롯 = 나중에 살 것** | 폭발·기총 연기 FX(팩 FX 폴더 후보 있음), 경고음·레이더 파동 소리(오디오 팩 없음), 안개 위 경고 원 UI(UI 팩) |
 
 ## 항목 36 결과 — 시가전 배경 + 수로 (2026-11-14, Claude Sonnet 5.5, 구입한 Synty 팩만)
 
@@ -3100,4 +3149,8 @@ OVERNIGHT-QUEUE.md 규칙 1에 따라 묻지 않고 기본값으로 진행했다
 | 25 | 32 | 정전이면 건물이 어두워지는 표현(절차 건물은 Off 머티리얼) | 팩 건물은 정전 표현 없음(원본 머티리얼 유지) | 어두운 변형 머티리얼(우리 쪽 파일)을 승인하면 추가 |
 | 26 | 32 | 대형 유닛(중전차·요새 전차)을 키울까 | 키우지 않음(결정). 더 큰 팩 모델(전차 A·B, 10m급)을 고르고, 슬롯 `AutoFit`이 판정 크기(링 반지름)에 맞춘다 | — |
 | 27 | 32 | 팩 파일 이름을 UI에 보여 줄까 | 보여 주지 않음(`Texts`는 가상 이름 그대로) | — |
+| 28 | 34 | 안개를 기본으로 켤까 | 기본 꺼짐(`GameRulesSpec.FogOfWar` false). 켜면 AI(전체 상태를 보고 움직임)와 사거리 14 무기가 시야 부족으로 달라져 AI 밸런스를 다시 재야 한다 | `FactoryWarsSetup`에서 `rules.FogOfWar = true` 후 BuildData, 이어서 AI 2인·4인 20판 재측정 |
+| 29 | 34 | 안개 판이 높은 건물·하치장·대지를 못 가린다 | 땅 높이 한 장만(시차 방지). 안개 속 적 건물은 그리지 않는다 | 건물·소품에 안개 색 틴트를 입히려면 `FogOverlay` 확장 |
+| 30 | 34 | 보급 보상 가중치와 획득 방식 | 자원 5·출격권 2·정찰 사진 2·보급 3, 3m 안 5초(쟁탈 시 정지), 경고 35초(기존 20) | `GameRulesSpec.DropRewardWeights`·`DropCaptureSeconds`·`DropWarningSeconds` |
+| 31 | 34 | 항목 34를 어디까지 하고 멈출까 | A(안개)·B(보급 알람)까지. C(저격수)·D(항공 작전)·E(밸런스)는 사용량 한도로 미착수 | 다음 지시로 C → D → E 순서 |
 <!-- 사용자 결정 대기 끝 -->

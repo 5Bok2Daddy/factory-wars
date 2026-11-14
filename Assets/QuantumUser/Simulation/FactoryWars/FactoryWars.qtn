@@ -21,6 +21,8 @@ enum ResourceKind : Byte { Iron, Wood }
 enum CaptureKind : Byte { Comms, Relay }
 enum PauseReason : Byte { None, Outage }
 // 항목 33 궁극 전력. 종류는 UltimateSpec.Kind, 단계는 PlayerState.UltimatePhase.
+// 항목 34-B 보급품 사전 알람 단계: Zone(35초 전, 넓은 경고 원), Closing(10초 전, 좁은 원), Landed(착지, 신호탄), Captured(획득).
+enum DropPhase : Byte { Zone, Closing, Landed, Captured }
 enum UltimateKind : Byte { Carrier, StrategicMissile, AmphibiousAssault }
 // Preparing: 전용 건물에서 준비 중. Ready: 발동 대기(미사일·상륙). Active: 전장에 있음(항모·상륙정). Cooldown: 재사용 대기.
 enum UltimatePhase : Byte { None, Preparing, Ready, Active, Cooldown }
@@ -68,6 +70,10 @@ struct PlayerState {
     Int32 Captures;
     Int32 CaptureFrames;
     Int32 CratesPicked;
+    // 항목 34-B: 긴급 출격권(항공 작전 즉시 재정비용, 34-D 전까지는 쌓이기만 한다), 낙하 상자 획득·쟁탈 횟수.
+    Int32 SortieTickets;
+    Int32 DropCaptures;
+    Int32 DropContests;
     Int32 HighGroundShots;
     Int32 GarrisonEntries;
     // 항목 30 온라인: 연결이 끊긴 프레임(0이면 연결됨). 끊긴 동안은 봇이 대신 조종한다.
@@ -162,6 +168,8 @@ global {
     Int32 NextDropFrame;
     Int32 DropGroup;
     QBoolean DropAnnounced;
+    // 항목 34-B: 0 = 경고 전, 1 = 구역 공개됨, 2 = 좁혀짐.
+    Int32 DropStage;
     // 도시 건물 붕괴 비트. 번호는 MapSpec.CityBuildings의 순서다.
     array<Int32>[8] CityCollapsed;
     // 항목 32: 맵 엄폐점(바리케이드·도시 건물)을 만들었는지.
@@ -321,6 +329,9 @@ component CityBuilding {
 component SupplyCrate {
     Int32 Seat;
     ResourceCost Reward;
+    // 항목 34-B: 낙하 상자(Seat < 0)는 3m 안에 5초 머물러야 얻는다. 적이 함께 있으면 진행이 멈춘다.
+    FP Progress;
+    QBoolean Contested;
 }
 
 // 항목 34: 플레이어마다 지금 보이는 칸(Visible)과 본 적 있는 칸(Explored). 5틱마다 FogSystem이 다시 만든다.
@@ -331,6 +342,12 @@ struct FogGrid {
 
 singleton component Fog {
     array<FogGrid>[MAX_PLAYERS] Grids;
+    // 항목 34-B: 보급 신호탄(모든 플레이어에게 보이는 자리·끝나는 프레임)과 정찰 사진(플레이어별 한 곳).
+    array<FPVector3>[MAX_PLAYERS] FlarePositions;
+    Int32 FlareCount;
+    Int32 FlareUntilFrame;
+    array<FPVector3>[MAX_PLAYERS] ReconPositions;
+    array<Int32>[MAX_PLAYERS] ReconUntilFrames;
     FP Cell;
     FP MinX;
     FP MinZ;
@@ -370,6 +387,8 @@ synced event CaptureContested { entity_ref Site; }
 synced event CaptureChanged { entity_ref Site; player_ref Previous; player_ref Next; }
 synced event BarricadeDestroyed { Int32 Index; }
 synced event SupplyDropIncoming { Int32 Group; Int32 Frame; }
+// 항목 34-B: 단계별 공개. Zone·Closing은 정확한 자리가 아니라 원의 중심과 반지름이다. Landed부터 상자 자리가 드러난다. Kind는 Captured일 때 보상 종류(0 자원, 1 긴급 출격권, 2 정찰 사진, 3 보급).
+synced event SupplyDropStage { DropPhase Phase; FPVector3 Position; FP Radius; Int32 Frame; Int32 Group; player_ref Player; Int32 Kind; }
 synced event CratePicked { player_ref Player; FPVector3 Position; ResourceCost Reward; }
 synced event BaseUnderAttack { player_ref Player; FPVector3 Position; }
 synced event CityBuildingDamaged { entity_ref Building; Int32 Index; Int32 Stage; }

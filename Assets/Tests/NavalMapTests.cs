@@ -212,8 +212,12 @@ namespace FactoryWars.Tests {
       var initialIron = Funds(0);
       var initialCrates = GetPlayerCratesPicked(Verified, 0);
 
-      // 상자 수거 판정 (매 틱 또는 프레임 실행)
-      yield return WaitFrames(Fps / 2);
+      // 항목 34-B: 낙하 상자는 3m 안에 5초 머물러야 얻고, 보상은 가중치 표로 정해진다. 이 시험은 자원 보상만 나오게 표를 고정하고 5초 넘게 기다린다.
+      var rules = Resources.Load<GameRulesSpec>("FactoryWars/game_rules");
+      var weights = rules.DropRewardWeights;
+      rules.DropRewardWeights = new FP[] { 1, 0, 0, 0 };
+      Restores.Add(() => rules.DropRewardWeights = weights);
+      yield return WaitFrames(Fps * 7);
 
       Assert.AreEqual(initialCrates + 1, GetPlayerCratesPicked(Verified, 0), "배가 수로 위 상자를 수거함");
       Assert.AreEqual(initialIron + 150, Funds(0), "상자 수거 보상 자금 지급 확인");

@@ -92,6 +92,20 @@ namespace Quantum {
     public ResourceCost DropReward;
     public FP DropIntervalSeconds;
     public FP DropWarningSeconds;
+    /// <summary>항목 34-B: 경고 원 반지름(구역 공개 때), 좁혀지는 시각·반지름, 신호탄 반경·시간, 획득 반경·시간.</summary>
+    public FP DropZoneRadius;
+    public FP DropClosingSeconds;
+    public FP DropClosingRadius;
+    public FP DropFlareRadius;
+    public FP DropFlareSeconds;
+    public FP DropCaptureRadius;
+    public FP DropCaptureSeconds;
+    /// <summary>보상 가중치: 자원 묶음, 긴급 출격권, 정찰 사진, 보급(주변 보병 회복).</summary>
+    public FP[] DropRewardWeights;
+    public FP DropReconSeconds;
+    public FP DropReconRadius;
+    public FP DropHealAmount;
+    public FP DropHealRadius;
     /// <summary>고지대 위에서 고지대 밖을 쏠 때의 사거리 배율.</summary>
     public FP HighGroundRangeMultiplier;
     public FP HighGroundRevealDistance;

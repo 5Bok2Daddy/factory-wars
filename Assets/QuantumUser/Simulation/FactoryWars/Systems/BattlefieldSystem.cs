@@ -169,10 +169,125 @@ namespace Quantum.FactoryWars {
       }
     }
 
+    /// <summary>보상 가중치에서 종류를 고른다(0 자원, 1 긴급 출격권, 2 정찰 사진, 3 보급). roll은 0 이상 가중치 합 미만의 값.</summary>
+    public static int PickRewardKind(FP[] weights, FP roll) {
+      if (weights == null || weights.Length == 0) {
+        return 0;
+      }
+      var total = FP._0;
+      foreach (var weight in weights) {
+        total += FPMath.Max(FP._0, weight);
+      }
+      var target = FPMath.Min(roll, total - FP.EN3);
+      for (var i = 0; i < weights.Length; i++) {
+        target -= FPMath.Max(FP._0, weights[i]);
+        if (target < FP._0) {
+          return i;
+        }
+      }
+      return weights.Length - 1;
+    }
+
+    /// <summary>낙하 상자 획득: 보상 종류를 RNG로 정해 준다. 정찰 사진은 가장 가까운 적 사령부를 잠깐 보여 준다.</summary>
+    static void ClaimDropCrate(Frame f, GameRulesSpec rules, PlayerRef player, FPVector3 position, SupplyCrate* crate) {
+      var weights = rules.DropRewardWeights;
+      var total = FP._0;
+      for (var i = 0; weights != null && i < weights.Length; i++) {
+        total += FPMath.Max(FP._0, weights[i]);
+      }
+      var kind = PickRewardKind(weights, total > FP._0 ? f.RNG->Next() * total : FP._0);
+      var state = FactoryWarsUtil.Player(f, player);
+      state->DropCaptures++;
+      state->CratesPicked++;
+      switch (kind) {
+        case 1:
+          state->SortieTickets++;
+          break;
+        case 2: {
+          var fog = f.Unsafe.GetPointerSingleton<Fog>();
+          var best = FP.UseableMax;
+          var buildings = f.Filter<Transform3D, Building>();
+          while (buildings.NextUnsafe(out _, out var transform, out var building)) {
+            if (f.FindAsset(building->Spec).Role != BuildingRole.Headquarters || DiplomacySystem.CanAttack(f, player, building->Owner) == false) {
+              continue;
+            }
+            var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, position);
+            if (distance < best) {
+              best = distance;
+              fog->ReconPositions[(int)player] = transform->Position;
+              fog->ReconUntilFrames[(int)player] = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.DropReconSeconds);
+            }
+          }
+          break;
+        }
+        case 3: {
+          var near = rules.DropHealRadius * rules.DropHealRadius;
+          var units = f.Filter<Transform3D, Unit>();
+          while (units.NextUnsafe(out _, out var transform, out var unit)) {
+            var spec = f.FindAsset(unit->Spec);
+            if (unit->Owner == player && spec.Size == UnitSize.Small && spec.IsVehicle == false && spec.IsAir == false && FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) <= near) {
+              unit->Health = FPMath.Min(spec.MaxHealth, unit->Health + rules.DropHealAmount);
+            }
+          }
+          break;
+        }
+        default:
+          kind = 0;
+          Collect(f, player, crate->Reward);
+          state->CratesPicked--;
+          break;
+      }
+      f.Events.CratePicked(player, position, crate->Reward);
+      f.Events.SupplyDropStage(DropPhase.Captured, position, FP._0, f.Number, f.Global->DropGroup, player, kind);
+    }
+
+    /// <summary>
+    /// 낙하 상자 하나의 획득 진행. 상자 3m 안의 지상 유닛(공병 포함, 저격수 제외)이 한 편뿐이면 5초 동안 차오르고,
+    /// 적대 관계인 편이 함께 있으면 멈춘다(쟁탈). 아무도 없으면 진행은 그대로다.
+    /// </summary>
+    static void CaptureDropCrate(Frame f, GameRulesSpec rules, EntityRef entity, FPVector3 position, SupplyCrate* crate) {
+      var limit = rules.DropCaptureRadius * rules.DropCaptureRadius;
+      var first = -1;
+      var contested = false;
+      var units = f.Filter<Transform3D, Unit>();
+      while (units.NextUnsafe(out _, out var transform, out var unit)) {
+        if (f.FindAsset(unit->Spec).IsAir || FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) > limit) {
+          continue;
+        }
+        var owner = (int)unit->Owner;
+        if (first < 0) {
+          first = owner;
+        } else if (owner != first && DiplomacySystem.CanAttack(f, (PlayerRef)first, unit->Owner)) {
+          contested = true;
+        }
+      }
+      if (first < 0) {
+        crate->Contested = false;
+        return;
+      }
+      if (contested) {
+        if (crate->Contested == false) {
+          FactoryWarsUtil.Player(f, (PlayerRef)first)->DropContests++;
+        }
+        crate->Contested = true;
+        return;
+      }
+      crate->Contested = false;
+      crate->Progress += f.DeltaTime;
+      if (crate->Progress >= rules.DropCaptureSeconds) {
+        ClaimDropCrate(f, rules, (PlayerRef)first, position, crate);
+        f.Destroy(entity);
+      }
+    }
+
     static void PickCrates(Frame f, GameRulesSpec rules) {
       var limit = rules.CratePickRadius * rules.CratePickRadius;
       var crates = f.Filter<Transform3D, SupplyCrate>();
       while (crates.NextUnsafe(out var entity, out var transform, out var crate)) {
+        if (crate->Seat < 0) {
+          CaptureDropCrate(f, rules, entity, transform->Position, crate);
+          continue;
+        }
         var units = f.Filter<Transform3D, Unit>();
         while (units.NextUnsafe(out _, out var position, out var unit)) {
           var own = crate->Seat < 0 || (int)unit->Owner == crate->Seat;
@@ -205,6 +320,24 @@ namespace Quantum.FactoryWars {
       return groups;
     }
 
+    /// <summary>이번 낙하 그룹의 상자 자리마다 원 하나를 알린다. 원 중심은 정확한 자리에서 RNG로 반지름의 절반 안쪽으로 벗어난 점이다(정확한 자리는 숨긴다).</summary>
+    static void AnnounceZones(Frame f, MapSpec map, GameRulesSpec rules, DropPhase phase, FP radius) {
+      var seatIndex = 0;
+      for (var i = 0; i < map.CrateSpots.Length; i++) {
+        if (map.CrateSpots[i].Seat >= 0 || map.CrateSpots[i].Group != f.Global->DropGroup) {
+          continue;
+        }
+        // 착지 때와 같은 규칙: 2인전은 사람이 앉은 자리의 상자만 떨어진다.
+        if (f.PlayerCount == 2 && FactoryWarsUtil.PlayerAtSeat(f, seatIndex++) < 0) {
+          continue;
+        }
+        var angle = f.RNG->Next() * FP.PiTimes2;
+        var distance = f.RNG->Next() * radius * FP._0_50;
+        var center = map.CrateSpots[i].Position + new FPVector3(FPMath.Cos(angle) * distance, FP._0, FPMath.Sin(angle) * distance);
+        f.Events.SupplyDropStage(phase, center, radius, f.Global->NextDropFrame, f.Global->DropGroup, PlayerRef.None, 0);
+      }
+    }
+
     static void UpdateDrops(Frame f, GameRulesSpec rules) {
       var map = FactoryWarsUtil.MapInfo(f);
       var groups = DropGroups(map);
@@ -214,8 +347,16 @@ namespace Quantum.FactoryWars {
       var warning = f.Global->NextDropFrame - FactoryWarsUtil.SecondsToFrames(f, rules.DropWarningSeconds);
       if (f.Global->DropAnnounced == false && f.Number >= warning) {
         f.Global->DropAnnounced = true;
+        f.Global->DropStage = 1;
         f.Global->DropGroup = f.RNG->Next(0, groups);
         f.Events.SupplyDropIncoming(f.Global->DropGroup, f.Global->NextDropFrame);
+        // 구역만 알린다: 상자 자리마다 그 둘레 반지름의 절반 안쪽 RNG 점이 원 중심이라 중심이 곧 낙하 지점은 아니다.
+        AnnounceZones(f, map, rules, DropPhase.Zone, rules.DropZoneRadius);
+      }
+      var closing = f.Global->NextDropFrame - FactoryWarsUtil.SecondsToFrames(f, rules.DropClosingSeconds);
+      if (f.Global->DropAnnounced && f.Global->DropStage < 2 && f.Number >= closing) {
+        f.Global->DropStage = 2;
+        AnnounceZones(f, map, rules, DropPhase.Closing, rules.DropClosingRadius);
       }
       if (f.Number < f.Global->NextDropFrame) {
         return;
@@ -227,14 +368,25 @@ namespace Quantum.FactoryWars {
         }
       }
       var seatIndex = 0;
+      var fog = f.Unsafe.GetPointerSingleton<Fog>();
+      fog->FlareCount = 0;
+      var landed = FPVector3.Zero;
       for (var i = 0; i < map.CrateSpots.Length; i++) {
         if (map.CrateSpots[i].Seat < 0 && map.CrateSpots[i].Group == f.Global->DropGroup) {
           if (f.PlayerCount != 2 || FactoryWarsUtil.PlayerAtSeat(f, seatIndex) >= 0) {
             SpawnCrate(f, map.CrateSpots[i].Position, -1, rules.DropReward);
+            if (fog->FlareCount < 4) {
+              fog->FlarePositions[fog->FlareCount++] = map.CrateSpots[i].Position;
+            }
+            landed = map.CrateSpots[i].Position;
+            f.Events.SupplyDropStage(DropPhase.Landed, landed, rules.DropFlareRadius, f.Number, f.Global->DropGroup, PlayerRef.None, 0);
           }
           seatIndex++;
         }
       }
+      // 신호탄: 착지한 상자 둘레를 모든 플레이어에게 잠깐 보여 준다.
+      fog->FlareUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.DropFlareSeconds);
+      f.Global->DropStage = 0;
       f.Global->DropAnnounced = false;
       f.Global->NextDropFrame += FactoryWarsUtil.SecondsToFrames(f, rules.DropIntervalSeconds);
     }

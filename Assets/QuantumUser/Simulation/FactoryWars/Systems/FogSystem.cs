@@ -163,6 +163,19 @@ namespace Quantum.FactoryWars {
         }
         Mark(fog, fog->Grids.GetPointer(owner), transform->Position, f.FindAsset(building->Spec).SightRange);
       }
+      // 항목 34-B: 보급 신호탄은 모든 플레이어에게, 정찰 사진은 얻은 플레이어에게 그 자리를 잠깐 보여 준다.
+      if (f.Number < fog->FlareUntilFrame) {
+        for (var p = 0; p < Players; p++) {
+          for (var i = 0; i < fog->FlareCount && i < Players; i++) {
+            Mark(fog, fog->Grids.GetPointer(p), fog->FlarePositions[i], rules.DropFlareRadius);
+          }
+        }
+      }
+      for (var p = 0; p < Players; p++) {
+        if (f.Number < fog->ReconUntilFrames[p]) {
+          Mark(fog, fog->Grids.GetPointer(p), fog->ReconPositions[p], rules.DropReconRadius);
+        }
+      }
       ShareWithAllies(f, fog);
       for (var p = 0; p < Players; p++) {
         var grid = fog->Grids.GetPointer(p);

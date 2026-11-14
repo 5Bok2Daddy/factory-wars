@@ -363,6 +363,14 @@ namespace Quantum.Prototypes {
   public unsafe partial class FogPrototype : ComponentPrototype<Quantum.Fog> {
     [ArrayLengthAttribute(4)]
     public Quantum.Prototypes.FogGridPrototype[] Grids = new Quantum.Prototypes.FogGridPrototype[4];
+    [ArrayLengthAttribute(4)]
+    public FPVector3[] FlarePositions = new FPVector3[4];
+    public Int32 FlareCount;
+    public Int32 FlareUntilFrame;
+    [ArrayLengthAttribute(4)]
+    public FPVector3[] ReconPositions = new FPVector3[4];
+    [ArrayLengthAttribute(4)]
+    public Int32[] ReconUntilFrames = new Int32[4];
     public FP Cell;
     public FP MinX;
     public FP MinZ;
@@ -377,6 +385,17 @@ namespace Quantum.Prototypes {
     public void Materialize(Frame frame, ref Quantum.Fog result, in PrototypeMaterializationContext context = default) {
         for (int i = 0, count = PrototypeValidator.CheckLength(Grids, 4, in context); i < count; ++i) {
           this.Grids[i].Materialize(frame, ref *result.Grids.GetPointer(i), in context);
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(FlarePositions, 4, in context); i < count; ++i) {
+          *result.FlarePositions.GetPointer(i) = this.FlarePositions[i];
+        }
+        result.FlareCount = this.FlareCount;
+        result.FlareUntilFrame = this.FlareUntilFrame;
+        for (int i = 0, count = PrototypeValidator.CheckLength(ReconPositions, 4, in context); i < count; ++i) {
+          *result.ReconPositions.GetPointer(i) = this.ReconPositions[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(ReconUntilFrames, 4, in context); i < count; ++i) {
+          result.ReconUntilFrames[i] = this.ReconUntilFrames[i];
         }
         result.Cell = this.Cell;
         result.MinX = this.MinX;
@@ -509,6 +528,9 @@ namespace Quantum.Prototypes {
     public Int32 Captures;
     public Int32 CaptureFrames;
     public Int32 CratesPicked;
+    public Int32 SortieTickets;
+    public Int32 DropCaptures;
+    public Int32 DropContests;
     public Int32 HighGroundShots;
     public Int32 GarrisonEntries;
     public Int32 DisconnectedFrame;
@@ -567,6 +589,9 @@ namespace Quantum.Prototypes {
         result.Captures = this.Captures;
         result.CaptureFrames = this.CaptureFrames;
         result.CratesPicked = this.CratesPicked;
+        result.SortieTickets = this.SortieTickets;
+        result.DropCaptures = this.DropCaptures;
+        result.DropContests = this.DropContests;
         result.HighGroundShots = this.HighGroundShots;
         result.GarrisonEntries = this.GarrisonEntries;
         result.DisconnectedFrame = this.DisconnectedFrame;
@@ -658,6 +683,8 @@ namespace Quantum.Prototypes {
   public unsafe partial class SupplyCratePrototype : ComponentPrototype<Quantum.SupplyCrate> {
     public Int32 Seat;
     public Quantum.Prototypes.ResourceCostPrototype Reward;
+    public FP Progress;
+    public QBoolean Contested;
     partial void MaterializeUser(Frame frame, ref Quantum.SupplyCrate result, in PrototypeMaterializationContext context);
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.SupplyCrate component = default;
@@ -667,6 +694,8 @@ namespace Quantum.Prototypes {
     public void Materialize(Frame frame, ref Quantum.SupplyCrate result, in PrototypeMaterializationContext context = default) {
         result.Seat = this.Seat;
         this.Reward.Materialize(frame, ref result.Reward, in context);
+        result.Progress = this.Progress;
+        result.Contested = this.Contested;
         MaterializeUser(frame, ref result, in context);
     }
   }

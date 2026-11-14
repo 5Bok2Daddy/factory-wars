@@ -236,6 +236,9 @@ namespace Quantum.Prototypes.Unity {
     public Int32 Captures;
     public Int32 CaptureFrames;
     public Int32 CratesPicked;
+    public Int32 SortieTickets;
+    public Int32 DropCaptures;
+    public Int32 DropContests;
     public Int32 HighGroundShots;
     public Int32 GarrisonEntries;
     public Int32 DisconnectedFrame;
@@ -296,6 +299,9 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Captures, out result.Captures);
       converter.Convert(this.CaptureFrames, out result.CaptureFrames);
       converter.Convert(this.CratesPicked, out result.CratesPicked);
+      converter.Convert(this.SortieTickets, out result.SortieTickets);
+      converter.Convert(this.DropCaptures, out result.DropCaptures);
+      converter.Convert(this.DropContests, out result.DropContests);
       converter.Convert(this.HighGroundShots, out result.HighGroundShots);
       converter.Convert(this.GarrisonEntries, out result.GarrisonEntries);
       converter.Convert(this.DisconnectedFrame, out result.DisconnectedFrame);

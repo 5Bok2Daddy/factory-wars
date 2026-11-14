@@ -914,7 +914,20 @@ namespace FactoryWars.EditorTools {
       rules.BaseCrateRewards = new[] { R(100, 0), R(0, 100) };
       rules.DropReward = R(200, 0, 150, 0);
       rules.DropIntervalSeconds = 150;
-      rules.DropWarningSeconds = 20;
+      rules.DropWarningSeconds = 35;
+      // 항목 34-B 보급품 사전 알람: 35초 전 반경 30m 원 → 10초 전 반경 10m → 착지, 신호탄 15m·20초(모두에게), 획득은 3m 안 5초.
+      rules.DropZoneRadius = 30;
+      rules.DropClosingSeconds = 10;
+      rules.DropClosingRadius = 10;
+      rules.DropFlareRadius = 15;
+      rules.DropFlareSeconds = 20;
+      rules.DropCaptureRadius = 3;
+      rules.DropCaptureSeconds = 5;
+      rules.DropRewardWeights = new FP[] { 5, 2, 2, 3 };
+      rules.DropReconSeconds = 15;
+      rules.DropReconRadius = 15;
+      rules.DropHealAmount = 60;
+      rules.DropHealRadius = 12;
       rules.HighGroundRangeMultiplier = N(1.15);
       rules.HighGroundRevealDistance = 6;
       rules.HighGroundAirRevealDistance = 12;
