@@ -1,11 +1,107 @@
 # TASK-01 결과 보고서
 
 <!-- 밤사이 요약 시작 -->
-## 다음 단계 (2026-11-14 01:55, 사용량 한도로 멈춤) — 재개할 때 여기부터
-- 항목 33은 끝났다(커밋 5bdb4ea, 아래 "항목 33 결과"). 대기열 "20:55 이후 순서"의 1번 **에셋 들여오기**를 시작하기 직전에 멈췄다. 아직 아무것도 들여오지 않았다.
-- 확인한 것: `temp-assets/Synty/`에 zip 4개(POLYGON_Military_PACK 737MB, POLYGON_City_PACK 307MB, Battle Royale Pack 398MB, ANIMATION_Base_Locomotion 198MB). Kubold 소총 애니메이션·GUI Pro는 없다(건너뛰고 보고할 것). zip 안이 .unitypackage인지 원본 파일인지는 아직 안 봤다.
-- 할 일 순서: zip 내용 확인 → `Game/Docs/ASSET-SWAP.md` 순서(들여오기, URP 변환, `2. Scan Pack Folder`, CSV, 칸 연결, `Visual_*` 시험) → NEXT-TASK-32의 2절 애니메이션 → 항목 34 → 항목 35.
+## 다음 단계 (2026-11-14, 에셋 들여오기 끝) — 재개할 때 여기부터
+- 에셋 들여오기(항목 32-0·1·2: 들여오기·칸 배정·애니메이션)는 끝났다. 결과는 바로 아래 "항목 32 결과 — 에셋 팩 적용". 사용자 지시("끝나면 전/후 캡처와 SETUP-REPORT를 쓰고 멈춰")대로 **여기서 멈췄다. 항목 34·35는 시작하지 않았다.**
+- 다음에 할 일: 사용자가 지시하면 `OVERNIGHT-QUEUE.md` "20:55 이후 순서"의 2번(항목 34) → 3번(항목 35). Kubold 소총·엄폐 애니메이션이나 GUI Pro를 넣어 주면 32의 사격·재장전·사망·엄폐 동작과 UI 교체를 이어서 한다.
+- 이 PC 상태: 팩은 `Game/Assets/ExternalAssets/Synty`(git 제외), 우리 변형·분대·애니메이션 컨트롤러는 `Game/Assets/FactoryWarsArt/Synty`(git 제외). 새 PC에서는 `Game/Docs/ASSET-SWAP.md`의 "항목 32 Synty 팩 적용" 순서대로 한다. 원본이 그대로인지는 `python Tools/pack_hashes.py check`.
 - 측정용 작업 폴더 `FactoryWars/Game-measure`(git worktree)는 34·35 측정에 쓰려고 남겨 두었다.
+
+## 항목 32 결과 — 에셋 팩 적용 (2026-11-14, Claude Sonnet 5.5) — 들여오기 · 칸 배정 · 보병 애니메이션 · 전/후 캡처
+
+### 한눈에
+- **`temp-assets` 전체를 찾아 본 결과 사용 가능한 팩은 Synty zip 4개**(Military·City·Battle Royale·Base Locomotion)다. 각 zip 안에 `.unitypackage`가 있었다(나머지 Godot·Unreal·원본 소스 zip은 쓰지 않음). 나머지 `kenney_*.zip` 27개는 이전 항목에서 쓴 Kenney 키트라 이번 일과 무관하다.
+- **없어서 건너뛴 것(팩 없음):** Rifle Animset Pro(Kubold), Cover Rifle Animset Pro(Kubold), GUI Pro. 그래서 **사격·재장전·피격·사망·엄폐 진입 동작과 UI 칸 교체는 하지 않았다.** Base Locomotion의 대기·걷기·달리기·질주·웅크리기는 썼다. (ANIMATION - Idles도 없음, 선택 항목)
+- **구입한 원본은 수정하지 않았다.** 팩 파일 17,438개(.meta 포함)의 SHA-256을 들여온 직후 저장(`Game-logs/assets/pack-hashes.csv`)했고, Unity를 여러 번 돌린 뒤에도 달라진 것 0개다. 시험 `Assets_PackFilesUnchanged`가 매번 비교한다. URP 변환은 하지 않았다(팩 머티리얼은 Shader Graph라 그대로 그려지고 분홍색 0). 그래서 `_backup` 복사도 필요 없었다.
+- **칸 62개를 연결했다**(유닛 22 + 건물 40). 색 변형·모델 선택만 썼고 칠하기·키우기·부착물은 없다. 전/후 캡처 5장면(해시 서로 다름)과 품질 3단계 수치를 남겼다.
+- **성능 경고:** 그리기 호출 추정이 높다(아래 4절). 팩 모델이 부품 많은 원본 그대로라서다. 합친 메쉬로 줄이려면 파생 자산이 필요해 사용자 결정으로 남겼다.
+- 실존 무기 닮음 확인(RealWorld)은 사용자 결정(2026-11-14 17:00)으로 필요 없다. `Visual_FilledSlotsWithinBudgetAndChecked`의 그 검사는 `CheckRealWorld = false`로 껐다(시험은 지우지 않고 이유를 주석에 적음).
+
+### 1. 들여오기 (증거: `Tools/import_synty.py`, `Game-logs/assets/pack-hashes.csv`)
+| 팩 | 있음 | 들여온 것 |
+| --- | --- | --- |
+| POLYGON Military (필수) | 있음 | 모델·프리팹·머티리얼·텍스처·FX (데모 씬·문서·도우미 제외) |
+| POLYGON Battle Royale (선택) | 있음 | 정찰 버기·오토바이·보트·수송 비행기 |
+| POLYGON City (선택) | 있음 | 들여왔지만 이번 칸 배정에는 쓰지 않음(1절 표에 도시 건물 칸이 없음) |
+| ANIMATION Base Locomotion | 있음 | 대기·걷기·달리기·질주·웅크리기 클립(Humanoid) |
+| Rifle / Cover Rifle Animset Pro (Kubold) | **없음** | 건너뜀 |
+| GUI Pro - Casual Game | **없음** | 건너뜀 |
+- 위치 `Game/Assets/ExternalAssets/Synty/`(968MB, 저장소에 올리지 않음 → `.gitignore`). 새 PC에서는 `python Tools/import_synty.py`로 다시 넣는다. GUID는 팩의 .meta 그대로라 칸 연결이 유지된다.
+- 팩 파일 이름에 실존 국가명이 들어 있는 것(전차 등)이 있어, 코드·문서에는 별칭과 GUID만 쓰고 실제 파일 표는 `Game-logs/assets/synty/slot-table.csv`(저장소 밖)에 둔다.
+
+### 2. 칸 배정 (증거: `SyntyAssign.cs`의 `Rows()`, `Game-logs/assets/synty/slot-table.csv`, 미리보기 `preview-slots-units.png`)
+| 칸 | 모델(별칭) | 색 변형 | 비고 |
+| --- | --- | --- | --- |
+| 자유 연방 공병 / 대륙 연방 공병 | 계약직 캐릭터 1 / 2 | 남색 / 기본 | 배율 1.3, 작업 동작 없음 |
+| 레인저 분대 · 스카이가드 분대 | 병사 캐릭터 1 × 3명 | 남색 | 소총·발사기 부착 없음 |
+| 민병대 · 화염방사 분대 | 병사 캐릭터 2 × 2명 · 폭탄 처리복 × 2명 | 기본 | |
+| 정찰 버기 / 정찰 오토바이 | BR 버기 / BR 오토바이 | `Veh_06` / `Veh_02` | |
+| 이글 전차 · 중전차 | 전차 C · 전차 A | 눈 위장 | 팩 안의 서로 다른 큰 모델(키우지 않음) |
+| 용린 전차 · 요새 전차 | 경전차 · 전차 B | 사막 위장 | |
+| 야전 지원차 | 장갑차 | 눈 위장 | |
+| 천둥 대공차 | 레이더 전차(접시 회전) | 사막 위장 | |
+| 만리 다연장포 | 로켓 트럭(발사대 회전) | 사막 위장 | |
+| 호크 / 대륙 공격헬기 | 공격헬기 A / B | 기본 / 녹색 위장 | 회전날개 회전 |
+| 스카이포트리스 폭격기 | 대형 수송기 | 기본 | |
+| 스톰네스트 항모 · 둥지 드론 | BR 수송 비행기(프로펠러 4) · 드론 | 기본 | 칸 연결됨, 궁극 전력으로만 나와 장면 캡처는 못 함 |
+| 정찰선(양쪽) | BR 보트 | `Veh_06` / `Veh_02` | |
+| 건물 40칸 | 막사·창고·가스탑·격납고·관제탑·텐트·소품 | 회색(자유) / 모래(대륙) 지붕 | 가로 6.4~9m로 맞춤(칸 데이터 `Scale`, 원본 안 고침) |
+- **연결하지 않은 것(맞는 모델 없음 → 현행 유지):** 포격함 2종, 상륙정, 조선소 2종, 상륙 도크, 철광산, 다리. 사령부는 단계별 모델·부착물을 하지 않았다(부착물 금지 + `BattleView`에 기지 단계 정보가 없음).
+- **진영 구분:** 모델과 팩의 색 변형 머티리얼만 골랐다(우리 폴더 `Assets/FactoryWarsArt/Synty/Variants`의 프리팹 변형이 머티리얼 참조만 바꿈). 캡처에서 자유 연방은 눈 위장·남색, 대륙 연방은 사막색으로 구분된다.
+- **플레이어 색 구분:** 모델에 칠하지 않으므로 유닛 발밑에 팀 색 고리(`OwnerRing`)를 두었다(건물은 기존 바닥판 색). 사용자 결정 대기 표 19번.
+
+### 3. 움직임·애니메이션 (§2)
+| 항목 | 결과 | 증거 |
+| --- | --- | --- |
+| 보간(이전·현재 틱, 회전 Slerp) | 이전 항목에서 이미 있음(`FollowRate`) | `BattleView.UpdateUnit` |
+| 보병 Animator 블렌드 트리(대기 0 · 걷기 1.6 · 달리기 4 · 질주 7 m/s) | **함**. 시뮬레이션 이동 속도로 구동, 정지·출발은 0.12초 보간 | `Synty_InfantryAnimationFollowsSpeedAndCover` 통과 |
+| 엄폐 중 웅크려 대기 | **함**(Cover 파라미터 ← `Unit.InCover`) | 같은 시험 |
+| 분대원끼리 걸음 시작 위치·속도 어긋남 | **함**(분대원 3명의 위상이 서로 다름) | 같은 시험 |
+| 방향 전환 시 상체 먼저 회전 | 못 함(상체 마스크용 클립 없음) | |
+| 사격·재장전·피격·사망, 시체 가라앉기 | 못 함(Kubold 팩 없음). 죽으면 바로 사라진다 | |
+| 전차 포탑·포신 따로 조준, 포신 반동 | **함**. 포탑 이름을 칸 데이터로 찾아 목표를 향해 돈다 | `Synty_TurretAimsAndSpinPartsMove` 통과 |
+| 헬기 주·꼬리 회전날개 회전, 레이더 접시 회전 | **함**(축은 메쉬가 가장 얇은 축) | 같은 시험 |
+| 차량 기울기·헬기 선회 기울기 | 이전 항목에서 이미 있음 | `Tilt` |
+| 궤도 UV 흐름·바퀴 회전·서스펜션·불타는 잔해 | 못 함(원본 머티리얼·메쉬를 쓰는 한 비용 대비 효과가 작아 미룸) | |
+| Animator 컬링 | 화면 밖에서 변환 갱신을 끔(`CullUpdateTransforms`) | `UnitAnimatorBridge.Attach` |
+| 스킨드 메시 예산 | 분대원 수를 품질별로 1 / 2 / 전체, GPU 스키닝 켬(`gpuSkinning`·`meshDeformation` 1) | 4절 |
+
+### 4. 전/후 캡처와 렌더 수치 (증거: `screenshots/synty32/`, `Game-logs/assets/synty/render-stats.csv`, 시험 `CaptureSynty_BeforeAfter`)
+| 장면 | 전(절차 모델) 해시 | 후(팩 모델) 해시 | 그리기 호출 추정 전→후 | 삼각형 전→후 |
+| --- | --- | --- | --- | --- |
+| 보병 행군(8부대) | `82abbfb3277b` | `d581cf48ad27` | 35 → 442 | 1.8만 → 19.5만 |
+| 차량 라인(9대) | `ec983a939b5c` | `6450453e92b8` | 60 → 423 | 2.0만 → 20.2만 |
+| 공중(5기) | `789920ed217d` | `f4ee74a33dd9` | 48 → 307 | 2.0만 → 13.8만 |
+| 자유 연방 건물 18채 | `d387da6a4ebc` | `583b80f4df99` | 125 → 365 | 3.4만 → 16.9만 |
+| 대륙 연방 건물 18채 | `8788c5ecbe41` | `192893b3d2e8` | 125 → 367 | 3.7만 → 16.9만 |
+- 보병 장면의 품질별: 높음 442 / **보통 291 / 낮음 130**(호출 추정), 삼각형 19.5만 / 12.7만 / 5.4만. 보통 품질 예산(호출 350·삼각형 55만)은 이 장면에서는 넘지 않지만, **유닛 수백 기가 겹치는 4인 교전은 넘을 가능성이 크다**(보병 1명 ≈ 호출 14·삼각형 5.9천, 전차 1대 ≈ 호출 23~27·삼각형 1만). 호출 추정은 "보이는 렌더러 × 머티리얼 칸"이며 프로파일러 호출 수는 배치 모드에서 0이라 쓰지 못했다. 카메라 한 번 그리기 CPU 시간은 1~3ms(PC)다. **실기기 프레임 측정은 못 했다.**
+- 줄이는 방법(지금은 원본 무수정 원칙 때문에 하지 않음): 부품을 합친 파생 메쉬 프리팹, 분대원 수 더 줄이기, 먼 유닛 단순화. 결정 대기 표 22번.
+
+### 5. 시험
+| 시험 | 확인하는 것 | 결과 |
+| --- | --- | --- |
+| `Assets_PackFilesUnchanged` | 팩 17,438개 파일(.meta 포함)의 크기·SHA-256이 들여온 직후 목록(`Game-logs/assets/pack-hashes.csv`)과 같다 | 통과 |
+| `Synty_SlotsConnectedWithSupportedShaders` | 팩 칸이 유닛 22·건물 40 이상 연결, 프리팹에 렌더러, 셰이더가 지원됨(분홍색 0), 팀 색 칠하기가 꺼져 있음 | 통과 |
+| `Synty_InfantryAnimationFollowsSpeedAndCover` | 분대원 3명 모두 Animator, 속도 4에서 달리기·0에서 대기, 엄폐이고 멈추면 웅크림, 분대원 걸음 위상이 서로 다름 | 통과 |
+| `Synty_TurretAimsAndSpinPartsMove` | 전차 포탑·포신을 이름 글자로 찾음, 목표를 향해 돌고 반동, 헬기 회전날개·레이더 접시가 돈다 | 통과 |
+| `Synty_PackModelsKeepOriginalMaterialsAndShowOwnerRing` | 팩 모델에 팀 머티리얼(ArtP*)이 입혀지지 않고, 유닛 발밑에 팀 색 고리가 있다 | 통과 |
+| `Visual_FilledSlotsWithinBudgetAndChecked` | 팩 칸의 크기 비율·삼각형·그리기 호출 예산(팩 칸은 유닛 3만 삼각형·60호출, 건물 3만·20호출로 따로 둠), 켜진 렌더러만 셈 | 통과 |
+| `CaptureSynty_BeforeAfter`(따로: `-testCategory CaptureSynty`) | 5장면 전/후 캡처 파일 해시가 서로 다르고, 렌더 수치를 `render-stats.csv`로 남김 | 통과 |
+
+**기존 시험을 고친 것(이유):**
+- 실존 무기 닮음 검사(`Visual_FilledSlotsWithinBudgetAndChecked`의 RealWorld 열): **사용자 결정(2026-11-14 17:00)으로 필요 없어 `CheckRealWorld = false`로 껐다.** 시험은 지우지 않았다.
+- `Battle_EveryEntityIsDrawnWithItsPrefab`, `Battle_UsesPlayerColorMaterial`, `Battle_OutageSwapsBuildingsButNotUnits`: 절차 모델의 팀 머티리얼(ArtP*)·정전 머티리얼을 보는 시험이라 시험 동안 팩 칸을 끈다(`UseProceduralModels`, TearDown이 되돌림). 팩 모델에는 같은 일을 하지 않는다(칠하기 금지). **팩 건물은 정전이어도 어두워지지 않는다**(결정 대기 표 25번).
+- `Art_RingAndBarStayOnTheModelAtEveryYaw`: 켜진 렌더러만 센다(팩 캐릭터는 바꿔 끼우는 꺼진 메쉬를 잔뜩 갖고 있어 바운드가 치우침). 이 시험이 잡아 준 문제 둘을 고쳤다: 분대 대형이 넓어 링 밖으로 나감(대형을 좁힘), 공중 유닛 체력바가 모델 아래에 있음(`VisualCatalog.Override`에서 고도를 더함).
+- 앞선 시험이 품질을 낮춰 두면 분대원이 1명만 켜져 새 애니메이션 시험이 전체 실행에서만 실패했다 → 시험이 높음 품질로 맞추고 끝나면 되돌린다.
+- 전체 PlayMode: **433개 중 336 통과·0 실패**, 97개는 따로 돌리는 시험(AI 대전·캡처·측정·온라인 실서버, Explicit)이라 건너뜀. 전체 실행을 4번 하면서 앞 3번에서 나온 실패(절차 모델을 가정한 시험 4개, 품질 누수로 인한 새 시험 1개)를 위처럼 고쳤고 4번째에 0 실패다. 4번째 실행 뒤에도 팩 원본 변경 0.
+
+
+### 6. 하지 않은 것 · 사용자가 할 일
+- Kubold 소총·엄폐 애니메이션, GUI Pro가 있으면 넣어 주면 이어서 한다(사격·재장전·사망·엄폐 동작, UI 교체).
+- AI 대 AI 2인·4인 20판 재측정은 하지 않았다: 이번 변경은 화면 전용이라 시뮬레이션(밸런스)이 그대로다.
+- APK는 새로 빌드하지 않았다(팩 모델 포함 크기·실기기 성능을 먼저 보고 싶다면 알려 주면 빌드).
+- HUD 아이콘(생산·건설 패널의 모델 그림)은 이전 절차 모델 그림 그대로다(결정 대기 표 23번).
+- 도시 전장 건물(City 팩)은 이번 칸 표에 없어 연결하지 않았다.
 
 ## 항목 33 결과 (2026-11-13~14, Claude Fable 5.2) — 진영 궁극 전력 · 4인 쏠림 원인 · 경기 시간 · 벙커 수용
 
@@ -2920,4 +3016,13 @@ OVERNIGHT-QUEUE.md 규칙 1에 따라 묻지 않고 기본값으로 진행했다
 | 16 | 33 | 민병대 사거리 | 6 → 6.5 | `FactoryWarsSetup.Units`의 `cf_militia` |
 | 17 | 33 | 조정 3회 한도 | 3차가 4인 시간 초과를 늘려 본진 철을 되돌렸고, 확인 측정(t3b)을 한 번 더 돌렸다 | — |
 | 18 | 33 | 온라인 결정론 시험용 설정 | `OnlineRoom.KeepScenario`(시험에서만 켬, 실제 방은 항상 시나리오를 지움) | 필드 삭제 시 `Ultimate_DeterministicAcrossRunsAndOnline`의 온라인 부분도 고쳐야 함 |
+| 19 | 32 | 팩 모델은 칠하지 않으므로 플레이어 색을 모델로 구분할 수 없다(같은 진영끼리 붙는 판) | 유닛 발밑에 얇은 팀 색 고리(`VisualSlot.OwnerRing`)를 둠. 건물은 기존 바닥판의 팀 색 | `SyntyAssign.cs`의 `OwnerRing`을 false로 하고 `5. Assign Synty Pack` 다시 실행 |
+| 20 | 32 | 팩(968MB)과 우리 변형 폴더를 저장소에 올릴까 | 올리지 않음(`.gitignore`: `Assets/ExternalAssets/Synty`, `Assets/FactoryWarsArt/Synty`). 저장소의 `VisualCatalog.asset`에 남는 연결은 팩이 없는 PC에서 빈 칸으로 읽혀 절차 모델로 돌아간다. 새 PC는 `Tools/import_synty.py` 후 `Assign Synty Pack` | `.gitignore`의 해당 줄 삭제 |
+| 21 | 32 | 소총·로켓 발사기를 보병 손에 붙일까(부착물 금지에 해당하는지 애매) | 붙이지 않음: 보병이 총 없이 걷는다 | 허락하면 `SyntyAssign`에 손 뼈 부착 단계 추가 |
+| 22 | 32 | 그리기 호출을 줄이려고 부품을 합친 파생 메쉬 프리팹(원본은 그대로)을 만들까 | 만들지 않음. 품질별 분대원 수(낮음 1·보통 2·높음 전체)와 GPU 스키닝만 씀. 보병 장면 호출 추정 높음 442 → 보통 291 → 낮음 130 | 승인하면 합친 메쉬를 `FactoryWarsArt`에 생성 |
+| 23 | 32 | 생산·건설 패널의 모델 그림(HUD 아이콘)을 팩 모델 렌더로 다시 만들까 | 안 함: 절차 모델 그림 그대로(팩 렌더 PNG를 저장소에 넣지 않으려고) | `UiCatalogTools.CaptureModelIcons` |
+| 24 | 32 | GPU 스키닝 켜기 | 켬(`ProjectSettings`의 `gpuSkinning`·`meshDeformation` 1). 스킨드 메시는 팩 캐릭터뿐이라 다른 곳엔 영향 없음 | 두 값을 0으로 |
+| 25 | 32 | 정전이면 건물이 어두워지는 표현(절차 건물은 Off 머티리얼) | 팩 건물은 정전 표현 없음(원본 머티리얼 유지) | 어두운 변형 머티리얼(우리 쪽 파일)을 승인하면 추가 |
+| 26 | 32 | 대형 유닛(중전차·요새 전차)을 키울까 | 키우지 않음(결정). 더 큰 팩 모델(전차 A·B, 10m급)을 고르고, 슬롯 `AutoFit`이 판정 크기(링 반지름)에 맞춘다 | — |
+| 27 | 32 | 팩 파일 이름을 UI에 보여 줄까 | 보여 주지 않음(`Texts`는 가상 이름 그대로) | — |
 <!-- 사용자 결정 대기 끝 -->

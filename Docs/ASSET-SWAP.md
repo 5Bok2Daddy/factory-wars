@@ -127,3 +127,29 @@
 | `building/tf_assault_dock` | 강습 도크(차기 진영 예약) | 조선소 x0.95 |
 
 미사일 착탄 경고(붉은 고리·연막 신호)와 폭발은 기존 효과(`fx/explosion` 등)를 크게 쓴 것이라 따로 칸이 없습니다. 명령 카드의 궁극 전력 그림은 빌린 모델의 아이콘을 씁니다. 모델을 바꾼 뒤 `Capture Model Icons`를 다시 돌리면 전용 아이콘이 생깁니다.
+
+## 항목 32 Synty 팩 적용 (2026-11-14)
+원칙(사용자 결정): **구입한 팩 원본은 수정하지 않는다.** 팩 폴더의 모델·메쉬·텍스처·머티리얼·프리팹·애니메이션·.meta는 읽기만 한다. 칠하기·크기 조정·부착물·위장 변형 없음.
+시험 `Assets_PackFilesUnchanged`가 `Game-logs/assets/pack-hashes.csv`와 매번 비교한다(17,438개 파일, .meta 포함).
+
+### 새 PC에서 다시 만들기
+1. `temp-assets/Synty/` zip 4개(Military·City·Battle Royale·Base Locomotion)에서 `.unitypackage`를 `temp-assets/Synty/unity/`로 꺼낸다.
+2. `python Tools/import_synty.py` → `Assets/ExternalAssets/Synty/`(저장소에 올리지 않음, `.gitignore`). 데모 씬·샘플 스크립트·문서는 넣지 않는다. GUID는 팩의 .meta 그대로다.
+3. `python Tools/pack_hashes.py write` → 해시 목록(들여온 직후 한 번). 이후 `check`로 비교.
+4. Unity 메뉴 `Tools > Factory Wars > Assets > 5. Assign Synty Pack`(배치: `-executeMethod FactoryWars.EditorTools.SyntyAssign.Run`) → 유닛 22칸·건물 40칸을 `VisualCatalog`에 연결한다.
+   - 결과물은 `Assets/FactoryWarsArt/Synty/`(저장소에 올리지 않음): `Variants/`(색 변형 프리팹 변형), `Prefabs/`(분대), `Animation/PackInfantry.controller`.
+   - 팩이 없으면 아무것도 하지 않고, 칸은 지금(절차) 모델 그대로다. 저장소의 `VisualCatalog.asset`에 남는 연결은 팩이 없는 PC에서는 빈 칸으로 읽힌다.
+5. 팩 URP 변환은 필요 없다(팩 머티리얼은 Shader Graph라 URP에서 바로 그려진다, 분홍색 0). 변환 도구(`ConvertBatch`)는 `Assets/ExternalAssets/Synty`를 건너뛴다.
+
+### 진영 구분(모델·색 변형 선택으로만)
+| | 자유 연방 | 대륙 연방 |
+| --- | --- | --- |
+| 육상 차량 | 눈 위장 변형(`Land_Vehicles_04`) | 사막 위장 변형(`Land_Vehicles_05`) |
+| 헬기 | 연회색 기본(`Helicopters_01_A`) | 녹색 위장(`Helicopters_01_C`) |
+| 보병·공병 | 남색 변형(`PolygonMilitary_02_A`) | 기본 모래색(`PolygonMilitary_01_A`) |
+| 건물 | 회색 지붕(`PolygonMilitary_02_A`) | 모래색 지붕(`PolygonMilitary_03_A`) |
+| 정찰차·보트 | `PolygonBattleRoyale_Veh_06` | `PolygonBattleRoyale_Veh_02` |
+변형은 우리 폴더의 프리팹 변형이 머티리얼 참조만 바꾼 것이다. 같은 팀 색(플레이어 색)은 모델에 칠하지 않고, 유닛 발밑의 얇은 팀 색 고리(`VisualSlot.OwnerRing`)로 구분한다. 건물은 기존 바닥판의 팀 색을 쓴다.
+
+### 칸 데이터가 가리키는 움직이는 부분(팩 파일은 고치지 않고 이름 글자로 찾는다)
+`VisualSlot.TurretPart`(포탑 조준 회전)·`BarrelPart`(포신 반동)·`MuzzlePart`+`MuzzleOffset`(사격 효과 위치)·`SpinParts`(헬기·프로펠러·레이더 접시 회전, 축은 메쉬가 가장 얇은 축 또는 `이름:Y`)·`MembersByQuality`(품질별 분대원 수 1/2/전체).
