@@ -2,7 +2,7 @@
 
 <!-- 밤사이 요약 시작 -->
 ## 다음 단계 (2026-11-14, 에셋 들여오기 끝) — 재개할 때 여기부터
-- 에셋 들여오기(항목 32-0·1·2: 들여오기·칸 배정·애니메이션)는 끝났다. 결과는 바로 아래 "항목 32 결과 — 에셋 팩 적용". 사용자 지시("끝나면 전/후 캡처와 SETUP-REPORT를 쓰고 멈춰")대로 **여기서 멈췄다. 항목 34·35는 시작하지 않았다.**
+- 에셋 들여오기(항목 32-0·1·2: 들여오기·칸 배정·애니메이션)는 끝났다. 결과는 바로 아래 "항목 32 결과 — 에셋 팩 적용". 사용자 지시("끝나면 전/후 캡처와 SETUP-REPORT를 쓰고 멈춰")대로 **여기서 멈췄다. 항목 34·35는 시작하지 않았다.** (커밋 e4d38fd 코드·시험, a1b7a1b 보고서, origin main에 push함)
 - 다음에 할 일: 사용자가 지시하면 `OVERNIGHT-QUEUE.md` "20:55 이후 순서"의 2번(항목 34) → 3번(항목 35). Kubold 소총·엄폐 애니메이션이나 GUI Pro를 넣어 주면 32의 사격·재장전·사망·엄폐 동작과 UI 교체를 이어서 한다.
 - 이 PC 상태: 팩은 `Game/Assets/ExternalAssets/Synty`(git 제외), 우리 변형·분대·애니메이션 컨트롤러는 `Game/Assets/FactoryWarsArt/Synty`(git 제외). 새 PC에서는 `Game/Docs/ASSET-SWAP.md`의 "항목 32 Synty 팩 적용" 순서대로 한다. 원본이 그대로인지는 `python Tools/pack_hashes.py check`.
 - 측정용 작업 폴더 `FactoryWars/Game-measure`(git worktree)는 34·35 측정에 쓰려고 남겨 두었다.
