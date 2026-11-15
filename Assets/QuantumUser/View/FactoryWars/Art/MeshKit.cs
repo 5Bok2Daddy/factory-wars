@@ -685,6 +685,9 @@ namespace FactoryWars.View {
     static bool Dense(Matrix4x4? toWorld) => toWorld.HasValue && Dressing.Collecting && Dressing.Has(DressKind.Conifer);
 
     public static void Forest(MeshKit kit, float halfLength, float halfWidth, int seed, float remaining, Matrix4x4? toWorld = null) {
+      if (UrbanYard(kit, halfLength, halfWidth, seed, remaining, toWorld)) {
+        return;
+      }
       if (Dense(toWorld)) {
         kit.Paint(ArtPalette.Turf(Swatch.GrassDark)).Chamfer(new Vector3(0, 0.05f, 0), new Vector3(halfLength * 2, 0.1f, halfWidth * 2), 1.4f);
         kit.Paint(Swatch.ForestFloor).Chamfer(new Vector3(0, 0.09f, 0), new Vector3(Mathf.Max(2f, (halfLength - 2.2f) * 2), 0.16f, Mathf.Max(2f, (halfWidth - 2.2f) * 2)), 1.4f);
@@ -708,6 +711,9 @@ namespace FactoryWars.View {
 
     /// <summary>원형 군락. 나무 배치만 다르고 바깥부터 벌목되는 규칙은 같다.</summary>
     public static void Grove(MeshKit kit, float radius, int seed, float remaining, Matrix4x4? toWorld = null) {
+      if (UrbanYard(kit, radius * 0.9f, radius * 0.9f, seed, remaining, toWorld)) {
+        return;
+      }
       var dense = Dense(toWorld);
       if (dense) {
         kit.Paint(ArtPalette.Turf(Swatch.GrassDark)).Cylinder(new Vector3(0, 0, 0), radius, 0.1f, 20);
@@ -733,6 +739,25 @@ namespace FactoryWars.View {
     }
 
     /// <summary>toWorld가 있고 Kenney 나무가 있으면 모델로 놓고, 없으면 절차 나무를 kit에 굽는다. 가장자리에는 덤불·통나무·작은 바위를 섞는다.</summary>
+    /// <summary>
+    /// 시가지(항목 36 시각 교정): 목재 자원지를 상자·드럼통 수십 개 더미로 그리지 않고, 보도블록 패드(높이 0.15m) 위에
+    /// 창고 건물 1채만 반듯하게 놓는다. 채집이 끝나면(남은 양 0) 창고가 사라지고 빈 패드만 남는다. 판정은 그대로(화면 전용).
+    /// </summary>
+    static bool UrbanYard(MeshKit kit, float halfLength, float halfWidth, int seed, float remaining, Matrix4x4? toWorld) {
+      if (VisualProfile.Current.UrbanDecor == false || toWorld.HasValue == false || Dressing.Has(DressKind.LumberYard) == false) {
+        return false;
+      }
+      kit.Paint(Swatch.Concrete).Box(new Vector3(0, 0.075f, 0), new Vector3(halfLength * 2 + 1.2f, 0.15f, halfWidth * 2 + 1.2f));
+      kit.Paint(Swatch.ConcreteDark).Box(new Vector3(0, 0.155f, 0), new Vector3(halfLength * 2 - 0.6f, 0.01f, halfWidth * 2 - 0.6f));
+      if (remaining > 0f) {
+        var matrix = toWorld.Value;
+        var center = matrix.MultiplyPoint3x4(new Vector3(0, 0.16f, 0));
+        var yaw = matrix.rotation.eulerAngles.y + (halfWidth > halfLength ? 90f : 0f);
+        Dressing.AddFitted(DressKind.LumberYard, center, yaw, Mathf.Max(halfLength, halfWidth) * 2f * 0.8f, Mathf.Min(halfLength, halfWidth) * 2f * 0.8f, seed);
+      }
+      return true;
+    }
+
     static void Plant(MeshKit kit, List<(Vector3 Position, float Edge, int Id)> spots, int seed, float remaining, Matrix4x4? toWorld) {
       spots.Sort((a, b) => a.Edge != b.Edge ? a.Edge.CompareTo(b.Edge) : a.Id.CompareTo(b.Id));
       var cut = Mathf.RoundToInt(spots.Count * (1f - Mathf.Clamp01(remaining)));

@@ -19,7 +19,7 @@ namespace FactoryWars.EditorTools {
   public static class VisualCatalogTools {
     public const string AssetPath = "Assets/QuantumUser/Resources/FactoryWars/Visual/VisualCatalog.asset";
     public const string ViewCatalogPath = "Assets/QuantumUser/Resources/FactoryWars/Art/ViewCatalog.asset";
-    public static readonly string[] Effects = { "muzzle", "impact", "explosion", "flame", "smoke" };
+    public static readonly string[] Effects = { "muzzle", "impact", "explosion", "flame", "smoke", "weather_sand", "weather_rain", "weather_fog" };
 
     static string LogFolder() {
       var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Game-logs", "assets"));

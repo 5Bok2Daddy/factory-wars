@@ -114,8 +114,11 @@ namespace FactoryWars.View {
         _ground.SetFloat("_Brightness", 1f);
         _ground.SetFloat("_AoStrength", 0f);
         _ground.SetFloat("_GradientStrength", 0f);
-        _ground.SetFloat("_NoiseStrength", 0.05f);
-        _ground.SetFloat("_NoiseScale", 0.05f);
+        // 항목 36 시각 교정: 단색 플라스틱 느낌을 없애는 은은한 명암 노이즈와, 밝은 회색 포장면에만 2m 타일 줄눈.
+        _ground.SetFloat("_NoiseStrength", VisualProfile.Current.UrbanDecor ? 0.1f : 0.05f);
+        _ground.SetFloat("_NoiseScale", VisualProfile.Current.UrbanDecor ? 0.09f : 0.05f);
+        _ground.SetFloat("_GridStrength", VisualProfile.Current.UrbanDecor ? 0.16f : 0f);
+        _ground.SetFloat("_GridSize", 2f);
         _ground.SetFloat("_ScarStrength", 1f);
       }
       return _ground;
@@ -155,6 +158,7 @@ namespace FactoryWars.View {
         UrbanDecor.Crosswalks(roads, _map);
         UrbanDecor.Plazas(roads, _map);
         UrbanDecor.Sidewalks(roads, _map);
+        UrbanDecor.QuayApron(roads, _map);
         if (roads.TriangleCount > 0) {
           var roadMesh = roads.ToMesh("world_roads");
           var uvs = roadMesh.uv;

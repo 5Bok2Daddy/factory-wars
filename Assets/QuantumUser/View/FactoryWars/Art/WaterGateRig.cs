@@ -51,7 +51,8 @@ namespace FactoryWars.View {
       if (Door != null) {
         var sx = Mathf.Max(0.5f, span - pierHalf * 4f) / Mathf.Max(0.1f, DoorSize.x);
         var sy = doorHeight / Mathf.Max(0.1f, DoorSize.y);
-        Door.localScale = new Vector3(sx, sy, sy);
+        // 두께는 1m로 고정(구멍 없는 판 문이 수로를 빈틈없이 막는다).
+        Door.localScale = new Vector3(sx, sy, 1f / Mathf.Max(0.1f, DoorSize.z));
         Door.localRotation = Quaternion.identity;
       }
       if (Foam != null) {

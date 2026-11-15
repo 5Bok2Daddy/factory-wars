@@ -32,9 +32,16 @@ namespace FactoryWars.View {
     public bool IsPlacing => Placing != default;
 
     /// <summary>다음 땅 탭의 뜻(항목 30). 버튼으로 켜고, 탭 한 번에 꺼진다.</summary>
-    public enum TapMode { None, AttackMove, Patrol, Rally, Ultimate }
+    public enum TapMode { None, AttackMove, Patrol, Rally, Ultimate, Jammer, Sortie }
 
     public TapMode Mode;
+    /// <summary>항목 34-D: 작전 목표를 고르는 중인 비행장과 격납 칸.</summary>
+    public EntityRef SortieAirfield;
+    public int SortieSlot;
+
+    /// <summary>항목 34-C: 고른 유닛 중 은신·교란 장치를 쓸 수 있는 저격수.</summary>
+    public List<EntityRef> SelectedSnipers(Frame frame) =>
+      Selection.Units.Where(e => frame.Exists(e) && frame.Has<Unit>(e) && frame.FindAsset(frame.Get<Unit>(e).Spec).StealthSeconds > FP._0).ToList();
 
     static FPVector3 ToFP(Vector3 world) => new FPVector3(FP.FromFloat_UNSAFE(world.x), FP._0, FP.FromFloat_UNSAFE(world.z));
 
@@ -131,6 +138,22 @@ namespace FactoryWars.View {
           case TapMode.Ultimate:
             // 항목 33: 궁극 전력 목표 지정(미사일 착탄 지점, 상륙 해안).
             return new LaunchUltimateCommand { Target = ToFP(world) };
+          case TapMode.Jammer: {
+            // 항목 34-C: 은신한 저격수를 고른 채 자원 노드를 누르면 교란 장치를 설치한다.
+            var jamNode = PickNode(frame, world);
+            var snipers = SelectedSnipers(frame);
+            return jamNode == EntityRef.None || snipers.Count == 0 ? null : new PlaceJammerCommand { Sniper = snipers[0], Node = jamNode };
+          }
+          case TapMode.Sortie: {
+            // 항목 34-D: 누른 곳이 목표, 진입 방향은 비행장 → 목표.
+            if (frame.Exists(SortieAirfield) == false) {
+              return null;
+            }
+            var from = frame.Get<Transform3D>(SortieAirfield).Position;
+            var target = ToFP(world);
+            var heading = new FPVector2(target.X - from.X, target.Z - from.Z);
+            return new OrderSortieCommand { Airfield = SortieAirfield, Slot = SortieSlot, Target = target, Heading = heading.SqrMagnitude > FP._0 ? heading.Normalized : new FPVector2(FP._1, FP._0) };
+          }
         }
       }
 

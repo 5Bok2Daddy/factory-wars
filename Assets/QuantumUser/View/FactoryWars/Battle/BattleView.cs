@@ -27,6 +27,8 @@ namespace FactoryWars.View {
       public bool IsBuilding;
       public bool IsAir;
       public bool IsNaval;
+      /// <summary>항목 34-D 작전기(비조작). 끝나면 폭발 없이 사라진다(격추는 이벤트가 폭발을 그린다).</summary>
+      public bool IsSortie;
       public Vector3 Position;
       public float HullYaw;
       public float TurretYaw;
@@ -163,6 +165,7 @@ namespace FactoryWars.View {
         }
       });
       QuantumEvent.Subscribe<EventCratePicked>(this, e => Fx.Burst(e.Position.ToUnityVector3(), new Color(1f, 0.85f, 0.3f), 1f));
+      QuantumEvent.Subscribe<EventSortieEnded>(this, e => { if (e.ShotDown) { Fx.Explosion(e.Position.ToUnityVector3() + Vector3.up * 8f, 1.4f); } });
       QuantumEvent.Subscribe<EventCaptureChanged>(this, e => {
         var frame = e.Game.Frames.Verified;
         if (e.Next.IsValid && frame != null && frame.Exists(e.Site)) {
@@ -284,6 +287,7 @@ namespace FactoryWars.View {
           Fx.Signal(signal.Position);
         }
       }
+      UpdateWeather(frame);
       World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
       // 항목 33: 날아오는 전략 미사일의 착탄 지점을 모든 플레이어에게 보인다(폭발 반경만큼 붉은 고리 + 연막 신호).
       if (Time.time >= _strikeAt) {
@@ -311,6 +315,11 @@ namespace FactoryWars.View {
         _seen.Add(entity);
         UpdateBuilding(frame, entity, transform3D, building, dt);
       }
+      var sorties = frame.Filter<Transform3D, Sortie>();
+      while (sorties.NextUnsafe(out var entity, out var transform3D, out var sortie)) {
+        _seen.Add(entity);
+        UpdateSortie(frame, entity, transform3D, sortie, dt);
+      }
 
       _gone.Clear();
       foreach (var pair in _actors) {
@@ -328,6 +337,12 @@ namespace FactoryWars.View {
     void Remove(EntityRef entity) {
       var actor = _actors[entity];
       var center = actor.View.transform.position + Vector3.up * (actor.IsAir ? actor.View.Entry.Altitude : actor.Height * 0.4f);
+      if (actor.IsSortie) {
+        // 작전기: 귀환은 조용히 사라지고, 격추면 SortieEnded 이벤트가 이미 폭발을 그렸다.
+        Destroy(actor.View.gameObject);
+        _actors.Remove(entity);
+        return;
+      }
       Fx.Explosion(center, actor.IsBuilding ? 2.2f : Mathf.Clamp(actor.Radius * 0.5f, 0.5f, 1.5f));
       if (actor.IsAir == false && actor.IsNaval == false && (actor.IsBuilding || actor.Radius > 1.8f)) {
         Fx.Wreck(actor.View.transform.position, actor.IsBuilding ? 3.2f : actor.Radius * 0.8f, actor.IsBuilding ? 20f : 30f);
@@ -342,6 +357,82 @@ namespace FactoryWars.View {
         Destroy(actor.View.gameObject);
       }
       _actors.Remove(entity);
+    }
+
+    GameObject _weatherFx;
+    bool _weatherOn;
+    bool _fogBefore;
+    Color _fogColorBefore;
+    float _fogDensityBefore;
+    FogMode _fogModeBefore;
+
+    /// <summary>
+    /// 항목 37 기상 연출(화면 전용, 시뮬레이션 상태 WeatherOn만 읽음): 맵 테마에 맞는 팩 파티클(모래바람·비·안개)을 카메라 앞에 띄우고
+    /// 장면 안개를 모래색·회색으로 잠깐 짙게 한다. 낮음 품질은 파티클 없이 안개 색만.
+    /// </summary>
+    void UpdateWeather(Frame frame) {
+      var on = (bool)frame.Global->WeatherOn;
+      if (on == _weatherOn) {
+        return;
+      }
+      _weatherOn = on;
+      var theme = frame.FindAsset<MapSpec>(frame.Map.UserAsset).Theme ?? "";
+      var sand = theme.Contains("사막");
+      if (on) {
+        _fogBefore = RenderSettings.fog;
+        _fogColorBefore = RenderSettings.fogColor;
+        _fogDensityBefore = RenderSettings.fogDensity;
+        _fogModeBefore = RenderSettings.fogMode;
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Exponential;
+        RenderSettings.fogColor = sand ? new Color(0.78f, 0.68f, 0.52f) : new Color(0.62f, 0.66f, 0.70f);
+        RenderSettings.fogDensity = 0.0045f;
+        var camera = Camera.main;
+        var slot = VisualCatalog.Current != null ? VisualCatalog.Current.Get(VisualCatalog.FxId(sand ? "weather_sand" : "weather_rain")) : null;
+        if (camera != null && slot != null && slot.Prefab != null && GraphicsQuality.Current != QualityTier.Low) {
+          _weatherFx = Instantiate(slot.Prefab, camera.transform);
+          _weatherFx.name = "WeatherFx";
+          _weatherFx.transform.localPosition = new Vector3(0f, -6f, 30f);
+          _weatherFx.transform.localScale = Vector3.one * 4f;
+        }
+      } else {
+        RenderSettings.fog = _fogBefore;
+        RenderSettings.fogColor = _fogColorBefore;
+        RenderSettings.fogDensity = _fogDensityBefore;
+        RenderSettings.fogMode = _fogModeBefore;
+        if (_weatherFx != null) {
+          Destroy(_weatherFx);
+          _weatherFx = null;
+        }
+      }
+    }
+
+    /// <summary>항목 34-D: 작전기. 진영 색을 입힌 빌린 모델(VisualCatalog 칸 unit/*_sortie_*)이 시뮬레이션 궤적을 부드럽게 따라간다.</summary>
+    void UpdateSortie(Frame frame, EntityRef entity, Transform3D* transform3D, Sortie* sortie, float dt) {
+      var spec = frame.FindAsset(sortie->Spec);
+      var target = transform3D->Position.ToUnityVector3();
+      if (_actors.TryGetValue(entity, out var actor) == false) {
+        actor = Create(entity, spec.name, false, true);
+        if (actor == null) {
+          return;
+        }
+        actor.IsSortie = true;
+        actor.View.transform.position = target;
+        ArtLook.Apply(actor.View.Model, frame.Global->Players.GetPointer(sortie->Owner)->ColorIndex);
+      }
+      var view = actor.View.transform;
+      var next = Vector3.Lerp(view.position, target, Mathf.Clamp01(dt * 12f));
+      var move = next - view.position;
+      if (move.sqrMagnitude > 0.0001f) {
+        var bank = Mathf.Clamp(Vector3.SignedAngle(view.forward, move, Vector3.up) * 2f, -35f, 35f);
+        view.rotation = Quaternion.Slerp(view.rotation, Quaternion.LookRotation(move.normalized, Vector3.up) * Quaternion.Euler(0, 0, -bank), Mathf.Clamp01(dt * 6f));
+      }
+      view.position = next;
+      var viewer = _controller != null ? _controller.Player : PlayerRef.None;
+      var visible = viewer.IsValid == false || sortie->Owner == viewer || FogSystem.IsVisible(frame, viewer, transform3D->Position);
+      if (actor.View.gameObject.activeSelf != visible) {
+        actor.View.gameObject.SetActive(visible);
+      }
     }
 
     Actor Create(EntityRef entity, string id, bool isBuilding, bool isAir) {

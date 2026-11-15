@@ -291,6 +291,41 @@ namespace FactoryWars.View {
     }
 
     /// <summary>
+    /// 항목 36 시각 교정(부두 바닥): 외곽 수로와 맞닿는 땅 가장자리 안쪽 4m를 밝은 항만 콘크리트로 덮고, 물가 1m 안쪽에 노란 안전선을 긋는다.
+    /// 수로·수문·다리가 지나는 곳은 끊는다. 도로 메쉬에 더하는 장식이라 판정이 없다.
+    /// </summary>
+    public static void QuayApron(MeshKit k, MapSpec map) {
+      if (VisualProfile.Current.UrbanDecor == false || TerrainKit.Channel(map) <= 0f) {
+        return;
+      }
+      var h = Mathf.Max(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
+      var paths = TerrainKit.RiverPaths(map, false);
+      const float Step = 2f;
+      const float Width = 4f;
+      foreach (var (from, to, inward) in new[] {
+        (new Vector2(-h, -h), new Vector2(h, -h), new Vector2(0, 1)), (new Vector2(-h, h), new Vector2(h, h), new Vector2(0, -1)),
+        (new Vector2(-h, -h), new Vector2(-h, h), new Vector2(1, 0)), (new Vector2(h, -h), new Vector2(h, h), new Vector2(-1, 0)),
+      }) {
+        var length = (to - from).magnitude;
+        var d = (to - from) / length;
+        for (var s = 0f; s < length; s += Step) {
+          var a = from + d * s;
+          var b = from + d * Mathf.Min(length, s + Step);
+          var mid = (a + b) * 0.5f + inward * (Width * 0.5f);
+          var mid3 = new Vector3(mid.x, 0f, mid.y);
+          if (TerrainKit.RiverDistance(paths, mid) < 8f || Near(map.WaterGates, mid3, 6f) || Near(map.Bridges, mid3, 5f) || Near(map.Roads, mid3, 0.5f)) {
+            continue;
+          }
+          Vector3 P(Vector2 p, float across, float y) => new Vector3(p.x + inward.x * across, y, p.y + inward.y * across);
+          k.Paint(Swatch.Concrete);
+          k.Quad(P(a, 0f, 0.12f), P(b, 0f, 0.12f), P(b, Width, 0.12f), P(a, Width, 0.12f), Vector3.up);
+          k.Paint(Swatch.StripeYellow);
+          k.Quad(P(a, 0.8f, 0.13f), P(b, 0.8f, 0.13f), P(b, 1.15f, 0.13f), P(a, 1.15f, 0.13f), Vector3.up);
+        }
+      }
+    }
+
+    /// <summary>
     /// 항목 36 시각 교정 5: 외곽 수로와 땅이 맞닿는 해안 옹벽을 단색 박스로 두지 않고 11m마다 기둥, 그 사이 난간, 6m 간격 계선주를 놓는다.
     /// 수문·다리·강 근처는 건너뛴다. 장식이라 판정이 없다. 컨테이너 크레인은 팩에 없어 놓지 않는다.
     /// </summary>

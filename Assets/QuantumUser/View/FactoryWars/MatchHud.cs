@@ -64,7 +64,7 @@ namespace FactoryWars.View {
     public RectTransform Root { get; private set; }
     public string MenuName => _menu.ToString() + (_menu == Menu.Build ? _menuTier.ToString() : _menu == Menu.Research ? _menuSize.ToString() : "");
 
-    enum Menu { Root, Build, Research }
+    enum Menu { Root, Build, Research, Hangar }
 
     static readonly (string Icon, float Width)[] ResourceSlots = {
       ("res_iron", 150), ("res_wood", 150), ("res_steel", 150), ("res_power", 280), ("res_population", 150),
@@ -198,6 +198,8 @@ namespace FactoryWars.View {
       _note.color = theme.PanelText;
       _noteBubble.gameObject.SetActive(false);
 
+      BuildDoctrinePanel(theme);
+
       // 하단 왼쪽: 미니맵.
       var mapFrame = Ui.Panel("MinimapFrame", Root, theme.Panel);
       var frameSprite = UiCatalog.SpriteFor("minimap_frame");
@@ -247,6 +249,12 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventNoteReceived>(this, OnNote);
       QuantumEvent.Subscribe<EventPowerOutage>(this, OnOutage);
       QuantumEvent.Subscribe<EventBarrierOpened>(this, e => ShowAlert(Texts.BarrierAlert));
+      // 항목 34·37 알림: 기상, 승급, 저격 당함, 도크린 기본값, 작전기 격추.
+      QuantumEvent.Subscribe<EventWeatherChanged>(this, e => ShowAlert(e.On ? "기상 악화: 시야 감소, 신호탄 구역 밖 출격 불가" : "기상 회복"));
+      QuantumEvent.Subscribe<EventVeteranPromoted>(this, e => { if (e.Owner == Controller.Player) { ShowAlert($"유닛 승급: {new string('★', e.Rank)}"); } });
+      QuantumEvent.Subscribe<EventSniperFired>(this, e => { if (e.Victim == Controller.Player) { ShowAlert(e.Killed ? "저격 당함! 총구 섬광 방향을 확인하세요" : "저격 공격을 받고 있습니다"); } });
+      QuantumEvent.Subscribe<EventDoctrineChosen>(this, e => { if (e.Player == Controller.Player && e.ByDefault) { ShowAlert("도크린 기본값 적용: 공군 타격 사령부"); } });
+      QuantumEvent.Subscribe<EventSortieEnded>(this, e => { if (e.Player == Controller.Player && e.ShotDown) { ShowAlert("작전기 격추됨 — 격납 칸이 비었습니다"); } });
       QuantumEvent.Subscribe<EventCaptureChanged>(this, OnCapture);
       QuantumEvent.Subscribe<EventSupplyDropIncoming>(this, OnDropIncoming);
       QuantumEvent.Subscribe<EventBarricadeDestroyed>(this, OnBarricade);
@@ -436,6 +444,54 @@ namespace FactoryWars.View {
       Ui.Stretch(text.rectTransform);
       badge.gameObject.SetActive(false);
       return text;
+    }
+
+    RectTransform _doctrinePanel;
+    Text _doctrineTitle;
+
+    static readonly (int Id, string Name, string Body, string Icon)[] Doctrines = {
+      (1, "공군 타격 사령부", "출격기 재정비 -25%\n정찰차 시야·속도 +20%", "doctrine_air"),
+      (2, "그림자 특수전단", "저격수 한도 +1\n은신 +10초 · 엄폐 피해 -15%", "doctrine_shadow"),
+      (3, "기갑 요새화 군단", "전차·포격함 생산비 -15%\n공병 수리 +50%", "doctrine_armor"),
+    };
+
+    /// <summary>항목 37: 경기 시작 직후 도크린 3택 1 카드. 이미지는 UiCatalog 칸(doctrine_*)이 있으면 그것, 없으면 도형 카드.</summary>
+    void BuildDoctrinePanel(UiTheme theme) {
+      _doctrinePanel = Ui.Panel("DoctrinePanel", Root, theme.Panel);
+      Ui.Place(_doctrinePanel, new Vector2(0.5f, 0.5f), new Vector2(0, 40), new Vector2(1180, 470));
+      _doctrineTitle = Ui.Label("Title", _doctrinePanel, "전술 도크린을 고르세요", theme.FontLarge, TextAnchor.MiddleCenter);
+      _doctrineTitle.color = theme.PanelText;
+      Ui.Place(_doctrineTitle.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -44), new Vector2(1100, 70));
+      for (var i = 0; i < Doctrines.Length; i++) {
+        var card = Doctrines[i];
+        var id = card.Id;
+        var button = Ui.Button($"Doctrine{id}", _doctrinePanel, $"{card.Name}\n\n{card.Body}", () => {
+          Controller.Send(new ChooseDoctrineCommand { Doctrine = id });
+          _doctrinePanel.gameObject.SetActive(false);
+        }, theme.FontMedium - 2);
+        Ui.Place((RectTransform)button.transform, new Vector2(0.5f, 0.5f), new Vector2((i - 1) * 375, -30), new Vector2(350, 300));
+        var art = UiCatalog.SpriteFor(card.Icon);
+        if (art != null) {
+          Ui.SetIcon(button, art);
+        }
+      }
+      _doctrinePanel.gameObject.SetActive(false);
+    }
+
+    void RefreshDoctrine(Frame frame) {
+      if (_doctrinePanel == null || Controller.Player.IsValid == false) {
+        return;
+      }
+      var state = FactoryWarsUtil.Player(frame, Controller.Player);
+      var rules = frame.FindAsset(frame.RuntimeConfig.Rules);
+      var left = rules.DoctrineSelectSeconds - frame.Number / Mathf.Max(1, frame.SessionConfig.UpdateFPS);
+      var show = state != null && state->DoctrineLocked == false && left > 0;
+      if (_doctrinePanel.gameObject.activeSelf != show) {
+        _doctrinePanel.gameObject.SetActive(show);
+      }
+      if (show) {
+        _doctrineTitle.text = $"전술 도크린을 고르세요 ({left}초 뒤 기본값)";
+      }
     }
 
     void BuildCard(UiTheme theme) {
@@ -938,6 +994,7 @@ namespace FactoryWars.View {
       }
       RefreshContext(frame, state);
       RefreshCard(frame, state);
+      RefreshDoctrine(frame);
       RefreshUltimateBars(frame);
       Layout();
       if (DiplomacyOpen) {
@@ -1204,7 +1261,9 @@ namespace FactoryWars.View {
           UnitCommandEntries();
           showPanel = true;
         }
-        if (input.Mode == MatchInput.TapMode.AttackMove) {
+        if (input.Mode == MatchInput.TapMode.Jammer) {
+          status = "교란 장치: 적 자원 노드를 누르세요";
+        } else if (input.Mode == MatchInput.TapMode.AttackMove) {
           status = "공격 이동: 목적지를 누르세요";
         } else if (input.Mode == MatchInput.TapMode.Patrol) {
           status = "순찰: 반대쪽 끝을 누르세요";
@@ -1245,6 +1304,71 @@ namespace FactoryWars.View {
         Detail = "지금 위치와 누른 곳 사이를 오가며 적을 공격",
         Action = () => input.Mode = input.Mode == MatchInput.TapMode.Patrol ? MatchInput.TapMode.None : MatchInput.TapMode.Patrol });
       Entries.Add(new ContextEntry { Label = "정지", Icon = "ui_stop", Enabled = true, Detail = "하던 일을 멈춥니다", Action = () => Controller.Stop() });
+      SniperEntries();
+    }
+
+    /// <summary>항목 34-C: 저격수를 고르면 은신·교란 장치 버튼. 주둔은 진지 건물(도시 진지·벙커)을 누르면 된다.</summary>
+    void SniperEntries() {
+      var frame = Controller.Frame;
+      var input = Controller.Input;
+      if (frame == null) {
+        return;
+      }
+      var snipers = input.SelectedSnipers(frame);
+      if (snipers.Count == 0) {
+        return;
+      }
+      var ground = snipers.Where(e => frame.Get<Unit>(e).Garrison == EntityRef.None).ToList();
+      var ready = ground.Where(e => frame.Number >= frame.Get<Unit>(e).StealthReadyFrame && frame.Get<Unit>(e).StealthUntilFrame <= frame.Number).ToList();
+      var wait = ground.Count == 0 ? 0 : ground.Min(e => Mathf.Max(0, frame.Get<Unit>(e).StealthReadyFrame - frame.Number)) / Mathf.Max(1, frame.SessionConfig.UpdateFPS);
+      Entries.Add(new ContextEntry {
+        Label = ready.Count > 0 ? "은신" : ground.Count == 0 ? "은신\n주둔 중" : $"은신\n{wait}초", Icon = "ui_hold", Enabled = ready.Count > 0, Locked = ready.Count == 0,
+        Reason = ground.Count == 0 ? "건물에서 내려와야 합니다" : "다시 쓸 수 있을 때까지 기다리세요",
+        Detail = "20초 동안 적에게 안 보입니다(이동 -30%). 적이 4m 안에 오거나 레이더·정찰차에 들키면 드러납니다",
+        Action = () => Controller.Send(new StealthCommand { Units = ready.ToArray() }),
+      });
+      var hidden = ground.Any(e => frame.Get<Unit>(e).StealthUntilFrame > frame.Number);
+      Entries.Add(new ContextEntry {
+        Label = input.Mode == MatchInput.TapMode.Jammer ? "노드를 누르세요" : "교란 장치", Icon = "ui_cancel", Enabled = hidden, Locked = hidden == false,
+        Reason = "은신 중에만 설치할 수 있습니다",
+        Detail = "은신한 채 적 자원 노드 10m 안에서 4초 설치. 60초 동안 그 노드 채집 -40%(1인당 1개)",
+        Action = () => input.Mode = input.Mode == MatchInput.TapMode.Jammer ? MatchInput.TapMode.None : MatchInput.TapMode.Jammer,
+      });
+    }
+
+    /// <summary>항목 34-D: 비행장 격납 칸 4개. 대기 중인 작전기를 누르고 보이는 땅을 누르면 출격한다.</summary>
+    string HangarEntries(Frame frame, EntityRef entity, Building building) {
+      var input = Controller.Input;
+      var rules = frame.FindAsset(frame.RuntimeConfig.Rules);
+      for (var i = 0; i < SortieSystem.Slots; i++) {
+        var slot = building.Hangar[i];
+        var index = i;
+        if (slot.State == 0) {
+          Entries.Add(new ContextEntry { Label = $"격납 {i + 1}\n비어 있음", Icon = "ui_back", Enabled = false, Locked = true, Reason = "비행장에서 작전기를 생산하세요" });
+          continue;
+        }
+        var spec = frame.FindAsset(slot.Spec);
+        var name = Texts.NameOf(spec.name);
+        if (slot.State == 2) {
+          Entries.Add(new ContextEntry { Label = $"{name}\n작전 중", Icon = "ui_attack", Enabled = false, Locked = true, Reason = "작전기가 비행 중입니다" });
+          continue;
+        }
+        var left = Mathf.Max(0, slot.ReadyFrame - frame.Number) / Mathf.Max(1, frame.SessionConfig.UpdateFPS);
+        var picking = input.Mode == MatchInput.TapMode.Sortie && input.SortieAirfield == entity && input.SortieSlot == i;
+        Entries.Add(new ContextEntry {
+          Label = picking ? "목표를 누르세요" : left > 0 ? $"{name}\n재정비 {left}초" : $"{name}\n{Texts.Cost(spec.SortieCost, FactoryWarsUtil.Player(frame, Controller.Player)->Stock)}",
+          Icon = spec.SortieKind == SortieKind.Drop ? "ui_rally" : "ui_attack", Enabled = left == 0, Locked = left > 0, Reason = "재정비 중입니다",
+          Detail = spec.SortieKind == SortieKind.Strafe ? "기총소사: 진입~이탈 통로의 보병에 강함" : spec.SortieKind == SortieKind.Bomb ? "폭격: 폭탄 4발, 건물 피해 2배" : "공수 투하: 목표에 보병 6을 내려놓음",
+          Action = () => {
+            input.SortieAirfield = entity;
+            input.SortieSlot = index;
+            input.Mode = picking ? MatchInput.TapMode.None : MatchInput.TapMode.Sortie;
+          },
+        });
+      }
+      PadTo(ContextSlots - 1);
+      Entries.Add(new ContextEntry { Label = "뒤로", Icon = "ui_back", Enabled = true, Action = () => { _menu = Menu.Root; input.Mode = MatchInput.TapMode.None; } });
+      return TacticalSystem.WeatherActive(frame) ? "격납고 (기상 악화: 신호탄 구역만 출격)" : input.Mode == MatchInput.TapMode.Sortie ? "작전 목표: 보이는 땅을 누르세요" : "격납고";
     }
 
     /// <summary>건물이 있는 단계 목록. 지금 단계 + 1까지만 보인다(2단계 이상 높으면 숨김).</summary>
@@ -1396,6 +1520,20 @@ namespace FactoryWars.View {
       if (spec.Role == BuildingRole.UltimateSite) {
         UltimateEntries(frame, state);
         return status;
+      }
+      if (spec.Role == BuildingRole.Airfield) {
+        if (_menu == Menu.Hangar) {
+          return HangarEntries(frame, entity, building);
+        }
+        var stored = 0;
+        for (var i = 0; i < SortieSystem.Slots; i++) {
+          stored += building.Hangar[i].State != 0 ? 1 : 0;
+        }
+        Entries.Add(new ContextEntry {
+          Label = $"격납고\n{stored}/{SortieSystem.Slots}", Icon = "ui_attack", Enabled = true,
+          Detail = "작전기(전투기·공격기·수송기)는 격납고에 대기합니다. 눌러서 출격시키세요",
+          Action = () => _menu = Menu.Hangar,
+        });
       }
       // 항목 33 벙커: 안의 분대를 내보낸다.
       if (spec.GarrisonCapacity > 0) {

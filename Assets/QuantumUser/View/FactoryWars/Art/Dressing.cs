@@ -139,10 +139,10 @@ namespace FactoryWars.View {
     }
 
     public static int Fill(MapSpec map) {
-      if (Dressing.Collecting == false || Dressing.Has(DressKind.Grass) == false || VisualProfile.Current.UrbanDecor) {
-        // 항목 36 시각 교정: 시가지는 바닥에 점처럼 흩뿌린 자갈·쓰레기 소품을 두지 않는다(길가 엄폐물만 정렬 배치).
+      if (Dressing.Collecting == false || Dressing.Has(DressKind.Grass) == false) {
         return 0;
       }
+      var urban = VisualProfile.Current.UrbanDecor;
       var paths = TerrainKit.RiverPaths(map);
       var terrain = map.Terrain?.Select(t => t.Shape).ToArray();
       var nodes = map.ResourceNodes?.Select(n => n.Shape).ToArray();
@@ -163,6 +163,15 @@ namespace FactoryWars.View {
             continue;
           }
           var pick = MeshKit.Hash(index, 4);
+          // 시가지: 잔디 구역(보도 바깥)에만 낮은 풀·덤불. 자갈·쓰레기는 두지 않는다.
+          if (urban) {
+            if (TerrainKit.IsPavedGround(map, spot.x, spot.z) || MeshKit.Hash(index, 5) > 0.55f) {
+              continue;
+            }
+            spot.y = TerrainKit.SurfaceHeight(map, spot.x, spot.z);
+            count += Dressing.Add(pick < 0.72f ? DressKind.Grass : DressKind.Bush, spot, 9000 + index) ? 1 : 0;
+            continue;
+          }
           var kind = pick < 0.48f ? DressKind.Grass : pick < 0.6f && Dressing.Has(DressKind.GroundPatch) ? DressKind.GroundPatch : pick < 0.85f ? DressKind.RockSmall : DressKind.Bush;
           // 도시 건물 둘레(폐허 주변)는 차량 부품·타이어 같은 잔해와 길가 버려진 가구(high 전용)를 섞는다. 작아서 통과해도 어색하지 않다.
           if (Near(city, spot, 5f) && pick < 0.6f) {

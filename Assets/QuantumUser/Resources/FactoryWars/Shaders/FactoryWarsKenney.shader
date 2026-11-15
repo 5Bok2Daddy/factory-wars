@@ -18,6 +18,8 @@ Shader "FactoryWars/KenneyLit"
         _GradientStrength ("Gradient Strength", Range(0, 1)) = 0.22
         _NoiseScale ("Noise Scale", Float) = 0.035
         _NoiseStrength ("Noise Strength", Range(0, 0.5)) = 0.08
+        _GridStrength ("Paving Grid Strength", Range(0, 0.5)) = 0
+        _GridSize ("Paving Grid Size (m)", Float) = 2
         _AoHeight ("Contact AO Height", Float) = 1.0
         _AoStrength ("Contact AO Strength", Range(0, 1)) = 0.35
         _GroundY ("Ground Y", Float) = 0
@@ -47,6 +49,8 @@ Shader "FactoryWars/KenneyLit"
             half _GradientStrength;
             float _NoiseScale;
             half _NoiseStrength;
+            half _GridStrength;
+            float _GridSize;
             float _AoHeight;
             half _AoStrength;
             float _GroundY;
@@ -171,6 +175,17 @@ Shader "FactoryWars/KenneyLit"
                 UNITY_SETUP_INSTANCE_ID(input);
                 half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb * input.color;
                 albedo = FwShade(albedo, input.positionWS);
+                // 포장면 줄눈: 채도가 낮고 너무 어둡지 않은 정점 색(콘크리트·보도)에만 2m 격자 선을 옅게 긋는다(아스팔트·잔디 제외).
+                if (_GridStrength > 0.001)
+                {
+                    float2 cell = abs(frac(input.positionWS.xz / _GridSize + 0.5) - 0.5) * _GridSize;
+                    half gridLine = 1.0 - saturate(min(cell.x, cell.y) / 0.05);
+                    half3 vc = input.color;
+                    half sat = max(vc.r, max(vc.g, vc.b)) - min(vc.r, min(vc.g, vc.b));
+                    half lum = dot(vc, half3(0.299, 0.587, 0.114));
+                    half paved = (1.0 - saturate(sat * 8.0)) * saturate((lum - 0.22) * 6.0);
+                    albedo *= 1.0 - _GridStrength * gridLine * paved;
+                }
                 albedo = FwScar(albedo, input.positionWS);
                 half3 normal = normalize(input.normalWS);
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);

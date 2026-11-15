@@ -2093,9 +2093,10 @@ MonoBehaviour:
   - Id: dress/Bush
     Category: 4
     Prefabs:
-    - {fileID: 1312355241603112, guid: bbbb24f5f90919b45a46ad0bfc79b609, type: 3}
-    - {fileID: 179988, guid: 5e9f23a0d535d65438771a89191d0f83, type: 3}
-    Scale: 1.0427071
+    - {fileID: 1942271765617280, guid: 347b600295e5b61419922faa4dd55b7a, type: 3}
+    - {fileID: 1186236345388672, guid: 8fe3023c8b002c346b00947dc8f040e3, type: 3}
+    - {fileID: 1222381812956956, guid: 1819aaf6f0261ab42b289b5395a78e7f, type: 3}
+    Scale: 1.7674844
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2173,14 +2174,14 @@ MonoBehaviour:
   - Id: dress/Cliff
     Category: 4
     Prefabs:
-    - {fileID: 259947360957426316, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
-    - {fileID: 8116675839788136361, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
-    - {fileID: 2623760124184984354, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
-    - {fileID: 3719040959788266544, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
-    - {fileID: 7936248589008842540, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
-    - {fileID: 798557557705920792, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
-    - {fileID: 3069482782131035623, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
-    - {fileID: 3975466646712594796, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
+    - {fileID: 1598321485868189481, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
+    - {fileID: 3482445409911092958, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
+    - {fileID: 6634492654076426705, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
+    - {fileID: 2169147111768589506, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
+    - {fileID: 8115594124561136973, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
+    - {fileID: 808321421146133489, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
+    - {fileID: 3099245320174013348, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
+    - {fileID: 3683038508299499514, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -2570,10 +2571,11 @@ MonoBehaviour:
   - Id: dress/Grass
     Category: 4
     Prefabs:
-    - {fileID: 1490646748009286, guid: b3cdda3cca11aab4b831821407447d27, type: 3}
-    - {fileID: 1435898926375564, guid: 20d4d1d81be647842afbca4b0c65e82d, type: 3}
-    - {fileID: 1129552176155994, guid: dcc4f2b0304bbd04bb61515da38c14d7, type: 3}
-    Scale: 0.67293215
+    - {fileID: 195558, guid: 7b30b5ba44201104fba4e71a527b6905, type: 3}
+    - {fileID: 1921160686080338, guid: f2aca044b25c4a44fb7e1e321447c261, type: 3}
+    - {fileID: 1258429159176928, guid: 18aeec7ff9aa17e4d968d22617ca2fbc, type: 3}
+    - {fileID: 1712885822017418, guid: ddcc8030742463e49959f0e6fbadeff2, type: 3}
+    Scale: 0.46560106
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -3236,7 +3238,7 @@ MonoBehaviour:
   - Id: dress/WaterGate
     Category: 4
     Prefabs:
-    - {fileID: 4545588270608497739, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
+    - {fileID: 349201535506146233, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3384,6 +3386,31 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
+  - Id: dress/LumberYard
+    Category: 5
+    Prefabs:
+    - {fileID: 1771269981955728, guid: f4bb022ab0d2a5c46b6af300deb95be5, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 LumberYard"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: fx/muzzle
     Category: 6
     Prefabs: []
@@ -3410,8 +3437,9 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: fx/impact
     Category: 6
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1804206099813350, guid: 5370e1f7cacd96e40bfb6ca583e860da, type: 3}
+    Scale: 0.8
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -3422,9 +3450,9 @@ MonoBehaviour:
     TeamTextures: []
     Animator: {fileID: 0}
     DeathSeconds: 1.5
-    Lifetime: 2
+    Lifetime: 2.5
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 FX Explosion_Small_FX"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -3434,7 +3462,8 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: fx/explosion
     Category: 6
-    Prefabs: []
+    Prefabs:
+    - {fileID: 1974830201887114, guid: 8baff3207836e304f95274c39c8d572c, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3446,9 +3475,9 @@ MonoBehaviour:
     TeamTextures: []
     Animator: {fileID: 0}
     DeathSeconds: 1.5
-    Lifetime: 2
+    Lifetime: 4
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 FX FX_Explosion_Large_Dark_01"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -3458,8 +3487,9 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: fx/flame
     Category: 6
-    Prefabs: []
-    Scale: 1
+    Prefabs:
+    - {fileID: 1853590768085000, guid: 1356dc656cdf1654faa01a76e60e6b45, type: 3}
+    Scale: 0.8
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -3472,7 +3502,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 FX FX_Fire_Small_01"
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -3482,7 +3512,33 @@ MonoBehaviour:
     OwnerRing: 0
   - Id: fx/smoke
     Category: 6
-    Prefabs: []
+    Prefabs:
+    - {fileID: 1506195013956270, guid: 2455f9e97989bb34b863456d2c2f67de, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 6
+    RealWorld: 1
+    Notes: "Synty \uD329 FX FX_Smoke_Medium_01"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/weather_sand
+    Category: 6
+    Prefabs:
+    - {fileID: 1288709326204050, guid: f27743b8dc5cfbe4d896187fcdd8c9f6, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3496,7 +3552,57 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: 
+    Notes: "Synty \uD329 FX FX_Dust_Blowing_Soft_Large_01"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/weather_rain
+    Category: 6
+    Prefabs:
+    - {fileID: 3565298838687146643, guid: daf8f70fb4a14fea9a31616448a384a6, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 FX FX_Rain_01"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/weather_fog
+    Category: 6
+    Prefabs:
+    - {fileID: 605366958336811197, guid: 513c9de105694c7babcfca33ccf48340, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 FX FX_Fog_01"
     TurretPart: 
     BarrelPart: 
     SpinParts: []

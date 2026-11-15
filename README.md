@@ -65,6 +65,13 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 그래픽 2차: 잔디·보도 줄눈·창고 자원지·콘크리트 수문 (2026-11-15)
+![교차로](Docs/status_images/36g_crossroads_ground.png)
+![수문](Docs/status_images/36g_gate_solid.png)
+![전체](Docs/status_images/36g_overview.png)
+
+> 구매 후보 목록: [Docs/ASSET-SHOPPING.md](Docs/ASSET-SHOPPING.md)
+
 ### 36 시각 교정 전/후 (2026-11-15)
 ![전](Docs/status_images/36v_crossroads_before.png)
 ![후](Docs/status_images/36v_crossroads_after.png)

@@ -232,6 +232,9 @@ namespace FactoryWars.View {
     }
 
     /// <summary>도로나 도시 건물 가장자리에서 reach 안인가.</summary>
+    /// <summary>시가지 바닥에서 보도(콘크리트)로 칠해지는 자리인가(도로·건물 3.2m 안). 아니면 잔디.</summary>
+    public static bool IsPavedGround(MapSpec map, float x, float z) => NearRoadOrCity(map, x, z, 3.2f);
+
     static bool NearRoadOrCity(MapSpec map, float x, float z, float reach) {
       var fp = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(z));
       foreach (var r in map.Roads ?? Array.Empty<MapShape>()) {
@@ -333,8 +336,11 @@ namespace FactoryWars.View {
     }
 
     /// <summary>물 면, 경사 강변, 땅 위의 모래 띠. 강줄기 하나를 리본으로 잇는다.</summary>
-    public static void River(MeshKit k, List<RiverPoint> path, int seed, Rect land, MeshKit water = null) {
+    public static void River(MeshKit k, List<RiverPoint> path, int seed, Rect land, MeshKit water = null, Rect? banks = null) {
+      // 물 면은 외곽 수로까지 이어지고, 둑(벽)은 banks(해안 옹벽 선) 안에서 끊는다(항목 36 시각 교정: 벽이 바다로 튀어나오지 않게).
+      var bankLand = banks ?? land;
       Vector3 Edge(RiverPoint point, float side, float offset, float y) => Clip(Bank(point, side, offset, y), land);
+      Vector3 BankEdge(RiverPoint point, float side, float offset, float y) => Clip(Bank(point, side, offset, y), bankLand);
       // 항목 36: water를 주면 물 면과 가장자리 거품 띠를 따로 모은다(물 셰이더로 그린다).
       var surface = water ?? k;
       for (var i = 0; i + 1 < path.Count; i++) {
@@ -357,14 +363,14 @@ namespace FactoryWars.View {
           // 항목 36: 시가지는 흙 둑 대신 콘크리트 제방.
           var urban = VisualProfile.Current.UrbanDecor;
           k.Paint(urban ? Swatch.Concrete : MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.CanyonMid);
-          k.Quad(Edge(a, side, BandInner, BankY), Edge(a, side, ledge, middle), Edge(b, side, ledge, middle), Edge(b, side, BandInner, BankY), Vector3.up);
+          k.Quad(BankEdge(a, side, BandInner, BankY), BankEdge(a, side, ledge, middle), BankEdge(b, side, ledge, middle), BankEdge(b, side, BandInner, BankY), Vector3.up);
           k.Paint(urban ? Swatch.ConcreteDark : Swatch.CanyonDark);
-          k.Quad(Edge(a, side, ledge, middle), Edge(a, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, SlopeInner, WaterLevel - 0.1f), Edge(b, side, ledge, middle), Vector3.up);
+          k.Quad(BankEdge(a, side, ledge, middle), BankEdge(a, side, SlopeInner, WaterLevel - 0.1f), BankEdge(b, side, SlopeInner, WaterLevel - 0.1f), BankEdge(b, side, ledge, middle), Vector3.up);
           if (Folded(path, a, side) || Folded(path, b, side)) {
             continue;
           }
           k.Paint(urban ? Swatch.Concrete : MeshKit.Hash(seed, i * 2 + 300 + (side > 0 ? 1 : 0)) < 0.55f ? Swatch.Sand : Swatch.Dirt);
-          k.Quad(Edge(a, side, BandOuter, BankY), Edge(a, side, BandInner, BankY), Edge(b, side, BandInner, BankY), Edge(b, side, BandOuter, BankY), Vector3.up);
+          k.Quad(BankEdge(a, side, BandOuter, BankY), BankEdge(a, side, BandInner, BankY), BankEdge(b, side, BandInner, BankY), BankEdge(b, side, BandOuter, BankY), Vector3.up);
         }
       }
     }
@@ -732,7 +738,7 @@ namespace FactoryWars.View {
         }
       }
       for (var i = 0; i < paths.Count; i++) {
-        River(k, paths[i], 40 + i, Land(map), water);
+        River(k, paths[i], 40 + i, Land(map), water, Channel(map) > 0f ? new Rect(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat, map.BoundsMax.X.AsFloat - map.BoundsMin.X.AsFloat, map.BoundsMax.Y.AsFloat - map.BoundsMin.Y.AsFloat) : (Rect?)null);
         RiverRocks(k, paths[i], 70 + i, map);
       }
       if (roads) {

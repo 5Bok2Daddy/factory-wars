@@ -63,6 +63,8 @@ namespace FactoryWars.View {
     QuayBollard,
     OutpostTower,
     OutpostWall,
+    /// <summary>시가지 목재 자원지: 상자 더미 대신 단일 창고 건물(채집이 끝나면 사라진다).</summary>
+    LumberYard,
   }
 
   /// <summary>

@@ -47,7 +47,7 @@ namespace FactoryWars.EditorTools {
     static GameObject BuildWaterGate(StringBuilder csv) {
       var wall = Find("SM_Env_Port_Wall_02") ?? Find("SM_Env_Port_Wall_01");
       var pier = Find("SM_Env_Bridge_Support_01");
-      var door = Find("SM_Prop_Fence_Gate_01") ?? Find("SM_Bld_Village_Wall_Gate_01") ?? Find("SM_Prop_Barricade_01");
+      var door = Find("SM_Env_Port_Wall_01") ?? Find("SM_Prop_Container_01") ?? Find("SM_Prop_Fence_Gate_01");
       var foam = Find("FX_Waterfall_Foam_01");
       if (wall == null || door == null) {
         Debug.LogWarning("[FW-Urban] 수문: 옹벽 또는 문 모델이 팩에 없어 건너뜀");
@@ -96,9 +96,9 @@ namespace FactoryWars.EditorTools {
       yield return Scaled(DressKind.Broadleaf, 1.8f, "SM_Prop_Pallet_01", "SM_Prop_Crate_Large_01");
       yield return Scaled(DressKind.TreeSparse, 1.3f, "SM_Prop_Pallet_01", "SM_Prop_Pallet_02");
       yield return Scaled(DressKind.Stump, 0.9f, "SM_Prop_Pallet_01", "SM_Prop_Pallet_02");
-      yield return Sized(DressKind.Bush, 1.6f, "SM_Prop_Rubble_Pile_03", "SM_Prop_TrashBag_01");
+      yield return Sized(DressKind.Bush, 1.5f, "SM_Env_Bush_Small_01", "SM_Env_Bush_Small_02", "SM_Env_Bush_Small_03");
       // 빈 땅 흩뿌리기와 바위: 자갈·잔해·콘크리트 더미.
-      yield return Sized(DressKind.Grass, 1.3f, "SM_Env_Rubble_Pebbles_01", "SM_Env_Rubble_Pebbles_02", "SM_Env_Rubble_Pebbles_03");
+      yield return Sized(DressKind.Grass, 1.1f, "SM_Env_Grass_01", "SM_Env_Grass_02", "SM_Env_Grass_03", "SM_Env_Grass_04");
       yield return Sized(DressKind.RockSmall, 2.2f, "SM_Prop_Rubble_Pile_01", "SM_Prop_Rubble_Pile_02", "SM_Prop_Rubble_Pile_03");
       yield return Sized(DressKind.RockLarge, 5f, "SM_Env_Rubble_Pile_01", "SM_Env_Rubble_Pile_02", "SM_Prop_DebrisPile_02");
       yield return Sized(DressKind.GroundPatch, 3f, "SM_Env_Road_Patch_01");
@@ -116,6 +116,7 @@ namespace FactoryWars.EditorTools {
       yield return Sized(DressKind.QuayBollard, 1.1f, "SM_Env_Port_Boat_Tie_01");
       yield return Sized(DressKind.OutpostTower, 3.2f, "SM_Prop_GuardTower_01");
       yield return Sized(DressKind.OutpostWall, 2.8f, "SM_Prop_Barricade_01");
+      yield return Scaled(DressKind.LumberYard, 1f, "SM_Bld_Warehouse_01");
       // 길가: 가로등·소화전·쓰레기통·고깔.
       yield return Scaled(DressKind.RoadProp, 1f, "SM_Prop_LightPole_Base_01", "SM_Prop_LightPole_Base_01", "SM_Prop_Hydrant_01", "SM_Prop_TrashCan_01", "SM_Prop_Cone_01");
       // 도시 건물(칸 크기에 맞춰 늘어난다: Fit). 세로는 칸 데이터의 목표 높이 쪽으로 0.8~1.3배.
@@ -200,6 +201,34 @@ namespace FactoryWars.EditorTools {
         cliff.RealWorld = RealWorldCheck.Clear;
         cliff.Notes = "Synty 팩 시가지 Cliff(상자형 건물 블록)";
         csv.AppendLine($"Cliff,1,{blocks.Count},{string.Join("+", blocks.Select(b => b.name))}");
+        count++;
+      }
+      // 효과 칸: 가진 팩의 FX를 그대로 연결(포구 섬광은 발사마다 생겨 모바일 부하가 커서 절차 효과를 유지한다).
+      foreach (var (fx, names, life, scale) in new[] {
+        ("impact", new[] { "Explosion_Small_FX", "FX_Grenade_Explosive_01" }, 2.5f, 0.8f),
+        ("explosion", new[] { "FX_Explosion_Large_Dark_01", "Explosion_Large_FX" }, 4f, 1f),
+        ("flame", new[] { "FX_Fire_Small_01", "Fire_01_FX" }, 2f, 0.8f),
+        ("smoke", new[] { "FX_Smoke_Medium_01", "FX_Smoke_Large_01" }, 6f, 1f),
+        ("weather_sand", new[] { "FX_Dust_Blowing_Soft_Large_01", "FX_Dust_Blowing_Soft_01" }, 0f, 1f),
+        ("weather_rain", new[] { "FX_Rain_01", "FX_Rain" }, 0f, 1f),
+        ("weather_fog", new[] { "FX_Fog_01" }, 0f, 1f),
+      }) {
+        var fxSlot = catalog.Get(VisualCatalog.FxId(fx));
+        if (fxSlot == null) {
+          fxSlot = new VisualSlot { Id = VisualCatalog.FxId(fx), Category = VisualCategory.Effect };
+          catalog.Slots.Add(fxSlot);
+        }
+        var fxPrefabs = names.Select(Find).Where(p => p != null).Take(1).ToList();
+        if (fxPrefabs.Count == 0) {
+          continue;
+        }
+        fxSlot.Prefabs = fxPrefabs;
+        fxSlot.Scale = scale;
+        fxSlot.Lifetime = life > 0f ? life : 2f;
+        fxSlot.AutoFit = false;
+        fxSlot.RealWorld = RealWorldCheck.Clear;
+        fxSlot.Notes = "Synty 팩 FX " + fxPrefabs[0].name;
+        csv.AppendLine($"fx/{fx},{scale},1,{fxPrefabs[0].name}");
         count++;
       }
       var gate = BuildWaterGate(csv);
