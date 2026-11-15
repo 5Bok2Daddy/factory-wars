@@ -2,7 +2,8 @@
 
 <!-- 밤사이 요약 시작 -->
 ## 다음 단계 (2026-11-14, 항목 34 부분 완료) — 재개할 때 여기부터
-- 사용자 지시(20:15): 순서 **36 → 34 → 35**. 36은 끝났다("항목 36 결과"). **34는 A 안개·B 보급 알람까지 끝났고(바로 아래 "항목 34 결과(부분)") C 저격수·D 항공 작전·E 밸런스는 남았다. 35(맵 5종)는 시작하지 않았다**(사용량 한도). 각 항목 보고서 끝에 "에셋 반영 정리" 표가 있다.
+- **2026-11-15 사용자 지시: 순서 36 → 34 → 35 → 37.** 36 추가 지시(수문·깊이 거품·모래주머니)는 끝났다("항목 36 추가 지시 결과").
+- (이전) 사용자 지시(20:15): 순서 **36 → 34 → 35**. 36은 끝났다("항목 36 결과"). **34는 A 안개·B 보급 알람까지 끝났고(바로 아래 "항목 34 결과(부분)") C 저격수·D 항공 작전·E 밸런스는 남았다. 35(맵 5종)는 시작하지 않았다**(사용량 한도). 각 항목 보고서 끝에 "에셋 반영 정리" 표가 있다.
 - 다음에 할 일: 34-C 주둔 저격수 → 34-D 항공 작전 → 34-E 밸런스·APK → 35. 안개는 기본 꺼짐이라 켜기 전에 AI 재측정이 필요하다.
 - 이 PC 상태: 팩은 `Game/Assets/ExternalAssets/Synty`(git 제외), 우리 틀·변형·컨트롤러는 `Game/Assets/FactoryWarsArt/Synty`(git 제외). 새 PC는 `Game/Docs/ASSET-SWAP.md`의 "항목 32 Synty 팩 적용" → `Tools/Factory Wars/Assets/5. Assign Synty Pack` → `6. Assign Urban Dressing`. 원본 확인은 `python Tools/pack_hashes.py check`.
 - APK는 34·35까지 끝낸 뒤 한 번에 빌드한다(지금까지 빌드 안 함).
@@ -55,6 +56,40 @@
 | **기존 모델 그대로** | 보급 상자·낙하 연출은 기존 Kenney `SupplyCrate`(칸 `dress/SupplyCrate`) |
 | **빈 슬롯 = 팩에서 고를 후보** | 보급 낙하산 → 팩 `Prop_Parachute_01`, 상자 → `Prop_Crate_Ammo/Medical`; 주둔 저격수 → 팩 `Ghillie` 캐릭터 + `Wep_Sniper_01`, 가건물 → `Bld_Plywood_Shed_01`, 감시탑 → `Bld_GuardTower_01`; 작전기(전투기·공격기·수송기) → 팩 `Veh_Jet_01/02`, `Veh_Jet_Attach_Bomb_01`, `Veh_TransportPlane_01`(수송기는 폭격기로 이미 연결됨), 낙하 병력 → `Prop_Parachute_01`; 오디오 칸 `drop_warning`·`drop_closing`·`drop_landed`·`drop_captured`(아직 칸 없음) |
 | **빈 슬롯 = 나중에 살 것** | 폭발·기총 연기 FX(팩 FX 폴더 후보 있음), 경고음·레이더 파동 소리(오디오 팩 없음), 안개 위 경고 원 UI(UI 팩) |
+
+## 항목 36 추가 지시 결과 — 수문 조립 · 깊이 거품 물 셰이더 · 모래주머니 대체 (2026-11-15, Claude Sonnet 5.5)
+
+### 한눈에
+- **지시서 5절(추가 지시) 3건을 처리했다.** 수문 조립 프리팹 + 개방 연출, URP 깊이 텍스처 기반 해안선 거품 물 셰이더(낮음 품질 대체 포함), 모래주머니 대체. 시험 새로 2개 + 기존 36 시험 전부 통과(9개 중 9 통과), 팩 원본 해시 시험 통과.
+- 시뮬레이션·NavMesh·수문 영역(`WaterGate*`)은 바꾸지 않았다. 수문 연출은 `Global.BarrierOpen`과 `PlayerAtSeat`만 읽는다.
+- **정정:** 이전 36 보고서는 수문 모델이 "기존 그대로"라고 썼지만, 확인해 보니 수문은 화면 모델이 전혀 없는 NavMesh 영역뿐이었다. 이번에 처음 만들었다.
+
+### 1. 해야 했던 것과 결과 (증거)
+| 지시 | 한 일 | 증거 |
+| --- | --- | --- |
+| 수문 킷배싱 | 팩 옹벽 `Port_Wall_02`(양옆 벽)·`Bridge_Support_01`(문이 끼는 홈 기둥)·철제 문 `Fence_Gate_01`·물보라 `FX_Waterfall_Foam_01`을 **우리 프리팹 `Assets/FactoryWarsArt/Synty/Urban/water_gate.prefab`** 한 개로 조립(`UrbanAssign.BuildWaterGate`). 팩 모델은 감싸개의 자식으로 넣기만 했고 배율·위치는 감싸개에만 준다(`WaterGateRig`). 칸 `dress/WaterGate`(새 `DressKind.WaterGate`)로 연결 | `Urban_WaterGateAssembledAndOpens`, `Assets_PackFilesUnchanged` 통과, `urban36/gate_after.png` |
+| 수문 개방 연출 | 휴전 종료(7분) 또는 빈 본진 자리면 문이 `GateDropSeconds`(2.4초)에 걸쳐 아래로 내려가 사라지고, 내려가기 시작할 때 `FX_Waterfall_Foam`이 나온다(문이 다 내려간 4초 뒤 끔). 사람이 앉은 자리의 문은 휴전 중 올라와 있다 | 같은 시험(수문 수 = 맵의 수문 영역 수, 휴전 중 문 보임·`Drop=0`, 종료 뒤 `Drop=1`·문 숨김) |
+| 해안선 거품 물 셰이더 | `FactoryWars/UrbanWater`를 다시 작성: URP 깊이 텍스처로 물 면과 뒤쪽 물체(둑·수문 기둥·배·다리 기둥)의 깊이 차를 구해 맞닿는 곳에 흰 거품 띠, 얕을수록 투명. 파스텔 에메랄드(`WaterShallowTint`·`WaterDeepTint`). 공용 머티리얼 1개. 높음·보통 URP 에셋의 `Depth Texture`를 켰다 | `Urban_WaterDepthFoamByQuality`, `urban36/canal_after.png` |
+| 낮음 품질 대체 | 키워드 `_FW_DEPTH_FOAM`을 끄면 깊이 텍스처를 읽지 않고 불투명 단색 + 정점 색 가장자리 줄무늬 거품만 그린다(렌더 큐도 Geometry+50). 낮음 URP 에셋은 Depth Texture 꺼짐 그대로. 품질을 바꿀 때 `GraphicsQuality.Apply`가 즉시 갱신 | 같은 시험(높음·보통 켜짐 / 낮음 꺼짐 + 큐 < 3000) |
+| 데이터 | 색·거품 폭(`WaterFoamWidth` 1.3m)·흐름 속도(`WaterFlowSpeed`)·수문 문 높이/기둥 높이/하강 초는 `VisualProfile`·`VisualPresets` | 같은 시험(프로필 값 = 머티리얼 값) |
+| 모래주머니 | 팩에는 모래주머니 더미·Hesco 방벽이 없다(`Tent_Sandbags_01` 1종뿐). 기존 대로 `Prop_Barricade`·콘크리트 방벽(`Barrier_05/06`)·컨테이너·잔해 더미로 대체. 새로 연결한 것은 없다(이미 `Barrier`·`Container`·`Debris` 칸) | 아래 "부족한 모델" |
+
+전/후 캡처(`screenshots/urban36/`, 해시 서로 다름): 수문 전 `629045dbc21e` → 후 `8379b91f09c2`, 수로 전 `563c84ad91d8` → 후 `fbb91fa97afc`. 캡처는 그래픽을 켜고 돌려야 한다(`-nographics`로 돌리면 전/후가 같아 실패한다. 이 시험은 이름이 `Urban_`을 포함해 필터 `Urban_`에 걸리니 `CaptureUrban_BeforeAfter`로 따로 지정).
+
+### 2. 알려진 한계 (사실대로)
+- **수문 문이 지표(y=0) 높이에서 시작한다.** 수로 바닥·수면 높이를 정확히 읽지 않고 `DoorBaseY = -1.2m`로 물에 잠기게 했다. 수문이 가로지르는 폭은 수문 사각형의 긴 변이라 맵에 따라 어긋날 수 있다(Map4P에서 확인).
+- 깊이 거품은 둑이 수직 벽이라 위에서 보면 띠가 얇다(폭 1.3m로 키움). 배(선체) 둘레 거품은 배 렌더러가 깊이 텍스처에 쓰이는 때만 나온다(불투명 배이므로 나오지만 전용 캡처는 못 찍었다).
+- 물이 투명 큐로 바뀌어 겹쳐 그릴 때 비용이 조금 늘었다(성능 표는 다시 재지 않았다: 36 본문 표 그대로. 낮음은 불투명).
+- 이전 36의 미완 항목(신호등·팩 다리 모델 교체·부두/보트 묶음·`36_vs_target.png`)은 이번에도 하지 않았다.
+
+### 3. 에셋 반영 정리 (사용자 지시 20:15)
+| 구분 | 내용 |
+| --- | --- |
+| **적용한 것(팩 → 우리 프리팹 → 칸)** | `Port_Wall_02`·`Bridge_Support_01`·`Fence_Gate_01`·`FX_Waterfall_Foam_01` → `water_gate.prefab` → 칸 `dress/WaterGate`(25번째 칸) |
+| **우리가 만든 것(팩 대체 아님)** | 물 셰이더 깊이 거품·낮음 대체, 수문 틀 스크립트 `WaterGateRig`, 수문 개방 연출 `WorldView.UpdateGates`, 프로필 데이터 |
+| **대체한 것** | 모델이 없던 수문 영역 → 조립 수문 / 단색 청록 물 → 파스텔 에메랄드 + 깊이 거품 |
+| **부족한 모델(팩에 없음)** | 모래주머니 더미·Hesco 방벽(→ 방벽·컨테이너·잔해로 대체), 수문 일체형 모델(→ 부품 조립), 물 재질·물결 텍스처(→ 우리 셰이더) |
+| **빈 슬롯 = 나중에 살 것** | 수문(댐 게이트) 일체형, 항만 설비 일체형(부두·크레인), 신호등 기둥 일체형, 물 파티클 팩. 교체는 칸 `dress/WaterGate`에 프리팹만 넣으면 된다(`WaterGateRig`가 있어야 함) |
 
 ## 항목 36 결과 — 시가전 배경 + 수로 (2026-11-14, Claude Sonnet 5.5, 구입한 Synty 팩만)
 

@@ -144,6 +144,19 @@ namespace FactoryWars.View {
     public Color BackgroundColor = new Color(0.11f, 0.12f, 0.13f);
     /// <summary>강·운하·수로 물색. 알파가 0이면 팔레트 기본색을 쓴다.</summary>
     public Color WaterColor = new Color(0f, 0f, 0f, 0f);
+    /// <summary>항목 36 추가: 파스텔 에메랄드 물. 얕은 쪽·깊은 쪽·거품 색(알파 0이면 WaterColor에서 계산한 옛 값).</summary>
+    public Color WaterShallowTint = new Color(0f, 0f, 0f, 0f);
+    public Color WaterDeepTint = new Color(0f, 0f, 0f, 0f);
+    public Color WaterFoamTint = new Color(0.97f, 1f, 1f, 1f);
+    /// <summary>깊이 거품 폭(m). 둑·수문 기둥·배와 물이 맞닿는 곳에서 이 거리 안이 흰색이다.</summary>
+    public float WaterFoamWidth = 0.9f;
+    /// <summary>물결 흐름 속도(x, z).</summary>
+    public Vector2 WaterFlowSpeed = new Vector2(0.06f, 0.03f);
+    /// <summary>수문 가운데 문이 내려가는 초(7분 휴전이 끝나는 때).</summary>
+    public float GateDropSeconds = 2.4f;
+    /// <summary>수문 문이 올라와 있을 때의 높이(m)와 양옆 기둥 높이(m).</summary>
+    public float GateDoorHeight = 3.2f;
+    public float GatePostHeight = 4.6f;
     /// <summary>절벽 단마다 밝기 차이(아래 단이 어둡고 위 단이 밝다). 단색 면에서 층 경계가 보이게 한다.</summary>
     public float CliffTierShade;
     /// <summary>통과 불가 대지 윗면에 심는 장식 숲 밀도(0~1, 3.5m 격자에서 심을 확률).</summary>

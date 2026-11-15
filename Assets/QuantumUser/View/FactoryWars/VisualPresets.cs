@@ -133,6 +133,15 @@ namespace FactoryWars.View {
       p.SolidGround = true;
       p.BackgroundColor = new Color32(0xB2, 0xBA, 0xCC, 0xFF);
       p.WaterColor = new Color32(0x4A, 0xA3, 0xD6, 0xFF);
+      // 항목 36 추가: 파스텔 에메랄드 물(참고 그림의 밝고 맑은 수로), 깊이 거품 폭 0.9m.
+      p.WaterShallowTint = new Color32(0x73, 0xDB, 0xBD, 0xFF);
+      p.WaterDeepTint = new Color32(0x2B, 0x9E, 0xA3, 0xFF);
+      p.WaterFoamTint = new Color32(0xF7, 0xFF, 0xFF, 0xFF);
+      p.WaterFoamWidth = 1.3f;
+      p.WaterFlowSpeed = new Vector2(0.06f, 0.03f);
+      p.GateDropSeconds = 2.4f;
+      p.GateDoorHeight = 3.2f;
+      p.GatePostHeight = 4.6f;
       p.Outside = OutsideMode.Dark;
       p.PlateauHeight = 6f;
       // 29 2-1: 단일 슬래브 절벽으로 얼룩말 층층 줄무늬 제거

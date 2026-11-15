@@ -131,6 +131,53 @@ namespace FactoryWars.Tests {
       Assert.IsFalse(world.BarrierVisible, "열리면 울타리가 사라진다");
     }
 
+    /// <summary>깊이 거품 물 셰이더: 높음·보통은 깊이 거품 키워드가 켜지고(URP 깊이 텍스처 사용), 낮음은 꺼져 깊이 텍스처 없이 단색+가장자리 거품이다. 색·폭·흐름은 프로필 데이터.</summary>
+    [Test]
+    public void Urban_WaterDepthFoamByQuality() {
+      var before = GraphicsQuality.Current;
+      try {
+        var material = UrbanDecor.WaterMaterial();
+        Assert.IsNotNull(material);
+        Assert.IsTrue(material.HasProperty("_FoamWidth") && material.HasProperty("_Shallow") && material.HasProperty("_Flow"));
+        var profile = VisualProfile.Current;
+        Assert.AreEqual(profile.WaterFoamWidth, material.GetFloat("_FoamWidth"), 0.001f, "거품 폭은 프로필 데이터");
+        Assert.AreEqual(profile.WaterFlowSpeed.x, material.GetVector("_Flow").x, 0.001f, "흐름 속도는 프로필 데이터");
+        GraphicsQuality.Apply(QualityTier.High);
+        Assert.IsTrue(material.IsKeywordEnabled("_FW_DEPTH_FOAM"), "높음: 깊이 거품");
+        Assert.IsTrue(UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline is UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset high && high.supportsCameraDepthTexture, "높음 URP 에셋이 깊이 텍스처를 만든다");
+        GraphicsQuality.Apply(QualityTier.Medium);
+        Assert.IsTrue(material.IsKeywordEnabled("_FW_DEPTH_FOAM"), "보통: 깊이 거품");
+        GraphicsQuality.Apply(QualityTier.Low);
+        Assert.IsFalse(material.IsKeywordEnabled("_FW_DEPTH_FOAM"), "낮음: 깊이 거품 끔");
+        Assert.Less(material.renderQueue, 3000, "낮음은 불투명 순서(겹침 그리기 절약)");
+      } finally {
+        GraphicsQuality.Apply(before);
+      }
+    }
+
+    /// <summary>수문 조립: 옹벽·다리 기둥·문을 우리 프리팹으로 조립해 수문 영역마다 하나 세우고, 휴전이 끝나면 가운데 문이 내려가며 물보라가 나온다(시뮬레이션 상태를 읽기만 함).</summary>
+    [UnityTest]
+    public IEnumerator Urban_WaterGateAssembledAndOpens() {
+      if (PackPresent == false) {
+        Assert.Pass("팩 없음");
+      }
+      yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 5, truce: 20);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var map = Map4P();
+      var world = Battle().World;
+      var slot = VisualCatalog.Current.Get(VisualCatalog.DressId(DressKind.WaterGate));
+      Assert.IsTrue(slot != null && slot.IsFilled, "수문 칸이 우리 조립 프리팹으로 채워짐");
+      Assert.AreEqual(map.WaterGates.Length, world.Gates.Count, "수문 영역 수 = 수문 모델 수");
+      Assert.IsTrue(world.Gates.All(g => g.Rig.Left != null && g.Rig.Right != null && g.Rig.Door != null), "양옆 기둥+가운데 문");
+      Assert.IsTrue(world.Gates.Where(g => Quantum.FactoryWars.FactoryWarsUtil.PlayerAtSeat(Verified, g.Seat) >= 0).All(g => g.Rig.DoorVisible && g.Drop == 0f), "휴전 중 사람이 앉은 자리의 문은 올라와 있다");
+      yield return WaitFor(BarrierOpen, 30f, "휴전 종료");
+      yield return WaitFor(() => world.Gates.All(g => g.Drop >= 1f), 20f, "문 하강");
+      yield return null;
+      Assert.IsTrue(world.Gates.All(g => g.Rig.DoorVisible == false), "열리면 문이 아래로 내려가 사라진다");
+      Assert.IsTrue(world.Gates.Any(g => g.OpenFor >= 0f && g.Rig.Foam != null), "물보라 틀");
+    }
+
     /// <summary>품질별 장식 밀도: 낮음 40%·보통 70%·높음 100%(데이터 VisualProfile).</summary>
     [Test]
     public void Urban_DensityByQuality() {

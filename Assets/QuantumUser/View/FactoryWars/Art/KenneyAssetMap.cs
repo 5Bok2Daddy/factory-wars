@@ -55,6 +55,8 @@ namespace FactoryWars.View {
     TrainTrack,
     TrainWreck,
     AnimatedWorker,
+    /// <summary>항목 36 수문: 팩 옹벽·다리 기둥·철제 문을 우리 폴더 프리팹으로 조립한 것(WaterGateRig). 칸이 비어 있으면 수문 장식을 놓지 않는다.</summary>
+    WaterGate,
   }
 
   /// <summary>

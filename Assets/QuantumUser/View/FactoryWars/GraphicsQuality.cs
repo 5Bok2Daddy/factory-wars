@@ -39,6 +39,7 @@ namespace FactoryWars.View {
       QualitySettings.SetQualityLevel((int)tier, true);
       Bind(Camera.main);
       ArtView.RefreshAll();
+      UrbanDecor.RefreshWater();
       DressingRenderer.Active?.MarkDirty();
     }
 

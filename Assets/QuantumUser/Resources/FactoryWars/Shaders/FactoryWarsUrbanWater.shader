@@ -1,28 +1,36 @@
-// 항목 36 수로 물 표면(우리 쪽 셰이더, 구입한 팩에는 물 재질이 없다). 얕은 청록 ↔ 깊은 파랑이 월드 좌표 노이즈로 천천히 흐르고,
-// 정점 색 r이 1인 띠(강둑 가장자리)에는 흰 거품이 줄무늬로 흐른다. 조명 없이 단색으로 그린다(밝고 깨끗한 물). 머티리얼 하나를 모든 물이 공유한다.
+// 항목 36 수로 물 표면(우리 쪽 셰이더, 구입한 팩에는 물 재질이 없다). 파스텔 에메랄드 얕은 쪽 ↔ 깊은 쪽이 월드 좌표 노이즈로 천천히 흐른다.
+// 높은 품질(키워드 _FW_DEPTH_FOAM): URP 카메라 깊이 텍스처로 "물 면과 뒤의 물체(둑·수문 기둥·배·다리 기둥)의 깊이 차"를 구해, 맞닿는 곳에 흰 거품 띠가 그려지고 가까울수록 투명해진다.
+// 낮음 품질(키워드 없음): 깊이 텍스처를 읽지 않는다. 정점 색 r이 1인 띠(강둑 가장자리)에 줄무늬 거품만 그리고 불투명 단색이다(메쉬의 알파 가장자리 거품).
+// 머티리얼 하나를 모든 물이 공유한다. 색·거품 폭·흐름 속도는 VisualProfile 데이터가 채운다.
 Shader "FactoryWars/UrbanWater"
 {
     Properties
     {
-        _Shallow ("Shallow", Color) = (0.36, 0.70, 0.80, 1)
-        _Deep ("Deep", Color) = (0.18, 0.50, 0.78, 1)
-        _Foam ("Foam", Color) = (0.96, 0.99, 1, 1)
+        _Shallow ("Shallow", Color) = (0.45, 0.86, 0.74, 1)
+        _Deep ("Deep", Color) = (0.17, 0.62, 0.64, 1)
+        _Foam ("Foam", Color) = (0.97, 1, 1, 1)
         _Flow ("Flow (xz speed)", Vector) = (0.06, 0.03, 0, 0)
         _Scale ("Pattern scale", Float) = 0.11
+        _FoamWidth ("Depth foam width (m)", Float) = 0.9
+        _DepthFade ("Depth fade distance (m)", Float) = 3.5
     }
 
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" "Queue" = "Geometry" }
+        Tags { "RenderType" = "Transparent" "RenderPipeline" = "UniversalPipeline" "Queue" = "Transparent" }
 
         Pass
         {
             Name "Forward"
             Tags { "LightMode" = "UniversalForward" }
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile_local _ _FW_DEPTH_FOAM
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Shallow;
@@ -30,6 +38,8 @@ Shader "FactoryWars/UrbanWater"
                 half4 _Foam;
                 float4 _Flow;
                 float _Scale;
+                float _FoamWidth;
+                float _DepthFade;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; half4 color : COLOR; };
@@ -68,11 +78,24 @@ Shader "FactoryWars/UrbanWater"
                 // 잔물결 하이라이트: 좁은 띠가 흐른다.
                 float ripple = smoothstep(0.82, 0.95, WNoise(p * 3.7 - float2(t * 0.12, 0)));
                 color += ripple * 0.10;
-                // 가장자리 거품: 정점 색 r이 거품 띠 안쪽 1, 바깥쪽 0. 줄무늬가 둑을 따라 흐른다.
+                half alpha = 1;
+                // 줄무늬 거품(정점 색 r이 거품 띠 안쪽 1, 바깥쪽 0). 낮음 품질의 가장자리 거품이자, 높은 품질에서는 깊이 거품 위에 얹는 보조 줄무늬다.
                 float stripes = WNoise(float2(input.positionWS.x * 0.35 + input.positionWS.z * 0.35, t * 0.6) * 1.7);
                 half foam = saturate(input.color.r * (0.55 + 0.8 * stripes));
-                color = lerp(color, _Foam.rgb, foam * 0.85);
-                return half4(color, 1);
+                #if defined(_FW_DEPTH_FOAM)
+                    float2 uv = input.positionCS.xy / _ScaledScreenParams.xy;
+                    float sceneEye = LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams);
+                    float gap = max(sceneEye - input.positionCS.w, 0);
+                    // 물 면 바로 뒤에 둑·기둥·선체가 있으면(깊이 차가 작으면) 흰 거품. 거품 폭 안쪽은 꽉 차고 바깥으로 갈수록 줄무늬로 흩어진다.
+                    float edge = 1 - saturate(gap / max(_FoamWidth, 0.01));
+                    float ring = edge * (0.55 + 0.6 * stripes);
+                    // 깊이가 얕을수록 투명(물 아래 바닥이 비친다), 깊을수록 불투명.
+                    alpha = lerp(0.55, 0.96, saturate(gap / max(_DepthFade, 0.01)));
+                    foam = saturate(max(foam * 0.6, ring));
+                #endif
+                color = lerp(color, _Foam.rgb, foam * 0.9);
+                alpha = max(alpha, foam);
+                return half4(color, alpha);
             }
             ENDHLSL
         }

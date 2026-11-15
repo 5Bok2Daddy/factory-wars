@@ -91,7 +91,7 @@ namespace FactoryWars.EditorTools {
           return VisualCategory.City;
         case DressKind.Conifer: case DressKind.Autumn: case DressKind.Broadleaf: case DressKind.TreeSparse: case DressKind.Stump: case DressKind.Bush:
         case DressKind.RockLarge: case DressKind.RockSmall: case DressKind.Cliff: case DressKind.Grass: case DressKind.GroundPatch:
-        case DressKind.BridgePillar: case DressKind.BridgeDeck: case DressKind.TrainTrack: case DressKind.BaseWall:
+        case DressKind.BridgePillar: case DressKind.BridgeDeck: case DressKind.TrainTrack: case DressKind.BaseWall: case DressKind.WaterGate:
           return VisualCategory.Terrain;
         case DressKind.Crystal:
           return VisualCategory.Resource;

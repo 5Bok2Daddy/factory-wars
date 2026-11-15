@@ -1981,14 +1981,14 @@ MonoBehaviour:
   - Id: dress/Cliff
     Category: 4
     Prefabs:
-    - {fileID: 8297608632156406597, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
-    - {fileID: 575081590277342107, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
-    - {fileID: 8792040827848394616, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
-    - {fileID: 3493899947417218082, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
-    - {fileID: 4226899481184644103, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
-    - {fileID: 1085884899669912155, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
-    - {fileID: 7930855639238481562, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
-    - {fileID: 703229651220241652, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
+    - {fileID: 1481111793773116406, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
+    - {fileID: 2277169274387650775, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
+    - {fileID: 3899814573793812538, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
+    - {fileID: 2964033176954847027, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
+    - {fileID: 4964797135955231635, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
+    - {fileID: 2020462063878194653, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
+    - {fileID: 2628636636855016995, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
+    - {fileID: 5762082388838986119, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3034,6 +3034,32 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/WaterGate
+    Category: 4
+    Prefabs:
+    - {fileID: 8896226880593585858, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uBD80\uD488 \uC870\uB9BD \uC218\uBB38(\uC6B0\uB9AC \uD504\uB9AC\uD339
+      water_gate)"
     TurretPart: 
     BarrelPart: 
     SpinParts: []

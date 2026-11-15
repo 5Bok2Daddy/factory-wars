@@ -234,12 +234,32 @@ namespace FactoryWars.View {
         }
         var profile = VisualProfile.Current;
         _water = new Material(shader) { name = "UrbanWater" };
-        // 참고 그림의 밝고 깨끗한 파란 물: 프로필 물 색(WaterColor)에서 얕은 쪽은 밝게, 깊은 쪽은 어둡게.
+        // 항목 36 추가: 파스텔 에메랄드. 프로필 값이 있으면 그것, 없으면(옛 프로필) 물색에서 계산한다.
         var baseColor = profile.WaterColor.a > 0f ? (Color)profile.WaterColor : new Color(0.29f, 0.64f, 0.84f);
-        _water.SetColor("_Shallow", Color.Lerp(baseColor, Color.white, 0.28f));
-        _water.SetColor("_Deep", baseColor * 0.78f);
+        _water.SetColor("_Shallow", profile.WaterShallowTint.a > 0f ? (Color)profile.WaterShallowTint : Color.Lerp(baseColor, Color.white, 0.28f));
+        _water.SetColor("_Deep", profile.WaterDeepTint.a > 0f ? (Color)profile.WaterDeepTint : baseColor * 0.78f);
+        _water.SetColor("_Foam", profile.WaterFoamTint);
+        _water.SetFloat("_FoamWidth", profile.WaterFoamWidth);
+        _water.SetVector("_Flow", new Vector4(profile.WaterFlowSpeed.x, profile.WaterFlowSpeed.y, 0f, 0f));
       }
+      RefreshWater();
       return _water;
+    }
+
+    /// <summary>깊이 거품은 높음·보통에서만 켠다(낮음은 깊이 텍스처를 읽지 않고 불투명 단색+가장자리 줄무늬). 품질을 바꿀 때도 부른다.</summary>
+    public static bool DepthFoamOn => GraphicsQuality.Current != QualityTier.Low;
+
+    public static void RefreshWater() {
+      if (_water == null) {
+        return;
+      }
+      if (DepthFoamOn) {
+        _water.EnableKeyword("_FW_DEPTH_FOAM");
+        _water.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+      } else {
+        _water.DisableKeyword("_FW_DEPTH_FOAM");
+        _water.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Geometry + 50;
+      }
     }
   }
 }

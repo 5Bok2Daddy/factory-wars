@@ -55,6 +55,16 @@ namespace FactoryWars.View {
 
     readonly List<Barrier> _barriers = new List<Barrier>();
     float _barrierDrop = -1f;
+    /// <summary>항목 36 수문: 시뮬레이션 수문 영역마다 조립 프리팹 하나. 개방(7분 휴전 끝 또는 빈 본진)이면 가운데 문이 내려간다.</summary>
+    public class GateView {
+      public WaterGateRig Rig;
+      public int Seat;
+      public float Drop;
+      public float OpenFor;
+    }
+    readonly List<GateView> _gates = new List<GateView>();
+    bool _gatesBuilt;
+    public IReadOnlyList<GateView> Gates => _gates;
     readonly Transform _root;
     readonly MapSpec _map;
     readonly ViewCatalog _catalog;
@@ -387,6 +397,77 @@ namespace FactoryWars.View {
       }
     }
 
+    /// <summary>수문 영역(MapSpec.WaterGates)마다 조립 프리팹을 세운다. 칸(`dress/WaterGate`)이 비었거나 시가지 장식이 꺼져 있으면 아무것도 세우지 않는다.</summary>
+    void BuildGates(Frame frame) {
+      _gatesBuilt = true;
+      var gates = _map.WaterGates;
+      var slot = VisualCatalog.Current != null ? VisualCatalog.Current.Get(VisualCatalog.DressId(DressKind.WaterGate)) : null;
+      if (gates == null || gates.Length == 0 || slot == null || slot.Prefab == null || VisualProfile.Current.UrbanDecor == false) {
+        return;
+      }
+      var seats = Mathf.Max(1, _map.BaseAreas != null ? _map.BaseAreas.Length : 1);
+      var perSeat = Mathf.Max(1, gates.Length / seats);
+      var profile = VisualProfile.Current;
+      for (var i = 0; i < gates.Length; i++) {
+        var shape = gates[i];
+        var holder = new GameObject("WaterGate" + i).transform;
+        holder.SetParent(_root, false);
+        var along = shape.HalfLength >= shape.HalfWidth;
+        // 문이 가로지르는 폭 = 사각형의 긴 변(물길을 가로지르는 쪽).
+        var span = 2f * (along ? shape.HalfLength : shape.HalfWidth).AsFloat;
+        holder.position = new Vector3(shape.Center.X.AsFloat, 0f, shape.Center.Z.AsFloat);
+        holder.rotation = Quaternion.Euler(0f, shape.Yaw.AsFloat + (along ? 0f : 90f), 0f);
+        var model = Object.Instantiate(slot.Prefab, holder);
+        model.transform.localPosition = Vector3.zero;
+        model.transform.localRotation = Quaternion.identity;
+        var rig = model.GetComponent<WaterGateRig>();
+        if (rig == null) {
+          Object.Destroy(holder.gameObject);
+          continue;
+        }
+        rig.Layout(span, profile.GatePostHeight, profile.GateDoorHeight);
+        foreach (var renderer in model.GetComponentsInChildren<Renderer>(true)) {
+          if (renderer is ParticleSystemRenderer == false) {
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+          }
+        }
+        _gates.Add(new GateView { Rig = rig, Seat = i / perSeat });
+      }
+    }
+
+    /// <summary>수문은 울타리(방어 울타리)와 같이 열린다: 휴전이 끝났거나 그 본진 자리가 비어 있으면 열림. 시뮬레이션 상태만 읽는다.</summary>
+    void UpdateGates(Frame frame, float deltaTime) {
+      if (_gatesBuilt == false) {
+        BuildGates(frame);
+      }
+      var truceOpen = (bool)frame.Global->BarrierOpen;
+      var seconds = Mathf.Max(0.1f, VisualProfile.Current.GateDropSeconds);
+      foreach (var gate in _gates) {
+        var open = truceOpen || Quantum.FactoryWars.FactoryWarsUtil.PlayerAtSeat(frame, gate.Seat) < 0;
+        if (open && gate.Drop <= 0f && gate.OpenFor <= 0f && truceOpen == false) {
+          // 처음부터 비어 있는 자리: 연출 없이 열린 채로 시작.
+          gate.Drop = 1f;
+          gate.Rig.SetDrop(1f);
+          continue;
+        }
+        if (open == false) {
+          continue;
+        }
+        if (gate.Drop < 1f) {
+          if (gate.Drop <= 0f) {
+            gate.Rig.PlayFoam();
+          }
+          gate.Drop = Mathf.MoveTowards(gate.Drop, 1f, deltaTime / seconds);
+          gate.Rig.SetDrop(gate.Drop);
+        } else {
+          gate.OpenFor += deltaTime;
+          if (gate.OpenFor > 4f) {
+            gate.Rig.StopFoam();
+          }
+        }
+      }
+    }
+
     void UpdateBarriers(Frame frame, float deltaTime) {
       var open = (bool)frame.Global->BarrierOpen;
       if (_barrierDrop < 0f) {
@@ -440,6 +521,7 @@ namespace FactoryWars.View {
         return;
       }
       UpdateBarriers(frame, deltaTime);
+      UpdateGates(frame, deltaTime);
       CheckForestScars();
       var nodes = frame.Filter<ResourceNode>();
       while (nodes.NextUnsafe(out var entity, out var node)) {

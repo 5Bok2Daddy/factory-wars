@@ -40,6 +40,51 @@ namespace FactoryWars.EditorTools {
       return saved;
     }
 
+    /// <summary>
+    /// 항목 36 수문 조립: 단일 수문 모델이 팩에 없어 옹벽(Port_Wall)·다리 기둥(Bridge_Support)·철제 문(Fence_Gate, 없으면 Village_Wall_Gate·방벽)·물보라(FX_Waterfall_Foam)를
+    /// 우리 폴더 프리팹 한 개로 조립한다. 팩 모델은 감싸개 오브젝트의 자식으로 넣기만 한다(팩 원본 무수정). 배치·배율은 WaterGateRig가 런타임에 감싸개에 준다.
+    /// </summary>
+    static GameObject BuildWaterGate(StringBuilder csv) {
+      var wall = Find("SM_Env_Port_Wall_02") ?? Find("SM_Env_Port_Wall_01");
+      var pier = Find("SM_Env_Bridge_Support_01");
+      var door = Find("SM_Prop_Fence_Gate_01") ?? Find("SM_Bld_Village_Wall_Gate_01") ?? Find("SM_Prop_Barricade_01");
+      var foam = Find("FX_Waterfall_Foam_01");
+      if (wall == null || door == null) {
+        Debug.LogWarning("[FW-Urban] 수문: 옹벽 또는 문 모델이 팩에 없어 건너뜀");
+        return null;
+      }
+      var root = new GameObject("water_gate");
+      var rig = root.AddComponent<WaterGateRig>();
+      Transform Wrap(string name, GameObject model, out Vector3 size) {
+        var holder = new GameObject(name).transform;
+        holder.SetParent(root.transform, false);
+        size = Vector3.one;
+        if (model == null) {
+          return holder;
+        }
+        var bounds = VisualCatalog.LocalBounds(model);
+        size = bounds.size;
+        var child = (GameObject)PrefabUtility.InstantiatePrefab(model, holder);
+        // 모델의 바닥 중앙이 감싸개 원점이 되게 한다(자식 위치만 조정, 팩 파일은 그대로).
+        child.transform.localPosition = new Vector3(-bounds.center.x, -bounds.min.y, -bounds.center.z);
+        return holder;
+      }
+      rig.Left = Wrap("PostL", wall, out rig.WallSize);
+      rig.Right = Wrap("PostR", wall, out _);
+      rig.PierL = Wrap("PierL", pier, out rig.PierSize);
+      rig.PierR = Wrap("PierR", pier, out _);
+      rig.Door = Wrap("Door", door, out rig.DoorSize);
+      if (foam != null) {
+        rig.Foam = Wrap("Foam", foam, out _);
+        // 파티클 모델은 메쉬 크기가 없으므로 바닥 보정을 지운다.
+        rig.Foam.GetChild(0).localPosition = Vector3.zero;
+      }
+      var saved = PrefabUtility.SaveAsPrefabAsset(root, $"{SyntyAssign.OutRoot}/Urban/water_gate.prefab");
+      UnityEngine.Object.DestroyImmediate(root);
+      csv.AppendLine($"WaterGate,1,1,{wall.name}+{pier?.name}+{door.name}+{foam?.name}");
+      return saved;
+    }
+
     static Row Sized(DressKind kind, float meters, params string[] names) => new Row { Kind = kind, Names = names, Meters = meters };
     static Row Scaled(DressKind kind, float scale, params string[] names) => new Row { Kind = kind, Names = names, Scale = scale };
 
@@ -149,6 +194,21 @@ namespace FactoryWars.EditorTools {
         cliff.RealWorld = RealWorldCheck.Clear;
         cliff.Notes = "Synty 팩 시가지 Cliff(상자형 건물 블록)";
         csv.AppendLine($"Cliff,1,{blocks.Count},{string.Join("+", blocks.Select(b => b.name))}");
+        count++;
+      }
+      var gate = BuildWaterGate(csv);
+      var gateSlot = catalog.Get(VisualCatalog.DressId(DressKind.WaterGate));
+      if (gateSlot == null) {
+        gateSlot = new VisualSlot { Id = VisualCatalog.DressId(DressKind.WaterGate), Category = VisualCategory.Terrain };
+        catalog.Slots.Add(gateSlot);
+      }
+      if (gate != null) {
+        gateSlot.Prefabs = new List<GameObject> { gate };
+        gateSlot.Scale = 1f;
+        gateSlot.AutoFit = false;
+        gateSlot.TeamColor = TeamColorMode.None;
+        gateSlot.RealWorld = RealWorldCheck.Clear;
+        gateSlot.Notes = "Synty 팩 부품 조립 수문(우리 프리팹 water_gate)";
         count++;
       }
       catalog.Invalidate();
