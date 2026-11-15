@@ -22,6 +22,14 @@ MonoBehaviour:
     RawValue: 65536
   SupplyRewardMultiplier:
     RawValue: 65536
+  HasTrader: 1
+  TraderPosition:
+    X:
+      RawValue: 2621440
+    Y:
+      RawValue: 0
+    Z:
+      RawValue: 1310720
   WeatherFirstSeconds: 0
   WeatherDurationSeconds: 0
   WeatherPeriodSeconds: 0

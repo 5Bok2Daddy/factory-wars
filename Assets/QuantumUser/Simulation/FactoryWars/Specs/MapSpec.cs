@@ -71,6 +71,9 @@ namespace Quantum {
     public FP SupplyIntervalMultiplier = 1;
     public FP SupplyRewardMultiplier = 1;
     /// <summary>항목 37 기상: 첫 발동 시각, 지속, 주기(초). 0이면 기상 없음. 기상 중 기본 시야 배율.</summary>
+    /// <summary>중앙 암시장(NPC 무기상)이 있는지와 그 자리.</summary>
+    public bool HasTrader;
+    public FPVector3 TraderPosition;
     public int WeatherFirstSeconds;
     public int WeatherDurationSeconds;
     public int WeatherPeriodSeconds;

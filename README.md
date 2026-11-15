@@ -65,6 +65,10 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 중앙 철조망 암시장(NPC 무기상) (2026-11-15)
+![평소](Docs/status_images/38_trader_clean.png)
+![선택·거래](Docs/status_images/38_trader_selected.png)
+
 ### 시가지 정리 4차: 근접 아스팔트·균일 배율 건물·언덕·숲·군용 벽 (2026-11-15)
 ![전체](Docs/status_images/36d_wide.png)
 ![근접](Docs/status_images/36d_center_close.png)

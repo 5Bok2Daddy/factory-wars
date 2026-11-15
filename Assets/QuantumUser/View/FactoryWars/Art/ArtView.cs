@@ -96,10 +96,27 @@ namespace FactoryWars.View {
     static Mesh RingMesh() {
       if (_ring == null) {
         var kit = new MeshKit().Paint(Swatch.White);
-        kit.Annulus(Vector3.zero, 1f - RingWidth, 1f, 32);
+        DashedRing(kit, 1f - RingWidth, 1f, 24);
         _ring = kit.ToMesh("marker_ring");
       }
       return _ring;
+    }
+
+    /// <summary>점선 고리: segments개 조각 중 짝수 칸만 그린다(선택 표시, 돌면서 보인다).</summary>
+    public static void DashedRing(MeshKit kit, float inner, float outer, int segments) {
+      for (var i = 0; i < segments; i += 2) {
+        var a = Mathf.PI * 2f * i / segments;
+        var b = Mathf.PI * 2f * (i + 0.8f) / segments;
+        Vector3 P(float angle, float r) => new Vector3(Mathf.Cos(angle) * r, 0f, Mathf.Sin(angle) * r);
+        kit.Quad(P(a, inner), P(a, outer), P(b, outer), P(b, inner), Vector3.up);
+      }
+    }
+
+    void Update() {
+      // 선택 고리는 부드럽게 돈다(초당 25도).
+      if (Ring != null && Ring.activeSelf) {
+        Ring.transform.Rotate(0f, 25f * Time.deltaTime, 0f, Space.Self);
+      }
     }
 
     static Mesh _ownerRing;
@@ -164,6 +181,8 @@ namespace FactoryWars.View {
           _owner.transform.localScale = new Vector3(radius, 1, radius);
         }
         _owner.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(color, powered);
+        // 기본은 숨김(전장을 깨끗하게). 선택했을 때만 보인다.
+        _owner.SetActive(Ring != null && Ring.activeSelf);
       }
     }
 
@@ -208,6 +227,9 @@ namespace FactoryWars.View {
     public void SetSelected(bool selected) {
       Ring.SetActive(selected);
       Bar.SetActive(selected);
+      if (_owner != null) {
+        _owner.SetActive(selected);
+      }
     }
 
     /// <summary>0~1. 왼쪽을 기준으로 줄어든다.</summary>

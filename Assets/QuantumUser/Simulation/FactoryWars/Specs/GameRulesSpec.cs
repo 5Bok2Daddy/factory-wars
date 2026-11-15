@@ -174,6 +174,25 @@ namespace Quantum {
     /// <summary>기갑 요새화 군단: 전차·포격함 생산비 배율, 공병 수리 속도 배율.</summary>
     public FP ArmorCostMultiplier = 1;
     public FP ArmorRepairMultiplier = 1;
+
+    // ---- 중앙 암시장(NPC 무기상) ----
+    public FP TraderHealth;
+    /// <summary>철조망 구역 반지름(m). 공격 사거리 계산과 화면 둘레에 쓴다.</summary>
+    public FP TraderRadius;
+    /// <summary>경비 화력: 사거리·피해·간격.</summary>
+    public FP TraderRange;
+    public FP TraderDamage;
+    public FP TraderInterval;
+    /// <summary>파괴한 플레이어가 받는 현상금(한 번).</summary>
+    public ResourceCost TraderBounty;
+    /// <summary>거래 사이 대기(초, 플레이어별).</summary>
+    public FP TraderCooldownSeconds;
+    public ResourceCost TraderMercCost;
+    public int TraderMercCount;
+    public ResourceCost TraderDroneCost;
+    public FP TraderDroneDamage;
+    public FP TraderDroneRadius;
+    public ResourceCost TraderRefuelCost;
     /// <summary>항목 34-C: 저격수끼리는 보이는 적 저격수에게 피해가 이 배율이다.</summary>
     public FP SniperVsSniperMultiplier = 1;
     public FP GarrisonRangeBonus;

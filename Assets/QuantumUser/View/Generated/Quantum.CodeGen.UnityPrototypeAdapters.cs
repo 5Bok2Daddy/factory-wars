@@ -235,6 +235,29 @@ namespace Quantum.Prototypes.Unity {
     }
   }
   [System.SerializableAttribute()]
+  public unsafe partial class NpcTraderPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.NpcTraderPrototype> {
+    public FP Health;
+    public FP MaxHealth;
+    public Int32 HostileMask;
+    public QBoolean Destroyed;
+    public FP Cooldown;
+    public Quantum.QuantumEntityPrototype Target;
+    public PlayerRef Killer;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.NpcTraderPrototype prototype);
+    public override Quantum.Prototypes.NpcTraderPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.NpcTraderPrototype();
+      converter.Convert(this.Health, out result.Health);
+      converter.Convert(this.MaxHealth, out result.MaxHealth);
+      converter.Convert(this.HostileMask, out result.HostileMask);
+      converter.Convert(this.Destroyed, out result.Destroyed);
+      converter.Convert(this.Cooldown, out result.Cooldown);
+      converter.Convert(this.Target, out result.Target);
+      converter.Convert(this.Killer, out result.Killer);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
   public unsafe partial class PlayerStatePrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.PlayerStatePrototype> {
     public AssetRef<FactionSpec> Faction;
     public Quantum.Prototypes.ResourceCostPrototype Stock;
@@ -274,6 +297,8 @@ namespace Quantum.Prototypes.Unity {
     public Int32 Doctrine;
     public QBoolean DoctrineLocked;
     public Int32 Promotions;
+    public Int32 TradeReadyFrame;
+    public Int32 TradesMade;
     public Int32 HighGroundShots;
     public Int32 GarrisonEntries;
     public Int32 DisconnectedFrame;
@@ -348,6 +373,8 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Doctrine, out result.Doctrine);
       converter.Convert(this.DoctrineLocked, out result.DoctrineLocked);
       converter.Convert(this.Promotions, out result.Promotions);
+      converter.Convert(this.TradeReadyFrame, out result.TradeReadyFrame);
+      converter.Convert(this.TradesMade, out result.TradesMade);
       converter.Convert(this.HighGroundShots, out result.HighGroundShots);
       converter.Convert(this.GarrisonEntries, out result.GarrisonEntries);
       converter.Convert(this.DisconnectedFrame, out result.DisconnectedFrame);

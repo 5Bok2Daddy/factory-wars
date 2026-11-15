@@ -102,6 +102,8 @@ namespace Quantum {
     Limit,
     Weather,
     Doctrine,
+    Hostile,
+    Closed,
   }
   public enum Relation : byte {
     Enemy,
@@ -858,25 +860,25 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct PlayerState {
-    public const Int32 SIZE = 408;
+    public const Int32 SIZE = 416;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(240)]
+    [FieldOffset(248)]
     public AssetRef<FactionSpec> Faction;
-    [FieldOffset(344)]
+    [FieldOffset(352)]
     public ResourceCost Stock;
-    [FieldOffset(280)]
-    public FP PowerCap;
     [FieldOffset(288)]
+    public FP PowerCap;
+    [FieldOffset(296)]
     public FP PowerRate;
-    [FieldOffset(228)]
+    [FieldOffset(236)]
     public QBoolean Outage;
-    [FieldOffset(256)]
+    [FieldOffset(264)]
     public FP OutageSeconds;
     [FieldOffset(96)]
     public Int32 OutageCount;
-    [FieldOffset(272)]
+    [FieldOffset(280)]
     public FP PopulationUsed;
-    [FieldOffset(264)]
+    [FieldOffset(272)]
     public FP PopulationCap;
     [FieldOffset(148)]
     public Int32 Team;
@@ -884,21 +886,21 @@ namespace Quantum {
     public Int32 ColorIndex;
     [FieldOffset(88)]
     public Int32 NextNoteFrame;
-    [FieldOffset(208)]
+    [FieldOffset(216)]
     public QBoolean Active;
-    [FieldOffset(212)]
+    [FieldOffset(220)]
     public QBoolean Defeated;
-    [FieldOffset(224)]
+    [FieldOffset(232)]
     public QBoolean IsBot;
     [FieldOffset(0)]
     public BotDifficulty Difficulty;
-    [FieldOffset(204)]
+    [FieldOffset(212)]
     public Int32 UnitsProduced;
-    [FieldOffset(200)]
+    [FieldOffset(208)]
     public Int32 UnitsLost;
     [FieldOffset(20)]
     public Int32 BuildingsLost;
-    [FieldOffset(312)]
+    [FieldOffset(320)]
     public ResourceCost Earned;
     [FieldOffset(84)]
     public Int32 NextBaseAlertFrame;
@@ -932,19 +934,23 @@ namespace Quantum {
     public Int32 SortiesShotDown;
     [FieldOffset(56)]
     public Int32 Doctrine;
-    [FieldOffset(216)]
+    [FieldOffset(224)]
     public QBoolean DoctrineLocked;
     [FieldOffset(116)]
     public Int32 Promotions;
+    [FieldOffset(164)]
+    public Int32 TradeReadyFrame;
+    [FieldOffset(168)]
+    public Int32 TradesMade;
     [FieldOffset(72)]
     public Int32 HighGroundShots;
     [FieldOffset(68)]
     public Int32 GarrisonEntries;
     [FieldOffset(52)]
     public Int32 DisconnectedFrame;
-    [FieldOffset(220)]
+    [FieldOffset(228)]
     public QBoolean Forfeited;
-    [FieldOffset(196)]
+    [FieldOffset(204)]
     public Int32 UnitsKilled;
     [FieldOffset(16)]
     public Int32 BuildingsDestroyed;
@@ -966,31 +972,31 @@ namespace Quantum {
     public Int32 NextRadarAlertFrame;
     [FieldOffset(9)]
     public UltimatePhase UltimatePhase;
-    [FieldOffset(296)]
-    public FP UltimateRemaining;
     [FieldOffset(304)]
+    public FP UltimateRemaining;
+    [FieldOffset(312)]
     public FP UltimateTotal;
-    [FieldOffset(376)]
+    [FieldOffset(384)]
     public ResourceCost UltimatePaid;
-    [FieldOffset(248)]
+    [FieldOffset(256)]
     public EntityRef UltimateSite;
-    [FieldOffset(232)]
+    [FieldOffset(240)]
     public QBoolean UltimateHalf;
-    [FieldOffset(192)]
+    [FieldOffset(200)]
     public Int32 UltimateUses;
-    [FieldOffset(184)]
+    [FieldOffset(192)]
     public Int32 UltimateStartFrame;
-    [FieldOffset(176)]
+    [FieldOffset(184)]
     public Int32 UltimateReadyFrame;
-    [FieldOffset(188)]
+    [FieldOffset(196)]
     public Int32 UltimateUseFrame;
-    [FieldOffset(168)]
+    [FieldOffset(176)]
     public Int32 UltimateIntercepted;
-    [FieldOffset(172)]
-    public Int32 UltimateLost;
     [FieldOffset(180)]
+    public Int32 UltimateLost;
+    [FieldOffset(188)]
     public Int32 UltimateSitesLost;
-    [FieldOffset(164)]
+    [FieldOffset(172)]
     public Int32 UltimateCoreKills;
     [FieldOffset(36)]
     public Int32 CoreLost;
@@ -1035,6 +1041,8 @@ namespace Quantum {
         hash = hash * 31 + Doctrine.GetHashCode();
         hash = hash * 31 + DoctrineLocked.GetHashCode();
         hash = hash * 31 + Promotions.GetHashCode();
+        hash = hash * 31 + TradeReadyFrame.GetHashCode();
+        hash = hash * 31 + TradesMade.GetHashCode();
         hash = hash * 31 + HighGroundShots.GetHashCode();
         hash = hash * 31 + GarrisonEntries.GetHashCode();
         hash = hash * 31 + DisconnectedFrame.GetHashCode();
@@ -1106,6 +1114,8 @@ namespace Quantum {
         serializer.Stream.Serialize(&p->SortiesShotDown);
         serializer.Stream.Serialize(&p->Team);
         serializer.Stream.SerializeBuffer(&p->TierFrames[0], 3);
+        serializer.Stream.Serialize(&p->TradeReadyFrame);
+        serializer.Stream.Serialize(&p->TradesMade);
         serializer.Stream.Serialize(&p->UltimateCoreKills);
         serializer.Stream.Serialize(&p->UltimateIntercepted);
         serializer.Stream.Serialize(&p->UltimateLost);
@@ -1192,7 +1202,7 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct _globals_ {
-    public const Int32 SIZE = 3032;
+    public const Int32 SIZE = 3064;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(0)]
     public AssetRef<Map> Map;
@@ -1221,7 +1231,7 @@ namespace Quantum {
     public BitSet4 PlayerLastConnectionState;
     [FieldOffset(1400)]
     [FramePrinter.FixedArrayAttribute(typeof(PlayerState), 4)]
-    private fixed Byte _Players_[1632];
+    private fixed Byte _Players_[1664];
     [FieldOffset(728)]
     [FramePrinter.FixedArrayAttribute(typeof(BotState), 4)]
     private fixed Byte _Bots_[672];
@@ -1256,7 +1266,7 @@ namespace Quantum {
     }
     public readonly FixedArray<PlayerState> Players {
       get {
-        fixed (byte* p = _Players_) { return new FixedArray<PlayerState>(p, 408, 4); }
+        fixed (byte* p = _Players_) { return new FixedArray<PlayerState>(p, 416, 4); }
       }
     }
     public readonly FixedArray<BotState> Bots {
@@ -1899,6 +1909,48 @@ namespace Quantum {
     }
   }
   [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct NpcTrader : Quantum.IComponent {
+    public const Int32 SIZE = 48;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(32)]
+    public FP Health;
+    [FieldOffset(40)]
+    public FP MaxHealth;
+    [FieldOffset(0)]
+    public Int32 HostileMask;
+    [FieldOffset(8)]
+    public QBoolean Destroyed;
+    [FieldOffset(24)]
+    public FP Cooldown;
+    [FieldOffset(16)]
+    public EntityRef Target;
+    [FieldOffset(4)]
+    public PlayerRef Killer;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 2207;
+        hash = hash * 31 + Health.GetHashCode();
+        hash = hash * 31 + MaxHealth.GetHashCode();
+        hash = hash * 31 + HostileMask.GetHashCode();
+        hash = hash * 31 + Destroyed.GetHashCode();
+        hash = hash * 31 + Cooldown.GetHashCode();
+        hash = hash * 31 + Target.GetHashCode();
+        hash = hash * 31 + Killer.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (NpcTrader*)ptr;
+        serializer.Stream.Serialize(&p->HostileMask);
+        PlayerRef.Serialize(&p->Killer, serializer);
+        QBoolean.Serialize(&p->Destroyed, serializer);
+        EntityRef.Serialize(&p->Target, serializer);
+        FP.Serialize(&p->Cooldown, serializer);
+        FP.Serialize(&p->Health, serializer);
+        FP.Serialize(&p->MaxHealth, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct ResourceNode : Quantum.IComponent {
     public const Int32 SIZE = 72;
     public const Int32 ALIGNMENT = 8;
@@ -2302,6 +2354,8 @@ namespace Quantum {
       BuildSignalsArrayOnComponentRemoved<NavMeshPathfinder>();
       BuildSignalsArrayOnComponentAdded<NavMeshSteeringAgent>();
       BuildSignalsArrayOnComponentRemoved<NavMeshSteeringAgent>();
+      BuildSignalsArrayOnComponentAdded<Quantum.NpcTrader>();
+      BuildSignalsArrayOnComponentRemoved<Quantum.NpcTrader>();
       BuildSignalsArrayOnComponentAdded<PhysicsBody2D>();
       BuildSignalsArrayOnComponentRemoved<PhysicsBody2D>();
       BuildSignalsArrayOnComponentAdded<PhysicsBody3D>();
@@ -2454,6 +2508,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(NavMeshPathfinder), NavMeshPathfinder.SIZE);
       typeRegistry.Register(typeof(NavMeshRegionMask), NavMeshRegionMask.SIZE);
       typeRegistry.Register(typeof(NavMeshSteeringAgent), NavMeshSteeringAgent.SIZE);
+      typeRegistry.Register(typeof(Quantum.NpcTrader), Quantum.NpcTrader.SIZE);
       typeRegistry.Register(typeof(NullableFP), NullableFP.SIZE);
       typeRegistry.Register(typeof(NullableFPVector2), NullableFPVector2.SIZE);
       typeRegistry.Register(typeof(NullableFPVector3), NullableFPVector3.SIZE);
@@ -2503,7 +2558,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(Quantum._globals_), Quantum._globals_.SIZE);
     }
     static partial void InitComponentTypeIdGen() {
-      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 17)
+      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 18)
         .AddBuiltInComponents()
         .Add<Quantum.Barricade>(Quantum.Barricade.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Building>(Quantum.Building.Serialize, null, null, ComponentFlags.None)
@@ -2517,6 +2572,7 @@ namespace Quantum {
         .Add<Quantum.Jammer>(Quantum.Jammer.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.LandingCraft>(Quantum.LandingCraft.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.MissileStrike>(Quantum.MissileStrike.Serialize, null, null, ComponentFlags.None)
+        .Add<Quantum.NpcTrader>(Quantum.NpcTrader.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.ResourceNode>(Quantum.ResourceNode.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Sortie>(Quantum.Sortie.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.SupplyCrate>(Quantum.SupplyCrate.Serialize, null, null, ComponentFlags.None)

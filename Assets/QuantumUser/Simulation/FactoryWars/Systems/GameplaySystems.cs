@@ -550,6 +550,9 @@ namespace Quantum.FactoryWars {
     }
 
     static bool IsValidTarget(Frame f, in Weapon weapon, EntityRef target) {
+      if (f.Unsafe.TryGetPointer<NpcTrader>(target, out var trader)) {
+        return trader->Destroyed == false && FactoryWarsUtil.InTruce(f) == false && weapon.Attack != AttackType.AntiAir;
+      }
       if (f.Has<Barricade>(target)) {
         return FactoryWarsUtil.InTruce(f) == false && weapon.Attack != AttackType.AntiAir;
       }
@@ -618,6 +621,8 @@ namespace Quantum.FactoryWars {
         range += f.FindAsset(building->Spec).FootprintRadius;
       } else if (f.Unsafe.TryGetPointer<Barricade>(target, out var barricade)) {
         range += barricade->Shape.HalfWidth + FP._2 + FP._1;
+      } else if (f.Has<NpcTrader>(target)) {
+        range += FactoryWarsUtil.Rules(f).TraderRadius;
       } else if (f.Unsafe.TryGetPointer<CityBuilding>(target, out var city)) {
         var shape = FactoryWarsUtil.MapInfo(f).CityBuildings[city->Index].Shape;
         range += FPMath.Max(shape.HalfLength, shape.HalfWidth) + FP._1;
@@ -754,6 +759,8 @@ namespace Quantum.FactoryWars {
         BattlefieldSystem.HitBarricade(f, target, barricade, amount * BuildingMultiplier(FactoryWarsUtil.Rules(f), weapon.Attack));
       } else if (f.Unsafe.TryGetPointer<CityBuilding>(target, out var city)) {
         CitySystem.Hit(f, target, city, amount * CitySystem.Multiplier(f, city, weapon.Attack, weapon.Spec));
+      } else if (f.Unsafe.TryGetPointer<NpcTrader>(target, out var trader)) {
+        NpcTraderSystem.Hit(f, target, trader, weapon.Owner, amount * BuildingMultiplier(FactoryWarsUtil.Rules(f), weapon.Attack));
       }
     }
 

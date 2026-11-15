@@ -1094,6 +1094,20 @@ namespace FactoryWars.EditorTools {
       rules.ShadowCoverBonus = N(0.15);
       rules.ArmorCostMultiplier = N(0.85);
       rules.ArmorRepairMultiplier = N(1.5);
+      // 중앙 암시장: 체력 3000, 철조망 반지름 10m, 경비 사거리 24m(구역 밖 공격자까지)·피해 45·1.2초, 현상금 철 1500·강철 600, 거래 대기 60초.
+      rules.TraderHealth = 3000;
+      rules.TraderRadius = 10;
+      rules.TraderRange = 24;
+      rules.TraderDamage = 45;
+      rules.TraderInterval = N(1.2);
+      rules.TraderBounty = R(1500, 600, 600, 300);
+      rules.TraderCooldownSeconds = 60;
+      rules.TraderMercCost = R(300, 0, 80);
+      rules.TraderMercCount = 4;
+      rules.TraderDroneCost = R(200, 0, 120);
+      rules.TraderDroneDamage = 260;
+      rules.TraderDroneRadius = 6;
+      rules.TraderRefuelCost = R(150, 0, 100, 100);
       rules.GarrisonEnterDistance = 2;
       rules.CityCrackedFraction = N(0.6);
       rules.CityBurningFraction = N(0.3);
@@ -1197,6 +1211,8 @@ namespace FactoryWars.EditorTools {
       testMap.StartingEngineers = 1;
       // 항목 31: 시험 맵은 3단계로 시작해 기존 건설·생산 시험이 단계에 막히지 않는다. 단계 시험은 RuntimeConfig.StartingTier로 1부터 한다.
       testMap.StartingTier = 3;
+      testMap.HasTrader = true;
+      testMap.TraderPosition = new FPVector3(40, 0, 20);
       testMap.SpawnFactionUnits = true;
       testMap.ResourceNodes = new[] {
         Mine(-30, 14, 5000),
@@ -1248,6 +1264,8 @@ namespace FactoryWars.EditorTools {
       spec.Theme = def.Theme;
       spec.SupplyIntervalMultiplier = N(def.SupplyInterval);
       spec.SupplyRewardMultiplier = N(def.SupplyReward);
+      spec.HasTrader = def.Trader;
+      spec.TraderPosition = def.TraderPosition;
       spec.WeatherFirstSeconds = def.WeatherFirst;
       spec.WeatherDurationSeconds = def.WeatherDuration;
       spec.WeatherPeriodSeconds = def.WeatherPeriod;

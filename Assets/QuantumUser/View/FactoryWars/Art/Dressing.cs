@@ -142,7 +142,8 @@ namespace FactoryWars.View {
       }
       var fit = KenneyAssetMap.FitScale(variant, length, width, turned) * margin * entry.Scale;
       if (VisualProfile.Current.FieldLook) {
-        fit = Mathf.Clamp(fit, 0.85f, 1.15f);
+        // 균일 배율만: 칸보다 크면 균일하게 줄이고(늘이지 않음), 키우는 것은 1.15배까지.
+        fit = Mathf.Min(fit, 1.15f);
       }
       var rotation = Quaternion.Euler(0f, yaw + (turned ? 90f : 0f), 0f);
       _collector.Add(new Item { Kind = kind, Prefab = variant.Prefab, World = KenneyAssetMap.Matrix(variant, position, rotation, Vector3.one * fit), Shadows = entry.Shadows, Keep = 0f, LowKeep = 1f, MediumKeep = 1f });
@@ -238,7 +239,8 @@ namespace FactoryWars.View {
       }
       var fit = KenneyAssetMap.FitScale(variant, length, width, turned) * 0.86f * entry.Scale;
       if (VisualProfile.Current.FieldLook) {
-        fit = Mathf.Clamp(fit, 0.85f, 1.15f);
+        // 균일 배율만: 칸보다 크면 균일하게 줄이고(늘이지 않음), 키우는 것은 1.15배까지.
+        fit = Mathf.Min(fit, 1.15f);
       }
       if (kind == DressKind.CityTower) {
         fit = Mathf.Min(fit, 3.2f);

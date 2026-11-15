@@ -48,6 +48,10 @@ namespace FactoryWars.EditorTools {
       list.AddRange(spec.Roads.Select(r => (r, RoadClearance, "Roads")));
       list.AddRange(spec.BaseAreas.Select(b => (b, 4f, "BaseAreas")));
       list.AddRange(spec.CaptureSites.Select(c => (new MapShape { Center = c.Center, Radius = c.Radius }, 3f, "CaptureSites")));
+      // 중앙 암시장 구역(철조망 반지름 10m + 경비 공간)에는 도시 건물을 두지 않는다.
+      if (spec.HasTrader) {
+        list.Add((new MapShape { Center = spec.TraderPosition, Radius = FP.FromFloat_UNSAFE(22f) }, 3f, "Trader"));
+      }
       list.AddRange(spec.CrateSpots.Select(c => (new MapShape { Center = c.Position, Radius = FP._1 }, 3f, "CrateSpots")));
       list.AddRange(spec.Expansions.Select(e => (new MapShape { Center = e.Position, Radius = FP._1 }, 10f, "Expansions")));
       list.AddRange(spec.HighGrounds.Select(g => (g, 5f, "HighGrounds")));

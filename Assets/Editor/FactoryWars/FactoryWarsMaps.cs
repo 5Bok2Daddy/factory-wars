@@ -47,6 +47,9 @@ namespace FactoryWars.EditorTools {
       public double SupplyReward = 1;
       /// <summary>항목 37 기상(초). 0이면 없음.</summary>
       public int WeatherFirst, WeatherDuration, WeatherPeriod;
+      /// <summary>중앙 암시장.</summary>
+      public bool Trader;
+      public FPVector3 TraderPosition;
       public double WeatherSight = 1;
       public MapDef Clone() => (MapDef)MemberwiseClone();
     }
@@ -274,14 +277,17 @@ namespace FactoryWars.EditorTools {
           Mine(-118, 10, 5000, 3.5), Grove(-118, -6, 6, 5000),
           Grove(-16, -16, 6, 2000),
         },
-        CenterNodes = new[] { Mine(0, 0, 8000, 5) },
+        // 중앙: 광산·통신 점령지·확장 부지 대신 철조망 암시장(NPC 무기상).
+        CenterNodes = new ResourceNodePlacement[0],
+        Trader = true,
+        TraderPosition = Position(0, 0),
         Terrain = terrain.ToArray(),
         NoBuildZones = WithMirror(new[] {
           Rect(-140, -97, 9, 8), Rect(-102, -64, 8, 12), Rect(-151, -48, 10, 8), Rect(-147, -24, 6, 12),
         }).Concat(new[] { Rect(-72, 0, 9, 9), Rect(-36, -36, 12, 8, 45) }).Concat(ramps.Select(ramp => Rect(ramp.Center.X.AsFloat, ramp.Center.Z.AsFloat, 6, 6, ramp.Yaw.AsFloat))).ToArray(),
         CameraPosition = new Vector3(0, 250, -205),
         CaptureSites = new[] { Site(CaptureKind.Relay, relay.x, relay.y, 8) },
-        CenterSites = new[] { Site(CaptureKind.Comms, 0, 0, 12) },
+        CenterSites = new CaptureSitePlacement[0],
         Barricades = new[] { Rect(-72, 0, 7, 3) },
         BaseCrates = new[] { Position(-110, -128), Position(-128, -110) },
         DropCrates = new[] { Position(-70, -30), Position(-142, 12), Position(-169, -20) },
@@ -291,7 +297,7 @@ namespace FactoryWars.EditorTools {
         Fords = new[] { Segment(P(-74, -30), P(-30, -74), FordHalfWidth) },
         Expansions = new[] { Expansion(ExpansionKind.IronForecourt, -136, -72), Expansion(ExpansionKind.WoodForecourt, -72, -136) },
         SharedExpansions = new[] { Expansion(ExpansionKind.Shared, -134, 0) },
-        CenterExpansions = new[] { Expansion(ExpansionKind.Center, 0, 0) },
+        CenterExpansions = new ExpansionSite[0],
         SharedSeatOffsets = new[] { 0, 3 },
         ChannelWidth = 18f,
       };

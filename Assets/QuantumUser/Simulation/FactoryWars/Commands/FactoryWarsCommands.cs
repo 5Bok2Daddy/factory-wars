@@ -75,6 +75,17 @@ namespace Quantum.FactoryWars {
     }
 
     public override void Execute(Frame f, PlayerRef player) {
+      // 중앙 암시장 공격: 맞히는 순간 그 플레이어는 영구 적대가 된다(NpcTraderSystem.Hit).
+      if (f.Unsafe.TryGetPointer<NpcTrader>(Target, out var trader)) {
+        if (FactoryWarsUtil.InTruce(f)) {
+          f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.Truce, 0);
+          return;
+        }
+        if (trader->Destroyed == false) {
+          Order(f, player);
+        }
+        return;
+      }
       if (f.Unsafe.TryGetPointer<CityBuilding>(Target, out var city)) {
         if (FactoryWarsUtil.InTruce(f)) {
           f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.Truce, 0);
@@ -596,6 +607,25 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       TacticalSystem.Choose(f, player, Doctrine, false);
+    }
+  }
+}
+
+namespace Quantum.FactoryWars {
+  using Photon.Deterministic;
+
+  /// <summary>중앙 암시장 거래(1 용병 투입, 2 자폭 드론 타격: Target 지점, 3 비행장 긴급 재정비).</summary>
+  public unsafe class TradeCommand : FactoryCommand {
+    public int Offer;
+    public FPVector3 Target;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Offer);
+      stream.Serialize(ref Target);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      NpcTraderSystem.Trade(f, player, Offer, Target);
     }
   }
 }

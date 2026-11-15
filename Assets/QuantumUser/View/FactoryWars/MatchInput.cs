@@ -32,7 +32,7 @@ namespace FactoryWars.View {
     public bool IsPlacing => Placing != default;
 
     /// <summary>다음 땅 탭의 뜻(항목 30). 버튼으로 켜고, 탭 한 번에 꺼진다.</summary>
-    public enum TapMode { None, AttackMove, Patrol, Rally, Ultimate, Jammer, Sortie }
+    public enum TapMode { None, AttackMove, Patrol, Rally, Ultimate, Jammer, Sortie, Drone }
 
     public TapMode Mode;
     /// <summary>항목 34-D: 작전 목표를 고르는 중인 비행장과 격납 칸.</summary>
@@ -126,6 +126,12 @@ namespace FactoryWars.View {
         var chosen = SelectedUnits(frame);
         switch (mode) {
           case TapMode.AttackMove:
+            foreach (var pair in frame.GetComponentIterator<NpcTrader>()) {
+              var at = frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3();
+              if ((new Vector2(at.x, at.z) - new Vector2(world.x, world.z)).magnitude <= frame.FindAsset(frame.RuntimeConfig.Rules).TraderRadius.AsFloat && chosen.Count > 0 && pair.Component.Destroyed == false) {
+                return new AttackTargetCommand { Units = chosen.ToArray(), Target = pair.Entity };
+              }
+            }
             var enemy = PickUnit(frame, world);
             if (enemy != EntityRef.None && frame.Get<Unit>(enemy).Owner != player) {
               return Attack(frame, player, enemy);
@@ -138,6 +144,8 @@ namespace FactoryWars.View {
           case TapMode.Ultimate:
             // 항목 33: 궁극 전력 목표 지정(미사일 착탄 지점, 상륙 해안).
             return new LaunchUltimateCommand { Target = ToFP(world) };
+          case TapMode.Drone:
+            return new TradeCommand { Offer = NpcTraderSystem.OfferDrone, Target = ToFP(world) };
           case TapMode.Jammer: {
             // 항목 34-C: 은신한 저격수를 고른 채 자원 노드를 누르면 교란 장치를 설치한다.
             var jamNode = PickNode(frame, world);
@@ -166,6 +174,15 @@ namespace FactoryWars.View {
         return Attack(frame, player, unit);
       }
 
+      // 중앙 암시장: 공격 이동 중이면 공격, 아니면 선택(거래 패널).
+      foreach (var pair in frame.GetComponentIterator<NpcTrader>()) {
+        var at = frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3();
+        var reach = frame.FindAsset(frame.RuntimeConfig.Rules).TraderRadius.AsFloat;
+        if ((new Vector2(at.x, at.z) - new Vector2(world.x, world.z)).magnitude <= reach && pair.Component.Destroyed == false) {
+          Selection.SelectBuilding(pair.Entity);
+          return null;
+        }
+      }
       var city = PickCity(frame, world);
       if (city != EntityRef.None) {
         return TapCity(frame, city);

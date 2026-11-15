@@ -220,8 +220,10 @@ namespace FactoryWars.EditorTools {
           fxSlot = new VisualSlot { Id = VisualCatalog.FxId(fx), Category = VisualCategory.Effect };
           catalog.Slots.Add(fxSlot);
         }
-        var fxPrefabs = names.Select(Find).Where(p => p != null).Take(1).ToList();
+        // 머티리얼이 빠진 팩 FX(URP에서 분홍·빈 렌더러)는 연결하지 않는다: 절차 효과를 그대로 쓴다.
+        var fxPrefabs = names.Select(Find).Where(p => p != null && p.GetComponentsInChildren<Renderer>(true).SelectMany(r => r.sharedMaterials).All(m => m != null && m.shader != null && m.shader.isSupported && m.shader.name != "Hidden/InternalErrorShader")).Take(1).ToList();
         if (fxPrefabs.Count == 0) {
+          fxSlot.Prefabs = new List<GameObject>();
           continue;
         }
         fxSlot.Prefabs = fxPrefabs;

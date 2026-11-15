@@ -250,6 +250,8 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventPowerOutage>(this, OnOutage);
       QuantumEvent.Subscribe<EventBarrierOpened>(this, e => ShowAlert(Texts.BarrierAlert));
       // 항목 34·37 알림: 기상, 승급, 저격 당함, 도크린 기본값, 작전기 격추.
+      QuantumEvent.Subscribe<EventTraderHostile>(this, e => { if (e.Player == Controller.Player) { ShowAlert("암시장과 적대! 거래가 영구히 막혔습니다"); } });
+      QuantumEvent.Subscribe<EventTraderDestroyed>(this, e => ShowAlert(e.Killer == Controller.Player ? "암시장 파괴 — 현상금 획득!" : "암시장이 파괴되어 닫혔습니다"));
       QuantumEvent.Subscribe<EventWeatherChanged>(this, e => ShowAlert(e.On ? "기상 악화: 시야 감소, 신호탄 구역 밖 출격 불가" : "기상 회복"));
       QuantumEvent.Subscribe<EventVeteranPromoted>(this, e => { if (e.Owner == Controller.Player) { ShowAlert($"유닛 승급: {new string('★', e.Rank)}"); } });
       QuantumEvent.Subscribe<EventSniperFired>(this, e => { if (e.Victim == Controller.Player) { ShowAlert(e.Killed ? "저격 당함! 총구 섬광 방향을 확인하세요" : "저격 공격을 받고 있습니다"); } });
@@ -1104,6 +1106,17 @@ namespace FactoryWars.View {
     void RefreshCard(Frame frame, PlayerState* state) {
       var selection = Controller.Input.Selection;
       _typeSpecs.Clear();
+      if (selection.Building != EntityRef.None && frame.Exists(selection.Building) && frame.Has<NpcTrader>(selection.Building)) {
+        var trader = frame.Get<NpcTrader>(selection.Building);
+        ShowCard(true);
+        _cardIcon.sprite = Ui.IconSprite("building_headquarters");
+        _cardTitle.text = "암시장 무기상";
+        _cardBadge.gameObject.SetActive(false);
+        SetHealth(trader.Health.AsFloat / Mathf.Max(1f, trader.MaxHealth.AsFloat));
+        _cardDetail.text = $"체력 {trader.Health.AsInt}/{trader.MaxHealth.AsInt}";
+        HideQueue();
+        return;
+      }
       if (selection.Building != EntityRef.None && frame.Exists(selection.Building)) {
         if (frame.Has<CityBuilding>(selection.Building)) {
           var city = frame.Get<CityBuilding>(selection.Building);
@@ -1245,7 +1258,10 @@ namespace FactoryWars.View {
       var selection = input.Selection;
       var status = "";
       var showPanel = false;
-      if (selection.Building != EntityRef.None && frame.Exists(selection.Building) && frame.Has<CityBuilding>(selection.Building)) {
+      if (selection.Building != EntityRef.None && frame.Exists(selection.Building) && frame.Has<NpcTrader>(selection.Building)) {
+        status = TraderEntries(frame, state, selection.Building);
+        showPanel = true;
+      } else if (selection.Building != EntityRef.None && frame.Exists(selection.Building) && frame.Has<CityBuilding>(selection.Building)) {
         status = CityEntries(frame, selection.Building);
         showPanel = true;
       } else if (selection.Building != EntityRef.None && frame.Exists(selection.Building)) {
@@ -1305,6 +1321,36 @@ namespace FactoryWars.View {
         Action = () => input.Mode = input.Mode == MatchInput.TapMode.Patrol ? MatchInput.TapMode.None : MatchInput.TapMode.Patrol });
       Entries.Add(new ContextEntry { Label = "정지", Icon = "ui_stop", Enabled = true, Detail = "하던 일을 멈춥니다", Action = () => Controller.Stop() });
       SniperEntries();
+    }
+
+    /// <summary>중앙 암시장 거래 패널. 적대가 되면 영구 잠김, 파괴되면 닫힘.</summary>
+    string TraderEntries(Frame frame, PlayerState* state, EntityRef entity) {
+      var trader = frame.Get<NpcTrader>(entity);
+      var rules = frame.FindAsset(frame.RuntimeConfig.Rules);
+      var index = (int)Controller.Player;
+      var hostile = index >= 0 && (trader.HostileMask & (1 << index)) != 0;
+      if (trader.Destroyed) {
+        return "암시장: 파괴되어 영구히 닫힘";
+      }
+      if (hostile) {
+        Entries.Add(new ContextEntry { Label = "거래 불가\n(적대)", Icon = "ui_cancel", Enabled = false, Locked = true, Reason = "이 무기상을 공격해 영구히 거래가 막혔습니다" });
+        return "암시장: 적대 — 경비가 반격 중. 파괴하면 현상금";
+      }
+      var wait = Mathf.Max(0, state->TradeReadyFrame - frame.Number) / Mathf.Max(1, frame.SessionConfig.UpdateFPS);
+      var stock = state->Stock;
+      var input = Controller.Input;
+      void Offer(int offer, string name, ResourceCost cost, string detail, System.Action action) {
+        var ok = wait == 0 && stock.Covers(cost);
+        Entries.Add(new ContextEntry {
+          Label = wait > 0 ? $"{name}\n대기 {wait}초" : $"{name}\n{Texts.Cost(cost, stock)}", Icon = offer == 1 ? "ui_rally" : offer == 2 ? "ui_attack" : "ui_upgrade",
+          Enabled = ok, Locked = ok == false, Reason = wait > 0 ? "다음 거래까지 기다리세요" : "자원이 부족합니다", Detail = detail, Action = action,
+        });
+      }
+      Offer(NpcTraderSystem.OfferMercenaries, "용병 투입", rules.TraderMercCost, $"보병 {rules.TraderMercCount}분대를 암시장 출입구에 즉시 투입", () => Controller.Send(new TradeCommand { Offer = NpcTraderSystem.OfferMercenaries }));
+      Offer(NpcTraderSystem.OfferDrone, input.Mode == MatchInput.TapMode.Drone ? "목표를 누르세요" : "자폭 드론", rules.TraderDroneCost, "보이는 땅을 눌러 정밀 타격(범위 피해)",
+        () => input.Mode = input.Mode == MatchInput.TapMode.Drone ? MatchInput.TapMode.None : MatchInput.TapMode.Drone);
+      Offer(NpcTraderSystem.OfferRefuel, "긴급 재정비", rules.TraderRefuelCost, "비행장 격납 작전기 즉시 재정비 + 긴급 출격권 1", () => Controller.Send(new TradeCommand { Offer = NpcTraderSystem.OfferRefuel }));
+      return input.Mode == MatchInput.TapMode.Drone ? "자폭 드론: 목표 지점을 누르세요" : "암시장 무기상 — 공격하면 영구 적대";
     }
 
     /// <summary>항목 34-C: 저격수를 고르면 은신·교란 장치 버튼. 주둔은 진지 건물(도시 진지·벙커)을 누르면 된다.</summary>

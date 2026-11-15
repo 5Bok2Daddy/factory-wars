@@ -165,6 +165,7 @@ namespace FactoryWars.View {
         }
       });
       QuantumEvent.Subscribe<EventCratePicked>(this, e => Fx.Burst(e.Position.ToUnityVector3(), new Color(1f, 0.85f, 0.3f), 1f));
+      QuantumEvent.Subscribe<EventTraderShot>(this, e => Fx.MuzzleFlash(e.From.ToUnityVector3() + Vector3.up * 3f, (e.To - e.From).ToUnityVector3().normalized, 0.8f));
       QuantumEvent.Subscribe<EventSortieEnded>(this, e => { if (e.ShotDown) { Fx.Explosion(e.Position.ToUnityVector3() + Vector3.up * 8f, 1.4f); } });
       QuantumEvent.Subscribe<EventCaptureChanged>(this, e => {
         var frame = e.Game.Frames.Verified;
@@ -288,6 +289,8 @@ namespace FactoryWars.View {
         }
       }
       UpdateWeather(frame);
+      _trader ??= new TraderView(_stage);
+      _trader.Update(frame, _catalog, Fx, _controller != null && _controller.Input != null && _controller.Input.Selection.Building != EntityRef.None && frame.Has<NpcTrader>(_controller.Input.Selection.Building), dt);
       World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
       // 항목 33: 날아오는 전략 미사일의 착탄 지점을 모든 플레이어에게 보인다(폭발 반경만큼 붉은 고리 + 연막 신호).
       if (Time.time >= _strikeAt) {
@@ -359,6 +362,8 @@ namespace FactoryWars.View {
       _actors.Remove(entity);
     }
 
+    TraderView _trader;
+    public TraderView Trader => _trader;
     GameObject _weatherFx;
     bool _weatherOn;
     bool _fogBefore;

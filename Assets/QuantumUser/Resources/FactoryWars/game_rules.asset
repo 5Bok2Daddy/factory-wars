@@ -286,6 +286,59 @@ MonoBehaviour:
     RawValue: 55705
   ArmorRepairMultiplier:
     RawValue: 98304
+  TraderHealth:
+    RawValue: 196608000
+  TraderRadius:
+    RawValue: 655360
+  TraderRange:
+    RawValue: 1572864
+  TraderDamage:
+    RawValue: 2949120
+  TraderInterval:
+    RawValue: 78643
+  TraderBounty:
+    Iron:
+      RawValue: 98304000
+    Wood:
+      RawValue: 39321600
+    Steel:
+      RawValue: 39321600
+    Power:
+      RawValue: 19660800
+  TraderCooldownSeconds:
+    RawValue: 3932160
+  TraderMercCost:
+    Iron:
+      RawValue: 19660800
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 5242880
+    Power:
+      RawValue: 0
+  TraderMercCount: 4
+  TraderDroneCost:
+    Iron:
+      RawValue: 13107200
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 7864320
+    Power:
+      RawValue: 0
+  TraderDroneDamage:
+    RawValue: 17039360
+  TraderDroneRadius:
+    RawValue: 393216
+  TraderRefuelCost:
+    Iron:
+      RawValue: 9830400
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 6553600
+    Power:
+      RawValue: 6553600
   SniperVsSniperMultiplier:
     RawValue: 131072
   GarrisonRangeBonus:

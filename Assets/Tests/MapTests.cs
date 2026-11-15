@@ -331,8 +331,10 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(4, spec.StartPositions.Length);
       Assert.AreEqual(new FPVector2(320, 320), spec.BoundsMax - spec.BoundsMin);
       Assert.AreEqual(4, Verified.ComponentCount<Building>());
-      Assert.AreEqual(49, Verified.ComponentCount<ResourceNode>());
-      Assert.AreEqual(1, NodeCount(ResourceKind.Iron, 8000), "중앙 대형 철");
+      // 중앙 대형 철광산은 철조망 암시장으로 바뀌었다(48 = 49 - 1).
+      Assert.AreEqual(48, Verified.ComponentCount<ResourceNode>());
+      Assert.AreEqual(0, NodeCount(ResourceKind.Iron, 8000), "중앙 대형 철 없음(암시장)");
+      Assert.AreEqual(1, Verified.ComponentCount<NpcTrader>(), "중앙 암시장");
       Assert.AreEqual(4, NodeCount(ResourceKind.Iron, 5000), "공유 확장 철");
       Assert.AreEqual(4, NodeCount(ResourceKind.Wood, 2000) - 4, "중앙 숲");
       AssertRotationalSymmetry(spec, 1);
@@ -341,7 +343,7 @@ namespace FactoryWars.Tests {
       AssertBattlefieldReachable(spec);
       AssertNoSticks(spec);
       AssertBarricadesBlock(spec);
-      Assert.AreEqual(5, spec.CaptureSites.Length, "중앙 1 + 변 4");
+      Assert.AreEqual(4, spec.CaptureSites.Length, "변 4(중앙은 암시장)");
       Assert.AreEqual(4, spec.Barricades.Length);
       Assert.AreEqual(4, spec.HighGrounds.Length);
       Assert.AreEqual(4, spec.Fords.Length);

@@ -544,6 +544,31 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.NpcTrader))]
+  public unsafe class NpcTraderPrototype : ComponentPrototype<Quantum.NpcTrader> {
+    public FP Health;
+    public FP MaxHealth;
+    public Int32 HostileMask;
+    public QBoolean Destroyed;
+    public FP Cooldown;
+    public MapEntityId Target;
+    public PlayerRef Killer;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.NpcTrader component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.NpcTrader result, in PrototypeMaterializationContext context = default) {
+        result.Health = this.Health;
+        result.MaxHealth = this.MaxHealth;
+        result.HostileMask = this.HostileMask;
+        result.Destroyed = this.Destroyed;
+        result.Cooldown = this.Cooldown;
+        PrototypeValidator.FindMapEntity(this.Target, in context, out result.Target);
+        result.Killer = this.Killer;
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.PlayerState))]
   public unsafe class PlayerStatePrototype : StructPrototype {
     public AssetRef<FactionSpec> Faction;
@@ -584,6 +609,8 @@ namespace Quantum.Prototypes {
     public Int32 Doctrine;
     public QBoolean DoctrineLocked;
     public Int32 Promotions;
+    public Int32 TradeReadyFrame;
+    public Int32 TradesMade;
     public Int32 HighGroundShots;
     public Int32 GarrisonEntries;
     public Int32 DisconnectedFrame;
@@ -656,6 +683,8 @@ namespace Quantum.Prototypes {
         result.Doctrine = this.Doctrine;
         result.DoctrineLocked = this.DoctrineLocked;
         result.Promotions = this.Promotions;
+        result.TradeReadyFrame = this.TradeReadyFrame;
+        result.TradesMade = this.TradesMade;
         result.HighGroundShots = this.HighGroundShots;
         result.GarrisonEntries = this.GarrisonEntries;
         result.DisconnectedFrame = this.DisconnectedFrame;

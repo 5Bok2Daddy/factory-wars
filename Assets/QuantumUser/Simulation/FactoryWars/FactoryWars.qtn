@@ -14,7 +14,7 @@ enum Relation : Byte { Enemy, Allied, BreakPending }
 // Hold: 위치 고수(쫓지 않음). Patrol: TargetPosition과 PatrolOrigin 사이를 공격 이동으로 오간다(항목 30).
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget, Hold, Patrol }
 enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce, Attack, Garrison, Upgrade, Research, Ultimate }
-enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce, TierLocked, SizeLimit, Busy, NoVision, NeedGarrison, NoSetup, Limit, Weather, Doctrine }
+enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce, TierLocked, SizeLimit, Busy, NoVision, NeedGarrison, NoSetup, Limit, Weather, Doctrine, Hostile, Closed }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
 enum ResourceKind : Byte { Iron, Wood }
@@ -88,6 +88,9 @@ struct PlayerState {
     Int32 Doctrine;
     QBoolean DoctrineLocked;
     Int32 Promotions;
+    // 중앙 암시장: 다음 거래 가능 프레임, 거래 수.
+    Int32 TradeReadyFrame;
+    Int32 TradesMade;
     Int32 HighGroundShots;
     Int32 GarrisonEntries;
     // 항목 30 온라인: 연결이 끊긴 프레임(0이면 연결됨). 끊긴 동안은 봇이 대신 조종한다.
@@ -265,6 +268,17 @@ component Sortie {
     array<FP>[6] Cum;
     Int32 NextEvent;
     QBoolean Dropped;
+}
+
+// 중앙 철조망 암시장(NPC 무기상). HostileMask는 영구 적대가 된 플레이어 비트. 파괴되면 모두에게 닫힌다.
+component NpcTrader {
+    FP Health;
+    FP MaxHealth;
+    Int32 HostileMask;
+    QBoolean Destroyed;
+    FP Cooldown;
+    entity_ref Target;
+    player_ref Killer;
 }
 
 // 항목 33 공중 항모. Docked는 격납 중인 드론 수, BuildProgress는 잃은 드론 재생산 진행(초), LastContactFrame은 반경 안에서 적을 마지막으로 본 프레임.
@@ -467,6 +481,11 @@ synced event SortieEnded { player_ref Player; QBoolean ShotDown; FPVector3 Posit
 synced event VeteranPromoted { player_ref Owner; Int32 Rank; }
 synced event WeatherChanged { QBoolean On; }
 synced event DoctrineChosen { player_ref Player; Int32 Doctrine; QBoolean ByDefault; }
+// 중앙 암시장
+synced event TraderHostile { player_ref Player; }
+synced event TraderDestroyed { player_ref Killer; ResourceCost Bounty; }
+synced event TraderTrade { player_ref Player; Int32 Offer; }
+synced event TraderShot { FPVector3 From; FPVector3 To; }
 synced event BaseUnderAttack { player_ref Player; FPVector3 Position; }
 synced event CityBuildingDamaged { entity_ref Building; Int32 Index; Int32 Stage; }
 synced event CityBuildingCollapsed { Int32 Index; }

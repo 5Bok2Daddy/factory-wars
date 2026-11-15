@@ -267,7 +267,8 @@ namespace FactoryWars.Tests {
       yield return WaitForBattle();
       yield return null;
       var field = Battle().Field;
-      Assert.AreEqual(5, field.SiteCount, "점령지");
+      // 중앙 통신 점령지는 철조망 암시장(NPC 무기상)으로 바뀌었다: 변 4곳만.
+      Assert.AreEqual(4, field.SiteCount, "점령지");
       Assert.AreEqual(4, field.WallCount, "바리케이드");
       Assert.AreEqual(4, field.CrateCount, "점유 본진 상자");
     }

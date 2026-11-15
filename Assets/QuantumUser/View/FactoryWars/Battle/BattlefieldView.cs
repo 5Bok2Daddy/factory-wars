@@ -180,7 +180,8 @@ namespace FactoryWars.View {
       var ring = new MeshKit().Paint(Swatch.MetalDark);
       ring.Annulus(new Vector3(0, RingY, 0), site->Radius.AsFloat - RingWidth, site->Radius.AsFloat, 48);
       // 반투명 발광(시안·흰색) 링: 우리 셰이더, 공용 머티리얼 1개.
-      Item(root, "Ring", ring.ToMesh("capture_ring"), GlowRingMaterial());
+      // 전장을 깨끗하게: 고정 고리는 점령이 진행 중일 때만 보인다(UpdateSite).
+      Item(root, "Ring", ring.ToMesh("capture_ring"), GlowRingMaterial()).SetActive(false);
       var progress = Item(root, "Progress", null, ArtLook.NeutralMaterial);
       Item(root, "Pole", PoleMesh(), ArtLook.NeutralMaterial);
       var flag = Item(root, "Flag", FlagMesh(), ArtLook.NeutralMaterial);
@@ -251,6 +252,14 @@ namespace FactoryWars.View {
         view.FlagRenderer.sharedMaterial = TeamOf(frame, owned ? site->Owner : site->Claimant, owned);
       }
       view.Flag.localPosition = Vector3.up * Mathf.Lerp(FlagLow, PoleHeight - 0.5f, owned ? 1f : fraction);
+      var contested = site->Claimant.IsValid;
+      var ringObject = view.Root.transform.Find("Ring");
+      if (ringObject != null && ringObject.gameObject.activeSelf != contested) {
+        ringObject.gameObject.SetActive(contested);
+      }
+      if (view.ProgressRenderer.enabled != contested) {
+        view.ProgressRenderer.enabled = contested;
+      }
     }
 
     Wall CreateWall(Barricade* barricade, Vector3 position) {
