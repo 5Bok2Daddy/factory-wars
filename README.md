@@ -65,6 +65,10 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 전투 가독성: 붉은 공격선·조준 고리·초록 이동선·예광탄·폭발 그을음 (2026-11-15)
+![교전](Docs/status_images/39_combat_lines.png)
+![교전 중간](Docs/status_images/39_combat_mid.png)
+
 ### 중앙 철조망 암시장(NPC 무기상) (2026-11-15)
 ![평소](Docs/status_images/38_trader_clean.png)
 ![선택·거래](Docs/status_images/38_trader_selected.png)

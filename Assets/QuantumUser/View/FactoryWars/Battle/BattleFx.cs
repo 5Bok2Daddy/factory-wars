@@ -12,13 +12,16 @@ namespace FactoryWars.View {
     const float WreckSink = 1.2f;
     // 항목 27 K-2: 크레이터는 영구로 남는다. 상한을 넘으면 오래된 것부터 지운다(손상 지도에는 이미 그을음으로 남아 있다).
     static int MaxCraters => GraphicsQuality.Current == QualityTier.Low ? 48 : 96;
-    const float CraterSeconds = float.MaxValue;
+    // 그을음 자국은 25초 뒤 사라진다(전장이 지저분해지지 않게).
+    const float CraterSeconds = 25f;
 
-    static readonly Color Muzzle = new Color(1f, 0.62f, 0.2f, 1f);
+    // 전투 가독성: 포구 섬광 주황(#FF6B00 계열), 소총·기관총 예광 호박색(#FFD166), 포탄 연노랑(#FFF3B0), 미사일 주황 불꽃.
+    static readonly Color Muzzle = new Color(1f, 0.42f, 0f, 1f);
     static readonly Color Flame = new Color(1f, 0.42f, 0.08f, 1f);
     static readonly Color Spark = new Color(1f, 0.74f, 0.32f, 1f);
-    static readonly Color Bullet = new Color(1f, 0.82f, 0.5f, 1f);
-    static readonly Color Missile = new Color(0.72f, 0.92f, 1f, 1f);
+    static readonly Color Bullet = new Color(1f, 0.82f, 0.4f, 1f);
+    static readonly Color Shell = new Color(1f, 0.95f, 0.69f, 1f);
+    static readonly Color Missile = new Color(1f, 0.55f, 0.15f, 1f);
     static readonly Color SmokeGray = new Color(0.52f, 0.52f, 0.52f, 0.5f);
     static readonly Color SmokeDark = new Color(0.16f, 0.15f, 0.14f, 0.62f);
     static readonly Color DustBrown = new Color(0.62f, 0.54f, 0.4f, 0.45f);
@@ -118,7 +121,14 @@ namespace FactoryWars.View {
       if (distance < 0.5f) {
         return;
       }
-      Emit(_tracer, from, delta / distance * speed, width, distance / speed + 0.04f, missile ? Missile : Bullet);
+      Emit(_tracer, from, delta / distance * speed, width, distance / speed + 0.04f, missile ? Missile : width > 0.25f ? Shell : Bullet);
+      if (missile == false && width > 0.25f) {
+        // 포탄: 옅은 흰·회색 연기 꼬리.
+        var ribbon = Scaled(4);
+        for (var i = 1; i <= ribbon; i++) {
+          Emit(_smoke, Vector3.Lerp(from, to, i / (ribbon + 1f)), Vector3.up * 0.2f, 0.35f, 0.7f, SmokeGray);
+        }
+      }
       if (missile) {
         // 미사일 연기 꼬리: 길고 굵게, 오래 남는다.
         var trail = Scaled(10);
@@ -126,6 +136,17 @@ namespace FactoryWars.View {
           var t = i / (trail + 1f);
           Emit(_smoke, Vector3.Lerp(from, to, t) + Vector3.up * Mathf.Sin(t * Mathf.PI) * distance * 0.08f, Vector3.up * 0.3f, 0.6f + t * 0.4f, 1.2f + t * 0.6f, SmokeGray);
         }
+      }
+    }
+
+    /// <summary>맞은 방향(쏜 쪽 반대)으로 튀는 불꽃과 하얀 번쩍임.</summary>
+    public void Impact(Vector3 position, float size, Vector3 incoming) {
+      var normal = incoming.sqrMagnitude > 0.001f ? -incoming.normalized : Vector3.up;
+      Emit(_glow, position + Vector3.up * 0.3f, Vector3.zero, size * 1.8f, 0.07f, Color.white);
+      var count = Scaled(6);
+      for (var i = 0; i < count; i++) {
+        var velocity = (normal + Vector3.up * 0.6f + Random.insideUnitSphere * 0.6f) * Random.Range(3f, 7f);
+        Emit(_tracer, position, velocity, 0.12f * size, Random.Range(0.15f, 0.3f), Spark);
       }
     }
 
@@ -239,6 +260,11 @@ namespace FactoryWars.View {
 
     public void Explosion(Vector3 position, float size) {
       GameAudio.Play(SoundEvent.Explosion);
+      // 충격파 고리 + 그을음 자국(큰 폭발만).
+      if (size >= 1.2f) {
+        Ring(new Vector3(position.x, 0.1f, position.z), new Color(1f, 0.9f, 0.75f, 0.8f), size * 2.6f, 0.35f);
+        Crater(position, size * 0.9f);
+      }
       if (VisualCatalog.SpawnEffect("explosion", position, Vector3.up, size)) {
         if (size >= 2f) {
           Shake(size * 0.12f);

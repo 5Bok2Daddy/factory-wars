@@ -570,8 +570,16 @@ namespace FactoryWars.View {
       }
       var missile = attack == AttackType.AntiAir || attack == AttackType.Area;
       var speed = attack == AttackType.AntiInfantry ? BulletSpeed : missile ? MissileSpeed : ShellSpeed;
-      Fx.Tracer(muzzle, target, speed, attack == AttackType.AntiInfantry ? 0.18f : 0.34f, missile);
-      Fx.Impact(target, attack == AttackType.AntiInfantry ? 0.8f : 1.6f);
+      if (attack == AttackType.AntiInfantry) {
+        // 소총·기관총: 예광탄 3발 연사, 약간 흩어짐.
+        for (var i = 0; i < 3; i++) {
+          var spread = new Vector3(Random.Range(-0.35f, 0.35f), Random.Range(-0.1f, 0.2f), Random.Range(-0.35f, 0.35f));
+          Fx.Tracer(muzzle + forward * (0.3f * i), target + spread, speed, 0.18f, false);
+        }
+      } else {
+        Fx.Tracer(muzzle, target, speed, 0.34f, missile);
+      }
+      Fx.Impact(target, attack == AttackType.AntiInfantry ? 0.8f : 1.6f, target - muzzle);
       if (attack == AttackType.Area) {
         // 크레이터는 확정 이벤트(AreaImpact)로 손상 지도가 만든다(항목 27 K-2). 예측 사격으로는 만들지 않는다.
       }
@@ -881,6 +889,139 @@ namespace FactoryWars.View {
       if (selection.Building != EntityRef.None && _actors.TryGetValue(selection.Building, out var selected)
           && frame.Unsafe.TryGetPointer<Building>(selection.Building, out var building)) {
         Mark(selected, building->Health.AsFloat / frame.FindAsset(building->Spec).MaxHealth.AsFloat);
+      }
+      CommandLines(frame, selection);
+      DamageBars(frame);
+    }
+
+    // ---------- 명령선·조준 표시·체력바(전투 가독성) ----------
+
+    readonly List<LineRenderer> _lines = new List<LineRenderer>();
+    readonly List<GameObject> _reticles = new List<GameObject>();
+    readonly HashSet<EntityRef> _targeted = new HashSet<EntityRef>();
+    static Material _attackLine;
+    static Material _moveLine;
+    static Mesh _reticleMesh;
+    public int AttackLines { get; private set; }
+    public int MoveLines { get; private set; }
+
+    static Material LineMaterial(Color color) {
+      var shader = Shader.Find("FactoryWars/CaptureRing");
+      var material = new Material(shader != null ? shader : Shader.Find("Sprites/Default"));
+      material.SetColor("_Color", color);
+      material.SetFloat("_Glow", 1.6f);
+      material.SetFloat("_Pulse", 0.25f);
+      return material;
+    }
+
+    LineRenderer Line(int index, Material material) {
+      while (_lines.Count <= index) {
+        var line = new GameObject("CommandLine").AddComponent<LineRenderer>();
+        line.transform.SetParent(_stage, false);
+        line.positionCount = 2;
+        line.widthMultiplier = 0.12f;
+        line.numCapVertices = 2;
+        line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        line.receiveShadows = false;
+        _lines.Add(line);
+      }
+      var result = _lines[index];
+      result.sharedMaterial = material;
+      result.gameObject.SetActive(true);
+      return result;
+    }
+
+    GameObject Reticle(int index) {
+      if (_reticleMesh == null) {
+        var kit = new MeshKit().Paint(Swatch.White);
+        ArtView.DashedRing(kit, 0.82f, 1f, 16);
+        _reticleMesh = kit.ToMesh("target_reticle");
+      }
+      while (_reticles.Count <= index) {
+        var item = new GameObject("Reticle", typeof(MeshFilter), typeof(MeshRenderer));
+        item.transform.SetParent(_stage, false);
+        item.GetComponent<MeshFilter>().sharedMesh = _reticleMesh;
+        item.GetComponent<MeshRenderer>().sharedMaterial = _attackLine;
+        item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        _reticles.Add(item);
+      }
+      _reticles[index].SetActive(true);
+      return _reticles[index];
+    }
+
+    /// <summary>
+    /// 고른 아군 유닛 → 표적: 붉은 공격선(#FF2A2A)과 표적 아래 맥동하는 붉은 점선 조준 고리. 이동 중이면 목적지까지 초록 이동선(#38F27A)과 목적지 고리.
+    /// 화면 전용(시뮬레이션 TargetEntity·TargetPosition을 읽기만 함).
+    /// </summary>
+    void CommandLines(Frame frame, SelectionModel selection) {
+      _attackLine ??= LineMaterial(new Color(1f, 0.165f, 0.165f, 0.75f));
+      _moveLine ??= LineMaterial(new Color(0.22f, 0.95f, 0.48f, 0.7f));
+      _targeted.Clear();
+      var lines = 0;
+      var reticles = 0;
+      var attack = 0;
+      var move = 0;
+      foreach (var entity in selection.Units) {
+        if (_actors.TryGetValue(entity, out var actor) == false || frame.Unsafe.TryGetPointer<Unit>(entity, out var unit) == false || actor.View.gameObject.activeInHierarchy == false) {
+          continue;
+        }
+        var from = actor.View.transform.position + Vector3.up * 0.5f;
+        if (TryTarget(frame, unit->TargetEntity, out var at, out _)) {
+          var line = Line(lines++, _attackLine);
+          line.SetPosition(0, from);
+          line.SetPosition(1, at);
+          attack++;
+          if (_targeted.Add(unit->TargetEntity) && reticles < 12) {
+            var ring = Reticle(reticles++);
+            var radius = _actors.TryGetValue(unit->TargetEntity, out var targetActor) ? Mathf.Max(1f, targetActor.Radius) : 1.5f;
+            var pulse = 1f + 0.12f * Mathf.Sin(Time.time * 6f);
+            ring.transform.position = new Vector3(at.x, 0.12f, at.z);
+            ring.transform.localScale = new Vector3(radius * pulse, 1f, radius * pulse);
+            ring.transform.Rotate(0f, 40f * Time.deltaTime, 0f);
+          }
+          continue;
+        }
+        if ((unit->Order == UnitOrder.Move || unit->Order == UnitOrder.AttackMove)) {
+          var goal = unit->TargetPosition.ToUnityVector3();
+          goal.y = 0.15f;
+          if ((goal - from).sqrMagnitude > 4f) {
+            var line = Line(lines++, _moveLine);
+            line.SetPosition(0, new Vector3(from.x, 0.15f, from.z));
+            line.SetPosition(1, goal);
+            move++;
+          }
+        }
+      }
+      for (var i = lines; i < _lines.Count; i++) {
+        _lines[i].gameObject.SetActive(false);
+      }
+      for (var i = reticles; i < _reticles.Count; i++) {
+        _reticles[i].SetActive(false);
+      }
+      AttackLines = attack;
+      MoveLines = move;
+    }
+
+    /// <summary>체력바는 피해를 입었거나(100% 미만), 선택됐거나, 고른 아군이 조준 중일 때만 보인다.</summary>
+    void DamageBars(Frame frame) {
+      foreach (var pair in _actors) {
+        var actor = pair.Value;
+        if (actor.View == null || actor.View.Bar == null || _marked.Contains(actor)) {
+          continue;
+        }
+        var ratio = 1f;
+        if (frame.Unsafe.TryGetPointer<Unit>(pair.Key, out var unit)) {
+          ratio = unit->Health.AsFloat / Mathf.Max(1f, TechSystem.MaxHealth(frame, unit->Owner, unit->Spec).AsFloat);
+        } else if (frame.Unsafe.TryGetPointer<Building>(pair.Key, out var building)) {
+          ratio = building->Health.AsFloat / Mathf.Max(1f, frame.FindAsset(building->Spec).MaxHealth.AsFloat);
+        }
+        var show = ratio < 0.995f || _targeted.Contains(pair.Key);
+        if (actor.View.Bar.activeSelf != show) {
+          actor.View.Bar.SetActive(show);
+        }
+        if (show) {
+          actor.View.SetHealth(ratio);
+        }
       }
     }
 

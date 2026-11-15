@@ -2170,14 +2170,14 @@ MonoBehaviour:
   - Id: dress/Cliff
     Category: 4
     Prefabs:
-    - {fileID: 3293009205769231677, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
-    - {fileID: 8233738818141013397, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
-    - {fileID: 1490775217274316434, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
-    - {fileID: 3962974326508932457, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
-    - {fileID: 1074221671721516938, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
-    - {fileID: 7050138690249278875, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
-    - {fileID: 8019026396654060861, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
-    - {fileID: 7640599883593789315, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
+    - {fileID: 1246307686667822634, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
+    - {fileID: 6067579016045673159, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
+    - {fileID: 2645498432065336962, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
+    - {fileID: 166753874587260934, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
+    - {fileID: 6036514254117680824, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
+    - {fileID: 3274678515811793332, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
+    - {fileID: 5036235871685499948, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
+    - {fileID: 5573797683621934260, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3234,7 +3234,7 @@ MonoBehaviour:
   - Id: dress/WaterGate
     Category: 4
     Prefabs:
-    - {fileID: 5941306572691483982, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
+    - {fileID: 5825143032201395618, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
