@@ -581,6 +581,9 @@ namespace Quantum.Prototypes {
     public Int32 SortiesLaunched;
     public Int32 SortiesCompleted;
     public Int32 SortiesShotDown;
+    public Int32 Doctrine;
+    public QBoolean DoctrineLocked;
+    public Int32 Promotions;
     public Int32 HighGroundShots;
     public Int32 GarrisonEntries;
     public Int32 DisconnectedFrame;
@@ -650,6 +653,9 @@ namespace Quantum.Prototypes {
         result.SortiesLaunched = this.SortiesLaunched;
         result.SortiesCompleted = this.SortiesCompleted;
         result.SortiesShotDown = this.SortiesShotDown;
+        result.Doctrine = this.Doctrine;
+        result.DoctrineLocked = this.DoctrineLocked;
+        result.Promotions = this.Promotions;
         result.HighGroundShots = this.HighGroundShots;
         result.GarrisonEntries = this.GarrisonEntries;
         result.DisconnectedFrame = this.DisconnectedFrame;
@@ -838,6 +844,9 @@ namespace Quantum.Prototypes {
     public Int32 DetectedMask;
     public Int32 JammerUntilFrame;
     public MapEntityId JammerNode;
+    public Int32 Kills;
+    public Int32 VetRank;
+    public Int32 LastDamagedFrame;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Unit component = default;
         Materialize((Frame)f, ref component, in context);
@@ -880,6 +889,9 @@ namespace Quantum.Prototypes {
         result.DetectedMask = this.DetectedMask;
         result.JammerUntilFrame = this.JammerUntilFrame;
         PrototypeValidator.FindMapEntity(this.JammerNode, in context, out result.JammerNode);
+        result.Kills = this.Kills;
+        result.VetRank = this.VetRank;
+        result.LastDamagedFrame = this.LastDamagedFrame;
     }
   }
   [System.SerializableAttribute()]

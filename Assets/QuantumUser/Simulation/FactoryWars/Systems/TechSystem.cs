@@ -299,7 +299,9 @@ namespace Quantum.FactoryWars {
         reason = RejectReason.TierLocked;
         return false;
       }
-      if (unit.MaxOwned > 0 && SniperSystem.CountOwnedAndQueued(f, player, unit) + unit.SpawnCount > unit.MaxOwned) {
+      // 항목 37 그림자 특수전단: 저격수 보유 한도 +1.
+      var ownedCap = unit.MaxOwned + (unit.GarrisonFireOnly && TacticalSystem.DoctrineOf(f, player) == 2 ? FactoryWarsUtil.Rules(f).ShadowSniperBonus : 0);
+      if (unit.MaxOwned > 0 && SniperSystem.CountOwnedAndQueued(f, player, unit) + unit.SpawnCount > ownedCap) {
         reason = RejectReason.Limit;
         return false;
       }

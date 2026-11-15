@@ -261,6 +261,10 @@ namespace Quantum.FactoryWars {
       }
 
       var cost = unit.Cost + PresetCost(f, building, unit);
+      // 항목 37 기갑 요새화 군단: 전차·포격함 생산비 할인.
+      if (TacticalSystem.DoctrineOf(f, player) == 3 && TacticalSystem.IsArmorClass(unit)) {
+        cost = cost * FactoryWarsUtil.Rules(f).ArmorCostMultiplier;
+      }
       var population = unit.Population * unit.SpawnCount;
       for (var i = 0; i < count && building->QueueCount < building->Queue.Length; i++) {
         // 항목 31: 기지 단계와 크기별 보유 상한.
@@ -624,7 +628,8 @@ namespace Quantum.FactoryWars {
     public static FP EffectiveRange(Frame f, Unit* unit, UnitSpec spec) {
       var faction = f.FindAsset(FactoryWarsUtil.Player(f, unit->Owner)->Faction);
       var range = spec.Range + TechSystem.RangeBonus(f, unit->Owner, unit->Spec);
-      return spec.IsRanged ? range * faction.RangedRangeMultiplier : range;
+      var result = spec.IsRanged ? range * faction.RangedRangeMultiplier : range;
+      return result * TacticalSystem.VetRange(f, unit);
     }
 
     static bool FindMatchup(GameRulesSpec rules, AttackType attack, out DamageMatchup matchup) {
@@ -676,6 +681,10 @@ namespace Quantum.FactoryWars {
       amount *= TechSystem.IncomingMultiplier(f, unit->Owner, spec);
       if (weapon.IgnoreCover == false) {
         amount *= CoverSystem.DamageMultiplier(f, unit, weapon.Origin, weapon.Area);
+        // 항목 37 그림자 특수전단: 엄폐 중 받는 피해가 더 준다.
+        if (unit->InCover && TacticalSystem.DoctrineOf(f, unit->Owner) == 2) {
+          amount *= FP._1 - FactoryWarsUtil.Rules(f).ShadowCoverBonus;
+        }
       }
       // 항목 33: 공중 항모는 대공 무기에 더 크게 맞는다(카운터).
       if (weapon.Attack == AttackType.AntiAir && f.Has<Carrier>(target)) {
@@ -685,6 +694,7 @@ namespace Quantum.FactoryWars {
         }
       }
       unit->Health -= ModuleSystem.ApplyIncoming(f, unit, amount);
+      unit->LastDamagedFrame = f.Number;
 
       if (unit->Health <= FP._0) {
         UltimateSystem.OnUnitKilled(f, target, unit);
@@ -695,6 +705,7 @@ namespace Quantum.FactoryWars {
         if (killer != null) {
           killer->UnitsKilled++;
         }
+        TacticalSystem.OnKill(f, weapon.Unit);
         f.Destroy(target);
       } else if (weapon.Ability == SpecialAbility.TargetDesignator) {
         unit->DesignatedBy = weapon.Owner;
@@ -920,7 +931,7 @@ namespace Quantum.FactoryWars {
     static void Fire(Frame f, in Weapon weapon, Unit* unit, EntityRef target, FPVector3 position, FPVector3 targetPosition, FP range) {
       var spec = weapon.Spec;
       // 항목 31: 공격 연구와 정예화.
-      var amount = spec.Damage * TechSystem.OutgoingMultiplier(f, unit->Owner, unit, spec);
+      var amount = spec.Damage * TechSystem.OutgoingMultiplier(f, unit->Owner, unit, spec) * TacticalSystem.VetDamage(f, unit);
       if (spec.Ability == SpecialAbility.FirstShotDouble) {
         if (f.Number >= unit->EngagedUntilFrame) {
           amount *= spec.AbilityMultiplier;
@@ -928,7 +939,7 @@ namespace Quantum.FactoryWars {
         unit->EngagedUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, spec.AbilitySeconds);
       }
 
-      unit->AttackCooldown = spec.AttackInterval;
+      unit->AttackCooldown = spec.AttackInterval * TacticalSystem.VetReload(f, unit);
       unit->LastFiredFrame = f.Number;
       if (FactoryWarsUtil.MapInfo(f).HighGroundAt(position) >= 0) {
         FactoryWarsUtil.Player(f, unit->Owner)->HighGroundShots++;
@@ -1239,6 +1250,10 @@ namespace Quantum.FactoryWars {
     /// <summary>능력과 도로·여울을 합친 지상 이동 속도.</summary>
     public static FP GroundSpeed(Frame f, MapSpec map, GameRulesSpec rules, UnitSpec spec, Unit* unit, FPVector3 position) {
       var speed = unit->Swarming ? spec.MoveSpeed * spec.AbilityMultiplier : spec.MoveSpeed;
+      // 항목 37 공군 타격 사령부: 정찰 유닛(탐지 반경이 있는 소형 차량) 이동 속도 증가.
+      if (spec.DetectRadius > FP._0 && TacticalSystem.DoctrineOf(f, unit->Owner) == 1) {
+        speed *= rules.ScoutSpeedMultiplier;
+      }
       if (unit->StealthUntilFrame > f.Number) {
         speed *= spec.StealthSpeedMultiplier;
       }

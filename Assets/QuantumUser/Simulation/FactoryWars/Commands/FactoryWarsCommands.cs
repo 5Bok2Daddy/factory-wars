@@ -582,3 +582,20 @@ namespace Quantum.FactoryWars {
     }
   }
 }
+
+namespace Quantum.FactoryWars {
+  using Photon.Deterministic;
+
+  /// <summary>항목 37 전술 도크린 선택(1 공군 타격 사령부, 2 그림자 특수전단, 3 기갑 요새화 군단). 한 번만 고를 수 있다.</summary>
+  public unsafe class ChooseDoctrineCommand : FactoryCommand {
+    public int Doctrine;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Doctrine);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      TacticalSystem.Choose(f, player, Doctrine, false);
+    }
+  }
+}

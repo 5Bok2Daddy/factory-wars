@@ -17,6 +17,7 @@ MonoBehaviour:
     Guid:
       Value: 447499274210451113
   FactionId: free_federation
+  PreferredDoctrine: 1
   RangedRangeMultiplier:
     RawValue: 72089
   SmallBuildTimeMultiplier:

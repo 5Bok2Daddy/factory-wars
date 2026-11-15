@@ -168,7 +168,9 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => Verified.ComponentCount<Sortie>() == 0, 60f, "작전 종료");
       Assert.AreEqual(1, HangarState(airfield, 0), "귀환해 칸에 다시 대기");
       var rearm = HangarReady(airfield, 0) - Verified.Number;
-      Assert.AreEqual(45 * Fps, rearm, 3 * Fps, "재정비 45초");
+      // 항목 37: 선택 시간(30초) 뒤 기본 도크린 1(공군 타격 사령부)이 적용되면 재정비가 25% 짧다.
+      var expected = DoctrineOf(0) == 1 ? 45f * 0.75f : 45f;
+      Assert.AreEqual(expected * Fps, rearm, 3 * Fps, "재정비 시간");
       _rejected.Clear();
       yield return Send(0, new OrderSortieCommand { Airfield = airfield, Slot = 0, Target = V(10, 10), Heading = East });
       AssertRejected(0, ActionKind.Attack, RejectReason.Cooldown);

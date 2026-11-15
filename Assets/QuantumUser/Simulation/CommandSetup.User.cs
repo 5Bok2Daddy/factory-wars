@@ -32,6 +32,7 @@ namespace Quantum
             factories.Add(new FactoryWars.StealthCommand());
             factories.Add(new FactoryWars.PlaceJammerCommand());
             factories.Add(new FactoryWars.OrderSortieCommand());
+            factories.Add(new FactoryWars.ChooseDoctrineCommand());
         }
     }
 }

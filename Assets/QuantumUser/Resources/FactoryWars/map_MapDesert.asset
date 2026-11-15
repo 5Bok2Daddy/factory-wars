@@ -22,6 +22,11 @@ MonoBehaviour:
     RawValue: 32768
   SupplyRewardMultiplier:
     RawValue: 131072
+  WeatherFirstSeconds: 480
+  WeatherDurationSeconds: 60
+  WeatherPeriodSeconds: 240
+  WeatherSightMultiplier:
+    RawValue: 42598
   BoundsMin:
     X:
       RawValue: -10485760

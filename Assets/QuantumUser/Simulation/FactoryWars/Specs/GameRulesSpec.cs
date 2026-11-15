@@ -145,6 +145,35 @@ namespace Quantum {
     public FP JammerDisarmRadius;
     /// <summary>항목 34-D: 대공 화력(피해/간격)에 곱해 작전기 체력에서 깎는 배율.</summary>
     public FP SortieAntiAirFactor = 1;
+
+    // ---- 항목 37 베테랑(계급 1~3: 킬 기준과 보너스) ----
+    public int VetKillsRank1;
+    public int VetKillsRank2;
+    public int VetKillsRank3;
+    /// <summary>계급별(1~3) 최대 체력·피해·사거리 증가율, 재장전 단축율, 초당 자가 회복 비율(최대 체력 대비).</summary>
+    public FP[] VetHealthBonus;
+    public FP[] VetDamageBonus;
+    public FP[] VetRangeBonus;
+    public FP[] VetReloadBonus;
+    public FP[] VetRegenPerSecond;
+    /// <summary>쏘거나 맞은 뒤 자가 회복이 시작되기까지(초).</summary>
+    public FP VetRegenDelaySeconds;
+
+    // ---- 항목 37 전술 도크린 ----
+    /// <summary>선택 시간(초)과, 고르지 않았을 때의 기본값(1~3).</summary>
+    public int DoctrineSelectSeconds;
+    public int DefaultDoctrine = 1;
+    /// <summary>공군 타격 사령부: 출격기 재정비 배율, 정찰 유닛 시야·이동속도 배율.</summary>
+    public FP AirRearmMultiplier = 1;
+    public FP ScoutSightMultiplier = 1;
+    public FP ScoutSpeedMultiplier = 1;
+    /// <summary>그림자 특수전단: 저격수 보유 한도 +, 은신 지속 +(초), 엄폐 중 받는 피해 추가 감소 비율.</summary>
+    public int ShadowSniperBonus;
+    public FP ShadowStealthBonusSeconds;
+    public FP ShadowCoverBonus;
+    /// <summary>기갑 요새화 군단: 전차·포격함 생산비 배율, 공병 수리 속도 배율.</summary>
+    public FP ArmorCostMultiplier = 1;
+    public FP ArmorRepairMultiplier = 1;
     /// <summary>항목 34-C: 저격수끼리는 보이는 적 저격수에게 피해가 이 배율이다.</summary>
     public FP SniperVsSniperMultiplier = 1;
     public FP GarrisonRangeBonus;

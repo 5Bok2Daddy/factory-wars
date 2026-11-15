@@ -271,6 +271,9 @@ namespace Quantum.Prototypes.Unity {
     public Int32 SortiesLaunched;
     public Int32 SortiesCompleted;
     public Int32 SortiesShotDown;
+    public Int32 Doctrine;
+    public QBoolean DoctrineLocked;
+    public Int32 Promotions;
     public Int32 HighGroundShots;
     public Int32 GarrisonEntries;
     public Int32 DisconnectedFrame;
@@ -342,6 +345,9 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.SortiesLaunched, out result.SortiesLaunched);
       converter.Convert(this.SortiesCompleted, out result.SortiesCompleted);
       converter.Convert(this.SortiesShotDown, out result.SortiesShotDown);
+      converter.Convert(this.Doctrine, out result.Doctrine);
+      converter.Convert(this.DoctrineLocked, out result.DoctrineLocked);
+      converter.Convert(this.Promotions, out result.Promotions);
       converter.Convert(this.HighGroundShots, out result.HighGroundShots);
       converter.Convert(this.GarrisonEntries, out result.GarrisonEntries);
       converter.Convert(this.DisconnectedFrame, out result.DisconnectedFrame);
@@ -449,6 +455,9 @@ namespace Quantum.Prototypes.Unity {
     public Int32 DetectedMask;
     public Int32 JammerUntilFrame;
     public Quantum.QuantumEntityPrototype JammerNode;
+    public Int32 Kills;
+    public Int32 VetRank;
+    public Int32 LastDamagedFrame;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
     public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.UnitPrototype();
@@ -486,6 +495,9 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.DetectedMask, out result.DetectedMask);
       converter.Convert(this.JammerUntilFrame, out result.JammerUntilFrame);
       converter.Convert(this.JammerNode, out result.JammerNode);
+      converter.Convert(this.Kills, out result.Kills);
+      converter.Convert(this.VetRank, out result.VetRank);
+      converter.Convert(this.LastDamagedFrame, out result.LastDamagedFrame);
       ConvertUser(converter, ref result);
       return result;
     }

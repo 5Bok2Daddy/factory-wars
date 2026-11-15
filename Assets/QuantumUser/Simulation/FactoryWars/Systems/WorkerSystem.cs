@@ -226,7 +226,8 @@ namespace Quantum.FactoryWars {
         return;
       }
 
-      var heal = FPMath.Min(rules.RepairPerSecond * f.DeltaTime, spec.MaxHealth - building->Health);
+      var repairRate = TacticalSystem.DoctrineOf(f, unit->Owner) == 3 ? rules.RepairPerSecond * rules.ArmorRepairMultiplier : rules.RepairPerSecond;
+      var heal = FPMath.Min(repairRate * f.DeltaTime, spec.MaxHealth - building->Health);
       // 자원별로 낸다. 곱한 뒤 나눠야 작은 값에서 정밀도를 잃지 않는다.
       var cost = spec.Cost * (heal * rules.RepairCostRatio) / spec.MaxHealth;
       var state = FactoryWarsUtil.Player(f, unit->Owner);

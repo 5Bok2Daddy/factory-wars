@@ -105,6 +105,22 @@ namespace Quantum.FactoryWars {
       return IsVisible(f, player, transform->Position);
     }
 
+    /// <summary>항목 37: 신호탄 구역이거나 이 플레이어의 정찰 사진 구역 안인가(기상 중에도 시야와 출격이 가능한 예외).</summary>
+    public static bool InSignalArea(Frame f, PlayerRef player, FPVector3 position) {
+      var fog = f.Unsafe.GetPointerSingleton<Fog>();
+      var rules = FactoryWarsUtil.Rules(f);
+      if (f.Number < fog->FlareUntilFrame) {
+        for (var i = 0; i < fog->FlareCount && i < Players; i++) {
+          if (FactoryWarsUtil.FlatDistanceSqr(fog->FlarePositions[i], position) <= rules.DropFlareRadius * rules.DropFlareRadius) {
+            return true;
+          }
+        }
+      }
+      var index = (int)player;
+      return index >= 0 && index < Players && f.Number < fog->ReconUntilFrames[index]
+        && FactoryWarsUtil.FlatDistanceSqr(fog->ReconPositions[index], position) <= rules.DropReconRadius * rules.DropReconRadius;
+    }
+
     // ---------- 갱신 ----------
 
     static void Mark(Fog* fog, FogGrid* grid, FPVector3 center, FP radius) {
@@ -133,6 +149,8 @@ namespace Quantum.FactoryWars {
     static void Recompute(Frame f, Fog* fog) {
       var rules = FactoryWarsUtil.Rules(f);
       var map = FactoryWarsUtil.MapInfo(f);
+      // 항목 37: 기상 중 기본 시야 감소(신호탄·정찰 사진 구역은 아래에서 따로 그려 배율을 받지 않는다).
+      var weatherSight = TacticalSystem.SightMultiplier(f);
       for (var p = 0; p < Players; p++) {
         var grid = fog->Grids.GetPointer(p);
         for (var i = 0; i < Bytes; i++) {
@@ -153,6 +171,10 @@ namespace Quantum.FactoryWars {
         if (unit->Garrison != EntityRef.None) {
           radius = spec.GarrisonSightRange > FP._0 ? spec.GarrisonSightRange : radius + rules.FogGarrisonBonus;
         }
+        radius *= weatherSight;
+        if (spec.DetectRadius > FP._0 && TacticalSystem.DoctrineOf(f, unit->Owner) == 1) {
+          radius *= rules.ScoutSightMultiplier;
+        }
         Mark(fog, fog->Grids.GetPointer(owner), transform->Position, radius);
         // 항목 34-C: 저격수가 쏜 건물은 피격 진영에게 잠깐 보인다.
         if (f.Number < unit->MuzzleRevealUntilFrame) {
@@ -169,7 +191,7 @@ namespace Quantum.FactoryWars {
         if (owner < 0 || owner >= Players) {
           continue;
         }
-        Mark(fog, fog->Grids.GetPointer(owner), transform->Position, f.FindAsset(building->Spec).SightRange);
+        Mark(fog, fog->Grids.GetPointer(owner), transform->Position, f.FindAsset(building->Spec).SightRange * weatherSight);
       }
       // 항목 34-B: 보급 신호탄은 모든 플레이어에게, 정찰 사진은 얻은 플레이어에게 그 자리를 잠깐 보여 준다.
       if (f.Number < fog->FlareUntilFrame) {

@@ -70,6 +70,11 @@ namespace Quantum {
     public string Theme;
     public FP SupplyIntervalMultiplier = 1;
     public FP SupplyRewardMultiplier = 1;
+    /// <summary>항목 37 기상: 첫 발동 시각, 지속, 주기(초). 0이면 기상 없음. 기상 중 기본 시야 배율.</summary>
+    public int WeatherFirstSeconds;
+    public int WeatherDurationSeconds;
+    public int WeatherPeriodSeconds;
+    public FP WeatherSightMultiplier = 1;
     /// <summary>카메라 이동 범위·미니맵용 경계(XZ).</summary>
     public FPVector2 BoundsMin;
     public FPVector2 BoundsMax;

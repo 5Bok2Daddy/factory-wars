@@ -646,6 +646,7 @@ namespace FactoryWars.EditorTools {
       // 항목 22: 공중 유닛이 없는 진영은 AI가 비행장을 짓지 않는다(항목 31부터 두 진영 모두 공중이 있다). 대륙 연방은 물량형이라 중공업 기지를 차량 공장 바로 다음에 짓는다.
       faction.AiSkipRoles = ids.Any(k => units[k].IsAir) ? new BuildingRole[0] : new[] { BuildingRole.Airfield };
       faction.Researches = researches;
+      faction.PreferredDoctrine = factionId == "continental_federation" ? 3 : 1;
       faction.AiEarlyRoles = factionId == "continental_federation" ? new[] { BuildingRole.HeavyWorks } : new BuildingRole[0];
       faction.Modules = modules;
       EditorUtility.SetDirty(faction);
@@ -1072,6 +1073,27 @@ namespace FactoryWars.EditorTools {
       rules.JammerDisarmPerSecond = 10;
       rules.JammerDisarmRadius = 4;
       rules.SortieAntiAirFactor = N(3);
+      // 항목 37 베테랑: 킬 3·6·10에 계급 1·2·3. 체력 +10/20/30%, 피해 +8/16/24%, 사거리 +4/8/12%, 재장전 -5/10/15%, 비전투 5초 뒤 초당 0.5/1/1.5% 회복.
+      rules.VetKillsRank1 = 3;
+      rules.VetKillsRank2 = 6;
+      rules.VetKillsRank3 = 10;
+      rules.VetHealthBonus = new[] { N(0.10), N(0.20), N(0.30) };
+      rules.VetDamageBonus = new[] { N(0.08), N(0.16), N(0.24) };
+      rules.VetRangeBonus = new[] { N(0.04), N(0.08), N(0.12) };
+      rules.VetReloadBonus = new[] { N(0.05), N(0.10), N(0.15) };
+      rules.VetRegenPerSecond = new[] { N(0.005), N(0.01), N(0.015) };
+      rules.VetRegenDelaySeconds = 5;
+      // 항목 37 전술 도크린(선택 30초, 기본값 1).
+      rules.DoctrineSelectSeconds = 30;
+      rules.DefaultDoctrine = 1;
+      rules.AirRearmMultiplier = N(0.75);
+      rules.ScoutSightMultiplier = N(1.2);
+      rules.ScoutSpeedMultiplier = N(1.2);
+      rules.ShadowSniperBonus = 1;
+      rules.ShadowStealthBonusSeconds = 10;
+      rules.ShadowCoverBonus = N(0.15);
+      rules.ArmorCostMultiplier = N(0.85);
+      rules.ArmorRepairMultiplier = N(1.5);
       rules.GarrisonEnterDistance = 2;
       rules.CityCrackedFraction = N(0.6);
       rules.CityBurningFraction = N(0.3);
@@ -1226,6 +1248,10 @@ namespace FactoryWars.EditorTools {
       spec.Theme = def.Theme;
       spec.SupplyIntervalMultiplier = N(def.SupplyInterval);
       spec.SupplyRewardMultiplier = N(def.SupplyReward);
+      spec.WeatherFirstSeconds = def.WeatherFirst;
+      spec.WeatherDurationSeconds = def.WeatherDuration;
+      spec.WeatherPeriodSeconds = def.WeatherPeriod;
+      spec.WeatherSightMultiplier = N(def.WeatherSight);
       spec.BoundsMin = new FPVector2(-def.HalfSize, -def.HalfSize);
       spec.BoundsMax = new FPVector2(def.HalfSize, def.HalfSize);
       spec.StartPositions = Orbit(def, new MapShape { Center = def.Start }).Select(s => s.Center).ToArray();

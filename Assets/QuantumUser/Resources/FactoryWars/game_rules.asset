@@ -244,6 +244,48 @@ MonoBehaviour:
     RawValue: 262144
   SortieAntiAirFactor:
     RawValue: 196608
+  VetKillsRank1: 3
+  VetKillsRank2: 6
+  VetKillsRank3: 10
+  VetHealthBonus:
+  - RawValue: 6553
+  - RawValue: 13107
+  - RawValue: 19660
+  VetDamageBonus:
+  - RawValue: 5242
+  - RawValue: 10485
+  - RawValue: 15728
+  VetRangeBonus:
+  - RawValue: 2621
+  - RawValue: 5242
+  - RawValue: 7864
+  VetReloadBonus:
+  - RawValue: 3276
+  - RawValue: 6553
+  - RawValue: 9830
+  VetRegenPerSecond:
+  - RawValue: 327
+  - RawValue: 655
+  - RawValue: 983
+  VetRegenDelaySeconds:
+    RawValue: 327680
+  DoctrineSelectSeconds: 30
+  DefaultDoctrine: 1
+  AirRearmMultiplier:
+    RawValue: 49152
+  ScoutSightMultiplier:
+    RawValue: 78643
+  ScoutSpeedMultiplier:
+    RawValue: 78643
+  ShadowSniperBonus: 1
+  ShadowStealthBonusSeconds:
+    RawValue: 655360
+  ShadowCoverBonus:
+    RawValue: 9830
+  ArmorCostMultiplier:
+    RawValue: 55705
+  ArmorRepairMultiplier:
+    RawValue: 98304
   SniperVsSniperMultiplier:
     RawValue: 131072
   GarrisonRangeBonus:

@@ -3,6 +3,8 @@ namespace Quantum {
 
   public partial class FactionSpec : AssetObject {
     public string FactionId;
+    /// <summary>항목 37: AI가 고르는 전술 도크린(1~3). 0이면 규칙의 기본값.</summary>
+    public int PreferredDoctrine;
     public FP RangedRangeMultiplier;
     public FP SmallBuildTimeMultiplier;
     public FP PopulationCapMultiplier;

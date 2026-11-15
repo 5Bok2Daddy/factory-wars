@@ -100,6 +100,8 @@ namespace Quantum {
     NeedGarrison,
     NoSetup,
     Limit,
+    Weather,
+    Doctrine,
   }
   public enum Relation : byte {
     Enemy,
@@ -856,49 +858,49 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct PlayerState {
-    public const Int32 SIZE = 392;
+    public const Int32 SIZE = 408;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(224)]
-    public AssetRef<FactionSpec> Faction;
-    [FieldOffset(328)]
-    public ResourceCost Stock;
-    [FieldOffset(264)]
-    public FP PowerCap;
-    [FieldOffset(272)]
-    public FP PowerRate;
-    [FieldOffset(216)]
-    public QBoolean Outage;
     [FieldOffset(240)]
-    public FP OutageSeconds;
-    [FieldOffset(92)]
-    public Int32 OutageCount;
+    public AssetRef<FactionSpec> Faction;
+    [FieldOffset(344)]
+    public ResourceCost Stock;
+    [FieldOffset(280)]
+    public FP PowerCap;
+    [FieldOffset(288)]
+    public FP PowerRate;
+    [FieldOffset(228)]
+    public QBoolean Outage;
     [FieldOffset(256)]
+    public FP OutageSeconds;
+    [FieldOffset(96)]
+    public Int32 OutageCount;
+    [FieldOffset(272)]
     public FP PopulationUsed;
-    [FieldOffset(248)]
+    [FieldOffset(264)]
     public FP PopulationCap;
-    [FieldOffset(140)]
+    [FieldOffset(148)]
     public Int32 Team;
     [FieldOffset(32)]
     public Int32 ColorIndex;
-    [FieldOffset(84)]
+    [FieldOffset(88)]
     public Int32 NextNoteFrame;
-    [FieldOffset(200)]
+    [FieldOffset(208)]
     public QBoolean Active;
-    [FieldOffset(204)]
-    public QBoolean Defeated;
     [FieldOffset(212)]
+    public QBoolean Defeated;
+    [FieldOffset(224)]
     public QBoolean IsBot;
     [FieldOffset(0)]
     public BotDifficulty Difficulty;
-    [FieldOffset(196)]
+    [FieldOffset(204)]
     public Int32 UnitsProduced;
-    [FieldOffset(192)]
+    [FieldOffset(200)]
     public Int32 UnitsLost;
     [FieldOffset(20)]
     public Int32 BuildingsLost;
-    [FieldOffset(296)]
+    [FieldOffset(312)]
     public ResourceCost Earned;
-    [FieldOffset(80)]
+    [FieldOffset(84)]
     public Int32 NextBaseAlertFrame;
     [FieldOffset(28)]
     public Int32 Captures;
@@ -906,83 +908,89 @@ namespace Quantum {
     public Int32 CaptureFrames;
     [FieldOffset(44)]
     public Int32 CratesPicked;
-    [FieldOffset(124)]
+    [FieldOffset(132)]
     public Int32 SortieTickets;
-    [FieldOffset(56)]
-    public Int32 DropCaptures;
     [FieldOffset(60)]
+    public Int32 DropCaptures;
+    [FieldOffset(64)]
     public Int32 DropContests;
-    [FieldOffset(120)]
+    [FieldOffset(128)]
     public Int32 SnipeKillsInfantry;
-    [FieldOffset(116)]
+    [FieldOffset(124)]
     public Int32 SnipeKillsEngineers;
-    [FieldOffset(76)]
+    [FieldOffset(80)]
     public Int32 JammersPlaced;
-    [FieldOffset(72)]
+    [FieldOffset(76)]
     public Int32 JammersDestroyed;
     [FieldOffset(48)]
     public Int32 Detections;
-    [FieldOffset(132)]
+    [FieldOffset(140)]
     public Int32 SortiesLaunched;
-    [FieldOffset(128)]
-    public Int32 SortiesCompleted;
     [FieldOffset(136)]
+    public Int32 SortiesCompleted;
+    [FieldOffset(144)]
     public Int32 SortiesShotDown;
-    [FieldOffset(68)]
+    [FieldOffset(56)]
+    public Int32 Doctrine;
+    [FieldOffset(216)]
+    public QBoolean DoctrineLocked;
+    [FieldOffset(116)]
+    public Int32 Promotions;
+    [FieldOffset(72)]
     public Int32 HighGroundShots;
-    [FieldOffset(64)]
+    [FieldOffset(68)]
     public Int32 GarrisonEntries;
     [FieldOffset(52)]
     public Int32 DisconnectedFrame;
-    [FieldOffset(208)]
+    [FieldOffset(220)]
     public QBoolean Forfeited;
-    [FieldOffset(188)]
+    [FieldOffset(196)]
     public Int32 UnitsKilled;
     [FieldOffset(16)]
     public Int32 BuildingsDestroyed;
     [FieldOffset(12)]
     public Int32 BaseTier;
-    [FieldOffset(144)]
+    [FieldOffset(152)]
     public fixed Int32 TierFrames[3];
-    [FieldOffset(112)]
+    [FieldOffset(120)]
     public Int32 ResearchDone;
     [FieldOffset(5)]
     public fixed Byte AttackLevels[4];
     [FieldOffset(1)]
     public fixed Byte ArmorLevels[4];
-    [FieldOffset(96)]
+    [FieldOffset(100)]
     public fixed Int32 ProducedBySize[4];
     [FieldOffset(40)]
     public Int32 CoverEntries;
-    [FieldOffset(88)]
+    [FieldOffset(92)]
     public Int32 NextRadarAlertFrame;
     [FieldOffset(9)]
     public UltimatePhase UltimatePhase;
-    [FieldOffset(280)]
+    [FieldOffset(296)]
     public FP UltimateRemaining;
-    [FieldOffset(288)]
+    [FieldOffset(304)]
     public FP UltimateTotal;
-    [FieldOffset(360)]
+    [FieldOffset(376)]
     public ResourceCost UltimatePaid;
-    [FieldOffset(232)]
+    [FieldOffset(248)]
     public EntityRef UltimateSite;
-    [FieldOffset(220)]
+    [FieldOffset(232)]
     public QBoolean UltimateHalf;
-    [FieldOffset(184)]
+    [FieldOffset(192)]
     public Int32 UltimateUses;
-    [FieldOffset(176)]
+    [FieldOffset(184)]
     public Int32 UltimateStartFrame;
-    [FieldOffset(168)]
+    [FieldOffset(176)]
     public Int32 UltimateReadyFrame;
-    [FieldOffset(180)]
+    [FieldOffset(188)]
     public Int32 UltimateUseFrame;
-    [FieldOffset(160)]
+    [FieldOffset(168)]
     public Int32 UltimateIntercepted;
-    [FieldOffset(164)]
-    public Int32 UltimateLost;
     [FieldOffset(172)]
+    public Int32 UltimateLost;
+    [FieldOffset(180)]
     public Int32 UltimateSitesLost;
-    [FieldOffset(156)]
+    [FieldOffset(164)]
     public Int32 UltimateCoreKills;
     [FieldOffset(36)]
     public Int32 CoreLost;
@@ -1024,6 +1032,9 @@ namespace Quantum {
         hash = hash * 31 + SortiesLaunched.GetHashCode();
         hash = hash * 31 + SortiesCompleted.GetHashCode();
         hash = hash * 31 + SortiesShotDown.GetHashCode();
+        hash = hash * 31 + Doctrine.GetHashCode();
+        hash = hash * 31 + DoctrineLocked.GetHashCode();
+        hash = hash * 31 + Promotions.GetHashCode();
         hash = hash * 31 + HighGroundShots.GetHashCode();
         hash = hash * 31 + GarrisonEntries.GetHashCode();
         hash = hash * 31 + DisconnectedFrame.GetHashCode();
@@ -1073,6 +1084,7 @@ namespace Quantum {
         serializer.Stream.Serialize(&p->CratesPicked);
         serializer.Stream.Serialize(&p->Detections);
         serializer.Stream.Serialize(&p->DisconnectedFrame);
+        serializer.Stream.Serialize(&p->Doctrine);
         serializer.Stream.Serialize(&p->DropCaptures);
         serializer.Stream.Serialize(&p->DropContests);
         serializer.Stream.Serialize(&p->GarrisonEntries);
@@ -1084,6 +1096,7 @@ namespace Quantum {
         serializer.Stream.Serialize(&p->NextRadarAlertFrame);
         serializer.Stream.Serialize(&p->OutageCount);
         serializer.Stream.SerializeBuffer(&p->ProducedBySize[0], 4);
+        serializer.Stream.Serialize(&p->Promotions);
         serializer.Stream.Serialize(&p->ResearchDone);
         serializer.Stream.Serialize(&p->SnipeKillsEngineers);
         serializer.Stream.Serialize(&p->SnipeKillsInfantry);
@@ -1106,6 +1119,7 @@ namespace Quantum {
         serializer.Stream.Serialize(&p->UnitsProduced);
         QBoolean.Serialize(&p->Active, serializer);
         QBoolean.Serialize(&p->Defeated, serializer);
+        QBoolean.Serialize(&p->DoctrineLocked, serializer);
         QBoolean.Serialize(&p->Forfeited, serializer);
         QBoolean.Serialize(&p->IsBot, serializer);
         QBoolean.Serialize(&p->Outage, serializer);
@@ -1178,7 +1192,7 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct _globals_ {
-    public const Int32 SIZE = 2960;
+    public const Int32 SIZE = 3032;
     public const Int32 ALIGNMENT = 8;
     [FieldOffset(0)]
     public AssetRef<Map> Map;
@@ -1205,10 +1219,10 @@ namespace Quantum {
     private fixed Byte _input_[16];
     [FieldOffset(640)]
     public BitSet4 PlayerLastConnectionState;
-    [FieldOffset(1392)]
+    [FieldOffset(1400)]
     [FramePrinter.FixedArrayAttribute(typeof(PlayerState), 4)]
-    private fixed Byte _Players_[1568];
-    [FieldOffset(720)]
+    private fixed Byte _Players_[1632];
+    [FieldOffset(728)]
     [FramePrinter.FixedArrayAttribute(typeof(BotState), 4)]
     private fixed Byte _Bots_[672];
     [FieldOffset(716)]
@@ -1227,6 +1241,8 @@ namespace Quantum {
     public Int32 DropGroup;
     [FieldOffset(712)]
     public QBoolean DropAnnounced;
+    [FieldOffset(720)]
+    public QBoolean WeatherOn;
     [FieldOffset(684)]
     public Int32 DropStage;
     [FieldOffset(648)]
@@ -1240,7 +1256,7 @@ namespace Quantum {
     }
     public readonly FixedArray<PlayerState> Players {
       get {
-        fixed (byte* p = _Players_) { return new FixedArray<PlayerState>(p, 392, 4); }
+        fixed (byte* p = _Players_) { return new FixedArray<PlayerState>(p, 408, 4); }
       }
     }
     public readonly FixedArray<BotState> Bots {
@@ -1273,6 +1289,7 @@ namespace Quantum {
         hash = hash * 31 + NextDropFrame.GetHashCode();
         hash = hash * 31 + DropGroup.GetHashCode();
         hash = hash * 31 + DropAnnounced.GetHashCode();
+        hash = hash * 31 + WeatherOn.GetHashCode();
         hash = hash * 31 + DropStage.GetHashCode();
         fixed (Int32* p = CityCollapsed) hash = hash * 31 + HashCodeUtils.GetArrayHashCode(p, 8);
         hash = hash * 31 + CoverReady.GetHashCode();
@@ -1304,6 +1321,7 @@ namespace Quantum {
         QBoolean.Serialize(&p->CoverReady, serializer);
         QBoolean.Serialize(&p->DropAnnounced, serializer);
         QBoolean.Serialize(&p->GameEnded, serializer);
+        QBoolean.Serialize(&p->WeatherOn, serializer);
         FixedArray.Serialize(p->Bots, serializer, Statics.SerializeBotState);
         FixedArray.Serialize(p->Players, serializer, Statics.SerializePlayerState);
     }
@@ -2016,77 +2034,83 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Unit : Quantum.IComponent {
-    public const Int32 SIZE = 240;
+    public const Int32 SIZE = 256;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(68)]
+    [FieldOffset(80)]
     public PlayerRef Owner;
-    [FieldOffset(104)]
+    [FieldOffset(120)]
     public AssetRef<UnitSpec> Spec;
-    [FieldOffset(176)]
+    [FieldOffset(192)]
     public FP Health;
     [FieldOffset(0)]
     public UnitOrder Order;
-    [FieldOffset(216)]
+    [FieldOffset(232)]
     public FPVector3 TargetPosition;
-    [FieldOffset(144)]
-    public EntityRef TargetEntity;
     [FieldOffset(160)]
+    public EntityRef TargetEntity;
+    [FieldOffset(176)]
     public FP AttackCooldown;
-    [FieldOffset(184)]
+    [FieldOffset(200)]
     public FP ReactiveArmorCooldown;
-    [FieldOffset(80)]
+    [FieldOffset(96)]
     [FramePrinter.FixedArrayAttribute(typeof(AssetRef<ModuleSpec>), 3)]
     private fixed Byte _Modules_[24];
-    [FieldOffset(152)]
+    [FieldOffset(168)]
     public FP AbilityCooldown;
     [FieldOffset(16)]
     public Int32 EngagedUntilFrame;
     [FieldOffset(8)]
     public Int32 DesignatedUntilFrame;
-    [FieldOffset(64)]
-    public PlayerRef DesignatedBy;
-    [FieldOffset(168)]
-    public FP DesignatedBonus;
-    [FieldOffset(48)]
-    public Int32 SlideTurn;
-    [FieldOffset(44)]
-    public Int32 SlideFace;
-    [FieldOffset(52)]
-    public Int32 SlideUntilFrame;
-    [FieldOffset(24)]
-    public Int32 LastFiredFrame;
-    [FieldOffset(36)]
-    public Int32 ReservedUntilFrame;
     [FieldOffset(76)]
+    public PlayerRef DesignatedBy;
+    [FieldOffset(184)]
+    public FP DesignatedBonus;
+    [FieldOffset(56)]
+    public Int32 SlideTurn;
+    [FieldOffset(52)]
+    public Int32 SlideFace;
+    [FieldOffset(60)]
+    public Int32 SlideUntilFrame;
+    [FieldOffset(32)]
+    public Int32 LastFiredFrame;
+    [FieldOffset(44)]
+    public Int32 ReservedUntilFrame;
+    [FieldOffset(88)]
     public QBoolean Swarming;
-    [FieldOffset(120)]
+    [FieldOffset(136)]
     public EntityRef Garrison;
-    [FieldOffset(128)]
+    [FieldOffset(144)]
     public EntityRef GarrisonTarget;
-    [FieldOffset(192)]
+    [FieldOffset(208)]
     public FPVector3 PatrolOrigin;
-    [FieldOffset(112)]
+    [FieldOffset(128)]
     public EntityRef Cover;
-    [FieldOffset(72)]
+    [FieldOffset(84)]
     public QBoolean InCover;
     [FieldOffset(4)]
     public Int32 AssaultUntilFrame;
-    [FieldOffset(40)]
+    [FieldOffset(48)]
     public Int32 SetupUntilFrame;
-    [FieldOffset(60)]
+    [FieldOffset(68)]
     public Int32 StealthUntilFrame;
-    [FieldOffset(56)]
+    [FieldOffset(64)]
     public Int32 StealthReadyFrame;
-    [FieldOffset(28)]
+    [FieldOffset(36)]
     public Int32 MuzzleRevealUntilFrame;
-    [FieldOffset(32)]
+    [FieldOffset(40)]
     public Int32 MuzzleVictimMask;
     [FieldOffset(12)]
     public Int32 DetectedMask;
     [FieldOffset(20)]
     public Int32 JammerUntilFrame;
-    [FieldOffset(136)]
+    [FieldOffset(152)]
     public EntityRef JammerNode;
+    [FieldOffset(24)]
+    public Int32 Kills;
+    [FieldOffset(72)]
+    public Int32 VetRank;
+    [FieldOffset(28)]
+    public Int32 LastDamagedFrame;
     public readonly FixedArray<AssetRef<ModuleSpec>> Modules {
       get {
         fixed (byte* p = _Modules_) { return new FixedArray<AssetRef<ModuleSpec>>(p, 8, 3); }
@@ -2129,6 +2153,9 @@ namespace Quantum {
         hash = hash * 31 + DetectedMask.GetHashCode();
         hash = hash * 31 + JammerUntilFrame.GetHashCode();
         hash = hash * 31 + JammerNode.GetHashCode();
+        hash = hash * 31 + Kills.GetHashCode();
+        hash = hash * 31 + VetRank.GetHashCode();
+        hash = hash * 31 + LastDamagedFrame.GetHashCode();
         return hash;
       }
     }
@@ -2140,6 +2167,8 @@ namespace Quantum {
         serializer.Stream.Serialize(&p->DetectedMask);
         serializer.Stream.Serialize(&p->EngagedUntilFrame);
         serializer.Stream.Serialize(&p->JammerUntilFrame);
+        serializer.Stream.Serialize(&p->Kills);
+        serializer.Stream.Serialize(&p->LastDamagedFrame);
         serializer.Stream.Serialize(&p->LastFiredFrame);
         serializer.Stream.Serialize(&p->MuzzleRevealUntilFrame);
         serializer.Stream.Serialize(&p->MuzzleVictimMask);
@@ -2150,6 +2179,7 @@ namespace Quantum {
         serializer.Stream.Serialize(&p->SlideUntilFrame);
         serializer.Stream.Serialize(&p->StealthReadyFrame);
         serializer.Stream.Serialize(&p->StealthUntilFrame);
+        serializer.Stream.Serialize(&p->VetRank);
         PlayerRef.Serialize(&p->DesignatedBy, serializer);
         PlayerRef.Serialize(&p->Owner, serializer);
         QBoolean.Serialize(&p->InCover, serializer);

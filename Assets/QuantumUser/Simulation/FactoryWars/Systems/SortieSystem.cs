@@ -92,6 +92,11 @@ namespace Quantum.FactoryWars {
         f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.NoVision, 0);
         return;
       }
+      // 항목 37 기상: 신호탄·정찰 사진 구역이 아니면 기상 중에는 일반 출격을 못 한다.
+      if (TacticalSystem.WeatherActive(f) && FogSystem.InSignalArea(f, player, target) == false) {
+        f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.Weather, 0);
+        return;
+      }
       var spec = f.FindAsset(hangar->Spec);
       var state = FactoryWarsUtil.Player(f, player);
       var missing = state->Stock.Missing(spec.SortieCost);
@@ -238,7 +243,9 @@ namespace Quantum.FactoryWars {
           hangar->Spec = default;
         } else {
           hangar->State = 1;
-          hangar->ReadyFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, spec.SortieRearmSeconds);
+          // 항목 37 공군 타격 사령부: 재정비 시간 단축.
+          var rearm = TacticalSystem.DoctrineOf(f, sortie->Owner) == 1 ? spec.SortieRearmSeconds * FactoryWarsUtil.Rules(f).AirRearmMultiplier : spec.SortieRearmSeconds;
+          hangar->ReadyFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, rearm);
         }
       }
       var state = FactoryWarsUtil.Player(f, sortie->Owner);

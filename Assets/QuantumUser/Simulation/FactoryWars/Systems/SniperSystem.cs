@@ -70,7 +70,8 @@ namespace Quantum.FactoryWars {
         f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.Cooldown, 0);
         return;
       }
-      unit->StealthUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, spec.StealthSeconds);
+      var bonus = TacticalSystem.DoctrineOf(f, player) == 2 ? FactoryWarsUtil.Rules(f).ShadowStealthBonusSeconds : FP._0;
+      unit->StealthUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, spec.StealthSeconds + bonus);
       // 재사용 대기는 은신을 시작한 때부터 센다(지속 20초 + 대기 60초 = 시작 후 60초).
       unit->StealthReadyFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, spec.StealthCooldownSeconds);
       unit->DetectedMask = 0;
@@ -299,7 +300,7 @@ namespace Quantum.FactoryWars {
       var targetPosition = f.Unsafe.GetPointer<Transform3D>(target)->Position;
       // 보병·공병은 Damage, 차량(IsVehicle·중형 이상)은 VehicleDamageRatio배, 저격수끼리는 SniperVsSniperMultiplier배가 최종 피해다.
       // DamageUnit이 크기 상성 배율을 곱하므로 미리 나눠 두어 표의 피해가 그대로 들어가게 한다.
-      var wanted = spec.Damage * TechSystem.OutgoingMultiplier(f, unit->Owner, unit, spec);
+      var wanted = spec.Damage * TechSystem.OutgoingMultiplier(f, unit->Owner, unit, spec) * TacticalSystem.VetDamage(f, unit);
       if (targetSpec.IsVehicle || targetSpec.Size >= UnitSize.Medium) {
         wanted *= spec.VehicleDamageRatio;
       }
@@ -310,7 +311,7 @@ namespace Quantum.FactoryWars {
       var weapon = new Weapon { Owner = unit->Owner, Attack = spec.Attack, IsAir = false, IsRanged = true, Unit = unit, Spec = spec, Origin = position };
       CombatSystem.Damage(f, weapon, target, matchup > FP._0 ? wanted / matchup : wanted);
       var killed = f.Exists(target) == false;
-      unit->AttackCooldown = spec.AttackInterval;
+      unit->AttackCooldown = spec.AttackInterval * TacticalSystem.VetReload(f, unit);
       unit->LastFiredFrame = f.Number;
       if (killed) {
         var state = FactoryWarsUtil.Player(f, unit->Owner);

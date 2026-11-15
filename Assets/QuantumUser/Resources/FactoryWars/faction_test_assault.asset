@@ -17,6 +17,7 @@ MonoBehaviour:
     Guid:
       Value: 271991612311266748
   FactionId: test_assault
+  PreferredDoctrine: 0
   RangedRangeMultiplier:
     RawValue: 72089
   SmallBuildTimeMultiplier:

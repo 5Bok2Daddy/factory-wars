@@ -45,6 +45,9 @@ namespace FactoryWars.EditorTools {
       public string Theme = "표준";
       public double SupplyInterval = 1;
       public double SupplyReward = 1;
+      /// <summary>항목 37 기상(초). 0이면 없음.</summary>
+      public int WeatherFirst, WeatherDuration, WeatherPeriod;
+      public double WeatherSight = 1;
       public MapDef Clone() => (MapDef)MemberwiseClone();
     }
 
@@ -218,6 +221,11 @@ namespace FactoryWars.EditorTools {
       def.Theme = "사막 보급전";
       def.SupplyInterval = 0.5;
       def.SupplyReward = 2;
+      // 모래폭풍: 8분에 첫 발동, 60초 지속, 4분 주기, 기본 시야 -35%.
+      def.WeatherFirst = 480;
+      def.WeatherDuration = 60;
+      def.WeatherPeriod = 240;
+      def.WeatherSight = 0.65;
       ResourceNodePlacement Scaled(ResourceNodePlacement node) {
         node.Amount = node.Amount * N(0.4);
         return node;
