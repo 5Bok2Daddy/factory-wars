@@ -91,9 +91,10 @@ namespace FactoryWars.EditorTools {
     static IEnumerable<Row> Rows() {
       // 목재 자원지(옛 숲): 나무 대신 팔레트·상자·드럼통 더미. 높이 3~5m, 간격은 숲 코드 그대로(1.2~1.4m)라 빽빽한 하치장이 된다.
       // 삼각형 예산: 숲 하나에 개체가 수백 개라 가벼운 모델(상자 288·팔레트 294)을 많이, 무거운 것(드럼통 더미 1.7천)은 조금만 섞는다.
-      yield return Scaled(DressKind.Conifer, 1.7f, "SM_Prop_Crate_Large_01", "SM_Prop_Crate_Large_01", "SM_Prop_Crate_Large_01", "SM_Prop_Pallet_01", "SM_Prop_Pallet_01", "SM_Prop_Barrel_Stack_01");
+      // 야전 룩: 나무 칸은 진짜 팩 나무(목재 자원지는 창고로 그리므로 칸이 비어 있다).
+      yield return Scaled(DressKind.Conifer, 1f, "SM_Gen_Env_Tree_Pine_01", "SM_Gen_Env_Tree_Pine_02", "SM_Gen_Env_Tree_Pine_03");
       yield return Scaled(DressKind.Autumn, 1.5f, "SM_Prop_Crate_Large_01", "SM_Prop_Pallet_01");
-      yield return Scaled(DressKind.Broadleaf, 1.8f, "SM_Prop_Pallet_01", "SM_Prop_Crate_Large_01");
+      yield return Scaled(DressKind.Broadleaf, 1f, "SM_Env_Tree_01", "SM_Env_Tree_02", "SM_Env_Tree_03", "SM_Env_Tree_Round_01");
       yield return Scaled(DressKind.TreeSparse, 1.3f, "SM_Prop_Pallet_01", "SM_Prop_Pallet_02");
       yield return Scaled(DressKind.Stump, 0.9f, "SM_Prop_Pallet_01", "SM_Prop_Pallet_02");
       yield return Sized(DressKind.Bush, 1.8f, "SM_Env_Bush_03", "SM_Env_Bush_01");
@@ -109,14 +110,15 @@ namespace FactoryWars.EditorTools {
       // 엄폐 소품: 컨테이너·방벽.
       yield return Sized(DressKind.Container, 6.2f, "SM_Prop_Container_01", "SM_Prop_Container_Small_01");
       yield return Sized(DressKind.Barrier, 2.6f, "SM_Prop_Barrier_05", "SM_Prop_Barrier_06");
-      yield return Sized(DressKind.BaseWall, 4.8f, "SM_Env_Fence_01");
+      yield return Sized(DressKind.BaseWall, 4.2f, "SM_Bld_Village_Fence_01", "SM_Bld_Village_Fence_02");
       // 해안 옹벽 모듈(10~12m마다)과 점령 거점 소품. 팩 모델 그대로, 배율은 칸 데이터에만 둔다.
       yield return Sized(DressKind.QuayPillar, 1.8f, "SM_Bld_Base_Pillar_Half_01");
       yield return Sized(DressKind.QuayRail, 4.4f, "SM_Bld_Railing_01");
       yield return Sized(DressKind.QuayBollard, 1.1f, "SM_Env_Port_Boat_Tie_01");
       yield return Sized(DressKind.OutpostTower, 3.2f, "SM_Prop_GuardTower_01");
-      yield return Sized(DressKind.OutpostWall, 2.8f, "SM_Prop_Barricade_01");
+      yield return Sized(DressKind.OutpostWall, 3f, "SM_Prop_BaseWall_01", "SM_Prop_Cinderblock_Wall_01");
       yield return Scaled(DressKind.LumberYard, 1f, "SM_Bld_Warehouse_01");
+      yield return Sized(DressKind.Checkpoint, 3.2f, "SM_Prop_WireFence_01", "SM_Prop_BaseWall_01");
       // 길가: 가로등·소화전·쓰레기통·고깔.
       yield return Scaled(DressKind.RoadProp, 1f, "SM_Prop_LightPole_Base_01", "SM_Prop_LightPole_Base_01", "SM_Prop_Hydrant_01", "SM_Prop_TrashCan_01", "SM_Prop_Cone_01");
       // 도시 건물(칸 크기에 맞춰 늘어난다: Fit). 세로는 칸 데이터의 목표 높이 쪽으로 0.8~1.3배.

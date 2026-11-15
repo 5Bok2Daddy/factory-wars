@@ -732,7 +732,15 @@ namespace FactoryWars.View {
         var seed = 100 + i * 17;
         switch (features[i].Kind) {
           case TerrainKind.Hill: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * (0.85f + 0.3f * MeshKit.Hash(seed, 5)), layers, profile.Jagged, false); break;
-          case TerrainKind.Cliff: Plateau(k, features[i].Shape, seed, HighGroundHeight + 0.8f, 1, profile.Jagged * 0.5f, false); break;
+          case TerrainKind.Cliff:
+            if (profile.FieldLook) {
+              // 야전 룩: 고지대 둘레 절벽 조각은 건물 대신 바위 하나(언덕 비탈 위).
+              var at = features[i].Shape.Center;
+              Dressing.Add(DressKind.RockLarge, new Vector3(at.X.AsFloat, 0f, at.Z.AsFloat), seed);
+              break;
+            }
+            Plateau(k, features[i].Shape, seed, HighGroundHeight + 0.8f, 1, profile.Jagged * 0.5f, false);
+            break;
           case TerrainKind.CanyonWall: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * 1.25f, layers + 1, profile.Jagged, true); break;
           case TerrainKind.Rock: Boulders(k, features[i].Shape, seed); break;
         }

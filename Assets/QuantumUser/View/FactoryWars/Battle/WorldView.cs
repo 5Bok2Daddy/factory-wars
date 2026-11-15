@@ -102,6 +102,22 @@ namespace FactoryWars.View {
     /// <summary>바닥·도로 공용 머티리얼(정점 색 + 전장 손상). 색 맞추기 비교 장면도 쓴다.</summary>
     public static Material SharedGroundMaterial => GroundMaterial();
 
+    static Material _road;
+
+    /// <summary>
+    /// 길 전용 머티리얼: 바닥과 같지만 전장 손상(_ScarStrength)을 약하게 해, 교전이 잦은 교차로에서 아스팔트가 흙색으로 바뀌어
+    /// 흰 차선만 떠 보이던 문제를 없앤다. 깊이 오프셋으로 바닥에 묻히지 않게 한다.
+    /// </summary>
+    static Material RoadMaterial() {
+      if (_road == null && GroundMaterial() != null) {
+        _road = new Material(GroundMaterial()) { name = "RoadVertexColor" };
+        _road.SetFloat("_ScarStrength", VisualProfile.Current.FieldLook ? 0.18f : 1f);
+        _road.SetFloat("_GridStrength", 0f);
+        _road.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Geometry + 10;
+      }
+      return _road;
+    }
+
     static Material GroundMaterial() {
       if (_ground == null) {
         var shader = Shader.Find("FactoryWars/KenneyLit");
@@ -173,7 +189,8 @@ namespace FactoryWars.View {
             roadColors[v] = linear ? tint.linear : tint;
           }
           roadMesh.colors = roadColors;
-          MeshObject(_root, "Roads", roadMesh, false).GetComponent<MeshRenderer>().sharedMaterial = GroundMaterial();
+          roadMesh.RecalculateBounds();
+          MeshObject(_root, "Roads", roadMesh, false).GetComponent<MeshRenderer>().sharedMaterial = RoadMaterial();
         }
       }
       var features = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
@@ -314,6 +331,10 @@ namespace FactoryWars.View {
         view.SetYaw(index * 57f);
         _crystals[entity] = view.Model.transform.Find("Crystals").gameObject;
         // 고철·광산 설비 느낌: 둘레에 호퍼·고철 하치장(skip-rocks)·크레인·작업 차량(Kenney, 판정 없음 — 항목 19C·19D).
+        // 야전 룩: 중앙 거점 안의 광산은 둘레 설비(컨테이너·호퍼 등)를 두지 않아 보병이 설 자리를 비운다.
+        if (VisualProfile.Current.FieldLook && center.magnitude < 14f) {
+          return;
+        }
         Dressing.Begin();
         var radius = node->Shape.Radius.AsFloat;
         // 작업 차량(삼각형 2,700개)은 성능 예산 때문에 컨테이너로 바꿨다(항목 25-1).

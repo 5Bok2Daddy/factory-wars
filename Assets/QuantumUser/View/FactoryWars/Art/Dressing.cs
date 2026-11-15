@@ -53,12 +53,12 @@ namespace FactoryWars.View {
     /// <summary>틴트를 곱해 놓는다(합친 메쉬에서만 보인다).</summary>
     /// <summary>야전 룩 길 비우기: 지금 그리는 맵(WorldView가 넣는다). 길 폭 + RoadClearance 안에는 건물·소품·바위를 놓지 않는다.</summary>
     public static MapSpec RoadMask;
-    public const float RoadClearance = 4f;
+    public const float RoadClearance = 2f;
     /// <summary>검문소처럼 일부러 길 위에 두는 소품을 놓는 동안 true.</summary>
     public static bool AllowOnRoad;
 
     static bool Exempt(DressKind kind) => kind == DressKind.RoadProp || kind == DressKind.QuayPillar || kind == DressKind.QuayRail || kind == DressKind.QuayBollard
-      || kind == DressKind.OutpostTower || kind == DressKind.OutpostWall || kind == DressKind.WaterGate || kind == DressKind.BridgeDeck || kind == DressKind.BridgePillar || kind == DressKind.Grass;
+      || kind == DressKind.OutpostTower || kind == DressKind.OutpostWall || kind == DressKind.Checkpoint || kind == DressKind.WaterGate || kind == DressKind.BridgeDeck || kind == DressKind.BridgePillar || kind == DressKind.Grass;
 
     /// <summary>야전 룩에서 이 자리가 길(폭 + 4m) 안이라 놓으면 안 되는가.</summary>
     public static bool OnRoad(DressKind kind, Vector3 position, float radius = 0f) {
@@ -137,7 +137,13 @@ namespace FactoryWars.View {
       }
       var variant = KenneyAssetMap.Pick(entry, MeshKit.Hash(seed, 1));
       var turned = MeshKit.Hash(seed, 2) < 0.5f;
+      if (VisualProfile.Current.FieldLook) {
+        variant = DressingSpawn.BestFit(entry, length, width, turned, variant);
+      }
       var fit = KenneyAssetMap.FitScale(variant, length, width, turned) * margin * entry.Scale;
+      if (VisualProfile.Current.FieldLook) {
+        fit = Mathf.Clamp(fit, 0.85f, 1.15f);
+      }
       var rotation = Quaternion.Euler(0f, yaw + (turned ? 90f : 0f), 0f);
       _collector.Add(new Item { Kind = kind, Prefab = variant.Prefab, World = KenneyAssetMap.Matrix(variant, position, rotation, Vector3.one * fit), Shadows = entry.Shadows, Keep = 0f, LowKeep = 1f, MediumKeep = 1f });
       return true;
@@ -226,11 +232,18 @@ namespace FactoryWars.View {
       }
       var variant = KenneyAssetMap.Pick(entry, MeshKit.Hash(seed, 1));
       var turned = MeshKit.Hash(seed, 2) < 0.5f;
+      if (VisualProfile.Current.FieldLook) {
+        // 야전 룩: 칸에 크기가 가장 맞는 변종을 고르고(늘이지 않음) 균일 배율 0.85~1.15로만 맞춘다. 판정 칸 크기와 무관하게 창·벽 디테일이 그대로다.
+        variant = BestFit(entry, length, width, turned, variant);
+      }
       var fit = KenneyAssetMap.FitScale(variant, length, width, turned) * 0.86f * entry.Scale;
+      if (VisualProfile.Current.FieldLook) {
+        fit = Mathf.Clamp(fit, 0.85f, 1.15f);
+      }
       if (kind == DressKind.CityTower) {
         fit = Mathf.Min(fit, 3.2f);
       }
-      var stretch = targetHeight > 0f ? Mathf.Clamp(targetHeight / Mathf.Max(0.01f, variant.Size.y * fit), 0.8f, 1.3f) : 1f;
+      var stretch = targetHeight > 0f && VisualProfile.Current.FieldLook == false ? Mathf.Clamp(targetHeight / Mathf.Max(0.01f, variant.Size.y * fit), 0.8f, 1.3f) : 1f;
       var wrapper = new GameObject("Kenney").transform;
       wrapper.SetParent(parent, false);
       wrapper.localRotation = Quaternion.Euler(0f, turned ? 90f : 0f, 0f);
@@ -243,6 +256,23 @@ namespace FactoryWars.View {
         renderer.shadowCastingMode = entry.Shadows && GraphicsQuality.Current != QualityTier.Low ? ShadowCastingMode.On : ShadowCastingMode.Off;
       }
       return wrapper.gameObject;
+    }
+
+    /// <summary>칸(length×width)에 균일 배율 1에 가장 가깝게 맞는 변종.</summary>
+    public static KenneyAssetMap.Variant BestFit(KenneyAssetMap.Entry entry, float length, float width, bool turned, KenneyAssetMap.Variant fallback) {
+      var best = fallback;
+      var bestError = float.MaxValue;
+      foreach (var candidate in entry.Variants) {
+        if (candidate.Prefab == null) {
+          continue;
+        }
+        var error = Mathf.Abs(Mathf.Log(Mathf.Max(0.01f, KenneyAssetMap.FitScale(candidate, length, width, turned) * 0.86f)));
+        if (error < bestError) {
+          best = candidate;
+          bestError = error;
+        }
+      }
+      return best;
     }
 
     /// <summary>사라지거나 움직이는 것에 붙이는 Kenney 소품 하나(실제 오브젝트). localPosition은 parent 기준이다.</summary>

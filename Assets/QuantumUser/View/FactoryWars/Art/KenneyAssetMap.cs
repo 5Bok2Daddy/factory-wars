@@ -65,6 +65,8 @@ namespace FactoryWars.View {
     OutpostWall,
     /// <summary>시가지 목재 자원지: 상자 더미 대신 단일 창고 건물(채집이 끝나면 사라진다).</summary>
     LumberYard,
+    /// <summary>야전 룩 검문소 방벽(팩 군용 벽·철조망 울타리, 공사용 줄무늬 아님).</summary>
+    Checkpoint,
   }
 
   /// <summary>

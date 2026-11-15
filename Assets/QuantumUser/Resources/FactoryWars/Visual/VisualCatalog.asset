@@ -1959,13 +1959,10 @@ MonoBehaviour:
   - Id: dress/Conifer
     Category: 4
     Prefabs:
-    - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
-    - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
-    - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
-    - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
-    - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
-    - {fileID: 1200674478224756, guid: 9a825139bd2a13849bb88a515c3f099e, type: 3}
-    Scale: 1.7
+    - {fileID: 6131553767378768855, guid: ae12f1ba847c6f74281e7a9a7b0ac7fd, type: 3}
+    - {fileID: 1487672732027152291, guid: 6a549a408565cdf44b5961dccadce139, type: 3}
+    - {fileID: 4492788140253398761, guid: 814fca2ada463e34d8f0430280c2f116, type: 3}
+    Scale: 1
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2015,9 +2012,11 @@ MonoBehaviour:
   - Id: dress/Broadleaf
     Category: 4
     Prefabs:
-    - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
-    - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
-    Scale: 1.8
+    - {fileID: 189882, guid: ee6af68a3d2c1864ebc6cfc3be82d851, type: 3}
+    - {fileID: 131094, guid: d93817f79a1e01242b20f7081cbfa384, type: 3}
+    - {fileID: 129346, guid: c50789636e1fc5c4b8a37e2700e4a3c1, type: 3}
+    - {fileID: 1015111387618874, guid: 9492467a8ad1f6748ae42252b1322a14, type: 3}
+    Scale: 1
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2171,14 +2170,14 @@ MonoBehaviour:
   - Id: dress/Cliff
     Category: 4
     Prefabs:
-    - {fileID: 6944840750476961787, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
-    - {fileID: 7404327959306548010, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
-    - {fileID: 7324332588164044727, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
-    - {fileID: 6332380677173552586, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
-    - {fileID: 3410770322260492275, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
-    - {fileID: 8171431670864111462, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
-    - {fileID: 350226171426576179, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
-    - {fileID: 7752352856183042590, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
+    - {fileID: 7402666888574426750, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
+    - {fileID: 691777565008312389, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
+    - {fileID: 4881006448954279666, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
+    - {fileID: 2846846490582039131, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
+    - {fileID: 2143455003289028319, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
+    - {fileID: 2454268665985262517, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
+    - {fileID: 3231196284339377130, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
+    - {fileID: 593413161137383468, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -2798,8 +2797,9 @@ MonoBehaviour:
   - Id: dress/BaseWall
     Category: 4
     Prefabs:
-    - {fileID: 159082, guid: cc10ce20cd2faea4ca8cb6505e5861d5, type: 3}
-    Scale: 0.96000004
+    - {fileID: 1420904269766144, guid: dd7e60d30386a8f48aa62d958338d1a5, type: 3}
+    - {fileID: 1249894925761748, guid: 0c2eea1820cbadd439fafd1919ccfa65, type: 3}
+    Scale: 1.4431379
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -3234,7 +3234,7 @@ MonoBehaviour:
   - Id: dress/WaterGate
     Category: 4
     Prefabs:
-    - {fileID: 8217574127901518507, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
+    - {fileID: 6933974384350464113, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3360,8 +3360,9 @@ MonoBehaviour:
   - Id: dress/OutpostWall
     Category: 5
     Prefabs:
-    - {fileID: 1224111418291396, guid: 8895dea04dd3bd942a9039e333512a11, type: 3}
-    Scale: 1.5048637
+    - {fileID: 1630052041012002, guid: f996731b12085f44883c30318a77c3c8, type: 3}
+    - {fileID: 1431215749144654, guid: a60aed3109aac2e4e8b4fbd8e35506ec, type: 3}
+    Scale: 1.3326157
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -3400,6 +3401,32 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 LumberYard"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/Checkpoint
+    Category: 5
+    Prefabs:
+    - {fileID: 1712709652979322, guid: 0d64cf1bb9d6db5458fc4331eed07b15, type: 3}
+    - {fileID: 1630052041012002, guid: f996731b12085f44883c30318a77c3c8, type: 3}
+    Scale: 1.590746
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 Checkpoint"
     TurretPart: 
     BarrelPart: 
     SpinParts: []

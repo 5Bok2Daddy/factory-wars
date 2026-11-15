@@ -114,6 +114,7 @@ namespace FactoryWars.Tests {
       var spots = new List<(string Scene, Vector2 Focus, float Height)> {
         ("base", new Vector2(map.StartPositions[0].X.AsFloat, map.StartPositions[0].Z.AsFloat), 52f),
         ("crossroads", Vector2.zero, 52f),
+        ("center_close", new Vector2(0f, 4f), 34f),
         ("overview", Vector2.zero, 140f),
       };
       if (map.ResourceNodes != null && map.ResourceNodes.Length > 0) {

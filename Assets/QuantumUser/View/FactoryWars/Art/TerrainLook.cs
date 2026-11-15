@@ -230,10 +230,34 @@ namespace FactoryWars.View {
           // 가까운 길 쪽을 보게 0/90/180/270 중에서 고른다.
           var face = yaw + FaceRoad(map, world, yaw);
           var kind = MeshKit.Hash(seed, 300 + i * 7 + j) < 0.6f ? DressKind.CitySmall : DressKind.CityMedium;
+          // 칸 셋 중 하나는 건물 대신 작은 숲(나무 3~4그루 + 덤불)으로 비워 에란겔식 들판·숲 느낌을 낸다.
+          if (MeshKit.Hash(seed, 400 + i * 7 + j) < 0.33f) {
+            Grove(world, cellL, cellW, seed * 211 + i * 13 + j);
+            Lots.Add((spot, radius));
+            continue;
+          }
           if (Dressing.AddFitted(kind, world, face, cellL, cellW, seed * 131 + i * 17 + j, 0.92f)) {
             Lots.Add((spot, radius));
             placed++;
           }
+        }
+      }
+    }
+
+    /// <summary>빈 칸 작은 숲: 팩 나무 3~4그루, 덤불·바위 몇 개, 한쪽 변에 낮은 나무 울타리.</summary>
+    static void Grove(Vector3 center, float length, float width, int seed) {
+      var count = 3 + (MeshKit.Hash(seed, 1) < 0.5f ? 1 : 0);
+      for (var n = 0; n < count; n++) {
+        var offset = new Vector3((MeshKit.Hash(seed, 10 + n) - 0.5f) * length * 0.7f, 0f, (MeshKit.Hash(seed, 20 + n) - 0.5f) * width * 0.7f);
+        Dressing.Add(n % 2 == 0 ? DressKind.Conifer : DressKind.Broadleaf, center + offset, seed * 7 + n);
+      }
+      for (var n = 0; n < 3; n++) {
+        var offset = new Vector3((MeshKit.Hash(seed, 30 + n) - 0.5f) * length * 0.8f, 0f, (MeshKit.Hash(seed, 40 + n) - 0.5f) * width * 0.8f);
+        Dressing.Add(n == 2 ? DressKind.RockSmall : DressKind.Bush, center + offset, seed * 11 + n);
+      }
+      if (Dressing.Has(DressKind.BaseWall)) {
+        for (var x = -length * 0.5f + 2f; x <= length * 0.5f - 2f; x += 4.2f) {
+          Dressing.Add(DressKind.BaseWall, center + new Vector3(x, 0f, -width * 0.5f + 0.5f), seed * 13 + (int)x, null, 0f);
         }
       }
     }
@@ -312,7 +336,7 @@ namespace FactoryWars.View {
         if (VisualProfile.Current.FieldLook) {
           // 야전 룩 아스팔트(2026-11-15): 끝을 길이만큼 정확히 자르고(튀어나오는 모서리 없음) 둥근 마개로 마감. 양옆 연석, 흰 가장자리선·중앙 점선.
           // 겹치는 길끼리 높이를 조금씩 달리해 깜빡임을 없앤다.
-          var y = 0.04f + (roadIndex++ % 8) * 0.003f;
+          var y = 0.06f + (roadIndex++ % 8) * 0.003f;
           k.Push(center, new Vector3(0, yaw, 0));
           k.Paint(Swatch.Concrete);
           k.Quad(new Vector3(-half.x, y - 0.01f, -half.y - CurbWidth), new Vector3(half.x, y - 0.01f, -half.y - CurbWidth), new Vector3(half.x, y - 0.01f, half.y + CurbWidth), new Vector3(-half.x, y - 0.01f, half.y + CurbWidth), Vector3.up);
@@ -445,6 +469,29 @@ namespace FactoryWars.View {
     /// </summary>
     public static void HighGrounds(MeshKit k, MapSpec map) {
       var height = HighGroundHeight;
+      if (VisualProfile.Current.FieldLook) {
+        // 야전 룩: 고지대(사거리 이점, 판정 그대로)를 흰 경사로가 달린 원판 대신 흙·풀 언덕으로 그린다. 비탈이 경사로를 겸한다.
+        for (var g = 0; map.HighGrounds != null && g < map.HighGrounds.Length; g++) {
+          var ground = map.HighGrounds[g];
+          var c = new Vector3(ground.Center.X.AsFloat, 0f, ground.Center.Z.AsFloat);
+          var top = ground.Radius.AsFloat;
+          var foot = top + 7f;
+          const int Sides = 28;
+          for (var i = 0; i < Sides; i++) {
+            var a = Mathf.PI * 2f * i / Sides;
+            var b = Mathf.PI * 2f * (i + 1) / Sides;
+            var da = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
+            var db = new Vector3(Mathf.Cos(b), 0, Mathf.Sin(b));
+            var wobA = 1f + (MeshKit.Hash(g * 97 + i, 3) - 0.5f) * 0.12f;
+            var wobB = 1f + (MeshKit.Hash(g * 97 + (i + 1) % Sides, 3) - 0.5f) * 0.12f;
+            k.Paint(ArtPalette.Turf(Swatch.Grass));
+            k.Tri(c + Vector3.up * height, c + da * top * wobA + Vector3.up * height, c + db * top * wobB + Vector3.up * height, Vector3.up);
+            k.Paint(Swatch.OliveDark);
+            k.Quad(c + da * top * wobA + Vector3.up * height, c + db * top * wobB + Vector3.up * height, c + db * foot * wobB + Vector3.up * 0.02f, c + da * foot * wobA + Vector3.up * 0.02f, Vector3.up);
+          }
+        }
+        return;
+      }
       var dressed = Dressing.Collecting && Dressing.Has(DressKind.Cliff);
       for (var g = 0; map.HighGrounds != null && g < map.HighGrounds.Length; g++) {
         var ground = map.HighGrounds[g];

@@ -181,7 +181,7 @@ namespace FactoryWars.View {
           if (Mathf.Abs(offset) > halfWidth + 2.5f) {
             continue;
           }
-          Put(i == 0 ? DressKind.OutpostWall : DressKind.Barrier, at + across * offset, seed + i * 2 + (side > 0 ? 1 : 0), yaw, "checkpoint", profile);
+          Put(i == 0 ? DressKind.OutpostWall : DressKind.Checkpoint, at + across * offset, seed + i * 2 + (side > 0 ? 1 : 0), yaw, "checkpoint", profile);
         }
       }
     }

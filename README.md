@@ -65,6 +65,10 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 시가지 정리 4차: 근접 아스팔트·균일 배율 건물·언덕·숲·군용 벽 (2026-11-15)
+![전체](Docs/status_images/36d_wide.png)
+![근접](Docs/status_images/36d_center_close.png)
+
 ### 시가지 정리 3차: 아스팔트·검문소·겹침 제거 (2026-11-15)
 ![전체](Docs/status_images/36c_city_overview.png)
 ![교차로](Docs/status_images/36c_city_crossroads.png)

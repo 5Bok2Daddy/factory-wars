@@ -195,11 +195,15 @@ namespace FactoryWars.View {
       DressingSpawn.Place(site->Kind == CaptureKind.Comms ? DressKind.SpaceProp : DressKind.Hopper, station.transform, new Vector3(1.3f, 0.15f, -0.2f), -90f, seed + 1);
       DressingSpawn.Place(DressKind.Prop, station.transform, new Vector3(0f, 0.15f, 1.1f), 0f, seed + 2);
       // 항목 36 시각 교정 2: 거점 중앙 패드 둘레에 관측 초소와 낮은 방벽을 원형으로 둘러 전술 거점처럼 보이게 한다(팩 모델, 장식).
-      DressingSpawn.Place(DressKind.OutpostTower, root, new Vector3(-3.4f, 0.1f, -3.4f), 45f, seed + 20);
-      for (var i = 0; i < 8; i++) {
-        var angle = (45f + (i / 2) * 90f + (i % 2 == 0 ? -16f : 16f)) * Mathf.Deg2Rad;
-        const float WallRadius = 6.6f;
-        DressingSpawn.Place(DressKind.OutpostWall, root, new Vector3(Mathf.Sin(angle) * WallRadius, 0.1f, Mathf.Cos(angle) * WallRadius), angle * Mathf.Rad2Deg + 90f, seed + 30 + i);
+      // 항목 36 시각 교정(4차): 초소·컨테이너·낮은 벽을 거점 원 둘레(대각선 네 방향)에 두고 가운데는 보병이 설 자리로 비운다.
+      var edge = Mathf.Max(6f, site->Radius.AsFloat - 2.5f);
+      Vector3 Rim(float degrees, float r) => new Vector3(Mathf.Sin(degrees * Mathf.Deg2Rad) * r, 0.1f, Mathf.Cos(degrees * Mathf.Deg2Rad) * r);
+      DressingSpawn.Place(DressKind.OutpostTower, root, Rim(315f, edge), 135f, seed + 20);
+      DressingSpawn.Place(DressKind.Container, root, Rim(135f, edge), 45f, seed + 21);
+      foreach (var degrees in new[] { 45f, 225f }) {
+        for (var i = -1; i <= 1; i++) {
+          DressingSpawn.Place(DressKind.OutpostWall, root, Rim(degrees + i * 11f, edge), degrees + i * 11f + 90f, seed + 30 + (int)degrees + i);
+        }
       }
       return new Site {
         Root = root.gameObject, Progress = progress.GetComponent<MeshFilter>(), ProgressRenderer = progress.GetComponent<MeshRenderer>(),
