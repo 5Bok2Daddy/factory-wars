@@ -11,5 +11,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/QuantumUser/Scenes/Map4P.unity
     guid: f785351cc2c644d4cb33789c470ac502
+  - enabled: 1
+    path: Assets/QuantumUser/Scenes/MapDesert.unity
+    guid: bb45d5b0a7d57114ebcc8c84242cb786
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

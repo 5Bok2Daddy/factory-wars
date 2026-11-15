@@ -153,6 +153,8 @@ namespace FactoryWars.View {
         var roads = new MeshKit();
         TerrainKit.Roads(roads, _map);
         UrbanDecor.Crosswalks(roads, _map);
+        UrbanDecor.Plazas(roads, _map);
+        UrbanDecor.Sidewalks(roads, _map);
         if (roads.TriangleCount > 0) {
           var roadMesh = roads.ToMesh("world_roads");
           var uvs = roadMesh.uv;

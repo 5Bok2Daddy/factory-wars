@@ -29,7 +29,10 @@ namespace FactoryWars.View {
 
     public int Color => ColorIndex >= 0 ? ColorIndex : Palette.Recommended(FactionIndex);
 
-    public string Scene => "Map4P";
+    /// <summary>항목 35 고른 맵의 씬 이름(MapCatalog).</summary>
+    public string MapId = "Map4P";
+
+    public string Scene => MapId;
 
     public int Players => Bots + 1;
 

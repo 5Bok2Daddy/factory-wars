@@ -1965,7 +1965,7 @@ MonoBehaviour:
     - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
     - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
     - {fileID: 1200674478224756, guid: 9a825139bd2a13849bb88a515c3f099e, type: 3}
-    Scale: 3.2
+    Scale: 1.7
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -1991,7 +1991,7 @@ MonoBehaviour:
     Prefabs:
     - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
     - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
-    Scale: 2.8
+    Scale: 1.5
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2017,7 +2017,7 @@ MonoBehaviour:
     Prefabs:
     - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
     - {fileID: 1475137749187476, guid: 7d261aef3b84ccb4b91a005a110cdafe, type: 3}
-    Scale: 3.4
+    Scale: 1.8
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2043,7 +2043,7 @@ MonoBehaviour:
     Prefabs:
     - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
     - {fileID: 1934626129697622, guid: 9ae4763466ac0d64bac66154f0cd7fd9, type: 3}
-    Scale: 2.4
+    Scale: 1.3
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2069,7 +2069,7 @@ MonoBehaviour:
     Prefabs:
     - {fileID: 1061708749408488, guid: 1aef08dc7f4ce5d4c8a049851008dd8f, type: 3}
     - {fileID: 1934626129697622, guid: 9ae4763466ac0d64bac66154f0cd7fd9, type: 3}
-    Scale: 1.6
+    Scale: 0.9
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -2173,14 +2173,14 @@ MonoBehaviour:
   - Id: dress/Cliff
     Category: 4
     Prefabs:
-    - {fileID: 8994595025031049588, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
-    - {fileID: 3732324774675256012, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
-    - {fileID: 5938115614288086012, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
-    - {fileID: 7585065058171700638, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
-    - {fileID: 1986427273081481443, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
-    - {fileID: 5619273286312945196, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
-    - {fileID: 5343203457815688185, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
-    - {fileID: 7298785720942930437, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
+    - {fileID: 259947360957426316, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
+    - {fileID: 8116675839788136361, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
+    - {fileID: 2623760124184984354, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
+    - {fileID: 3719040959788266544, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
+    - {fileID: 7936248589008842540, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
+    - {fileID: 798557557705920792, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
+    - {fileID: 3069482782131035623, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
+    - {fileID: 3975466646712594796, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3236,7 +3236,7 @@ MonoBehaviour:
   - Id: dress/WaterGate
     Category: 4
     Prefabs:
-    - {fileID: 5599090794786306298, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
+    - {fileID: 4545588270608497739, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3252,6 +3252,131 @@ MonoBehaviour:
     RealWorld: 1
     Notes: "Synty \uD329 \uBD80\uD488 \uC870\uB9BD \uC218\uBB38(\uC6B0\uB9AC \uD504\uB9AC\uD339
       water_gate)"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/QuayPillar
+    Category: 5
+    Prefabs:
+    - {fileID: 8563476880496825956, guid: 392acaee1665e3f47b1b8f66a234b80b, type: 3}
+    Scale: 4.6013427
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 QuayPillar"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/QuayRail
+    Category: 5
+    Prefabs:
+    - {fileID: 1008200158728592, guid: 81c5dc8c256622c4f85250e196f1c501, type: 3}
+    Scale: 2.3001223
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 QuayRail"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/QuayBollard
+    Category: 5
+    Prefabs:
+    - {fileID: 1986833058304084, guid: 2da28168743016746b5df127f2837a4e, type: 3}
+    Scale: 1.4848353
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 QuayBollard"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/OutpostTower
+    Category: 5
+    Prefabs:
+    - {fileID: 1170082105736364, guid: 2519fcdc1183c2e46be8eb01405a2ac3, type: 3}
+    Scale: 1.208038
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 OutpostTower"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/OutpostWall
+    Category: 5
+    Prefabs:
+    - {fileID: 1224111418291396, guid: 8895dea04dd3bd942a9039e333512a11, type: 3}
+    Scale: 1.5048637
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 OutpostWall"
     TurretPart: 
     BarrelPart: 
     SpinParts: []

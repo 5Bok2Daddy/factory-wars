@@ -1,5 +1,6 @@
 namespace FactoryWars.View {
   using System.Collections.Generic;
+  using System.Linq;
   using Photon.Deterministic;
   using Quantum;
   using UnityEngine;
@@ -87,6 +88,7 @@ namespace FactoryWars.View {
         return;
       }
       Boundary(map, profile);
+      Seawall(map, profile);
       Street(map, profile);
     }
 
@@ -147,12 +149,13 @@ namespace FactoryWars.View {
           if (Allowed(map, spot, road) == false) {
             continue;
           }
+          // 항목 36 시각 교정: 초소형 잔해를 빼고 실제 엄폐가 되는 컨테이너·방벽만 길 방향에 맞춰 놓는다.
           var pick = Hash(idx, 34);
-          var kind = pick < 0.34f ? DressKind.Container : pick < 0.62f ? DressKind.Barrier : pick < 0.82f ? DressKind.Debris : DressKind.Wreck;
+          var kind = pick < 0.5f ? DressKind.Container : DressKind.Barrier;
           if (Dressing.Has(kind) == false) {
             continue;
           }
-          Put(kind, spot, 5200 + idx * 5, yaw + (Hash(idx, 35) - 0.5f) * 28f + (Hash(idx, 36) < 0.5f ? 0f : 180f), "street", profile);
+          Put(kind, spot, 5200 + idx * 5, yaw + (side > 0f ? 0f : 180f), "street", profile);
         }
       }
     }
@@ -210,12 +213,114 @@ namespace FactoryWars.View {
           if (onRoad == false) {
             continue;
           }
-          var center = point + d * (arm.Item3 + 2.4f);
+          var center = point + d * (RadiusAt(map, point, halfA, halfB) + 1.3f);
           var width = arm.Item2 - 0.9f;
           for (var lateral = -width + 0.6f; lateral <= width - 0.6f; lateral += 1.5f) {
             var c = center + n * lateral;
             Vector3 P(float along, float across) => new Vector3(c.x + d.x * along + n.x * across, 0.075f, c.y + d.y * along + n.y * across);
             k.Quad(P(-1.4f, -0.35f), P(1.4f, -0.35f), P(1.4f, 0.35f), P(-1.4f, 0.35f), Vector3.up);
+          }
+        }
+      }
+    }
+
+    /// <summary>교차로 광장 패드 반지름: 두 길이 겹치는 사각 모서리(폭 반의 1.41배)를 덮는 4~5.2m.</summary>
+    public static float PadRadius(float halfA, float halfB) => Mathf.Clamp(Mathf.Max(halfA, halfB) * 1.45f, 4f, 5.2f);
+
+    const float PlazaY = 0.095f;
+    const float SitePlazaRadius = 9f;
+
+    static float RadiusAt(MapSpec map, Vector2 point, float halfA, float halfB) {
+      foreach (var site in map.CaptureSites ?? new CaptureSitePlacement[0]) {
+        if ((new Vector2(site.Center.X.AsFloat, site.Center.Z.AsFloat) - point).magnitude < 2.5f) {
+          return SitePlazaRadius;
+        }
+      }
+      return PadRadius(halfA, halfB);
+    }
+
+    /// <summary>
+    /// 항목 36 시각 교정 1·2: 교차로 정중앙과 점령 거점 아래에 원형 콘크리트 광장 패드를 도로보다 0.05m 높게 깔아
+    /// 두 길의 아스팔트·차선이 같은 높이로 겹쳐 깨지는 자리(Z-fighting)를 덮는다. 가장자리에 낮은 연석 고리. 장식이라 판정이 없다.
+    /// </summary>
+    public static void Plazas(MeshKit k, MapSpec map) {
+      if (VisualProfile.Current.UrbanDecor == false) {
+        return;
+      }
+      var centers = new List<(Vector2 Point, float Radius)>();
+      foreach (var (point, _, halfA, _, halfB) in Crossings(map)) {
+        centers.Add((point, RadiusAt(map, point, halfA, halfB)));
+      }
+      foreach (var site in (map.CaptureSites ?? new CaptureSitePlacement[0])) {
+        var at = new Vector2(site.Center.X.AsFloat, site.Center.Z.AsFloat);
+        if (centers.Exists(c => (c.Point - at).magnitude < 2.5f) == false) {
+          centers.Add((at, SitePlazaRadius));
+        }
+      }
+      foreach (var (point, radius) in centers) {
+        // 바닥(광장 색)과 구분되도록 밝은 회색 패드 + 어두운 연석 고리.
+        k.Paint(Swatch.MetalLight);
+        k.Disc(new Vector3(point.x, PlazaY, point.y), radius, 40);
+        k.Paint(Swatch.Asphalt);
+        k.Annulus(new Vector3(point.x, PlazaY + 0.012f, point.y), radius - 0.4f, radius, 40);
+      }
+    }
+
+    /// <summary>
+    /// 항목 36 시각 교정 4: 도시 건물 부지 둘레 보도블록 패드(밝은 회색, 높이 0.15m)와 연석. 건물이 맨바닥 위에 바로 서 보이지 않게 한다.
+    /// </summary>
+    public static void Sidewalks(MeshKit k, MapSpec map) {
+      if (VisualProfile.Current.UrbanDecor == false) {
+        return;
+      }
+      foreach (var city in map.CityBuildings ?? new CityBuildingPlacement[0]) {
+        var shape = city.Shape;
+        var center = new Vector3(shape.Center.X.AsFloat, 0f, shape.Center.Z.AsFloat);
+        var hx = (shape.IsCircle ? shape.Radius.AsFloat : shape.HalfLength.AsFloat) + 1.8f;
+        var hz = (shape.IsCircle ? shape.Radius.AsFloat : shape.HalfWidth.AsFloat) + 1.8f;
+        k.Push(center, new Vector3(0, shape.Yaw.AsFloat, 0));
+        k.Paint(Swatch.Concrete);
+        k.Quad(new Vector3(-hx, 0.15f, -hz), new Vector3(hx, 0.15f, -hz), new Vector3(hx, 0.15f, hz), new Vector3(-hx, 0.15f, hz), Vector3.up);
+        k.Paint(Swatch.ConcreteDark);
+        k.Quad(new Vector3(-hx, 0f, -hz), new Vector3(hx, 0f, -hz), new Vector3(hx, 0.15f, -hz), new Vector3(-hx, 0.15f, -hz), Vector3.back);
+        k.Quad(new Vector3(hx, 0f, hz), new Vector3(-hx, 0f, hz), new Vector3(-hx, 0.15f, hz), new Vector3(hx, 0.15f, hz), Vector3.forward);
+        k.Quad(new Vector3(hx, 0f, -hz), new Vector3(hx, 0f, hz), new Vector3(hx, 0.15f, hz), new Vector3(hx, 0.15f, -hz), Vector3.right);
+        k.Quad(new Vector3(-hx, 0f, hz), new Vector3(-hx, 0f, -hz), new Vector3(-hx, 0.15f, -hz), new Vector3(-hx, 0.15f, hz), Vector3.left);
+        k.Pop();
+      }
+    }
+
+    /// <summary>
+    /// 항목 36 시각 교정 5: 외곽 수로와 땅이 맞닿는 해안 옹벽을 단색 박스로 두지 않고 11m마다 기둥, 그 사이 난간, 6m 간격 계선주를 놓는다.
+    /// 수문·다리·강 근처는 건너뛴다. 장식이라 판정이 없다. 컨테이너 크레인은 팩에 없어 놓지 않는다.
+    /// </summary>
+    static void Seawall(MapSpec map, VisualProfile profile) {
+      if (TerrainKit.Channel(map) <= 0f || Dressing.Has(DressKind.QuayPillar) == false) {
+        return;
+      }
+      var h = Mathf.Max(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
+      var paths = TerrainKit.RiverPaths(map, false);
+      var n = 0;
+      var edges = new[] {
+        (new Vector2(-h, -h), new Vector2(h, -h), 0f), (new Vector2(-h, h), new Vector2(h, h), 180f),
+        (new Vector2(-h, -h), new Vector2(-h, h), 90f), (new Vector2(h, -h), new Vector2(h, h), 270f),
+      };
+      foreach (var (from, to, yaw) in edges) {
+        var length = (to - from).magnitude;
+        var direction = (to - from) / length;
+        for (var s = 6f; s < length - 4f; s += 11f, n++) {
+          var point = from + direction * s;
+          var spot = new Vector3(point.x, 0f, point.y);
+          if (TerrainKit.RiverDistance(paths, point) < 9f || Near(map.WaterGates, spot, 7f) || Near(map.Bridges, spot, 6f)) {
+            continue;
+          }
+          Put(DressKind.QuayPillar, spot, 6100 + n * 3, yaw, "quay", profile);
+          var mid = spot + new Vector3(direction.x, 0f, direction.y) * 5.5f;
+          if (s + 11f < length - 4f && Dressing.Has(DressKind.QuayRail)) {
+            Put(DressKind.QuayRail, mid, 6101 + n * 3, yaw + 90f, "quay", profile);
+          }
+          if (Dressing.Has(DressKind.QuayBollard)) {
+            Put(DressKind.QuayBollard, spot + new Vector3(direction.x, 0f, direction.y) * 2.8f, 6102 + n * 3, yaw, "quay", profile);
           }
         }
       }

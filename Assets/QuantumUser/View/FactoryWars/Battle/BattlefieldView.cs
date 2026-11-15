@@ -9,7 +9,9 @@ namespace FactoryWars.View {
   /// </summary>
   public unsafe class BattlefieldView {
     const int RingSteps = 24;
-    const float RingWidth = 0.6f;
+    const float RingWidth = 0.9f;
+    /// <summary>점령 링 높이: 광장 패드(0.095)보다 0.08m 위. 도로에 묻히지 않는다.</summary>
+    const float RingY = 0.18f;
     const float PoleHeight = 4.2f;
     const float FlagLow = 0.6f;
     const float BarWidth = 4f;
@@ -88,7 +90,7 @@ namespace FactoryWars.View {
       for (var i = 0; i < segments; i++) {
         var a = Mathf.PI * 2f * fraction * i / segments;
         var b = Mathf.PI * 2f * fraction * (i + 1) / segments;
-        Vector3 P(float angle, float r) => new Vector3(Mathf.Sin(angle) * r, 0.08f, Mathf.Cos(angle) * r);
+        Vector3 P(float angle, float r) => new Vector3(Mathf.Sin(angle) * r, RingY + 0.02f, Mathf.Cos(angle) * r);
         kit.Quad(P(a, radius - RingWidth), P(a, radius), P(b, radius), P(b, radius - RingWidth), Vector3.up);
       }
       return kit.ToMesh("capture_progress");
@@ -176,8 +178,9 @@ namespace FactoryWars.View {
       root.SetParent(_root, false);
       root.localPosition = position;
       var ring = new MeshKit().Paint(Swatch.MetalDark);
-      ring.Annulus(new Vector3(0, 0.05f, 0), site->Radius.AsFloat - RingWidth, site->Radius.AsFloat, 48);
-      Item(root, "Ring", ring.ToMesh("capture_ring"), ArtLook.NeutralMaterial);
+      ring.Annulus(new Vector3(0, RingY, 0), site->Radius.AsFloat - RingWidth, site->Radius.AsFloat, 48);
+      // 반투명 발광(시안·흰색) 링: 우리 셰이더, 공용 머티리얼 1개.
+      Item(root, "Ring", ring.ToMesh("capture_ring"), GlowRingMaterial());
       var progress = Item(root, "Progress", null, ArtLook.NeutralMaterial);
       Item(root, "Pole", PoleMesh(), ArtLook.NeutralMaterial);
       var flag = Item(root, "Flag", FlagMesh(), ArtLook.NeutralMaterial);
@@ -191,10 +194,28 @@ namespace FactoryWars.View {
       DressingSpawn.Place(DressKind.SpaceProp, station.transform, new Vector3(-1.3f, 0.15f, 0.2f), 90f, seed);
       DressingSpawn.Place(site->Kind == CaptureKind.Comms ? DressKind.SpaceProp : DressKind.Hopper, station.transform, new Vector3(1.3f, 0.15f, -0.2f), -90f, seed + 1);
       DressingSpawn.Place(DressKind.Prop, station.transform, new Vector3(0f, 0.15f, 1.1f), 0f, seed + 2);
+      // 항목 36 시각 교정 2: 거점 중앙 패드 둘레에 관측 초소와 낮은 방벽을 원형으로 둘러 전술 거점처럼 보이게 한다(팩 모델, 장식).
+      DressingSpawn.Place(DressKind.OutpostTower, root, new Vector3(-3.4f, 0.1f, -3.4f), 45f, seed + 20);
+      for (var i = 0; i < 8; i++) {
+        var angle = (45f + (i / 2) * 90f + (i % 2 == 0 ? -16f : 16f)) * Mathf.Deg2Rad;
+        const float WallRadius = 6.6f;
+        DressingSpawn.Place(DressKind.OutpostWall, root, new Vector3(Mathf.Sin(angle) * WallRadius, 0.1f, Mathf.Cos(angle) * WallRadius), angle * Mathf.Rad2Deg + 90f, seed + 30 + i);
+      }
       return new Site {
         Root = root.gameObject, Progress = progress.GetComponent<MeshFilter>(), ProgressRenderer = progress.GetComponent<MeshRenderer>(),
         Flag = flag.transform, FlagRenderer = flag.GetComponent<MeshRenderer>(),
       };
+    }
+
+    static Material _glowRing;
+
+    /// <summary>점령 표시 링용 반투명 발광 머티리얼(셰이더 FactoryWars/CaptureRing). 셰이더가 없으면 지금 머티리얼.</summary>
+    static Material GlowRingMaterial() {
+      if (_glowRing == null) {
+        var shader = Shader.Find("FactoryWars/CaptureRing");
+        _glowRing = shader != null ? new Material(shader) { name = "CaptureRing" } : null;
+      }
+      return _glowRing != null ? _glowRing : ArtLook.NeutralMaterial;
     }
 
     static Material TeamOf(Frame frame, PlayerRef player, bool glow) {

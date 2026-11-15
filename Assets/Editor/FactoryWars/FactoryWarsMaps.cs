@@ -41,6 +41,11 @@ namespace FactoryWars.EditorTools {
       public int[] SharedSeatOffsets;
       /// <summary>항목 24: 땅 바깥을 두르는 외곽 수로 너비. 0이면 수로가 없다.</summary>
       public float ChannelWidth;
+      /// <summary>항목 35 맵 프리셋: 테마, 보급 낙하 간격·보상 배율.</summary>
+      public string Theme = "표준";
+      public double SupplyInterval = 1;
+      public double SupplyReward = 1;
+      public MapDef Clone() => (MapDef)MemberwiseClone();
     }
 
     const float RoadHalfWidth = 3.5f;
@@ -200,6 +205,27 @@ namespace FactoryWars.EditorTools {
     static ExpansionSite Expansion(ExpansionKind kind, double x, double z) => new ExpansionSite { Kind = kind, Position = Position(x, z) };
 
     static readonly MapDef FourPlayerMap = BuildFourPlayer();
+
+    /// <summary>
+    /// 항목 35 "사막 보급전": 표준 맵 지형을 그대로 쓰고 광산을 40%로 줄이고, 보급 낙하 간격을 절반·보상을 2배로 한다(보급 쟁탈이 핵심).
+    /// 같은 지형이라 회전 대칭·자리 공정성·경로 연결은 표준 맵과 같다. 새 지형·건물 배치는 만들지 않았다.
+    /// </summary>
+    static readonly MapDef DesertMap = BuildDesert();
+
+    static MapDef BuildDesert() {
+      var def = FourPlayerMap.Clone();
+      def.Id = "MapDesert";
+      def.Theme = "사막 보급전";
+      def.SupplyInterval = 0.5;
+      def.SupplyReward = 2;
+      ResourceNodePlacement Scaled(ResourceNodePlacement node) {
+        node.Amount = node.Amount * N(0.4);
+        return node;
+      }
+      def.Nodes = def.Nodes.Select(Scaled).ToArray();
+      def.CenterNodes = def.CenterNodes.Select(Scaled).ToArray();
+      return def;
+    }
 
     static MapDef BuildFourPlayer() {
       var terrain = new List<TerrainFeature>();

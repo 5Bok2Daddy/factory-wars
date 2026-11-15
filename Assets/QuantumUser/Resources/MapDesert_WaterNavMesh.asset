@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1283927171, guid: b156eeaae3f741b40af66649a4748430, type: 3}
+  m_Name: MapDesert_WaterNavMesh
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/MapDesert_WaterNavMesh
+    Guid:
+      Value: 402410388010627183
+  Name: WaterNavMesh
+  SerializeType: 0
+  RegionMaskBlockCount: 8
+  DataAsset:
+    Id:
+      Value: 332125533395664003
+  GridSizeX: 97
+  GridSizeY: 97
+  GridNodeSize: 4
+  WorldOffset:
+    X:
+      RawValue: -12713984
+    Y:
+      RawValue: -12713984
+  MinAgentRadius:
+    RawValue: 32768

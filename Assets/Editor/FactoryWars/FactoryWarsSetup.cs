@@ -48,6 +48,7 @@ namespace FactoryWars.EditorTools {
       BuildMaterials();
       BuildTestScene();
       BuildMapScene(FourPlayerMap);
+      BuildMapScene(DesertMap);
       BuildMenuScene();
       IconBaker.BakeAll();
       ArtBaker.BakeAll();
@@ -59,6 +60,7 @@ namespace FactoryWars.EditorTools {
       BuildData();
       BuildTestScene();
       BuildMapScene(FourPlayerMap);
+      BuildMapScene(DesertMap);
       BuildMenuScene();
       AssetDatabase.SaveAssets();
       Debug.Log("FactoryWarsSetup.BuildMapsAndMenu: 완료");
@@ -1197,6 +1199,7 @@ namespace FactoryWars.EditorTools {
       EditorUtility.SetDirty(testMap);
 
       BuildMapSpec(FourPlayerMap);
+      BuildMapSpec(DesertMap);
 
       AssetDatabase.SaveAssets();
       QuantumUnityDBUtilities.RefreshGlobalDB(true);
@@ -1220,6 +1223,9 @@ namespace FactoryWars.EditorTools {
     static void BuildMapSpec(MapDef def) {
       var spec = Asset<MapSpec>($"map_{def.Id}");
       spec.MaxPlayers = def.Players;
+      spec.Theme = def.Theme;
+      spec.SupplyIntervalMultiplier = N(def.SupplyInterval);
+      spec.SupplyRewardMultiplier = N(def.SupplyReward);
       spec.BoundsMin = new FPVector2(-def.HalfSize, -def.HalfSize);
       spec.BoundsMax = new FPVector2(def.HalfSize, def.HalfSize);
       spec.StartPositions = Orbit(def, new MapShape { Center = def.Start }).Select(s => s.Center).ToArray();
@@ -1508,7 +1514,7 @@ namespace FactoryWars.EditorTools {
       camera.GetComponent<Camera>().backgroundColor = new Color(0.1f, 0.13f, 0.17f);
       new GameObject("Menu").AddComponent<FactoryWars.View.MenuController>();
       EditorSceneManager.SaveScene(scene, path);
-      EditorBuildSettings.scenes = new[] { path, $"{ScenesRoot}/{FourPlayerMap.Id}.unity" }
+      EditorBuildSettings.scenes = new[] { path, $"{ScenesRoot}/{FourPlayerMap.Id}.unity", $"{ScenesRoot}/{DesertMap.Id}.unity" }
         .Select(scenePath => new EditorBuildSettingsScene(scenePath, true)).ToArray();
     }
 
@@ -1595,10 +1601,18 @@ namespace FactoryWars.EditorTools {
         navObject.AddComponent<QuantumMapNavMeshUnity>().NavMeshSurfaces = new[] { navObject };
       }
       // 항목 24: 지상 NavMesh는 물 판(레이어 4)을 모으지 않는다.
+      if (navObject.GetComponent<NavMeshSurface>() == null) {
+        navObject.AddComponent<NavMeshSurface>();
+      }
       navObject.GetComponent<NavMeshSurface>().layerMask = ~(1 << WaterLayer);
       // QuantumNavMeshRegion을 쓰려면 Advanced 모드여야 한다. Simple은 Unity 영역 이름으로 만든다.
       var quantumNavMesh = navObject.GetComponent<QuantumMapNavMeshUnity>();
-      var settings = quantumNavMesh.Settings;
+      if (quantumNavMesh == null) {
+        // 새 Quantum 씬 틀이 "NavMesh" 오브젝트를 이미 갖고 있으면(항목 35 새 맵) 우리 컴포넌트만 더한다.
+        quantumNavMesh = navObject.AddComponent<QuantumMapNavMeshUnity>();
+        quantumNavMesh.NavMeshSurfaces = new[] { navObject };
+      }
+      var settings = quantumNavMesh.Settings ?? new QuantumNavMesh.ImportSettings();
       settings.ImportRegionMode = NavmeshRegionImportMode.Advanced;
       settings.RegionAreaIds = new List<int> { BarrierArea, BarricadeArea };
       quantumNavMesh.Settings = settings;

@@ -116,6 +116,7 @@ namespace FactoryWars.View {
     Button _bots;
     Button _difficulty;
     Button _truce;
+    Button _map;
     Button _color;
 
     // 온라인 방 코드 대전 UI (항목 30, 실제 Photon 방)
@@ -179,7 +180,10 @@ namespace FactoryWars.View {
       Ui.Place(_notice.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 340), new Vector2(1000, 70));
       _mode = Add(_options, "", 190, NextMode);
       _bots = Add(_options, "", 40, NextBots);
-      _difficulty = Add(_options, "", -110, NextDifficulty);
+      _difficulty = Add(_options, "", -110, NextDifficulty, 300);
+      ((RectTransform)_difficulty.transform).anchoredPosition = new Vector2(-160, -110);
+      _map = Add(_options, "", -110, NextMap, 300);
+      ((RectTransform)_map.transform).anchoredPosition = new Vector2(160, -110);
       _truce = Add(_options, "", -260, NextTruce, 300);
       ((RectTransform)_truce.transform).anchoredPosition = new Vector2(-160, -260);
       _color = Add(_options, "", -260, NextColor, 300);
@@ -501,6 +505,12 @@ namespace FactoryWars.View {
       RefreshOptions();
     }
 
+    /// <summary>항목 35: 맵을 돌려 고른다(MapCatalog).</summary>
+    public void NextMap() {
+      Settings.MapId = MapCatalog.Next(Settings.MapId).Id;
+      RefreshOptions();
+    }
+
     public void NextColor() {
       Settings.ColorIndex = (Settings.Color + 1) % Palette.Count;
       RefreshOptions();
@@ -529,6 +539,8 @@ namespace FactoryWars.View {
               : "배치: 4인 전원 본진 배치";
       }
       Ui.SetLabel(_difficulty, $"난이도: {(Settings.Difficulty == BotDifficulty.Easy ? "쉬움" : "보통")}");
+      var mapEntry = MapCatalog.Maps[MapCatalog.IndexOf(Settings.MapId)];
+      Ui.SetLabel(_map, $"맵: {mapEntry.Name}");
       Ui.SetLabel(_truce, Settings.TruceMinutes == 0 ? "휴전: 없음" : $"휴전: {Settings.TruceMinutes}분");
       var color = Palette.Colors[Settings.Color];
       Ui.SetLabel(_color, $"색: {Palette.Names[Settings.Color]}");

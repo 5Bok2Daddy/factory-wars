@@ -66,6 +66,10 @@ namespace Quantum {
   /// <summary>맵 하나의 크기·시작 위치·자원 노드. Map.UserAsset으로 맵과 연결한다.</summary>
   public partial class MapSpec : AssetObject {
     public int MaxPlayers;
+    /// <summary>항목 35 맵 프리셋: 테마 이름, 보급 낙하 간격 배율, 보급 보상 배율(0 이하는 1로 본다). 광산 양은 광산 데이터에 이미 반영한다.</summary>
+    public string Theme;
+    public FP SupplyIntervalMultiplier = 1;
+    public FP SupplyRewardMultiplier = 1;
     /// <summary>카메라 이동 범위·미니맵용 경계(XZ).</summary>
     public FPVector2 BoundsMin;
     public FPVector2 BoundsMax;

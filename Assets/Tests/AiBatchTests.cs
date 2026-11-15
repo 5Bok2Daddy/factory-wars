@@ -48,6 +48,14 @@ namespace FactoryWars.Tests {
       yield return PlayAiMatch(Map4PScene, "4P", 4, run);
     }
 
+    static readonly int[] DesertRuns = Enumerable.Range(0, 10).ToArray();
+
+    /// <summary>항목 35 사막 보급전: 같은 AI로 2인 10판(맵별 진영 승률·시간·보급 획득 측정).</summary>
+    [UnityTest, Explicit, Category("AiBatch"), Timeout(3000000)]
+    public IEnumerator AiBatch_DesertTwoPlayer([ValueSource(nameof(DesertRuns))] int run) {
+      yield return PlayAiMatch(DesertScene, "2P", 2, run);
+    }
+
     static IEnumerable<int> MirrorRuns() => Enumerable.Range(0, 20);
 
     /// <summary>항목 22 자리 쏠림: 4인 맵 2인 대각선에서 두 자리가 같은 진영(짝수 판 자유, 홀수 판 대륙)으로 20판.</summary>

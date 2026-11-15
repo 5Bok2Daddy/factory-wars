@@ -139,7 +139,8 @@ namespace FactoryWars.View {
     }
 
     public static int Fill(MapSpec map) {
-      if (Dressing.Collecting == false || Dressing.Has(DressKind.Grass) == false) {
+      if (Dressing.Collecting == false || Dressing.Has(DressKind.Grass) == false || VisualProfile.Current.UrbanDecor) {
+        // 항목 36 시각 교정: 시가지는 바닥에 점처럼 흩뿌린 자갈·쓰레기 소품을 두지 않는다(길가 엄폐물만 정렬 배치).
         return 0;
       }
       var paths = TerrainKit.RiverPaths(map);

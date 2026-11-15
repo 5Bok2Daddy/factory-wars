@@ -25,7 +25,18 @@ namespace Quantum.FactoryWars {
           }
         }
       }
-      f.Global->NextDropFrame = f.Global->TruceEndFrame + FactoryWarsUtil.SecondsToFrames(f, rules.DropIntervalSeconds);
+      f.Global->NextDropFrame = f.Global->TruceEndFrame + FactoryWarsUtil.SecondsToFrames(f, rules.DropIntervalSeconds * SupplyInterval(f));
+    }
+
+    /// <summary>항목 35: 맵 프리셋의 보급 간격·보상 배율(0 이하면 1).</summary>
+    public static FP SupplyInterval(Frame f) {
+      var value = FactoryWarsUtil.MapInfo(f).SupplyIntervalMultiplier;
+      return value > FP._0 ? value : FP._1;
+    }
+
+    public static FP SupplyReward(Frame f) {
+      var value = FactoryWarsUtil.MapInfo(f).SupplyRewardMultiplier;
+      return value > FP._0 ? value : FP._1;
     }
 
     static void SpawnCrate(Frame f, FPVector3 position, int seat, ResourceCost reward) {
@@ -374,7 +385,7 @@ namespace Quantum.FactoryWars {
       for (var i = 0; i < map.CrateSpots.Length; i++) {
         if (map.CrateSpots[i].Seat < 0 && map.CrateSpots[i].Group == f.Global->DropGroup) {
           if (f.PlayerCount != 2 || FactoryWarsUtil.PlayerAtSeat(f, seatIndex) >= 0) {
-            SpawnCrate(f, map.CrateSpots[i].Position, -1, rules.DropReward);
+            SpawnCrate(f, map.CrateSpots[i].Position, -1, rules.DropReward * SupplyReward(f));
             if (fog->FlareCount < 4) {
               fog->FlarePositions[fog->FlareCount++] = map.CrateSpots[i].Position;
             }
@@ -388,7 +399,7 @@ namespace Quantum.FactoryWars {
       fog->FlareUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.DropFlareSeconds);
       f.Global->DropStage = 0;
       f.Global->DropAnnounced = false;
-      f.Global->NextDropFrame += FactoryWarsUtil.SecondsToFrames(f, rules.DropIntervalSeconds);
+      f.Global->NextDropFrame += FactoryWarsUtil.SecondsToFrames(f, rules.DropIntervalSeconds * SupplyInterval(f));
     }
 
     /// <summary>체력이 다하면 틈의 NavMesh 영역을 연다. 다시 세울 수 없다.</summary>

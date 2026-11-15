@@ -119,6 +119,8 @@ namespace FactoryWars.View {
       p.PaletteLift = 0.9f;
       p.WhiteLanes = true;
       p.UrbanDecor = true;
+      // 항목 36 시각 교정: 건물 옥상(통과 불가 대지 윗면)에 건물만 하게 크던 상자·드럼통 묶음을 심지 않는다.
+      p.PlateauTrees = 0f;
       // 항목 36: 청록 잔디 바닥을 시가지 콘크리트·아스팔트 톤으로. 바닥은 중간 회색, 본진·광장은 밝은 보도색, 길은 짙은 아스팔트.
       // 렌더 값은 이 색의 약 1.4배로 밝아진다(햇빛 1.05 + 환경광). 밝기 245 이상 픽셀 3% 이하가 되도록 낮게 둔다.
       p.GroundGrass = new Color32(0x62, 0x68, 0x71, 0xFF);

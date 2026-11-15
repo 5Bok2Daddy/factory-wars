@@ -103,13 +103,13 @@ namespace FactoryWars.View {
               // 단마다 밝기를 달리해 단색 면에서도 층 경계가 보이게 한다(항목 27 K): 아래 단 어둡게, 위 단 밝게.
               var tier = layers > 1 ? (float)l / (layers - 1) : 1f;
               var shadeTier = 1f - VisualProfile.Current.CliffTierShade * (1f - tier);
-              Dressing.Add(DressKind.Cliff, new Vector3(mid.x, bottom, mid.z), seed * 7919 + l * 977 + i, new Color(shadeTier, shadeTier, shadeTier, 1f), new Vector3(length + 0.6f, top - bottom, Depth), yaw);
+              Dressing.Add(DressKind.Cliff, new Vector3(mid.x, bottom, mid.z), seed * 7919 + l * 977 + i, new Color(shadeTier, shadeTier, shadeTier, 1f), new Vector3(length + (VisualProfile.Current.UrbanDecor ? 0.1f : 0.6f), top - bottom, Depth), yaw);
               // 아래층 바깥 가장자리에 바위, 맨 위층 가장자리 안쪽에 나무를 듬성듬성(판정 경계 안쪽).
               var edge = (a + b) * 0.5f - normal * 1.4f;
-              if (l == 0 && MeshKit.Hash(seed, 3000 + i) < 0.14f) {
+              if (VisualProfile.Current.UrbanDecor == false && l == 0 && MeshKit.Hash(seed, 3000 + i) < 0.14f) {
                 Dressing.Add(DressKind.RockLarge, new Vector3(edge.x, 0f, edge.z), seed * 131 + i, Vector3.one * 0.65f);
               }
-              if (l == layers - 1 && MeshKit.Hash(seed, 5000 + i) < 0.12f) {
+              if (VisualProfile.Current.UrbanDecor == false && l == layers - 1 && MeshKit.Hash(seed, 5000 + i) < 0.12f) {
                 var inside = (a + b) * 0.5f - normal * 2.2f;
                 ForestKit.DressTree(new Vector3(inside.x, top, inside.z), seed * 977 + i, ForestKit.TreeState.Full);
               }
@@ -141,6 +141,27 @@ namespace FactoryWars.View {
               ForestKit.DressTree(new Vector3(spot.x, topY, spot.y), seed * 1301 + n, ForestKit.TreeState.Full);
             }
           }
+        }
+      }
+      // 항목 36 시각 교정: 건물 블록 둘레 보도블록 패드(높이 0.15m, 밝은 회색 콘크리트). 도로보다 높아 구획이 나뉜다.
+      if (dressed && dark == false && VisualProfile.Current.UrbanDecor) {
+        var ringTop = rings[layers];
+        var apron = new Vector2[ringTop.Length];
+        for (var i = 0; i < ringTop.Length; i++) {
+          var away = (ringTop[i] - center).normalized;
+          apron[i] = ringTop[i] + away * 1.8f;
+        }
+        for (var i = 0; i < ringTop.Length; i++) {
+          var j = (i + 1) % ringTop.Length;
+          var inner = new Vector3(ringTop[i].x, 0.15f, ringTop[i].y);
+          var innerNext = new Vector3(ringTop[j].x, 0.15f, ringTop[j].y);
+          var outer = new Vector3(apron[i].x, 0.15f, apron[i].y);
+          var outerNext = new Vector3(apron[j].x, 0.15f, apron[j].y);
+          k.Paint(Swatch.Concrete);
+          k.Quad(inner, innerNext, outerNext, outer, Vector3.up);
+          // 바깥 연석 옆면.
+          k.Paint(Swatch.ConcreteDark);
+          k.Quad(new Vector3(outer.x, 0f, outer.z), new Vector3(outerNext.x, 0f, outerNext.z), outerNext, outer, new Vector3(apron[i].x + apron[j].x, 0, apron[i].y + apron[j].y) * 0.5f - new Vector3(center.x, 0, center.y));
         }
       }
       // 윗면: 맨 위 고리를 가운데 점으로 덮는다.

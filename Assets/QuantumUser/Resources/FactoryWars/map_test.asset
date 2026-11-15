@@ -17,6 +17,11 @@ MonoBehaviour:
     Guid:
       Value: 353120664313869488
   MaxPlayers: 4
+  Theme: 
+  SupplyIntervalMultiplier:
+    RawValue: 65536
+  SupplyRewardMultiplier:
+    RawValue: 65536
   BoundsMin:
     X:
       RawValue: -3276800

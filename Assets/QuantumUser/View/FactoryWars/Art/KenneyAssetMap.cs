@@ -57,6 +57,12 @@ namespace FactoryWars.View {
     AnimatedWorker,
     /// <summary>항목 36 수문: 팩 옹벽·다리 기둥·철제 문을 우리 폴더 프리팹으로 조립한 것(WaterGateRig). 칸이 비어 있으면 수문 장식을 놓지 않는다.</summary>
     WaterGate,
+    /// <summary>항목 36 시각 교정: 해안 옹벽 모듈(기둥·난간·계선주)과 점령 거점 소품(관측 초소·낮은 방벽).</summary>
+    QuayPillar,
+    QuayRail,
+    QuayBollard,
+    OutpostTower,
+    OutpostWall,
   }
 
   /// <summary>

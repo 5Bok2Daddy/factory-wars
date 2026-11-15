@@ -136,7 +136,9 @@ namespace FactoryWars.EditorTools {
     }
 
     static void CityLayout(MapDef def, MapSpec spec) {
-      if (CityPlans.TryGetValue(def.Id, out var plan) == false) {
+      // 항목 35: 표준 지형을 쓰는 변형 맵(MapDesert)은 표준 맵의 도시 계획을 그대로 쓴다.
+      var planId = def.Id == "MapDesert" ? "Map4P" : def.Id;
+      if (CityPlans.TryGetValue(planId, out var plan) == false) {
         spec.CityBuildings = new CityBuildingPlacement[0];
         return;
       }
