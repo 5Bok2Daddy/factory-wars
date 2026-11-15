@@ -379,6 +379,15 @@ namespace Quantum.FactoryWars {
         if (state->PopulationUsed + population > state->PopulationCap) {
           continue;
         }
+        // 항목 34-D: 작전기는 유닛으로 나오지 않고 비행장 격납 칸에 대기한다(칸이 없으면 완성 상태로 기다린다).
+        if (unit.SortieKind != SortieKind.None) {
+          if (SortieSystem.Store(f, building, building->Queue[0].Unit) == false) {
+            continue;
+          }
+          state->UnitsProduced++;
+          RemoveOrder(building, 0);
+          continue;
+        }
         for (var i = 0; i < unit.SpawnCount; i++) {
           var spawned = SpawnUnit(f, building->Owner, building->Queue[0].Unit, transform->Position, i, building);
           state->UnitsProduced++;
@@ -694,7 +703,7 @@ namespace Quantum.FactoryWars {
       }
     }
 
-    static void Damage(Frame f, in Weapon weapon, EntityRef target, FP amount) {
+    public static void Damage(Frame f, in Weapon weapon, EntityRef target, FP amount) {
       if (f.Unsafe.TryGetPointer<Unit>(target, out var unit)) {
         DamageUnit(f, weapon, target, unit, amount);
       } else if (f.Unsafe.TryGetPointer<Building>(target, out var building)) {
@@ -944,7 +953,8 @@ namespace Quantum.FactoryWars {
         if (spec.Ability == SpecialAbility.FieldRepair && unit->Health > FP._0) {
           FieldRepair(f, entity, unit, spec, transform->Position);
         }
-        if (unit->Health <= FP._0 || spec.Attack == AttackType.None) {
+        if (unit->Health <= FP._0 || spec.Attack == AttackType.None || spec.GarrisonFireOnly) {
+          // 항목 34-C: 주둔 저격수는 SniperSystem이 따로 쏜다.
           continue;
         }
         unit->AttackCooldown = FPMath.Max(FP._0, unit->AttackCooldown - f.DeltaTime);
@@ -1229,6 +1239,9 @@ namespace Quantum.FactoryWars {
     /// <summary>능력과 도로·여울을 합친 지상 이동 속도.</summary>
     public static FP GroundSpeed(Frame f, MapSpec map, GameRulesSpec rules, UnitSpec spec, Unit* unit, FPVector3 position) {
       var speed = unit->Swarming ? spec.MoveSpeed * spec.AbilityMultiplier : spec.MoveSpeed;
+      if (unit->StealthUntilFrame > f.Number) {
+        speed *= spec.StealthSpeedMultiplier;
+      }
       var city = map.CityAt(position);
       if (city >= 0 && CitySystem.IsCollapsed(f, city)) {
         return speed * rules.RubbleSpeedMultiplier;

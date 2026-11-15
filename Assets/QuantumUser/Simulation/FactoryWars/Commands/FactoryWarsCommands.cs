@@ -117,6 +117,11 @@ namespace Quantum.FactoryWars {
     void Order(Frame f, PlayerRef player) {
       for (var i = 0; i < Units.Length; i++) {
         if (IsOwnCommandable(f, player, Units[i], out var unit)) {
+          if (f.FindAsset(unit->Spec).GarrisonFireOnly && unit->Garrison == EntityRef.None) {
+            // 항목 34-C: 주둔 저격수는 지상에서 쏠 수 없다(건물에 올라가야 사격 가능).
+            f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.NeedGarrison, 0);
+            continue;
+          }
           unit->TargetEntity = Target;
           unit->Order = UnitOrder.AttackTarget;
         }
@@ -513,6 +518,67 @@ namespace Quantum.FactoryWars {
       return TargetMode == NoteTarget.Everyone
         || (TargetMode == NoteTarget.Player && other == Receiver)
         || (TargetMode == NoteTarget.Allies && DiplomacySystem.GetRelation(f, player, other) == Relation.Allied);
+    }
+  }
+}
+
+namespace Quantum.FactoryWars {
+  using Photon.Deterministic;
+
+  /// <summary>항목 34-C 은신: 지상 저격수가 지속 시간 동안 은신한다(재사용 대기 있음).</summary>
+  public unsafe class StealthCommand : FactoryCommand {
+    public EntityRef[] Units = System.Array.Empty<EntityRef>();
+
+    public override void Serialize(BitStream stream) {
+      SerializeUnits(stream, ref Units);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      for (var i = 0; i < Units.Length; i++) {
+        if (IsOwnCommandable(f, player, Units[i], out var unit)) {
+          SniperSystem.TryStealth(f, player, unit);
+        }
+      }
+    }
+  }
+
+  /// <summary>항목 34-C 채굴 교란 장치: 은신한 저격수가 가까운 자원 노드에 장치를 설치하기 시작한다(설치 시간 동안 제자리).</summary>
+  public unsafe class PlaceJammerCommand : FactoryCommand {
+    public EntityRef Sniper;
+    public EntityRef Node;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Sniper);
+      stream.Serialize(ref Node);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      if (IsOwnCommandable(f, player, Sniper, out var unit)) {
+        SniperSystem.TryPlaceJammer(f, player, Sniper, unit, Node);
+      }
+    }
+  }
+}
+
+namespace Quantum.FactoryWars {
+  using Photon.Deterministic;
+
+  /// <summary>항목 34-D 항공 작전 지시: 비행장 격납 칸, 목표 지점(지금 보이는 칸), 진입 방향.</summary>
+  public unsafe class OrderSortieCommand : FactoryCommand {
+    public EntityRef Airfield;
+    public int Slot;
+    public FPVector3 Target;
+    public FPVector2 Heading;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Airfield);
+      stream.Serialize(ref Slot);
+      stream.Serialize(ref Target);
+      stream.Serialize(ref Heading);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      SortieSystem.TryLaunch(f, player, Airfield, Slot, Target, Heading);
     }
   }
 }

@@ -29,6 +29,9 @@ namespace Quantum
             factories.Add(new FactoryWars.StartUltimateCommand());
             factories.Add(new FactoryWars.LaunchUltimateCommand());
             factories.Add(new FactoryWars.CancelUltimateCommand());
+            factories.Add(new FactoryWars.StealthCommand());
+            factories.Add(new FactoryWars.PlaceJammerCommand());
+            factories.Add(new FactoryWars.OrderSortieCommand());
         }
     }
 }

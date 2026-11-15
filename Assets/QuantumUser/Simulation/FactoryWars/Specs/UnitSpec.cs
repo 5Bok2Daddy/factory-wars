@@ -37,5 +37,53 @@ namespace Quantum {
     public FP AbilityCooldownSeconds;
     /// <summary>항목 34: 시야 반경(m). 0이면 시야 없음.</summary>
     public FP SightRange;
+
+    // ---- 항목 34-C 주둔 저격수(데이터. 값이 0/false인 유닛은 영향 없음) ----
+    /// <summary>주둔 중에만 사격한다. 지상에서는 쏠 수 없고 공격 명령을 거부한다(NeedGarrison).</summary>
+    public bool GarrisonFireOnly;
+    /// <summary>주둔 중 시야 반경(m).</summary>
+    public FP GarrisonSightRange;
+    /// <summary>올라간 직후 사격 못 하는 시간(올라가기 3초 + 자리 잡기 2초).</summary>
+    public FP SetupSeconds;
+    /// <summary>보병·공병 대비 차량(IsVehicle·중형 이상)에 주는 피해 비율(30/140).</summary>
+    public FP VehicleDamageRatio = 1;
+    /// <summary>플레이어당 보유 상한. 0이면 제한 없음.</summary>
+    public int MaxOwned;
+    /// <summary>은신: 지속·재사용 대기(초), 이동 속도 배율, 적이 이 거리 안에 오면 자동 노출(m).</summary>
+    public FP StealthSeconds;
+    public FP StealthCooldownSeconds;
+    public FP StealthSpeedMultiplier = 1;
+    public FP StealthExposeRadius;
+    /// <summary>채굴 교란 장치: 설치 가능 거리(m), 설치 시간·지속(초), 장치 체력, 노드 채집 속도 배율.</summary>
+    public FP JammerRange;
+    public FP JammerSetupSeconds;
+    public FP JammerSeconds;
+    public FP JammerHealth;
+    public FP JammerGatherMultiplier = 1;
+    /// <summary>다른 유닛의 은신·숨긴 장치를 드러내는 반경(m). 정찰 버기·척후 오토바이 10. 0이면 없음.</summary>
+    public FP DetectRadius;
+
+    // ---- 항목 34-D 작전기(SortieKind가 None이 아니면 유닛이 아니라 비행장 격납 칸에 대기하는 작전기. 전부 데이터) ----
+    public SortieKind SortieKind;
+    /// <summary>비행 속도(m/s)와 체력(대공 격추 판정). 재정비 시간(초).</summary>
+    public FP SortieSpeed;
+    public FP SortieHealth;
+    public FP SortieRearmSeconds;
+    /// <summary>진입 거리 Lin, 이탈 거리 Lout, 귀환 선회 반경(m).</summary>
+    public FP SortieApproach;
+    public FP SortieExit;
+    public FP SortieTurn;
+    /// <summary>기총소사 통로 폭 / 폭탄·낙하 반경(m).</summary>
+    public FP SortieWidth;
+    /// <summary>기총소사 사격 간격(틱), 폭탄 수와 투하 간격(경로 거리 m), 건물 피해 배율.</summary>
+    public int SortieTicks;
+    public int SortieBombs;
+    public FP SortieBombGap;
+    public FP SortieBuildingMultiplier = 1;
+    /// <summary>출격마다 내는 비용.</summary>
+    public ResourceCost SortieCost;
+    /// <summary>공수 투하로 내려놓는 유닛 종류와 수.</summary>
+    public AssetRef<UnitSpec> SortieCargo;
+    public int SortieCargoCount;
   }
 }

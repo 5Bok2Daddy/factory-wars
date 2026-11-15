@@ -163,6 +163,8 @@ namespace Quantum.Prototypes {
     public Int32 Research;
     public FP ResearchRemaining;
     public QBoolean CoverMade;
+    [ArrayLengthAttribute(4)]
+    public Quantum.Prototypes.HangarSlotPrototype[] Hangar = new Quantum.Prototypes.HangarSlotPrototype[4];
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Building component = default;
         Materialize((Frame)f, ref component, in context);
@@ -195,6 +197,9 @@ namespace Quantum.Prototypes {
         result.Research = this.Research;
         result.ResearchRemaining = this.ResearchRemaining;
         result.CoverMade = this.CoverMade;
+        for (int i = 0, count = PrototypeValidator.CheckLength(Hangar, 4, in context); i < count; ++i) {
+          this.Hangar[i].Materialize(frame, ref *result.Hangar.GetPointer(i), in context);
+        }
     }
   }
   [System.SerializableAttribute()]
@@ -424,6 +429,20 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.HangarSlot))]
+  public unsafe partial class HangarSlotPrototype : StructPrototype {
+    public AssetRef<UnitSpec> Spec;
+    public Int32 State;
+    public Int32 ReadyFrame;
+    partial void MaterializeUser(Frame frame, ref Quantum.HangarSlot result, in PrototypeMaterializationContext context);
+    public void Materialize(Frame frame, ref Quantum.HangarSlot result, in PrototypeMaterializationContext context = default) {
+        result.Spec = this.Spec;
+        result.State = this.State;
+        result.ReadyFrame = this.ReadyFrame;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.Input))]
   public unsafe partial class InputPrototype : StructPrototype {
     [HideInInspector()]
@@ -431,6 +450,29 @@ namespace Quantum.Prototypes {
     partial void MaterializeUser(Frame frame, ref Quantum.Input result, in PrototypeMaterializationContext context);
     public void Materialize(Frame frame, ref Quantum.Input result, in PrototypeMaterializationContext context = default) {
         MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.Jammer))]
+  public unsafe class JammerPrototype : ComponentPrototype<Quantum.Jammer> {
+    public PlayerRef Owner;
+    public MapEntityId Node;
+    public FP Health;
+    public FP GatherMultiplier;
+    public Int32 UntilFrame;
+    public Int32 DetectedMask;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.Jammer component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.Jammer result, in PrototypeMaterializationContext context = default) {
+        result.Owner = this.Owner;
+        PrototypeValidator.FindMapEntity(this.Node, in context, out result.Node);
+        result.Health = this.Health;
+        result.GatherMultiplier = this.GatherMultiplier;
+        result.UntilFrame = this.UntilFrame;
+        result.DetectedMask = this.DetectedMask;
     }
   }
   [System.SerializableAttribute()]
@@ -531,6 +573,14 @@ namespace Quantum.Prototypes {
     public Int32 SortieTickets;
     public Int32 DropCaptures;
     public Int32 DropContests;
+    public Int32 SnipeKillsInfantry;
+    public Int32 SnipeKillsEngineers;
+    public Int32 JammersPlaced;
+    public Int32 JammersDestroyed;
+    public Int32 Detections;
+    public Int32 SortiesLaunched;
+    public Int32 SortiesCompleted;
+    public Int32 SortiesShotDown;
     public Int32 HighGroundShots;
     public Int32 GarrisonEntries;
     public Int32 DisconnectedFrame;
@@ -592,6 +642,14 @@ namespace Quantum.Prototypes {
         result.SortieTickets = this.SortieTickets;
         result.DropCaptures = this.DropCaptures;
         result.DropContests = this.DropContests;
+        result.SnipeKillsInfantry = this.SnipeKillsInfantry;
+        result.SnipeKillsEngineers = this.SnipeKillsEngineers;
+        result.JammersPlaced = this.JammersPlaced;
+        result.JammersDestroyed = this.JammersDestroyed;
+        result.Detections = this.Detections;
+        result.SortiesLaunched = this.SortiesLaunched;
+        result.SortiesCompleted = this.SortiesCompleted;
+        result.SortiesShotDown = this.SortiesShotDown;
         result.HighGroundShots = this.HighGroundShots;
         result.GarrisonEntries = this.GarrisonEntries;
         result.DisconnectedFrame = this.DisconnectedFrame;
@@ -679,6 +737,49 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.Sortie))]
+  public unsafe class SortiePrototype : ComponentPrototype<Quantum.Sortie> {
+    public PlayerRef Owner;
+    public AssetRef<UnitSpec> Spec;
+    public MapEntityId Airfield;
+    public Int32 Slot;
+    public Int32 StartFrame;
+    public FP Speed;
+    public FP Health;
+    public FPVector3 Target;
+    public FPVector2 Heading;
+    [ArrayLengthAttribute(6)]
+    public FPVector3[] Points = new FPVector3[6];
+    [ArrayLengthAttribute(6)]
+    public FP[] Cum = new FP[6];
+    public Int32 NextEvent;
+    public QBoolean Dropped;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.Sortie component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.Sortie result, in PrototypeMaterializationContext context = default) {
+        result.Owner = this.Owner;
+        result.Spec = this.Spec;
+        PrototypeValidator.FindMapEntity(this.Airfield, in context, out result.Airfield);
+        result.Slot = this.Slot;
+        result.StartFrame = this.StartFrame;
+        result.Speed = this.Speed;
+        result.Health = this.Health;
+        result.Target = this.Target;
+        result.Heading = this.Heading;
+        for (int i = 0, count = PrototypeValidator.CheckLength(Points, 6, in context); i < count; ++i) {
+          *result.Points.GetPointer(i) = this.Points[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(Cum, 6, in context); i < count; ++i) {
+          *result.Cum.GetPointer(i) = this.Cum[i];
+        }
+        result.NextEvent = this.NextEvent;
+        result.Dropped = this.Dropped;
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.SupplyCrate))]
   public unsafe partial class SupplyCratePrototype : ComponentPrototype<Quantum.SupplyCrate> {
     public Int32 Seat;
@@ -729,6 +830,14 @@ namespace Quantum.Prototypes {
     public MapEntityId Cover;
     public QBoolean InCover;
     public Int32 AssaultUntilFrame;
+    public Int32 SetupUntilFrame;
+    public Int32 StealthUntilFrame;
+    public Int32 StealthReadyFrame;
+    public Int32 MuzzleRevealUntilFrame;
+    public Int32 MuzzleVictimMask;
+    public Int32 DetectedMask;
+    public Int32 JammerUntilFrame;
+    public MapEntityId JammerNode;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Unit component = default;
         Materialize((Frame)f, ref component, in context);
@@ -763,6 +872,14 @@ namespace Quantum.Prototypes {
         PrototypeValidator.FindMapEntity(this.Cover, in context, out result.Cover);
         result.InCover = this.InCover;
         result.AssaultUntilFrame = this.AssaultUntilFrame;
+        result.SetupUntilFrame = this.SetupUntilFrame;
+        result.StealthUntilFrame = this.StealthUntilFrame;
+        result.StealthReadyFrame = this.StealthReadyFrame;
+        result.MuzzleRevealUntilFrame = this.MuzzleRevealUntilFrame;
+        result.MuzzleVictimMask = this.MuzzleVictimMask;
+        result.DetectedMask = this.DetectedMask;
+        result.JammerUntilFrame = this.JammerUntilFrame;
+        PrototypeValidator.FindMapEntity(this.JammerNode, in context, out result.JammerNode);
     }
   }
   [System.SerializableAttribute()]

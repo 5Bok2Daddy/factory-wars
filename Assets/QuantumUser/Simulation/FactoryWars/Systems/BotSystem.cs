@@ -831,7 +831,8 @@ namespace Quantum.FactoryWars {
       overShare = false;
       var allowed = 0;
       for (var i = 0; i < producible.Length && i < 30; i++) {
-        if (TechSystem.CanProduce(f, player, f.FindAsset(producible[i]), out _)) {
+        // 항목 34-C: AI는 아직 저격수를 쓰지 않는다(주둔 전에는 사격 불가라 지상에서 쓸모가 없다).
+        if (f.FindAsset(producible[i]).GarrisonFireOnly == false && f.FindAsset(producible[i]).SortieKind == SortieKind.None && TechSystem.CanProduce(f, player, f.FindAsset(producible[i]), out _)) {
           allowed |= 1 << i;
         }
       }

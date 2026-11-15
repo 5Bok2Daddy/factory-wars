@@ -134,6 +134,19 @@ namespace Quantum {
     public FP ToppleDamage;
     public FP TopplePushMargin;
     public int GarrisonCapacity;
+    /// <summary>항목 34-C: 저격수가 쏘면 그 건물이 피격 진영에 보이는 시간(초).</summary>
+    public FP MuzzleRevealSeconds;
+    /// <summary>사격한 건물 주변을 피격 진영에게 보여 주는 반경(m).</summary>
+    public FP MuzzleRevealRadius;
+    /// <summary>항목 34-C: 레이더 기지가 은신·숨긴 장치를 드러내는 반경(m). 레이더의 넓은 정찰 반경(RevealRadius)과 작은 쪽을 쓴다.</summary>
+    public FP RadarDetectRadius;
+    /// <summary>항목 34-C: 교란 장치를 풀어 내는 속도(체력/초)와 가까이 와야 하는 거리(m).</summary>
+    public FP JammerDisarmPerSecond;
+    public FP JammerDisarmRadius;
+    /// <summary>항목 34-D: 대공 화력(피해/간격)에 곱해 작전기 체력에서 깎는 배율.</summary>
+    public FP SortieAntiAirFactor = 1;
+    /// <summary>항목 34-C: 저격수끼리는 보이는 적 저격수에게 피해가 이 배율이다.</summary>
+    public FP SniperVsSniperMultiplier = 1;
     public FP GarrisonRangeBonus;
     public FP GarrisonEnterDistance;
     /// <summary>체력 비율이 이 아래로 내려가면 금 간 단계다.</summary>

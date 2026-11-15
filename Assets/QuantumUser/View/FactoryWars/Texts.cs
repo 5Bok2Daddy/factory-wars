@@ -28,6 +28,10 @@ namespace FactoryWars.View {
       // 항목 31 새 유닛(가칭, 실존 무기명과 무관)
       { "ff_scout_buggy", "정찰 버기" }, { "ff_field_support", "야전 정비차" }, { "ff_bulwark_tank", "방벽 중전차" },
       { "cf_scout_bike", "척후 오토바이" }, { "cf_gale_gunship", "돌풍 공격헬기" }, { "cf_fortress_tank", "요새 전차" },
+      // 항목 34-C 주둔 저격수(가칭)
+      { "ff_sortie_fighter", "제비 전투기" }, { "ff_sortie_striker", "벼락 공격기" }, { "ff_sortie_transport", "구름 수송기" },
+      { "cf_sortie_fighter", "참새 전투기" }, { "cf_sortie_striker", "철매 공격기" }, { "cf_sortie_transport", "기러기 수송기" },
+      { "ff_sniper", "정밀 저격수" }, { "cf_sniper", "매복 사수" },
       // 항목 33 궁극 전력(가칭, 실존 함정·항공기·미사일 이름과 무관)
       { "ff_stormnest_carrier", "스톰네스트 공중 항모" }, { "ff_nest_drone", "둥지 드론" }, { "tf_wavecrest_lander", "파도머리 상륙정" },
       { "ff_carrier_yard", "항모 조립창" }, { "cf_missile_silo", "미사일 격납고" }, { "tf_assault_dock", "강습 도크" },

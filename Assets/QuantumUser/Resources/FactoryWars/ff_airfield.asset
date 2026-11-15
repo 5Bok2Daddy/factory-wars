@@ -68,6 +68,12 @@ MonoBehaviour:
       Value: 489920977364748690
   - Id:
       Value: 491932192956100920
+  - Id:
+      Value: 353160783042217494
+  - Id:
+      Value: 452576285374966082
+  - Id:
+      Value: 379653629282169331
   Attack: 0
   GroundOnly: 0
   Damage:

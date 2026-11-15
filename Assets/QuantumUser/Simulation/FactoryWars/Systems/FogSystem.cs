@@ -151,9 +151,17 @@ namespace Quantum.FactoryWars {
           radius += rules.FogHighGroundBonus;
         }
         if (unit->Garrison != EntityRef.None) {
-          radius += rules.FogGarrisonBonus;
+          radius = spec.GarrisonSightRange > FP._0 ? spec.GarrisonSightRange : radius + rules.FogGarrisonBonus;
         }
         Mark(fog, fog->Grids.GetPointer(owner), transform->Position, radius);
+        // 항목 34-C: 저격수가 쏜 건물은 피격 진영에게 잠깐 보인다.
+        if (f.Number < unit->MuzzleRevealUntilFrame) {
+          for (var p = 0; p < Players; p++) {
+            if ((unit->MuzzleVictimMask & (1 << p)) != 0) {
+              Mark(fog, fog->Grids.GetPointer(p), transform->Position, rules.MuzzleRevealRadius);
+            }
+          }
+        }
       }
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out _, out var transform, out var building)) {

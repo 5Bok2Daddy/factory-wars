@@ -4,10 +4,58 @@
 ## 다음 단계 (2026-11-14, 항목 34 부분 완료) — 재개할 때 여기부터
 - **2026-11-15 사용자 지시: 순서 36 → 34 → 35 → 37.** 36 추가 지시(수문·깊이 거품·모래주머니)는 끝났다("항목 36 추가 지시 결과").
 - (이전) 사용자 지시(20:15): 순서 **36 → 34 → 35**. 36은 끝났다("항목 36 결과"). **34는 A 안개·B 보급 알람까지 끝났고(바로 아래 "항목 34 결과(부분)") C 저격수·D 항공 작전·E 밸런스는 남았다. 35(맵 5종)는 시작하지 않았다**(사용량 한도). 각 항목 보고서 끝에 "에셋 반영 정리" 표가 있다.
-- 다음에 할 일: 34-C 주둔 저격수 → 34-D 항공 작전 → 34-E 밸런스·APK → 35. 안개는 기본 꺼짐이라 켜기 전에 AI 재측정이 필요하다.
+- (갱신) 34-C·D 시뮬레이션은 "항목 34 추가 결과"에서 끝났다. 남은 것: 34-E 밸런스, 작전 UI·AI. 다음은 35.
+- (이전) 다음에 할 일: 34-C 주둔 저격수 → 34-D 항공 작전 → 34-E 밸런스·APK → 35. 안개는 기본 꺼짐이라 켜기 전에 AI 재측정이 필요하다.
 - 이 PC 상태: 팩은 `Game/Assets/ExternalAssets/Synty`(git 제외), 우리 틀·변형·컨트롤러는 `Game/Assets/FactoryWarsArt/Synty`(git 제외). 새 PC는 `Game/Docs/ASSET-SWAP.md`의 "항목 32 Synty 팩 적용" → `Tools/Factory Wars/Assets/5. Assign Synty Pack` → `6. Assign Urban Dressing`. 원본 확인은 `python Tools/pack_hashes.py check`.
 - APK는 34·35까지 끝낸 뒤 한 번에 빌드한다(지금까지 빌드 안 함).
 - 측정용 작업 폴더 `FactoryWars/Game-measure`(git worktree)는 34·35 측정에 쓰려고 남겨 두었다.
+
+## 항목 34 추가 결과 — C 주둔 저격수 · D 항공 작전 시뮬레이션 (2026-11-15, Claude Sonnet 5.5)
+
+### 한눈에
+- **C(주둔 저격수)와 D(비조작 항공 작전)의 시뮬레이션·시험을 만들었다.** 전체 PlayMode 467개 중 367 통과·**0 실패**(나머지 100개는 따로 돌리는 시험). 새 시험 13개(`Sniper_*` 6, `Sortie_*` 7) 통과. 팩 원본 무수정.
+- **하지 못한 것(사실대로):** E 밸런스(AI 20판·CSV 열), 작전 지시 UI·작전기 화면(그림 없음, 시뮬레이션 엔티티만), AI의 작전 호출(`Ai_ScoutsThenCallsSortie`), 스카이포트리스 폭격기의 작전기 전환, 가건물·감시탑 건물, 연막 시선 차단, 건물 파괴 시 기절 2초, 안개 켠 실서버 시험, 캡처. APK 미빌드.
+
+### 1. C 주둔 저격수 (증거: `Systems/SniperSystem.cs`, `Sniper_*` 6개)
+| 항목 | 한 일 | 증거 |
+| --- | --- | --- |
+| 유닛 | `ff_sniper`(정밀 저격수)·`cf_sniper`(매복 사수): 소형·2단계·보유 3·인구 2·체력 60/70·이동 2.4·사거리 24/22·간격 6/5.5·피해 140. 값은 `UnitSpec`(GarrisonFireOnly 등)과 `FactoryWarsSetup.ApplySniper` | `Sniper_OwnedCapIsThree` |
+| 지상 사격 불가 | 지상에서는 쏘지 않고, 공격 명령은 `NeedGarrison`으로 거부 | `Sniper_CannotFireOnGround` |
+| 주둔·자리 잡기 | 기존 진지(도시 진지·벙커)에 올라가면 5초(올라가기 3+자리 잡기 2) 뒤부터 사격. 차량엔 30(비율 데이터), 보병 한 방 | `Sniper_FiresOnlyAfterSetupInGarrison` |
+| 총구 노출 | 쏘면 그 건물이 피격 진영·동맹에게 4초 보임(안개 시야 + `SniperFired` 이벤트) | `Sniper_MuzzleRevealsBuilding` |
+| 은신 | 20초, 재사용 60초(시작부터), 이동 -30%, 적이 4m 안이면 해제, 척후 버기·오토바이 10m·레이더 30m 탐지로 드러남(은신은 유지) | `Sniper_StealthBrokenByDetectorAndProximity` |
+| 채굴 교란 장치 | 은신 중 노드 10m 안, 설치 4초, 1인당 1개, 노드 채집 ×0.6·60초, 탐지된 뒤 적이 4m 안에 서면 체력 50이 풀림 | `Sniper_JammerSlowsGatherAndIsDetectable` |
+| 저격수끼리 | 피해 2배(`SniperVsSniperMultiplier`) — 시험은 없음 | 없음 |
+| 측정 열 | `SnipeKillsInfantry/Engineers`, `JammersPlaced/Destroyed`, `Detections` (CSV 열에는 아직 안 넣음) | 코드 |
+
+**알려진 한계:** 가건물·감시탑을 만들지 않아 기존 진지 건물을 쓴다. 건물이 파괴되면 기존 규칙(체력 25% 피해로 퇴출)이고 기절 2초·돌입전 전용 시험은 없다. 연막 시선 차단 없음. AI는 저격수를 생산하지 않는다(`AllowedMask`에서 제외).
+
+### 2. D 항공 작전 (증거: `Systems/SortieSystem.cs`, `Sortie_*` 7개)
+| 항목 | 한 일 | 증거 |
+| --- | --- | --- |
+| 격납 | 비행장 `Building.Hangar` 4칸. 작전기(`SortieKind`)는 유닛이 아니라 칸에 들어간다(칸이 차면 완성 상태로 대기). 인구 0 | `Sortie_ReturnsAndRearms` |
+| 작전기 6종 | 전투기(기총소사, 2단계)·공격기(폭격, 3단계)·수송기(공수 투하, 2단계) × 진영별 수치. 비용·속도·재정비 45/90/120초·궤적 거리 전부 `UnitSpec.Sortie*` | 시험 전부 |
+| 지시 | `OrderSortieCommand(칸, 목표, 진입 방향)`. 목표가 안 보이는 칸이면 `NoVision` | `Sortie_RejectedOutsideVision` |
+| 결정론 궤적 | 점 6개+누적 길이를 출격 때 한 번 계산, 위치 = 경과 프레임×속도의 누적 거리(FP) | `Sortie_PathIsDeterministicFromStartFrame` |
+| 기총소사 | 진입~이탈 구간에서 2틱마다 통로(폭 5m) 안 지상 적에게 피해, 옆 12m는 무사 | `Sortie_StrafeHitsCorridorOnly` |
+| 폭격 | 4발·간격 6m·반경 6m, 건물 피해 2배 | `Sortie_BombDamagesBuildingDouble` |
+| 공수 투하 | T 통과 때 병력 6을 반경 안 `frame.RNG`로 흩뿌림 | `Sortie_AirborneDropLandsCargo` |
+| 격추 | 대공(대공차·방공포대) 화력×3 배율로 체력 감소, 격추되면 탑재 소멸·칸 빔 | `Sortie_ShotDownLosesPayload` |
+| 휴전 | 작전 피해는 `CanAttack`을 따라 휴전 중에는 들어가지 않음 | 시험이 휴전 종료를 기다림 |
+
+**알려진 한계:** 낙하 4초 무적·행동 불가는 AI 예약만(`ReservedUntilFrame`), 폭탄 낙하 지연 없음(즉시 착탄), 긴급 출격권 사용 없음, 적 시야에 들어온 작전기 경고 없음, 작전 지시 UI·작전기 모델 없음(엔티티는 있으나 화면에 안 보임), 기존 스카이포트리스 폭격기는 그대로. 수치(피해·속도·배율)는 첫 추정값이라 밸런스 측정 전이다.
+
+### 3. 시험 수정(회귀 2건)
+- `Tech_DataFollowsSizeRules`: 소형 3 기대에 저격수·작전기가 걸려 `GarrisonFireOnly == false && SortieKind == None`만 세도록 고쳤다(구성 규칙 자체는 그대로).
+- `Visual_CatalogHasSlotForEveryElement`: 새 유닛 슬롯을 `UrbanAssign.Run`(슬롯 재생성)으로 채웠다.
+
+### 4. 에셋 반영 정리 (사용자 지시 20:15)
+| 구분 | 내용 |
+| --- | --- |
+| **적용한 것** | 저격수·작전기 6종은 임시로 기존 모델을 빌려 쓴다(`TemporaryModels`: 저격수→각 진영 보병, 전투기→헬기, 공격기·수송기→폭격기 모델) |
+| **대체한 것** | 없음 |
+| **빈 슬롯 = 팩에서 고를 후보** | 저격수 → 팩 `SM_Chr_Ghillie_Male_01`·`Character_GhillieSuit_01` + `Wep_Sniper_01`; 전투기·공격기 → `Veh_Jet_01/02`·`Veh_Jet_Attach_Bomb_01`; 수송기 → `Veh_TransportPlane_01`; 낙하 병력 → `Prop_Parachute_01`; 가건물 → `Bld_Plywood_Shed_01`, 감시탑 → `Bld_GuardTower_01` |
+| **빈 슬롯 = 나중에 살 것** | 총구 섬광·기총·폭발 FX, 작전 지시·격납고 아이콘(UI 팩), 경고음·엔진음(오디오 팩) |
 
 ## 항목 34 결과(부분) — 전장의 안개(A) · 보급품 사전 알람(B) 완료, 저격수(C)·항공 작전(D)·AI·밸런스(E) 미착수 (2026-11-14, Claude Sonnet 5.5)
 

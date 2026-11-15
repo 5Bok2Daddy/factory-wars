@@ -51,6 +51,11 @@ namespace FactoryWars.View {
       ("cf_radar", "cf_air_defense", 0.9f),
       ("cf_helipad", "cf_airfield", 0.7f),
       ("cf_artillery", "cf_ground_tower", 0.98f),
+      // 항목 34-C 주둔 저격수(팩 Ghillie 캐릭터가 빈 슬롯 후보: 지금은 보병 모델을 빌린다)
+      ("ff_sortie_fighter", "ff_hawk_gunship", 0.8f), ("ff_sortie_striker", "ff_skyfortress_bomber", 0.6f), ("ff_sortie_transport", "ff_skyfortress_bomber", 0.5f),
+      ("cf_sortie_fighter", "cf_gale_gunship", 0.8f), ("cf_sortie_striker", "ff_skyfortress_bomber", 0.6f), ("cf_sortie_transport", "ff_skyfortress_bomber", 0.5f),
+      ("ff_sniper", "ff_ranger_squad", 0.85f),
+      ("cf_sniper", "cf_militia", 0.85f),
       // 항목 33 궁극 전력(그래픽 작업 없음: 기존 절차 모델을 빌리고 칸만 만든다)
       ("ff_stormnest_carrier", "ff_skyfortress_bomber", 1.3f),
       ("ff_nest_drone", "ff_hawk_gunship", 0.5f),

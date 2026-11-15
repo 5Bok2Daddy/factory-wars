@@ -1,0 +1,128 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946fb8225d8a67b488f649875809ea13, type: 3}
+  m_Name: ff_sortie_striker
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ff_sortie_striker
+    Guid:
+      Value: 452576285374966082
+  Size: 3
+  RequiredTier: 3
+  IsAir: 1
+  IsNaval: 0
+  IsVehicle: 0
+  Cost:
+    Iron:
+      RawValue: 19660800
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 9175040
+    Power:
+      RawValue: 10485760
+  BuildTimeSeconds:
+    RawValue: 2621440
+  MaxHealth:
+    RawValue: 29491200
+  Attack: 4
+  Damage:
+    RawValue: 10485760
+  Range:
+    RawValue: 0
+  MinRange:
+    RawValue: 0
+  SplashRadius:
+    RawValue: 0
+  AttackInterval:
+    RawValue: 65536
+  IsRanged: 0
+  MoveSpeed:
+    RawValue: 0
+  Population:
+    RawValue: 0
+  ModuleSlots: 3
+  SpawnCount: 1
+  Ability: 0
+  AbilityMultiplier:
+    RawValue: 65536
+  AbilitySeconds:
+    RawValue: 0
+  AbilityRadius:
+    RawValue: 0
+  AbilityCount: 0
+  AbilityCooldownSeconds:
+    RawValue: 0
+  SightRange:
+    RawValue: 917504
+  GarrisonFireOnly: 0
+  GarrisonSightRange:
+    RawValue: 0
+  SetupSeconds:
+    RawValue: 0
+  VehicleDamageRatio:
+    RawValue: 65536
+  MaxOwned: 0
+  StealthSeconds:
+    RawValue: 0
+  StealthCooldownSeconds:
+    RawValue: 0
+  StealthSpeedMultiplier:
+    RawValue: 65536
+  StealthExposeRadius:
+    RawValue: 0
+  JammerRange:
+    RawValue: 0
+  JammerSetupSeconds:
+    RawValue: 0
+  JammerSeconds:
+    RawValue: 0
+  JammerHealth:
+    RawValue: 0
+  JammerGatherMultiplier:
+    RawValue: 65536
+  DetectRadius:
+    RawValue: 0
+  SortieKind: 2
+  SortieSpeed:
+    RawValue: 1441792
+  SortieHealth:
+    RawValue: 29491200
+  SortieRearmSeconds:
+    RawValue: 5898240
+  SortieApproach:
+    RawValue: 1966080
+  SortieExit:
+    RawValue: 1966080
+  SortieTurn:
+    RawValue: 1179648
+  SortieWidth:
+    RawValue: 393216
+  SortieTicks: 0
+  SortieBombs: 4
+  SortieBombGap:
+    RawValue: 393216
+  SortieBuildingMultiplier:
+    RawValue: 131072
+  SortieCost:
+    Iron:
+      RawValue: 3932160
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 2621440
+    Power:
+      RawValue: 0
+  SortieCargo:
+    Id:
+      Value: 0
+  SortieCargoCount: 0

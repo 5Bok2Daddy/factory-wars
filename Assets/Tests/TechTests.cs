@@ -143,8 +143,8 @@ namespace FactoryWars.Tests {
     public void Tech_DataFollowsSizeRules() {
       var rules = Resources.Load<GameRulesSpec>("FactoryWars/game_rules");
       foreach (var faction in Resources.LoadAll<FactionSpec>("FactoryWars")) {
-        var units = faction.Units.Select(u => Resources.LoadAll<UnitSpec>("FactoryWars").First(s => s.Guid == u.Id)).ToArray();
-        // 진영마다 지상·공중 소형 3, 중형 3, 대형 2(해군 제외).
+        var units = faction.Units.Select(u => Resources.LoadAll<UnitSpec>("FactoryWars").First(s => s.Guid == u.Id)).Where(u => u.GarrisonFireOnly == false && u.SortieKind == SortieKind.None).ToArray();
+        // 항목 34: 주둔 저격수·작전기는 크기별 구성 수에 넣지 않는다. 진영마다 지상·공중 소형 3, 중형 3, 대형 2(해군 제외).
         Assert.AreEqual(3, units.Count(u => u.Size == UnitSize.Small && u.IsNaval == false), $"{faction.name} 소형");
         Assert.AreEqual(3, units.Count(u => u.Size == UnitSize.Medium && u.IsNaval == false), $"{faction.name} 중형");
         Assert.AreEqual(2, units.Count(u => u.Size == UnitSize.Large && u.IsNaval == false), $"{faction.name} 대형");

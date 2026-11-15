@@ -299,6 +299,10 @@ namespace Quantum.FactoryWars {
         reason = RejectReason.TierLocked;
         return false;
       }
+      if (unit.MaxOwned > 0 && SniperSystem.CountOwnedAndQueued(f, player, unit) + unit.SpawnCount > unit.MaxOwned) {
+        reason = RejectReason.Limit;
+        return false;
+      }
       if (unit.IsNaval == false && FindSizeRule(FactoryWarsUtil.Rules(f), unit.Size, out var rule) && rule.OwnedLimit > 0
           && OwnedOfSize(f, player, unit.Size) + unit.SpawnCount > rule.OwnedLimit) {
         reason = RejectReason.SizeLimit;

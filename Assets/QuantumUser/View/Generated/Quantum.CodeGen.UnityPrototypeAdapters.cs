@@ -132,6 +132,8 @@ namespace Quantum.Prototypes.Unity {
     public Int32 Research;
     public FP ResearchRemaining;
     public QBoolean CoverMade;
+    [ArrayLengthAttribute(4)]
+    public Quantum.Prototypes.HangarSlotPrototype[] Hangar = new Quantum.Prototypes.HangarSlotPrototype[4];
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BuildingPrototype prototype);
     public override Quantum.Prototypes.BuildingPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BuildingPrototype();
@@ -157,6 +159,7 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Research, out result.Research);
       converter.Convert(this.ResearchRemaining, out result.ResearchRemaining);
       converter.Convert(this.CoverMade, out result.CoverMade);
+      converter.Convert(this.Hangar, out result.Hangar);
       ConvertUser(converter, ref result);
       return result;
     }
@@ -211,6 +214,27 @@ namespace Quantum.Prototypes.Unity {
     }
   }
   [System.SerializableAttribute()]
+  public unsafe partial class JammerPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.JammerPrototype> {
+    public PlayerRef Owner;
+    public Quantum.QuantumEntityPrototype Node;
+    public FP Health;
+    public FP GatherMultiplier;
+    public Int32 UntilFrame;
+    public Int32 DetectedMask;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.JammerPrototype prototype);
+    public override Quantum.Prototypes.JammerPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.JammerPrototype();
+      converter.Convert(this.Owner, out result.Owner);
+      converter.Convert(this.Node, out result.Node);
+      converter.Convert(this.Health, out result.Health);
+      converter.Convert(this.GatherMultiplier, out result.GatherMultiplier);
+      converter.Convert(this.UntilFrame, out result.UntilFrame);
+      converter.Convert(this.DetectedMask, out result.DetectedMask);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
   public unsafe partial class PlayerStatePrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.PlayerStatePrototype> {
     public AssetRef<FactionSpec> Faction;
     public Quantum.Prototypes.ResourceCostPrototype Stock;
@@ -239,6 +263,14 @@ namespace Quantum.Prototypes.Unity {
     public Int32 SortieTickets;
     public Int32 DropCaptures;
     public Int32 DropContests;
+    public Int32 SnipeKillsInfantry;
+    public Int32 SnipeKillsEngineers;
+    public Int32 JammersPlaced;
+    public Int32 JammersDestroyed;
+    public Int32 Detections;
+    public Int32 SortiesLaunched;
+    public Int32 SortiesCompleted;
+    public Int32 SortiesShotDown;
     public Int32 HighGroundShots;
     public Int32 GarrisonEntries;
     public Int32 DisconnectedFrame;
@@ -302,6 +334,14 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.SortieTickets, out result.SortieTickets);
       converter.Convert(this.DropCaptures, out result.DropCaptures);
       converter.Convert(this.DropContests, out result.DropContests);
+      converter.Convert(this.SnipeKillsInfantry, out result.SnipeKillsInfantry);
+      converter.Convert(this.SnipeKillsEngineers, out result.SnipeKillsEngineers);
+      converter.Convert(this.JammersPlaced, out result.JammersPlaced);
+      converter.Convert(this.JammersDestroyed, out result.JammersDestroyed);
+      converter.Convert(this.Detections, out result.Detections);
+      converter.Convert(this.SortiesLaunched, out result.SortiesLaunched);
+      converter.Convert(this.SortiesCompleted, out result.SortiesCompleted);
+      converter.Convert(this.SortiesShotDown, out result.SortiesShotDown);
       converter.Convert(this.HighGroundShots, out result.HighGroundShots);
       converter.Convert(this.GarrisonEntries, out result.GarrisonEntries);
       converter.Convert(this.DisconnectedFrame, out result.DisconnectedFrame);
@@ -336,6 +376,43 @@ namespace Quantum.Prototypes.Unity {
     }
   }
   [System.SerializableAttribute()]
+  public unsafe partial class SortiePrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.SortiePrototype> {
+    public PlayerRef Owner;
+    public AssetRef<UnitSpec> Spec;
+    public Quantum.QuantumEntityPrototype Airfield;
+    public Int32 Slot;
+    public Int32 StartFrame;
+    public FP Speed;
+    public FP Health;
+    public FPVector3 Target;
+    public FPVector2 Heading;
+    [ArrayLengthAttribute(6)]
+    public FPVector3[] Points = new FPVector3[6];
+    [ArrayLengthAttribute(6)]
+    public FP[] Cum = new FP[6];
+    public Int32 NextEvent;
+    public QBoolean Dropped;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.SortiePrototype prototype);
+    public override Quantum.Prototypes.SortiePrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.SortiePrototype();
+      converter.Convert(this.Owner, out result.Owner);
+      converter.Convert(this.Spec, out result.Spec);
+      converter.Convert(this.Airfield, out result.Airfield);
+      converter.Convert(this.Slot, out result.Slot);
+      converter.Convert(this.StartFrame, out result.StartFrame);
+      converter.Convert(this.Speed, out result.Speed);
+      converter.Convert(this.Health, out result.Health);
+      converter.Convert(this.Target, out result.Target);
+      converter.Convert(this.Heading, out result.Heading);
+      converter.Convert(this.Points, out result.Points);
+      converter.Convert(this.Cum, out result.Cum);
+      converter.Convert(this.NextEvent, out result.NextEvent);
+      converter.Convert(this.Dropped, out result.Dropped);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
   public unsafe partial class UnitPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.UnitPrototype> {
     public PlayerRef Owner;
     public AssetRef<UnitSpec> Spec;
@@ -364,6 +441,14 @@ namespace Quantum.Prototypes.Unity {
     public Quantum.QuantumEntityPrototype Cover;
     public QBoolean InCover;
     public Int32 AssaultUntilFrame;
+    public Int32 SetupUntilFrame;
+    public Int32 StealthUntilFrame;
+    public Int32 StealthReadyFrame;
+    public Int32 MuzzleRevealUntilFrame;
+    public Int32 MuzzleVictimMask;
+    public Int32 DetectedMask;
+    public Int32 JammerUntilFrame;
+    public Quantum.QuantumEntityPrototype JammerNode;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
     public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.UnitPrototype();
@@ -393,6 +478,14 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Cover, out result.Cover);
       converter.Convert(this.InCover, out result.InCover);
       converter.Convert(this.AssaultUntilFrame, out result.AssaultUntilFrame);
+      converter.Convert(this.SetupUntilFrame, out result.SetupUntilFrame);
+      converter.Convert(this.StealthUntilFrame, out result.StealthUntilFrame);
+      converter.Convert(this.StealthReadyFrame, out result.StealthReadyFrame);
+      converter.Convert(this.MuzzleRevealUntilFrame, out result.MuzzleRevealUntilFrame);
+      converter.Convert(this.MuzzleVictimMask, out result.MuzzleVictimMask);
+      converter.Convert(this.DetectedMask, out result.DetectedMask);
+      converter.Convert(this.JammerUntilFrame, out result.JammerUntilFrame);
+      converter.Convert(this.JammerNode, out result.JammerNode);
       ConvertUser(converter, ref result);
       return result;
     }

@@ -156,7 +156,7 @@ namespace Quantum.FactoryWars {
       if (MoveInto(f, entity, worker, position, node->Shape.Spot(worker->Spot - 1, rules), rules.SpotArrival) == false) {
         return;
       }
-      worker->WorkTimer += f.DeltaTime;
+      worker->WorkTimer += f.DeltaTime * SniperSystem.GatherMultiplier(f, worker->Target);
       if (worker->WorkTimer < (node->Kind == ResourceKind.Iron ? rules.IronGatherSeconds : rules.WoodGatherSeconds)) {
         return;
       }

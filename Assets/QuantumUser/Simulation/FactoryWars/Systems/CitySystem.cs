@@ -115,6 +115,13 @@ namespace Quantum.FactoryWars {
     public static void Enter(Frame f, EntityRef entity, Unit* unit, EntityRef building) {
       CoverSystem.Release(f, unit);
       unit->Garrison = building;
+      // 항목 34-C: 저격수는 올라간 직후 SetupSeconds(올라가기 3초 + 자리 잡기 2초) 동안 사격 못 하고, 은신·교란 설치는 풀린다.
+      var enterSpec = f.FindAsset(unit->Spec);
+      if (enterSpec.GarrisonFireOnly) {
+        unit->SetupUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, enterSpec.SetupSeconds);
+        unit->StealthUntilFrame = 0;
+        unit->JammerUntilFrame = 0;
+      }
       unit->Order = UnitOrder.Stop;
       unit->TargetEntity = EntityRef.None;
       f.Remove<NavMeshPathfinder>(entity);

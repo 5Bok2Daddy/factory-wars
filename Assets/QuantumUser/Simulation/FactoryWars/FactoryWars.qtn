@@ -14,7 +14,7 @@ enum Relation : Byte { Enemy, Allied, BreakPending }
 // Hold: 위치 고수(쫓지 않음). Patrol: TargetPosition과 PatrolOrigin 사이를 공격 이동으로 오간다(항목 30).
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget, Hold, Patrol }
 enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce, Attack, Garrison, Upgrade, Research, Ultimate }
-enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce, TierLocked, SizeLimit, Busy, NoVision }
+enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce, TierLocked, SizeLimit, Busy, NoVision, NeedGarrison, NoSetup, Limit }
 enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
 enum BotDifficulty : Byte { Easy, Normal }
 enum ResourceKind : Byte { Iron, Wood }
@@ -74,6 +74,16 @@ struct PlayerState {
     Int32 SortieTickets;
     Int32 DropCaptures;
     Int32 DropContests;
+    // 항목 34-C 주둔 저격수 측정: 저격 처치(보병·공병), 교란 장치 설치·파괴, 탐지로 드러난 횟수.
+    Int32 SnipeKillsInfantry;
+    Int32 SnipeKillsEngineers;
+    Int32 JammersPlaced;
+    Int32 JammersDestroyed;
+    Int32 Detections;
+    // 항목 34-D 작전 측정: 출격·완료·격추.
+    Int32 SortiesLaunched;
+    Int32 SortiesCompleted;
+    Int32 SortiesShotDown;
     Int32 HighGroundShots;
     Int32 GarrisonEntries;
     // 항목 30 온라인: 연결이 끊긴 프레임(0이면 연결됨). 끊긴 동안은 봇이 대신 조종한다.
@@ -208,6 +218,43 @@ component Unit {
     QBoolean InCover;
     // 항목 33 상륙 강습: 이 프레임까지 공격력 보너스.
     Int32 AssaultUntilFrame;
+    // 항목 34-C 주둔 저격수: 이 프레임부터 사격 가능(올라가기+자리 잡기), 은신 끝·다음 은신 가능 프레임, 사격 노출 끝 프레임과 피격 진영 비트, 탐지한 진영 비트.
+    Int32 SetupUntilFrame;
+    Int32 StealthUntilFrame;
+    Int32 StealthReadyFrame;
+    Int32 MuzzleRevealUntilFrame;
+    Int32 MuzzleVictimMask;
+    Int32 DetectedMask;
+    // 교란 장치 설치 중: 끝나는 프레임과 대상 자원 노드.
+    Int32 JammerUntilFrame;
+    entity_ref JammerNode;
+}
+
+// 항목 34-C 채굴 교란 장치. 은신 저격수가 적 자원 노드 곁에 둔다. 노드 채집 속도가 줄고, 탐지된 쪽에게만 보인다. DetectedMask는 탐지한 진영 비트.
+component Jammer {
+    player_ref Owner;
+    entity_ref Node;
+    FP Health;
+    FP GatherMultiplier;
+    Int32 UntilFrame;
+    Int32 DetectedMask;
+}
+
+// 항목 34-D 비조작 작전기. 출격 때 점 6개(비행장·진입·목표·이탈·선회·비행장)와 누적 길이를 저장하고, 위치는 경과 프레임 × 속도로 구간 누적 거리를 따라 계산한다.
+component Sortie {
+    player_ref Owner;
+    asset_ref<UnitSpec> Spec;
+    entity_ref Airfield;
+    Int32 Slot;
+    Int32 StartFrame;
+    FP Speed;
+    FP Health;
+    FPVector3 Target;
+    FPVector2 Heading;
+    array<FPVector3>[6] Points;
+    array<FP>[6] Cum;
+    Int32 NextEvent;
+    QBoolean Dropped;
 }
 
 // 항목 33 공중 항모. Docked는 격납 중인 드론 수, BuildProgress는 잃은 드론 재생산 진행(초), LastContactFrame은 반경 안에서 적을 마지막으로 본 프레임.
@@ -263,6 +310,13 @@ component Worker {
     Int32 Spot;
 }
 
+// 항목 34-D 비행장 격납 칸. State 0 빔, 1 대기(ReadyFrame부터 출격 가능), 2 출격 중.
+struct HangarSlot {
+    asset_ref<UnitSpec> Spec;
+    Int32 State;
+    Int32 ReadyFrame;
+}
+
 component Building {
     player_ref Owner;
     asset_ref<BuildingSpec> Spec;
@@ -290,6 +344,8 @@ component Building {
     FP ResearchRemaining;
     // 항목 32: 엄폐점을 만들었는지(모래주머니·벙커).
     QBoolean CoverMade;
+    // 항목 34-D: 비행장 격납 칸 4개.
+    array<HangarSlot>[4] Hangar;
 }
 
 component ResourceNode {
@@ -390,6 +446,13 @@ synced event SupplyDropIncoming { Int32 Group; Int32 Frame; }
 // 항목 34-B: 단계별 공개. Zone·Closing은 정확한 자리가 아니라 원의 중심과 반지름이다. Landed부터 상자 자리가 드러난다. Kind는 Captured일 때 보상 종류(0 자원, 1 긴급 출격권, 2 정찰 사진, 3 보급).
 synced event SupplyDropStage { DropPhase Phase; FPVector3 Position; FP Radius; Int32 Frame; Int32 Group; player_ref Player; Int32 Kind; }
 synced event CratePicked { player_ref Player; FPVector3 Position; ResourceCost Reward; }
+// 항목 34-C: 저격수가 쏜 사격. 피격 진영에 방향을 알리고 총구 섬광을 그린다.
+synced event SniperFired { player_ref Shooter; player_ref Victim; FPVector3 From; FPVector3 To; QBoolean Killed; }
+synced event JammerPlaced { player_ref Owner; entity_ref Jammer; FPVector3 Position; }
+synced event JammerRemoved { player_ref Owner; FPVector3 Position; QBoolean Destroyed; }
+// 항목 34-D: 작전기 출격(Kind는 SortieKind)과 종료(격추 여부).
+synced event SortieLaunched { player_ref Player; entity_ref Sortie; Int32 Kind; FPVector3 Target; }
+synced event SortieEnded { player_ref Player; QBoolean ShotDown; FPVector3 Position; }
 synced event BaseUnderAttack { player_ref Player; FPVector3 Position; }
 synced event CityBuildingDamaged { entity_ref Building; Int32 Index; Int32 Stage; }
 synced event CityBuildingCollapsed { Int32 Index; }

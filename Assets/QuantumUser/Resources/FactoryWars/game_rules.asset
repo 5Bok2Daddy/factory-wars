@@ -232,6 +232,20 @@ MonoBehaviour:
   TopplePushMargin:
     RawValue: 98304
   GarrisonCapacity: 3
+  MuzzleRevealSeconds:
+    RawValue: 262144
+  MuzzleRevealRadius:
+    RawValue: 393216
+  RadarDetectRadius:
+    RawValue: 1966080
+  JammerDisarmPerSecond:
+    RawValue: 655360
+  JammerDisarmRadius:
+    RawValue: 262144
+  SortieAntiAirFactor:
+    RawValue: 196608
+  SniperVsSniperMultiplier:
+    RawValue: 131072
   GarrisonRangeBonus:
     RawValue: 131072
   GarrisonEnterDistance:

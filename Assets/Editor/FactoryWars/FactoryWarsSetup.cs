@@ -270,6 +270,8 @@ namespace FactoryWars.EditorTools {
     static readonly UnitRow[] Units = {
       new UnitRow { Id = "ff_engineer", At = "headquarters", Size = UnitSize.Engineer, Cost = R(100), Build = 10, Health = 80, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
       new UnitRow { Id = "ff_ranger_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 50), Build = 15, Health = 150, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
+      // 항목 34-C 주둔 저격수(진영별 수치가 약간 다름). 2단계, 보유 3, 인구 2. 사격·은신·교란 값은 아래 SniperTable.
+      new UnitRow { Id = "ff_sniper", At = "barracks", Size = UnitSize.Small, Cost = R(120, 60, 40), Build = 20, Health = 60, Attack = AttackType.AntiInfantry, Damage = 140, Range = 24, Interval = 6, Speed = 2.4, Population = 2 },
       new UnitRow { Id = "ff_skyguard_squad", At = "barracks", Size = UnitSize.Small, Cost = R(80, 50, 0, 20), Build = 18, Health = 120, Attack = AttackType.AntiAir, Damage = 20, Range = 8, Interval = 1, Speed = 4, Ability = SpecialAbility.AirPriority },
       // 항목 31 새 소형: 군수공장의 빠른 정찰차.
       new UnitRow { Id = "ff_scout_buggy", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Small, Cost = R(90, 30, 0, 10), Build = 14, Health = 160, Attack = AttackType.AntiInfantry, Damage = 12, Range = 7, Interval = 1, Speed = 7.5 },
@@ -288,6 +290,7 @@ namespace FactoryWars.EditorTools {
       // 2차: 2인이 대륙으로 넘어가 간격 0.9→1, 용린 체력 620→570으로 되돌리고 사거리 7만 남긴다(같은 값 교전에서 자유 연방이 30~40% 남기고 이김).
       // 3차(ai-33-*-t2: 2인 대륙 81%, 4인 자유 64%): 사거리 7→6.5.
       new UnitRow { Id = "cf_militia", At = "barracks", Size = UnitSize.Small, Cost = R(45, 50), Build = 12, Health = 80, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6.5, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
+      new UnitRow { Id = "cf_sniper", At = "barracks", Size = UnitSize.Small, Cost = R(100, 60, 30), Build = 18, Health = 70, Attack = AttackType.AntiInfantry, Damage = 140, Range = 22, Interval = 5.5, Speed = 2.4, Population = 2 },
       new UnitRow { Id = "cf_flame_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 130, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
       // 항목 31 새 소형: 군수공장의 싸고 빠른 척후 오토바이.
       new UnitRow { Id = "cf_scout_bike", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Small, Cost = R(60, 30), Build = 10, Health = 110, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 0.8, Speed = 8 },
@@ -300,6 +303,13 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "cf_fortress_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(380, 0, 160, 120), Build = 50, Health = 1500, Attack = AttackType.AntiArmor, Damage = 90, Range = 9, Interval = 2.5, Speed = 3.5, Population = 5 },
       new UnitRow { Id = "ff_scout_boat", At = "shipyard", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
       new UnitRow { Id = "ff_artillery_ship", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
+      // 항목 34-D 작전기(비조작, 비행장 격납 칸). 전투기=기총소사(2단계), 공격기=폭격(3단계), 수송기=공수 투하(2단계). 수치는 ApplySortie 표.
+      new UnitRow { Id = "ff_sortie_fighter", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(180, 0, 60, 80), Build = 24, Health = 300, Attack = AttackType.AntiInfantry, Damage = 8, Range = 0, Interval = 1, Speed = 0 },
+      new UnitRow { Id = "ff_sortie_striker", At = "airfield", Size = UnitSize.Large, Air = true, Cost = R(300, 0, 140, 160), Build = 40, Health = 450, Attack = AttackType.Area, Damage = 160, Range = 0, Interval = 1, Speed = 0 },
+      new UnitRow { Id = "ff_sortie_transport", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(200, 0, 60, 80), Build = 30, Health = 350, Attack = AttackType.None, Speed = 0 },
+      new UnitRow { Id = "cf_sortie_fighter", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(150, 0, 50, 70), Build = 22, Health = 260, Attack = AttackType.AntiInfantry, Damage = 7, Range = 0, Interval = 1, Speed = 0 },
+      new UnitRow { Id = "cf_sortie_striker", At = "airfield", Size = UnitSize.Large, Air = true, Cost = R(260, 0, 120, 140), Build = 36, Health = 400, Attack = AttackType.Area, Damage = 140, Range = 0, Interval = 1, Speed = 0 },
+      new UnitRow { Id = "cf_sortie_transport", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(170, 0, 50, 70), Build = 28, Health = 320, Attack = AttackType.None, Speed = 0 },
       new UnitRow { Id = "cf_scout_boat", At = "shipyard", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
       new UnitRow { Id = "cf_artillery_ship", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
     };
@@ -346,8 +356,101 @@ namespace FactoryWars.EditorTools {
       spec.AbilityRadius = N(row.AbilityRadius);
       spec.AbilityCount = row.AbilityCount;
       spec.AbilityCooldownSeconds = N(row.AbilityCooldown);
+      ApplySniper(spec, row);
+      ApplySortie(spec, row);
       EditorUtility.SetDirty(spec);
       return spec;
+    }
+
+    /// <summary>항목 34-C 주둔 저격수 값(전부 데이터, 설계: NEXT-TASK-34 C절). 은신 20초·대기 60초, 이동 -30%, 4m 접근 노출, 교란 장치 10m·설치 4초·60초·체력 50·채집 -40%.</summary>
+    static void ApplySniper(UnitSpec spec, UnitRow row) {
+      spec.GarrisonFireOnly = false;
+      spec.GarrisonSightRange = 0;
+      spec.SetupSeconds = 0;
+      spec.VehicleDamageRatio = 1;
+      spec.MaxOwned = 0;
+      spec.StealthSeconds = 0;
+      spec.StealthCooldownSeconds = 0;
+      spec.StealthSpeedMultiplier = 1;
+      spec.StealthExposeRadius = 0;
+      spec.JammerRange = 0;
+      spec.JammerSetupSeconds = 0;
+      spec.JammerSeconds = 0;
+      spec.JammerHealth = 0;
+      spec.JammerGatherMultiplier = 1;
+      // 정찰 버기·척후 오토바이는 은신·숨긴 장치를 10m에서 드러낸다.
+      spec.DetectRadius = row.Id.EndsWith("scout_buggy") || row.Id.EndsWith("scout_bike") ? N(10) : 0;
+      if (row.Id.EndsWith("_sniper") == false) {
+        return;
+      }
+      spec.GarrisonFireOnly = true;
+      spec.RequiredTier = 2;
+      spec.SightRange = N(10);
+      spec.GarrisonSightRange = N(26);
+      spec.SetupSeconds = N(5);
+      spec.VehicleDamageRatio = N(30.0 / 140.0);
+      spec.MaxOwned = 3;
+      spec.StealthSeconds = N(20);
+      spec.StealthCooldownSeconds = N(60);
+      spec.StealthSpeedMultiplier = N(0.7);
+      spec.StealthExposeRadius = N(4);
+      spec.JammerRange = N(10);
+      spec.JammerSetupSeconds = N(4);
+      spec.JammerSeconds = N(60);
+      spec.JammerHealth = N(50);
+      spec.JammerGatherMultiplier = N(0.6);
+    }
+
+    /// <summary>항목 34-D 작전기 값(설계: NEXT-TASK-34 D절). 진영별로 조금 다르다. 속도는 m/s, 재정비는 초.</summary>
+    static void ApplySortie(UnitSpec spec, UnitRow row) {
+      spec.SortieKind = SortieKind.None;
+      if (row.Id.Contains("_sortie_") == false) {
+        return;
+      }
+      var free = row.Id.StartsWith("ff_");
+      spec.Population = 0;
+      spec.IsAir = true;
+      spec.SpawnCount = 1;
+      spec.SortieHealth = N(row.Health);
+      spec.SortieCargo = default;
+      spec.SortieCargoCount = 0;
+      spec.SortieBombs = 0;
+      spec.SortieTicks = 0;
+      spec.SortieBombGap = 0;
+      spec.SortieBuildingMultiplier = 1;
+      if (row.Id.EndsWith("fighter")) {
+        spec.SortieKind = SortieKind.Strafe;
+        spec.SortieSpeed = N(free ? 26 : 24);
+        spec.SortieRearmSeconds = 45;
+        spec.SortieApproach = 24;
+        spec.SortieExit = 24;
+        spec.SortieTurn = 14;
+        spec.SortieWidth = 5;
+        spec.SortieTicks = 2;
+        spec.SortieCost = R(30, 0, 10);
+      } else if (row.Id.EndsWith("striker")) {
+        spec.SortieKind = SortieKind.Bomb;
+        spec.SortieSpeed = N(free ? 22 : 20);
+        spec.SortieRearmSeconds = 90;
+        spec.SortieApproach = 30;
+        spec.SortieExit = 30;
+        spec.SortieTurn = 18;
+        spec.SortieWidth = 6;
+        spec.SortieBombs = 4;
+        spec.SortieBombGap = 6;
+        spec.SortieBuildingMultiplier = 2;
+        spec.SortieCost = R(60, 0, 40);
+      } else {
+        spec.SortieKind = SortieKind.Drop;
+        spec.SortieSpeed = N(free ? 20 : 18);
+        spec.SortieRearmSeconds = 120;
+        spec.SortieApproach = 30;
+        spec.SortieExit = 20;
+        spec.SortieTurn = 16;
+        spec.SortieWidth = 6;
+        spec.SortieCargoCount = 6;
+        spec.SortieCost = R(40, 0, 20);
+      }
     }
 
     static BuildingSpec BuildBuilding(string id, ResourceCost cost, int seconds, int health, int population, int slots, params UnitSpec[] producible) {
@@ -396,7 +499,7 @@ namespace FactoryWars.EditorTools {
         BuildBuilding($"{prefix}_medic_tent", R(150, 100, 0, 50), 20, 600, 0, 0),
         BuildBuilding($"{prefix}_repair_bay", R(200, 50, 40, 60), 25, 900, 0, 0),
         BuildBuilding($"{prefix}_radar", R(200, 0, 60, 120), 25, 700, 0, 0),
-        BuildBuilding($"{prefix}_helipad", R(250, 0, 60, 150), 25, 800, 0, 0, At("airfield").Where(u => u.IsAir && u.Size == UnitSize.Medium).ToArray()),
+        BuildBuilding($"{prefix}_helipad", R(250, 0, 60, 150), 25, 800, 0, 0, At("airfield").Where(u => u.IsAir && u.Size == UnitSize.Medium && u.name.Contains("_sortie_") == false).ToArray()),
         BuildBuilding($"{prefix}_artillery", R(350, 0, 150, 150), 35, 1200, 0, 0),
         // 항목 33 궁극 전력 전용 건물(20): 항모 조립창 / 미사일 격납고. 3단계, 준비·보유 중에만 전기 4/초. 건설 45→30초(3차: AI 첫 사용이 21~23분으로 늦었다).
         BuildBuilding(siteId, R(600, 0, 300, 300), 30, 2200, 0, 0),
@@ -671,6 +774,10 @@ namespace FactoryWars.EditorTools {
       assault.CraftCount = 2;
       // 탑재 부대: 중형 기갑 4 + 소형 보병 4(상륙정 두 척에 번갈아 싣는다).
       var tank = Ref(units["ff_eagle_tank"]);
+      units["ff_sortie_transport"].SortieCargo = Ref(units["ff_ranger_squad"]);
+      units["cf_sortie_transport"].SortieCargo = Ref(units["cf_militia"]);
+      EditorUtility.SetDirty(units["ff_sortie_transport"]);
+      EditorUtility.SetDirty(units["cf_sortie_transport"]);
       var squad = Ref(units["ff_ranger_squad"]);
       assault.Cargo = new[] { tank, tank, squad, squad, tank, tank, squad, squad };
       assault.LandedBonusSeconds = 30;
@@ -955,6 +1062,14 @@ namespace FactoryWars.EditorTools {
       rules.TopplePushMargin = N(1.5);
       rules.GarrisonCapacity = 3;
       rules.GarrisonRangeBonus = 2;
+      // 항목 34-C 주둔 저격수 규칙.
+      rules.MuzzleRevealSeconds = 4;
+      rules.MuzzleRevealRadius = 6;
+      rules.SniperVsSniperMultiplier = 2;
+      rules.RadarDetectRadius = 30;
+      rules.JammerDisarmPerSecond = 10;
+      rules.JammerDisarmRadius = 4;
+      rules.SortieAntiAirFactor = N(3);
       rules.GarrisonEnterDistance = 2;
       rules.CityCrackedFraction = N(0.6);
       rules.CityBurningFraction = N(0.3);

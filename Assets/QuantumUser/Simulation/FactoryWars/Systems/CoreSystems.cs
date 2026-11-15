@@ -104,6 +104,10 @@ namespace Quantum.FactoryWars {
       if (f.Unsafe.TryGetPointer<Unit>(entity, out var unit) == false || unit->Owner == player) {
         return true;
       }
+      // 항목 34-C: 은신한 저격수는 탐지되지 않은 적에게 안 보인다.
+      if (SniperSystem.IsConcealedFrom(f, unit, player)) {
+        return false;
+      }
       var map = MapInfo(f);
       var position = f.Unsafe.GetPointer<Transform3D>(entity)->Position;
       var ground = map.HighGroundAt(position);

@@ -64,3 +64,65 @@ MonoBehaviour:
     RawValue: 0
   SightRange:
     RawValue: 917504
+  GarrisonFireOnly: 0
+  GarrisonSightRange:
+    RawValue: 0
+  SetupSeconds:
+    RawValue: 0
+  VehicleDamageRatio:
+    RawValue: 65536
+  MaxOwned: 0
+  StealthSeconds:
+    RawValue: 0
+  StealthCooldownSeconds:
+    RawValue: 0
+  StealthSpeedMultiplier:
+    RawValue: 65536
+  StealthExposeRadius:
+    RawValue: 0
+  JammerRange:
+    RawValue: 0
+  JammerSetupSeconds:
+    RawValue: 0
+  JammerSeconds:
+    RawValue: 0
+  JammerHealth:
+    RawValue: 0
+  JammerGatherMultiplier:
+    RawValue: 65536
+  DetectRadius:
+    RawValue: 0
+  SortieKind: 0
+  SortieSpeed:
+    RawValue: 0
+  SortieHealth:
+    RawValue: 0
+  SortieRearmSeconds:
+    RawValue: 0
+  SortieApproach:
+    RawValue: 0
+  SortieExit:
+    RawValue: 0
+  SortieTurn:
+    RawValue: 0
+  SortieWidth:
+    RawValue: 0
+  SortieTicks: 0
+  SortieBombs: 0
+  SortieBombGap:
+    RawValue: 0
+  SortieBuildingMultiplier:
+    RawValue: 65536
+  SortieCost:
+    Iron:
+      RawValue: 0
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  SortieCargo:
+    Id:
+      Value: 0
+  SortieCargoCount: 0

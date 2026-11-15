@@ -1,6 +1,9 @@
 namespace Quantum {
   public enum UnitSize { Engineer, Small, Medium, Large }
 
+  /// <summary>항목 34-D 작전기 종류: 기총소사·폭격·공수 투하. None이면 일반 유닛.</summary>
+  public enum SortieKind { None, Strafe, Bomb, Drop }
+
   public enum BuildingRole {
     Headquarters, PowerPlant, Processor, SupplyDepot, Barracks, ResearchLab, VehicleFactory, Airfield, HeavyWorks, GroundTower, CollectionYard, AirDefense, Shipyard,
     // 항목 32
