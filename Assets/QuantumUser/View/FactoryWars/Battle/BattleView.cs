@@ -830,6 +830,52 @@ namespace FactoryWars.View {
       actor.View.Model.transform.localPosition = position;
     }
 
+    /// <summary>확장 사령부: 주인의 시작 자리에서 25m 넘게 떨어진 사령부.</summary>
+    public const float ForwardDistance = 25f;
+    const float ForwardRingExtra = 4.2f;
+
+    static bool IsForward(Frame frame, PlayerRef owner, Vector3 position) {
+      var home = FactoryWarsUtil.StartPosition(frame, owner).ToUnityVector3();
+      return new Vector2(position.x - home.x, position.z - home.z).magnitude > ForwardDistance;
+    }
+
+    /// <summary>전진 사령부 수: 확장 사령부 표시를 단 건물 수(테스트용).</summary>
+    public int ForwardHeadquarters { get; private set; }
+
+    /// <summary>
+    /// 전진(확장) 사령부 표시: 일반 사령부·도시 건물과 한눈에 구분되도록 이동식 레이더·위성 안테나, 둘레 헤스코 방벽 고리,
+    /// 탄약 상자 더미, 위장망, 작업등을 사령부 둘레에 놓는다(공사 중에는 숨김). 화면 전용.
+    /// </summary>
+    void DressForward(Actor actor, BuildingSpec spec, Vector3 worldPos) {
+      if (actor.Dressing == null) {
+        var root = new GameObject("BuildingDressing").transform;
+        root.SetParent(actor.View.Turn, false);
+        actor.Dressing = root.gameObject;
+      }
+      var group = new GameObject("ForwardCommand").transform;
+      group.SetParent(actor.Dressing.transform, false);
+      var r = spec.FootprintRadius.AsFloat;
+      var seed = KenneyAssetMap.Seed(worldPos, 911);
+      DressingSpawn.Place(DressKind.ForwardRadar, group, new Vector3(r + 2.2f, 0f, r * 0.2f), 90f, seed);
+      DressingSpawn.Place(DressKind.TraderDish, group, new Vector3(-r - 1.4f, 0f, r * 0.7f), 0f, seed + 1);
+      DressingSpawn.Place(DressKind.TraderNet, group, new Vector3(-r - 2.6f, 0f, -r * 0.6f), 0f, seed + 2);
+      for (var i = 0; i < 4; i++) {
+        DressingSpawn.Place(DressKind.TraderAmmo, group, new Vector3(r * 0.3f + i * 1.5f, 0f, -r - 2f), 0f, seed + 3 + i);
+      }
+      DressingSpawn.Place(DressKind.TraderLight, group, new Vector3(r + 1.2f, 0f, -r - 1.2f), 180f, seed + 8);
+      // 헤스코 방벽 고리(앞쪽 출입구는 비움).
+      var ring = r + ForwardRingExtra;
+      for (var i = 0; i < 12; i++) {
+        var angle = i * 30f;
+        if (angle > 150f && angle < 210f) {
+          continue;
+        }
+        var local = Quaternion.Euler(0f, angle, 0f) * Vector3.forward * ring;
+        DressingSpawn.Place(DressKind.TraderSandbag, group, local, angle, seed + 20 + i);
+      }
+      ForwardHeadquarters++;
+    }
+
     static void DressBuilding(Actor actor, BuildingSpec spec, Vector3 worldPos) {
       if (spec.Role == BuildingRole.GroundTower || spec.Role == BuildingRole.AirDefense || spec.FootprintRadius.AsFloat < 2.2f) {
         return;
@@ -863,6 +909,12 @@ namespace FactoryWars.View {
         actor.View.transform.position = position;
         actor.View.AddPlate(frame.FindAsset(building->Spec).FootprintRadius.AsFloat, frame.Global->Players.GetPointer(building->Owner)->ColorIndex);
         DressBuilding(actor, spec, position);
+        var forward = spec.Role == BuildingRole.Headquarters && IsForward(frame, building->Owner, position);
+        if (forward) {
+          DressForward(actor, spec, position);
+        }
+        // 건물(전진 사령부는 방벽 고리까지) 자리의 길가·흩뿌림 장식을 걷어낸다.
+        DressingRenderer.Active?.ClearAround(position, spec.FootprintRadius.AsFloat + (forward ? ForwardRingExtra + 1.5f : 1.5f), "urban", "scatter");
         actor.HullYaw = 180f;
         actor.View.SetYaw(180f);
       }
@@ -1003,6 +1055,12 @@ namespace FactoryWars.View {
     /// 고른 아군 유닛 → 표적: 붉은 공격선(#FF2A2A)과 표적 아래 맥동하는 붉은 점선 조준 고리. 이동 중이면 목적지까지 초록 이동선(#38F27A)과 목적지 고리.
     /// 화면 전용(시뮬레이션 TargetEntity·TargetPosition을 읽기만 함).
     /// </summary>
+    const float MoveLineWidth = 0.1f;
+    const float AttackLineWidth = 0.12f;
+    const float MoveLineHold = 1.2f;
+    const float MoveLineFade = 0.8f;
+    readonly Dictionary<EntityRef, (Vector3 Goal, float Since)> _moveSeen = new Dictionary<EntityRef, (Vector3, float)>();
+
     void CommandLines(Frame frame, SelectionModel selection) {
       _attackLine ??= LineMaterial(new Color(1f, 0.165f, 0.165f, 0.75f));
       _moveLine ??= LineMaterial(new Color(0.22f, 0.95f, 0.48f, 0.7f));
@@ -1018,6 +1076,7 @@ namespace FactoryWars.View {
         var from = actor.View.transform.position + Vector3.up * 0.5f;
         if (TryTarget(frame, unit->TargetEntity, out var at, out _)) {
           var line = Line(lines++, _attackLine);
+          line.widthMultiplier = AttackLineWidth;
           line.SetPosition(0, from);
           line.SetPosition(1, at);
           attack++;
@@ -1034,8 +1093,15 @@ namespace FactoryWars.View {
         if ((unit->Order == UnitOrder.Move || unit->Order == UnitOrder.AttackMove)) {
           var goal = unit->TargetPosition.ToUnityVector3();
           goal.y = 0.15f;
-          if ((goal - from).sqrMagnitude > 4f) {
+          // 명령을 받은 뒤 1.2초 동안 보이고 0.8초에 걸쳐 가늘어지며 사라진다(새 목적지면 다시 처음부터).
+          if (_moveSeen.TryGetValue(entity, out var seen) == false || (seen.Goal - goal).sqrMagnitude > 0.25f) {
+            seen = (goal, Time.time);
+            _moveSeen[entity] = seen;
+          }
+          var fade = 1f - Mathf.Clamp01((Time.time - seen.Since - MoveLineHold) / MoveLineFade);
+          if ((goal - from).sqrMagnitude > 4f && fade > 0f) {
             var line = Line(lines++, _moveLine);
+            line.widthMultiplier = MoveLineWidth * fade;
             line.SetPosition(0, new Vector3(from.x, 0.15f, from.z));
             line.SetPosition(1, goal);
             move++;

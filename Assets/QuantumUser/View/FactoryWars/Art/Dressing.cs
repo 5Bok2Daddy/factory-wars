@@ -406,6 +406,34 @@ namespace FactoryWars.View {
 
     public IEnumerable<string> GroupNames => _groups.Keys;
 
+    /// <summary>
+    /// 플레이어 건물이 들어선 자리의 길가·흩뿌림 장식(컨테이너·방벽·잡풀 등)을 반경 안에서 걷어낸다. 지운 개수를 돌려준다.
+    /// 지도 장식은 시작할 때 한 번 깔려 나중에 지어지는 건물을 모르므로, 건물이 생길 때 화면에서 비운다(판정과 무관).
+    /// </summary>
+    public int ClearAround(Vector3 center, float radius, params string[] groups) {
+      var removed = 0;
+      foreach (var name in groups) {
+        if (_groups.TryGetValue(name, out var items) == false) {
+          continue;
+        }
+        var kept = new List<Dressing.Item>(items.Count);
+        foreach (var item in items) {
+          var p = item.World.GetColumn(3);
+          var dx = p.x - center.x;
+          var dz = p.z - center.z;
+          if (dx * dx + dz * dz < radius * radius) {
+            removed++;
+            continue;
+          }
+          kept.Add(item);
+        }
+        if (kept.Count != items.Count) {
+          Set(name, kept);
+        }
+      }
+      return removed;
+    }
+
     public IReadOnlyList<Dressing.Item> Group(string group) => _groups.TryGetValue(group, out var list) ? list : System.Array.Empty<Dressing.Item>();
 
     /// <summary>품질이 바뀌면(낮음은 나무 수를 줄인다) 모두 다시 만든다.</summary>

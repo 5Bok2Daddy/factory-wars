@@ -62,7 +62,8 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(0, mini.TerritoryPixels[2], "모르는 적 영역은 숨김");
       var far = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset).StartPositions[1].ToUnityVector3();
       var c = mini.PixelAt(far);
-      Assert.Less(c.r + c.g + c.b, 60, "미탐색 = 검정");
+      Assert.Less(c.r + c.g + c.b, 110, "미탐색 = 22% 밝기로 어둡게");
+      Assert.Greater(c.r + c.g + c.b, 20, "미탐색에서도 지도 윤곽이 보인다(완전 검정 아님)");
       Assert.AreEqual(1, mini.TraderState, "암시장 금색");
     }
 
@@ -83,6 +84,71 @@ namespace FactoryWars.Tests {
       big.Apply();
       var path = Path.Combine(UrbanFolder(), name + ".png");
       File.WriteAllBytes(path, big.EncodeToPNG());
+    }
+
+    /// <summary>
+    /// HUD 포함 캡처: 주 카메라(안개·후처리 포함)를 먼저 그리고, UI만 따로 비추는 카메라(후처리 없음, 지우지 않음)로 캔버스를 위에 덮는다.
+    /// 실제 게임은 Overlay 캔버스라 안개·비네트가 HUD를 어둡게 하지 않는다. 캡처도 같게 만든다.
+    /// </summary>
+    static Texture2D Grab(Camera camera) {
+      var surface = new RenderTexture(1920, 1080, 24, RenderTextureFormat.ARGB32);
+      camera.targetTexture = surface;
+      camera.Render();
+      RenderTexture.active = surface;
+      var image = new Texture2D(1920, 1080, TextureFormat.RGBA32, false);
+      image.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
+      image.Apply();
+      RenderTexture.active = null;
+      camera.targetTexture = null;
+      surface.Release();
+      return image;
+    }
+
+    IEnumerator ShootHud(string name) {
+      var canvas = Controller().Hud.GetComponentInChildren<Canvas>();
+      var mode = canvas.renderMode;
+      // 캔버스를 잠시 UI 층(5)으로 옮겨 UI 카메라가 캔버스만 그리게 한다.
+      const int UiLayer = 5;
+      var layers = new System.Collections.Generic.List<(Transform Item, int Layer)>();
+      foreach (var item in canvas.GetComponentsInChildren<Transform>(true)) {
+        layers.Add((item, item.gameObject.layer));
+        item.gameObject.layer = UiLayer;
+      }
+      var uiObject = new GameObject("HudCaptureCamera");
+      var ui = uiObject.AddComponent<Camera>();
+      ui.clearFlags = CameraClearFlags.Nothing;
+      ui.cullingMask = 1 << UiLayer;
+      ui.depth = 100;
+      ui.enabled = false;
+      canvas.renderMode = RenderMode.ScreenSpaceCamera;
+      canvas.worldCamera = ui;
+      canvas.planeDistance = 1f;
+      yield return null;
+      Canvas.ForceUpdateCanvases();
+      var main = Camera.main;
+      var mask = main.cullingMask;
+      main.cullingMask = mask & ~(1 << UiLayer);
+      // 1) 장면(안개·후처리 포함), 2) UI만 투명 바탕에, 3) CPU로 합성(UI 알파는 SrcAlpha 섞기라 rgb는 미리 곱해져 있고 a = 덮임²).
+      var scene = Grab(main);
+      ui.clearFlags = CameraClearFlags.SolidColor;
+      ui.backgroundColor = new Color(0f, 0f, 0f, 0f);
+      var overlay = Grab(ui);
+      main.cullingMask = mask;
+      var a = scene.GetPixels32();
+      var b = overlay.GetPixels32();
+      for (var i = 0; i < a.Length; i++) {
+        var cover = Mathf.Sqrt(b[i].a / 255f);
+        a[i] = new Color32((byte)Mathf.Min(255, b[i].r + a[i].r * (1f - cover)), (byte)Mathf.Min(255, b[i].g + a[i].g * (1f - cover)), (byte)Mathf.Min(255, b[i].b + a[i].b * (1f - cover)), 255);
+      }
+      var image = new Texture2D(1920, 1080, TextureFormat.RGB24, false);
+      image.SetPixels32(a);
+      image.Apply();
+      File.WriteAllBytes(Path.Combine(UrbanFolder(), name + ".png"), image.EncodeToPNG());
+      canvas.renderMode = mode;
+      foreach (var (item, layer) in layers) {
+        item.gameObject.layer = layer;
+      }
+      Object.Destroy(uiObject);
     }
 
     [UnityTest, Explicit, Category("CaptureUrban")]
@@ -113,36 +179,56 @@ namespace FactoryWars.Tests {
       }
       var seat = 1 << FactoryWarsUtil.SeatOf(Verified, 0);
       var camera = Controller().Camera;
-      camera.MoveTo(new Vector2(home.x + 18f, home.z + 18f));
-      camera.Height = 40f;
+      camera.MoveTo(new Vector2(-96f, -82f));
+      camera.Height = 32f;
       camera.Apply();
-      var canvas = Controller().Hud.GetComponentInChildren<Canvas>();
-      canvas.renderMode = RenderMode.ScreenSpaceCamera;
-      canvas.worldCamera = Camera.main;
-      canvas.planeDistance = 1f;
       yield return WaitFrames(Fps);
       Mini().Refresh(Controller().Frame);
-      yield return null;
-      ShootUrban("minimap_hud_start");
+      yield return ShootHud("minimap_hud_start");
       SaveMinimapBig("minimap_start");
       var start = Mini().TerritoryPixels[0];
-      // 확장: 내 본진에서 가장 가까운 확장 자리(자리 표시가 나를 포함)에 사령부 착공.
+      // 확장: 내 본진에서 가장 가까운 앞마당 자리에 사령부. 캡처 시간을 줄이려고 건설 시간만 잠시 4초로.
+      var hqSpec = SpecOf(0, "_headquarters");
+      var buildBefore = hqSpec.BuildTimeSeconds;
+      Restores.Add(() => hqSpec.BuildTimeSeconds = buildBefore);
+      hqSpec.BuildTimeSeconds = 4;
       var site = map.Expansions.Where(e => (e.SeatMask & seat) != 0 && (e.Kind == ExpansionKind.IronForecourt || e.Kind == ExpansionKind.WoodForecourt)).OrderBy(e => (e.Position.ToUnityVector3() - home).sqrMagnitude).First().Position;
-      yield return Build(0, "_headquarters", site);
+      var builder = Engineers(0).Last();
+      yield return Build(0, "_headquarters", site, builder);
       yield return WaitFrames(CommandFrames + 2);
       Assert.AreNotEqual(EntityRef.None, BuildingAt(site), "확장 부지: " + string.Join(",", _rejected.Select(r => r.Reason)));
-      yield return WaitFrames(Fps);
+      var forward = BuildingAt(site);
+      yield return WaitFor(() => Finished(forward), 90f, "전진 사령부 완공");
+      Assert.Greater(Battle().ForwardHeadquarters, 0, "전진 사령부 표시");
+      // 공병 셋이 옆 자원지에서 채집(전진 사령부로 반입).
+      var node = EntityRef.None;
+      var best = float.MaxValue;
+      foreach (var pair in Verified.GetComponentIterator<ResourceNode>()) {
+        var d = (pair.Component.Shape.Center.ToUnityVector3() - site.ToUnityVector3()).sqrMagnitude;
+        if (d < best) {
+          best = d;
+          node = pair.Entity;
+        }
+      }
+      yield return Send(0, new GatherCommand { Units = Engineers(0).ToArray(), Node = node });
+      for (var wait = 0; wait < 3; wait++) {
+        yield return WaitFrames(Fps * 10);
+      }
+      camera.MoveTo(new Vector2(site.X.AsFloat + 2f, site.Z.AsFloat - 4f));
+      camera.Height = 24f;
+      camera.Apply();
+      yield return WaitFrames(Fps / 2);
+      ShootUrban("forward_base");
+      // 미니맵: 확장 지점 경보 고리 + 전방 HUD.
       Mini().Ping(site.ToUnityVector3(), Minimap.PingColor);
       Mini().Refresh(Controller().Frame);
-      yield return null;
-      // HUD 캡처는 시야가 있는 전방(내 정찰 분대와 적 전진 기지)을 비춘다.
+      yield return ShootHud("forward_base_hud");
       camera.MoveTo(new Vector2(-96f, -82f));
       camera.Height = 32f;
       camera.Apply();
       yield return WaitFrames(Fps / 2);
       Mini().Refresh(Controller().Frame);
-      yield return null;
-      ShootUrban("minimap_hud_expansion");
+      yield return ShootHud("minimap_hud_expansion");
       SaveMinimapBig("minimap_expansion");
       Assert.Greater(Mini().TerritoryPixels[0], start, "확장으로 영역 증가");
     }

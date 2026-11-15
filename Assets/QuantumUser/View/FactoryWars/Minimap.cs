@@ -11,13 +11,13 @@ namespace FactoryWars.View {
   /// <summary>
   /// 왼쪽 아래 미니맵(화면 전용, 시뮬레이션 상태를 읽기만 한다). 층 순서:
   /// 바탕(지형·물·길·순환로·다리·수문·도시 건물, 한 번만 칠함). 진영 영역 = 사령부·확장 사령부·건물·점령 거점 둘레, 반투명 + 1px 테두리.
-  /// → 남은 자원지 마름모 → 안개 3단계(미탐색 검정, 탐색 50%, 시야 맑음) → 진영 영역(안개 위) → 건물 사각형·유닛 점(적은 시야 안만, 적 건물은 마지막으로 본 자리를 흐리게)
+  /// → 남은 자원지 마름모 → 안개 3단계(미탐색 = 지도 윤곽 22% 밝기, 탐색 45% 어둡게, 시야 맑음, 칸 사이 쌍선형) → 진영 영역(안개 위) → 건물 사각형·유닛 점(적은 시야 안만, 적 건물은 마지막으로 본 자리를 흐리게)
   /// → 암시장 아이콘 → 궁극 전력 → 카메라 시야 사다리꼴 → 경보 고리(퍼지는 고리) → 테두리.
   /// 색은 보는 사람 기준 관계색: 나 #2B8AEE, 동맹 #3FC9B4, 적 #E53E3E.
   /// 왼쪽 클릭·끌기 = 카메라 이동, 오른쪽 클릭 = 선택 유닛 이동(Shift = 공격 이동).
   /// </summary>
   public class Minimap : MonoBehaviour, IPointerClickHandler, IDragHandler, IPointerDownHandler {
-    public const int Size = 192;
+    public const int Size = 256;
 
     static readonly Color32 Ground = new Color32(0x5E, 0x6B, 0x4A, 0xFF);
     static readonly Color32 RockColor = new Color32(0x70, 0x68, 0x62, 0xFF);
@@ -41,6 +41,9 @@ namespace FactoryWars.View {
     /// <summary>관계색: 0 나, 1 동맹, 2 적.</summary>
     public static readonly Color32[] RelationColors = { new Color32(0x2B, 0x8A, 0xEE, 0xFF), new Color32(0x3F, 0xC9, 0xB4, 0xFF), new Color32(0xE5, 0x3E, 0x3E, 0xFF) };
     public const float TerritoryAlpha = 0.28f;
+    // 안개 어둡기: 미탐색은 지도 윤곽(길·강·다리)이 22% 밝기로 보이게 0.78, 탐색은 0.45, 시야는 0.
+    public const float UnexploredDark = 0.78f;
+    public const float ExploredDark = 0.45f;
     // 영역 반경(m, 화면 전용): 사령부(첫 기지·확장 사령부) 30, 그 밖의 건물 9, 점령 거점은 반경 + 8.
     public const float HeadquartersReach = 30f;
     public const float BuildingReach = 9f;
@@ -73,7 +76,7 @@ namespace FactoryWars.View {
       var channel = TerrainKit.Channel(map);
       _min = new Vector2(map.BoundsMin.X.AsFloat - channel, map.BoundsMin.Y.AsFloat - channel);
       _max = new Vector2(map.BoundsMax.X.AsFloat + channel, map.BoundsMax.Y.AsFloat + channel);
-      _texture = new Texture2D(Size, Size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+      _texture = new Texture2D(Size, Size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
       _base = new Color32[Size * Size];
       _zone = new byte[Size * Size];
       _fogState = new byte[Size * Size];
@@ -315,43 +318,61 @@ namespace FactoryWars.View {
 
     // ---------- 영역 ----------
 
+    float[] _fill;
+    float[] _edge;
+    float[] _inner;
+
+    float Cx(float x) => (x - _min.x) / (_max.x - _min.x) * Size;
+    float Cy(float z) => (z - _min.y) / (_max.y - _min.y) * Size;
+
+    /// <summary>영역: 관계마다 채움(가장자리 안티에일리어싱)과 1px 테두리(같은 관계 다른 원 안쪽은 지움)를 소수 픽셀 거리로 계산한다.</summary>
     void DrawTerritory() {
-      Array.Clear(_zone, 0, _zone.Length);
+      var n = Size * Size;
+      if (_fill == null) {
+        _fill = new float[n * 3];
+        _edge = new float[n * 3];
+        _inner = new float[n * 3];
+      }
+      Array.Clear(_fill, 0, _fill.Length);
+      Array.Clear(_edge, 0, _edge.Length);
+      Array.Clear(_inner, 0, _inner.Length);
       var ppm = PixelsPerMeter;
       foreach (var (center, radius, relation) in _zones) {
-        var bit = (byte)(1 << relation);
-        var cx = Px(center.x);
-        var cy = Py(center.y);
-        var r = Mathf.Max(1, Mathf.RoundToInt(radius * ppm));
-        var r2 = r * r;
-        for (var y = Mathf.Max(0, cy - r); y <= Mathf.Min(Size - 1, cy + r); y++) {
-          for (var x = Mathf.Max(0, cx - r); x <= Mathf.Min(Size - 1, cx + r); x++) {
-            if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= r2) {
-              _zone[y * Size + x] |= bit;
-            }
+        var cx = Cx(center.x);
+        var cy = Cy(center.y);
+        var r = Mathf.Max(1f, radius * ppm);
+        var offset = relation * n;
+        for (var y = Mathf.Max(0, (int)(cy - r - 2)); y <= Mathf.Min(Size - 1, (int)(cy + r + 2)); y++) {
+          for (var x = Mathf.Max(0, (int)(cx - r - 2)); x <= Mathf.Min(Size - 1, (int)(cx + r + 2)); x++) {
+            var dx = x + 0.5f - cx;
+            var dy = y + 0.5f - cy;
+            var d = Mathf.Sqrt(dx * dx + dy * dy);
+            var i = offset + y * Size + x;
+            _fill[i] = Mathf.Max(_fill[i], Mathf.Clamp01(r - d + 0.5f));
+            _edge[i] = Mathf.Max(_edge[i], Mathf.Clamp01(1.2f - Mathf.Abs(d - r)));
+            _inner[i] = Mathf.Max(_inner[i], Mathf.Clamp01(r - d - 1.2f));
           }
         }
       }
       TerritoryPixels[0] = TerritoryPixels[1] = TerritoryPixels[2] = 0;
-      for (var y = 0; y < Size; y++) {
-        for (var x = 0; x < Size; x++) {
-          var i = y * Size + x;
-          var mask = _zone[i];
-          if (mask == 0) {
+      for (var i = 0; i < n; i++) {
+        var color = _pixels[i];
+        var touched = false;
+        for (var rel = 0; rel < 3; rel++) {
+          var f = _fill[rel * n + i];
+          if (f <= 0f) {
             continue;
           }
-          var blended = _pixels[i];
-          for (var rel = 0; rel < 3; rel++) {
-            var bit = 1 << rel;
-            if ((mask & bit) == 0) {
-              continue;
-            }
-            TerritoryPixels[rel]++;
-            // 1px 테두리: 네 이웃 중 하나라도 이 관계 영역 밖이면 진하게.
-            var edge = x == 0 || y == 0 || x == Size - 1 || y == Size - 1 || (_zone[i - 1] & bit) == 0 || (_zone[i + 1] & bit) == 0 || (_zone[i - Size] & bit) == 0 || (_zone[i + Size] & bit) == 0;
-            blended = Color32.Lerp(blended, RelationColors[rel], edge ? 0.9f : TerritoryAlpha);
+          touched = true;
+          TerritoryPixels[rel] += f >= 0.5f ? 1 : 0;
+          color = Color32.Lerp(color, RelationColors[rel], TerritoryAlpha * f);
+          var edge = _edge[rel * n + i] * (1f - _inner[rel * n + i]);
+          if (edge > 0f) {
+            color = Color32.Lerp(color, RelationColors[rel], 0.9f * edge);
           }
-          _pixels[i] = blended;
+        }
+        if (touched) {
+          _pixels[i] = color;
         }
       }
     }
@@ -359,51 +380,82 @@ namespace FactoryWars.View {
     // ---------- 안개 ----------
 
     int[] _fogIndex;
+    int[] _fogX;
+    int[] _fogZ;
+    float[] _fogTx;
+    float[] _fogTz;
+    float[] _cellDark;
+    float[] _dark;
 
     unsafe void BuildFogState(Frame frame, PlayerRef viewer) {
       var fog = frame.Unsafe.GetPointerSingleton<Quantum.Fog>();
       var size = FogSystem.Size;
       if (_fogIndex == null) {
-        _fogIndex = new int[Size * Size];
+        var n = Size * Size;
+        _fogIndex = new int[n];
+        _fogX = new int[n];
+        _fogZ = new int[n];
+        _fogTx = new float[n];
+        _fogTz = new float[n];
+        _cellDark = new float[size * size];
+        _dark = new float[n];
         var minX = fog->MinX.AsFloat;
         var minZ = fog->MinZ.AsFloat;
         var cell = fog->Cell.AsFloat;
         for (var y = 0; y < Size; y++) {
           for (var x = 0; x < Size; x++) {
             var w = ToWorld(x, y);
+            var i = y * Size + x;
             var cx = Mathf.FloorToInt((w.x - minX) / cell);
             var cz = Mathf.FloorToInt((w.y - minZ) / cell);
-            _fogIndex[y * Size + x] = cx < 0 || cx >= size || cz < 0 || cz >= size ? -1 : cz * size + cx;
+            _fogIndex[i] = cx < 0 || cx >= size || cz < 0 || cz >= size ? -1 : cz * size + cx;
+            // 쌍선형 보간용: 칸 중심 기준 소수 좌표.
+            var fx = (w.x - minX) / cell - 0.5f;
+            var fz = (w.y - minZ) / cell - 0.5f;
+            _fogX[i] = Mathf.FloorToInt(fx);
+            _fogZ[i] = Mathf.FloorToInt(fz);
+            _fogTx[i] = fx - _fogX[i];
+            _fogTz[i] = fz - _fogZ[i];
           }
         }
       }
       var index = (int)viewer;
       if (index < 0 || index >= 4) {
         Array.Clear(_fogState, 0, _fogState.Length);
+        Array.Clear(_dark, 0, _dark.Length);
         return;
       }
       var grid = fog->Grids.GetPointer(index);
+      for (var c = 0; c < _cellDark.Length; c++) {
+        var bit = 1 << (c & 7);
+        _cellDark[c] = (grid->Visible[c >> 3] & bit) != 0 ? 0f : (grid->Explored[c >> 3] & bit) != 0 ? ExploredDark : UnexploredDark;
+      }
       for (var i = 0; i < _fogState.Length; i++) {
         var c = _fogIndex[i];
         if (c < 0) {
           _fogState[i] = 0;
-          continue;
+        } else {
+          var bit = 1 << (c & 7);
+          _fogState[i] = (byte)((grid->Visible[c >> 3] & bit) != 0 ? 2 : (grid->Explored[c >> 3] & bit) != 0 ? 1 : 0);
         }
-        var bit = 1 << (c & 7);
-        _fogState[i] = (byte)((grid->Visible[c >> 3] & bit) != 0 ? 2 : (grid->Explored[c >> 3] & bit) != 0 ? 1 : 0);
+        var x0 = _fogX[i];
+        var z0 = _fogZ[i];
+        var tx = _fogTx[i];
+        var tz = _fogTz[i];
+        _dark[i] = Mathf.Lerp(Mathf.Lerp(CellDark(x0, z0, size), CellDark(x0 + 1, z0, size), tx), Mathf.Lerp(CellDark(x0, z0 + 1, size), CellDark(x0 + 1, z0 + 1, size), tx), tz);
       }
     }
 
+    float CellDark(int x, int z, int size) => x < 0 || z < 0 || x >= size || z >= size ? UnexploredDark : _cellDark[z * size + x];
+
     bool VisibleAt(Vector3 world) => _fogState[Py(world.z) * Size + Px(world.x)] == 2;
 
-    /// <summary>미탐색 = 검정, 탐색 = 50% 어둡게, 시야 = 그대로.</summary>
+    /// <summary>미탐색 = 지도 윤곽만 22% 밝기, 탐색 = 45% 어둡게, 시야 = 그대로. 칸 사이는 쌍선형으로 부드럽게.</summary>
     void ApplyFog() {
       for (var i = 0; i < _pixels.Length; i++) {
-        var state = _fogState[i];
-        if (state == 0) {
-          _pixels[i] = FogBlack;
-        } else if (state == 1) {
-          _pixels[i] = Color32.Lerp(_pixels[i], FogBlack, 0.5f);
+        var dark = _dark[i];
+        if (dark > 0.001f) {
+          _pixels[i] = Color32.Lerp(_pixels[i], FogBlack, dark);
         }
       }
     }
@@ -500,13 +552,19 @@ namespace FactoryWars.View {
     static readonly Color32 UltimateColor = new Color32(255, 255, 255, 255);
     static readonly Color32 StrikeColor = new Color32(255, 60, 40, 255);
 
-    void Ring(Vector3 world, int radius, Color32 color) {
-      var cx = Px(world.x);
-      var cy = Py(world.z);
-      var steps = Mathf.Max(16, radius * 8);
-      for (var a = 0; a < steps; a++) {
-        var angle = a * Mathf.PI * 2f / steps;
-        Set(cx + Mathf.RoundToInt(Mathf.Cos(angle) * radius), cy + Mathf.RoundToInt(Mathf.Sin(angle) * radius), color);
+    /// <summary>안티에일리어싱 고리(두께 약 1.4px).</summary>
+    void Ring(Vector3 world, float radius, Color32 color) {
+      var cx = Cx(world.x);
+      var cy = Cy(world.z);
+      for (var y = Mathf.Max(0, (int)(cy - radius - 2)); y <= Mathf.Min(Size - 1, (int)(cy + radius + 2)); y++) {
+        for (var x = Mathf.Max(0, (int)(cx - radius - 2)); x <= Mathf.Min(Size - 1, (int)(cx + radius + 2)); x++) {
+          var dx = x + 0.5f - cx;
+          var dy = y + 0.5f - cy;
+          var a = Mathf.Clamp01(1.4f - Mathf.Abs(Mathf.Sqrt(dx * dx + dy * dy) - radius));
+          if (a > 0f) {
+            _pixels[y * Size + x] = Color32.Lerp(_pixels[y * Size + x], color, a);
+          }
+        }
       }
     }
 
@@ -614,12 +672,10 @@ namespace FactoryWars.View {
     void DrawPings() {
       _pings.RemoveAll(p => Time.unscaledTime >= p.Until);
       foreach (var (world, until, color) in _pings) {
-        // 1초마다 반지름 3 → 11px로 퍼지는 고리 두 겹.
+        // 1초마다 반지름 4 → 15px로 퍼지는 고리 + 가운데 작은 고리.
         var phase = Mathf.Repeat((PingSeconds - (until - Time.unscaledTime)) / PingPeriod, 1f);
-        var radius = Mathf.RoundToInt(Mathf.Lerp(3f, 11f, phase));
-        Ring(world, radius, color);
-        Ring(world, radius + 1, color);
-        Ring(world, 2, color);
+        Ring(world, Mathf.Lerp(4f, 15f, phase), color);
+        Ring(world, 2.5f, color);
       }
     }
 

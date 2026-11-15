@@ -2172,14 +2172,14 @@ MonoBehaviour:
   - Id: dress/Cliff
     Category: 4
     Prefabs:
-    - {fileID: 6112497518907194873, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
-    - {fileID: 319503678583589529, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
-    - {fileID: 1748378761197480577, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
-    - {fileID: 3690244878896535038, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
-    - {fileID: 4630519792334232695, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
-    - {fileID: 3185762878467970202, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
-    - {fileID: 3739082364604864913, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
-    - {fileID: 2099859139166140495, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
+    - {fileID: 8793290613579932466, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
+    - {fileID: 2828271766700409676, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
+    - {fileID: 5199867096882778281, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
+    - {fileID: 2582022599502687662, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
+    - {fileID: 9036097180623946028, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
+    - {fileID: 4538786812529985959, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
+    - {fileID: 7816312029599992930, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
+    - {fileID: 6894122815386862665, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3236,7 +3236,7 @@ MonoBehaviour:
   - Id: dress/WaterGate
     Category: 4
     Prefabs:
-    - {fileID: 1568020540070883931, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
+    - {fileID: 6890552005270226588, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3942,6 +3942,31 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RoadWreck"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/ForwardRadar
+    Category: 5
+    Prefabs:
+    - {fileID: 1600183121273576, guid: 5f19effbe79f5a44bbc16823c322f522, type: 3}
+    Scale: 0.8
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 ForwardRadar"
     TurretPart: 
     BarrelPart: 
     SpinParts: []

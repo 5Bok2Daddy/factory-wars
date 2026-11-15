@@ -65,6 +65,22 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 고해상도 미니맵·전진 사령부·교전 화면 (2026-11-16, 2차)
+미니맵(256px·쌍선형, 미탐색도 길·강 윤곽이 보이게, 안개 경계·영역 테두리 부드럽게, 3배 확대):
+
+![고해상도 미니맵](Docs/status_images/43_minimap_highres.png)
+
+HUD(안개·후처리에 어두워지지 않게 따로 합성) + 전진 사령부(레이더·위성 안테나·헤스코 방벽·탄약·위장망, 옆 광석지 채집):
+
+![미니맵 HUD](Docs/status_images/43_minimap_hud.png)
+![전진 사령부](Docs/status_images/43_forward_base.png)
+![전진 사령부 HUD](Docs/status_images/43_forward_base_hud.png)
+
+교전(붉은 공격선·조준 고리, 예광탄, 포구 섬광, 폭발):
+
+![교전](Docs/status_images/43_firefight.png)
+![교전 공격선](Docs/status_images/43_firefight_lines.png)
+
 ### 미니맵 개편: 진영 영역(땅따먹기)·길·안개 3단계·카메라 시야·경보 고리 (2026-11-16)
 확장 전 → 확장 사령부 착공 후(파란 영역이 늘어남, 3배 확대):
 

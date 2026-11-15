@@ -1,4 +1,4 @@
-// 항목 34-A 전장의 안개 판: 텍스처 알파만큼 검게 덮는다(조명 없음, 깊이 쓰기 없음). 텍스처는 96x96이고 쌍선형으로 늘어난다.
+// 항목 34-A 전장의 안개 판: 텍스처 알파만큼 검게 덮는다(조명 없음, 깊이 쓰기·검사 없음). 텍스처는 96x96이고 쌍선형으로 늘어난다.
 Shader "FactoryWars/Fog"
 {
     Properties
@@ -16,6 +16,8 @@ Shader "FactoryWars/Fog"
             Tags { "LightMode" = "UniversalForward" }
             Blend SrcAlpha OneMinusSrcAlpha
             ZWrite Off
+            // 고지대 둔덕·건물처럼 안개 판(0.32m)보다 높은 것도 그 자리 안개만큼 어둡게: 깊이 검사 없이 위에 덮는다.
+            ZTest Always
             Cull Off
             HLSLPROGRAM
             #pragma vertex vert

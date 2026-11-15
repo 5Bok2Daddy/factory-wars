@@ -141,6 +141,7 @@ namespace FactoryWars.EditorTools {
       yield return Scaled(DressKind.RoadBusStop, 1f, "SM_Prop_BusStop_01");
       yield return Scaled(DressKind.RoadCover, 1f, "SM_Prop_Barrier_Base_Row_01", "SM_Prop_Barrier_01", "SM_Prop_Crate_Stack_Cover_01", "SM_Prop_Barrel_Stack_01");
       yield return Scaled(DressKind.RoadWreck, 1f, "SM_Veh_Car_Destroyed_01", "SM_Veh_Car_Medium_Destroyed_01", "SM_Veh_SUV_Destroyed_01", "SM_Veh_Pickup_Small_Destroyed_01", "SM_Veh_Light_Car_Destroyed_01");
+      yield return Scaled(DressKind.ForwardRadar, 0.8f, "SM_Prop_Mobile_Radar_01");
       // 길가: 가로등·소화전·쓰레기통·고깔.
       yield return Scaled(DressKind.RoadProp, 1f, "SM_Prop_LightPole_Base_01", "SM_Prop_LightPole_Base_01", "SM_Prop_Hydrant_01", "SM_Prop_TrashCan_01", "SM_Prop_Cone_01");
       // 도시 건물(칸 크기에 맞춰 늘어난다: Fit). 세로는 칸 데이터의 목표 높이 쪽으로 0.8~1.3배.

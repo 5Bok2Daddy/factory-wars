@@ -89,6 +89,8 @@ namespace FactoryWars.View {
     RoadBusStop,
     RoadCover,
     RoadWreck,
+    /// <summary>전진(확장) 사령부 표시: 이동식 레이더.</summary>
+    ForwardRadar,
   }
 
   /// <summary>

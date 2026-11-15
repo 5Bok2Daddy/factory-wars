@@ -360,8 +360,8 @@ namespace FactoryWars.View {
         foreach (var side in new[] { -1f, 1f }) {
           var middle = (BankY + WaterLevel) * 0.5f;
           var ledge = (BandInner + SlopeInner) * 0.5f;
-          // 항목 36: 시가지는 흙 둑 대신 콘크리트 제방.
-          var urban = VisualProfile.Current.UrbanDecor;
+          // 항목 36: 시가지는 흙 둑 대신 콘크리트 제방. 야전 룩은 팔레트 콘크리트가 거의 흰색이라(위에서 보면 흰 띠) 흙·바위 둑으로 그린다.
+          var urban = VisualProfile.Current.UrbanDecor && VisualProfile.Current.FieldLook == false;
           k.Paint(urban ? Swatch.Concrete : MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.CanyonMid);
           k.Quad(BankEdge(a, side, BandInner, BankY), BankEdge(a, side, ledge, middle), BankEdge(b, side, ledge, middle), BankEdge(b, side, BandInner, BankY), Vector3.up);
           k.Paint(urban ? Swatch.ConcreteDark : Swatch.CanyonDark);

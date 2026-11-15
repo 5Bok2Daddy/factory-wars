@@ -12,7 +12,8 @@ namespace FactoryWars.View {
   public unsafe class FogOverlay {
     public const float UnexploredAlpha = 0.92f;
     public const float ExploredAlpha = 0.5f;
-    const float Lift = 0.16f;
+    // 높인 연석(약 0.2m)·광장 마개가 안개 판을 뚫고 하얗게 보이지 않도록 그 위에 둔다.
+    const float Lift = 0.32f;
 
     readonly GameObject _root;
     readonly Texture2D _texture;
