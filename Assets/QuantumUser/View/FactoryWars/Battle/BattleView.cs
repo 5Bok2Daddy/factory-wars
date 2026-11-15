@@ -49,6 +49,10 @@ namespace FactoryWars.View {
       public Transform Turret;
       public Transform Barrel;
       public Vector3 BarrelHome;
+      /// <summary>분대원마다 소총 자세(절차 IK). 비어 있으면 보병이 아니거나 사람형 뼈가 없다.</summary>
+      public readonly List<RiflemanRig> Rigs = new List<RiflemanRig>();
+      /// <summary>포 발사 때 차체가 뒤로 흔들리는 양(0~1).</summary>
+      public float Rock;
       public Quaternion BarrelRest = Quaternion.identity;
       public float Elevation;
       public bool AntiAir;
@@ -181,8 +185,8 @@ namespace FactoryWars.View {
         var to = e.To.ToUnityVector3() + Vector3.up * 0.8f;
         var from = _trader != null ? _trader.ShotOrigin(e.From.ToUnityVector3(), to) : e.From.ToUnityVector3() + Vector3.up * 3f;
         var dir = (to - from).normalized;
-        Fx.MuzzleFlash(from + dir * 0.4f, dir, 0.8f);
-        Fx.Tracer(from + dir * 0.4f, to, 90f, 0.18f, false);
+        Fx.MuzzleFlash(from, dir, 0.45f);
+        Fx.Needle(from + dir * 0.1f, to, 90f);
         Fx.Impact(to, 0.8f, dir);
       });
       QuantumEvent.Subscribe<EventSortieEnded>(this, e => { if (e.ShotDown) { Fx.Explosion(e.Position.ToUnityVector3() + Vector3.up * 8f, 1.4f); } });
@@ -597,11 +601,45 @@ namespace FactoryWars.View {
       Shoot(actor, attack, range, hasTarget, target, flame);
     }
 
+    /// <summary>소총을 든 분대원 수(화면 전용, 테스트용).</summary>
+    public int RifleRigs { get { var n = 0; foreach (var a in _actors.Values) { n += a.Rigs.Count; } return n; } }
+
+    /// <summary>표적을 겨누고 있는 분대원 수.</summary>
+    public int AimingRigs { get { var n = 0; foreach (var a in _actors.Values) { foreach (var r in a.Rigs) { n += r.Aiming ? 1 : 0; } } return n; } }
+
     public int PendingShots { get { var n = 0; foreach (var a in _actors.Values) { if (a.Pending) { n++; } } return n; } }
+
+    /// <summary>보병 무기 프리팹(팩 소총). 칸이 비어 있으면 null.</summary>
+    public static GameObject Weapon(DressKind kind) {
+      var entry = Dressing.Map != null ? Dressing.Map.Get(kind) : null;
+      return entry != null && entry.Variants.Count > 0 ? entry.Variants[0].Prefab : null;
+    }
+
+    public const float NeedleWidth = 0.035f;
 
     void Shoot(Actor actor, AttackType attack, float range, bool hasTarget, Vector3 target, bool flame) {
       actor.View.Animation?.Fire();
       actor.Recoil = RecoilDistance;
+      if (actor.Rigs.Count > 0 && flame == false) {
+        // 보병: 분대원마다 소총 총구에서 섬광과 가는 예광탄(반동은 RiflemanRig가 그린다).
+        foreach (var rig in actor.Rigs) {
+          rig.Fire();
+          var tip = rig.Muzzle;
+          var aim = hasTarget ? (target - tip).normalized : rig.MuzzleForward;
+          Fx.MuzzleFlash(tip, aim, 0.45f);
+          if (hasTarget) {
+            var spread = new Vector3(Random.Range(-0.3f, 0.3f), Random.Range(-0.05f, 0.25f), Random.Range(-0.3f, 0.3f));
+            Fx.Needle(tip, target + spread, BulletSpeed);
+          }
+        }
+        if (hasTarget) {
+          Fx.Impact(target, attack == AttackType.AntiInfantry ? 0.6f : 1.2f, target - actor.View.transform.position);
+        }
+        return;
+      }
+      if (attack == AttackType.AntiArmor || attack == AttackType.Area) {
+        actor.Rock = 1f;
+      }
       var muzzle = actor.Muzzle.TransformPoint(actor.View.Entry.Muzzle);
       var forward = hasTarget ? (target - muzzle).normalized : actor.Muzzle.forward;
       if (flame) {
@@ -618,7 +656,7 @@ namespace FactoryWars.View {
         // 소총·기관총: 예광탄 3발 연사, 약간 흩어짐.
         for (var i = 0; i < 3; i++) {
           var spread = new Vector3(Random.Range(-0.35f, 0.35f), Random.Range(-0.1f, 0.2f), Random.Range(-0.35f, 0.35f));
-          Fx.Tracer(muzzle + forward * (0.3f * i), target + spread, speed, 0.18f, false);
+          Fx.Needle(muzzle + forward * (0.3f * i), target + spread, speed);
         }
       } else if (missile) {
         // 미사일: 위로 솟았다가 휘어 내려가는 비행, 배기 불꽃과 연기 꼬리, 도착할 때 착탄.
@@ -644,6 +682,9 @@ namespace FactoryWars.View {
         start.y = 0f;
         actor.Position = start;
         actor.View.transform.position = start;
+        if (spec.IsVehicle == false && spec.IsAir == false && spec.IsNaval == false && spec.Ability != SpecialAbility.EngineerWork) {
+          actor.Rigs.AddRange(RiflemanRig.AttachAll(actor.View.Model, Weapon(spec.name.Contains("sniper") ? DressKind.SniperRifle : DressKind.Rifle)));
+        }
       }
       var color = frame.Global->Players.GetPointer(unit->Owner)->ColorIndex;
       if (color != actor.Color) {
@@ -683,6 +724,10 @@ namespace FactoryWars.View {
       actor.View.Turn.localPosition = Vector3.up * (actor.View.Entry.Altitude + hover);
 
       var hasTarget = TryTarget(frame, unit->TargetEntity, out var target, out var air);
+      foreach (var rig in actor.Rigs) {
+        rig.Aiming = hasTarget;
+        rig.AimPoint = target;
+      }
       if (moved.sqrMagnitude > 0.002f) {
         actor.HullYaw = Mathf.MoveTowardsAngle(actor.HullYaw, Mathf.Atan2(moved.x, moved.z) * Mathf.Rad2Deg, TurnRate * dt);
       } else if (hasTarget && actor.Turret == null) {
@@ -736,7 +781,9 @@ namespace FactoryWars.View {
       var k = 1f - Mathf.Exp(-profile.TiltRate * dt);
       actor.Pitch = Mathf.Lerp(actor.Pitch, pitch, k);
       actor.Roll = Mathf.Lerp(actor.Roll, roll, k);
-      actor.View.Turn.localRotation = Quaternion.Euler(0, actor.HullYaw, 0) * Quaternion.Euler(actor.Pitch, 0, actor.Roll);
+      // 포 발사 반동: 차체가 뒤로 4도 들렸다가 0.25초에 돌아온다.
+      actor.Rock = Mathf.MoveTowards(actor.Rock, 0f, dt * 4f);
+      actor.View.Turn.localRotation = Quaternion.Euler(0, actor.HullYaw, 0) * Quaternion.Euler(actor.Pitch - actor.Rock * 4f, 0, actor.Roll);
     }
 
     /// <summary>항목 32: 엄폐 중인 보병 머리 위 작은 방패.</summary>
@@ -1036,7 +1083,7 @@ namespace FactoryWars.View {
     GameObject Reticle(int index) {
       if (_reticleMesh == null) {
         var kit = new MeshKit().Paint(Swatch.White);
-        ArtView.DashedRing(kit, 0.82f, 1f, 16);
+        ArtView.DashedRing(kit, 0.965f, 1f, 32);
         _reticleMesh = kit.ToMesh("target_reticle");
       }
       while (_reticles.Count <= index) {

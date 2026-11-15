@@ -41,6 +41,33 @@ namespace FactoryWars.Tests {
         }
       }
       Assert.Greater(Battle().AttackLines, 0, "붉은 공격선");
+      Assert.Greater(Battle().RifleRigs, 0, "분대원이 소총을 든다");
+      // 가까이: 소총 조준 자세·총구 섬광·가는 예광탄.
+      // 교전 중인 쌍: 내 소총 분대와 적 민병 중 서로 가장 가까운 둘의 가운데를 비춘다.
+      var rangers = UnitsNamed(0, "ff_ranger_squad").Select(e => At(e).ToUnityVector3()).ToList();
+      var foes = UnitsNamed(1, "cf_militia").Concat(UnitsNamed(1, "cf_flame_squad")).Select(e => At(e).ToUnityVector3()).ToList();
+      var middle = rangers.Count > 0 ? rangers[0] : Vector3.zero;
+      var bestGap = float.MaxValue;
+      foreach (var a in rangers) {
+        foreach (var b in foes) {
+          if ((a - b).sqrMagnitude < bestGap) {
+            bestGap = (a - b).sqrMagnitude;
+            middle = (a + b) * 0.5f;
+          }
+        }
+      }
+      camera.MoveTo(new Vector2(middle.x, middle.z));
+      camera.Height = 15f;
+      camera.Apply();
+      var aimed = false;
+      for (var i = 0; i < 16; i++) {
+        yield return new WaitForSeconds(0.12f);
+        aimed |= Battle().AimingRigs > 0;
+        if (i == 9 || i == 15) {
+          ShootUrban(i == 9 ? "combat_closeup" : "combat_closeup2");
+        }
+      }
+      Assert.IsTrue(aimed, "조준 자세");
     }
   }
 }

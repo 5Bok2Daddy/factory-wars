@@ -142,6 +142,8 @@ namespace FactoryWars.EditorTools {
       yield return Scaled(DressKind.RoadCover, 1f, "SM_Prop_Barrier_Base_Row_01", "SM_Prop_Barrier_01", "SM_Prop_Crate_Stack_Cover_01", "SM_Prop_Barrel_Stack_01");
       yield return Scaled(DressKind.RoadWreck, 1f, "SM_Veh_Car_Destroyed_01", "SM_Veh_Car_Medium_Destroyed_01", "SM_Veh_SUV_Destroyed_01", "SM_Veh_Pickup_Small_Destroyed_01", "SM_Veh_Light_Car_Destroyed_01");
       yield return Scaled(DressKind.ForwardRadar, 0.8f, "SM_Prop_Mobile_Radar_01");
+      yield return Scaled(DressKind.Rifle, 1f, "SM_Wep_Rifle_Assault_03");
+      yield return Scaled(DressKind.SniperRifle, 1f, "SM_Wep_Sniper_Mil_01");
       // 길가: 가로등·소화전·쓰레기통·고깔.
       yield return Scaled(DressKind.RoadProp, 1f, "SM_Prop_LightPole_Base_01", "SM_Prop_LightPole_Base_01", "SM_Prop_Hydrant_01", "SM_Prop_TrashCan_01", "SM_Prop_Cone_01");
       // 도시 건물(칸 크기에 맞춰 늘어난다: Fit). 세로는 칸 데이터의 목표 높이 쪽으로 0.8~1.3배.
@@ -230,10 +232,11 @@ namespace FactoryWars.EditorTools {
       }
       // 효과 칸: 가진 팩의 FX를 그대로 연결(포구 섬광은 발사마다 생겨 모바일 부하가 커서 절차 효과를 유지한다).
       foreach (var (fx, names, life, scale) in new[] {
-        ("impact", new[] { "Explosion_Small_FX", "FX_Grenade_Explosive_01" }, 2.5f, 0.8f),
-        ("explosion", new[] { "FX_Explosion_Large_Dark_01", "Explosion_Large_FX" }, 4f, 1f),
+        // 폭발·피격·연기는 팩 FX가 네모난 파편(색종이처럼 보임)이라 연결하지 않는다: 절차 효과(부드러운 불꽃·연기)를 쓴다.
+        ("impact", new string[0], 2.5f, 0.8f),
+        ("explosion", new string[0], 4f, 1f),
         ("flame", new[] { "FX_Fire_Small_01", "Fire_01_FX" }, 2f, 0.8f),
-        ("smoke", new[] { "FX_Smoke_Medium_01", "FX_Smoke_Large_01" }, 6f, 1f),
+        ("smoke", new string[0], 6f, 1f),
         ("weather_sand", new[] { "FX_Dust_Blowing_Soft_Large_01", "FX_Dust_Blowing_Soft_01" }, 0f, 1f),
         ("weather_rain", new[] { "FX_Rain_01", "FX_Rain" }, 0f, 1f),
         ("weather_fog", new[] { "FX_Fog_01" }, 0f, 1f),

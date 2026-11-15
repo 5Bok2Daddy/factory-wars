@@ -369,7 +369,7 @@ namespace FactoryWars.View {
           if (Folded(path, a, side) || Folded(path, b, side)) {
             continue;
           }
-          k.Paint(urban ? Swatch.Concrete : MeshKit.Hash(seed, i * 2 + 300 + (side > 0 ? 1 : 0)) < 0.55f ? Swatch.Sand : Swatch.Dirt);
+          k.Paint(urban ? Swatch.Concrete : VisualProfile.Current.FieldLook ? ArtPalette.Turf(Swatch.GrassDark) : MeshKit.Hash(seed, i * 2 + 300 + (side > 0 ? 1 : 0)) < 0.55f ? Swatch.Sand : Swatch.Dirt);
           k.Quad(BankEdge(a, side, BandOuter, BankY), BankEdge(a, side, BandInner, BankY), BankEdge(b, side, BandInner, BankY), BankEdge(b, side, BandOuter, BankY), Vector3.up);
         }
       }

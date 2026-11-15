@@ -91,6 +91,9 @@ namespace FactoryWars.View {
     RoadWreck,
     /// <summary>전진(확장) 사령부 표시: 이동식 레이더.</summary>
     ForwardRadar,
+    /// <summary>보병이 드는 팩 소총(분대원·경비) / 저격 소총.</summary>
+    Rifle,
+    SniperRifle,
   }
 
   /// <summary>

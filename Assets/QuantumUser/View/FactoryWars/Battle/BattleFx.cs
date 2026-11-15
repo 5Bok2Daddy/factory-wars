@@ -29,6 +29,11 @@ namespace FactoryWars.View {
     ParticleSystem _glow;
     ParticleSystem _tracer;
     ParticleSystem _smoke;
+    ParticleSystem _needle;
+    ParticleSystem _flash;
+    static readonly Color NeedleColor = new Color(1f, 0.88f, 0.4f, 1f);
+    static readonly Color FlashCore = new Color(1f, 0.78f, 0.38f, 1f);
+    static readonly Color SmokeBillow = new Color(0.2f, 0.2f, 0.21f, 0.62f);
     Mesh _rubble;
     readonly Queue<(GameObject Item, float Born, float Y)> _wrecks = new Queue<(GameObject, float, float)>();
     readonly List<(Vector3 Position, float Size, float Born)> _craters = new List<(Vector3, float, float)>();
@@ -128,6 +133,13 @@ namespace FactoryWars.View {
       _glow = Make(transform, "Glow", "FxGlow", 400, false, 0.3f);
       _tracer = Make(transform, "Tracer", "FxGlow", 200, true, 1f);
       _smoke = Make(transform, "Smoke", "FxSmoke", 300, false, 3f);
+      // 바늘 예광탄: 폭 0.035m, 길이 1.6m로 늘인다(속도와 무관한 길이).
+      _needle = Make(transform, "Needle", "FxGlow", 300, true, 1f);
+      var needle = _needle.GetComponent<ParticleSystemRenderer>();
+      needle.lengthScale = 1.6f / BattleView.NeedleWidth;
+      needle.velocityScale = 0f;
+      // 폭발 중심 섬광: 0.25초 동안 커지며 사라진다.
+      _flash = Make(transform, "Flash", "FxGlow", 60, false, 2.4f);
     }
 
     static int Scaled(int count) => Mathf.Max(1, Mathf.RoundToInt(count * GraphicsQuality.FxScale));
@@ -161,6 +173,18 @@ namespace FactoryWars.View {
       }
     }
 
+    /// <summary>소총 예광탄: 총구에서 표적까지 바늘처럼 가는 빛줄기(#FFE066 계열) 하나.</summary>
+    public void Needle(Vector3 from, Vector3 to, float speed) {
+      var delta = to - from;
+      var distance = delta.magnitude;
+      if (distance < 0.5f) {
+        return;
+      }
+      Emit(_needle, from, delta / distance * speed, BattleView.NeedleWidth, distance / speed + 0.03f, NeedleColor);
+    }
+
+    public int NeedleCount => _needle != null ? _needle.particleCount : 0;
+
     /// <summary>탄 궤적. 빠른 입자 하나를 쏘고 도착 시점에 사라지게 한다.</summary>
     public void Tracer(Vector3 from, Vector3 to, float speed, float width, bool missile) {
       var delta = to - from;
@@ -189,12 +213,14 @@ namespace FactoryWars.View {
     /// <summary>맞은 방향(쏜 쪽 반대)으로 튀는 불꽃과 하얀 번쩍임.</summary>
     public void Impact(Vector3 position, float size, Vector3 incoming) {
       var normal = incoming.sqrMagnitude > 0.001f ? -incoming.normalized : Vector3.up;
-      Emit(_glow, position + Vector3.up * 0.3f, Vector3.zero, size * 1.8f, 0.07f, Color.white);
-      var count = Scaled(6);
+      Emit(_glow, position + Vector3.up * 0.3f, Vector3.zero, size * 1.2f, 0.07f, FlashCore);
+      // 가는 불티 몇 개 + 흙먼지 한 번(네모 파편 없음).
+      var count = Scaled(3);
       for (var i = 0; i < count; i++) {
         var velocity = (normal + Vector3.up * 0.6f + Random.insideUnitSphere * 0.6f) * Random.Range(3f, 7f);
-        Emit(_tracer, position, velocity, 0.12f * size, Random.Range(0.15f, 0.3f), Spark);
+        Emit(_needle, position, velocity, 0.03f, Random.Range(0.08f, 0.16f), Spark);
       }
+      Emit(_smoke, position + Vector3.up * 0.2f, Vector3.up * 0.4f + normal * 0.3f, 0.5f * size, 0.6f, DustBrown);
     }
 
     public void Impact(Vector3 position, float size) {
@@ -236,7 +262,7 @@ namespace FactoryWars.View {
         var (center, size, _) = _craters[c];
         var lift = 0.07f + c * 0.0004f;
         for (var ring = 0; ring < 2; ring++) {
-          kit.Paint(ring == 0 ? Swatch.DirtDark : Swatch.Black);
+          kit.Paint(ring == 0 ? Swatch.DirtDark : Swatch.RockDark);
           var radius = size * (ring == 0 ? 1f : 0.55f);
           for (var i = 0; i < Sides; i++) {
             var a = Mathf.PI * 2f * i / Sides + c;
@@ -321,18 +347,29 @@ namespace FactoryWars.View {
       if (size >= 2f) {
         Shake(size * 0.12f);
       }
-      var flames = Scaled(8);
+      // 1) 중심 섬광: 0.25초 동안 커지며 사라지는 주황·노랑 불덩이 두 겹.
+      Emit(_flash, position + Vector3.up * (0.6f * size), Vector3.zero, size * 1.7f, 0.25f, FlashCore);
+      Emit(_flash, position + Vector3.up * (0.4f * size), Vector3.zero, size * 0.9f, 0.18f, new Color(1f, 0.95f, 0.75f, 1f));
+      // 2) 불길: 몇 덩이만 위로.
+      var flames = Scaled(4);
       for (var i = 0; i < flames; i++) {
-        Emit(_glow, position + Random.insideUnitSphere * size * 0.5f, Random.insideUnitSphere * size * 2f + Vector3.up * size, size * Random.Range(1f, 1.8f), Random.Range(0.3f, 0.5f), Flame);
+        Emit(_glow, position + Random.insideUnitSphere * size * 0.4f, Random.insideUnitSphere * size * 1.2f + Vector3.up * size * 1.4f, size * Random.Range(0.8f, 1.3f), Random.Range(0.3f, 0.45f), Flame);
       }
-      var sparks = Scaled(10);
-      for (var i = 0; i < sparks; i++) {
-        var velocity = (Random.onUnitSphere + Vector3.up * 1.2f) * size * Random.Range(3f, 8f);
-        Emit(_tracer, position, velocity, 0.16f, Random.Range(0.3f, 0.6f), Spark);
-      }
-      var smoke = Scaled(6);
+      // 3) 짙은 회색 연기: 부풀며 천천히 오르고 사라진다.
+      var smoke = Scaled(7);
       for (var i = 0; i < smoke; i++) {
-        Emit(_smoke, position + Random.insideUnitSphere * size * 0.6f, Vector3.up * Random.Range(1f, 2.4f), size * Random.Range(0.9f, 1.5f), Random.Range(1.2f, 2.2f), SmokeDark);
+        var drift = new Vector3(Random.Range(-0.5f, 0.5f), Random.Range(0.9f, 1.8f), Random.Range(-0.5f, 0.5f));
+        Emit(_smoke, position + Vector3.up * (0.5f * size) + Random.insideUnitSphere * size * 0.5f, drift, size * Random.Range(1f, 1.5f), Random.Range(2f, 3.2f), SmokeBillow);
+      }
+      // 4) 가는 불티 몇 개(네모 파편 없음).
+      var sparks = Scaled(4);
+      for (var i = 0; i < sparks; i++) {
+        var velocity = (Random.onUnitSphere + Vector3.up * 1.2f) * size * Random.Range(3f, 6f);
+        Emit(_needle, position, velocity, 0.04f, Random.Range(0.1f, 0.2f), Spark);
+      }
+      // 5) 그을음 자국(작은 폭발도 옅게).
+      if (size < 1.2f) {
+        Crater(position, size * 0.7f);
       }
     }
 

@@ -217,7 +217,8 @@ namespace FactoryWars.View {
             }
             spot.y = TerrainKit.SurfaceHeight(map, spot.x, spot.z);
             // 배틀로얄 데모 씬 구성: 풀 덤불 패치가 대부분, 작은 돌·덤불·바위를 섞는다.
-            var field = pick < 0.6f ? DressKind.Grass : pick < 0.78f ? DressKind.RockSmall : pick < 0.93f ? DressKind.Bush : DressKind.RockLarge;
+            // 큰 바위는 걸어 다니는 들판에 두지 않는다(판정이 없어 보병이 바위 속을 지나가 보였다). 큰 바위는 막힌 지형(바위 지형) 안에만.
+            var field = pick < 0.6f ? DressKind.Grass : pick < 0.78f ? DressKind.RockSmall : DressKind.Bush;
             count += Dressing.Add(field, spot, 9000 + index) ? 1 : 0;
             continue;
           }

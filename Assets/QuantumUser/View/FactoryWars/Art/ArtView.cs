@@ -65,7 +65,7 @@ namespace FactoryWars.View {
       }
       ArtLook.Apply(view.Model, color, powered);
 
-      view.Ring = Marker("Ring", view.transform, RingMesh());
+      view.Ring = Marker("Ring", view.transform, RingMesh(entry.RingRadius * extra));
       view.Ring.transform.localPosition = Vector3.up * RingLift;
       view.Ring.transform.localScale = new Vector3(entry.RingRadius * extra, 1, entry.RingRadius * extra);
       view.Ring.SetActive(false);
@@ -93,13 +93,20 @@ namespace FactoryWars.View {
       return item;
     }
 
-    static Mesh RingMesh() {
-      if (_ring == null) {
+    /// <summary>선택 고리 두께(m). 반지름과 무관하게 얇게(전차도 보병도 같은 두께).</summary>
+    public const float RingThickness = 0.07f;
+    static readonly System.Collections.Generic.Dictionary<int, Mesh> Rings = new System.Collections.Generic.Dictionary<int, Mesh>();
+    static readonly System.Collections.Generic.Dictionary<int, Mesh> OwnerRings = new System.Collections.Generic.Dictionary<int, Mesh>();
+
+    static Mesh RingMesh(float radius) {
+      var key = Mathf.Max(1, Mathf.RoundToInt(radius * 10f));
+      if (Rings.TryGetValue(key, out var mesh) == false) {
         var kit = new MeshKit().Paint(Swatch.White);
-        DashedRing(kit, 1f - RingWidth, 1f, 24);
-        _ring = kit.ToMesh("marker_ring");
+        DashedRing(kit, 1f - RingThickness / Mathf.Max(0.3f, radius), 1f, 48);
+        mesh = kit.ToMesh("marker_ring");
+        Rings[key] = mesh;
       }
-      return _ring;
+      return mesh;
     }
 
     /// <summary>점선 고리: segments개 조각 중 짝수 칸만 그린다(선택 표시, 돌면서 보인다).</summary>
@@ -122,13 +129,15 @@ namespace FactoryWars.View {
     static Mesh _ownerRing;
 
     /// <summary>소유자 고리: 팀 색 칸(Swatch.Team)으로 칠한 얇은 고리. 팀 머티리얼의 팔레트에서 팀 색이 나온다.</summary>
-    static Mesh OwnerRingMesh() {
-      if (_ownerRing == null) {
+    static Mesh OwnerRingMesh(float radius) {
+      var key = Mathf.Max(1, Mathf.RoundToInt(radius * 10f));
+      if (OwnerRings.TryGetValue(key, out var mesh) == false) {
         var kit = new MeshKit().Paint(Swatch.Team);
-        kit.Annulus(Vector3.zero, 1f - RingWidth * 0.8f, 1f, 32);
-        _ownerRing = kit.ToMesh("marker_owner_ring");
+        kit.Annulus(Vector3.zero, 1f - 0.05f / Mathf.Max(0.3f, radius), 1f, 48);
+        mesh = kit.ToMesh("marker_owner_ring");
+        OwnerRings[key] = mesh;
       }
-      return _ownerRing;
+      return mesh;
     }
 
     static Mesh BarBackMesh() {
@@ -175,9 +184,9 @@ namespace FactoryWars.View {
       VisualCatalog.ApplyTeamColor(Model, Slot, color, powered);
       if (Slot.OwnerRing) {
         if (_owner == null) {
-          _owner = Marker("OwnerRing", transform, OwnerRingMesh());
-          _owner.transform.localPosition = Vector3.up * (RingLift * 0.6f);
           var radius = Entry.RingRadius * ScaleOf(Entry) * 0.88f;
+          _owner = Marker("OwnerRing", transform, OwnerRingMesh(radius));
+          _owner.transform.localPosition = Vector3.up * (RingLift * 0.6f);
           _owner.transform.localScale = new Vector3(radius, 1, radius);
         }
         _owner.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(color, powered);
@@ -247,7 +256,8 @@ namespace FactoryWars.View {
     /// </summary>
     public void AddPlate(float footprintRadius, int color) {
       var profile = VisualProfile.Current;
-      if (profile.BuildingBody >= 0.999f || _plate != null) {
+      // 야전 룩: 건물이 흙·풀 위에 바로 선다(흰 콘크리트 바닥판 없음).
+      if (profile.BuildingBody >= 0.999f || _plate != null || profile.FieldLook) {
         return;
       }
       var key = Mathf.RoundToInt(footprintRadius * 100f);

@@ -29,6 +29,7 @@ namespace FactoryWars.View {
     class Guard {
       public Transform View;
       public UnitAnimatorBridge Anim;
+      public List<RiflemanRig> Rigs;
       public Vector3 Home;
       public float Yaw;
       public bool Patrol;
@@ -120,17 +121,20 @@ namespace FactoryWars.View {
     public Vector3 ShotOrigin(Vector3 from, Vector3 to) {
       var best = from + Vector3.up * 3f;
       var bestDistance = float.MaxValue;
+      RiflemanRig shooter = null;
       foreach (var guard in _guards) {
         if (guard.View == null) {
           continue;
         }
-        var at = guard.View.position + Vector3.up * 1.4f;
+        var at = guard.Rigs.Count > 0 ? guard.Rigs[0].Muzzle : guard.View.position + Vector3.up * 1.4f;
         var distance = (at - to).sqrMagnitude;
         if (distance < bestDistance) {
           bestDistance = distance;
           best = at;
+          shooter = guard.Rigs.Count > 0 ? guard.Rigs[0] : null;
         }
       }
+      shooter?.Fire();
       return best;
     }
 
@@ -349,6 +353,7 @@ namespace FactoryWars.View {
     bool AddGuard(ViewCatalog catalog, Vector3 local, float yaw, bool patrol, bool tower) {
       Transform view = null;
       UnitAnimatorBridge anim = null;
+      List<RiflemanRig> rigs = null;
       if (VisualCatalog.TryFilled(GuardSlot, out var slot)) {
         // 팩 군인 한 명(경비 전용 칸). 진영 색을 입히지 않는다.
         view = new GameObject("TraderGuard").transform;
@@ -359,6 +364,7 @@ namespace FactoryWars.View {
         model.transform.localScale = Vector3.one * scale;
         model.transform.localPosition = offset * scale;
         anim = UnitAnimatorBridge.Attach(model, slot);
+        rigs = RiflemanRig.AttachAll(model, BattleView.Weapon(DressKind.Rifle));
       } else {
         var art = ArtView.Create(catalog, "cf_engineer", _alive.transform, Palette.Count - 1);
         if (art == null) {
@@ -369,7 +375,7 @@ namespace FactoryWars.View {
       }
       view.localPosition = local;
       view.localRotation = Quaternion.Euler(0f, yaw, 0f);
-      _guards.Add(new Guard { View = view, Anim = anim, Home = local, Yaw = yaw, Patrol = patrol, Tower = tower });
+      _guards.Add(new Guard { View = view, Anim = anim, Rigs = rigs ?? new List<RiflemanRig>(), Home = local, Yaw = yaw, Patrol = patrol, Tower = tower });
       return true;
     }
 
@@ -396,6 +402,10 @@ namespace FactoryWars.View {
           continue;
         }
         var anim = guard.Anim;
+        foreach (var rig in guard.Rigs) {
+          rig.Aiming = hostile;
+          rig.AimPoint = target + Vector3.up;
+        }
         if (hostile) {
           // 적대: 모두 표적을 겨눈다(순찰은 멈춘다).
           var delta = target - guard.View.position;
