@@ -124,14 +124,18 @@ namespace FactoryWars.View {
       // 항목 36: 청록 잔디 바닥을 시가지 콘크리트·아스팔트 톤으로. 바닥은 중간 회색, 본진·광장은 밝은 보도색, 길은 짙은 아스팔트.
       // 렌더 값은 이 색의 약 1.4배로 밝아진다(햇빛 1.05 + 환경광). 밝기 245 이상 픽셀 3% 이하가 되도록 낮게 둔다.
       // 항목 36 시각 교정: 도로·건물 둘레(보도)는 콘크리트, 그 바깥 빈 땅은 파스텔 민트 잔디(렌더가 약 1.4배 밝아지므로 낮게 잡음).
-      p.GroundGrass = new Color32(0x5C, 0x9C, 0x80, 0xFF);
-      p.GroundGrassLight = new Color32(0x66, 0xA6, 0x89, 0xFF);
-      p.GroundGrassDark = new Color32(0x53, 0x90, 0x76, 0xFF);
-      p.GroundDirt = new Color32(0x74, 0x70, 0x68, 0xFF);
-      p.GroundDirtDark = new Color32(0x66, 0x62, 0x5B, 0xFF);
-      p.GroundPlaza = new Color32(0x80, 0x84, 0x8D, 0xFF);
-      p.GroundPlazaDark = new Color32(0x73, 0x77, 0x80, 0xFF);
-      p.RoadColor = new Color32(0x2A, 0x2D, 0x35, 0xFF);
+      // 야전 룩(2026-11-15 사용자 지시): 에란겔식 무채색 올리브·카키 잔디와 마른 흙.
+      p.FieldLook = true;
+      p.GroundGrass = new Color32(0x5C, 0x66, 0x49, 0xFF);
+      p.GroundGrassLight = new Color32(0x64, 0x6E, 0x50, 0xFF);
+      p.GroundGrassDark = new Color32(0x54, 0x5D, 0x43, 0xFF);
+      p.GroundDirt = new Color32(0x78, 0x6B, 0x56, 0xFF);
+      p.GroundDirtDark = new Color32(0x6A, 0x5E, 0x4B, 0xFF);
+      // 길·건물 둘레(예전 보도 자리)는 밟아 다진 흙.
+      p.GroundPlaza = new Color32(0x78, 0x6B, 0x56, 0xFF);
+      p.GroundPlazaDark = new Color32(0x6A, 0x5E, 0x4B, 0xFF);
+      // 흙길(야전 룩).
+      p.RoadColor = new Color32(0x6B, 0x5E, 0x4A, 0xFF);
       p.TreeDensity = 0.5f;
       p.SolidGround = true;
       p.BackgroundColor = new Color32(0xB2, 0xBA, 0xCC, 0xFF);

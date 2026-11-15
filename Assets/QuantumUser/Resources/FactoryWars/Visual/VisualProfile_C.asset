@@ -73,21 +73,22 @@ MonoBehaviour:
   UrbanDensityLow: 0.4
   UrbanDensityMedium: 0.7
   GroundVertexColors: 1
-  GroundGrass: {r: 0.36078432, g: 0.6117647, b: 0.5019608, a: 1}
-  GroundGrassLight: {r: 0.4, g: 0.6509804, b: 0.5372549, a: 1}
-  GroundGrassDark: {r: 0.3254902, g: 0.5647059, b: 0.4627451, a: 1}
-  GroundDirt: {r: 0.45490196, g: 0.4392157, b: 0.40784314, a: 1}
-  GroundDirtDark: {r: 0.4, g: 0.38431373, b: 0.35686275, a: 1}
+  GroundGrass: {r: 0.36078432, g: 0.4, b: 0.28627452, a: 1}
+  GroundGrassLight: {r: 0.39215687, g: 0.43137255, b: 0.3137255, a: 1}
+  GroundGrassDark: {r: 0.32941177, g: 0.3647059, b: 0.2627451, a: 1}
+  GroundDirt: {r: 0.47058824, g: 0.41960785, b: 0.3372549, a: 1}
+  GroundDirtDark: {r: 0.41568628, g: 0.36862746, b: 0.29411766, a: 1}
   KenneyMilitary: 0
   PaletteLift: 0.9
   WhiteLanes: 1
-  GroundPlaza: {r: 0.5019608, g: 0.5176471, b: 0.5529412, a: 1}
-  GroundPlazaDark: {r: 0.4509804, g: 0.46666667, b: 0.5019608, a: 1}
-  RoadColor: {r: 0.16470589, g: 0.1764706, b: 0.20784314, a: 1}
+  GroundPlaza: {r: 0.47058824, g: 0.41960785, b: 0.3372549, a: 1}
+  GroundPlazaDark: {r: 0.41568628, g: 0.36862746, b: 0.29411766, a: 1}
+  RoadColor: {r: 0.41960785, g: 0.36862746, b: 0.2901961, a: 1}
   SolidGround: 1
   BackgroundColor: {r: 0.69803923, g: 0.7294118, b: 0.8, a: 1}
   WaterColor: {r: 0.2901961, g: 0.6392157, b: 0.8392157, a: 1}
   WaterShallowTint: {r: 0.4509804, g: 0.85882354, b: 0.7411765, a: 1}
+  FieldLook: 1
   WaterDeepTint: {r: 0.16862746, g: 0.61960787, b: 0.6392157, a: 1}
   WaterFoamTint: {r: 0.96862745, g: 1, b: 1, a: 1}
   WaterFoamWidth: 1.3

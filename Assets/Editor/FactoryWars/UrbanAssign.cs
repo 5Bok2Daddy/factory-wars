@@ -96,11 +96,11 @@ namespace FactoryWars.EditorTools {
       yield return Scaled(DressKind.Broadleaf, 1.8f, "SM_Prop_Pallet_01", "SM_Prop_Crate_Large_01");
       yield return Scaled(DressKind.TreeSparse, 1.3f, "SM_Prop_Pallet_01", "SM_Prop_Pallet_02");
       yield return Scaled(DressKind.Stump, 0.9f, "SM_Prop_Pallet_01", "SM_Prop_Pallet_02");
-      yield return Sized(DressKind.Bush, 1.5f, "SM_Env_Bush_Small_01", "SM_Env_Bush_Small_02", "SM_Env_Bush_Small_03");
+      yield return Sized(DressKind.Bush, 1.8f, "SM_Env_Bush_03", "SM_Env_Bush_01");
       // 빈 땅 흩뿌리기와 바위: 자갈·잔해·콘크리트 더미.
-      yield return Sized(DressKind.Grass, 1.1f, "SM_Env_Grass_01", "SM_Env_Grass_02", "SM_Env_Grass_03", "SM_Env_Grass_04");
-      yield return Sized(DressKind.RockSmall, 2.2f, "SM_Prop_Rubble_Pile_01", "SM_Prop_Rubble_Pile_02", "SM_Prop_Rubble_Pile_03");
-      yield return Sized(DressKind.RockLarge, 5f, "SM_Env_Rubble_Pile_01", "SM_Env_Rubble_Pile_02", "SM_Prop_DebrisPile_02");
+      yield return Sized(DressKind.Grass, 2.6f, "SM_Generic_Grass_Patch_01", "SM_Generic_Grass_Patch_02", "SM_Generic_Grass_Patch_03");
+      yield return Sized(DressKind.RockSmall, 1.4f, "SM_Generic_Small_Rocks_01", "SM_Generic_Small_Rocks_02");
+      yield return Sized(DressKind.RockLarge, 3f, "SM_Env_Rock_01", "SM_Env_Rock_02");
       yield return Sized(DressKind.GroundPatch, 3f, "SM_Env_Road_Patch_01");
       yield return Sized(DressKind.Debris, 3f, "SM_Prop_DebrisPile_03", "SM_Prop_Vehicle_Debris_01", "SM_Prop_Vehicle_Debris_02", "SM_Prop_Rubble_Pile_03");
       yield return Sized(DressKind.Wreck, 4.6f, "SM_Veh_Car_Destroyed_01", "SM_Veh_Light_Car_Destroyed_01");

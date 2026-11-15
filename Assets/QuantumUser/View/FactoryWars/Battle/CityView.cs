@@ -169,6 +169,10 @@ namespace FactoryWars.View {
 
     /// <summary>건물 부지 패드를 메쉬 하나로 합친다(항목 25-1: 건물마다 렌더러 하나씩이던 것을 하나로). 패드는 무너져도 남는다.</summary>
     void BuildPads() {
+      // 야전 룩: 도시 건물 밑 부지 판을 그리지 않는다(건물이 땅에 바로 선다).
+      if (VisualProfile.Current.FieldLook) {
+        return;
+      }
       var kit = new MeshKit();
       for (var i = 0; _map.CityBuildings != null && i < _map.CityBuildings.Length; i++) {
         var shape = _map.CityBuildings[i].Shape;
@@ -347,7 +351,7 @@ namespace FactoryWars.View {
             Yaw = FP.FromFloat_UNSAFE(yaw),
           };
           TerrainKit.Plateau(rock, shape, 300 + index, height, 3, 0.9f, false);
-          for (var t = 0; t < 5; t++) {
+          for (var t = 0; t < 5 && VisualProfile.Current.UrbanDecor == false; t++) {
             if (MeshKit.Hash(index, 40 + t) < 0.35f) {
               continue;
             }

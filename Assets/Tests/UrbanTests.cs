@@ -90,7 +90,15 @@ namespace FactoryWars.Tests {
       }
       var kit = new MeshKit();
       UrbanDecor.Crosswalks(kit, map);
-      Assert.GreaterOrEqual(kit.TriangleCount, crossings.Count * 4 * 2, "교차로마다 네 갈래에 줄무늬");
+      if (VisualProfile.Current.FieldLook) {
+        // 야전 룩(흙길): 횡단보도·광장 패드를 그리지 않는다. 대신 다리 양끝을 길과 잇는 흙길이 있다.
+        Assert.AreEqual(0, kit.TriangleCount, "야전 룩: 횡단보도 없음");
+        var links = new MeshKit();
+        UrbanDecor.BridgeLinks(links, map);
+        Assert.Greater(links.TriangleCount, 0, "다리 입구와 길을 잇는 흙길");
+      } else {
+        Assert.GreaterOrEqual(kit.TriangleCount, crossings.Count * 4 * 2, "교차로마다 네 갈래에 줄무늬");
+      }
     }
 
     /// <summary>수로 둑이 끊기지 않는다: 강줄기마다 물 면·거품 띠(양쪽)·둑 면이 구간마다 한 벌씩 이어지고, 물 셰이더가 있다.</summary>

@@ -65,6 +65,11 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 야전 룩(PUBG식) 전환 (2026-11-15)
+![교차로](Docs/status_images/36f_field_crossroads.png)
+![수문](Docs/status_images/36f_field_gate.png)
+![전체](Docs/status_images/36f_field_overview.png)
+
 ### 그래픽 2차: 잔디·보도 줄눈·창고 자원지·콘크리트 수문 (2026-11-15)
 ![교차로](Docs/status_images/36g_crossroads_ground.png)
 ![수문](Docs/status_images/36g_gate_solid.png)

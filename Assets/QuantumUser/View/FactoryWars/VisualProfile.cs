@@ -146,6 +146,8 @@ namespace FactoryWars.View {
     public Color WaterColor = new Color(0f, 0f, 0f, 0f);
     /// <summary>항목 36 추가: 파스텔 에메랄드 물. 얕은 쪽·깊은 쪽·거품 색(알파 0이면 WaterColor에서 계산한 옛 값).</summary>
     public Color WaterShallowTint = new Color(0f, 0f, 0f, 0f);
+    /// <summary>야전 룩(PUBG식): 건물 밑판·횡단보도·부두 패드 없음, 흙길, 올리브·흙 바닥, 데모 씬식 풀·바위.</summary>
+    public bool FieldLook;
     public Color WaterDeepTint = new Color(0f, 0f, 0f, 0f);
     public Color WaterFoamTint = new Color(0.97f, 1f, 1f, 1f);
     /// <summary>깊이 거품 폭(m). 둑·수문 기둥·배와 물이 맞닿는 곳에서 이 거리 안이 흰색이다.</summary>

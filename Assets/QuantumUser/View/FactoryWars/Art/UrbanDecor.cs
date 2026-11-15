@@ -193,6 +193,10 @@ namespace FactoryWars.View {
 
     /// <summary>교차로마다 네 갈래에 횡단보도(흰 줄무늬)를 깐다. 도로 메쉬에 더하는 장식이라 판정이 없다.</summary>
     public static void Crosswalks(MeshKit k, MapSpec map) {
+      // 야전 룩(PUBG식, 2026-11-15 사용자 지시): 건물·거점·부두 밑 패드와 횡단보도를 그리지 않는다.
+      if (VisualProfile.Current.FieldLook) {
+        return;
+      }
       if (VisualProfile.Current.UrbanDecor == false) {
         return;
       }
@@ -244,6 +248,10 @@ namespace FactoryWars.View {
     /// 두 길의 아스팔트·차선이 같은 높이로 겹쳐 깨지는 자리(Z-fighting)를 덮는다. 가장자리에 낮은 연석 고리. 장식이라 판정이 없다.
     /// </summary>
     public static void Plazas(MeshKit k, MapSpec map) {
+      // 야전 룩(PUBG식, 2026-11-15 사용자 지시): 건물·거점·부두 밑 패드와 횡단보도를 그리지 않는다.
+      if (VisualProfile.Current.FieldLook) {
+        return;
+      }
       if (VisualProfile.Current.UrbanDecor == false) {
         return;
       }
@@ -270,6 +278,10 @@ namespace FactoryWars.View {
     /// 항목 36 시각 교정 4: 도시 건물 부지 둘레 보도블록 패드(밝은 회색, 높이 0.15m)와 연석. 건물이 맨바닥 위에 바로 서 보이지 않게 한다.
     /// </summary>
     public static void Sidewalks(MeshKit k, MapSpec map) {
+      // 야전 룩(PUBG식, 2026-11-15 사용자 지시): 건물·거점·부두 밑 패드와 횡단보도를 그리지 않는다.
+      if (VisualProfile.Current.FieldLook) {
+        return;
+      }
       if (VisualProfile.Current.UrbanDecor == false) {
         return;
       }
@@ -295,6 +307,10 @@ namespace FactoryWars.View {
     /// 수로·수문·다리가 지나는 곳은 끊는다. 도로 메쉬에 더하는 장식이라 판정이 없다.
     /// </summary>
     public static void QuayApron(MeshKit k, MapSpec map) {
+      // 야전 룩(PUBG식, 2026-11-15 사용자 지시): 건물·거점·부두 밑 패드와 횡단보도를 그리지 않는다.
+      if (VisualProfile.Current.FieldLook) {
+        return;
+      }
       if (VisualProfile.Current.UrbanDecor == false || TerrainKit.Channel(map) <= 0f) {
         return;
       }
@@ -351,7 +367,7 @@ namespace FactoryWars.View {
           }
           Put(DressKind.QuayPillar, spot, 6100 + n * 3, yaw, "quay", profile);
           var mid = spot + new Vector3(direction.x, 0f, direction.y) * 5.5f;
-          if (s + 11f < length - 4f && Dressing.Has(DressKind.QuayRail)) {
+          if (VisualProfile.Current.FieldLook == false && s + 11f < length - 4f && Dressing.Has(DressKind.QuayRail)) {
             Put(DressKind.QuayRail, mid, 6101 + n * 3, yaw + 90f, "quay", profile);
           }
           if (Dressing.Has(DressKind.QuayBollard)) {
@@ -359,6 +375,64 @@ namespace FactoryWars.View {
           }
         }
       }
+    }
+
+    /// <summary>
+    /// 야전 룩: 다리 양 끝에서 가장 가까운 길까지 흙길을 이어 다리 입구와 길이 끊겨 보이지 않게 한다(화면 전용, 길 판정은 맵 데이터 그대로).
+    /// </summary>
+    public static void BridgeLinks(MeshKit k, MapSpec map) {
+      if (VisualProfile.Current.FieldLook == false || map.Bridges == null || map.Roads == null) {
+        return;
+      }
+      var samples = new List<Vector2>();
+      foreach (var road in map.Roads) {
+        var c = new Vector2(road.Center.X.AsFloat, road.Center.Z.AsFloat);
+        var d3 = Quaternion.Euler(0, road.Yaw.AsFloat, 0) * Vector3.right;
+        var d = new Vector2(d3.x, d3.z);
+        for (var s = -road.HalfLength.AsFloat; s <= road.HalfLength.AsFloat; s += 2f) {
+          samples.Add(c + d * s);
+        }
+      }
+      k.Paint(Swatch.Asphalt);
+      foreach (var bridge in map.Bridges) {
+        var c = new Vector2(bridge.Center.X.AsFloat, bridge.Center.Z.AsFloat);
+        var alongX = bridge.HalfLength.AsFloat >= bridge.HalfWidth.AsFloat;
+        var d3 = Quaternion.Euler(0, bridge.Yaw.AsFloat + (alongX ? 0f : 90f), 0) * Vector3.right;
+        var d = new Vector2(d3.x, d3.z);
+        var half = Mathf.Max(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
+        var width = Mathf.Min(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat) * 0.85f;
+        foreach (var sign in new[] { -1f, 1f }) {
+          var end = c + d * sign * (half + 0.5f);
+          var best = Vector2.zero;
+          var bestDistance = 45f;
+          foreach (var p in samples) {
+            var distance = (p - end).magnitude;
+            // 다리 바깥쪽(같은 방향)의 길만 잇는다.
+            if (distance < bestDistance && Vector2.Dot(p - end, d * sign) > -1f) {
+              best = p;
+              bestDistance = distance;
+            }
+          }
+          if (bestDistance >= 45f) {
+            continue;
+          }
+          // 다리 축으로 곧게 나온 뒤(직진 구간) 길까지 잇는다.
+          var straight = end + d * sign * Mathf.Min(6f, bestDistance * 0.5f);
+          Strip(k, end, straight, width);
+          Strip(k, straight, best, width);
+        }
+      }
+    }
+
+    static void Strip(MeshKit k, Vector2 a, Vector2 b, float halfWidth) {
+      var dir = b - a;
+      if (dir.sqrMagnitude < 0.01f) {
+        return;
+      }
+      var n = new Vector2(-dir.y, dir.x).normalized * halfWidth;
+      Vector3 P(Vector2 p) => new Vector3(p.x, 0.07f, p.y);
+      k.Quad(P(a - n), P(b - n), P(b + n), P(a + n), Vector3.up);
+      k.Disc(new Vector3(b.x, 0.07f, b.y), halfWidth, 12);
     }
 
     // ---------- 수로 물 표면 ----------

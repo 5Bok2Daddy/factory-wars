@@ -20,7 +20,7 @@ namespace FactoryWars.View {
     public Vector3 DoorSize = Vector3.one;
 
     /// <summary>문이 닫혔을 때 밑면 높이(물 속에 잠기게 음수).</summary>
-    public const float DoorBaseY = -1.2f;
+    public const float DoorBaseY = -7f;
 
     float _doorHeight;
     float _drop = -1f;
@@ -49,6 +49,27 @@ namespace FactoryWars.View {
       Place(PierR, new Vector3(pierX, 0f, 0f), 0f, Vector3.one * pierScale);
       // 문: 기둥 사이 폭에 맞춰 늘리고 높이는 doorHeight, 두께는 높이 배율을 따른다. 우리 감싸개에만 배율을 주므로 팩 파일은 그대로다.
       if (Door != null) {
+        // 야전 룩: 팩 문 모델 대신 두꺼운 짙은 강철판(#4A5568)을 수로 바닥(-7m)부터 벽 위(문 높이)까지 세워 빈틈없이 막는다.
+        foreach (Transform child in Door) {
+          child.gameObject.SetActive(false);
+        }
+        var plate = Door.Find("SteelPlate");
+        if (plate == null) {
+          plate = GameObject.CreatePrimitive(PrimitiveType.Cube).transform;
+          plate.name = "SteelPlate";
+          Object.Destroy(plate.GetComponent<Collider>());
+          plate.GetComponent<MeshRenderer>().sharedMaterial = SteelMaterial();
+          plate.SetParent(Door, false);
+        }
+        plate.gameObject.SetActive(true);
+        Door.localScale = Vector3.one;
+        Door.localRotation = Quaternion.identity;
+        var full = doorHeight + Mathf.Abs(DoorBaseY);
+        plate.localScale = new Vector3(Mathf.Max(0.5f, span - 0.2f), full, 1.2f);
+        plate.localPosition = new Vector3(0f, full * 0.5f, 0f);
+        _doorHeight = full;
+      }
+      if (false && Door != null) {
         var sx = Mathf.Max(0.5f, span - pierHalf * 4f) / Mathf.Max(0.1f, DoorSize.x);
         var sy = doorHeight / Mathf.Max(0.1f, DoorSize.y);
         // 두께는 1m로 고정(구멍 없는 판 문이 수로를 빈틈없이 막는다).
@@ -83,11 +104,24 @@ namespace FactoryWars.View {
         return;
       }
       var eased = _drop * _drop * (3f - 2f * _drop);
-      Door.localPosition = new Vector3(0f, DoorBaseY - (_doorHeight + Mathf.Abs(DoorBaseY)) * eased, 0f);
+      Door.localPosition = new Vector3(0f, DoorBaseY - _doorHeight * eased, 0f);
       var visible = _drop < 1f;
       if (Door.gameObject.activeSelf != visible) {
         Door.gameObject.SetActive(visible);
       }
+    }
+
+    static Material _steel;
+
+    /// <summary>수문 강철판 공용 머티리얼(URP Lit, 짙은 강철 #4A5568, 무광에 가까움). 팩 머티리얼은 건드리지 않는다.</summary>
+    static Material SteelMaterial() {
+      if (_steel == null) {
+        var shader = Shader.Find("Universal Render Pipeline/Lit");
+        _steel = new Material(shader) { name = "FloodgateSteel", color = new Color32(0x4A, 0x55, 0x68, 0xFF) };
+        _steel.SetFloat("_Smoothness", 0.25f);
+        _steel.SetFloat("_Metallic", 0.6f);
+      }
+      return _steel;
     }
 
     /// <summary>문이 다 내려가고 몇 초 뒤 물보라를 끈다.</summary>

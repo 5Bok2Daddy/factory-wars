@@ -144,7 +144,7 @@ namespace FactoryWars.View {
         }
       }
       // 항목 36 시각 교정: 건물 블록 둘레 보도블록 패드(높이 0.15m, 밝은 회색 콘크리트). 도로보다 높아 구획이 나뉜다.
-      if (dressed && dark == false && VisualProfile.Current.UrbanDecor) {
+      if (dressed && dark == false && VisualProfile.Current.UrbanDecor && VisualProfile.Current.FieldLook == false) {
         var ringTop = rings[layers];
         var apron = new Vector2[ringTop.Length];
         for (var i = 0; i < ringTop.Length; i++) {
@@ -196,10 +196,20 @@ namespace FactoryWars.View {
 
     /// <summary>MapSpec.Roads 조각마다 아스팔트, 가장자리 연석, 가운데 노란 점선, 양옆 흰 선.</summary>
     public static void Roads(MeshKit k, MapSpec map) {
+      var roadIndex = 0;
       foreach (var road in map.Roads ?? System.Array.Empty<MapShape>()) {
         var center = new Vector3(road.Center.X.AsFloat, 0f, road.Center.Z.AsFloat);
         var yaw = road.Yaw.AsFloat;
         var half = new Vector2(road.HalfLength.AsFloat, road.HalfWidth.AsFloat);
+        if (VisualProfile.Current.FieldLook) {
+          // 야전 룩: 연석·차선 없는 흙길 한 장. 겹치는 길끼리 높이를 조금씩 달리해 깜빡임(Z-fighting)을 없앤다.
+          var y = 0.04f + (roadIndex++ % 8) * 0.004f;
+          k.Push(center, new Vector3(0, yaw, 0));
+          k.Paint(Swatch.Asphalt);
+          k.Quad(new Vector3(-half.x - half.y, y, -half.y), new Vector3(half.x + half.y, y, -half.y), new Vector3(half.x + half.y, y, half.y), new Vector3(-half.x - half.y, y, half.y), Vector3.up);
+          k.Pop();
+          continue;
+        }
         k.Push(center, new Vector3(0, yaw, 0));
         k.Paint(Swatch.Concrete);
         k.Quad(new Vector3(-half.x - CurbWidth, 0.035f, -half.y - CurbWidth), new Vector3(half.x + CurbWidth, 0.035f, -half.y - CurbWidth),

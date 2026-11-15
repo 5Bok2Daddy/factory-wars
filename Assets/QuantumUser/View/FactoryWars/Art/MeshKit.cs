@@ -69,6 +69,10 @@ namespace FactoryWars.View {
       if (VisualProfile.Current.UrbanDecor == false) {
         return swatch;
       }
+      // 야전 룩: 대지·고지대 윗면 잔디는 흰 콘크리트가 아니라 짙은 올리브.
+      if (VisualProfile.Current.FieldLook && (swatch == Swatch.Grass || swatch == Swatch.GrassLight || swatch == Swatch.GrassDark)) {
+        return Swatch.OliveDark;
+      }
       return swatch == Swatch.Grass || swatch == Swatch.GrassLight ? Swatch.ConcreteDark : swatch == Swatch.GrassDark ? Swatch.Asphalt : swatch;
     }
 
@@ -657,6 +661,10 @@ namespace FactoryWars.View {
     /// Kenney 나무로 한 그루를 놓는다(모으는 중일 때만). 침엽·단풍·짙은 활엽 비율은 프로필 값이다. 놓았으면 true.
     /// </summary>
     public static bool DressTree(Vector3 world, int seed, TreeState state) {
+      // 야전 룩: 나무 칸이 상자·팔레트 더미로 연결돼 있어 어디에도 심지 않는다(true = 처리됨, 절차 나무도 그리지 않음).
+      if (VisualProfile.Current.FieldLook) {
+        return true;
+      }
       if (Dressing.Collecting == false || Dressing.Has(DressKind.Conifer) == false) {
         return false;
       }
@@ -747,11 +755,10 @@ namespace FactoryWars.View {
       if (VisualProfile.Current.UrbanDecor == false || toWorld.HasValue == false || Dressing.Has(DressKind.LumberYard) == false) {
         return false;
       }
-      kit.Paint(Swatch.Concrete).Box(new Vector3(0, 0.075f, 0), new Vector3(halfLength * 2 + 1.2f, 0.15f, halfWidth * 2 + 1.2f));
-      kit.Paint(Swatch.ConcreteDark).Box(new Vector3(0, 0.155f, 0), new Vector3(halfLength * 2 - 0.6f, 0.01f, halfWidth * 2 - 0.6f));
+      // 야전 룩: 밑판 없이 땅에 바로 세운다.
       if (remaining > 0f) {
         var matrix = toWorld.Value;
-        var center = matrix.MultiplyPoint3x4(new Vector3(0, 0.16f, 0));
+        var center = matrix.MultiplyPoint3x4(Vector3.zero);
         var yaw = matrix.rotation.eulerAngles.y + (halfWidth > halfLength ? 90f : 0f);
         Dressing.AddFitted(DressKind.LumberYard, center, yaw, Mathf.Max(halfLength, halfWidth) * 2f * 0.8f, Mathf.Min(halfLength, halfWidth) * 2f * 0.8f, seed);
       }

@@ -165,11 +165,13 @@ namespace FactoryWars.View {
           var pick = MeshKit.Hash(index, 4);
           // 시가지: 잔디 구역(보도 바깥)에만 낮은 풀·덤불. 자갈·쓰레기는 두지 않는다.
           if (urban) {
-            if (TerrainKit.IsPavedGround(map, spot.x, spot.z) || MeshKit.Hash(index, 5) > 0.55f) {
+            if (TerrainKit.IsPavedGround(map, spot.x, spot.z) && pick > 0.25f) {
               continue;
             }
             spot.y = TerrainKit.SurfaceHeight(map, spot.x, spot.z);
-            count += Dressing.Add(pick < 0.72f ? DressKind.Grass : DressKind.Bush, spot, 9000 + index) ? 1 : 0;
+            // 배틀로얄 데모 씬 구성: 풀 덤불 패치가 대부분, 작은 돌·덤불·바위를 섞는다.
+            var field = pick < 0.6f ? DressKind.Grass : pick < 0.78f ? DressKind.RockSmall : pick < 0.93f ? DressKind.Bush : DressKind.RockLarge;
+            count += Dressing.Add(field, spot, 9000 + index) ? 1 : 0;
             continue;
           }
           var kind = pick < 0.48f ? DressKind.Grass : pick < 0.6f && Dressing.Has(DressKind.GroundPatch) ? DressKind.GroundPatch : pick < 0.85f ? DressKind.RockSmall : DressKind.Bush;
