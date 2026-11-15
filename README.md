@@ -65,6 +65,12 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 교전 애니메이션: 소총 들기·어깨 조준 자세·총구 예광탄, 부드러운 폭발, 얇은 고리 (2026-11-16, 3차)
+![소총 조준 가까이](Docs/status_images/44_rifles_closeup.png)
+![교전](Docs/status_images/44_firefight.png)
+![전진 사령부(흰 바닥판 없음)](Docs/status_images/44_forward_hq_nopad.png)
+![HUD](Docs/status_images/44_hud.png)
+
 ### 고해상도 미니맵·전진 사령부·교전 화면 (2026-11-16, 2차)
 미니맵(256px·쌍선형, 미탐색도 길·강 윤곽이 보이게, 안개 경계·영역 테두리 부드럽게, 3배 확대):
 
