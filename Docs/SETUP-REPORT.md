@@ -3390,3 +3390,22 @@ OVERNIGHT-QUEUE.md 규칙 1에 따라 묻지 않고 기본값으로 진행했다
 | 원본 수정 | 없음(배율은 칸 데이터에만, Assets_PackFilesUnchanged 통과) |
 | 없어서 절차로 만든 것 | 정찰 드론(쿼드콥터) |
 | 사면 좋은 것 | 쿼드콥터·UAV 모델 팩, 모래주머니 진지 팩 |
+
+## 항목 39-3 결과 (주둔지 순환로·길가 정비, 2026-11-16)
+
+- 길-주둔지 겹침: 들어오는 길을 순환로 바깥 가장자리 1.5m 안쪽에서 자름(TerrainKit.RoadPieces, Liang-Barsky). 울타리 둘레에 5m 폭 사각 순환로(안쪽 콘크리트 띠, 흰 가장자리선 2줄, 바깥 높인 연석). 주둔지 반경 안 교차로 마개·횡단보도·검문소는 그리지 않음(검문소는 30m 밖으로).
+- 연석·갓길: 모든 길 양옆에 높인 연석(0.14m, 2m 조각, 교차로에 걸리는 조각은 뺌)과 자갈 갓길 2.4m(절차 메쉬). 팩 보도 모듈은 길 전체에 깔면 개체 수가 너무 많아 쓰지 않았다.
+- 길가 가구(16m마다, 갓길 1m): 가로등(Street_Light_01/02), 전신주(Powerpole_01/02), 표지판(Stop/GiveWay), 쓰레기통·소화전, 가끔 버스 정류장. 길마다 순서를 밀어 짧은 길에도 고루 나오게 함.
+- 엄폐(32m마다, 갓길 2.4m): 헤스코 줄·방벽·상자 엄폐·드럼통. 버려진 차량(약 28%, 갓길 3.6m, ±15도): 파괴된 승용차·SUV·픽업. 화면 전용이라 길찾기에 영향 없음.
+- 갓길 뒤 자연(5m마다, 갓길 4.5~8m): 잡풀·작은 바위·덤불·활엽수·침엽수.
+- Map4P 배치 수: 가로등 30, 전신주 17, 쓰레기통·소화전 18, 표지판 18, 정류장 11, 엄폐 20, 차량 14, 갓길 자연 289.
+- 드론: 0/120/240도, 반경 10·13·16m, 같은 각속도(14도/초)라 간격이 유지됨.
+- 감시탑: 지붕 없는 난간 갑판형(SM_Bld_GuardTower_02)으로 바꿔 탑 위 보초가 위에서 보임. 사다리는 마당 쪽.
+- 테스트: Urban_RoadsidesDressedAlongRoads 추가(종류별 개수, 길 위 소품 없음), 주둔지 테스트에 드론 간격·길 조각 검사 추가. 회귀 78/78 통과. 캡처 통과.
+
+| 에셋 반영 정리 | 내용 |
+|---|---|
+| 새로 쓴 팩 모델 | SM_Prop_Street_Light_01/02, SM_Prop_Powerpole_01/02, SM_Prop_Sign_Stop_01, SM_Prop_Sign_GiveWay_01, SM_Prop_Trashbin_01, SM_Prop_TrashCan_01, SM_Prop_Hydrant_01, SM_Prop_BusStop_01, SM_Prop_Barrier_Base_Row_01, SM_Prop_Barrier_01, SM_Prop_Crate_Stack_Cover_01, SM_Prop_Barrel_Stack_01, SM_Veh_Car_Destroyed_01, SM_Veh_Car_Medium_Destroyed_01, SM_Veh_SUV_Destroyed_01, SM_Veh_Pickup_Small_Destroyed_01, SM_Veh_Light_Car_Destroyed_01, SM_Bld_GuardTower_02 |
+| 원본 수정 | 없음(Assets_PackFilesUnchanged 통과) |
+| 절차로 만든 것 | 순환로, 연석, 자갈 갓길 |
+| 쓰지 않은 것 | 실존 국가명이 붙은 전차 잔해 모델(가상 진영 원칙), 벽걸이 표지판 |

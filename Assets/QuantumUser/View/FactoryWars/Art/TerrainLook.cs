@@ -326,36 +326,155 @@ namespace FactoryWars.View {
       return true;
     }
 
+    /// <summary>중앙 암시장 둘레 순환로: 울타리 바깥 0.6m부터 5m 폭. 들어오는 길은 바깥 가장자리 1.5m 안에서 끝난다.</summary>
+    public const float RingInner = TraderView.Half + 0.6f;
+    public const float RingWidth = 5f;
+    public static float RingOuter => RingInner + RingWidth;
+    const float ShoulderWidth = 2.4f;
+    const float CurbPiece = 2f;
+
+    static bool OnOtherRoad(MapSpec map, MapShape road, Vector3 point) {
+      var fp = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(point.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(point.z));
+      foreach (var other in map.Roads) {
+        if (other.Center != road.Center && other.Distance(fp).AsFloat < 0.9f) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// <summary>길 하나를 암시장 순환로 바깥 조각들로 자른다(각 조각의 중심, 반길이). 암시장이 없으면 그대로 한 조각.</summary>
+    public static List<(Vector3 Center, float Half)> RoadPieces(MapSpec map, MapShape road) {
+      var center = new Vector3(road.Center.X.AsFloat, 0f, road.Center.Z.AsFloat);
+      var half = road.HalfLength.AsFloat;
+      var result = new List<(Vector3, float)>();
+      if (map.HasTrader == false) {
+        result.Add((center, half));
+        return result;
+      }
+      var dir = Quaternion.Euler(0f, road.Yaw.AsFloat, 0f) * Vector3.right;
+      var t = new Vector3(map.TraderPosition.X.AsFloat, 0f, map.TraderPosition.Z.AsFloat);
+      var r = RingOuter - 1.5f;
+      var a = center - dir * half - t;
+      var d = dir * (half * 2f);
+      // Liang-Barsky: 선분 중 정사각형 [-r, r]² 안에 드는 구간 [t0, t1].
+      var t0 = 0f;
+      var t1 = 1f;
+      var inside = true;
+      foreach (var (p, q) in new[] { (-d.x, a.x + r), (d.x, r - a.x), (-d.z, a.z + r), (d.z, r - a.z) }) {
+        if (Mathf.Abs(p) < 1e-5f) {
+          if (q < 0f) {
+            inside = false;
+          }
+          continue;
+        }
+        var u = q / p;
+        if (p < 0f) {
+          t0 = Mathf.Max(t0, u);
+        } else {
+          t1 = Mathf.Min(t1, u);
+        }
+      }
+      if (inside == false || t0 >= t1) {
+        result.Add((center, half));
+        return result;
+      }
+      var start = center - dir * half;
+      foreach (var (from, to) in new[] { (0f, t0), (t1, 1f) }) {
+        var length = (to - from) * half * 2f;
+        if (length > 1f) {
+          result.Add((start + dir * ((from + to) * half), length * 0.5f));
+        }
+      }
+      return result;
+    }
+
+    static void FieldRoad(MeshKit k, MapSpec map, MapShape road, Vector3 center, float yaw, Vector2 half, int roadIndex) {
+      // 야전 룩 아스팔트: 둥근 끝 마개, 양옆 높인 연석(0.14m)과 자갈 갓길(2.4m), 흰 가장자리선·중앙 점선. 겹치는 길끼리 높이를 조금씩 달리한다.
+      var y = 0.06f + (roadIndex % 8) * 0.003f;
+      k.Push(center, new Vector3(0, yaw, 0));
+      k.Paint(Swatch.RockDark);
+      foreach (var side in new[] { -1f, 1f }) {
+        var inner = side * (half.y + CurbWidth);
+        var outer = side * (half.y + CurbWidth + ShoulderWidth);
+        k.Quad(new Vector3(-half.x, 0.03f, Mathf.Min(inner, outer)), new Vector3(half.x, 0.03f, Mathf.Min(inner, outer)), new Vector3(half.x, 0.03f, Mathf.Max(inner, outer)), new Vector3(-half.x, 0.03f, Mathf.Max(inner, outer)), Vector3.up);
+      }
+      k.Paint(Swatch.Concrete);
+      k.Quad(new Vector3(-half.x, y - 0.01f, -half.y - CurbWidth), new Vector3(half.x, y - 0.01f, -half.y - CurbWidth), new Vector3(half.x, y - 0.01f, half.y + CurbWidth), new Vector3(-half.x, y - 0.01f, half.y + CurbWidth), Vector3.up);
+      // 높인 연석은 2m 조각으로 놓고, 다른 길 아스팔트 위(교차로)에 걸리는 조각은 뺀다.
+      var turn = Quaternion.Euler(0f, yaw, 0f);
+      var from = -half.x + half.y * 0.6f;
+      var to = half.x - half.y * 0.6f;
+      foreach (var side in new[] { -1f, 1f }) {
+        for (var x = from; x < to; x += CurbPiece) {
+          var len = Mathf.Min(CurbPiece, to - x);
+          var local = new Vector3(x + len * 0.5f, 0f, side * (half.y + CurbWidth * 0.55f));
+          if (OnOtherRoad(map, road, center + turn * local)) {
+            continue;
+          }
+          k.Box(local + Vector3.up * (y + 0.07f), new Vector3(len - 0.04f, 0.14f, CurbWidth * 0.7f));
+        }
+      }
+      k.Paint(Swatch.Asphalt);
+      k.Quad(new Vector3(-half.x, y, -half.y), new Vector3(half.x, y, -half.y), new Vector3(half.x, y, half.y), new Vector3(-half.x, y, half.y), Vector3.up);
+      k.Disc(new Vector3(-half.x, y, 0f), half.y, 16);
+      k.Disc(new Vector3(half.x, y, 0f), half.y, 16);
+      k.Paint(Swatch.LaneWhite);
+      foreach (var side in new[] { -1f, 1f }) {
+        var z = side * (half.y - 0.45f);
+        k.Quad(new Vector3(-half.x + half.y, y + 0.01f, z - LaneWidth / 2), new Vector3(half.x - half.y, y + 0.01f, z - LaneWidth / 2), new Vector3(half.x - half.y, y + 0.01f, z + LaneWidth / 2), new Vector3(-half.x + half.y, y + 0.01f, z + LaneWidth / 2), Vector3.up);
+      }
+      for (var x = -half.x + half.y; x < half.x - half.y; x += LaneDash + LaneGap) {
+        var end = Mathf.Min(x + LaneDash, half.x - half.y);
+        k.Quad(new Vector3(x, y + 0.012f, -LaneWidth / 2), new Vector3(end, y + 0.012f, -LaneWidth / 2), new Vector3(end, y + 0.012f, LaneWidth / 2), new Vector3(x, y + 0.012f, LaneWidth / 2), Vector3.up);
+      }
+      k.Pop();
+    }
+
+    /// <summary>암시장 울타리를 감싸는 사각 순환로(아스팔트, 안쪽 콘크리트 띠, 양쪽 흰 선). 들어오는 길 끝이 이 위에서 만난다.</summary>
+    static void RingRoad(MeshKit k, MapSpec map) {
+      var c = new Vector3(map.TraderPosition.X.AsFloat, 0f, map.TraderPosition.Z.AsFloat);
+      var i = RingInner;
+      var o = RingOuter;
+      const float y = 0.088f;
+      void Rect(float x0, float z0, float x1, float z1, float lift) {
+        k.Quad(c + new Vector3(x0, y + lift, z0), c + new Vector3(x1, y + lift, z0), c + new Vector3(x1, y + lift, z1), c + new Vector3(x0, y + lift, z1), Vector3.up);
+      }
+      k.Paint(Swatch.Concrete);
+      Rect(-i, -i, i, i, -0.005f);
+      k.Paint(Swatch.Asphalt);
+      Rect(-o, i, o, o, 0f);
+      Rect(-o, -o, o, -i, 0f);
+      Rect(-o, -i, -i, i, 0f);
+      Rect(i, -i, o, i, 0f);
+      k.Paint(Swatch.LaneWhite);
+      foreach (var e in new[] { i + 0.35f, o - 0.45f }) {
+        Rect(-e, e - LaneWidth / 2, e, e + LaneWidth / 2, 0.01f);
+        Rect(-e, -e - LaneWidth / 2, e, -e + LaneWidth / 2, 0.01f);
+        Rect(-e - LaneWidth / 2, -e, -e + LaneWidth / 2, e, 0.01f);
+        Rect(e - LaneWidth / 2, -e, e + LaneWidth / 2, e, 0.01f);
+      }
+      // 바깥 연석(높인 콘크리트 띠).
+      k.Paint(Swatch.Concrete);
+      foreach (var s in new[] { -1f, 1f }) {
+        k.Box(c + new Vector3(0f, y + 0.06f, s * (o + 0.2f)), new Vector3(o * 2f + 0.8f, 0.14f, 0.4f));
+        k.Box(c + new Vector3(s * (o + 0.2f), y + 0.06f, 0f), new Vector3(0.4f, 0.14f, o * 2f));
+      }
+    }
+
     /// <summary>MapSpec.Roads 조각마다 아스팔트, 가장자리 연석, 가운데 노란 점선, 양옆 흰 선.</summary>
     public static void Roads(MeshKit k, MapSpec map) {
       var roadIndex = 0;
       foreach (var road in map.Roads ?? System.Array.Empty<MapShape>()) {
-        var center = new Vector3(road.Center.X.AsFloat, 0f, road.Center.Z.AsFloat);
         var yaw = road.Yaw.AsFloat;
-        var half = new Vector2(road.HalfLength.AsFloat, road.HalfWidth.AsFloat);
         if (VisualProfile.Current.FieldLook) {
-          // 야전 룩 아스팔트(2026-11-15): 끝을 길이만큼 정확히 자르고(튀어나오는 모서리 없음) 둥근 마개로 마감. 양옆 연석, 흰 가장자리선·중앙 점선.
-          // 겹치는 길끼리 높이를 조금씩 달리해 깜빡임을 없앤다.
-          var y = 0.06f + (roadIndex++ % 8) * 0.003f;
-          k.Push(center, new Vector3(0, yaw, 0));
-          k.Paint(Swatch.Concrete);
-          k.Quad(new Vector3(-half.x, y - 0.01f, -half.y - CurbWidth), new Vector3(half.x, y - 0.01f, -half.y - CurbWidth), new Vector3(half.x, y - 0.01f, half.y + CurbWidth), new Vector3(-half.x, y - 0.01f, half.y + CurbWidth), Vector3.up);
-          k.Paint(Swatch.Asphalt);
-          k.Quad(new Vector3(-half.x, y, -half.y), new Vector3(half.x, y, -half.y), new Vector3(half.x, y, half.y), new Vector3(-half.x, y, half.y), Vector3.up);
-          k.Disc(new Vector3(-half.x, y, 0f), half.y, 16);
-          k.Disc(new Vector3(half.x, y, 0f), half.y, 16);
-          k.Paint(Swatch.LaneWhite);
-          foreach (var side in new[] { -1f, 1f }) {
-            var z = side * (half.y - 0.45f);
-            k.Quad(new Vector3(-half.x + half.y, y + 0.01f, z - LaneWidth / 2), new Vector3(half.x - half.y, y + 0.01f, z - LaneWidth / 2), new Vector3(half.x - half.y, y + 0.01f, z + LaneWidth / 2), new Vector3(-half.x + half.y, y + 0.01f, z + LaneWidth / 2), Vector3.up);
+          foreach (var (pieceCenter, pieceHalf) in RoadPieces(map, road)) {
+            FieldRoad(k, map, road, pieceCenter, yaw, new Vector2(pieceHalf, road.HalfWidth.AsFloat), roadIndex++);
           }
-          for (var x = -half.x + half.y; x < half.x - half.y; x += LaneDash + LaneGap) {
-            var end = Mathf.Min(x + LaneDash, half.x - half.y);
-            k.Quad(new Vector3(x, y + 0.012f, -LaneWidth / 2), new Vector3(end, y + 0.012f, -LaneWidth / 2), new Vector3(end, y + 0.012f, LaneWidth / 2), new Vector3(x, y + 0.012f, LaneWidth / 2), Vector3.up);
-          }
-          k.Pop();
           continue;
         }
+        var center = new Vector3(road.Center.X.AsFloat, 0f, road.Center.Z.AsFloat);
+        var half = new Vector2(road.HalfLength.AsFloat, road.HalfWidth.AsFloat);
         k.Push(center, new Vector3(0, yaw, 0));
         k.Paint(Swatch.Concrete);
         k.Quad(new Vector3(-half.x - CurbWidth, 0.035f, -half.y - CurbWidth), new Vector3(half.x + CurbWidth, 0.035f, -half.y - CurbWidth),
@@ -395,6 +514,9 @@ namespace FactoryWars.View {
             }
           }
         }
+      }
+      if (VisualProfile.Current.FieldLook && map.HasTrader) {
+        RingRoad(k, map);
       }
       // 본진 외곽 방벽·검문소(building-kit border-high*)와 기지 보급 텐트(mini-forest tent). 도로·다리와 겹치지 않는 가장자리에만 둔다(항목 19D).
       if (Dressing.Collecting && map.BaseAreas != null) {

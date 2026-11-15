@@ -91,6 +91,78 @@ namespace FactoryWars.View {
       Checkpoints(map, profile);
       Seawall(map, profile);
       Street(map, profile);
+      Roadside(map, profile);
+    }
+
+    public const float FurnitureStep = 16f;
+
+    /// <summary>
+    /// 야전 길가(2026-11-16): 길 양쪽 갓길에 16m마다 가로등·전신주·표지판·쓰레기통/소화전(가끔 버스 정류장)을 길과 나란히,
+    /// 32m마다 엄폐(헤스코·방벽·상자·드럼통), 가끔 버려진 차량, 갓길 뒤에는 바위·잡풀·덤불·나무. 화면 전용(판정 없음).
+    /// </summary>
+    static void Roadside(MapSpec map, VisualProfile profile) {
+      if (profile.FieldLook == false || map.Roads == null) {
+        return;
+      }
+      var n = 0;
+      var roadNo = 0;
+      foreach (var road in map.Roads) {
+        roadNo++;
+        var yaw = road.Yaw.AsFloat;
+        var turn = Quaternion.Euler(0f, yaw, 0f);
+        var edge = road.HalfWidth.AsFloat + 0.5f;
+        foreach (var (center, half) in TerrainKit.RoadPieces(map, road)) {
+          foreach (var side in new[] { 1f, -1f }) {
+            var face = yaw + (side > 0f ? 180f : 0f);
+            var slot = 0;
+            for (var x = -half + 3f + (side > 0f ? 0f : FurnitureStep * 0.5f); x <= half - 3f; x += FurnitureStep, slot++, n++) {
+              // 길가 가구: 갓길 1m.
+              // 길마다 순서를 밀어 짧은 길에도 가로등·전신주·쓰레기통·표지판이 고루 나온다.
+              var cycle = (slot + roadNo * 2 + (side > 0f ? 0 : 3)) % 5;
+              var furniture = cycle == 0 ? DressKind.RoadLight : cycle == 1 ? DressKind.RoadPole : cycle == 2 ? DressKind.RoadBin : cycle == 3 ? DressKind.RoadLight : DressKind.RoadSign;
+              if (Hash(n, 40) < 0.1f && Dressing.Has(DressKind.RoadBusStop)) {
+                furniture = DressKind.RoadBusStop;
+              }
+              Side(map, road, furniture, center + turn * new Vector3(x, 0f, side * (edge + (furniture == DressKind.RoadBusStop ? 2.2f : 1f))), 6100 + n * 7, face, "roadside", profile);
+              // 엄폐: 32m마다 갓길 2.4m(가구와 엇갈려).
+              if (slot % 2 == 1) {
+                Side(map, road, DressKind.RoadCover, center + turn * new Vector3(x + 7f, 0f, side * (edge + 2.4f)), 6200 + n * 7, yaw + (Hash(n, 41) < 0.5f ? 0f : 180f), "cover", profile);
+              }
+              // 버려진 차량: 갓길 3.6m, 길에서 15도 안팎 비스듬히.
+              if (Hash(n, 42) < 0.28f) {
+                Side(map, road, DressKind.RoadWreck, center + turn * new Vector3(x - 5f, 0f, side * (edge + 3.6f)), 6300 + n * 7, yaw + (Hash(n, 43) - 0.5f) * 30f + (Hash(n, 44) < 0.5f ? 0f : 180f), "wreck", profile);
+              }
+            }
+            // 갓길 뒤 자연: 5m마다 바위·잡풀·덤불·나무(갓길 4.5~8m).
+            var v = 0;
+            for (var x = -half + 2f; x <= half - 2f; x += 5f, v++, n++) {
+              var pick = Hash(n, 45);
+              var kind = pick < 0.38f ? DressKind.Grass : pick < 0.58f ? DressKind.RockSmall : pick < 0.78f ? DressKind.Bush : pick < 0.9f ? DressKind.Broadleaf : DressKind.Conifer;
+              var off = edge + 4.5f + Hash(n, 46) * 3.5f;
+              Side(map, road, kind, center + turn * new Vector3(x + (Hash(n, 47) - 0.5f) * 2.5f, 0f, side * off), 6400 + n * 7, Hash(n, 48) * 360f, "verge", profile);
+            }
+          }
+        }
+      }
+    }
+
+    static void Side(MapSpec map, MapShape road, DressKind kind, Vector3 spot, int seed, float yaw, string role, VisualProfile profile) {
+      if (Dressing.Has(kind) == false || Allowed(map, spot, road) == false) {
+        return;
+      }
+      foreach (var lot in TerrainKit.Lots) {
+        if ((lot.Center - new Vector2(spot.x, spot.z)).magnitude < lot.Radius + 0.5f) {
+          return;
+        }
+      }
+      // 다른 길 아스팔트 위(교차로 근처)는 피한다.
+      var fp = Fp(spot);
+      foreach (var other in map.Roads) {
+        if (other.Center != road.Center && other.Distance(fp).AsFloat <= 1.2f) {
+          return;
+        }
+      }
+      Put(kind, spot, seed, yaw, role, profile);
     }
 
     static void Put(DressKind kind, Vector3 position, int seed, float yaw, string role, VisualProfile profile) {
@@ -155,7 +227,7 @@ namespace FactoryWars.View {
           if (inner.magnitude > 70f || half < 14f) {
             continue;
           }
-          Gate(inner + outward * 16f, outward, road.HalfWidth.AsFloat, 7700 + n++ * 13, profile);
+          Gate(inner + outward * (map.HasTrader ? Dressing.TraderClearRadius + 8f : 16f), outward, road.HalfWidth.AsFloat, 7700 + n++ * 13, profile);
         }
         foreach (var bridge in map.Bridges ?? new MapShape[0]) {
           var c = new Vector3(bridge.Center.X.AsFloat, 0f, bridge.Center.Z.AsFloat);
@@ -236,6 +308,9 @@ namespace FactoryWars.View {
           // 두 길 모두 교점에 닿는다(광장에서 끝이 만나는 길은 8m까지 봐 준다).
           if (Mathf.Abs(t) <= roads[i].HalfLength.AsFloat + 8f && Mathf.Abs(s) <= roads[j].HalfLength.AsFloat + 8f) {
             var point = a + da * t;
+            if (Dressing.InTraderClear(new Vector3(point.x, 0f, point.y)) || (map.HasTrader && (point - new Vector2(map.TraderPosition.X.AsFloat, map.TraderPosition.Z.AsFloat)).magnitude < Dressing.TraderClearRadius)) {
+              continue;
+            }
             if (result.Exists(c => (c.Item1 - point).magnitude < 6f) == false) {
               result.Add((point, da, roads[i].HalfWidth.AsFloat, db, roads[j].HalfWidth.AsFloat));
             }

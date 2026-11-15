@@ -2172,14 +2172,14 @@ MonoBehaviour:
   - Id: dress/Cliff
     Category: 4
     Prefabs:
-    - {fileID: 1003559876612591357, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
-    - {fileID: 5393741467363935968, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
-    - {fileID: 1790941678457735968, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
-    - {fileID: 8321431046563956257, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
-    - {fileID: 7338060680456837840, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
-    - {fileID: 7923777716438057523, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
-    - {fileID: 6259279363040235488, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
-    - {fileID: 7762528070906061542, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
+    - {fileID: 6112497518907194873, guid: 954450f4d97c6754f9056c86f764c2e1, type: 3}
+    - {fileID: 319503678583589529, guid: cea2776a91d69a44687a01ad8001aeb2, type: 3}
+    - {fileID: 1748378761197480577, guid: 29d9142217032f04aa693ccb3e9c074c, type: 3}
+    - {fileID: 3690244878896535038, guid: 6344872cd234cf246b0f3ee6524b32f2, type: 3}
+    - {fileID: 4630519792334232695, guid: ceb90f6eaac33d54fad2c6c57e29a8b7, type: 3}
+    - {fileID: 3185762878467970202, guid: d8b06d25047cef94698c6d00e8646ca7, type: 3}
+    - {fileID: 3739082364604864913, guid: 9a37fc4e9985403489eb23553ea8e07d, type: 3}
+    - {fileID: 2099859139166140495, guid: 735abd8fb4d36b34d8a142845f8168b9, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3236,7 +3236,7 @@ MonoBehaviour:
   - Id: dress/WaterGate
     Category: 4
     Prefabs:
-    - {fileID: 7989328587085829062, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
+    - {fileID: 1568020540070883931, guid: 2bea68f8e6124ff48985a6a0e2fe7673, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -3539,7 +3539,7 @@ MonoBehaviour:
   - Id: dress/TraderTower
     Category: 5
     Prefabs:
-    - {fileID: 1112122440176180, guid: 7fa410500dabdde4cb375f3c7e442e92, type: 3}
+    - {fileID: 1300358768083420, guid: e80bc785a6eb0ae42b4812ad0cf387c5, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -3755,6 +3755,193 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 TraderBarrel"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/RoadLight
+    Category: 5
+    Prefabs:
+    - {fileID: 1197922389802060, guid: 6945f2bb7c40e42438309dedb86c9183, type: 3}
+    - {fileID: 1176811141286966, guid: 4bc0c7cec4b5c5c4f8ec6d71569ec980, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RoadLight"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/RoadPole
+    Category: 5
+    Prefabs:
+    - {fileID: 1491763348482022, guid: 55c6fd6e97802a549bff42dafe5febeb, type: 3}
+    - {fileID: 1148749837550394, guid: 9447ebe4e9eab4045980c83ea926cddd, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RoadPole"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/RoadSign
+    Category: 5
+    Prefabs:
+    - {fileID: 174670, guid: f91a7b3d9aa8ad64ab1d31bb2ae7608e, type: 3}
+    - {fileID: 165046, guid: 4170b399e985d6549a784678829905ad, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RoadSign"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/RoadBin
+    Category: 5
+    Prefabs:
+    - {fileID: 122224, guid: 008c6febfb8d88a4496fe51f2a2d409a, type: 3}
+    - {fileID: 188538, guid: f738f6acdbb1d5844bd657732cb05e13, type: 3}
+    - {fileID: 118212, guid: 400c967e5d1329c4c9dd5bc47e49d545, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RoadBin"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/RoadBusStop
+    Category: 5
+    Prefabs:
+    - {fileID: 194934, guid: 02569c08ab29ca94481dbec225d65225, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RoadBusStop"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/RoadCover
+    Category: 5
+    Prefabs:
+    - {fileID: 1118988988727754, guid: f43df9f6cdcac4247b40d381f708ee00, type: 3}
+    - {fileID: 1481980865230784, guid: 2252526341f17ff40b51a7eac1c47b29, type: 3}
+    - {fileID: 1733527593283712, guid: 3ae27566790ba404a87d8370ab11a673, type: 3}
+    - {fileID: 1200674478224756, guid: 9a825139bd2a13849bb88a515c3f099e, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RoadCover"
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/RoadWreck
+    Category: 5
+    Prefabs:
+    - {fileID: 1316948766749552, guid: 1f3a7fa169961a144ab0cb18f336c7b8, type: 3}
+    - {fileID: 1422008425217990, guid: 313adb6ee9446b7408fbffeb9ad65259, type: 3}
+    - {fileID: 1923996098445686, guid: 8f532b8e69df3ca4c9703ddfbbb7456c, type: 3}
+    - {fileID: 1597876942406768, guid: 73c8899f3737c294f9406f111f9afecd, type: 3}
+    - {fileID: 1589240936164142, guid: 1722a7e7db835f84e99c793413b77078, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 RoadWreck"
     TurretPart: 
     BarrelPart: 
     SpinParts: []

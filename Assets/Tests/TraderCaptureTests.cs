@@ -22,6 +22,21 @@ namespace FactoryWars.Tests {
       camera.Apply();
       yield return WaitFrames(Fps);
       ShootUrban("trader_clean");
+      // 넓은 화면: 순환로에 이어진 길과 길가(가로등·전신주·엄폐·차량·숲).
+      camera.MoveTo(new Vector2(-30f, -34f));
+      camera.Height = 46f;
+      camera.Apply();
+      yield return WaitFrames(Fps / 2);
+      ShootUrban("roadside_wide");
+      camera.MoveTo(new Vector2(-34f, -30f));
+      camera.Height = 22f;
+      camera.Apply();
+      yield return WaitFrames(Fps / 2);
+      ShootUrban("roadside_close");
+      camera.MoveTo(new Vector2(0f, -2f));
+      camera.Height = 31f;
+      camera.Apply();
+      yield return WaitFrames(Fps / 2);
       Controller().Input.Selection.SelectBuilding(TraderEntity());
       Controller().Hud.Refresh(Controller().Frame);
       yield return WaitFrames(Fps);

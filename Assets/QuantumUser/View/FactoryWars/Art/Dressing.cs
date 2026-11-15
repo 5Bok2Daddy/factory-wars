@@ -58,7 +58,8 @@ namespace FactoryWars.View {
     public static bool AllowOnRoad;
 
     static bool Exempt(DressKind kind) => kind == DressKind.RoadProp || kind == DressKind.QuayPillar || kind == DressKind.QuayRail || kind == DressKind.QuayBollard
-      || kind == DressKind.OutpostTower || kind == DressKind.OutpostWall || kind == DressKind.Checkpoint || kind == DressKind.WaterGate || kind == DressKind.BridgeDeck || kind == DressKind.BridgePillar || kind == DressKind.Grass;
+      || kind == DressKind.OutpostTower || kind == DressKind.OutpostWall || kind == DressKind.Checkpoint || kind == DressKind.WaterGate || kind == DressKind.BridgeDeck || kind == DressKind.BridgePillar || kind == DressKind.Grass
+      || kind == DressKind.RoadLight || kind == DressKind.RoadPole || kind == DressKind.RoadSign || kind == DressKind.RoadBin || kind == DressKind.RoadBusStop || kind == DressKind.RoadCover || kind == DressKind.RoadWreck;
 
     /// <summary>중앙 암시장 비움 반경: 이 안에는 건물·바위·잡풀 등 흩뿌림 개체를 하나도 놓지 않는다(주둔지만 남는다).</summary>
     public const float TraderClearRadius = 22f;

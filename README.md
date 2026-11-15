@@ -65,6 +65,11 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 주둔지 순환로·길가 정비: 순환로 연결, 연석·갓길, 가로등·전신주·표지판·정류장, 엄폐·버려진 차량, 갓길 숲 (2026-11-16)
+![주둔지 + 순환로](Docs/status_images/41_outpost_ringroad.png)
+![길가 넓게](Docs/status_images/41_roadside_wide.png)
+![길가 가까이](Docs/status_images/41_roadside_close.png)
+
 ### 중앙 암시장 주둔지 재건: 20m 사각 철조망·차단기 출입구·막사·감시탑 보초·순찰·정찰 드론 (2026-11-15)
 ![주둔지](Docs/status_images/40_outpost_clean.png)
 ![선택·거래](Docs/status_images/40_outpost_selected.png)

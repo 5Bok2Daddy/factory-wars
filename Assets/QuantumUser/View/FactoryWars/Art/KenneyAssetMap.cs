@@ -81,6 +81,14 @@ namespace FactoryWars.View {
     TraderRack,
     TraderAmmo,
     TraderBarrel,
+    /// <summary>야전 길가(2026-11-16): 가로등·전신주·표지판·쓰레기통/소화전·버스 정류장·엄폐(방벽·헤스코·상자)·버려진 차량.</summary>
+    RoadLight,
+    RoadPole,
+    RoadSign,
+    RoadBin,
+    RoadBusStop,
+    RoadCover,
+    RoadWreck,
   }
 
   /// <summary>

@@ -40,6 +40,42 @@ namespace FactoryWars.Tests {
       Assert.IsFalse(UrbanDecor.Spots.Any(s => new Vector2(s.Position.x - center.x, s.Position.z - center.z).magnitude < Dressing.TraderClearRadius && s.Role != "road"), "가운데 장식 없음");
       Assert.IsFalse(TerrainKit.Lots.Any(l => (l.Center - new Vector2(center.x, center.z)).magnitude < Dressing.TraderClearRadius), "가운데 건물 터 없음");
       Assert.IsTrue(Dressing.InTraderClear(center + new Vector3(15f, 0f, 0f)), "비움 반경 판정");
+      Assert.GreaterOrEqual(view.DroneMinSpacing, 100f, "드론 120도 간격");
+      // 들어오는 길은 순환로 바깥 가장자리 안쪽 1.5m에서 끝나 울타리·감시탑까지 들어오지 않는다.
+      var map = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      var limit = TerrainKit.RingOuter - 1.5f - 0.01f;
+      foreach (var road in map.Roads) {
+        var dir = Quaternion.Euler(0f, road.Yaw.AsFloat, 0f) * Vector3.right;
+        foreach (var (pc, ph) in TerrainKit.RoadPieces(map, road)) {
+          for (var t = -1f; t <= 1f; t += 0.05f) {
+            var p = pc + dir * (ph * t) - center;
+            Assert.IsFalse(Mathf.Abs(p.x) < limit && Mathf.Abs(p.z) < limit, $"길 조각이 주둔지 안: {p}");
+          }
+        }
+      }
+    }
+
+    [UnityTest]
+    public IEnumerator Urban_RoadsidesDressedAlongRoads() {
+      if (PackPresent == false) {
+        Assert.Pass("팩 없음");
+      }
+      yield return StartMatch(Map4PScene, 2, truce: -1);
+      yield return WaitForHud();
+      var spots = UrbanDecor.Spots;
+      Debug.Log("[ROADSIDE] " + string.Join(", ", spots.GroupBy(s => s.Role + ":" + s.Kind).Select(g => g.Key + "=" + g.Count())));
+      foreach (var role in new[] { "roadside", "cover", "wreck", "verge" }) {
+        Assert.Greater(spots.Count(s => s.Role == role), 4, $"길가 {role}");
+      }
+      foreach (var kind in new[] { DressKind.RoadLight, DressKind.RoadPole, DressKind.RoadBin, DressKind.RoadSign, DressKind.RoadCover, DressKind.RoadWreck }) {
+        Assert.Greater(spots.Count(s => s.Kind == kind), 2, $"길가 {kind}");
+      }
+      var map = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      // 길가 소품은 아스팔트(길 폭) 위에 없다.
+      foreach (var spot in spots.Where(s => s.Role == "roadside" || s.Role == "cover" || s.Role == "wreck")) {
+        var fp = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(spot.Position.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(spot.Position.z));
+        Assert.IsFalse(map.Roads.Any(r => r.Distance(fp).AsFloat < 0.4f), $"길 위 소품: {spot.Kind} {spot.Position}");
+      }
     }
 
     [UnityTest]

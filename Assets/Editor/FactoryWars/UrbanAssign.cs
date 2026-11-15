@@ -124,7 +124,7 @@ namespace FactoryWars.EditorTools {
       yield return Scaled(DressKind.TraderBoom, 0.75f, "SM_Prop_Road_Barrier_01");
       yield return Scaled(DressKind.TraderSandbag, 1f, "SM_Prop_Barrier_Base_Single_01");
       yield return Scaled(DressKind.TraderHQ, 0.8f, "SM_Bld_Barracks_01");
-      yield return Scaled(DressKind.TraderTower, 0.8f, "SM_Bld_GuardTower_01");
+      yield return Scaled(DressKind.TraderTower, 0.8f, "SM_Bld_GuardTower_02");
       yield return Sized(DressKind.TraderPad, 5f, "SM_Env_Helipad_01");
       yield return Scaled(DressKind.TraderDish, 1.3f, "SM_Prop_SatDish_01");
       yield return Scaled(DressKind.TraderLight, 1f, "SM_Prop_Light_Portable_01");
@@ -133,6 +133,14 @@ namespace FactoryWars.EditorTools {
       yield return Scaled(DressKind.TraderRack, 1f, "SM_Prop_Gunrack_01");
       yield return Scaled(DressKind.TraderAmmo, 1f, "SM_Prop_Crate_Ammo_01", "SM_Prop_Crate_Ammo_02");
       yield return Scaled(DressKind.TraderBarrel, 1f, "SM_Prop_Barrel_Stack_01");
+      // 야전 길가 가구·엄폐·차량(팩 실제 크기 그대로).
+      yield return Scaled(DressKind.RoadLight, 1f, "SM_Prop_Street_Light_01", "SM_Prop_Street_Light_02");
+      yield return Scaled(DressKind.RoadPole, 1f, "SM_Prop_Powerpole_01", "SM_Prop_Powerpole_02");
+      yield return Scaled(DressKind.RoadSign, 1f, "SM_Prop_Sign_Stop_01", "SM_Prop_Sign_GiveWay_01");
+      yield return Scaled(DressKind.RoadBin, 1f, "SM_Prop_Trashbin_01", "SM_Prop_TrashCan_01", "SM_Prop_Hydrant_01");
+      yield return Scaled(DressKind.RoadBusStop, 1f, "SM_Prop_BusStop_01");
+      yield return Scaled(DressKind.RoadCover, 1f, "SM_Prop_Barrier_Base_Row_01", "SM_Prop_Barrier_01", "SM_Prop_Crate_Stack_Cover_01", "SM_Prop_Barrel_Stack_01");
+      yield return Scaled(DressKind.RoadWreck, 1f, "SM_Veh_Car_Destroyed_01", "SM_Veh_Car_Medium_Destroyed_01", "SM_Veh_SUV_Destroyed_01", "SM_Veh_Pickup_Small_Destroyed_01", "SM_Veh_Light_Car_Destroyed_01");
       // 길가: 가로등·소화전·쓰레기통·고깔.
       yield return Scaled(DressKind.RoadProp, 1f, "SM_Prop_LightPole_Base_01", "SM_Prop_LightPole_Base_01", "SM_Prop_Hydrant_01", "SM_Prop_TrashCan_01", "SM_Prop_Cone_01");
       // 도시 건물(칸 크기에 맞춰 늘어난다: Fit). 세로는 칸 데이터의 목표 높이 쪽으로 0.8~1.3배.

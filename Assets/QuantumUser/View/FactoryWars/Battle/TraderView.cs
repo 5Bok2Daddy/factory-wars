@@ -273,13 +273,16 @@ namespace FactoryWars.View {
       Put(DressKind.TraderAmmo, 6.6f, 1.6f, 90f, 9955);
       Put(DressKind.TraderAmmo, 6.6f, 3.1f, 90f, 9956);
       // 서쪽: 연료 드럼통 더미.
-      Put(DressKind.TraderBarrel, -6.4f, -2.2f, 0f, 9960);
-      Put(DressKind.TraderBarrel, -6.4f, -4f, 0f, 9961);
-      Put(DressKind.TraderBarrel, -4.7f, -3.1f, 90f, 9962);
-      // 모서리 감시탑(북동·남서).
-      Put(DressKind.TraderTower, 8.4f, 8.4f, 225f, 9970);
-      Put(DressKind.TraderTower, -8.4f, -8.4f, 45f, 9971);
+      Put(DressKind.TraderBarrel, -6.4f, -0.6f, 0f, 9960);
+      Put(DressKind.TraderBarrel, -6.4f, -2.3f, 0f, 9961);
+      Put(DressKind.TraderBarrel, -4.7f, -1.4f, 90f, 9962);
+      // 모서리 감시탑(북동·남서): 지붕 없는 난간 갑판이라 위에서도 보초가 보인다. 사다리는 마당 쪽.
+      foreach (var (x, z, yaw) in Towers) {
+        Put(DressKind.TraderTower, x, z, yaw, 9970 + (int)x);
+      }
     }
+
+    static readonly (float X, float Z, float Yaw)[] Towers = { (8f, 7f, 0f), (-8f, -7f, 180f) };
 
     void WorkLight(Vector3 local) {
       if (GraphicsQuality.Current == QualityTier.Low) {
@@ -318,15 +321,16 @@ namespace FactoryWars.View {
     // ---------- 경비 ----------
 
     void Guards(ViewCatalog catalog) {
-      // 탑 위 보초: 탑 높이의 62%(발판) 위에 선다.
-      foreach (var (x, z, yaw) in new[] { (8.4f, 8.4f, 45f), (-8.4f, -8.4f, 225f) }) {
-        var height = 5.4f;
+      // 탑 위 보초: 갑판(꼭대기 오두막 아래, 높이의 66%) 앞쪽 끝, 사다리 위에 서서 바깥을 본다.
+      foreach (var (x, z, yaw) in Towers) {
+        var height = 3.1f;
         foreach (Transform child in _alive.transform) {
           if ((child.localPosition - L(x, z)).sqrMagnitude < 0.5f) {
-            height = (Bounds(child.gameObject).max.y - _compound.transform.position.y) * 0.62f;
+            height = (Bounds(child.gameObject).max.y - _compound.transform.position.y) * 0.66f;
           }
         }
-        if (AddGuard(catalog, L(x, z) + Vector3.up * height, Y(yaw), false, true)) {
+        var front = Quaternion.Euler(0f, Snap(Y(yaw)), 0f) * new Vector3(0.7f, 0f, -1.5f);
+        if (AddGuard(catalog, L(x, z) + front + Vector3.up * height, Y(yaw + 180f), false, true)) {
           TowerSentries++;
         }
       }
@@ -478,7 +482,8 @@ namespace FactoryWars.View {
         root.SetParent(_alive.transform, false);
         var body = MeshObject("Body", root, _droneBody, ArtLook.NeutralMaterial).transform;
         body.localScale = Vector3.one * 1.6f;
-        var drone = new Drone { Body = root, Angle = i * 120f, Radius = Half + 3f + i * 1.5f, Height = 5.2f + i * 0.8f, Speed = (i % 2 == 0 ? 1f : -1f) * (16f + i * 3f), Phase = i * 1.7f };
+        // 120도 간격, 반경 10·13·16m, 같은 방향·같은 각속도라 간격이 그대로 유지된다(높이만 조금씩 다름).
+        var drone = new Drone { Body = root, Angle = i * 120f, Radius = DroneRadii[i % DroneRadii.Length], Height = 5.2f + i * 0.8f, Speed = DroneSpeed, Phase = i * 1.7f };
         foreach (var (x, z) in new[] { (1f, 1f), (-1f, 1f), (1f, -1f), (-1f, -1f) }) {
           var rotor = MeshObject("Rotor", body, _rotor, ArtLook.NeutralMaterial).transform;
           rotor.localPosition = new Vector3(x * 0.55f, 0.06f, z * 0.55f);
@@ -489,6 +494,22 @@ namespace FactoryWars.View {
         }
         _drones.Add(drone);
         UpdateDrone(drone, 0f);
+      }
+    }
+
+    static readonly float[] DroneRadii = { 10f, 13f, 16f };
+    const float DroneSpeed = 14f;
+
+    /// <summary>드론 사이 가장 작은 궤도 위상 차(도).</summary>
+    public float DroneMinSpacing {
+      get {
+        var min = 360f;
+        for (var a = 0; a < _drones.Count; a++) {
+          for (var b = a + 1; b < _drones.Count; b++) {
+            min = Mathf.Min(min, Mathf.Abs(Mathf.DeltaAngle(_drones[a].Angle, _drones[b].Angle)));
+          }
+        }
+        return min;
       }
     }
 
