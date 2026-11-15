@@ -200,7 +200,8 @@ namespace FactoryWars.View {
         for (var z = map.BoundsMin.Y.AsFloat + Step / 2; z < map.BoundsMax.Y.AsFloat; z += Step) {
           index++;
           var spot = new Vector3(x + (MeshKit.Hash(index, 1) - 0.5f) * Step * 0.8f, 0f, z + (MeshKit.Hash(index, 2) - 0.5f) * Step * 0.8f);
-          if (MeshKit.Hash(index, 3) > 0.7f) {
+          // 야전 룩: 넓은 들판도 길가만큼 채운다(남김 비율 0.7 → 0.945, 약 35% 증가). 모두 통과 가능한 작은 장식이다.
+          if (MeshKit.Hash(index, 3) > (VisualProfile.Current.FieldLook ? 0.945f : 0.7f)) {
             continue;
           }
           if (TerrainKit.RiverDistance(paths, new Vector2(spot.x, spot.z)) < 3f || Near(map.Roads, spot, 1.5f) || Near(map.Bridges, spot, 2f)

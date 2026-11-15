@@ -213,6 +213,13 @@ namespace FactoryWars.View {
       _minimap = map.gameObject.AddComponent<Minimap>();
       _minimap.Init(frame.FindAsset<MapSpec>(frame.Map.UserAsset));
       _minimap.OnPick = world => Controller.Camera.MoveTo(world);
+      _minimap.View = Controller.Camera;
+      _minimap.OnOrder = (world, attack) => {
+        var command = Controller.Input.MinimapOrder(Controller.Frame, new Vector3(world.x, 0f, world.y), attack);
+        if (command != null) {
+          Controller.Send(command);
+        }
+      };
 
       // 화면 왼쪽 가장자리(미니맵 위): 범위 선택 토글.
       _boxButton = IconButton("BoxButton", Root, "ui_box", "범위", ToggleBoxMode);
@@ -250,7 +257,16 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventPowerOutage>(this, OnOutage);
       QuantumEvent.Subscribe<EventBarrierOpened>(this, e => ShowAlert(Texts.BarrierAlert));
       // 항목 34·37 알림: 기상, 승급, 저격 당함, 도크린 기본값, 작전기 격추.
-      QuantumEvent.Subscribe<EventTraderHostile>(this, e => { if (e.Player == Controller.Player) { ShowAlert("암시장과 적대! 거래가 영구히 막혔습니다"); } });
+      QuantumEvent.Subscribe<EventTraderHostile>(this, e => {
+        if (e.Player == Controller.Player) {
+          ShowAlert("암시장과 적대! 거래가 영구히 막혔습니다");
+        }
+        // 미니맵: 암시장 자리에 붉은 경보 고리(누가 적대했든 모두에게).
+        var map = MapOf(e.Game);
+        if (map != null && map.HasTrader) {
+          _minimap.Ping(map.TraderPosition.ToUnityVector3(), Minimap.RelationColors[2]);
+        }
+      });
       QuantumEvent.Subscribe<EventTraderDestroyed>(this, e => ShowAlert(e.Killer == Controller.Player ? "암시장 파괴 — 현상금 획득!" : "암시장이 파괴되어 닫혔습니다"));
       QuantumEvent.Subscribe<EventWeatherChanged>(this, e => ShowAlert(e.On ? "기상 악화: 시야 감소, 신호탄 구역 밖 출격 불가" : "기상 회복"));
       QuantumEvent.Subscribe<EventVeteranPromoted>(this, e => { if (e.Owner == Controller.Player) { ShowAlert($"유닛 승급: {new string('★', e.Rank)}"); } });

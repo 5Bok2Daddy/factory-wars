@@ -65,6 +65,13 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 미니맵 개편: 진영 영역(땅따먹기)·길·안개 3단계·카메라 시야·경보 고리 (2026-11-16)
+확장 전 → 확장 사령부 착공 후(파란 영역이 늘어남, 3배 확대):
+
+![확장 전](Docs/status_images/42_minimap_start.png)
+![확장 후](Docs/status_images/42_minimap_expansion.png)
+![HUD](Docs/status_images/42_minimap_hud.png)
+
 ### 주둔지 순환로·길가 정비: 순환로 연결, 연석·갓길, 가로등·전신주·표지판·정류장, 엄폐·버려진 차량, 갓길 숲 (2026-11-16)
 ![주둔지 + 순환로](Docs/status_images/41_outpost_ringroad.png)
 ![길가 넓게](Docs/status_images/41_roadside_wide.png)

@@ -114,6 +114,16 @@ namespace FactoryWars.View {
 
     List<EntityRef> SelectedUnits(Frame frame) => Selection.Units.Where(e => frame.Exists(e)).Take(MoveUnitsCommand.MaxUnits).ToList();
 
+    /// <summary>미니맵 오른쪽 클릭: 선택한 내 유닛을 그 자리로 이동(공격 이동). 선택이 없으면 null.</summary>
+    public MoveUnitsCommand MinimapOrder(Frame frame, Vector3 world, bool attackMove) {
+      if (frame == null) {
+        return null;
+      }
+      Selection.Prune(frame);
+      var units = SelectedUnits(frame);
+      return units.Count == 0 ? null : new MoveUnitsCommand { Units = units.ToArray(), Target = ToFP(world), AttackMove = attackMove };
+    }
+
     /// <summary>탭을 해석한다. 내릴 커맨드가 있으면 돌려주고, 선택만 바뀌면 null이다.</summary>
     public DeterministicCommand Tap(Frame frame, PlayerRef player, Vector3 world) {
       Selection.Prune(frame);
