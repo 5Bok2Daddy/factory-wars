@@ -17,8 +17,8 @@ namespace FactoryWars.Tests {
       yield return Send(0, new Quantum.FactoryWars.ChooseDoctrineCommand { Doctrine = 1 });
       Time.timeScale = 1f;
       var camera = Controller().Camera;
-      camera.MoveTo(new Vector2(0f, 4f));
-      camera.Height = 34f;
+      camera.MoveTo(new Vector2(0f, -2f));
+      camera.Height = 31f;
       camera.Apply();
       yield return WaitFrames(Fps);
       ShootUrban("trader_clean");

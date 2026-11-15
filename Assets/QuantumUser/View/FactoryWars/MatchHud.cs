@@ -480,6 +480,8 @@ namespace FactoryWars.View {
       _doctrinePanel.gameObject.SetActive(false);
     }
 
+    public bool DoctrineOpen { get; private set; }
+
     void RefreshDoctrine(Frame frame) {
       if (_doctrinePanel == null || Controller.Player.IsValid == false) {
         return;
@@ -491,7 +493,11 @@ namespace FactoryWars.View {
       if (_doctrinePanel.gameObject.activeSelf != show) {
         _doctrinePanel.gameObject.SetActive(show);
       }
+      DoctrineOpen = show;
       if (show) {
+        // 큰 창이 겹치지 않게: 도크린 선택 중에는 오른쪽 명령 패널·선택 카드를 숨긴다.
+        _contextPanel?.SetActive(false);
+        _card?.gameObject.SetActive(false);
         _doctrineTitle.text = $"전술 도크린을 고르세요 ({left}초 뒤 기본값)";
       }
     }

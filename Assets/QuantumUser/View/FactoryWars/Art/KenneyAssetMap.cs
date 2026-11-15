@@ -67,6 +67,20 @@ namespace FactoryWars.View {
     LumberYard,
     /// <summary>야전 룩 검문소 방벽(팩 군용 벽·철조망 울타리, 공사용 줄무늬 아님).</summary>
     Checkpoint,
+    /// <summary>중앙 암시장 주둔지(사각 철조망 칸·차단기·방벽·막사·감시탑·소품). 팩 모델 그대로, 배율은 칸 데이터에만.</summary>
+    TraderFence,
+    TraderBoom,
+    TraderSandbag,
+    TraderHQ,
+    TraderTower,
+    TraderPad,
+    TraderDish,
+    TraderLight,
+    TraderConsole,
+    TraderNet,
+    TraderRack,
+    TraderAmmo,
+    TraderBarrel,
   }
 
   /// <summary>

@@ -65,6 +65,10 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 중앙 암시장 주둔지 재건: 20m 사각 철조망·차단기 출입구·막사·감시탑 보초·순찰·정찰 드론 (2026-11-15)
+![주둔지](Docs/status_images/40_outpost_clean.png)
+![선택·거래](Docs/status_images/40_outpost_selected.png)
+
 ### 전투 가독성: 붉은 공격선·조준 고리·초록 이동선·예광탄·폭발 그을음 (2026-11-15)
 ![교전](Docs/status_images/39_combat_lines.png)
 ![교전 중간](Docs/status_images/39_combat_mid.png)

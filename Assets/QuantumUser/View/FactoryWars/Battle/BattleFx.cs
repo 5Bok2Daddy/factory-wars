@@ -39,6 +39,53 @@ namespace FactoryWars.View {
 
     public int Emitted { get; private set; }
 
+    // 비행 중인 미사일: 2차 베지어(위로 솟는 조종점 + 옆 흔들림)를 따라 머리 불꽃과 연기를 뿌린다.
+    class Flight {
+      public Vector3 From, Control, To;
+      public float T, Duration, Puff, Impact;
+    }
+    readonly List<Flight> _flights = new List<Flight>();
+    public int MissilesInFlight => _flights.Count;
+    public int MissilesLaunched { get; private set; }
+
+    public void LaunchMissile(Vector3 from, Vector3 to, float speed, float impact) {
+      var delta = to - from;
+      var distance = delta.magnitude;
+      if (distance < 0.5f) {
+        Impact(to, impact, delta);
+        return;
+      }
+      var side = Vector3.Cross(delta / distance, Vector3.up) * (Random.Range(-0.18f, 0.18f) * distance);
+      var control = (from + to) * 0.5f + Vector3.up * (distance * 0.22f + 1.5f) + side;
+      _flights.Add(new Flight { From = from, Control = control, To = to, Duration = distance * 1.15f / Mathf.Max(speed, 1f), Impact = impact });
+      MissilesLaunched++;
+    }
+
+    static Vector3 Bezier(Flight f, float t) {
+      var u = 1f - t;
+      return u * u * f.From + 2f * u * t * f.Control + t * t * f.To;
+    }
+
+    void UpdateFlights(float dt) {
+      for (var i = _flights.Count - 1; i >= 0; i--) {
+        var f = _flights[i];
+        f.T = Mathf.Min(1f, f.T + dt / Mathf.Max(f.Duration, 0.05f));
+        var head = Bezier(f, f.T);
+        var ahead = Bezier(f, Mathf.Min(1f, f.T + 0.05f)) - head;
+        Emit(_glow, head, Vector3.zero, 0.55f, 0.07f, Missile);
+        Emit(_glow, head - ahead.normalized * 0.25f, -ahead.normalized * 2f, 0.35f, 0.1f, Muzzle);
+        f.Puff -= dt;
+        if (f.Puff <= 0f) {
+          f.Puff = 0.03f / Mathf.Max(GraphicsQuality.FxScale, 0.25f);
+          Emit(_smoke, head, Vector3.up * 0.25f + Random.insideUnitSphere * 0.15f, 0.45f, 1.5f, SmokeGray);
+        }
+        if (f.T >= 1f) {
+          Impact(f.To, f.Impact, f.To - f.Control);
+          _flights.RemoveAt(i);
+        }
+      }
+    }
+
     static ParticleSystem Make(Transform parent, string name, string material, int max, bool stretch, float growth) {
       var item = new GameObject(name);
       item.transform.SetParent(parent, false);
@@ -351,6 +398,7 @@ namespace FactoryWars.View {
     }
 
     void Update() {
+      UpdateFlights(Time.deltaTime);
       if (_craters.Count > 0 && Time.time - _craters[0].Born > CraterSeconds) {
         _craters.RemoveAll(c => Time.time - c.Born > CraterSeconds);
         _cratersDirty = true;

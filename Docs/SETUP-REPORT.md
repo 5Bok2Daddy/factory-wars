@@ -3370,3 +3370,23 @@ OVERNIGHT-QUEUE.md 규칙 1에 따라 묻지 않고 기본값으로 진행했다
 | 새로 쓴 팩 에셋 | 없음 (선·고리·예광은 절차 생성) |
 | 원본 수정 | 없음 (Assets_PackFilesUnchanged 통과) |
 | 사면 좋은 것 | 탄피·포연 VFX 팩, 무기 사운드 팩 (현재 효과음 파일 없음) |
+
+## 항목 39-2 결과 (전투 연출 2차 + 중앙 암시장 주둔지 재건, 2026-11-15)
+
+- 조준 먼저 사격: 포탑이 목표를 6도 안으로 향할 때까지 사격을 미룸(최대 0.6초). 포탑 회전은 Quaternion.RotateTowards.
+- 포신 반동 0.25m. 대공: 공중 목표를 노리면 포신 40도, 평소 14도.
+- 미사일: 위로 솟았다가 휘어 내려가는 곡선 비행(베지어), 배기 불꽃과 연기 꼬리, 도착할 때 착탄.
+- 암시장 주둔지: 20m 정사각 철조망(2.5m 칸 28개, 0/90/180/270도, 틈 없음). 길 방향 두 출입구에는 차단기 + 방벽. 가운데 단층 막사(지붕 위성 안테나 2, 작업등 + 따뜻한 점광원). 그 밖에 드론 착륙장·관제 단말, 위장망 천막과 탄약 상자, 총기 거치대, 연료 드럼통, 다진 흙 마당(길 아스팔트를 덮음).
+- 경비: 모서리 감시탑 2개와 탑 위 보초 2명, 출입구 보초 2명, 안쪽 둘레 순찰 2명(걷기 동작). 경비 전용 칸(unit/trader_guard, 팩 군인 1명). 적대가 되면 모두 표적을 겨누고, 경비 사격은 가장 가까운 보초에서 나간다.
+- 정찰 드론 3대: 둘레 반경 13~16m, 높이 5.2~6.8m(±0.35 흔들림), 회전 방향으로 기울임, 로터 회전, 청록 센서 불빛과 탐조등 원뿔. 팩에 드론 모델이 없어 절차 메쉬로 만들었다.
+- 가운데 22m 비움: 흩뿌림 개체(건물·바위·잡풀)를 암시장 반경 22m 안에 놓지 않음(Dressing.InTraderClear).
+- UI: 도크린 선택 창이 열려 있는 동안 오른쪽 명령 패널과 선택 카드를 숨김.
+- 저격수 칸: 위장복 군인(chr_ghillie)을 연결. 그전까지는 절차 모델이었다.
+- 테스트: Trader_OutpostRectangularGuardsDronesAndClearCenter, Hud_DoctrineModalHidesSidePanels 추가. 회귀 71/71 통과. 캡처 2종 통과.
+
+| 에셋 반영 정리 | 내용 |
+|---|---|
+| 새로 쓴 팩 모델 | SM_Prop_Fence_01, SM_Prop_Road_Barrier_01, SM_Prop_Barrier_Base_Single_01, SM_Bld_Barracks_01, SM_Bld_GuardTower_01, SM_Env_Helipad_01, SM_Prop_SatDish_01, SM_Prop_Light_Portable_01, SM_Prop_Drone_Control_Station_01, SM_Bld_CamoNet_Tent_01, SM_Prop_Gunrack_01, SM_Prop_Crate_Ammo_01/02, SM_Prop_Barrel_Stack_01, chr_ghillie, chr_soldier_2_alt3 |
+| 원본 수정 | 없음(배율은 칸 데이터에만, Assets_PackFilesUnchanged 통과) |
+| 없어서 절차로 만든 것 | 정찰 드론(쿼드콥터) |
+| 사면 좋은 것 | 쿼드콥터·UAV 모델 팩, 모래주머니 진지 팩 |

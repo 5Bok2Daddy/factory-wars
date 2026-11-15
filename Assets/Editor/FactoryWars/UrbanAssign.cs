@@ -119,6 +119,20 @@ namespace FactoryWars.EditorTools {
       yield return Sized(DressKind.OutpostWall, 3f, "SM_Prop_BaseWall_01", "SM_Prop_Cinderblock_Wall_01");
       yield return Scaled(DressKind.LumberYard, 1f, "SM_Bld_Warehouse_01");
       yield return Sized(DressKind.Checkpoint, 3.2f, "SM_Prop_WireFence_01", "SM_Prop_BaseWall_01");
+      // 중앙 암시장 주둔지: 철조망 2.5m 칸(0.825배), 차단기 4.9m, 단층 막사 0.8배, 감시탑 0.8배, 착륙장 5m.
+      yield return Scaled(DressKind.TraderFence, 0.825f, "SM_Prop_Fence_01");
+      yield return Scaled(DressKind.TraderBoom, 0.75f, "SM_Prop_Road_Barrier_01");
+      yield return Scaled(DressKind.TraderSandbag, 1f, "SM_Prop_Barrier_Base_Single_01");
+      yield return Scaled(DressKind.TraderHQ, 0.8f, "SM_Bld_Barracks_01");
+      yield return Scaled(DressKind.TraderTower, 0.8f, "SM_Bld_GuardTower_01");
+      yield return Sized(DressKind.TraderPad, 5f, "SM_Env_Helipad_01");
+      yield return Scaled(DressKind.TraderDish, 1.3f, "SM_Prop_SatDish_01");
+      yield return Scaled(DressKind.TraderLight, 1f, "SM_Prop_Light_Portable_01");
+      yield return Scaled(DressKind.TraderConsole, 1f, "SM_Prop_Drone_Control_Station_01");
+      yield return Scaled(DressKind.TraderNet, 0.8f, "SM_Bld_CamoNet_Tent_01");
+      yield return Scaled(DressKind.TraderRack, 1f, "SM_Prop_Gunrack_01");
+      yield return Scaled(DressKind.TraderAmmo, 1f, "SM_Prop_Crate_Ammo_01", "SM_Prop_Crate_Ammo_02");
+      yield return Scaled(DressKind.TraderBarrel, 1f, "SM_Prop_Barrel_Stack_01");
       // 길가: 가로등·소화전·쓰레기통·고깔.
       yield return Scaled(DressKind.RoadProp, 1f, "SM_Prop_LightPole_Base_01", "SM_Prop_LightPole_Base_01", "SM_Prop_Hydrant_01", "SM_Prop_TrashCan_01", "SM_Prop_Cone_01");
       // 도시 건물(칸 크기에 맞춰 늘어난다: Fit). 세로는 칸 데이터의 목표 높이 쪽으로 0.8~1.3배.

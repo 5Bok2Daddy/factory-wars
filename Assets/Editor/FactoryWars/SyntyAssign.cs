@@ -130,6 +130,10 @@ namespace FactoryWars.EditorTools {
       yield return Squad("ff_skyguard_squad", 1.25f, SoldiersFree, "chr_soldier_1", "chr_soldier_1", "chr_soldier_1");
       yield return Squad("cf_militia", 1.25f, None, "chr_soldier_2", "chr_soldier_2");
       yield return Squad("cf_flame_squad", 1.25f, None, "chr_bombsuit", "chr_bombsuit");
+      // 저격수: 위장복 한 명. 중앙 암시장 경비: 진영 색이 아닌 다른 군복 한 명(TraderView가 칸에서 직접 꺼내 쓴다).
+      yield return Squad("ff_sniper", 1.25f, SoldiersFree, "chr_ghillie");
+      yield return Squad("cf_sniper", 1.25f, None, "chr_ghillie");
+      yield return Squad("trader_guard", 1.25f, None, "chr_soldier_2_alt3");
       // 차량·배·공중
       yield return Vehicle("ff_scout_buggy", "buggy", LightFree);
       yield return Vehicle("cf_scout_bike", "bike", LightContinental);

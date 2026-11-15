@@ -13,7 +13,12 @@ namespace FactoryWars.View {
     const float FollowRate = 16f;
     const float TurnRate = 300f;
     const float TurretRate = 220f;
-    const float RecoilDistance = 0.32f;
+    const float RecoilDistance = 0.25f;
+    const float AimTolerance = 6f;
+    const float AimMaxWait = 0.6f;
+    const float AirElevation = 40f;
+    const float AntiAirIdle = 14f;
+    const float ElevationRate = 90f;
     const float RecoilRecover = 3.2f;
     const float SmokeSeconds = 0.42f;
     const float ShellSpeed = 90f;
@@ -44,6 +49,13 @@ namespace FactoryWars.View {
       public Transform Turret;
       public Transform Barrel;
       public Vector3 BarrelHome;
+      public Quaternion BarrelRest = Quaternion.identity;
+      public float Elevation;
+      public bool AntiAir;
+      // 조준 먼저: 포탑이 목표를 향하기 전에 쏘라는 신호가 오면 맞출 때까지 미룬다.
+      public bool Pending;
+      public float PendingAt;
+      public (AttackType Attack, float Range, Vector3 Target, bool Flame) PendingShot;
       public Transform Muzzle;
       public readonly List<(Transform Part, Vector3 Axis, float Speed, bool NeedsPower)> Spinners = new List<(Transform, Vector3, float, bool)>();
       public readonly List<(Transform Part, Vector3 Home, Vector3 Reach, float Speed)> Sliders = new List<(Transform, Vector3, Vector3, float)>();
@@ -165,7 +177,14 @@ namespace FactoryWars.View {
         }
       });
       QuantumEvent.Subscribe<EventCratePicked>(this, e => Fx.Burst(e.Position.ToUnityVector3(), new Color(1f, 0.85f, 0.3f), 1f));
-      QuantumEvent.Subscribe<EventTraderShot>(this, e => Fx.MuzzleFlash(e.From.ToUnityVector3() + Vector3.up * 3f, (e.To - e.From).ToUnityVector3().normalized, 0.8f));
+      QuantumEvent.Subscribe<EventTraderShot>(this, e => {
+        var to = e.To.ToUnityVector3() + Vector3.up * 0.8f;
+        var from = _trader != null ? _trader.ShotOrigin(e.From.ToUnityVector3(), to) : e.From.ToUnityVector3() + Vector3.up * 3f;
+        var dir = (to - from).normalized;
+        Fx.MuzzleFlash(from + dir * 0.4f, dir, 0.8f);
+        Fx.Tracer(from + dir * 0.4f, to, 90f, 0.18f, false);
+        Fx.Impact(to, 0.8f, dir);
+      });
       QuantumEvent.Subscribe<EventSortieEnded>(this, e => { if (e.ShotDown) { Fx.Explosion(e.Position.ToUnityVector3() + Vector3.up * 8f, 1.4f); } });
       QuantumEvent.Subscribe<EventCaptureChanged>(this, e => {
         var frame = e.Game.Frames.Verified;
@@ -455,6 +474,7 @@ namespace FactoryWars.View {
       }
       if (actor.Barrel != null) {
         actor.BarrelHome = actor.Barrel.localPosition;
+        actor.BarrelRest = actor.Barrel.localRotation;
       }
       actor.Muzzle = (view.Slot != null ? FindPart(model, view.Entry.MuzzlePart) : FindDeep(model, view.Entry.MuzzlePart)) ?? model;
 
@@ -546,16 +566,40 @@ namespace FactoryWars.View {
     void Aim(Actor actor, bool hasTarget, Vector3 target, bool air, float dt) {
       if (actor.Turret != null) {
         var want = hasTarget ? Mathf.DeltaAngle(actor.HullYaw, YawTo(actor.Position, target)) : 0f;
-        actor.TurretYaw = Mathf.MoveTowardsAngle(actor.TurretYaw, want, TurretRate * dt);
-        actor.Turret.localRotation = Quaternion.Euler(0, actor.TurretYaw, 0);
+        var turned = Quaternion.RotateTowards(Quaternion.Euler(0f, actor.TurretYaw, 0f), Quaternion.Euler(0f, want, 0f), TurretRate * dt);
+        actor.TurretYaw = turned.eulerAngles.y;
+        actor.Turret.localRotation = turned;
       }
       if (actor.Barrel != null) {
         actor.Recoil = Mathf.MoveTowards(actor.Recoil, 0f, RecoilRecover * dt);
         actor.Barrel.localPosition = actor.BarrelHome + Vector3.back * actor.Recoil;
+        // 대공: 공중 목표를 노리면 포신을 크게 들고, 평소에도 살짝 들어 둔다.
+        var lift = hasTarget && air ? AirElevation : actor.AntiAir ? AntiAirIdle : 0f;
+        actor.Elevation = Mathf.MoveTowards(actor.Elevation, lift, ElevationRate * dt);
+        actor.Barrel.localRotation = actor.BarrelRest * Quaternion.Euler(-actor.Elevation, 0f, 0f);
+      }
+      if (actor.Pending && (Aligned(actor, actor.PendingShot.Target) || Time.time - actor.PendingAt > AimMaxWait)) {
+        actor.Pending = false;
+        Shoot(actor, actor.PendingShot.Attack, actor.PendingShot.Range, true, actor.PendingShot.Target, actor.PendingShot.Flame);
       }
     }
 
+    bool Aligned(Actor actor, Vector3 target) => actor.Turret == null || Mathf.Abs(Mathf.DeltaAngle(actor.TurretYaw, Mathf.DeltaAngle(actor.HullYaw, YawTo(actor.Position, target)))) <= AimTolerance;
+
+    /// <summary>포탑이 목표를 보고 있으면 바로 쏘고, 아니면 돌 때까지(최대 0.6초) 미룬다.</summary>
     void Fire(Actor actor, AttackType attack, float range, bool hasTarget, Vector3 target, bool flame) {
+      if (hasTarget && Aligned(actor, target) == false) {
+        actor.Pending = true;
+        actor.PendingAt = Time.time;
+        actor.PendingShot = (attack, range, target, flame);
+        return;
+      }
+      Shoot(actor, attack, range, hasTarget, target, flame);
+    }
+
+    public int PendingShots { get { var n = 0; foreach (var a in _actors.Values) { if (a.Pending) { n++; } } return n; } }
+
+    void Shoot(Actor actor, AttackType attack, float range, bool hasTarget, Vector3 target, bool flame) {
       actor.View.Animation?.Fire();
       actor.Recoil = RecoilDistance;
       var muzzle = actor.Muzzle.TransformPoint(actor.View.Entry.Muzzle);
@@ -576,8 +620,12 @@ namespace FactoryWars.View {
           var spread = new Vector3(Random.Range(-0.35f, 0.35f), Random.Range(-0.1f, 0.2f), Random.Range(-0.35f, 0.35f));
           Fx.Tracer(muzzle + forward * (0.3f * i), target + spread, speed, 0.18f, false);
         }
+      } else if (missile) {
+        // 미사일: 위로 솟았다가 휘어 내려가는 비행, 배기 불꽃과 연기 꼬리, 도착할 때 착탄.
+        Fx.LaunchMissile(muzzle, target, speed, 1.6f);
+        return;
       } else {
-        Fx.Tracer(muzzle, target, speed, 0.34f, missile);
+        Fx.Tracer(muzzle, target, speed, 0.34f, false);
       }
       Fx.Impact(target, attack == AttackType.AntiInfantry ? 0.8f : 1.6f, target - muzzle);
       if (attack == AttackType.Area) {
@@ -642,6 +690,7 @@ namespace FactoryWars.View {
       }
       actor.View.SetYaw(actor.HullYaw);
       Tilt(actor, spec, before, dt);
+      actor.AntiAir = spec.Attack == AttackType.AntiAir;
       Aim(actor, hasTarget, target, air, dt);
       UpdateShield(actor, unit->InCover);
 
@@ -841,6 +890,7 @@ namespace FactoryWars.View {
       }
 
       var hasTarget = TryTarget(frame, building->TargetEntity, out var target, out var air);
+      actor.AntiAir = spec.Attack == AttackType.AntiAir;
       Aim(actor, hasTarget, target, air, dt);
       var cooldown = building->AttackCooldown.AsFloat;
       // 손상: 체력 50% 이하는 연기, 25% 이하는 불.

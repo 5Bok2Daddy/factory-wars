@@ -60,6 +60,18 @@ namespace FactoryWars.View {
     static bool Exempt(DressKind kind) => kind == DressKind.RoadProp || kind == DressKind.QuayPillar || kind == DressKind.QuayRail || kind == DressKind.QuayBollard
       || kind == DressKind.OutpostTower || kind == DressKind.OutpostWall || kind == DressKind.Checkpoint || kind == DressKind.WaterGate || kind == DressKind.BridgeDeck || kind == DressKind.BridgePillar || kind == DressKind.Grass;
 
+    /// <summary>중앙 암시장 비움 반경: 이 안에는 건물·바위·잡풀 등 흩뿌림 개체를 하나도 놓지 않는다(주둔지만 남는다).</summary>
+    public const float TraderClearRadius = 22f;
+
+    public static bool InTraderClear(Vector3 position) {
+      if (RoadMask == null || RoadMask.HasTrader == false) {
+        return false;
+      }
+      var dx = position.x - RoadMask.TraderPosition.X.AsFloat;
+      var dz = position.z - RoadMask.TraderPosition.Z.AsFloat;
+      return dx * dx + dz * dz < TraderClearRadius * TraderClearRadius;
+    }
+
     /// <summary>야전 룩에서 이 자리가 길(폭 + 4m) 안이라 놓으면 안 되는가.</summary>
     public static bool OnRoad(DressKind kind, Vector3 position, float radius = 0f) {
       if (AllowOnRoad || RoadMask == null || RoadMask.Roads == null || VisualProfile.Current.FieldLook == false || Exempt(kind)) {
@@ -75,7 +87,7 @@ namespace FactoryWars.View {
     }
 
     public static bool Add(DressKind kind, Vector3 position, int seed, Color tint, Vector3? scale = null, float? yaw = null) {
-      if (_collector == null || Map == null || OnRoad(kind, position)) {
+      if (_collector == null || Map == null || OnRoad(kind, position) || InTraderClear(position)) {
         return false;
       }
       var entry = Map.Get(kind);
