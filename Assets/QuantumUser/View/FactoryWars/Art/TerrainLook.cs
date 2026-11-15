@@ -51,6 +51,10 @@ namespace FactoryWars.View {
     /// 점은 안쪽으로만 움직여서 화면이 판정 모양 밖으로 나가지 않는다.
     /// </summary>
     public static void Plateau(MeshKit k, MapShape shape, int seed, float height, int layers, float jag, bool dark) {
+      if (dark == false && VisualProfile.Current.FieldLook && Dressing.Collecting && Dressing.Has(DressKind.CitySmall)) {
+        CityLot(k, shape, seed);
+        return;
+      }
       var ring = Outline(shape, OutlineSpacing);
       var center = Vector2.zero;
       foreach (var p in ring) {
@@ -175,6 +179,110 @@ namespace FactoryWars.View {
       }
     }
 
+    /// <summary>야전 룩: 지금 지형에 놓은 건물 자리(겹침 검사용). WorldView가 지형을 만들기 전에 비운다.</summary>
+    public static readonly List<(Vector2 Center, float Radius)> Lots = new List<(Vector2, float)>();
+    const float LotGap = 3f;
+
+    /// <summary>
+    /// 야전 룩(2026-11-15 사용자 지시): 통과 불가 대지를 회전된 건물 조각 고리로 쌓지 않는다. 대지 모양(사각형)의 축에 맞춘 격자 칸마다
+    /// 진짜 팩 건물 1채를 반듯하게(0/90/180/270도) 놓는다. 건물끼리 3m 이상 띄우고(이웃 대지와도), 길 폭+4m 안·도시 건물·본진·다리·물가는 피한다.
+    /// 바닥은 땅 높이의 짙은 올리브 판 하나(벽·층 없음).
+    /// </summary>
+    static void CityLot(MeshKit k, MapShape shape, int seed) {
+      var map = Dressing.RoadMask;
+      var center = new Vector2(shape.Center.X.AsFloat, shape.Center.Z.AsFloat);
+      var circle = shape.IsCircle;
+      var halfL = circle ? shape.Radius.AsFloat * 0.7f : shape.HalfLength.AsFloat;
+      var halfW = circle ? shape.Radius.AsFloat * 0.7f : shape.HalfWidth.AsFloat;
+      var yaw = circle ? 0f : shape.Yaw.AsFloat;
+      var rot = Quaternion.Euler(0f, yaw, 0f);
+      var axisL = rot * Vector3.right;
+      var axisW = rot * Vector3.forward;
+      // 낮은 대지 판(풀 높이 0.03m): 통과 불가 구역이 길과 구분되게.
+      k.Paint(ArtPalette.Turf(Swatch.GrassDark));
+      var ring = Outline(shape, OutlineSpacing);
+      for (var i = 0; i < ring.Count; i++) {
+        var a = ring[i];
+        var b = ring[(i + 1) % ring.Count];
+        k.Tri(new Vector3(a.x, 0.03f, a.y), new Vector3(b.x, 0.03f, b.y), new Vector3(center.x, 0.03f, center.y), Vector3.up);
+      }
+      const float Cell = 12f;
+      var countL = Mathf.Max(0, Mathf.FloorToInt((halfL * 2f + LotGap) / (Cell + LotGap)));
+      var countW = Mathf.Max(0, Mathf.FloorToInt((halfW * 2f + LotGap) / (Cell + LotGap)));
+      var cellL = countL > 0 ? Cell : halfL * 2f - 1f;
+      var cellW = countW > 0 ? Cell : halfW * 2f - 1f;
+      countL = Mathf.Max(1, countL);
+      countW = Mathf.Max(1, countW);
+      if (cellL < 5f || cellW < 5f) {
+        return;
+      }
+      var placed = 0;
+      for (var i = 0; i < countL && placed < 16; i++) {
+        for (var j = 0; j < countW && placed < 16; j++) {
+          var offL = (i - (countL - 1) * 0.5f) * (cellL + LotGap);
+          var offW = (j - (countW - 1) * 0.5f) * (cellW + LotGap);
+          var world = new Vector3(center.x, 0f, center.y) + axisL * offL + axisW * offW;
+          var spot = new Vector2(world.x, world.z);
+          var radius = Mathf.Sqrt(cellL * cellL + cellW * cellW) * 0.5f;
+          if (Lots.Exists(l => (l.Center - spot).magnitude < l.Radius + radius + LotGap) || Blocked(map, world, radius)) {
+            continue;
+          }
+          // 가까운 길 쪽을 보게 0/90/180/270 중에서 고른다.
+          var face = yaw + FaceRoad(map, world, yaw);
+          var kind = MeshKit.Hash(seed, 300 + i * 7 + j) < 0.6f ? DressKind.CitySmall : DressKind.CityMedium;
+          if (Dressing.AddFitted(kind, world, face, cellL, cellW, seed * 131 + i * 17 + j, 0.92f)) {
+            Lots.Add((spot, radius));
+            placed++;
+          }
+        }
+      }
+    }
+
+    static bool Blocked(MapSpec map, Vector3 world, float radius) {
+      if (map == null) {
+        return false;
+      }
+      var p = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(world.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(world.z));
+      bool Near(MapShape[] shapes, float margin) {
+        foreach (var s in shapes ?? System.Array.Empty<MapShape>()) {
+          if (s.Distance(p).AsFloat < margin) {
+            return true;
+          }
+        }
+        return false;
+      }
+      if (Near(map.Roads, Dressing.RoadClearance + radius) || Near(map.BaseAreas, radius) || Near(map.Bridges, radius + 4f) || Near(map.WaterGates, radius + 4f)) {
+        return true;
+      }
+      foreach (var city in map.CityBuildings ?? System.Array.Empty<CityBuildingPlacement>()) {
+        if (city.Shape.Distance(p).AsFloat < radius + LotGap) {
+          return true;
+        }
+      }
+      return TerrainKit.RiverDistance(TerrainKit.RiverPaths(map), new Vector2(world.x, world.z)) < radius + 3f;
+    }
+
+    static float FaceRoad(MapSpec map, Vector3 world, float yaw) {
+      if (map?.Roads == null || map.Roads.Length == 0) {
+        return 0f;
+      }
+      var best = Vector3.zero;
+      var bestDistance = float.MaxValue;
+      foreach (var road in map.Roads) {
+        var c = new Vector3(road.Center.X.AsFloat, 0f, road.Center.Z.AsFloat);
+        var dir = Quaternion.Euler(0f, road.Yaw.AsFloat, 0f) * Vector3.right;
+        var t = Mathf.Clamp(Vector3.Dot(world - c, dir), -road.HalfLength.AsFloat, road.HalfLength.AsFloat);
+        var q = c + dir * t;
+        var distance = (q - world).sqrMagnitude;
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = q - world;
+        }
+      }
+      var local = Quaternion.Euler(0f, -yaw, 0f) * best;
+      return Mathf.Abs(local.x) > Mathf.Abs(local.z) ? (local.x > 0f ? 90f : 270f) : (local.z > 0f ? 0f : 180f);
+    }
+
     /// <summary>점이 다각형 안쪽이고 가장자리에서 margin 이상 떨어져 있는지(짝수-홀수 규칙 + 꼭짓점 거리 근사).</summary>
     static bool InsidePolygon(Vector2[] ring, Vector2 point, float margin) {
       var inside = false;
@@ -202,11 +310,25 @@ namespace FactoryWars.View {
         var yaw = road.Yaw.AsFloat;
         var half = new Vector2(road.HalfLength.AsFloat, road.HalfWidth.AsFloat);
         if (VisualProfile.Current.FieldLook) {
-          // 야전 룩: 연석·차선 없는 흙길 한 장. 겹치는 길끼리 높이를 조금씩 달리해 깜빡임(Z-fighting)을 없앤다.
-          var y = 0.04f + (roadIndex++ % 8) * 0.004f;
+          // 야전 룩 아스팔트(2026-11-15): 끝을 길이만큼 정확히 자르고(튀어나오는 모서리 없음) 둥근 마개로 마감. 양옆 연석, 흰 가장자리선·중앙 점선.
+          // 겹치는 길끼리 높이를 조금씩 달리해 깜빡임을 없앤다.
+          var y = 0.04f + (roadIndex++ % 8) * 0.003f;
           k.Push(center, new Vector3(0, yaw, 0));
+          k.Paint(Swatch.Concrete);
+          k.Quad(new Vector3(-half.x, y - 0.01f, -half.y - CurbWidth), new Vector3(half.x, y - 0.01f, -half.y - CurbWidth), new Vector3(half.x, y - 0.01f, half.y + CurbWidth), new Vector3(-half.x, y - 0.01f, half.y + CurbWidth), Vector3.up);
           k.Paint(Swatch.Asphalt);
-          k.Quad(new Vector3(-half.x - half.y, y, -half.y), new Vector3(half.x + half.y, y, -half.y), new Vector3(half.x + half.y, y, half.y), new Vector3(-half.x - half.y, y, half.y), Vector3.up);
+          k.Quad(new Vector3(-half.x, y, -half.y), new Vector3(half.x, y, -half.y), new Vector3(half.x, y, half.y), new Vector3(-half.x, y, half.y), Vector3.up);
+          k.Disc(new Vector3(-half.x, y, 0f), half.y, 16);
+          k.Disc(new Vector3(half.x, y, 0f), half.y, 16);
+          k.Paint(Swatch.LaneWhite);
+          foreach (var side in new[] { -1f, 1f }) {
+            var z = side * (half.y - 0.45f);
+            k.Quad(new Vector3(-half.x + half.y, y + 0.01f, z - LaneWidth / 2), new Vector3(half.x - half.y, y + 0.01f, z - LaneWidth / 2), new Vector3(half.x - half.y, y + 0.01f, z + LaneWidth / 2), new Vector3(-half.x + half.y, y + 0.01f, z + LaneWidth / 2), Vector3.up);
+          }
+          for (var x = -half.x + half.y; x < half.x - half.y; x += LaneDash + LaneGap) {
+            var end = Mathf.Min(x + LaneDash, half.x - half.y);
+            k.Quad(new Vector3(x, y + 0.012f, -LaneWidth / 2), new Vector3(end, y + 0.012f, -LaneWidth / 2), new Vector3(end, y + 0.012f, LaneWidth / 2), new Vector3(x, y + 0.012f, LaneWidth / 2), Vector3.up);
+          }
           k.Pop();
           continue;
         }

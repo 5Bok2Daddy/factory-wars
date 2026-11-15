@@ -91,8 +91,8 @@ namespace FactoryWars.Tests {
       var kit = new MeshKit();
       UrbanDecor.Crosswalks(kit, map);
       if (VisualProfile.Current.FieldLook) {
-        // 야전 룩(흙길): 횡단보도·광장 패드를 그리지 않는다. 대신 다리 양끝을 길과 잇는 흙길이 있다.
-        Assert.AreEqual(0, kit.TriangleCount, "야전 룩: 횡단보도 없음");
+        // 야전 룩(아스팔트, 2026-11-15 3차): 교차로마다 횡단보도가 있고, 다리 양끝을 길과 잇는 연결로가 있다.
+        Assert.GreaterOrEqual(kit.TriangleCount, crossings.Count * 4 * 2, "교차로마다 횡단보도");
         var links = new MeshKit();
         UrbanDecor.BridgeLinks(links, map);
         Assert.Greater(links.TriangleCount, 0, "다리 입구와 길을 잇는 흙길");

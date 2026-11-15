@@ -154,6 +154,7 @@ namespace FactoryWars.View {
       // 도로는 따로 그려 바닥과 같은 머티리얼(정점 색 + 전장 손상)을 쓴다(항목 27 K-2: 균열·패임·그을음).
       if (GroundMaterial() != null) {
         var roads = new MeshKit();
+        Dressing.RoadMask = _map;
         TerrainKit.Roads(roads, _map);
         UrbanDecor.Crosswalks(roads, _map);
         UrbanDecor.Plazas(roads, _map);
@@ -179,6 +180,8 @@ namespace FactoryWars.View {
       // 항목 36: 시가지 모드에서는 물 면을 따로 모아 물 셰이더로 그린다(우리 셰이더가 없으면 지금처럼 한 메쉬).
       var water = VisualProfile.Current.UrbanDecor && UrbanDecor.WaterMaterial() != null ? new MeshKit() : null;
       Dressing.Begin();
+      Dressing.RoadMask = _map;
+      TerrainKit.Lots.Clear();
       TerrainKit.Features(features, _map, GroundMaterial() == null, water);
       Dressing.End("world");
       if (water != null && water.TriangleCount > 0) {

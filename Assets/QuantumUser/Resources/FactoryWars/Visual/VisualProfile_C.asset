@@ -83,7 +83,7 @@ MonoBehaviour:
   WhiteLanes: 1
   GroundPlaza: {r: 0.47058824, g: 0.41960785, b: 0.3372549, a: 1}
   GroundPlazaDark: {r: 0.41568628, g: 0.36862746, b: 0.29411766, a: 1}
-  RoadColor: {r: 0.41960785, g: 0.36862746, b: 0.2901961, a: 1}
+  RoadColor: {r: 0.16862746, g: 0.18039216, b: 0.20392157, a: 1}
   SolidGround: 1
   BackgroundColor: {r: 0.69803923, g: 0.7294118, b: 0.8, a: 1}
   WaterColor: {r: 0.2901961, g: 0.6392157, b: 0.8392157, a: 1}

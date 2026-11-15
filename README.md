@@ -65,6 +65,10 @@
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
 
+### 시가지 정리 3차: 아스팔트·검문소·겹침 제거 (2026-11-15)
+![전체](Docs/status_images/36c_city_overview.png)
+![교차로](Docs/status_images/36c_city_crossroads.png)
+
 ### 야전 룩(PUBG식) 전환 (2026-11-15)
 ![교차로](Docs/status_images/36f_field_crossroads.png)
 ![수문](Docs/status_images/36f_field_gate.png)

@@ -135,7 +135,7 @@ namespace FactoryWars.View {
       p.GroundPlaza = new Color32(0x78, 0x6B, 0x56, 0xFF);
       p.GroundPlazaDark = new Color32(0x6A, 0x5E, 0x4B, 0xFF);
       // 흙길(야전 룩).
-      p.RoadColor = new Color32(0x6B, 0x5E, 0x4A, 0xFF);
+      p.RoadColor = new Color32(0x2B, 0x2E, 0x34, 0xFF);
       p.TreeDensity = 0.5f;
       p.SolidGround = true;
       p.BackgroundColor = new Color32(0xB2, 0xBA, 0xCC, 0xFF);

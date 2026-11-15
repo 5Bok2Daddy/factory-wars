@@ -51,8 +51,31 @@ namespace FactoryWars.View {
     public static bool Add(DressKind kind, Vector3 position, int seed, Vector3? scale = null, float? yaw = null) => Add(kind, position, seed, Color.white, scale, yaw);
 
     /// <summary>틴트를 곱해 놓는다(합친 메쉬에서만 보인다).</summary>
+    /// <summary>야전 룩 길 비우기: 지금 그리는 맵(WorldView가 넣는다). 길 폭 + RoadClearance 안에는 건물·소품·바위를 놓지 않는다.</summary>
+    public static MapSpec RoadMask;
+    public const float RoadClearance = 4f;
+    /// <summary>검문소처럼 일부러 길 위에 두는 소품을 놓는 동안 true.</summary>
+    public static bool AllowOnRoad;
+
+    static bool Exempt(DressKind kind) => kind == DressKind.RoadProp || kind == DressKind.QuayPillar || kind == DressKind.QuayRail || kind == DressKind.QuayBollard
+      || kind == DressKind.OutpostTower || kind == DressKind.OutpostWall || kind == DressKind.WaterGate || kind == DressKind.BridgeDeck || kind == DressKind.BridgePillar || kind == DressKind.Grass;
+
+    /// <summary>야전 룩에서 이 자리가 길(폭 + 4m) 안이라 놓으면 안 되는가.</summary>
+    public static bool OnRoad(DressKind kind, Vector3 position, float radius = 0f) {
+      if (AllowOnRoad || RoadMask == null || RoadMask.Roads == null || VisualProfile.Current.FieldLook == false || Exempt(kind)) {
+        return false;
+      }
+      var p = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(position.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(position.z));
+      foreach (var road in RoadMask.Roads) {
+        if (road.Distance(p).AsFloat < RoadClearance + radius) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     public static bool Add(DressKind kind, Vector3 position, int seed, Color tint, Vector3? scale = null, float? yaw = null) {
-      if (_collector == null || Map == null) {
+      if (_collector == null || Map == null || OnRoad(kind, position)) {
         return false;
       }
       var entry = Map.Get(kind);
@@ -78,6 +101,9 @@ namespace FactoryWars.View {
 
     /// <summary>시가지 장식용: 품질별 남김 비율을 직접 정해 놓는다(낮음·보통에서 해시가 이 값보다 크면 그리지 않는다).</summary>
     public static bool AddKept(DressKind kind, Vector3 position, int seed, float yaw, float lowKeep, float mediumKeep) {
+      if (OnRoad(kind, position)) {
+        return false;
+      }
       if (_collector == null || Map == null) {
         return false;
       }
@@ -102,7 +128,7 @@ namespace FactoryWars.View {
 
     /// <summary>정해진 칸(월드 길이 length × width, 회전 yaw)에 맞춰 놓는다. 건물 부지처럼 밖으로 튀어나오면 안 되는 곳에 쓴다.</summary>
     public static bool AddFitted(DressKind kind, Vector3 position, float yaw, float length, float width, int seed, float margin = 0.94f) {
-      if (_collector == null || Map == null) {
+      if (_collector == null || Map == null || OnRoad(kind, position, Mathf.Max(length, width) * 0.5f)) {
         return false;
       }
       var entry = Map.Get(kind);
