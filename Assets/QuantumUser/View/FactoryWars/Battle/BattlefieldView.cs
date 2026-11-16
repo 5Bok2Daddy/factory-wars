@@ -133,6 +133,16 @@ namespace FactoryWars.View {
         kit.Paint(Swatch.MetalDark).Frustum(new Vector3(0, 2.2f, 0), 0.25f, 0.08f, 7f, 6);
         kit.Paint(Swatch.Metal).Frustum(new Vector3(0.9f, 2.6f, 0), 0.9f, 0.2f, 0.5f, 10);
         kit.Paint(Swatch.GlowRed).Box(new Vector3(0, 9.3f, 0), Vector3.one * 0.25f);
+      } else if (kind == CaptureKind.Radar) {
+        kit.Paint(Swatch.ConcreteDark).Cylinder(Vector3.zero, 1.6f, 0.5f, 10);
+        kit.Paint(Swatch.MetalDark).Frustum(new Vector3(0, 0.5f, 0), 0.3f, 0.12f, 5f, 6);
+        kit.Paint(Swatch.Metal).Frustum(new Vector3(0, 5.3f, 0), 1.2f, 0.2f, 0.5f, 12);
+        kit.Paint(Swatch.GlowCyan).Box(new Vector3(0, 5.9f, 0), Vector3.one * 0.25f);
+      } else if (kind == CaptureKind.Fuel) {
+        kit.Paint(Swatch.Concrete).Box(new Vector3(0, 0.15f, 0), new Vector3(4f, 0.3f, 3f));
+        kit.Paint(Swatch.Olive).Cylinder(new Vector3(-0.9f, 0.3f, 0), 0.9f, 1.8f, 10);
+        kit.Paint(Swatch.OliveDark).Cylinder(new Vector3(1.0f, 0.3f, 0.2f), 0.8f, 1.5f, 10);
+        kit.Paint(Swatch.Hazard).Box(new Vector3(0, 0.35f, -1.2f), new Vector3(3f, 0.1f, 0.2f));
       } else {
         kit.Paint(Swatch.Concrete).Box(new Vector3(0, 0.15f, 0), new Vector3(3.2f, 0.3f, 2.4f));
         kit.Paint(Swatch.MetalDark).Box(new Vector3(-0.6f, 1.1f, 0), new Vector3(1.4f, 1.6f, 1.2f));

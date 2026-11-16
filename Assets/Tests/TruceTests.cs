@@ -41,10 +41,10 @@ namespace FactoryWars.Tests {
       yield return StartMatch(scene, players, truce: 600);
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
       var navMesh = MapNavMesh();
-      Assert.IsTrue(Verified.Map.RegionMap.ContainsKey("Barrier0"), "다리 영역이 구워짐");
+      Assert.IsTrue(Verified.Map.RegionMap.ContainsKey("Bridge0"), "다리 영역이 구워짐(항목 37: 다리마다 하나)");
       // 항목 24: 외곽 수로가 있으면 자리마다 수문 영역이 하나 더 있다(수문 2개가 같은 영역).
       var gates = (spec.WaterGates?.Length ?? 0) > 0 ? spec.BaseAreas.Length : 0;
-      Assert.AreEqual(1 + spec.BaseAreas.Length + spec.Barricades.Length + spec.CityBuildings.Length + spec.CityBuildings.Count(c => c.Topples) + gates, Verified.Map.RegionMap.Count, "기본 영역 + 자리별 다리 영역 + 바리케이드 + 도시 건물 + 낙하 구역 + 자리별 수문");
+      Assert.AreEqual(1 + spec.Bridges.Length + spec.Barricades.Length + spec.CityBuildings.Length + spec.CityBuildings.Count(c => c.Topples) + gates, Verified.Map.RegionMap.Count, "기본 영역 + 자리별 다리 영역 + 바리케이드 + 도시 건물 + 낙하 구역 + 자리별 수문");
       var mask = NavMeshRegionMask.Default;
       var rules = Verified.FindAsset(Verified.RuntimeConfig.Rules);
       for (var p = 0; p < players; p++) {

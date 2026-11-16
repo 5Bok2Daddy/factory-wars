@@ -83,6 +83,27 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.BlackBox))]
+  public unsafe partial class BlackBoxPrototype : ComponentPrototype<Quantum.BlackBox> {
+    public Int32 UntilFrame;
+    public FP Progress;
+    public PlayerRef Claimant;
+    public QBoolean Contested;
+    partial void MaterializeUser(Frame frame, ref Quantum.BlackBox result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.BlackBox component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.BlackBox result, in PrototypeMaterializationContext context = default) {
+        result.UntilFrame = this.UntilFrame;
+        result.Progress = this.Progress;
+        result.Claimant = this.Claimant;
+        result.Contested = this.Contested;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.BotState))]
   public unsafe class BotStatePrototype : StructPrototype {
     public FPVector3 Home;
@@ -137,6 +158,33 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.Bridge))]
+  public unsafe partial class BridgePrototype : ComponentPrototype<Quantum.Bridge> {
+    public Int32 Index;
+    public Int32 Seat;
+    public FP Health;
+    public FP MaxHealth;
+    public QBoolean Destroyed;
+    public QBoolean Pontoon;
+    public FP Work;
+    partial void MaterializeUser(Frame frame, ref Quantum.Bridge result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.Bridge component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.Bridge result, in PrototypeMaterializationContext context = default) {
+        result.Index = this.Index;
+        result.Seat = this.Seat;
+        result.Health = this.Health;
+        result.MaxHealth = this.MaxHealth;
+        result.Destroyed = this.Destroyed;
+        result.Pontoon = this.Pontoon;
+        result.Work = this.Work;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.Building))]
   public unsafe class BuildingPrototype : ComponentPrototype<Quantum.Building> {
     public PlayerRef Owner;
@@ -165,6 +213,8 @@ namespace Quantum.Prototypes {
     public QBoolean CoverMade;
     [ArrayLengthAttribute(4)]
     public Quantum.Prototypes.HangarSlotPrototype[] Hangar = new Quantum.Prototypes.HangarSlotPrototype[4];
+    public Int32 ProtocolUntilFrame;
+    public Int32 ProtocolNextShotFrame;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Building component = default;
         Materialize((Frame)f, ref component, in context);
@@ -200,6 +250,8 @@ namespace Quantum.Prototypes {
         for (int i = 0, count = PrototypeValidator.CheckLength(Hangar, 4, in context); i < count; ++i) {
           this.Hangar[i].Materialize(frame, ref *result.Hangar.GetPointer(i), in context);
         }
+        result.ProtocolUntilFrame = this.ProtocolUntilFrame;
+        result.ProtocolNextShotFrame = this.ProtocolNextShotFrame;
     }
   }
   [System.SerializableAttribute()]
@@ -644,6 +696,12 @@ namespace Quantum.Prototypes {
     public Int32 UltimateSitesLost;
     public Int32 UltimateCoreKills;
     public Int32 CoreLost;
+    public Int32 WrecksSalvaged;
+    public Int32 BridgesDown;
+    public Int32 BridgesRepaired;
+    public QBoolean ProtocolUsed;
+    public Int32 BlackBoxes;
+    public Int32 BlackBoxStacks;
     public void Materialize(Frame frame, ref Quantum.PlayerState result, in PrototypeMaterializationContext context = default) {
         result.Faction = this.Faction;
         this.Stock.Materialize(frame, ref result.Stock, in context);
@@ -722,6 +780,12 @@ namespace Quantum.Prototypes {
         result.UltimateSitesLost = this.UltimateSitesLost;
         result.UltimateCoreKills = this.UltimateCoreKills;
         result.CoreLost = this.CoreLost;
+        result.WrecksSalvaged = this.WrecksSalvaged;
+        result.BridgesDown = this.BridgesDown;
+        result.BridgesRepaired = this.BridgesRepaired;
+        result.ProtocolUsed = this.ProtocolUsed;
+        result.BlackBoxes = this.BlackBoxes;
+        result.BlackBoxStacks = this.BlackBoxStacks;
     }
   }
   [System.SerializableAttribute()]
@@ -946,6 +1010,29 @@ namespace Quantum.Prototypes {
         result.WorkTimer = this.WorkTimer;
         result.NextPathFrame = this.NextPathFrame;
         result.Spot = this.Spot;
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.Wreck))]
+  public unsafe partial class WreckPrototype : ComponentPrototype<Quantum.Wreck> {
+    public Int32 UntilFrame;
+    public FP Scrap;
+    public FP Work;
+    public Int32 Size;
+    public AssetRef<UnitSpec> Spec;
+    partial void MaterializeUser(Frame frame, ref Quantum.Wreck result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.Wreck component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.Wreck result, in PrototypeMaterializationContext context = default) {
+        result.UntilFrame = this.UntilFrame;
+        result.Scrap = this.Scrap;
+        result.Work = this.Work;
+        result.Size = this.Size;
+        result.Spec = this.Spec;
+        MaterializeUser(frame, ref result, in context);
     }
   }
 }

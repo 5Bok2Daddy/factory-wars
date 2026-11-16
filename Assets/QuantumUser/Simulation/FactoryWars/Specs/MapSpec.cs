@@ -74,6 +74,8 @@ namespace Quantum {
     /// <summary>중앙 암시장(NPC 무기상)이 있는지와 그 자리.</summary>
     public bool HasTrader;
     public FPVector3 TraderPosition;
+    /// <summary>항목 37 블랙박스 추락 자리(순환). 비어 있으면 이 맵에는 없다.</summary>
+    public FPVector3[] BlackBoxSpots;
     public int WeatherFirstSeconds;
     public int WeatherDurationSeconds;
     public int WeatherPeriodSeconds;

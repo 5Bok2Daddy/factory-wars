@@ -24,6 +24,7 @@ namespace FactoryWars.EditorTools {
     const string ScenePath = ScenesRoot + "/QuantumGameScene.unity";
     const string MapRoot = "Assets/QuantumUser/Resources";
     const string BarrierRegion = "Barrier";
+    const string BridgeRegion = "Bridge";
     const string BarricadeRegionPrefix = "Barricade";
     /// <summary>다리에 칠하는 Unity NavMesh 영역 번호. 0~2는 기본 영역이다.</summary>
     const int BarrierArea = 3;
@@ -1094,6 +1095,38 @@ namespace FactoryWars.EditorTools {
       rules.ShadowCoverBonus = N(0.15);
       rules.ArmorCostMultiplier = N(0.85);
       rules.ArmorRepairMultiplier = N(1.5);
+      // 항목 37 전술 깊이. 잔해 30초(생산비 철의 35% 회수, 기갑 군단은 2배), 다리 체력 1200·폭격 피해 x1.5·폭약 8초·폰툰 복구 10초.
+      rules.WreckSeconds = 30;
+      rules.WreckScrapRatio = N(0.35);
+      rules.WreckCoverRadius = N(2.4);
+      rules.WreckCoverReduction = N(0.5);
+      rules.WreckSalvageSeconds = 4;
+      rules.ArmorScrapMultiplier = 2;
+      rules.BridgeHealth = 1200;
+      rules.BridgeBlastMultiplier = N(1.5);
+      rules.BridgeDemolishSeconds = 8;
+      rules.BridgeRepairSeconds = 10;
+      rules.BridgeWorkRange = N(4);
+      rules.BridgeCollapseDamage = 250;
+      rules.BridgeRegion = BridgeRegion;
+      // 사령부 비상 프로토콜: 체력 40% 미만에서 한 번, 20초 피해 -60%, 수비 분대 2, 사거리 28 자동 사격(피해 60, 1.2초).
+      rules.HqProtocolHealthRatio = N(0.4);
+      rules.HqProtocolSeconds = 20;
+      rules.HqProtocolDamageTaken = N(0.4);
+      rules.HqProtocolSquads = 2;
+      rules.HqProtocolRange = 28;
+      rules.HqProtocolDamage = 60;
+      rules.HqProtocolInterval = N(1.2);
+      // 블랙박스: 첫 추락 9분, 6분 주기, 90초 유지, 반경 8m, 15초 점령, 영구 화력 +5%(최대 4번).
+      rules.BlackBoxFirstSeconds = 540;
+      rules.BlackBoxPeriodSeconds = 360;
+      rules.BlackBoxLifeSeconds = 90;
+      rules.BlackBoxRadius = 8;
+      rules.BlackBoxCaptureSeconds = 15;
+      rules.BlackBoxDamageBonus = N(0.05);
+      rules.BlackBoxMaxStacks = 4;
+      rules.RadarSiteRadius = 35;
+      rules.FuelRearmMultiplier = N(0.7);
       // 중앙 암시장: 체력 3000, 철조망 반지름 10m, 경비 사거리 24m(구역 밖 공격자까지)·피해 45·1.2초, 현상금 철 1500·강철 600, 거래 대기 60초.
       rules.TraderHealth = 3000;
       rules.TraderRadius = 10;
@@ -1266,6 +1299,7 @@ namespace FactoryWars.EditorTools {
       spec.SupplyRewardMultiplier = N(def.SupplyReward);
       spec.HasTrader = def.Trader;
       spec.TraderPosition = def.TraderPosition;
+      spec.BlackBoxSpots = def.BlackBoxSpots;
       spec.WeatherFirstSeconds = def.WeatherFirst;
       spec.WeatherDurationSeconds = def.WeatherDuration;
       spec.WeatherPeriodSeconds = def.WeatherPeriod;
@@ -1455,8 +1489,9 @@ namespace FactoryWars.EditorTools {
       foreach (var feature in spec.Terrain ?? new TerrainFeature[0]) {
         AddBlock(root, feature.Kind.ToString(), feature.Shape, feature.Kind == TerrainKind.Rock ? 3 : 6);
       }
-      foreach (var bridge in spec.Bridges ?? new MapShape[0]) {
-        AddBridge(root, spec, bridge);
+      var bridgeList = spec.Bridges ?? new MapShape[0];
+      for (var i = 0; i < bridgeList.Length; i++) {
+        AddBridge(root, spec, bridgeList[i], i);
       }
       foreach (var barricade in spec.Barricades ?? new BarricadePlacement[0]) {
         AddRegion(root, "Barricade", barricade.Shape, BarricadeArea, barricade.Region);
@@ -1473,18 +1508,10 @@ namespace FactoryWars.EditorTools {
     /// 다리 하나를 NavMesh 영역으로 칠한다. Quantum은 같은 Unity 영역의 삼각형 덩어리가 렌더러 경계 안에 다 들어올 때
     /// 그 영역 이름을 붙이므로, 렌더러는 꺼 둔 채 경계로만 쓴다. 자리별 본진이 있으면 자리 번호를 붙여 빈 본진 다리는 처음부터 열 수 있게 한다.
     /// </summary>
-    static void AddBridge(Transform root, MapSpec spec, MapShape shape) {
+    static void AddBridge(Transform root, MapSpec spec, MapShape shape, int index) {
+      // 항목 37: 다리마다 영역 하나(Bridge{index}). 휴전 울타리·빈 본진 자리·폭파 상태가 DepthSystem.ApplyBridgeRegion에서 합쳐진다.
       if (spec.BaseAreas != null && spec.BaseAreas.Length > 0) {
-        var seat = 0;
-        var best = float.MaxValue;
-        for (var i = 0; i < spec.BaseAreas.Length; i++) {
-          var distance = (shape.Center - spec.BaseAreas[i].Center).SqrMagnitude.AsFloat;
-          if (distance < best) {
-            best = distance;
-            seat = i;
-          }
-        }
-        AddRegion(root, "Bridge", shape, BarrierArea, $"{BarrierRegion}{seat}");
+        AddRegion(root, "Bridge", shape, BarrierArea, $"{BridgeRegion}{index}");
       } else {
         AddRegion(root, "Bridge", shape, BarrierArea, BarrierRegion);
       }

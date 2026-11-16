@@ -107,6 +107,9 @@ namespace Quantum.FactoryWars {
 
     /// <summary>항목 37: 신호탄 구역이거나 이 플레이어의 정찰 사진 구역 안인가(기상 중에도 시야와 출격이 가능한 예외).</summary>
     public static bool InSignalArea(Frame f, PlayerRef player, FPVector3 position) {
+      if (DepthSystem.InRadarArea(f, player, position)) {
+        return true;
+      }
       var fog = f.Unsafe.GetPointerSingleton<Fog>();
       var rules = FactoryWarsUtil.Rules(f);
       if (f.Number < fog->FlareUntilFrame) {
@@ -204,6 +207,14 @@ namespace Quantum.FactoryWars {
       for (var p = 0; p < Players; p++) {
         if (f.Number < fog->ReconUntilFrames[p]) {
           Mark(fog, fog->Grids.GetPointer(p), fog->ReconPositions[p], rules.DropReconRadius);
+        }
+      }
+      // 항목 37 무인 레이더탑: 점령한 쪽에게 반경 RadarSiteRadius의 안개가 계속 걷힌다(기상 영향 없음).
+      var radarSites = f.Filter<Transform3D, CaptureSite>();
+      while (radarSites.NextUnsafe(out _, out var radarAt, out var radar)) {
+        var radarOwner = (int)radar->Owner;
+        if (radar->Kind == CaptureKind.Radar && radar->Owner.IsValid && radarOwner >= 0 && radarOwner < Players) {
+          Mark(fog, fog->Grids.GetPointer(radarOwner), radarAt->Position, rules.RadarSiteRadius);
         }
       }
       ShareWithAllies(f, fog);

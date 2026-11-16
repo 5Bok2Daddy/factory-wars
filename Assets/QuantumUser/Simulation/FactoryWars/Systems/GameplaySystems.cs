@@ -667,7 +667,7 @@ namespace Quantum.FactoryWars {
       return FindMatchup(rules, attack, out var matchup) ? matchup.VsBuilding : FP._1;
     }
 
-    static void DamageUnit(Frame f, in Weapon weapon, EntityRef target, Unit* unit, FP amount) {
+    public static void DamageUnit(Frame f, in Weapon weapon, EntityRef target, Unit* unit, FP amount) {
       if (unit->Health <= FP._0) {
         return;
       }
@@ -682,6 +682,10 @@ namespace Quantum.FactoryWars {
         amount *= unit->DesignatedBonus;
       }
       amount = ModuleSystem.ApplyOutgoing(f, weapon.Unit, spec, amount);
+      // 항목 37 블랙박스: 영구 화력 보너스(회수 횟수만큼 중첩).
+      if (weapon.Owner.IsValid) {
+        amount *= DepthSystem.OutgoingBonus(f, weapon.Owner);
+      }
       // 항목 31: 방어 연구. 항목 32: 엄폐.
       amount *= TechSystem.IncomingMultiplier(f, unit->Owner, spec);
       if (weapon.IgnoreCover == false) {
@@ -705,6 +709,7 @@ namespace Quantum.FactoryWars {
         UltimateSystem.OnUnitKilled(f, target, unit);
         f.Events.UnitDestroyed(target, unit->Owner, unit->Spec);
         f.Events.Wrecked(f.Unsafe.GetPointer<Transform3D>(target)->Position, (int)spec.Size, FP._0);
+        DepthSystem.LeaveWreck(f, f.Unsafe.GetPointer<Transform3D>(target)->Position, spec, unit->Spec);
         FactoryWarsUtil.Player(f, unit->Owner)->UnitsLost++;
         var killer = FactoryWarsUtil.Player(f, weapon.Owner);
         if (killer != null) {
@@ -732,7 +737,9 @@ namespace Quantum.FactoryWars {
         if (weapon.Ability == SpecialAbility.FlameBurst) {
           amount *= weapon.Spec.AbilityMultiplier;
         }
+        amount *= DepthSystem.ProtocolFactor(f, building);
         building->Health -= amount;
+        DepthSystem.CheckProtocol(f, target, building);
         if (building->Health <= FP._0) {
           var lost = f.FindAsset(building->Spec);
           var loser = FactoryWarsUtil.Player(f, building->Owner);
@@ -781,6 +788,7 @@ namespace Quantum.FactoryWars {
 
     static void DamageArea(Frame f, in Weapon weapon, FPVector3 center, FP radius, FP amount) {
       f.Events.AreaImpact(center, radius);
+      DepthSystem.BlastBridges(f, weapon.Owner, center, radius, amount);
       var radiusSqr = radius * radius;
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform, out _)) {
@@ -823,6 +831,7 @@ namespace Quantum.FactoryWars {
     /// </summary>
     public static void Blast(Frame f, in Weapon weapon, FPVector3 center, FP radius, FP amount, FP edge, FP buildingMultiplier, FP cityMultiplier, bool friendlyFire) {
       f.Events.AreaImpact(center, radius);
+      DepthSystem.BlastBridges(f, weapon.Owner, center, radius, amount);
       var radiusSqr = radius * radius;
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform, out var unit)) {

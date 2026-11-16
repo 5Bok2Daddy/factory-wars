@@ -215,7 +215,7 @@ namespace FactoryWars.View {
       return placement.Garrison ? name + " (진지)" : name;
     }
 
-    public static string SiteName(CaptureKind kind) => kind == CaptureKind.Comms ? "중앙 통신소" : "발전 중계소";
+    public static string SiteName(CaptureKind kind) => kind == CaptureKind.Comms ? "중앙 통신소" : kind == CaptureKind.Radar ? "무인 레이더탑" : kind == CaptureKind.Fuel ? "전술 유류고" : "발전 중계소";
 
     public static string Captured(CaptureKind kind) => $"{SiteName(kind)}를 점령했습니다";
 

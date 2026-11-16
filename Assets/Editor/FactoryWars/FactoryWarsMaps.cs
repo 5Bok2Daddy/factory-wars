@@ -51,6 +51,8 @@ namespace FactoryWars.EditorTools {
       public bool Trader;
       public FPVector3 TraderPosition;
       public double WeatherSight = 1;
+      /// <summary>항목 37 블랙박스 추락 자리(순환, 회전 대칭 복제 없음: 중앙 부근).</summary>
+      public FPVector3[] BlackBoxSpots = new FPVector3[0];
       public MapDef Clone() => (MapDef)MemberwiseClone();
     }
 
@@ -281,12 +283,14 @@ namespace FactoryWars.EditorTools {
         CenterNodes = new ResourceNodePlacement[0],
         Trader = true,
         TraderPosition = Position(0, 0),
+        // 블랙박스: 중앙 암시장 둘레 40m 네 곳을 돌아가며 떨어진다(어느 진영에도 같은 거리).
+        BlackBoxSpots = new[] { Position(-40, 0), Position(0, 40), Position(40, 0), Position(0, -40) },
         Terrain = terrain.ToArray(),
         NoBuildZones = WithMirror(new[] {
           Rect(-140, -97, 9, 8), Rect(-102, -64, 8, 12), Rect(-151, -48, 10, 8), Rect(-147, -24, 6, 12),
         }).Concat(new[] { Rect(-72, 0, 9, 9), Rect(-36, -36, 12, 8, 45) }).Concat(ramps.Select(ramp => Rect(ramp.Center.X.AsFloat, ramp.Center.Z.AsFloat, 6, 6, ramp.Yaw.AsFloat))).ToArray(),
         CameraPosition = new Vector3(0, 250, -205),
-        CaptureSites = new[] { Site(CaptureKind.Relay, relay.x, relay.y, 8) },
+        CaptureSites = new[] { Site(CaptureKind.Relay, relay.x, relay.y, 8), Site(CaptureKind.Radar, -26, -26, 6), Site(CaptureKind.Fuel, -60, -98, 6) },
         CenterSites = new CaptureSitePlacement[0],
         Barricades = new[] { Rect(-72, 0, 7, 3) },
         BaseCrates = new[] { Position(-110, -128), Position(-128, -110) },

@@ -615,6 +615,64 @@ namespace Quantum.FactoryWars {
   using Photon.Deterministic;
 
   /// <summary>중앙 암시장 거래(1 용병 투입, 2 자폭 드론 타격: Target 지점, 3 비행장 긴급 재정비).</summary>
+  /// <summary>항목 37: 공병이 다리에 폭약을 설치(Demolish)하거나 폰툰으로 가교를 복구(Repair)한다. 다리 번호는 MapSpec.Bridges 순서다.</summary>
+  public unsafe class WorkBridgeCommand : FactoryCommand {
+    public EntityRef[] Units = System.Array.Empty<EntityRef>();
+    public int Bridge;
+    public bool Demolish;
+
+    public override void Serialize(BitStream stream) {
+      SerializeUnits(stream, ref Units);
+      stream.Serialize(ref Bridge);
+      stream.Serialize(ref Demolish);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      var target = DepthSystem.BridgeEntity(f, Bridge);
+      if (target == EntityRef.None) {
+        f.Events.ActionRejected(player, ActionKind.Repair, RejectReason.Invalid, 0);
+        return;
+      }
+      var bridge = f.Unsafe.GetPointer<Bridge>(target);
+      if (bridge->Destroyed == Demolish) {
+        f.Events.ActionRejected(player, ActionKind.Repair, RejectReason.Invalid, 0);
+        return;
+      }
+      if (Demolish && FactoryWarsUtil.InTruce(f)) {
+        f.Events.ActionRejected(player, ActionKind.Repair, RejectReason.Truce, 0);
+        return;
+      }
+      for (var i = 0; i < Units.Length; i++) {
+        if (IsOwnWorker(f, player, Units[i])) {
+          WorkerSystem.Assign(f, Units[i], Demolish ? WorkerTask.Demolish : WorkerTask.Pontoon, target);
+        }
+      }
+    }
+  }
+
+  /// <summary>항목 37: 공병이 기갑 잔해를 분해해 고철을 회수한다.</summary>
+  public unsafe class SalvageCommand : FactoryCommand {
+    public EntityRef[] Units = System.Array.Empty<EntityRef>();
+    public EntityRef Wreck;
+
+    public override void Serialize(BitStream stream) {
+      SerializeUnits(stream, ref Units);
+      stream.Serialize(ref Wreck);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      if (f.Has<Wreck>(Wreck) == false) {
+        f.Events.ActionRejected(player, ActionKind.Gather, RejectReason.Invalid, 0);
+        return;
+      }
+      for (var i = 0; i < Units.Length; i++) {
+        if (IsOwnWorker(f, player, Units[i])) {
+          WorkerSystem.Assign(f, Units[i], WorkerTask.Salvage, Wreck);
+        }
+      }
+    }
+  }
+
   public unsafe class TradeCommand : FactoryCommand {
     public int Offer;
     public FPVector3 Target;

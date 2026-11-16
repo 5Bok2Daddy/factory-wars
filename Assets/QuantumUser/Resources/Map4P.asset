@@ -48,10 +48,14 @@ MonoBehaviour:
   - Barricade1
   - Barricade2
   - Barricade3
-  - Barrier0
-  - Barrier1
-  - Barrier2
-  - Barrier3
+  - Bridge0
+  - Bridge1
+  - Bridge2
+  - Bridge3
+  - Bridge4
+  - Bridge5
+  - Bridge6
+  - Bridge7
   - City0
   - City1
   - City10
@@ -131,23 +135,27 @@ MonoBehaviour:
   - City78
   - City79
   - City8
+  - City80
+  - City81
+  - City82
+  - City83
   - City9
   - Fall1
   - Fall2
-  - Fall21
   - Fall22
   - Fall23
   - Fall24
+  - Fall25
   - Fall3
   - Fall4
-  - Fall41
-  - Fall42
   - Fall43
   - Fall44
-  - Fall61
-  - Fall62
-  - Fall63
+  - Fall45
+  - Fall46
   - Fall64
+  - Fall65
+  - Fall66
+  - Fall67
   - WaterGate0
   - WaterGate1
   - WaterGate2

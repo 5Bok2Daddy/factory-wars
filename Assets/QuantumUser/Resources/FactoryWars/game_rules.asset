@@ -286,6 +286,61 @@ MonoBehaviour:
     RawValue: 55705
   ArmorRepairMultiplier:
     RawValue: 98304
+  WreckSeconds:
+    RawValue: 1966080
+  WreckScrapRatio:
+    RawValue: 22937
+  WreckCoverRadius:
+    RawValue: 157286
+  WreckCoverReduction:
+    RawValue: 32768
+  WreckSalvageSeconds:
+    RawValue: 262144
+  ArmorScrapMultiplier:
+    RawValue: 131072
+  BridgeHealth:
+    RawValue: 78643200
+  BridgeBlastMultiplier:
+    RawValue: 98304
+  BridgeDemolishSeconds:
+    RawValue: 524288
+  BridgeRepairSeconds:
+    RawValue: 655360
+  BridgeWorkRange:
+    RawValue: 262144
+  BridgeCollapseDamage:
+    RawValue: 16384000
+  BridgeRegion: Bridge
+  HqProtocolHealthRatio:
+    RawValue: 26214
+  HqProtocolSeconds:
+    RawValue: 1310720
+  HqProtocolDamageTaken:
+    RawValue: 26214
+  HqProtocolSquads: 2
+  HqProtocolRange:
+    RawValue: 1835008
+  HqProtocolDamage:
+    RawValue: 3932160
+  HqProtocolInterval:
+    RawValue: 78643
+  BlackBoxFirstSeconds:
+    RawValue: 35389440
+  BlackBoxPeriodSeconds:
+    RawValue: 23592960
+  BlackBoxLifeSeconds:
+    RawValue: 5898240
+  BlackBoxRadius:
+    RawValue: 524288
+  BlackBoxCaptureSeconds:
+    RawValue: 983040
+  BlackBoxDamageBonus:
+    RawValue: 3276
+  BlackBoxMaxStacks: 4
+  RadarSiteRadius:
+    RawValue: 2293760
+  FuelRearmMultiplier:
+    RawValue: 45875
   TraderHealth:
     RawValue: 196608000
   TraderRadius:

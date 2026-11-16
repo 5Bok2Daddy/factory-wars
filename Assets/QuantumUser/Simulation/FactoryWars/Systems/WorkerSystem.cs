@@ -36,7 +36,7 @@ namespace Quantum.FactoryWars {
     /// range 안이면 멈추고 true. square면 정사각형 부지(건물) 기준 거리(가로·세로 중 큰 쪽)로 잰다.
     /// 항목 31: 원형으로 재면 공병이 부지 모서리 쪽에서 5.0을 살짝 넘겨 멈춰 건설이 영영 진행되지 않았다.
     /// </summary>
-    static bool MoveInto(Frame f, EntityRef entity, Worker* worker, FPVector3 position, FPVector3 target, FP range, bool square = false) {
+    public static bool MoveInto(Frame f, EntityRef entity, Worker* worker, FPVector3 position, FPVector3 target, FP range, bool square = false) {
       var inside = square
         ? FPMath.Max(FPMath.Abs(position.X - target.X), FPMath.Abs(position.Z - target.Z)) <= range
         : FactoryWarsUtil.FlatDistanceSqr(position, target) <= range * range;

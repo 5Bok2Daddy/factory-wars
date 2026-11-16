@@ -175,9 +175,10 @@ namespace Quantum.FactoryWars {
       state->CaptureFrames++;
       if (site->Kind == CaptureKind.Comms) {
         state->Stock.Steel += rules.CommsSteelPerSecond * f.DeltaTime;
-      } else {
+      } else if (site->Kind == CaptureKind.Relay) {
         state->Stock.Power = FPMath.Min(state->PowerCap, state->Stock.Power + rules.RelayPowerPerSecond * f.DeltaTime);
       }
+      // 항목 37: 레이더탑·유류고는 자원을 주지 않고 DepthSystem이 효과를 낸다.
     }
 
     /// <summary>보상 가중치에서 종류를 고른다(0 자원, 1 긴급 출격권, 2 정찰 사진, 3 보급). roll은 0 이상 가중치 합 미만의 값.</summary>

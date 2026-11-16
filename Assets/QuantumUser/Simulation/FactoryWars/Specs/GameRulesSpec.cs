@@ -175,6 +175,42 @@ namespace Quantum {
     public FP ArmorCostMultiplier = 1;
     public FP ArmorRepairMultiplier = 1;
 
+    // ---- 항목 37 전술 깊이 ----
+    /// <summary>기갑 잔해: 지속(초)·고철 회수율(생산비 철의 비율)·엄폐 반경과 피해 감소·분해 시간·기갑 군단 회수 배율.</summary>
+    public FP WreckSeconds;
+    public FP WreckScrapRatio;
+    public FP WreckCoverRadius;
+    public FP WreckCoverReduction;
+    public FP WreckSalvageSeconds;
+    public FP ArmorScrapMultiplier = 1;
+    /// <summary>교량: 체력(0이면 기능 없음)·폭발 피해 배율·폭약 설치(공병)·가교 복구(초)·작업 거리·붕괴 때 다리 위 피해.</summary>
+    public FP BridgeHealth;
+    public FP BridgeBlastMultiplier;
+    public FP BridgeDemolishSeconds;
+    public FP BridgeRepairSeconds;
+    public FP BridgeWorkRange;
+    public FP BridgeCollapseDamage;
+    public string BridgeRegion;
+    /// <summary>사령부 비상 프로토콜: 발동 체력 비율·지속·받는 피해 배율·수비 분대 수·자동 사격 사거리·피해·간격.</summary>
+    public FP HqProtocolHealthRatio;
+    public FP HqProtocolSeconds;
+    public FP HqProtocolDamageTaken = 1;
+    public int HqProtocolSquads;
+    public FP HqProtocolRange;
+    public FP HqProtocolDamage;
+    public FP HqProtocolInterval;
+    /// <summary>블랙박스: 첫 추락·주기·지속·점령 반경·점령 시간·영구 화력 보너스(중첩)와 상한.</summary>
+    public FP BlackBoxFirstSeconds;
+    public FP BlackBoxPeriodSeconds;
+    public FP BlackBoxLifeSeconds;
+    public FP BlackBoxRadius;
+    public FP BlackBoxCaptureSeconds;
+    public FP BlackBoxDamageBonus;
+    public int BlackBoxMaxStacks;
+    /// <summary>전술 거점: 레이더탑 시야 반경, 유류고가 있을 때 출격기 재정비 시간 배율.</summary>
+    public FP RadarSiteRadius;
+    public FP FuelRearmMultiplier = 1;
+
     // ---- 중앙 암시장(NPC 무기상) ----
     public FP TraderHealth;
     /// <summary>철조망 구역 반지름(m). 공격 사거리 계산과 화면 둘레에 쓴다.</summary>

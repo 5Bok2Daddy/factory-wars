@@ -30,6 +30,7 @@ MonoBehaviour:
       RawValue: 0
     Z:
       RawValue: 1310720
+  BlackBoxSpots: []
   WeatherFirstSeconds: 0
   WeatherDurationSeconds: 0
   WeatherPeriodSeconds: 0

@@ -34,6 +34,8 @@ namespace Quantum
             factories.Add(new FactoryWars.OrderSortieCommand());
             factories.Add(new FactoryWars.ChooseDoctrineCommand());
             factories.Add(new FactoryWars.TradeCommand());
+            factories.Add(new FactoryWars.WorkBridgeCommand());
+            factories.Add(new FactoryWars.SalvageCommand());
         }
     }
 }

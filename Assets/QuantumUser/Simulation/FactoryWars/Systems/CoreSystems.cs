@@ -316,7 +316,11 @@ namespace Quantum.FactoryWars {
       if (f.Map.RegionMap.TryGetValue(prefix, out var region)) {
         f.NavMeshRegionMask->ToggleRegion(region, open);
       }
-      var areas = FactoryWarsUtil.MapInfo(f).BaseAreas;
+      var map = FactoryWarsUtil.MapInfo(f);
+      for (var i = 0; map.Bridges != null && i < map.Bridges.Length; i++) {
+        DepthSystem.ApplyBridgeRegion(f, i, DepthSystem.BridgeDown(f, i));
+      }
+      var areas = map.BaseAreas;
       var gates = FactoryWarsUtil.Rules(f).WaterGateRegion;
       for (var seat = 0; areas != null && seat < areas.Length; seat++) {
         var seatOpen = open || FactoryWarsUtil.PlayerAtSeat(f, seat) < 0;

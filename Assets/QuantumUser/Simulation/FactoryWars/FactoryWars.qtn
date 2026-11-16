@@ -15,10 +15,10 @@ enum Relation : Byte { Enemy, Allied, BreakPending }
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget, Hold, Patrol }
 enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce, Attack, Garrison, Upgrade, Research, Ultimate }
 enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce, TierLocked, SizeLimit, Busy, NoVision, NeedGarrison, NoSetup, Limit, Weather, Doctrine, Hostile, Closed }
-enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair }
+enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair, Salvage, Demolish, Pontoon }
 enum BotDifficulty : Byte { Easy, Normal }
 enum ResourceKind : Byte { Iron, Wood }
-enum CaptureKind : Byte { Comms, Relay }
+enum CaptureKind : Byte { Comms, Relay, Radar, Fuel }
 enum PauseReason : Byte { None, Outage }
 // 항목 33 궁극 전력. 종류는 UltimateSpec.Kind, 단계는 PlayerState.UltimatePhase.
 // 항목 34-B 보급품 사전 알람 단계: Zone(35초 전, 넓은 경고 원), Closing(10초 전, 좁은 원), Landed(착지, 신호탄), Captured(획득).
@@ -132,6 +132,13 @@ struct PlayerState {
     Int32 UltimateSitesLost;
     Int32 UltimateCoreKills;
     Int32 CoreLost;
+    // 항목 37 전술 깊이(측정용 + 상태): 잔해 회수, 다리 폭파·복구, 비상 프로토콜 사용 여부, 블랙박스 회수·영구 화력 중첩.
+    Int32 WrecksSalvaged;
+    Int32 BridgesDown;
+    Int32 BridgesRepaired;
+    QBoolean ProtocolUsed;
+    Int32 BlackBoxes;
+    Int32 BlackBoxStacks;
 }
 
 struct BotState {
@@ -193,6 +200,9 @@ global {
     array<Int32>[8] CityCollapsed;
     // 항목 32: 맵 엄폐점(바리케이드·도시 건물)을 만들었는지.
     QBoolean CoverReady;
+    // 항목 37 블랙박스: 다음 추락 프레임과 지금까지 떨어진 횟수(맵의 순환 자리 선택용).
+    Int32 NextBlackBoxFrame;
+    Int32 BlackBoxCount;
 }
 
 component Unit {
@@ -370,6 +380,37 @@ component Building {
     QBoolean CoverMade;
     // 항목 34-D: 비행장 격납 칸 4개.
     array<HangarSlot>[4] Hangar;
+    // 항목 37: 사령부 비상 방어 프로토콜(피해 감소·자동 사격이 끝나는 프레임, 다음 사격 프레임).
+    Int32 ProtocolUntilFrame;
+    Int32 ProtocolNextShotFrame;
+}
+
+// 항목 37: 기갑 잔해. 30초 동안 임시 엄폐점을 만들고 공병이 분해하면 고철(Scrap)을 준다.
+component Wreck {
+    Int32 UntilFrame;
+    FP Scrap;
+    FP Work;
+    Int32 Size;
+    asset_ref<UnitSpec> Spec;
+}
+
+// 항목 37: 교량 상태(체력·파괴·폰툰 복구 여부). Seat는 지키는 본진 자리.
+component Bridge {
+    Int32 Index;
+    Int32 Seat;
+    FP Health;
+    FP MaxHealth;
+    QBoolean Destroyed;
+    QBoolean Pontoon;
+    FP Work;
+}
+
+// 항목 37: 추락 수송기 블랙박스(점령형 목표). 한 쪽만 반경 안에 있으면 Progress가 오른다.
+component BlackBox {
+    Int32 UntilFrame;
+    FP Progress;
+    player_ref Claimant;
+    QBoolean Contested;
 }
 
 component ResourceNode {
@@ -480,6 +521,13 @@ synced event SortieEnded { player_ref Player; QBoolean ShotDown; FPVector3 Posit
 // 항목 37
 synced event VeteranPromoted { player_ref Owner; Int32 Rank; }
 synced event WeatherChanged { QBoolean On; }
+synced event WreckLeft { entity_ref Wreck; FPVector3 Position; Int32 Size; }
+synced event WreckSalvaged { player_ref Player; FPVector3 Position; FP Iron; }
+synced event BridgeChanged { Int32 Index; QBoolean Destroyed; player_ref By; }
+synced event HqProtocol { player_ref Player; entity_ref Building; FPVector3 Position; }
+event HqProtocolShot { FPVector3 From; FPVector3 To; }
+synced event BlackBoxDown { entity_ref Box; FPVector3 Position; Int32 Seconds; }
+synced event BlackBoxEnded { FPVector3 Position; player_ref Winner; Int32 Reward; }
 synced event DoctrineChosen { player_ref Player; Int32 Doctrine; QBoolean ByDefault; }
 // 중앙 암시장
 synced event TraderHostile { player_ref Player; }

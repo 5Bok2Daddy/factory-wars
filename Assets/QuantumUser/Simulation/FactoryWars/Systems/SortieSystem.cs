@@ -245,6 +245,7 @@ namespace Quantum.FactoryWars {
           hangar->State = 1;
           // 항목 37 공군 타격 사령부: 재정비 시간 단축.
           var rearm = TacticalSystem.DoctrineOf(f, sortie->Owner) == 1 ? spec.SortieRearmSeconds * FactoryWarsUtil.Rules(f).AirRearmMultiplier : spec.SortieRearmSeconds;
+          rearm *= DepthSystem.RearmMultiplier(f, sortie->Owner);
           hangar->ReadyFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, rearm);
         }
       }

@@ -25,7 +25,7 @@ namespace Quantum.FactoryWars {
     }
 
     /// <summary>모양(사각형)의 네 변 바깥에 점을 둔다. 방향은 모양 쪽(그 너머의 적을 막는다).</summary>
-    static void ShapeSpots(Frame f, MapShape shape, FP reduction, EntityRef source, bool twoSides) {
+    public static void ShapeSpots(Frame f, MapShape shape, FP reduction, EntityRef source, bool twoSides) {
       var rules = FactoryWarsUtil.Rules(f);
       var gap = rules.CoverOffset;
       var radius = shape.Radius > FP._0;

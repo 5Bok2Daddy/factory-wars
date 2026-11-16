@@ -134,6 +134,8 @@ namespace Quantum.Prototypes.Unity {
     public QBoolean CoverMade;
     [ArrayLengthAttribute(4)]
     public Quantum.Prototypes.HangarSlotPrototype[] Hangar = new Quantum.Prototypes.HangarSlotPrototype[4];
+    public Int32 ProtocolUntilFrame;
+    public Int32 ProtocolNextShotFrame;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BuildingPrototype prototype);
     public override Quantum.Prototypes.BuildingPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BuildingPrototype();
@@ -160,6 +162,8 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.ResearchRemaining, out result.ResearchRemaining);
       converter.Convert(this.CoverMade, out result.CoverMade);
       converter.Convert(this.Hangar, out result.Hangar);
+      converter.Convert(this.ProtocolUntilFrame, out result.ProtocolUntilFrame);
+      converter.Convert(this.ProtocolNextShotFrame, out result.ProtocolNextShotFrame);
       ConvertUser(converter, ref result);
       return result;
     }
@@ -332,6 +336,12 @@ namespace Quantum.Prototypes.Unity {
     public Int32 UltimateSitesLost;
     public Int32 UltimateCoreKills;
     public Int32 CoreLost;
+    public Int32 WrecksSalvaged;
+    public Int32 BridgesDown;
+    public Int32 BridgesRepaired;
+    public QBoolean ProtocolUsed;
+    public Int32 BlackBoxes;
+    public Int32 BlackBoxStacks;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.PlayerStatePrototype prototype);
     public override Quantum.Prototypes.PlayerStatePrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.PlayerStatePrototype();
@@ -404,6 +414,12 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.UltimateSitesLost, out result.UltimateSitesLost);
       converter.Convert(this.UltimateCoreKills, out result.UltimateCoreKills);
       converter.Convert(this.CoreLost, out result.CoreLost);
+      converter.Convert(this.WrecksSalvaged, out result.WrecksSalvaged);
+      converter.Convert(this.BridgesDown, out result.BridgesDown);
+      converter.Convert(this.BridgesRepaired, out result.BridgesRepaired);
+      converter.Convert(this.ProtocolUsed, out result.ProtocolUsed);
+      converter.Convert(this.BlackBoxes, out result.BlackBoxes);
+      converter.Convert(this.BlackBoxStacks, out result.BlackBoxStacks);
       ConvertUser(converter, ref result);
       return result;
     }
