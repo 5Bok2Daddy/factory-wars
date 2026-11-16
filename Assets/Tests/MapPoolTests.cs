@@ -38,10 +38,13 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Map_Catalog_CyclesAndFindsScenes() {
-      Assert.GreaterOrEqual(MapCatalog.Maps.Length, 2);
+      Assert.AreEqual(5, MapCatalog.Maps.Length);
       Assert.AreEqual("Map4P", MapCatalog.Maps[0].Id);
       Assert.AreEqual("MapDesert", MapCatalog.Next("Map4P").Id);
-      Assert.AreEqual("Map4P", MapCatalog.Next("MapDesert").Id, "한 바퀴");
+      Assert.AreEqual("MapUrban", MapCatalog.Next("MapDesert").Id);
+      Assert.AreEqual("MapArchipelago", MapCatalog.Next("MapUrban").Id);
+      Assert.AreEqual("MapStrait", MapCatalog.Next("MapArchipelago").Id);
+      Assert.AreEqual("Map4P", MapCatalog.Next("MapStrait").Id, "한 바퀴");
       var settings = new MatchSettings { MapId = "MapDesert" };
       Assert.AreEqual("MapDesert", settings.Scene);
       foreach (var entry in MapCatalog.Maps) {

@@ -286,23 +286,36 @@ namespace Quantum.FactoryWars {
           continue;
         }
         var target = FPVector3.Zero;
-        var found = false;
+        var bestPriority = 0;
+        // 우선순위: 4 주둔 저격수 건물 > 3 쟁탈 보급/블랙박스 > 2 포병/대형 기갑 > 1 일반 시야 내 적
+        var cities = f.Filter<Transform3D, CityBuilding>();
+        while (cities.NextUnsafe(out _, out var cTransform, out var city)) {
+          if (city->Occupant.IsValid == false || DiplomacySystem.CanAttack(f, building->Owner, city->Occupant) == false) {
+            continue;
+          }
+          if (FogSystem.IsVisible(f, building->Owner, cTransform->Position) == false || (weather && FogSystem.InSignalArea(f, building->Owner, cTransform->Position) == false)) {
+            continue;
+          }
+          target = cTransform->Position;
+          bestPriority = 4;
+          break;
+        }
         var units = f.Filter<Transform3D, Unit>();
         while (units.NextUnsafe(out _, out var uTransform, out var u)) {
           if (u->Health <= FP._0 || DiplomacySystem.CanAttack(f, building->Owner, u->Owner) == false) {
             continue;
           }
-          if (FogSystem.IsVisible(f, building->Owner, uTransform->Position) == false) {
+          if (FogSystem.IsVisible(f, building->Owner, uTransform->Position) == false || (weather && FogSystem.InSignalArea(f, building->Owner, uTransform->Position) == false)) {
             continue;
           }
-          if (weather && FogSystem.InSignalArea(f, building->Owner, uTransform->Position) == false) {
-            continue;
+          var uSpec = f.FindAsset(u->Spec);
+          var priority = uSpec.Size >= UnitSize.Large || uSpec.Ability == SpecialAbility.LongRangeBarrage ? 2 : 1;
+          if (priority > bestPriority) {
+            bestPriority = priority;
+            target = uTransform->Position;
           }
-          target = uTransform->Position;
-          found = true;
-          break;
         }
-        if (found) {
+        if (bestPriority > 0) {
           var delta = new FPVector2(target.X - afTransform->Position.X, target.Z - afTransform->Position.Z);
           var heading = delta.SqrMagnitude > FP._0 ? delta.Normalized : new FPVector2(FP._1, FP._0);
           TryLaunch(f, building->Owner, airfield, readySlot, target, heading);

@@ -1,8 +1,8 @@
 # Factory Wars — 모바일 진행 현황 대시보드
 
-> **현재 완료된 마지막 TASK:** **TASK-37 · 34 · 35 · 36** (코드 구현 및 Roslyn 3어셈블리 컴파일·결정론 금지어 검사 통과)
-> **남은 실행 검증:** Unity Hub 로그인 세션 복구 후 `FactoryWarsSetup.BuildMapsAndMenu` (신규 맵 3종 씬 굽기), PlayMode 회귀 테스트 및 `Docs/status_images/` 캡처 재실행
-> **기준 시각:** 2026-11-16 (커밋 `6ace028` 이후 `[gemini]` 인계 반영)
+> **현재 완료된 마지막 TASK:** **TASK-34 · 35 · 37 · 33 밸런스 패치** (시스템·AI·기능 UI·밸런스 코드 완료, Roslyn 4어셈블리 컴파일·결정론 금지어 검사 통과)
+> **남은 실행 검증:** Unity Hub 로그인 세션 복구 후 `FactoryWarsSetup.BuildMapsAndMenu` (신규 맵 3종 씬/NavMesh 굽기), PlayMode 테스트 및 AI 배치 측정 실행
+> **기준 시각:** 2026-11-16 (`[gemini]` 시스템 우선 지시 완료)
 
 ---
 

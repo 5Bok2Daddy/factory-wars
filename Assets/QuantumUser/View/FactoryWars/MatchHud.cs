@@ -199,6 +199,7 @@ namespace FactoryWars.View {
       _noteBubble.gameObject.SetActive(false);
 
       BuildDoctrinePanel(theme);
+      BuildAirOpsPanel(theme);
 
       // 하단 왼쪽: 미니맵.
       var mapFrame = Ui.Panel("MinimapFrame", Root, theme.Panel);
@@ -515,6 +516,84 @@ namespace FactoryWars.View {
         }
       }
       _doctrinePanel.gameObject.SetActive(false);
+    }
+
+    RectTransform _airOpsPanel;
+    readonly List<(Button Button, Text Label, EntityRef Airfield, int Slot)> _airOpsSlots = new List<(Button, Text, EntityRef, int)>();
+
+    /// <summary>항목 34-E: 비행장을 선택하지 않아도 격납고 작전기를 바로 출격·재정비 확인할 수 있는 항공 작전 패널.</summary>
+    void BuildAirOpsPanel(UiTheme theme) {
+      _airOpsPanel = Ui.Panel("AirOpsPanel", Root, theme.Panel);
+      Ui.Place(_airOpsPanel, new Vector2(0f, 0f), new Vector2(328, 12), new Vector2(560, 88));
+      for (var i = 0; i < SortieSystem.Slots; i++) {
+        var idx = i;
+        var btn = Ui.Button($"AirOp{idx}", _airOpsPanel, "빈 칸", () => {
+          if (idx >= _airOpsSlots.Count) {
+            return;
+          }
+          var entry = _airOpsSlots[idx];
+          if (entry.Airfield == EntityRef.None) {
+            return;
+          }
+          var input = Controller.Input;
+          var picking = input.Mode == MatchInput.TapMode.Sortie && input.SortieAirfield == entry.Airfield && input.SortieSlot == entry.Slot;
+          input.SortieAirfield = entry.Airfield;
+          input.SortieSlot = entry.Slot;
+          input.Mode = picking ? MatchInput.TapMode.None : MatchInput.TapMode.Sortie;
+        }, theme.FontSmall);
+        Ui.Place((RectTransform)btn.transform, new Vector2(0f, 0.5f), new Vector2(10 + idx * 136, 0), new Vector2(128, 70));
+        _airOpsSlots.Add((btn, btn.GetComponentInChildren<Text>(), EntityRef.None, 0));
+      }
+      _airOpsPanel.gameObject.SetActive(false);
+    }
+
+    void RefreshAirOps(Frame frame) {
+      if (_airOpsPanel == null || Controller.Player.IsValid == false) {
+        return;
+      }
+      if (DoctrineOpen) {
+        _airOpsPanel.gameObject.SetActive(false);
+        return;
+      }
+      var collected = new List<(EntityRef Airfield, int Slot, HangarSlot Data)>();
+      var buildings = frame.Filter<Building>();
+      while (buildings.NextUnsafe(out var entity, out var b)) {
+        if (b->Owner != Controller.Player || b->ConstructionRemaining > FP._0 || b->Health <= FP._0) {
+          continue;
+        }
+        for (var i = 0; i < SortieSystem.Slots && collected.Count < SortieSystem.Slots; i++) {
+          var s = b->Hangar[i];
+          if (s.State != 0 && s.Spec.IsValid) {
+            collected.Add((entity, i, s));
+          }
+        }
+      }
+      var show = collected.Count > 0;
+      if (_airOpsPanel.gameObject.activeSelf != show) {
+        _airOpsPanel.gameObject.SetActive(show);
+      }
+      if (show == false) {
+        return;
+      }
+      var fps = Mathf.Max(1, frame.SessionConfig.UpdateFPS);
+      var input = Controller.Input;
+      for (var i = 0; i < _airOpsSlots.Count; i++) {
+        var item = _airOpsSlots[i];
+        if (i >= collected.Count) {
+          item.Button.gameObject.SetActive(false);
+          _airOpsSlots[i] = (item.Button, item.Label, EntityRef.None, 0);
+          continue;
+        }
+        item.Button.gameObject.SetActive(true);
+        var (af, slotIdx, slot) = collected[i];
+        var spec = frame.FindAsset(slot.Spec);
+        var role = spec.SortieKind == SortieKind.Strafe ? "기총소사" : spec.SortieKind == SortieKind.Bomb ? "폭격" : "공수투하";
+        var left = slot.State == 2 ? -1 : Mathf.Max(0, Mathf.CeilToInt((slot.ReadyFrame - frame.Number) / (float)fps));
+        var picking = input != null && input.Mode == MatchInput.TapMode.Sortie && input.SortieAirfield == af && input.SortieSlot == slotIdx;
+        item.Button.interactable = slot.State == 1 && left == 0;
+        item.Label.text = slot.State == 2 ? $"{role}\n출격 중" : picking ? $"{role}\n목표 탭" : left > 0 ? $"{role}\n재정비 {left}초" : $"{role}\n출격 가능";
+        _airOpsSlots[i] = (item.Button, item.Label, af, slotIdx);
+      }
     }
 
     public bool DoctrineOpen { get; private set; }
@@ -1058,6 +1137,7 @@ namespace FactoryWars.View {
       RefreshContext(frame, state);
       RefreshCard(frame, state);
       RefreshDoctrine(frame);
+      RefreshAirOps(frame);
       RefreshUltimateBars(frame);
       Layout();
       if (DiplomacyOpen) {

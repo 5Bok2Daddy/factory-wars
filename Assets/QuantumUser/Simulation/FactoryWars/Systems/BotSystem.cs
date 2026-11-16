@@ -564,7 +564,8 @@ namespace Quantum.FactoryWars {
       }
       var seat = 1 << FactoryWarsUtil.SeatOf(f, player);
       var wanted = PreferredForecourt(state->Stock);
-      var late = ai.LateExpansionSeconds > FP._0 && f.Number >= FactoryWarsUtil.SecondsToFrames(f, ai.LateExpansionSeconds);
+      var lowLocal = NearbyReserves(f, bot->Home, ai.ExpandReserveRadius) < (FP)1500;
+      var late = map.SupplyIntervalMultiplier < FP._1 || lowLocal || (ai.LateExpansionSeconds > FP._0 && f.Number >= FactoryWarsUtil.SecondsToFrames(f, ai.LateExpansionSeconds));
       var best = FP.MaxValue;
       for (var i = 0; i < sites.Length; i++) {
         var kind = sites[i].Kind;
@@ -830,9 +831,27 @@ namespace Quantum.FactoryWars {
     static int AllowedMask(Frame f, PlayerRef player, AiSpec ai, AssetRef<UnitSpec>[] producible, out bool overShare) {
       overShare = false;
       var allowed = 0;
+      var snipers = 0;
+      var hasGarrison = false;
+      var cityMap = FactoryWarsUtil.MapInfo(f).CityBuildings;
+      for (var c = 0; cityMap != null && c < cityMap.Length; c++) {
+        if (cityMap[c].Garrison) {
+          hasGarrison = true;
+          break;
+        }
+      }
+      var existing = f.Filter<Unit>();
+      while (existing.NextUnsafe(out _, out var u)) {
+        if (u->Owner == player && u->Health > FP._0 && f.FindAsset(u->Spec).GarrisonFireOnly) {
+          snipers++;
+        }
+      }
       for (var i = 0; i < producible.Length && i < 30; i++) {
-        // 항목 34-C: AI는 아직 저격수를 쓰지 않는다(주둔 전에는 사격 불가라 지상에서 쓸모가 없다).
-        if (f.FindAsset(producible[i]).GarrisonFireOnly == false && f.FindAsset(producible[i]).SortieKind == SortieKind.None && TechSystem.CanProduce(f, player, f.FindAsset(producible[i]), out _)) {
+        var candidate = f.FindAsset(producible[i]);
+        if (candidate.GarrisonFireOnly && (hasGarrison == false || snipers >= 2)) {
+          continue;
+        }
+        if (TechSystem.CanProduce(f, player, candidate, out _)) {
           allowed |= 1 << i;
         }
       }
@@ -1644,6 +1663,13 @@ namespace Quantum.FactoryWars {
       if (runner->Order != UnitOrder.Move || runner->TargetPosition != target) {
         MovementSystem.Order(f, bot->CrateRunner, runner, UnitOrder.Move, target);
       }
+      // 유휴 공병이 근처 기갑 잔해를 발견하면 고철 회수에 투입한다.
+      var wrecks = f.Filter<Transform3D, Wreck>();
+      if (wrecks.NextUnsafe(out var wreckEntity, out var wreckAt, out _)) {
+        if (FindBuilder(f, player, wreckAt->Position, out var salvager)) {
+          WorkerSystem.Assign(f, salvager, WorkerTask.Salvage, wreckEntity);
+        }
+      }
     }
 
     /// <summary>목표에서 가까운 지상 전투 유닛을 골라 분대로 묶는다. 묶인 동안 본대 명령을 받지 않는다.</summary>
@@ -1707,7 +1733,14 @@ namespace Quantum.FactoryWars {
       if (ai.CaptureSquad > 0 && f.Number >= bot->NextSquadFrame) {
         CountArmies(f, player, ai, out var army, out var enemyArmy);
         var strong = army >= enemyArmy * ai.CenterArmyRatio;
-        if ((strong && FindSite(f, player, bot->Home, CaptureKind.Comms, out var site)) || FindSite(f, player, bot->Home, CaptureKind.Relay, out site)) {
+        var boxes = f.Filter<Transform3D, BlackBox>();
+        if (boxes.NextUnsafe(out _, out var boxAt, out _)) {
+          SendSquad(f, player, boxAt->Position, System.Math.Max(2, ai.DropSquad), ai, FP._0);
+          bot->NextSquadFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
+        } else if ((strong && FindSite(f, player, bot->Home, CaptureKind.Comms, out var site))
+            || FindSite(f, player, bot->Home, CaptureKind.Radar, out site)
+            || FindSite(f, player, bot->Home, CaptureKind.Fuel, out site)
+            || FindSite(f, player, bot->Home, CaptureKind.Relay, out site)) {
           SendSquad(f, player, site, ai.CaptureSquad, ai, FP._0);
           bot->NextSquadFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, ai.SquadSeconds);
         }

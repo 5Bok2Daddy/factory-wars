@@ -248,9 +248,10 @@ namespace FactoryWars.EditorTools {
       var def = FourPlayerMap.Clone();
       def.Id = "MapUrban";
       def.Theme = "시가전";
-      def.ChannelWidth = 14f;
-      def.SupplyInterval = 1.0;
-      def.SupplyReward = 1.0;
+      def.ChannelWidth = 10f;
+      def.SupplyInterval = 0.9;
+      def.SupplyReward = 1.2;
+      def.CaptureSites = new[] { Site(CaptureKind.Relay, -134, 0, 8), Site(CaptureKind.Radar, -30, -30, 7), Site(CaptureKind.Fuel, -60, -98, 6) };
       return def;
     }
 
@@ -266,6 +267,8 @@ namespace FactoryWars.EditorTools {
       def.WeatherDuration = 60;
       def.WeatherPeriod = 240;
       def.WeatherSight = 0.65;
+      def.Fords = new[] { Segment(P(-74, -30), P(-30, -74), FordHalfWidth), Segment(P(-108, -74), P(-74, -108), FordHalfWidth) };
+      def.CaptureSites = new[] { Site(CaptureKind.Relay, -134, 0, 8), Site(CaptureKind.Radar, -24, -24, 7), Site(CaptureKind.Fuel, -84, -84, 7) };
       return def;
     }
 
@@ -275,10 +278,13 @@ namespace FactoryWars.EditorTools {
       def.Id = "MapStrait";
       def.Theme = "해협";
       def.ChannelWidth = 32f;
+      def.SupplyInterval = 0.9;
+      def.SupplyReward = 1.2;
       def.WeatherFirst = 450;
       def.WeatherDuration = 60;
       def.WeatherPeriod = 240;
       def.WeatherSight = 0.65;
+      def.CaptureSites = new[] { Site(CaptureKind.Relay, -134, 0, 8), Site(CaptureKind.Radar, -26, -26, 6), Site(CaptureKind.Fuel, -54, -90, 7) };
       return def;
     }
 
@@ -315,7 +321,7 @@ namespace FactoryWars.EditorTools {
         Nodes = new[] {
           // 항목 33 3차에서 본진 철광산을 4000→5500으로 늘려 봤으나(4인전은 10분쯤 본진 철이 바닥나 첫 교전을 진 쪽이 무너진다)
           // 4인 시간 초과가 6 → 14판으로 늘어(ai-33-4p-t3) 4000으로 되돌렸다.
-          Mine(-145, -118, 4000), Mine(-118, -145, 4000), Grove(-146, -146, 9, 6000),
+          Mine(-145, -118, 4600), Mine(-118, -145, 4600), Grove(-146, -146, 9, 6000),
           Mine(-148, -76, 3000), Mine(-124, -66, 3000), Grove(-150, -58, 5, 2000),
           Grove(-76, -147, 10, 5000), Grove(-67, -122, 7, 3000), Mine(-82, -118, 1500, 2.5),
           Mine(-118, 10, 5000, 3.5), Grove(-118, -6, 6, 5000),
