@@ -1,8 +1,8 @@
 # Factory Wars — 모바일 진행 현황 대시보드
 
-> **현재 완료된 마지막 TASK:** **TASK-34 · 35 · 37 · 33 밸런스 패치** (코드 구현 완료, Roslyn 4어셈블리 컴파일·결정론 금지어 0건·리플렉션 순수 C# `[Test]` 23/24 통과)
-> **남은 실행 검증:** Unity 라이선스 세션(`EXIT:198` 해소) 후 `FactoryWarsSetup.BuildMapsAndMenu`로 `MapUrban`·`MapArchipelago`·`MapStrait` `.unity` 씬/NavMesh 굽기 및 PlayMode 전체 테스트·캡처 실행
-> **기준 시각:** 2026-11-16 21:58 (`3292694` 이후 리플렉션 검증 반영)
+> **현재 완료된 마지막 TASK:** **TASK-32 · 33 · 34 · 35 · 36 · 37** (Kubold `Cover Rifle Animset Pro` 99클립 바인딩, 맵 5종 씬/NavMesh 굽기, PlayMode 34/34 + GPU 캡처 4/4 + AI 배치 4/4 통과)
+> **최신 검증 스크린샷:** `Docs/status_images/46_*.png` (Kubold 소총·엄폐·조준 교전, 암시장, 전장의 안개, HUD)
+> **기준 시각:** 2026-11-16 23:12 (야간 무인 파이프라인 완료)
 
 ---
 

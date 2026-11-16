@@ -470,7 +470,7 @@ namespace FactoryWars.View {
         }
         if (visual.Color != color) {
           visual.Color = color;
-          visual.ProgressRenderer.sharedMaterial = ArtLook.Team(color, false);
+          visual.ProgressRenderer.sharedMaterial = color < 0 ? ArtLook.NeutralMaterial : ArtLook.Team(color, false);
         }
         if (fx != null && Time.time >= visual.PulseAt) {
           visual.PulseAt = Time.time + 1.4f;

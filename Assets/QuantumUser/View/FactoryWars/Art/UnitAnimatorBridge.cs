@@ -23,6 +23,7 @@ namespace FactoryWars.View {
     public static readonly int Building = Animator.StringToHash("Building");
     public static readonly int Gathering = Animator.StringToHash("Gathering");
     public static readonly int CoverParam = Animator.StringToHash("Cover");
+    public static readonly int AimingParam = Animator.StringToHash("Aiming");
     public static readonly int DieTrigger = Animator.StringToHash("Die");
     public static readonly int Dead = Animator.StringToHash("Dead");
 
@@ -94,6 +95,7 @@ namespace FactoryWars.View {
       var hasBuilding = Has(Building);
       var hasGathering = Has(Gathering);
       var hasCover = Has(CoverParam);
+      var hasAiming = Has(AimingParam);
       foreach (var animator in All) {
         if (Usable(animator) == false) {
           continue;
@@ -113,6 +115,9 @@ namespace FactoryWars.View {
         }
         if (hasCover) {
           animator.SetBool(CoverParam, Cover);
+        }
+        if (hasAiming) {
+          animator.SetBool(AimingParam, state == UnitAnimState.Attack);
         }
       }
     }

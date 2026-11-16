@@ -122,7 +122,7 @@ namespace FactoryWars.View {
     }
 
     /// <summary>선택 고리 두께(m). 반지름과 무관하게 얇게(전차도 보병도 같은 두께).</summary>
-    public const float RingThickness = 0.07f;
+    public const float RingThickness = 0.06f;
     static readonly System.Collections.Generic.Dictionary<int, Mesh> Rings = new System.Collections.Generic.Dictionary<int, Mesh>();
     static readonly System.Collections.Generic.Dictionary<int, Mesh> OwnerRings = new System.Collections.Generic.Dictionary<int, Mesh>();
 

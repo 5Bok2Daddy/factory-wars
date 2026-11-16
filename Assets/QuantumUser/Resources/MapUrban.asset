@@ -1,0 +1,165 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1722638350, guid: b156eeaae3f741b40af66649a4748430, type: 3}
+  m_Name: MapUrban
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/MapUrban
+    Guid:
+      Value: 347802756737898165
+  UserAsset:
+    Id:
+      Value: 277169569948900564
+  Scene: MapUrban
+  ScenePath: Assets/QuantumUser/Scenes/MapUrban.unity
+  SceneGuid: a992b150a87ee4b41a36dd890ee8114f
+  WorldSize: 372
+  BucketsCount: 16
+  BucketsSubdivisions: 8
+  BucketingAxis: 0
+  SortingAxis: 1
+  SceneMeshCellSize:
+    RawValue: 262144
+  TriangleMeshCellSize: -1
+  StaticColliders3DTrianglesData:
+    Id:
+      Value: 296634664762234136
+  SerializeTrianglesMetadata: 0
+  GridSizeX: 93
+  GridSizeY: 93
+  GridNodeSize: 4
+  NavMeshLinks:
+  - Id:
+      Value: 376630511326500745
+  - Id:
+      Value: 330167690390149121
+  Regions:
+  - MainArea
+  - Barricade0
+  - Barricade1
+  - Barricade2
+  - Barricade3
+  - Bridge0
+  - Bridge1
+  - Bridge2
+  - Bridge3
+  - Bridge4
+  - Bridge5
+  - Bridge6
+  - Bridge7
+  - City0
+  - City1
+  - City10
+  - City11
+  - City12
+  - City13
+  - City14
+  - City15
+  - City16
+  - City17
+  - City18
+  - City19
+  - City2
+  - City20
+  - City21
+  - City22
+  - City23
+  - City24
+  - City25
+  - City26
+  - City27
+  - City28
+  - City29
+  - City3
+  - City30
+  - City31
+  - City32
+  - City33
+  - City34
+  - City35
+  - City36
+  - City37
+  - City38
+  - City39
+  - City4
+  - City40
+  - City41
+  - City42
+  - City43
+  - City44
+  - City45
+  - City46
+  - City47
+  - City48
+  - City49
+  - City5
+  - City50
+  - City51
+  - City52
+  - City53
+  - City54
+  - City55
+  - City56
+  - City57
+  - City58
+  - City59
+  - City6
+  - City60
+  - City61
+  - City62
+  - City63
+  - City64
+  - City65
+  - City66
+  - City67
+  - City68
+  - City69
+  - City7
+  - City70
+  - City71
+  - City72
+  - City73
+  - City74
+  - City75
+  - City76
+  - City77
+  - City78
+  - City79
+  - City8
+  - City9
+  - Fall1
+  - Fall2
+  - Fall21
+  - Fall22
+  - Fall23
+  - Fall24
+  - Fall3
+  - Fall4
+  - Fall41
+  - Fall42
+  - Fall43
+  - Fall44
+  - Fall61
+  - Fall62
+  - Fall63
+  - Fall64
+  - WaterGate0
+  - WaterGate1
+  - WaterGate2
+  - WaterGate3
+  StaticColliders2D: []
+  StaticColliders3D: []
+  MapEntities: []
+  SerializedTriangleDataUncompressedSize: 8
+  references:
+    version: 2
+    RefIds: []
