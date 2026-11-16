@@ -110,6 +110,34 @@ namespace FactoryWars.View {
       return EntityRef.None;
     }
 
+    public static EntityRef PickWreck(Frame frame, Vector3 world) {
+      var point = ToFP(world);
+      foreach (var pair in frame.GetComponentIterator<Wreck>()) {
+        var pos = frame.Get<Transform3D>(pair.Entity).Position;
+        if (FactoryWarsUtil.FlatDistanceSqr(pos, point) <= FP._3 * FP._3) {
+          return pair.Entity;
+        }
+      }
+      return EntityRef.None;
+    }
+
+    public static int PickBridge(Frame frame, Vector3 world, out bool destroyed) {
+      destroyed = false;
+      var map = frame.FindAsset<MapSpec>(frame.Map.UserAsset);
+      if (map?.Bridges == null) {
+        return -1;
+      }
+      var point = ToFP(world);
+      foreach (var pair in frame.GetComponentIterator<Quantum.Bridge>()) {
+        var idx = pair.Component.Index;
+        if (idx >= 0 && idx < map.Bridges.Length && map.Bridges[idx].Distance(point) <= FP._2) {
+          destroyed = pair.Component.Destroyed;
+          return idx;
+        }
+      }
+      return -1;
+    }
+
     List<EntityRef> SelectedEngineers(Frame frame) => Selection.Units.Where(e => frame.Exists(e) && frame.Has<Worker>(e)).ToList();
 
     List<EntityRef> SelectedUnits(Frame frame) => Selection.Units.Where(e => frame.Exists(e)).Take(MoveUnitsCommand.MaxUnits).ToList();
@@ -225,6 +253,22 @@ namespace FactoryWars.View {
         var gatherers = SelectedEngineers(frame);
         if (gatherers.Count > 0) {
           return new GatherCommand { Units = gatherers.ToArray(), Node = node };
+        }
+      }
+
+      var wreck = PickWreck(frame, world);
+      if (wreck != EntityRef.None) {
+        var salvagers = SelectedEngineers(frame);
+        if (salvagers.Count > 0) {
+          return new SalvageCommand { Units = salvagers.ToArray(), Wreck = wreck };
+        }
+      }
+
+      var bridge = PickBridge(frame, world, out var bridgeDestroyed);
+      if (bridge >= 0) {
+        var bridgeWorkers = SelectedEngineers(frame);
+        if (bridgeWorkers.Count > 0) {
+          return new WorkBridgeCommand { Units = bridgeWorkers.ToArray(), Bridge = bridge, Demolish = bridgeDestroyed == false };
         }
       }
 

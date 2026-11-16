@@ -246,6 +246,55 @@ namespace FactoryWars.View {
       _cratersDirty = true;
     }
 
+    static Material _scorchMat;
+    static Texture2D _scorchTex;
+
+    static Material ScorchMaterial() {
+      if (_scorchMat != null) {
+        return _scorchMat;
+      }
+      const int TexSize = 64;
+      _scorchTex = new Texture2D(TexSize, TexSize, TextureFormat.RGBA32, false) {
+        name = "ScorchDecalTex",
+        wrapMode = TextureWrapMode.Clamp,
+        filterMode = FilterMode.Bilinear,
+      };
+      var pixels = new Color32[TexSize * TexSize];
+      var half = (TexSize - 1) * 0.5f;
+      for (var y = 0; y < TexSize; y++) {
+        for (var x = 0; x < TexSize; x++) {
+          var dx = (x - half) / half;
+          var dy = (y - half) / half;
+          var dist = Mathf.Sqrt(dx * dx + dy * dy);
+          var falloff = Mathf.Clamp01(1f - dist);
+          var alpha = (byte)Mathf.RoundToInt(falloff * falloff * 210f);
+          // #181A1B 부드러운 어두운 그을음 데칼
+          pixels[y * TexSize + x] = new Color32(0x18, 0x1A, 0x1B, alpha);
+        }
+      }
+      _scorchTex.SetPixels32(pixels);
+      _scorchTex.Apply(false);
+      var shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Transparent") ?? Shader.Find("Sprites/Default");
+      _scorchMat = new Material(shader) { name = "FlatScorchDecal" };
+      _scorchMat.mainTexture = _scorchTex;
+      if (_scorchMat.HasProperty("_BaseMap")) {
+        _scorchMat.SetTexture("_BaseMap", _scorchTex);
+      }
+      if (_scorchMat.HasProperty("_BaseColor")) {
+        _scorchMat.SetColor("_BaseColor", Color.white);
+      }
+      if (_scorchMat.HasProperty("_Surface")) {
+        _scorchMat.SetFloat("_Surface", 1f);
+      }
+      if (_scorchMat.HasProperty("_ZWrite")) {
+        _scorchMat.SetFloat("_ZWrite", 0f);
+      }
+      _scorchMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+      _scorchMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+      _scorchMat.renderQueue = 2460;
+      return _scorchMat;
+    }
+
     void RebuildCraters() {
       _cratersDirty = false;
       if (_craterFilter == null) {
@@ -253,31 +302,42 @@ namespace FactoryWars.View {
         item.transform.SetParent(transform, false);
         _craterFilter = item.GetComponent<MeshFilter>();
         var renderer = item.GetComponent<MeshRenderer>();
-        renderer.sharedMaterial = ArtLook.NeutralMaterial;
+        renderer.sharedMaterial = ScorchMaterial();
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
       }
-      var kit = new MeshKit();
-      const int Sides = 9;
-      for (var c = 0; c < _craters.Count; c++) {
-        var (center, size, _) = _craters[c];
-        var lift = 0.07f + c * 0.0004f;
-        for (var ring = 0; ring < 2; ring++) {
-          kit.Paint(ring == 0 ? Swatch.DirtDark : Swatch.RockDark);
-          var radius = size * (ring == 0 ? 1f : 0.55f);
-          for (var i = 0; i < Sides; i++) {
-            var a = Mathf.PI * 2f * i / Sides + c;
-            var b = Mathf.PI * 2f * (i + 1) / Sides + c;
-            var wobbleA = 0.8f + 0.4f * MeshKit.Hash(c * 31 + ring, i);
-            var wobbleB = 0.8f + 0.4f * MeshKit.Hash(c * 31 + ring, (i + 1) % Sides);
-            kit.Tri(center + Vector3.up * (lift + ring * 0.01f), center + new Vector3(Mathf.Cos(a) * radius * wobbleA, lift + ring * 0.01f, Mathf.Sin(a) * radius * wobbleA),
-              center + new Vector3(Mathf.Cos(b) * radius * wobbleB, lift + ring * 0.01f, Mathf.Sin(b) * radius * wobbleB), Vector3.up);
-          }
+      var mesh = new Mesh { name = "scorch_decals" };
+      var count = _craters.Count;
+      if (count > 0) {
+        var verts = new Vector3[count * 4];
+        var uvs = new Vector2[count * 4];
+        var tris = new int[count * 6];
+        for (var c = 0; c < count; c++) {
+          var (center, size, _) = _craters[c];
+          var y = 0.02f + c * 0.0002f;
+          var r = size * 1.15f;
+          var v = c * 4;
+          verts[v + 0] = new Vector3(center.x - r, y, center.z - r);
+          verts[v + 1] = new Vector3(center.x + r, y, center.z - r);
+          verts[v + 2] = new Vector3(center.x + r, y, center.z + r);
+          verts[v + 3] = new Vector3(center.x - r, y, center.z + r);
+          uvs[v + 0] = new Vector2(0f, 0f);
+          uvs[v + 1] = new Vector2(1f, 0f);
+          uvs[v + 2] = new Vector2(1f, 1f);
+          uvs[v + 3] = new Vector2(0f, 1f);
+          var t = c * 6;
+          tris[t + 0] = v + 0; tris[t + 1] = v + 2; tris[t + 2] = v + 1;
+          tris[t + 3] = v + 0; tris[t + 4] = v + 3; tris[t + 5] = v + 2;
         }
+        mesh.vertices = verts;
+        mesh.uv = uvs;
+        mesh.triangles = tris;
+        mesh.RecalculateNormals();
       }
       if (_craterFilter.sharedMesh != null) {
         Destroy(_craterFilter.sharedMesh);
       }
-      _craterFilter.sharedMesh = _craters.Count > 0 ? kit.ToMesh("craters") : null;
+      _craterFilter.sharedMesh = count > 0 ? mesh : null;
     }
 
     /// <summary>손상된 건물의 연기와 불. fire면 불꽃을 더한다.</summary>
@@ -288,7 +348,7 @@ namespace FactoryWars.View {
       }
     }
 
-    static readonly Color SignalSmoke = new Color(0.95f, 0.45f, 0.18f, 0.7f);
+    static readonly Color SignalSmoke = new Color(0.95f, 0.18f, 0.15f, 0.8f);
 
     /// <summary>보급 투하 예고: 낙하 지점에서 피어오르는 주황 신호 연기.</summary>
     public void Signal(Vector3 position) {

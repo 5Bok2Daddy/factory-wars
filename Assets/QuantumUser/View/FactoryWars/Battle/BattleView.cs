@@ -72,6 +72,8 @@ namespace FactoryWars.View {
       public float Pitch;
       public float Roll;
       public GameObject Shield;
+      public int VetRank;
+      public TextMesh VetBadge;
     }
 
     class BaseWorker {
@@ -204,6 +206,17 @@ namespace FactoryWars.View {
           Fx.Explosion(e.Position.ToUnityVector3(), 2.5f);
         }
       });
+      QuantumEvent.Subscribe<EventHqProtocol>(this, e => {
+        Fx.Pulse(e.Position.ToUnityVector3(), new Color(1f, 0.72f, 0.18f), 14f);
+      });
+      QuantumEvent.Subscribe<EventHqProtocolShot>(this, e => {
+        var from = e.From.ToUnityVector3() + Vector3.up * 4.5f;
+        var to = e.To.ToUnityVector3() + Vector3.up * 0.9f;
+        var dir = (to - from).normalized;
+        Fx.MuzzleFlash(from, dir, 0.5f);
+        Fx.Needle(from + dir * 0.1f, to, 110f);
+        Fx.Impact(to, 0.9f, dir);
+      });
       City = new CityView(_stage, frame.FindAsset<MapSpec>(frame.Map.UserAsset)) { Fx = Fx };
       _controller = FindAnyObjectByType<MatchController>();
     }
@@ -294,7 +307,8 @@ namespace FactoryWars.View {
       }
       var dt = Time.deltaTime;
       World.Update(frame, dt);
-      Field.Update(frame, dt);
+      World.UpdateBridges(frame);
+      Field.Update(frame, dt, Fx);
       City.Update(frame, _controller != null ? _controller.Player : PlayerRef.None, dt);
       // 항목 34-A: 전장의 안개 판(안개가 꺼져 있으면 만들지 않는다).
       if (FactoryWars_FogOn(frame)) {
@@ -738,6 +752,7 @@ namespace FactoryWars.View {
       actor.AntiAir = spec.Attack == AttackType.AntiAir;
       Aim(actor, hasTarget, target, air, dt);
       UpdateShield(actor, unit->InCover);
+      UpdateVetBadge(actor, unit->VetRank);
 
       var cooldown = unit->AttackCooldown.AsFloat;
       if (cooldown > actor.Cooldown + 0.05f && spec.Attack != AttackType.None) {
@@ -804,6 +819,40 @@ namespace FactoryWars.View {
         if (inCover && camera != null) {
           actor.Shield.transform.rotation = camera.transform.rotation;
         }
+      }
+    }
+
+    /// <summary>항목 37 베테랑 계급 배지(★~★★★): 승급한 유닛 머리 위에 금색 별을 띄운다.</summary>
+    void UpdateVetBadge(Actor actor, int rank) {
+      if (rank <= 0) {
+        if (actor.VetBadge != null && actor.VetBadge.gameObject.activeSelf) {
+          actor.VetBadge.gameObject.SetActive(false);
+        }
+        return;
+      }
+      if (actor.VetBadge == null) {
+        var go = new GameObject("VetBadge");
+        go.transform.SetParent(actor.View.transform, false);
+        go.transform.localPosition = Vector3.up * (actor.View.Entry.BarHeight + 0.55f);
+        var tm = go.AddComponent<TextMesh>();
+        tm.anchor = TextAnchor.MiddleCenter;
+        tm.alignment = TextAlignment.Center;
+        tm.fontSize = 36;
+        tm.characterSize = 0.14f;
+        tm.color = new Color(1f, 0.84f, 0.16f, 1f);
+        tm.fontStyle = FontStyle.Bold;
+        actor.VetBadge = tm;
+      }
+      if (actor.VetRank != rank) {
+        actor.VetRank = rank;
+        actor.VetBadge.text = rank == 1 ? "★" : rank == 2 ? "★★" : "★★★";
+      }
+      if (actor.VetBadge.gameObject.activeSelf == false) {
+        actor.VetBadge.gameObject.SetActive(true);
+      }
+      var camera = Camera.main;
+      if (camera != null) {
+        actor.VetBadge.transform.rotation = camera.transform.rotation;
       }
     }
 
@@ -893,6 +942,22 @@ namespace FactoryWars.View {
     /// 전진(확장) 사령부 표시: 일반 사령부·도시 건물과 한눈에 구분되도록 이동식 레이더·위성 안테나, 둘레 헤스코 방벽 고리,
     /// 탄약 상자 더미, 위장망, 작업등을 사령부 둘레에 놓는다(공사 중에는 숨김). 화면 전용.
     /// </summary>
+    bool OnAsphaltRoad(Vector3 worldPos, float curbSetback = 3.5f) {
+      if (World?.Map?.Roads == null) {
+        return false;
+      }
+      var fp = new Photon.Deterministic.FPVector3(
+        Photon.Deterministic.FP.FromFloat_UNSAFE(worldPos.x),
+        Photon.Deterministic.FP._0,
+        Photon.Deterministic.FP.FromFloat_UNSAFE(worldPos.z));
+      foreach (var road in World.Map.Roads) {
+        if (road.Distance(fp).AsFloat <= curbSetback) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     void DressForward(Actor actor, BuildingSpec spec, Vector3 worldPos) {
       if (actor.Dressing == null) {
         var root = new GameObject("BuildingDressing").transform;
@@ -903,14 +968,19 @@ namespace FactoryWars.View {
       group.SetParent(actor.Dressing.transform, false);
       var r = spec.FootprintRadius.AsFloat;
       var seed = KenneyAssetMap.Seed(worldPos, 911);
-      DressingSpawn.Place(DressKind.ForwardRadar, group, new Vector3(r + 2.2f, 0f, r * 0.2f), 90f, seed);
-      DressingSpawn.Place(DressKind.TraderDish, group, new Vector3(-r - 1.4f, 0f, r * 0.7f), 0f, seed + 1);
-      DressingSpawn.Place(DressKind.TraderNet, group, new Vector3(-r - 2.6f, 0f, -r * 0.6f), 0f, seed + 2);
-      for (var i = 0; i < 4; i++) {
-        DressingSpawn.Place(DressKind.TraderAmmo, group, new Vector3(r * 0.3f + i * 1.5f, 0f, -r - 2f), 0f, seed + 3 + i);
+      void PlaceOffRoad(DressKind kind, Vector3 local, float yaw, int s) {
+        if (OnAsphaltRoad(worldPos + local, 3.5f) == false) {
+          DressingSpawn.Place(kind, group, local, yaw, s);
+        }
       }
-      DressingSpawn.Place(DressKind.TraderLight, group, new Vector3(r + 1.2f, 0f, -r - 1.2f), 180f, seed + 8);
-      // 헤스코 방벽 고리(앞쪽 출입구는 비움).
+      PlaceOffRoad(DressKind.ForwardRadar, new Vector3(r + 2.2f, 0f, r * 0.2f), 90f, seed);
+      PlaceOffRoad(DressKind.TraderDish, new Vector3(-r - 1.4f, 0f, r * 0.7f), 0f, seed + 1);
+      PlaceOffRoad(DressKind.TraderNet, new Vector3(-r - 2.6f, 0f, -r * 0.6f), 0f, seed + 2);
+      for (var i = 0; i < 4; i++) {
+        PlaceOffRoad(DressKind.TraderAmmo, new Vector3(r * 0.3f + i * 1.5f, 0f, -r - 2f), 0f, seed + 3 + i);
+      }
+      PlaceOffRoad(DressKind.TraderLight, new Vector3(r + 1.2f, 0f, -r - 1.2f), 180f, seed + 8);
+      // 헤스코 방벽 고리(앞쪽 출입구·아스팔트 차선 위는 비움).
       var ring = r + ForwardRingExtra;
       for (var i = 0; i < 12; i++) {
         var angle = i * 30f;
@@ -918,7 +988,7 @@ namespace FactoryWars.View {
           continue;
         }
         var local = Quaternion.Euler(0f, angle, 0f) * Vector3.forward * ring;
-        DressingSpawn.Place(DressKind.TraderSandbag, group, local, angle, seed + 20 + i);
+        PlaceOffRoad(DressKind.TraderSandbag, local, angle, seed + 20 + i);
       }
       ForwardHeadquarters++;
     }
@@ -1125,7 +1195,7 @@ namespace FactoryWars.View {
           var line = Line(lines++, _attackLine);
           line.widthMultiplier = AttackLineWidth;
           line.SetPosition(0, from);
-          line.SetPosition(1, at);
+          line.SetPosition(1, new Vector3(at.x, Mathf.Max(at.y, 1.1f), at.z));
           attack++;
           if (_targeted.Add(unit->TargetEntity) && reticles < 12) {
             var ring = Reticle(reticles++);

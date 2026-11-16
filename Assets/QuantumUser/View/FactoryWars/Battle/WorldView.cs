@@ -76,6 +76,16 @@ namespace FactoryWars.View {
     public bool BarrierVisible => _barriers.Exists(b => b.Root.activeSelf);
     public int ForestCount => _forests.Count;
     GameObject _noBuild;
+    class BridgeVisual {
+      public GameObject Intact;
+      public GameObject Broken;
+      public GameObject Pontoon;
+      public int State = -1; // 0=intact, 1=destroyed, 2=pontoon
+    }
+
+    readonly List<BridgeVisual> _bridges = new List<BridgeVisual>();
+    public int BridgeCount => _bridges.Count;
+
     public bool NoBuildShown => _noBuild == null || _noBuild.activeSelf;
 
     /// <summary>건설 위치를 고를 때만 금지 표시를 켠다.</summary>
@@ -238,11 +248,13 @@ namespace FactoryWars.View {
       }
       foreach (var shape in _map.Bridges ?? new MapShape[0]) {
         var rect = TerrainKit.Extent(shape);
-        var view = ArtView.Create(_catalog, "bridge", _root, 0);
-        view.transform.localPosition = new Vector3(rect.center.x, 0, rect.center.y);
-        // 프리팹의 다리는 Z축으로 건넌다. 사각형의 짧은 변이 건너는 방향이다.
+        var holder = new GameObject("BridgeSlot");
+        holder.transform.SetParent(_root, false);
+        holder.transform.localPosition = new Vector3(rect.center.x, 0, rect.center.y);
         var yaw = rect.width < rect.height ? 90f : 0f;
-        view.SetYaw(yaw);
+        holder.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+
+        var view = ArtView.Create(_catalog, "bridge", holder.transform, 0);
         // 29: 갈색 나무판자 다리를 city-kit-roads의 화이트/라이트그레이 난간 교량 FBX로 교체
         if (Dressing.Collecting && Dressing.Has(DressKind.BridgeDeck)) {
           var dressed = DressingSpawn.Place(DressKind.BridgeDeck, view.transform, Vector3.zero, 0f, 9800);
@@ -254,6 +266,61 @@ namespace FactoryWars.View {
             }
           }
         }
+
+        // 파괴된 교량 양단 교각/잔해.
+        var span = Mathf.Max(rect.width, rect.height);
+        var width = Mathf.Min(rect.width, rect.height);
+        var broken = new GameObject("BrokenBridge", typeof(MeshFilter), typeof(MeshRenderer));
+        broken.transform.SetParent(holder.transform, false);
+        var bkit = new MeshKit();
+        bkit.Paint(Swatch.ConcreteDark);
+        bkit.Box(new Vector3(0, 0.25f, -span * 0.42f), new Vector3(width, 0.7f, 1.8f));
+        bkit.Box(new Vector3(0, 0.25f, span * 0.42f), new Vector3(width, 0.7f, 1.8f));
+        bkit.Paint(Swatch.DirtDark);
+        bkit.Box(new Vector3(-0.4f, 0.1f, -span * 0.34f), new Vector3(1.5f, 0.4f, 1.4f));
+        bkit.Box(new Vector3(0.4f, 0.1f, span * 0.34f), new Vector3(1.5f, 0.4f, 1.4f));
+        broken.GetComponent<MeshFilter>().sharedMesh = bkit.ToMesh("broken_bridge");
+        broken.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+        broken.SetActive(false);
+
+        // 공병 가교(폰툰 철판 + 부표).
+        var pontoon = new GameObject("PontoonBridge", typeof(MeshFilter), typeof(MeshRenderer));
+        pontoon.transform.SetParent(holder.transform, false);
+        var pkit = new MeshKit();
+        pkit.Paint(Swatch.MetalDark).Box(new Vector3(0, 0.18f, 0), new Vector3(width * 0.9f, 0.22f, span));
+        pkit.Paint(Swatch.OliveDark);
+        for (var p = -2; p <= 2; p++) {
+          pkit.Box(new Vector3(0, -0.1f, p * (span * 0.18f)), new Vector3(width * 1.05f, 0.4f, 1.1f));
+        }
+        pkit.Paint(Swatch.Hazard);
+        pkit.Box(new Vector3(-width * 0.42f, 0.34f, 0), new Vector3(0.18f, 0.14f, span));
+        pkit.Box(new Vector3(width * 0.42f, 0.34f, 0), new Vector3(0.18f, 0.14f, span));
+        pontoon.GetComponent<MeshFilter>().sharedMesh = pkit.ToMesh("pontoon_bridge");
+        pontoon.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+        pontoon.SetActive(false);
+
+        _bridges.Add(new BridgeVisual { Intact = view.gameObject, Broken = broken, Pontoon = pontoon, State = 0 });
+      }
+    }
+
+    public void UpdateBridges(Frame frame) {
+      if (frame == null || _bridges.Count == 0) {
+        return;
+      }
+      var bridges = frame.Filter<Quantum.Bridge>();
+      while (bridges.NextUnsafe(out _, out var bridge)) {
+        if (bridge->Index < 0 || bridge->Index >= _bridges.Count) {
+          continue;
+        }
+        var visual = _bridges[bridge->Index];
+        var next = bridge->Destroyed ? 1 : (bridge->Pontoon ? 2 : 0);
+        if (visual.State == next) {
+          continue;
+        }
+        visual.State = next;
+        visual.Intact.SetActive(next == 0);
+        visual.Broken.SetActive(next == 1);
+        visual.Pontoon.SetActive(next == 2);
       }
     }
 

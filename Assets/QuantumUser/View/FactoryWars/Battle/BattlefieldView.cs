@@ -36,14 +36,32 @@ namespace FactoryWars.View {
       public float Fall = -1f;
     }
 
+    class WreckVisual {
+      public GameObject Root;
+      public float SmokeAt;
+    }
+
+    class BlackBoxVisual {
+      public GameObject Root;
+      public MeshFilter Progress;
+      public MeshRenderer ProgressRenderer;
+      public int Step = -1;
+      public int Color = -2;
+      public float PulseAt;
+    }
+
     readonly Transform _root;
     readonly Dictionary<EntityRef, Site> _sites = new Dictionary<EntityRef, Site>();
     readonly Dictionary<EntityRef, GameObject> _crates = new Dictionary<EntityRef, GameObject>();
     readonly Dictionary<EntityRef, Wall> _walls = new Dictionary<EntityRef, Wall>();
+    readonly Dictionary<EntityRef, WreckVisual> _wrecks = new Dictionary<EntityRef, WreckVisual>();
+    readonly Dictionary<EntityRef, BlackBoxVisual> _boxes = new Dictionary<EntityRef, BlackBoxVisual>();
     readonly HashSet<EntityRef> _seen = new HashSet<EntityRef>();
     readonly List<EntityRef> _gone = new List<EntityRef>();
     static Mesh _crate;
     static Mesh _parachute;
+    static Mesh _wreckHull;
+    static Mesh _blackBox;
     const float DropHeight = 16f;
     const float DropSeconds = 2.4f;
     readonly Dictionary<EntityRef, float> _falling = new Dictionary<EntityRef, float>();
@@ -67,6 +85,30 @@ namespace FactoryWars.View {
       return false;
     }
     public int WallCount => _walls.Count;
+    public int WreckCount => _wrecks.Count;
+    public int BlackBoxCount => _boxes.Count;
+
+    static Mesh WreckHullMesh() {
+      if (_wreckHull == null) {
+        var kit = new MeshKit();
+        kit.Paint(Swatch.MetalDark).Box(new Vector3(0, 0.45f, 0), new Vector3(2.2f, 0.9f, 3.4f));
+        kit.Paint(Swatch.DirtDark).Box(new Vector3(0, 1.0f, -0.2f), new Vector3(1.3f, 0.55f, 1.5f));
+        kit.Paint(Swatch.Black).Box(new Vector3(0.15f, 1.05f, 0.9f), new Vector3(0.22f, 0.22f, 1.6f));
+        _wreckHull = kit.ToMesh("tank_wreck");
+      }
+      return _wreckHull;
+    }
+
+    static Mesh BlackBoxMesh() {
+      if (_blackBox == null) {
+        var kit = new MeshKit();
+        kit.Paint(Swatch.MetalDark).Box(new Vector3(0, 0.65f, 0), new Vector3(3.6f, 1.3f, 5.2f));
+        kit.Paint(Swatch.Metal).Box(new Vector3(0, 0.9f, 0.4f), new Vector3(5.6f, 0.25f, 1.8f));
+        kit.Paint(Swatch.GlowCyan).Box(new Vector3(0, 1.45f, 0), new Vector3(0.75f, 0.35f, 0.75f));
+        _blackBox = kit.ToMesh("black_box_fuselage");
+      }
+      return _blackBox;
+    }
 
     public BattlefieldView(Transform parent) {
       _root = new GameObject("Battlefield").transform;
@@ -306,7 +348,7 @@ namespace FactoryWars.View {
       return new Wall { Root = root.gameObject, Fill = fill, Max = barricade->Health.AsFloat };
     }
 
-    public void Update(Frame frame, float deltaTime) {
+    public void Update(Frame frame, float deltaTime, BattleFx fx = null) {
       var rules = frame.FindAsset(frame.RuntimeConfig.Rules);
       _seen.Clear();
       var sites = frame.Filter<Transform3D, CaptureSite>();
@@ -368,6 +410,75 @@ namespace FactoryWars.View {
         wall.Fill.localScale = new Vector3(ratio, 1, 1);
         wall.Fill.localPosition = new Vector3((ratio - 1f) * 0.5f, 0, -0.01f);
       }
+      var wrecks = frame.Filter<Transform3D, Wreck>();
+      while (wrecks.NextUnsafe(out var entity, out var transform, out var wreck)) {
+        _seen.Add(entity);
+        var pos = transform->Position.ToUnityVector3();
+        if (_wrecks.TryGetValue(entity, out var visual) == false) {
+          var go = new GameObject("TankWreck");
+          go.transform.SetParent(_root, false);
+          go.transform.localPosition = pos;
+          var yaw = (entity.Index * 53) % 360;
+          go.transform.localRotation = Quaternion.Euler(0f, yaw, 7f);
+          var scale = wreck->Size >= (int)UnitSize.Large ? 1.35f : 1f;
+          go.transform.localScale = Vector3.one * scale;
+          var hull = Item(go.transform, "Hull", WreckHullMesh(), ArtLook.NeutralMaterial);
+          hull.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
+          if (Dressing.Collecting && Dressing.Has(DressKind.Wreck)) {
+            var dressed = DressingSpawn.Place(DressKind.Wreck, go.transform, Vector3.zero, 0f, 8600 + entity.Index);
+            if (dressed != null) {
+              hull.GetComponent<MeshRenderer>().enabled = false;
+            }
+          }
+          visual = new WreckVisual { Root = go, SmokeAt = Time.time };
+          _wrecks[entity] = visual;
+        }
+        if (fx != null && Time.time >= visual.SmokeAt) {
+          visual.SmokeAt = Time.time + 0.4f;
+          fx.Burning(pos + Vector3.up * 0.4f, false);
+        }
+      }
+      var boxes = frame.Filter<Transform3D, BlackBox>();
+      while (boxes.NextUnsafe(out var entity, out var transform, out var box)) {
+        _seen.Add(entity);
+        var pos = transform->Position.ToUnityVector3();
+        if (_boxes.TryGetValue(entity, out var visual) == false) {
+          var go = new GameObject("BlackBox");
+          go.transform.SetParent(_root, false);
+          go.transform.localPosition = pos;
+          var body = Item(go.transform, "Fuselage", BlackBoxMesh(), ArtLook.NeutralMaterial);
+          body.transform.localRotation = Quaternion.Euler(4f, 28f, -12f);
+          body.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
+          var progress = Item(go.transform, "Progress", null, ArtLook.NeutralMaterial);
+          visual = new BlackBoxVisual {
+            Root = go,
+            Progress = progress.GetComponent<MeshFilter>(),
+            ProgressRenderer = progress.GetComponent<MeshRenderer>(),
+            PulseAt = Time.time,
+          };
+          _boxes[entity] = visual;
+        }
+        var ratio = Mathf.Clamp01(box->Progress.AsFloat / Mathf.Max(1f, rules.BlackBoxCaptureSeconds.AsFloat));
+        var step = Mathf.RoundToInt(ratio * RingSteps);
+        var color = box->Contested == false && box->Claimant.IsValid ? frame.Global->Players.GetPointer(box->Claimant)->ColorIndex : -1;
+        if (visual.Step != step) {
+          visual.Step = step;
+          if (visual.Progress.sharedMesh != null) {
+            Object.Destroy(visual.Progress.sharedMesh);
+          }
+          visual.Progress.sharedMesh = step > 0 ? Arc(rules.BlackBoxRadius.AsFloat, (float)step / RingSteps) : null;
+        }
+        if (visual.Color != color) {
+          visual.Color = color;
+          visual.ProgressRenderer.sharedMaterial = ArtLook.Team(color, false);
+        }
+        if (fx != null && Time.time >= visual.PulseAt) {
+          visual.PulseAt = Time.time + 1.4f;
+          var ringColor = box->Contested ? new Color(1f, 0.35f, 0.2f) : new Color(0.2f, 0.9f, 1f);
+          fx.Ring(pos, ringColor, rules.BlackBoxRadius.AsFloat, 1.3f);
+          fx.Signal(pos);
+        }
+      }
       Collect(deltaTime);
     }
 
@@ -403,6 +514,26 @@ namespace FactoryWars.View {
       foreach (var entity in _gone) {
         Object.Destroy(_walls[entity].Root);
         _walls.Remove(entity);
+      }
+      _gone.Clear();
+      foreach (var pair in _wrecks) {
+        if (_seen.Contains(pair.Key) == false) {
+          _gone.Add(pair.Key);
+        }
+      }
+      foreach (var entity in _gone) {
+        Object.Destroy(_wrecks[entity].Root);
+        _wrecks.Remove(entity);
+      }
+      _gone.Clear();
+      foreach (var pair in _boxes) {
+        if (_seen.Contains(pair.Key) == false) {
+          _gone.Add(pair.Key);
+        }
+      }
+      foreach (var entity in _gone) {
+        Object.Destroy(_boxes[entity].Root);
+        _boxes.Remove(entity);
       }
     }
   }

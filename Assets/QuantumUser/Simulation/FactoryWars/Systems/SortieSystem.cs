@@ -126,6 +126,9 @@ namespace Quantum.FactoryWars {
         return;
       }
       var rules = FactoryWarsUtil.Rules(f);
+      if (f.Number % System.Math.Max(1, FactoryWarsUtil.SecondsToFrames(f, FP._4)) == 0 && FactoryWarsUtil.InTruce(f) == false) {
+        BotSorties(f);
+      }
       var sorties = f.Filter<Transform3D, Sortie>();
       while (sorties.NextUnsafe(out var entity, out var transform, out var sortie)) {
         var spec = f.FindAsset(sortie->Spec);
@@ -257,6 +260,54 @@ namespace Quantum.FactoryWars {
       }
       f.Events.SortieEnded(sortie->Owner, shotDown, position);
       f.Destroy(entity);
+    }
+
+    /// <summary>AI: 준비된 격납 칸이 있고 시야 내 적(단, 기상 악화 시 신호탄/레이더 구역 내)이 있으면 출격한다.</summary>
+    static void BotSorties(Frame f) {
+      var weather = TacticalSystem.WeatherActive(f);
+      var buildings = f.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out var airfield, out var afTransform, out var building)) {
+        if (building->ConstructionRemaining > FP._0 || building->Health <= FP._0) {
+          continue;
+        }
+        var state = FactoryWarsUtil.Player(f, building->Owner);
+        if (state == null || state->IsBot == false || state->Active == false) {
+          continue;
+        }
+        var readySlot = -1;
+        for (var i = 0; i < Slots; i++) {
+          var slot = building->Hangar.GetPointer(i);
+          if (slot->State == 1 && slot->ReadyFrame <= f.Number) {
+            readySlot = i;
+            break;
+          }
+        }
+        if (readySlot < 0) {
+          continue;
+        }
+        var target = FPVector3.Zero;
+        var found = false;
+        var units = f.Filter<Transform3D, Unit>();
+        while (units.NextUnsafe(out _, out var uTransform, out var u)) {
+          if (u->Health <= FP._0 || DiplomacySystem.CanAttack(f, building->Owner, u->Owner) == false) {
+            continue;
+          }
+          if (FogSystem.IsVisible(f, building->Owner, uTransform->Position) == false) {
+            continue;
+          }
+          if (weather && FogSystem.InSignalArea(f, building->Owner, uTransform->Position) == false) {
+            continue;
+          }
+          target = uTransform->Position;
+          found = true;
+          break;
+        }
+        if (found) {
+          var delta = new FPVector2(target.X - afTransform->Position.X, target.Z - afTransform->Position.Z);
+          var heading = delta.SqrMagnitude > FP._0 ? delta.Normalized : new FPVector2(FP._1, FP._0);
+          TryLaunch(f, building->Owner, airfield, readySlot, target, heading);
+        }
+      }
     }
   }
 }

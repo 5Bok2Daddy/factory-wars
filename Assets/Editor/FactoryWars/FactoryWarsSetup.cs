@@ -50,6 +50,9 @@ namespace FactoryWars.EditorTools {
       BuildTestScene();
       BuildMapScene(FourPlayerMap);
       BuildMapScene(DesertMap);
+      BuildMapScene(UrbanMap);
+      BuildMapScene(ArchipelagoMap);
+      BuildMapScene(StraitMap);
       BuildMenuScene();
       IconBaker.BakeAll();
       ArtBaker.BakeAll();
@@ -62,6 +65,9 @@ namespace FactoryWars.EditorTools {
       BuildTestScene();
       BuildMapScene(FourPlayerMap);
       BuildMapScene(DesertMap);
+      BuildMapScene(UrbanMap);
+      BuildMapScene(ArchipelagoMap);
+      BuildMapScene(StraitMap);
       BuildMenuScene();
       AssetDatabase.SaveAssets();
       Debug.Log("FactoryWarsSetup.BuildMapsAndMenu: 완료");
@@ -1271,6 +1277,9 @@ namespace FactoryWars.EditorTools {
 
       BuildMapSpec(FourPlayerMap);
       BuildMapSpec(DesertMap);
+      BuildMapSpec(UrbanMap);
+      BuildMapSpec(ArchipelagoMap);
+      BuildMapSpec(StraitMap);
 
       AssetDatabase.SaveAssets();
       QuantumUnityDBUtilities.RefreshGlobalDB(true);
@@ -1585,7 +1594,14 @@ namespace FactoryWars.EditorTools {
       camera.GetComponent<Camera>().backgroundColor = new Color(0.1f, 0.13f, 0.17f);
       new GameObject("Menu").AddComponent<FactoryWars.View.MenuController>();
       EditorSceneManager.SaveScene(scene, path);
-      EditorBuildSettings.scenes = new[] { path, $"{ScenesRoot}/{FourPlayerMap.Id}.unity", $"{ScenesRoot}/{DesertMap.Id}.unity" }
+      EditorBuildSettings.scenes = new[] {
+          path,
+          $"{ScenesRoot}/{FourPlayerMap.Id}.unity",
+          $"{ScenesRoot}/{DesertMap.Id}.unity",
+          $"{ScenesRoot}/{UrbanMap.Id}.unity",
+          $"{ScenesRoot}/{ArchipelagoMap.Id}.unity",
+          $"{ScenesRoot}/{StraitMap.Id}.unity",
+        }
         .Select(scenePath => new EditorBuildSettingsScene(scenePath, true)).ToArray();
     }
 

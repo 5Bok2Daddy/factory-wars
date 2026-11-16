@@ -10,10 +10,11 @@ namespace FactoryWars.View {
   public class ArtView : MonoBehaviour {
     const float RingWidth = 0.14f;
     const float RingLift = 0.06f;
-    const float BarThickness = 0.26f;
-    const float BarMinWidth = 1.8f;
-    const float BarMaxWidth = 5f;
-    const float BarPerRadius = 1.3f;
+    // 항목 36: 월드 체력바 크기 55% 축소 + 짙은 테두리.
+    const float BarThickness = 0.12f;
+    const float BarMinWidth = 0.85f;
+    const float BarMaxWidth = 2.25f;
+    const float BarPerRadius = 0.58f;
     static float BarPitch => VisualProfile.Current.Pitch;
 
     static Mesh _ring;
@@ -78,8 +79,35 @@ namespace FactoryWars.View {
       view.Fill = Marker("Fill", view.Bar.transform, BarFillMesh()).transform;
       view.Bar.SetActive(false);
 
+      if (entry.Unit) {
+        ArrangeSquadTwoRows(view.Model.transform, entry.RingRadius * extra, Mathf.Max(0.01f, entry.DisplayScale * extra));
+      }
+
       view.ApplyQuality();
       return view;
+    }
+
+    /// <summary>항목 36: 6인 분대를 선택 링 안쪽 2열(3×2) 대형으로 정돈한다.</summary>
+    static void ArrangeSquadTwoRows(Transform model, float ringRadius, float modelScale) {
+      var count = 0;
+      while (model.Find("Member" + count) != null) {
+        count++;
+      }
+      if (count != 6) {
+        return;
+      }
+      var maxSpan = Mathf.Max(0.6f, ringRadius * 0.65f);
+      var colGap = (maxSpan * 0.85f) / modelScale;
+      var rowGap = (maxSpan * 0.62f) / modelScale;
+      for (var i = 0; i < count; i++) {
+        var member = model.Find("Member" + i);
+        if (member == null) {
+          continue;
+        }
+        var row = i / 3;
+        var col = i % 3;
+        member.localPosition = new Vector3((col - 1f) * colGap, member.localPosition.y, (0.5f - row) * rowGap);
+      }
     }
 
     static GameObject Marker(string name, Transform parent, Mesh mesh) {

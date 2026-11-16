@@ -219,6 +219,9 @@ namespace FactoryWars.EditorTools {
     /// 같은 지형이라 회전 대칭·자리 공정성·경로 연결은 표준 맵과 같다. 새 지형·건물 배치는 만들지 않았다.
     /// </summary>
     static readonly MapDef DesertMap = BuildDesert();
+    static readonly MapDef UrbanMap = BuildUrban();
+    static readonly MapDef ArchipelagoMap = BuildArchipelago();
+    static readonly MapDef StraitMap = BuildStrait();
 
     static MapDef BuildDesert() {
       var def = FourPlayerMap.Clone();
@@ -237,6 +240,45 @@ namespace FactoryWars.EditorTools {
       }
       def.Nodes = def.Nodes.Select(Scaled).ToArray();
       def.CenterNodes = def.CenterNodes.Select(Scaled).ToArray();
+      return def;
+    }
+
+    /// <summary>항목 35 시가전: 고밀도 시가지 블록, 붕괴 우회 통로(Rubble Passage Rule), 주둔 저격·보병 엄폐 중심.</summary>
+    static MapDef BuildUrban() {
+      var def = FourPlayerMap.Clone();
+      def.Id = "MapUrban";
+      def.Theme = "시가전";
+      def.ChannelWidth = 14f;
+      def.SupplyInterval = 1.0;
+      def.SupplyReward = 1.0;
+      return def;
+    }
+
+    /// <summary>항목 35 다도해: 넓은 외곽·섬 수로, 얕은 여울, 해무 기상(60초 주기).</summary>
+    static MapDef BuildArchipelago() {
+      var def = FourPlayerMap.Clone();
+      def.Id = "MapArchipelago";
+      def.Theme = "다도해";
+      def.ChannelWidth = 28f;
+      def.SupplyInterval = 0.85;
+      def.SupplyReward = 1.25;
+      def.WeatherFirst = 420;
+      def.WeatherDuration = 60;
+      def.WeatherPeriod = 240;
+      def.WeatherSight = 0.65;
+      return def;
+    }
+
+    /// <summary>항목 35 해협/운하: 넓은 해협·7분 강철 수문·교량 요충지·해무 기상.</summary>
+    static MapDef BuildStrait() {
+      var def = FourPlayerMap.Clone();
+      def.Id = "MapStrait";
+      def.Theme = "해협";
+      def.ChannelWidth = 32f;
+      def.WeatherFirst = 450;
+      def.WeatherDuration = 60;
+      def.WeatherPeriod = 240;
+      def.WeatherSight = 0.65;
       return def;
     }
 

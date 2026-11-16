@@ -273,8 +273,29 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventSniperFired>(this, e => { if (e.Victim == Controller.Player) { ShowAlert(e.Killed ? "저격 당함! 총구 섬광 방향을 확인하세요" : "저격 공격을 받고 있습니다"); } });
       QuantumEvent.Subscribe<EventDoctrineChosen>(this, e => { if (e.Player == Controller.Player && e.ByDefault) { ShowAlert("도크린 기본값 적용: 공군 타격 사령부"); } });
       QuantumEvent.Subscribe<EventSortieEnded>(this, e => { if (e.Player == Controller.Player && e.ShotDown) { ShowAlert("작전기 격추됨 — 격납 칸이 비었습니다"); } });
+      QuantumEvent.Subscribe<EventHqProtocol>(this, e => {
+        if (e.Player == Controller.Player) {
+          ShowAlert("사령부 비상 방어 프로토콜 발동!");
+        }
+        _minimap.Ping(e.Position.ToUnityVector3(), new Color(1f, 0.72f, 0.18f));
+      });
+      QuantumEvent.Subscribe<EventBlackBoxDown>(this, e => {
+        ShowAlert("추락 수송기 블랙박스 발생 — 15초 점령으로 회수");
+        _minimap.Ping(e.Position.ToUnityVector3(), new Color(0.2f, 0.9f, 1f));
+      });
+      QuantumEvent.Subscribe<EventBlackBoxEnded>(this, e => {
+        if (e.Winner == Controller.Player) {
+          ShowAlert(e.Reward == 1 ? "블랙박스 회수: 격납고 즉시 재정비 + 출격권!" : "블랙박스 회수: 영구 화력 보너스!");
+        } else if (e.Winner.IsValid) {
+          ShowAlert("적이 블랙박스를 회수했습니다");
+        }
+      });
+      QuantumEvent.Subscribe<EventBridgeChanged>(this, e => {
+        ShowAlert(e.Destroyed ? $"교량 #{e.Index + 1} 파괴됨 — 통행 차단" : $"교량 #{e.Index + 1} 가교 복구 완료");
+      });
       QuantumEvent.Subscribe<EventCaptureChanged>(this, OnCapture);
       QuantumEvent.Subscribe<EventSupplyDropIncoming>(this, OnDropIncoming);
+      QuantumEvent.Subscribe<EventSupplyDropStage>(this, OnDropStage);
       QuantumEvent.Subscribe<EventBarricadeDestroyed>(this, OnBarricade);
       QuantumEvent.Subscribe<EventBaseUnderAttack>(this, OnBaseAttacked);
       QuantumEvent.Subscribe<EventCratePicked>(this, OnCratePicked);
@@ -679,6 +700,24 @@ namespace FactoryWars.View {
         if (spots[i].Seat < 0 && spots[i].Group == e.Group) {
           PingAlert(spots[i].Position.ToUnityVector3());
         }
+      }
+    }
+
+    void OnDropStage(EventSupplyDropStage e) {
+      var pos = e.Position.ToUnityVector3();
+      switch (e.Phase) {
+        case DropPhase.Zone:
+          ShowAlert("보급 투하 예고(35초) — 붉은 신호탄 구역 확인");
+          _minimap.Ping(pos, new Color(0.95f, 0.22f, 0.16f));
+          break;
+        case DropPhase.Closing:
+          ShowAlert("보급 투하 임박(10초) — 착지 반경 축소");
+          _minimap.Ping(pos, new Color(1f, 0.45f, 0.12f));
+          break;
+        case DropPhase.Landed:
+          ShowAlert("보급 상자 착지! 신호탄 시야 공개");
+          _minimap.Ping(pos, new Color(1f, 0.85f, 0.25f));
+          break;
       }
     }
 
