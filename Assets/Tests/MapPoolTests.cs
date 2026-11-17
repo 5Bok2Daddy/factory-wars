@@ -62,5 +62,27 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(2f, BattlefieldSystem.SupplyReward(Verified).AsFloat, 0.01f);
       Assert.AreEqual(0.5f, BattlefieldSystem.SupplyInterval(Verified).AsFloat, 0.01f);
     }
+
+    [UnityTest, Explicit]
+    public IEnumerator CaptureMaps35_AllFive() {
+      var pairs = new[] {
+        ("Map4P", "map_standard"),
+        ("MapDesert", "map_desert"),
+        ("MapUrban", "map_urban"),
+        ("MapArchipelago", "map_archipelago"),
+        ("MapStrait", "map_strait"),
+      };
+      foreach (var (sceneId, shotName) in pairs) {
+        yield return StartMatch($"Assets/QuantumUser/Scenes/{sceneId}.unity", 4, truce: 0);
+        yield return WaitForHud();
+        Time.timeScale = 1f;
+        var cam = Controller().Camera;
+        cam.MoveTo(Vector2.zero);
+        cam.Height = 140f;
+        cam.Apply();
+        yield return new WaitForSeconds(0.4f);
+        ShootUrban(shotName);
+      }
+    }
   }
 }

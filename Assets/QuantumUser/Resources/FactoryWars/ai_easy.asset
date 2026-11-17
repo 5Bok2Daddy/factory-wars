@@ -126,11 +126,11 @@ MonoBehaviour:
   AttackRatio:
     RawValue: 0
   AttackRatioDecay:
-    RawValue: 9830
+    RawValue: 16384
   AttackRatioFloor:
-    RawValue: 39321
+    RawValue: 36044
   DefenseWeight:
-    RawValue: 32768
+    RawValue: 26214
   WaveByPopulation: 0
   FirstAttackSeconds:
     RawValue: 27525120
