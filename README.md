@@ -1,8 +1,8 @@
 # Factory Wars — 모바일 진행 현황 대시보드
 
 > **현재 완료된 마지막 TASK:** **TASK-32 · 33 · 34 · 35 · 36 · 37 + 전술 폴리시 4종** (Kubold 99클립, 맵 5종 굽기·캡처, 절차적 효과음, 영역 내 분대 자동 보충, 스페이스바 경보 이동, 주둔 고지대 보너스, 결과 MVP 카드)
-> **최신 검증:** PlayMode 로직/오디오 **35/35 통과**, GPU 캡처 **5/5 + 4/4 통과** (`Docs/status_images/map_*.png`, `46_*.png`, `kubold_anim_verify.png`), AI 배치 **10/10 통과**, 금지어 **0건**
-> **기준 시각:** 2026-11-17 18:43 (전체 파이프라인 완료 및 `origin main` 동기화)
+> **최신 검증:** PlayMode 통합(로직/오디오 35종 + AI 배치 10판) **45/45 통과** (`final49_results.xml`, `EXIT:0`), GPU 캡처 **5/5 + 4/4 통과** (`Docs/status_images/map_*.png`, `46_*.png`, `kubold_anim_verify.png`), 금지어 **0건**
+> **기준 시각:** 2026-11-17 21:03 (Desert 광맥 `0.55` · `NormalAi MaxWaveSize=14` 최종 튜닝 및 `origin main` 동기화)
 
 ---
 

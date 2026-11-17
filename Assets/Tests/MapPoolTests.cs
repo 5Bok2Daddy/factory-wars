@@ -28,7 +28,7 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(standard.ResourceNodes.Length, desert.ResourceNodes.Length, "같은 광산 자리");
       for (var i = 0; i < standard.ResourceNodes.Length; i++) {
         Assert.AreEqual(standard.ResourceNodes[i].Shape.Center, desert.ResourceNodes[i].Shape.Center, $"광산 {i} 위치");
-        Assert.AreEqual(standard.ResourceNodes[i].Amount.AsFloat * 0.4f, desert.ResourceNodes[i].Amount.AsFloat, 1f, $"광산 {i} 양 40%");
+        Assert.AreEqual(standard.ResourceNodes[i].Amount.AsFloat * 0.55f, desert.ResourceNodes[i].Amount.AsFloat, 1f, $"광산 {i} 양 55%");
       }
       Assert.AreEqual(standard.CrateSpots.Length, desert.CrateSpots.Length, "보급 자리 수");
       Assert.AreEqual(standard.CityBuildings.Length, desert.CityBuildings.Length, "도시 건물 수");

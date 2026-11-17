@@ -106,7 +106,7 @@ MonoBehaviour:
   MaxYards: 4
   YardWorkers: 4
   LateExpansionSeconds:
-    RawValue: 27525120
+    RawValue: 23592960
   SideLaneChance:
     RawValue: 26214
   LaneArrivalDistance:
@@ -154,21 +154,21 @@ MonoBehaviour:
   ShipyardRingMultiplier: 2
   MaxShips: 4
   AttackRatio:
-    RawValue: 65536
+    RawValue: 55705
   AttackRatioDecay:
     RawValue: 16384
   AttackRatioFloor:
-    RawValue: 36044
+    RawValue: 29491
   DefenseWeight:
-    RawValue: 26214
+    RawValue: 22937
   WaveByPopulation: 0
   FirstAttackSeconds:
-    RawValue: 15728640
+    RawValue: 11796480
   AttackRepeatSeconds:
-    RawValue: 2621440
+    RawValue: 2293760
   WaveSize: 6
-  WaveGrowth: 4
-  MaxWaveSize: 24
+  WaveGrowth: 2
+  MaxWaveSize: 14
   StaleWaveSeconds:
     RawValue: 7864320
   SweepArmyRatio: 4

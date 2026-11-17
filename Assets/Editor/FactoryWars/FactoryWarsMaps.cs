@@ -235,7 +235,7 @@ namespace FactoryWars.EditorTools {
       def.WeatherPeriod = 240;
       def.WeatherSight = 0.65;
       ResourceNodePlacement Scaled(ResourceNodePlacement node) {
-        node.Amount = node.Amount * N(0.4);
+        node.Amount = node.Amount * N(0.55);
         return node;
       }
       def.Nodes = def.Nodes.Select(Scaled).ToArray();

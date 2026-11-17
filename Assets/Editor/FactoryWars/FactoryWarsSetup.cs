@@ -936,10 +936,10 @@ namespace FactoryWars.EditorTools {
       ai.IdleAntiAir = 2;
       ai.CounterTop = 2;
       // 항목 33: 보통 AI는 유리할 때만 먼저 친다(1.3배, 1분마다 0.15씩 0.6배까지 내려감, 방어 건물은 값의 절반으로 친다). 쉬움은 예전처럼 그냥 나간다.
-      ai.AttackRatio = normal ? N(1.0) : 0;
+      ai.AttackRatio = normal ? N(0.85) : 0;
       ai.AttackRatioDecay = N(0.25);
-      ai.AttackRatioFloor = N(0.55);
-      ai.DefenseWeight = N(0.4);
+      ai.AttackRatioFloor = N(0.45);
+      ai.DefenseWeight = N(0.35);
       ai.FirstAttackSeconds = N(firstAttack);
       ai.AttackRepeatSeconds = N(repeat);
       ai.WaveSize = wave;
@@ -1223,7 +1223,7 @@ namespace FactoryWars.EditorTools {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.ResearchLab, BuildingRole.VehicleFactory, BuildingRole.PowerPlant,
         BuildingRole.HeavyWorks,
       }));
-      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 4, 3, 5, 420, 240, 40, 6, 4, 24, true, new[] {
+      rules.NormalAi = Ref(BuildAi("ai_normal", 2, 10, 3, 4, 3, 5, 360, 180, 35, 6, 2, 14, true, new[] {
         BuildingRole.SupplyDepot, BuildingRole.Barracks, BuildingRole.PowerPlant, BuildingRole.Processor, BuildingRole.ResearchLab, BuildingRole.VehicleFactory,
         BuildingRole.HeavyWorks, BuildingRole.RepairBay, BuildingRole.SupplyDepot, BuildingRole.PowerPlant, BuildingRole.MedicTent, BuildingRole.Radar,
         BuildingRole.Bunker, BuildingRole.Shipyard, BuildingRole.Airfield, BuildingRole.Artillery, BuildingRole.Helipad, BuildingRole.Sandbags, BuildingRole.GroundTower, BuildingRole.AirDefense, BuildingRole.SupplyDepot,
