@@ -387,6 +387,38 @@ namespace FactoryWars.EditorTools {
     }
 
     /// <summary>Kubold Cover Rifle Animset Pro 클립 검색(경로에 Kubold/Cover/Rifle 포함).</summary>
+    public static void InspectController() {
+      var kubold = FindKuboldClips();
+      Debug.Log($"[KuboldInspect] Total clips in CoverRifleAnimsetPro: {kubold.Count}");
+      Debug.Log("[KuboldInspect] All clips: " + string.Join(", ", kubold.Select(c => c.name)));
+      var ctrl = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+      if (ctrl == null) {
+        Debug.LogError("[KuboldInspect] PackInfantry.controller not found!");
+        return;
+      }
+      foreach (var layer in ctrl.layers) {
+        Debug.Log($"[KuboldInspect] Layer '{layer.name}' blend={layer.blendingMode} defaultWeight={layer.defaultWeight}");
+        foreach (var child in layer.stateMachine.states) {
+          var st = child.state;
+          if (st.motion is BlendTree bt) {
+            var children = string.Join(", ", bt.children.Select(c => $"{c.threshold:F1}:{(c.motion != null ? c.motion.name : "null")}({AssetDatabase.GetAssetPath(c.motion)})"));
+            Debug.Log($"[KuboldInspect]   State '{st.name}' BlendTree -> [{children}]");
+          } else {
+            var m = st.motion;
+            Debug.Log($"[KuboldInspect]   State '{st.name}' -> {(m != null ? m.name : "null")} ({(m != null ? AssetDatabase.GetAssetPath(m) : "")})");
+          }
+        }
+      }
+      var catalog = Resources.Load<FactoryWars.View.VisualCatalog>(FactoryWars.View.VisualCatalog.ResourcePath);
+      if (catalog != null) {
+        foreach (var slot in catalog.Slots) {
+          if (slot.Animator != null) {
+            Debug.Log($"[KuboldInspect] Slot '{slot.Id}' Animator={AssetDatabase.GetAssetPath(slot.Animator)}");
+          }
+        }
+      }
+    }
+
     static List<AnimationClip> FindKuboldClips() {
       var list = new List<AnimationClip>();
       foreach (var guid in AssetDatabase.FindAssets("t:AnimationClip")) {
@@ -403,18 +435,14 @@ namespace FactoryWars.EditorTools {
       return list;
     }
 
-    static AnimationClip PickKubold(List<AnimationClip> clips, AnimationClip fallback, params string[] anyKeywords) {
-      foreach (var kw in anyKeywords) {
-        var found = clips.FirstOrDefault(c => c.name.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0);
-        if (found != null) {
-          return found;
-        }
-      }
-      return fallback;
+    static AnimationClip ExactKubold(List<AnimationClip> clips, AnimationClip fallback, string exactName) {
+      return clips.FirstOrDefault(c => string.Equals(c.name, exactName, StringComparison.OrdinalIgnoreCase)) ?? fallback;
     }
 
     /// <summary>
-    /// 보병 Animator 컨트롤러(우리 파일): Kubold Cover Rifle Animset Pro가 있으면 소총 대기·이동·엄폐 무릎앉기·사격·가산 조준 레이어를 연결하고, 없으면 Synty 기본 클립을 쓴다.
+    /// 보병 Animator 컨트롤러(우리 파일): Kubold Cover Rifle Animset Pro의 정확한 클립
+    /// (Rifle_Idle, CoverLo_CoverR, CoverLo_AimR, CoverHi_AimR, CoverHi_AimR_Burst_Add)과
+    /// Synty 전진 이동(Walk/Run/Sprint)을 조합한다.
     /// </summary>
     public static RuntimeAnimatorController BuildController() {
       EnsureFolder(OutRoot + "/Animation");
@@ -437,18 +465,36 @@ namespace FactoryWars.EditorTools {
       tree.blendParameter = "Speed";
       tree.useAutomaticThresholds = false;
 
-      var idleClip = PickKubold(kubold, Clip("idle"), "Rifle_Idle", "Stand_Idle", "Idle_Aim", "Idle");
-      var walkClip = PickKubold(kubold, Clip("walk"), "Rifle_Walk", "Walk_F", "Walk");
-      var runClip = PickKubold(kubold, Clip("run"), "Rifle_Run", "Run_F", "Run");
-      var sprintClip = PickKubold(kubold, Clip("sprint"), "Rifle_Sprint", "Sprint", "Run");
-      var coverClip = PickKubold(kubold, Clip("idle_crouch"), "Cover_Idle", "Crouch_Idle", "Kneel", "Cover");
-      var fireClip = PickKubold(kubold, idleClip, "Fire", "Shoot", "Recoil");
-      var aimClip = PickKubold(kubold, null, "Additive", "Aim_Center", "Aim_Idle", "Aim");
+      var idleClip = ExactKubold(kubold, Clip("idle"), "Rifle_Idle");
+      var walkClip = Clip("walk");
+      var runClip = Clip("run");
+      var sprintClip = Clip("sprint");
+      var coverClip = ExactKubold(kubold, Clip("idle_crouch"), "CoverLo_CoverR");
+      var coverAimClip = ExactKubold(kubold, coverClip, "CoverLo_AimR");
+      var standAimClip = ExactKubold(kubold, idleClip, "CoverHi_AimR");
+      var burstAddClip = ExactKubold(kubold, null, "CoverHi_AimR_Burst_Add");
 
       tree.AddChild(idleClip, 0f);
       tree.AddChild(walkClip, 1.6f);
       tree.AddChild(runClip, 4f);
       tree.AddChild(sprintClip, 7f);
+
+      var standAim = machine.AddState("StandAim");
+      standAim.motion = standAimClip;
+      var toStandAim = locomotion.AddTransition(standAim);
+      toStandAim.hasExitTime = false;
+      toStandAim.duration = 0.15f;
+      toStandAim.AddCondition(AnimatorConditionMode.If, 0f, "Aiming");
+      toStandAim.AddCondition(AnimatorConditionMode.IfNot, 0f, "Cover");
+      toStandAim.AddCondition(AnimatorConditionMode.Less, 0.3f, "Speed");
+      var fromStandAim = standAim.AddTransition(locomotion);
+      fromStandAim.hasExitTime = false;
+      fromStandAim.duration = 0.15f;
+      fromStandAim.AddCondition(AnimatorConditionMode.IfNot, 0f, "Aiming");
+      var standAimMove = standAim.AddTransition(locomotion);
+      standAimMove.hasExitTime = false;
+      standAimMove.duration = 0.15f;
+      standAimMove.AddCondition(AnimatorConditionMode.Greater, 0.3f, "Speed");
 
       var crouch = machine.AddState("CoverIdle");
       crouch.motion = coverClip;
@@ -461,39 +507,45 @@ namespace FactoryWars.EditorTools {
       fromCover.hasExitTime = false;
       fromCover.duration = 0.2f;
       fromCover.AddCondition(AnimatorConditionMode.IfNot, 0f, "Cover");
+      var coverMove = crouch.AddTransition(locomotion);
+      coverMove.hasExitTime = false;
+      coverMove.duration = 0.15f;
+      coverMove.AddCondition(AnimatorConditionMode.Greater, 0.3f, "Speed");
 
-      if (fireClip != null) {
-        var fireState = machine.AddState("Fire");
-        fireState.motion = fireClip;
-        var anyFire = machine.AddAnyStateTransition(fireState);
-        anyFire.hasExitTime = false;
-        anyFire.duration = 0.08f;
-        anyFire.AddCondition(AnimatorConditionMode.If, 0f, "Attack");
-        var back = fireState.AddTransition(locomotion);
-        back.hasExitTime = true;
-        back.exitTime = 0.85f;
-        back.duration = 0.12f;
-      }
+      var coverAim = machine.AddState("CoverAim");
+      coverAim.motion = coverAimClip;
+      var toCoverAim = crouch.AddTransition(coverAim);
+      toCoverAim.hasExitTime = false;
+      toCoverAim.duration = 0.15f;
+      toCoverAim.AddCondition(AnimatorConditionMode.If, 0f, "Aiming");
+      var fromCoverAim = coverAim.AddTransition(crouch);
+      fromCoverAim.hasExitTime = false;
+      fromCoverAim.duration = 0.15f;
+      fromCoverAim.AddCondition(AnimatorConditionMode.IfNot, 0f, "Aiming");
+      var coverAimExit = coverAim.AddTransition(locomotion);
+      coverAimExit.hasExitTime = false;
+      coverAimExit.duration = 0.15f;
+      coverAimExit.AddCondition(AnimatorConditionMode.IfNot, 0f, "Cover");
 
-      if (aimClip != null) {
-        controller.AddLayer("AdditiveAim");
+      if (burstAddClip != null) {
+        controller.AddLayer("AdditiveFire");
         var layers = controller.layers;
         layers[1].blendingMode = AnimatorLayerBlendingMode.Additive;
         layers[1].defaultWeight = 1f;
         controller.layers = layers;
-        var aimMachine = controller.layers[1].stateMachine;
-        var emptyState = aimMachine.AddState("NoAim");
-        var aimState = aimMachine.AddState("Aim");
-        aimState.motion = aimClip;
-        aimMachine.defaultState = emptyState;
-        var toAim = emptyState.AddTransition(aimState);
-        toAim.hasExitTime = false;
-        toAim.duration = 0.12f;
-        toAim.AddCondition(AnimatorConditionMode.If, 0f, "Aiming");
-        var fromAim = aimState.AddTransition(emptyState);
-        fromAim.hasExitTime = false;
-        fromAim.duration = 0.12f;
-        fromAim.AddCondition(AnimatorConditionMode.IfNot, 0f, "Aiming");
+        var fireMachine = controller.layers[1].stateMachine;
+        var emptyState = fireMachine.AddState("Idle");
+        var burstState = fireMachine.AddState("Burst");
+        burstState.motion = burstAddClip;
+        fireMachine.defaultState = emptyState;
+        var toBurst = fireMachine.AddAnyStateTransition(burstState);
+        toBurst.hasExitTime = false;
+        toBurst.duration = 0.04f;
+        toBurst.AddCondition(AnimatorConditionMode.If, 0f, "Attack");
+        var back = burstState.AddTransition(emptyState);
+        back.hasExitTime = true;
+        back.exitTime = 0.9f;
+        back.duration = 0.08f;
       }
 
       machine.defaultState = locomotion;
