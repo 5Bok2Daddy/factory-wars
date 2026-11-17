@@ -279,8 +279,13 @@ namespace FactoryWars.View {
     /// <summary>들어간 분대 수만큼 팀 색 칸. 0이면 숨긴다.</summary>
     static Mesh OccupantMesh(int count) {
       var kit = new MeshKit();
+      // 주둔 방패/갈매기형 휘장 + 주둔 수 표시.
+      kit.Team().Box(new Vector3(0f, 0.25f, 0f), new Vector3(1.1f, 0.9f, 0.22f));
+      kit.Team().Box(new Vector3(0f, -0.32f, 0f), new Vector3(0.65f, 0.35f, 0.22f));
+      kit.Paint(Swatch.White).Box(new Vector3(-0.22f, 0.28f, -0.13f), new Vector3(0.36f, 0.16f, 0.06f));
+      kit.Paint(Swatch.White).Box(new Vector3(0.22f, 0.28f, -0.13f), new Vector3(0.36f, 0.16f, 0.06f));
       for (var i = 0; i < count; i++) {
-        kit.Team().Box(new Vector3((i - (count - 1) / 2f) * 0.9f, 0, 0), new Vector3(0.7f, 0.7f, 0.2f));
+        kit.Paint(Swatch.Gold).Box(new Vector3((i - (count - 1) / 2f) * 0.48f, 0.92f, 0f), new Vector3(0.34f, 0.34f, 0.22f));
       }
       return kit.ToMesh("city_occupants");
     }

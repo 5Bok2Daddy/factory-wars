@@ -28,7 +28,7 @@ namespace FactoryWars.View {
   }
 
   /// <summary>소리가 나는 게임 일(항목 30). AudioCatalog의 칸 이름과 같다.</summary>
-  public enum SoundEvent { Click, ProductionDone, UnderAttack, Captured, Explosion, Collapse, Warning, Victory, Defeat }
+  public enum SoundEvent { Click, ProductionDone, UnderAttack, Captured, Explosion, Collapse, Warning, Victory, Defeat, RifleFire, TankCannon }
 
   /// <summary>소리·진동 재생. 칸이 비었으면 소리 없이 진동 설정만 따른다.</summary>
   public static class GameAudio {
@@ -81,6 +81,14 @@ namespace FactoryWars.View {
         return;
       }
       _synthInstalled = true;
+      var needed = new[] { SoundEvent.RifleFire, SoundEvent.TankCannon };
+      foreach (var extra in needed) {
+        if (catalog.Get(extra) == null) {
+          var list = new List<AudioCatalog.Slot>(catalog.Slots);
+          list.Add(new AudioCatalog.Slot { Event = extra, Volume = extra == SoundEvent.TankCannon ? 0.55f : 0.35f, MinInterval = extra == SoundEvent.TankCannon ? 0.25f : 0.12f, Haptic = false });
+          catalog.Slots = list.ToArray();
+        }
+      }
       foreach (var slot in catalog.Slots) {
         if (slot.Clips != null && slot.Clips.Length > 0) {
           continue;
@@ -143,6 +151,13 @@ namespace FactoryWars.View {
           case SoundEvent.Explosion:
           case SoundEvent.Collapse:
             sample = (noise * 0.55f + Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(115f, 38f, norm) * t) * 0.45f);
+            break;
+          case SoundEvent.RifleFire:
+            var burst = (norm < 0.28f || (norm > 0.36f && norm < 0.64f) || norm > 0.72f) ? 1f : 0.15f;
+            sample = (noise * 0.72f + Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(420f, 180f, norm) * t) * 0.28f) * burst * 0.65f;
+            break;
+          case SoundEvent.TankCannon:
+            sample = (noise * 0.42f * Mathf.Pow(1f - norm, 2.2f) + Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(95f, 32f, norm) * t) * 0.58f);
             break;
         }
         data[i] = Mathf.Clamp(sample * env, -1f, 1f);

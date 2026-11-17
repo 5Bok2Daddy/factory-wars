@@ -633,6 +633,9 @@ namespace FactoryWars.View {
     public const float NeedleWidth = 0.035f;
 
     void Shoot(Actor actor, AttackType attack, float range, bool hasTarget, Vector3 target, bool flame) {
+      if (actor.View.gameObject.activeSelf) {
+        GameAudio.Play(attack == AttackType.AntiArmor || attack == AttackType.Area ? SoundEvent.TankCannon : SoundEvent.RifleFire);
+      }
       actor.View.Animation?.Fire();
       actor.Recoil = RecoilDistance;
       if (actor.Rigs.Count > 0 && flame == false) {

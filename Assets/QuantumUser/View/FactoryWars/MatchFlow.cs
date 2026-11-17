@@ -1,7 +1,9 @@
 namespace FactoryWars.View {
+  using System.Collections.Generic;
   using System.Linq;
   using Photon.Deterministic;
   using Quantum;
+  using Quantum.FactoryWars;
   using UnityEngine;
   using UnityEngine.SceneManagement;
   using UnityEngine.UI;
@@ -19,6 +21,11 @@ namespace FactoryWars.View {
     RectTransform _settings;
     RectTransform _result;
     Text _resultText;
+    Text _mvpText;
+    RawImage _timelineImage;
+    Texture2D _timelineTex;
+    readonly List<(float Own, float Enemy, float Income)> _samples = new List<(float, float, float)>();
+    int _nextSampleFrame;
     bool _built;
 
     void Awake() {
@@ -59,20 +66,54 @@ namespace FactoryWars.View {
           _fastForwardFrames = 0;
         }
       }
-      if (_built || _controller.IsReady == false) {
+      if (_controller.IsReady == false) {
         return;
       }
-      _built = true;
-      Build(_controller.Hud.Root);
-      if (_tutorial) {
-        Tutorial.Attach(_controller);
-      }
-      QuantumEvent.Subscribe<EventGameOver>(this, e => ShowResult());
-      QuantumEvent.Subscribe<EventPlayerDefeated>(this, e => {
-        if (e.Player == _controller.Player) {
-          ShowResult();
+      if (_built == false) {
+        _built = true;
+        Build(_controller.Hud.Root);
+        if (_tutorial) {
+          Tutorial.Attach(_controller);
         }
-      });
+        QuantumEvent.Subscribe<EventGameOver>(this, e => ShowResult());
+        QuantumEvent.Subscribe<EventPlayerDefeated>(this, e => {
+          if (e.Player == _controller.Player) {
+            ShowResult();
+          }
+        });
+      }
+      var f = _controller.Frame;
+      if (f != null && f.Number >= _nextSampleFrame && f.Global->GameEnded == false) {
+        _nextSampleFrame = f.Number + f.SessionConfig.UpdateFPS * 10;
+        SampleTimeline(f);
+      }
+    }
+
+    void SampleTimeline(Frame f) {
+      var own = 0;
+      var enemy = 0;
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var b)) {
+        if (b->Owner == _controller.Player) {
+          own++;
+        } else if (b->Owner.IsValid && DiplomacySystem.CanAttack(f, _controller.Player, b->Owner)) {
+          enemy++;
+        }
+      }
+      var sites = f.Filter<CaptureSite>();
+      while (sites.NextUnsafe(out _, out var s)) {
+        if (s->Owner == _controller.Player) {
+          own += 2;
+        } else if (s->Owner.IsValid && DiplomacySystem.CanAttack(f, _controller.Player, s->Owner)) {
+          enemy += 2;
+        }
+      }
+      var total = Mathf.Max(1, own + enemy);
+      var st = f.Global->Players.GetPointer(_controller.Player);
+      var income = st->Earned.Iron.AsFloat + st->Earned.Wood.AsFloat;
+      if (_samples.Count < 240) {
+        _samples.Add((own / (float)total, enemy / (float)total, income));
+      }
     }
 
     void Build(RectTransform root) {
@@ -98,10 +139,31 @@ namespace FactoryWars.View {
       _settings.gameObject.SetActive(false);
 
       _result = Ui.Panel("Result", root);
-      Ui.Place(_result, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1100, 860));
+      Ui.Place(_result, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1140, 900));
       _result.pivot = new Vector2(0.5f, 0.5f);
-      _resultText = Ui.Label("Text", _result, "", 40, TextAnchor.UpperCenter);
-      Ui.Place(_resultText.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -30), new Vector2(1020, 620));
+      _resultText = Ui.Label("Text", _result, "", 32, TextAnchor.UpperCenter);
+      Ui.Place(_resultText.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -24), new Vector2(1060, 420));
+
+      // 모듈형 MVP 유닛 카드 슬롯(에셋 스킨 교체 대비).
+      var mvpCard = Ui.Panel("MvpCard", _result);
+      Ui.Place(mvpCard, new Vector2(0, 0), new Vector2(40, 125), new Vector2(510, 290));
+      var mvpBadge = Ui.Rect("MvpIcon", mvpCard);
+      Ui.Place(mvpBadge, new Vector2(0, 1), new Vector2(20, -20), new Vector2(54, 54));
+      mvpBadge.gameObject.AddComponent<Image>().color = new Color(0.95f, 0.78f, 0.22f, 0.9f);
+      _mvpText = Ui.Label("MvpStats", mvpCard, "MVP 유닛 집계 중", 28, TextAnchor.UpperLeft);
+      Ui.Place(_mvpText.rectTransform, new Vector2(0, 1), new Vector2(90, -20), new Vector2(400, 250));
+
+      // 전장 타임라인 그래프 슬롯(영역 점유율 · 자원 수입 추이).
+      var timelineCard = Ui.Panel("TimelineCard", _result);
+      Ui.Place(timelineCard, new Vector2(1, 0), new Vector2(-40, 125), new Vector2(530, 290));
+      timelineCard.pivot = new Vector2(1, 0);
+      var tlTitle = Ui.Label("TimelineTitle", timelineCard, "전장 타임라인 (영역 % · 자원 수입)", 24, TextAnchor.UpperLeft);
+      Ui.Place(tlTitle.rectTransform, new Vector2(0, 1), new Vector2(20, -14), new Vector2(490, 36));
+      var graphRect = Ui.Rect("TimelineGraph", timelineCard);
+      Ui.Place(graphRect, new Vector2(0.5f, 0), new Vector2(0, 20), new Vector2(490, 205));
+      _timelineImage = graphRect.gameObject.AddComponent<RawImage>();
+      _timelineTex = new Texture2D(180, 64, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+      _timelineImage.texture = _timelineTex;
       var leave = Ui.Button("Leave", _result, "시작 화면으로", Leave, 34);
       var rectLeave = (RectTransform)leave.transform;
       Ui.Place(rectLeave, new Vector2(0.5f, 0), new Vector2(240, 30), new Vector2(440, Ui.MinButtonSize));
@@ -174,6 +236,9 @@ namespace FactoryWars.View {
 
     /// <summary>앱 전환(항목 30): AI 대전은 멈추고, 온라인은 돌아왔을 때 연결이 끊겼으면 같은 방에 다시 들어간다.</summary>
     void OnApplicationPause(bool paused) {
+      if (_controller.IsReady == false) {
+        return;
+      }
       if (_built == false) {
         return;
       }
@@ -215,10 +280,57 @@ namespace FactoryWars.View {
       var mvpLine = mvpKills >= 0
         ? $"\nMVP 유닛: {mvpName} {(mvpRank > 0 ? new string('★', mvpRank) + " " : "")}(처치 {mvpKills})"
         : "";
-      var tacticalLine = $"\n전술 요약: 항공 출격 {state->SortiesCompleted}회 · 블랙박스 {state->BlackBoxes} · 교량 파괴/복구 {state->BridgesDown}/{state->BridgesRepaired} · 잔해 회수 {state->WrecksSalvaged}";
-      _resultText.text = summary + mvpLine + tacticalLine;
+      var tacticalLine = $"\n항공 출격 {state->SortiesLaunched}/{state->SortiesCompleted} · 암시장 거래 {state->TradesMade} · 블랙박스 {state->BlackBoxes} · 교량 {state->BridgesDown}/{state->BridgesRepaired} · 잔해 {state->WrecksSalvaged}";
+      _resultText.text = summary + tacticalLine;
+      if (_mvpText != null) {
+        var stars = mvpRank > 0 ? new string('★', mvpRank) : "신병";
+        _mvpText.text = mvpKills >= 0
+          ? $"<b>MVP 유닛</b>\n{mvpName} [{stars}]\n처치: {mvpKills} · 저격 견제: {state->SnipeKillsEngineers}\n승급: {state->Promotions}회"
+          : "<b>MVP 유닛</b>\n생존 전투 유닛 없음";
+      }
+      if (_timelineTex != null) {
+        SampleTimeline(frame);
+        DrawTimeline();
+      }
       _result.gameObject.SetActive(true);
       GameAudio.Play(won ? SoundEvent.Victory : SoundEvent.Defeat);
+    }
+
+    void DrawTimeline() {
+      var w = _timelineTex.width;
+      var h = _timelineTex.height;
+      var bg = new Color32(18, 22, 28, 255);
+      var grid = new Color32(42, 48, 58, 255);
+      var pixels = new Color32[w * h];
+      for (var y = 0; y < h; y++) {
+        var isGrid = y == h / 2 || y == 0 || y == h - 1;
+        for (var x = 0; x < w; x++) {
+          pixels[y * w + x] = isGrid ? grid : bg;
+        }
+      }
+      var n = _samples.Count;
+      if (n >= 1) {
+        var maxInc = 1f;
+        for (var i = 0; i < n; i++) {
+          if (_samples[i].Income > maxInc) {
+            maxInc = _samples[i].Income;
+          }
+        }
+        for (var x = 0; x < w; x++) {
+          var idx = n == 1 ? 0 : Mathf.Min(n - 1, (x * (n - 1)) / Mathf.Max(1, w - 1));
+          var s = _samples[idx];
+          void Plot(float val, Color32 col) {
+            var py = Mathf.Clamp(Mathf.RoundToInt(val * (h - 4)) + 2, 1, h - 2);
+            pixels[py * w + x] = col;
+            pixels[(py - 1) * w + x] = col;
+          }
+          Plot(s.Own, new Color32(0x2B, 0x8A, 0xEE, 255));
+          Plot(s.Enemy, new Color32(0xE5, 0x3E, 0x3E, 255));
+          Plot(s.Income / maxInc, new Color32(0xF2, 0xC1, 0x4E, 255));
+        }
+      }
+      _timelineTex.SetPixels32(pixels);
+      _timelineTex.Apply(false);
     }
 
     public void Leave() {

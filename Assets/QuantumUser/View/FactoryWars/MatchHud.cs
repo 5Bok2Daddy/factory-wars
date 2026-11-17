@@ -28,7 +28,7 @@ namespace FactoryWars.View {
   /// </summary>
   public unsafe class MatchHud : MonoBehaviour {
     const float RefreshSeconds = 0.2f;
-    const float AlertSeconds = 3f;
+    const float AlertSeconds = 2.5f;
     const float NoteSeconds = 3f;
     const float TooltipSeconds = 3f;
     const float FlashSeconds = 2f;
@@ -1092,9 +1092,6 @@ namespace FactoryWars.View {
       for (var i = 0; i < _resources.Count; i++) {
         var flashing = _flashUntil[i] > Time.unscaledTime && Mathf.Repeat(Time.unscaledTime * 4f, 1f) < 0.5f;
         _resources[i].Back.color = flashing ? theme.Danger : theme.Panel;
-      }
-      if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
-        JumpToAlert();
       }
       if (Time.unscaledTime < _nextRefresh) {
         return;

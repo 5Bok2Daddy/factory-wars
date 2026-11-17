@@ -1644,7 +1644,7 @@ namespace Quantum.FactoryWars {
       var crates = f.Filter<Transform3D, SupplyCrate>();
       while (crates.NextUnsafe(out _, out var transform, out var crate)) {
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, bot->Home);
-        if (crate->Seat == (int)player && distance < best) {
+        if ((crate->Seat == (int)player || crate->Seat < 0) && distance < best) {
           best = distance;
           target = transform->Position;
         }
@@ -1921,11 +1921,13 @@ namespace Quantum.FactoryWars {
       }
       var stalled = ai.StalledWaveSize > 0 && army >= ai.StalledWaveSize && bot->IdleSinceFrame > 0
         && f.Number - bot->IdleSinceFrame >= FactoryWarsUtil.SecondsToFrames(f, ai.StalledSeconds);
-      // 사령부와 공병을 모두 잃었으면 남은 군대로 바로 나간다.
+      // 사령부와 공병을 모두 잃었거나 맵 철이 고갈·공격 지연 시 남은 군대로 결판을 낸다.
       var lastStand = ai.LastStand && army > 0 && CannotRecover(f, player);
+      var noIron = army > 0 && RemainingIron(f) <= FP._0;
+      var overdue = army > 0 && f.Number - bot->NextAttackFrame >= FactoryWarsUtil.SecondsToFrames(f, (FP)90);
       FPVector3 target;
       PlayerRef enemy = default;
-      var forced = stalled || lastStand;
+      var forced = stalled || lastStand || noIron || overdue;
       if (sweeping) {
         if (FindCoreTarget(f, player, ArmyCenter(f, player, bot->Home), out target) == false) {
           return;

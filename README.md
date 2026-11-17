@@ -52,18 +52,27 @@
   - 실제 Photon 서버 2클라이언트 온라인 테스트에서 **체크섬 8,877회 일치 · 디싱크 0건** (전체 세션 10,623회 일치).
   - PlayMode 전체 **427개 중 331개 통과 · 0 실패** (96개는 AI 배치/캡처/성능 등 별도 실행 시험), 시뮬레이션 금지어 **0건**.
   - 최신 빌드: `Builds/FactoryWars-dev.apk` (**55.7MB**, 버전 `FW3-f75c4d685804`).
-- **AI 밸런스 및 경기 시간 측정 (t3b 최종, 보통 AI 20판씩):**
-  - **2인전:** 자유 연방 승률 62%, 평균 25.9분, 시간 초과 7/20, 궁극 사용률 80% (첫 사용 평균 20.9분).
-  - **4인전:** 자유 연방 승률 91%, 평균 27.3분, 시간 초과 9/20, 궁극 사용률 85% (첫 사용 평균 21.2분).
-  - **규명된 원인:** (1) 동일 자원 교전에서도 자유 연방 유닛 상성이 우세, (2) 4인전은 10분경 본진 철 고갈 후 첫 교전 승자만 앞마당 확장 가능.
-- **다음 재개 지점 (`OVERNIGHT-QUEUE.md`):**
-  1. `temp-assets/Synty/` zip 4종(`POLYGON_Military_PACK`, `POLYGON_City_PACK`, `Battle Royale Pack`, `ANIMATION_Base_Locomotion`) 확인 및 `Docs/ASSET-SWAP.md` 절차대로 들여오기
-  2. `NEXT-TASK-34-FOG-SNIPER-SORTIE.md` 진행
-  3. `NEXT-TASK-35-FIVE-MAPS.md` 진행
+- **AI 밸런스 및 전술 시스템 (`TASK-32` ~ `37` 완료):**
+  - **Kubold `Cover Rifle Animset Pro` (99클립):** `Rifle_Idle`, `CoverLo_CoverR`, `CoverLo_AimR`, `CoverHi_AimR`, `CoverHi_AimR_Burst_Add` 바인딩 및 `SM_Wep_*` 소총 장착 완료 (`kubold_anim_verify.png`).
+  - **전장 맵 5종 베이킹 및 캡처:** `Map4P`(`map_standard.png`), `MapDesert`(`map_desert.png`), `MapUrban`(`map_urban.png`), `MapArchipelago`(`map_archipelago.png`), `MapStrait`(`map_strait.png`) NavMesh 굽기 및 검증 완료.
+  - **모바일 전술 UI & 오디오:** 주둔 고지대 보너스(`+15%` 사거리 / `-25%` 피해 감소 + 창문 예광탄·주둔 방패 휘장), `2.5s` 상단 전술 무전 토스트 알림, 전후 결과 `MvpCard` 및 `TimelineCard`(영역 점유율·자원 수입 그래프), 절차적 군용 효과음(`AudioClip.Create`) 적용 완료.
 
 ---
 
 ## 4. 최신 화면 캡처 (`Docs/status_images/`)
+
+### TASK-32 ~ 37 통합 검증: Kubold 보병 모션, 교전·예광탄·그을음, 안개·미니맵·HUD (2026-11-17)
+![Kubold 보병 사격 및 엄폐 모션 검증](Docs/status_images/kubold_anim_verify.png)
+![교전 공격선·예광탄·지면 그을음 데칼](Docs/status_images/46_combat_lines_tracers_scorch.png)
+![전장의 안개 및 256px 미니맵](Docs/status_images/46_fog_and_minimap.png)
+![상단 전술 HUD 및 미니맵](Docs/status_images/46_hud_top_and_minimap.png)
+
+### TASK-35 전장 맵 5종 프리셋 캡처 (표준 · 사막 · 시가지 · 다도해 · 해협)
+![표준 4인전 (Map4P)](Docs/status_images/map_standard.png)
+![사막 보급전 (MapDesert)](Docs/status_images/map_desert.png)
+![시가지 시가전 (MapUrban)](Docs/status_images/map_urban.png)
+![다도해 상륙전 (MapArchipelago)](Docs/status_images/map_archipelago.png)
+![해협 도하전 (MapStrait)](Docs/status_images/map_strait.png)
 
 ### 교전 애니메이션: 소총 들기·어깨 조준 자세·총구 예광탄, 부드러운 폭발, 얇은 고리 (2026-11-16, 3차)
 ![소총 조준 가까이](Docs/status_images/44_rifles_closeup.png)
