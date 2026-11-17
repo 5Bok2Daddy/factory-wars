@@ -393,6 +393,7 @@ namespace FactoryWars.View {
 
     public void Explosion(Vector3 position, float size) {
       GameAudio.Play(SoundEvent.Explosion);
+      GameAudio.Play(SoundEvent.Explosion);
       // 충격파 고리 + 그을음 자국(큰 폭발만).
       if (size >= 1.2f) {
         Ring(new Vector3(position.x, 0.1f, position.z), new Color(1f, 0.9f, 0.75f, 0.8f), size * 2.6f, 0.35f);

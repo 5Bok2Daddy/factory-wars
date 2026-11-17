@@ -200,7 +200,23 @@ namespace FactoryWars.View {
       var state = frame.Global->Players.GetPointer(_controller.Player);
       var won = state->Defeated == false && (frame.Global->GameEnded == false || (frame.Global->WinnerMask & (1 << (int)_controller.Player)) != 0);
       var end = frame.Global->GameEnded ? frame.Global->EndFrame : frame.Number;
-      _resultText.text = FullSummary(won, end / (float)frame.SessionConfig.UpdateFPS, *state, frame.SessionConfig.UpdateFPS);
+      var summary = FullSummary(won, end / (float)frame.SessionConfig.UpdateFPS, *state, frame.SessionConfig.UpdateFPS);
+      var mvpName = "없음";
+      var mvpKills = -1;
+      var mvpRank = 0;
+      var units = frame.Filter<Unit>();
+      while (units.NextUnsafe(out _, out var u)) {
+        if (u->Owner == _controller.Player && (u->Kills > mvpKills || (u->Kills == mvpKills && u->VetRank > mvpRank))) {
+          mvpKills = u->Kills;
+          mvpRank = u->VetRank;
+          mvpName = Texts.NameOf(frame.FindAsset(u->Spec).name);
+        }
+      }
+      var mvpLine = mvpKills >= 0
+        ? $"\nMVP 유닛: {mvpName} {(mvpRank > 0 ? new string('★', mvpRank) + " " : "")}(처치 {mvpKills})"
+        : "";
+      var tacticalLine = $"\n전술 요약: 항공 출격 {state->SortiesCompleted}회 · 블랙박스 {state->BlackBoxes} · 교량 파괴/복구 {state->BridgesDown}/{state->BridgesRepaired} · 잔해 회수 {state->WrecksSalvaged}";
+      _resultText.text = summary + mvpLine + tacticalLine;
       _result.gameObject.SetActive(true);
       GameAudio.Play(won ? SoundEvent.Victory : SoundEvent.Defeat);
     }

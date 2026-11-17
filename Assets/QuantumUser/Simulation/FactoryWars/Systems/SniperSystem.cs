@@ -286,7 +286,7 @@ namespace Quantum.FactoryWars {
       if (f.Number < unit->SetupUntilFrame || unit->AttackCooldown > FP._0 || FactoryWarsUtil.InTruce(f)) {
         return;
       }
-      var range = spec.Range + rules.GarrisonRangeBonus;
+      var range = spec.Range * (FP._1 + FP._0_10 + FP._0_05) + rules.GarrisonRangeBonus;
       if (f.Unsafe.TryGetPointer<Building>(unit->Garrison, out var host)) {
         range += f.FindAsset(host->Spec).FootprintRadius;
       }

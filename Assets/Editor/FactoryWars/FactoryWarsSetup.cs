@@ -900,8 +900,8 @@ namespace FactoryWars.EditorTools {
       ai.LaneArrivalDistance = 24;
       ai.LaneTimeoutSeconds = 70;
       ai.CaptureSquad = id == "ai_normal" ? 6 : 0;
-      ai.SquadSeconds = 60;
-      ai.CenterArmyRatio = N(1.5);
+      ai.SquadSeconds = 40;
+      ai.CenterArmyRatio = N(1.1);
       ai.DropSquad = id == "ai_normal" ? 5 : 0;
       ai.BarricadeChance = id == "ai_normal" ? N(0.3) : 0;
       ai.HighGroundUnits = id == "ai_normal" ? 3 : 0;

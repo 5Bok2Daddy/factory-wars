@@ -686,8 +686,11 @@ namespace Quantum.FactoryWars {
       if (weapon.Owner.IsValid) {
         amount *= DepthSystem.OutgoingBonus(f, weapon.Owner);
       }
-      // 항목 31: 방어 연구. 항목 32: 엄폐.
+        // 항목 31: 방어 연구. 항목 32: 엄폐. 주둔 보병/저격수 -25% 피해 감소.
       amount *= TechSystem.IncomingMultiplier(f, unit->Owner, spec);
+      if (unit->Garrison != EntityRef.None) {
+        amount *= FP._0_75;
+      }
       if (weapon.IgnoreCover == false) {
         amount *= CoverSystem.DamageMultiplier(f, unit, weapon.Origin, weapon.Area);
         // 항목 37 그림자 특수전단: 엄폐 중 받는 피해가 더 준다.
@@ -993,7 +996,7 @@ namespace Quantum.FactoryWars {
         };
         var range = EffectiveRange(f, unit, spec);
         if (unit->Garrison != EntityRef.None) {
-          range += FactoryWarsUtil.Rules(f).GarrisonRangeBonus;
+          range = range * (FP._1 + FP._0_10 + FP._0_05) + FactoryWarsUtil.Rules(f).GarrisonRangeBonus;
           // 항목 33 벙커: 안의 분대는 건물 한가운데에 있지만 가장자리 총안에서 쏘는 것으로 친다(공격하는 쪽도 건물 가장자리까지만 재므로 서로 닿는다).
           if (f.Unsafe.TryGetPointer<Building>(unit->Garrison, out var host)) {
             range += f.FindAsset(host->Spec).FootprintRadius;

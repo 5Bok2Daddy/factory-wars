@@ -68,6 +68,89 @@ namespace FactoryWars.View {
       _source.PlayOneShot(clip, slot.Volume);
       Played++;
     }
+
+    static bool _synthInstalled;
+
+    /// <summary>오디오 팩이 없을 때 기본 카탈로그 슬롯에 절차적 군용 효과음을 채운다(테스트의 빈 카탈로그 인스턴스에는 손대지 않음).</summary>
+    public static void InstallProceduralDefaults() {
+      if (_synthInstalled) {
+        return;
+      }
+      var catalog = AudioCatalog.Current;
+      if (catalog == null || catalog.Slots == null) {
+        return;
+      }
+      _synthInstalled = true;
+      foreach (var slot in catalog.Slots) {
+        if (slot.Clips != null && slot.Clips.Length > 0) {
+          continue;
+        }
+        var clip = SynthClip(slot.Event);
+        if (clip != null) {
+          slot.Clips = new[] { clip };
+          if (slot.Event == SoundEvent.Explosion) {
+            slot.Volume = 0.55f;
+          } else if (slot.Event == SoundEvent.Click) {
+            slot.Volume = 0.45f;
+          }
+        }
+      }
+    }
+
+    static AudioClip SynthClip(SoundEvent e) {
+      const int Rate = 22050;
+      float duration = e switch {
+        SoundEvent.Click => 0.04f,
+        SoundEvent.ProductionDone => 0.18f,
+        SoundEvent.Warning => 0.34f,
+        SoundEvent.UnderAttack => 0.32f,
+        SoundEvent.Captured => 0.28f,
+        SoundEvent.Explosion => 0.36f,
+        SoundEvent.Collapse => 0.42f,
+        SoundEvent.Victory => 0.40f,
+        SoundEvent.Defeat => 0.40f,
+        _ => 0.15f,
+      };
+      var count = Mathf.Max(64, Mathf.RoundToInt(Rate * duration));
+      var data = new float[count];
+      uint rng = 0x9E3779B9u + (uint)e * 2654435761u;
+      for (var i = 0; i < count; i++) {
+        var t = (float)i / Rate;
+        var norm = (float)i / count;
+        var env = Mathf.Pow(1f - norm, e == SoundEvent.Explosion || e == SoundEvent.Collapse ? 1.8f : 1.2f);
+        rng ^= rng << 13; rng ^= rng >> 17; rng ^= rng << 5;
+        var noise = ((rng & 0xFFFF) / 32768f) - 1f;
+        float sample = 0f;
+        switch (e) {
+          case SoundEvent.Click:
+            sample = Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(920f, 1380f, norm) * t) * 0.4f;
+            break;
+          case SoundEvent.ProductionDone:
+            sample = Mathf.Sin(2f * Mathf.PI * (norm < 0.45f ? 523.25f : 659.25f) * t) * 0.35f;
+            break;
+          case SoundEvent.Warning:
+          case SoundEvent.UnderAttack:
+            sample = Mathf.Sin(2f * Mathf.PI * (680f + 240f * Mathf.Sin(norm * Mathf.PI * 4f)) * t) * 0.35f;
+            break;
+          case SoundEvent.Captured:
+          case SoundEvent.Victory:
+            var freq = norm < 0.33f ? 440f : norm < 0.66f ? 554.37f : 659.25f;
+            sample = Mathf.Sin(2f * Mathf.PI * freq * t) * 0.35f;
+            break;
+          case SoundEvent.Defeat:
+            sample = Mathf.Sin(2f * Mathf.PI * (norm < 0.5f ? 330f : 220f) * t) * 0.35f;
+            break;
+          case SoundEvent.Explosion:
+          case SoundEvent.Collapse:
+            sample = (noise * 0.55f + Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(115f, 38f, norm) * t) * 0.45f);
+            break;
+        }
+        data[i] = Mathf.Clamp(sample * env, -1f, 1f);
+      }
+      var clip = AudioClip.Create($"proc_{e}", count, 1, Rate, false);
+      clip.SetData(data, 0);
+      return clip;
+    }
   }
 
   /// <summary>

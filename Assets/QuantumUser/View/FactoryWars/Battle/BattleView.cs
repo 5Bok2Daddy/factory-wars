@@ -156,6 +156,7 @@ namespace FactoryWars.View {
     void Init(Frame frame) {
       _stage = new GameObject("Stage").transform;
       _stage.SetParent(transform, false);
+      GameAudio.InstallProceduralDefaults();
       _catalog = Resources.Load<ViewCatalog>(ViewCatalog.ResourcePath);
       WorldView.HideBakedScene();
       WorldView.ApplyLighting(Camera.main);
@@ -713,8 +714,13 @@ namespace FactoryWars.View {
         var inside = unit->AttackCooldown.AsFloat;
         if (inside > actor.Cooldown + 0.05f && frame.Exists(unit->Garrison)) {
           var window = frame.Get<Transform3D>(unit->Garrison).Position.ToUnityVector3() + Vector3.up * 4f;
-          var aim = TryTarget(frame, unit->TargetEntity, out var shot, out _) ? (shot - window).normalized : Vector3.forward;
-          Fx.MuzzleFlash(window + aim * 2.5f, aim, 0.7f);
+          var hasAim = TryTarget(frame, unit->TargetEntity, out var shot, out _);
+          var aim = hasAim ? (shot - window).normalized : Vector3.forward;
+          var muzzle = window + aim * 2.5f;
+          Fx.MuzzleFlash(muzzle, aim, 0.7f);
+          if (hasAim) {
+            Fx.Needle(muzzle, shot + Vector3.up * 1.1f, 95f);
+          }
         }
         actor.Cooldown = inside;
         return;

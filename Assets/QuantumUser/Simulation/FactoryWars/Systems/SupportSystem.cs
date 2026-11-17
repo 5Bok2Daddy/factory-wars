@@ -40,6 +40,36 @@ namespace Quantum.FactoryWars {
           continue;
         }
         var spec = f.FindAsset(building->Spec);
+        if (spec.Role == BuildingRole.Headquarters) {
+          // 아군 영역(사령부·전진 사령부 반경 30m) 내 비전투 소형 보병 분대 자동 보충(철 소모).
+          var hqState = FactoryWarsUtil.Player(f, building->Owner);
+          if (hqState != null) {
+            var zoneSqr = (FP)900;
+            var delay = FactoryWarsUtil.SecondsToFrames(f, FP._5);
+            var rate = FP._6 * f.DeltaTime;
+            var units = f.Filter<Transform3D, Unit>();
+            while (units.NextUnsafe(out _, out var uTransform, out var u)) {
+              if (u->Owner != building->Owner || u->Health <= FP._0 || u->Garrison != EntityRef.None || f.Number - u->LastDamagedFrame < delay) {
+                continue;
+              }
+              var uSpec = f.FindAsset(u->Spec);
+              if (uSpec.Size != UnitSize.Small || CitySystem.IsInfantry(uSpec) == false
+                  || FactoryWarsUtil.FlatDistanceSqr(uTransform->Position, transform->Position) > zoneSqr) {
+                continue;
+              }
+              var max = TechSystem.MaxHealth(f, u->Owner, u->Spec);
+              if (u->Health >= max) {
+                continue;
+              }
+              var heal = FPMath.Min(rate, max - u->Health);
+              var cost = heal / (FP)15;
+              if (hqState->Stock.Iron >= cost) {
+                hqState->Stock.Iron -= cost;
+                u->Health += heal;
+              }
+            }
+          }
+        }
         if (spec.Heals != HealTarget.None) {
           var radiusSqr = spec.HealRadius * spec.HealRadius;
           var amount = spec.HealPerSecond * f.DeltaTime;

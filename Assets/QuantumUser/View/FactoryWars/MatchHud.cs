@@ -278,11 +278,11 @@ namespace FactoryWars.View {
         if (e.Player == Controller.Player) {
           ShowAlert("사령부 비상 방어 프로토콜 발동!");
         }
-        _minimap.Ping(e.Position.ToUnityVector3(), new Color(1f, 0.72f, 0.18f));
+        PingAlert(e.Position.ToUnityVector3());
       });
       QuantumEvent.Subscribe<EventBlackBoxDown>(this, e => {
+        PingAlert(e.Position.ToUnityVector3());
         ShowAlert("추락 수송기 블랙박스 발생 — 15초 점령으로 회수");
-        _minimap.Ping(e.Position.ToUnityVector3(), new Color(0.2f, 0.9f, 1f));
       });
       QuantumEvent.Subscribe<EventBlackBoxEnded>(this, e => {
         if (e.Winner == Controller.Player) {
@@ -786,14 +786,17 @@ namespace FactoryWars.View {
       var pos = e.Position.ToUnityVector3();
       switch (e.Phase) {
         case DropPhase.Zone:
+          PingAlert(pos);
           ShowAlert("보급 투하 예고(35초) — 붉은 신호탄 구역 확인");
           _minimap.Ping(pos, new Color(0.95f, 0.22f, 0.16f));
           break;
         case DropPhase.Closing:
+          PingAlert(pos);
           ShowAlert("보급 투하 임박(10초) — 착지 반경 축소");
           _minimap.Ping(pos, new Color(1f, 0.45f, 0.12f));
           break;
         case DropPhase.Landed:
+          PingAlert(pos);
           ShowAlert("보급 상자 착지! 신호탄 시야 공개");
           _minimap.Ping(pos, new Color(1f, 0.85f, 0.25f));
           break;
@@ -1089,6 +1092,9 @@ namespace FactoryWars.View {
       for (var i = 0; i < _resources.Count; i++) {
         var flashing = _flashUntil[i] > Time.unscaledTime && Mathf.Repeat(Time.unscaledTime * 4f, 1f) < 0.5f;
         _resources[i].Back.color = flashing ? theme.Danger : theme.Panel;
+      }
+      if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
+        JumpToAlert();
       }
       if (Time.unscaledTime < _nextRefresh) {
         return;
