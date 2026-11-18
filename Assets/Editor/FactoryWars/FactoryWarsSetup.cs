@@ -978,6 +978,7 @@ namespace FactoryWars.EditorTools {
     }
 
     public static void BuildData() {
+      QuantumRunner.Init();
       var units = Units.ToDictionary(row => row.Id, BuildUnit);
 
       var piercing = Asset<ModuleSpec>("module_piercing_rounds");

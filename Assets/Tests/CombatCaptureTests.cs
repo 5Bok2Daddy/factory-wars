@@ -68,6 +68,18 @@ namespace FactoryWars.Tests {
         }
       }
       Assert.IsTrue(aimed, "조준 자세");
+      // 전후 MVP 카드 및 타임라인 그래프 결과 모달 캡처.
+      if (FactoryWars.View.MatchFlow.Current != null) {
+        FactoryWars.View.MatchFlow.Current.ShowResult();
+        yield return null;
+        yield return ShootHud("post_match_mvp_timeline");
+        var statusDir = System.IO.Path.Combine(Application.dataPath, "..", "Docs", "status_images");
+        System.IO.Directory.CreateDirectory(statusDir);
+        var src = System.IO.Path.Combine(UrbanFolder(), "post_match_mvp_timeline.png");
+        if (System.IO.File.Exists(src)) {
+          System.IO.File.Copy(src, System.IO.Path.Combine(statusDir, "46_post_match_mvp_timeline.png"), true);
+        }
+      }
     }
   }
 }

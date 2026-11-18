@@ -285,7 +285,7 @@ namespace FactoryWars.View {
       kit.Paint(Swatch.White).Box(new Vector3(-0.22f, 0.28f, -0.13f), new Vector3(0.36f, 0.16f, 0.06f));
       kit.Paint(Swatch.White).Box(new Vector3(0.22f, 0.28f, -0.13f), new Vector3(0.36f, 0.16f, 0.06f));
       for (var i = 0; i < count; i++) {
-        kit.Paint(Swatch.Gold).Box(new Vector3((i - (count - 1) / 2f) * 0.48f, 0.92f, 0f), new Vector3(0.34f, 0.34f, 0.22f));
+        kit.Team().Box(new Vector3((i - (count - 1) / 2f) * 0.48f, 0.92f, 0f), new Vector3(0.34f, 0.34f, 0.22f));
       }
       return kit.ToMesh("city_occupants");
     }

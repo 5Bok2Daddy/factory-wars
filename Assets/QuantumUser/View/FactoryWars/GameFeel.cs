@@ -84,9 +84,7 @@ namespace FactoryWars.View {
       var needed = new[] { SoundEvent.RifleFire, SoundEvent.TankCannon };
       foreach (var extra in needed) {
         if (catalog.Get(extra) == null) {
-          var list = new List<AudioCatalog.Slot>(catalog.Slots);
-          list.Add(new AudioCatalog.Slot { Event = extra, Volume = extra == SoundEvent.TankCannon ? 0.55f : 0.35f, MinInterval = extra == SoundEvent.TankCannon ? 0.25f : 0.12f, Haptic = false });
-          catalog.Slots = list.ToArray();
+          catalog.Slots.Add(new AudioCatalog.Slot { Event = extra, Volume = extra == SoundEvent.TankCannon ? 0.55f : 0.35f, MinInterval = extra == SoundEvent.TankCannon ? 0.25f : 0.12f, Haptic = false });
         }
       }
       foreach (var slot in catalog.Slots) {
