@@ -1146,9 +1146,10 @@ namespace Quantum.FactoryWars {
       var units = f.Filter<Unit>();
       while (ordered < MaxOrder && units.NextUnsafe(out var entity, out var unit)) {
         var spec = f.FindAsset(unit->Spec);
-        if (unit->Owner != player || spec.Attack == AttackType.None || f.Number < unit->ReservedUntilFrame || unit->Garrison != EntityRef.None) {
+        if (unit->Owner != player || spec.Attack == AttackType.None || unit->Garrison != EntityRef.None || unit->GarrisonTarget != EntityRef.None) {
           continue;
         }
+        unit->ReservedUntilFrame = 0;
         if (spec.IsNaval) {
           // 항목 33: 배는 뭍의 목표로 공격 이동하지 않는다. 목표가 사거리에 드는 물가가 있을 때만 그 물 위로 가고, 없으면 제자리를 지킨다.
           if (FactoryWarsUtil.FindNavPointNear(f, waterName, target, spec.Range, out var water)) {
@@ -1681,7 +1682,8 @@ namespace Quantum.FactoryWars {
         var units = f.Filter<Transform3D, Unit>();
         while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
           var spec = f.FindAsset(unit->Spec);
-          if (unit->Owner != player || spec.Attack == AttackType.None || spec.IsAir || spec.IsNaval || spec.Range < minRange || f.Number < unit->ReservedUntilFrame || unit->Garrison != EntityRef.None) {
+          if (unit->Owner != player || spec.Attack == AttackType.None || spec.IsAir || spec.IsNaval || spec.Range < minRange
+              || unit->Order != UnitOrder.Stop || f.Number < unit->ReservedUntilFrame || unit->Garrison != EntityRef.None) {
             continue;
           }
           var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, target);
@@ -1719,9 +1721,9 @@ namespace Quantum.FactoryWars {
 
     /// <summary>보통 AI의 전장 판단: 중계소, 통신소, 보급 투하, 고지대.</summary>
     static void PlayBattlefield(Frame f, PlayerRef player, BotState* bot, AiSpec ai) {
-      // 확장 후보가 없는 맵(규칙 시험장)에서는 분대를 빼지 않는다.
+      // 확장 후보가 없는 맵(규칙 시험장)이나 맵 철 고갈·적 사령부 전멸 시에는 분대를 빼지 않고 본대 결전에 집중한다.
       var sites = FactoryWarsUtil.MapInfo(f).Expansions;
-      if (FactoryWarsUtil.InTruce(f) || sites == null || sites.Length == 0) {
+      if (FactoryWarsUtil.InTruce(f) || sites == null || sites.Length == 0 || RemainingIron(f) <= FP._0 || AnyEnemyHeadquarters(f, player) == false) {
         return;
       }
       if (ai.DropSquad > 0 && f.Global->DropAnnounced && bot->RespondedDropFrame != f.Global->NextDropFrame) {
@@ -1906,13 +1908,25 @@ namespace Quantum.FactoryWars {
       return best < FP.MaxValue;
     }
 
+    static bool AnyEnemyHeadquarters(Frame f, PlayerRef player) {
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var b)) {
+        if (b->ConstructionRemaining <= FP._0 && DiplomacySystem.CanAttack(f, player, b->Owner) && f.FindAsset(b->Spec).Role == BuildingRole.Headquarters) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     static void Attack(Frame f, PlayerRef player, BotState* bot, AiSpec ai) {
       FollowLane(f, player, bot, ai);
       if (f.Number < bot->NextAttackFrame || FactoryWarsUtil.InTruce(f)) {
         return;
       }
       CountArmies(f, player, ai, out var army, out var enemyArmy);
-      var sweeping = IsSweeping(army, enemyArmy, ai);
+      var noIron = army > 0 && RemainingIron(f) <= FP._0;
+      var noEnemyHq = army >= 4 && AnyEnemyHeadquarters(f, player) == false;
+      var sweeping = noIron || noEnemyHq || (IsSweeping(army, enemyArmy, ai) && (enemyArmy > 0 || army >= ai.MaxWaveSize));
       // 항목 33: 생산이 멈춘 채(대기열이 StalledSeconds 동안 빔) 군대가 StalledWaveSize 이상이면 채울 수 없는 웨이브를 기다리지 않는다.
       if (ProductionIdle(f, player) == false) {
         bot->IdleSinceFrame = 0;
@@ -1923,11 +1937,13 @@ namespace Quantum.FactoryWars {
         && f.Number - bot->IdleSinceFrame >= FactoryWarsUtil.SecondsToFrames(f, ai.StalledSeconds);
       // 사령부와 공병을 모두 잃었거나 맵 철이 고갈·공격 지연 시 남은 군대로 결판을 낸다.
       var lastStand = ai.LastStand && army > 0 && CannotRecover(f, player);
-      var noIron = army > 0 && RemainingIron(f) <= FP._0;
       var overdue = army > 0 && f.Number - bot->NextAttackFrame >= FactoryWarsUtil.SecondsToFrames(f, (FP)90);
       FPVector3 target;
       PlayerRef enemy = default;
       var forced = stalled || lastStand || noIron || overdue;
+      if (noIron && army > 0) {
+        sweeping = true;
+      }
       if (sweeping) {
         if (FindCoreTarget(f, player, ArmyCenter(f, player, bot->Home), out target) == false) {
           return;
