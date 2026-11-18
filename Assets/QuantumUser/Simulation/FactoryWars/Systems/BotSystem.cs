@@ -1970,7 +1970,8 @@ namespace Quantum.FactoryWars {
       }
       // 이미 나가 있는 군대를 경유점으로 되돌리지 않는다. 공격 주기보다 이동이 긴 맵에서 왕복하게 된다.
       var center = ArmyCenter(f, player, bot->Home);
-      var hasSide = PickSideLane(f, player, enemy, bot, ai, out var lane);
+      FPVector3 lane = default;
+      var hasSide = f.Number < FactoryWarsUtil.SecondsToFrames(f, (FP)660) && PickSideLane(f, player, enemy, bot, ai, out lane);
       if (IsPastLane(center, lane, target)) {
         OrderArmy(f, player, target);
       } else {

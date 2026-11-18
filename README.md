@@ -1,8 +1,8 @@
 # Factory Wars — 모바일 진행 현황 대시보드
 
 > **현재 완료된 마지막 TASK:** **TASK-32 · 33 · 34 · 35 · 36 · 37 + 모바일 전술 기능 3종** (Kubold 99클립 바인딩, 맵 5종 베이킹·캡처, 절차적 효과음, 주둔 고지대 보너스·창문 예광탄·방패 휘장, `2.5s` 상단 전술 무전 토스트, 전후 MVP 유닛 카드 & 타임라인 그래프)
-> **최신 검증:** PlayMode 통합(로직/오디오 35종 + AI 배치 10판) **45/45 통과** (`final45_clean.xml`, `EXIT:0`, **AI 타임아웃 0/10건 — 10/10 전승부 완주**), GPU 캡처 **5/5 + 5/5 통과** (`Docs/status_images/map_*.png`, `46_*.png`, `kubold_anim_verify.png`), 금지어 **0건**
-> **기준 시각:** 2026-11-18 20:14 (전체 항목 **완료 (100%)** 및 `origin main` 동기화)
+> **최신 검증:** PlayMode 통합(로직/오디오 35종 + AI 배치 10판) **45/45 통과** (`aibatch_final10_v2.xml`, **AI 타임아웃 0/10건 — 4인전 승률 60%:40% · 평균 18.08분, 사막 2인전 승률 40%:60% · 평균 18.32분, 10판 합산 승률 50%:50% · 평균 18.20분**), GPU 캡처 **5/5 + 6/6 통과** (`Docs/status_images/map_*.png`, `46_*.png`, `kubold_anim_verify.png`), 최신 Android APK 빌드(`Builds/FW-Release-Full.apk`, **78.66MB**, `FW3-0a2931a9a693`), 금지어 **0건**
+> **기준 시각:** 2026-11-18 22:32 (전체 항목 **완료 (100%)** 및 `origin main` 동기화)
 
 ---
 
@@ -36,7 +36,7 @@
 | **TASK-30** | 게임 완성도 · 에셋 교체 구조 · 실서버 | **완료** | `ViewCatalog`/`UiCatalog` 교체 구조, 실서버 2클라이언트 검증, APK `FW3-3fcb27df6c6c` (`6810f48`) |
 | **TASK-31** | 테크 단계 · 연구소 · HUD 개편 | **완료** | 1~3단계 테크, 연구소 업그레이드, 유닛 6종 추가, HUD 4구역·3×3 명령 카드 (`56448ab`) |
 | **TASK-32** | 보병 엄폐 · 건물 7종 · Kubold 애니메이션 | **완료 (100%)** | `Cover Rifle Animset Pro` 99클립(`Rifle_Idle`, `CoverLo_CoverR`, `CoverLo_AimR`, `CoverHi_AimR`, `CoverHi_AimR_Burst_Add`) 바인딩, `SM_Wep_*` 오른손 장착, `Y=+1.1m` 조준점 (`kubold_anim_verify.png`) |
-| **TASK-33** | 진영 궁극 전력 · 벙커 수용 · 밸런스 | **완료 (100%)** | 궁극 전력 3종, 벙커 4분대 수용, AI 공격성·본진/사막 광맥 및 `noEnemyHq` 소탕 튜닝 완료 — **AI 10판 배치 10/10 결정 승부 (타임아웃 0건)**, 사막 2인전 승률 **40%:60%** · 평균 **18.0분** (`final45_clean.xml`) |
+| **TASK-33** | 진영 궁극 전력 · 벙커 수용 · 밸런스 | **완료 (100%)** | 궁극 전력 3종, 벙커 4분대 수용, 9분/13분 건물 공성 배율 및 Tier 3 대륙 연방(`cf_gale_gunship`·`cf_longwall_mlrs`·`cf_fortress_tank`) 보정 완료 — **AI 10판 배치 10/10 결정 승부 (타임아웃 0건)**: **4인전 자유 연방 승률 60%(3승 2패) · 평균 18.08분**, **사막 2인전 자유 연방 승률 40%(2승 3패) · 평균 18.32분**, **10판 합산 50%:50% · 평균 18.20분** (`aibatch_final10_v2.xml`) |
 | **TASK-34** | 전장의 안개 · 저격수 · 항공 작전 (Part A~E) | **완료 (100%)** | A 안개 · B 보급 35초/10초 알람 · C 주둔 저격수 · D 항공 작전 · E 모바일 `AirOpsPanel` UI 및 AI 저격/항공 출격 연동 완료 (`Sniper_*`, `Sortie_*`, `Fog_*`, `Drop_*` 전원 통과) |
 | **TASK-35** | 맵 풀 5종 베이킹 & AI 타임아웃 해결 | **완료 (100%)** | `Map4P`, `MapDesert`, `MapUrban`, `MapArchipelago`, `MapStrait` 5종 씬 + NavMesh 베이킹 및 캡처(`map_*.png`), AI 전진 멀티 확장·보급 쟁탈·소탕 개선으로 **타임아웃 0/10건 달성** |
 | **TASK-36** | 시가전 배경 · 수로 · 가독성 & 절차적 오디오 | **완료 (100%)** | 도로 `+3.5m` 이격, 슬림 체력바(`-55%`), `256px` 쌍선형 미니맵(`22%` 미탐색 윤곽 + 영역 고리), `#181A1B` 그을음 데칼, 2열 6인 분대(`0.06m` 링), `AudioClip.Create` 절차적 전투 효과음 |
@@ -50,7 +50,7 @@
   - 자유 연방 **공중 항모("스톰네스트")**, 대륙 연방 **전략 미사일**, 차기 진영 예약 **상륙 강습단** 구현 완료.
   - 실제 Photon 서버 2클라이언트 온라인 테스트에서 **체크섬 8,877회 일치 · 디싱크 0건** (전체 세션 10,623회 일치).
   - PlayMode 전체 **427개 중 331개 통과 · 0 실패** (96개는 AI 배치/캡처/성능 등 별도 실행 시험), 시뮬레이션 금지어 **0건**.
-  - 최신 빌드: `Builds/FactoryWars-dev.apk` (**55.7MB**, 버전 `FW3-f75c4d685804`).
+  - 최신 빌드: `Builds/FW-Release-Full.apk` 및 `Builds/FactoryWars-dev.apk` (**78.66MB** / `82,483,585 bytes`, 버전 태그 `FW3-0a2931a9a693`).
 - **AI 밸런스 및 전술 시스템 (`TASK-32` ~ `37` 완료):**
   - **Kubold `Cover Rifle Animset Pro` (99클립):** `Rifle_Idle`, `CoverLo_CoverR`, `CoverLo_AimR`, `CoverHi_AimR`, `CoverHi_AimR_Burst_Add` 바인딩 및 `SM_Wep_*` 소총 장착 완료 (`kubold_anim_verify.png`).
   - **전장 맵 5종 베이킹 및 캡처:** `Map4P`(`map_standard.png`), `MapDesert`(`map_desert.png`), `MapUrban`(`map_urban.png`), `MapArchipelago`(`map_archipelago.png`), `MapStrait`(`map_strait.png`) NavMesh 굽기 및 검증 완료.
@@ -63,9 +63,11 @@
 ### TASK-32 ~ 37 통합 검증: Kubold 보병 모션, 교전·예광탄·그을음, 안개·미니맵·HUD, 전후 MVP & 타임라인 리포트 (2026-11-18)
 ![전후 MVP 유닛 카드 및 타임라인 그래프 리포트 UI](Docs/status_images/46_post_match_mvp_timeline.png)
 ![Kubold 보병 사격 및 엄폐 모션 검증](Docs/status_images/kubold_anim_verify.png)
-![교전 공격선·예광탄·지면 그을음 데칼](Docs/status_images/46_combat_lines_tracers_scorch.png)
-![전장의 안개 및 256px 미니맵](Docs/status_images/46_fog_and_minimap.png)
-![상단 전술 HUD 및 미니맵](Docs/status_images/46_hud_top_and_minimap.png)
+![Kubold 근접 사격 자세 및 소총 파지](Docs/status_images/46_kubold_combat_closeup.png)
+![교전 공격선·예광탄·지면 그을음 데칼](Docs/status_images/46_combat_lines.png)
+![전장의 안개 및 256px 미니맵](Docs/status_images/46_fog_moved.png)
+![상단 전술 HUD 및 미니맵](Docs/status_images/46_hud.png)
+![중앙 암시장 및 경비 드론 3기](Docs/status_images/46_trader_selected.png)
 
 ### TASK-35 전장 맵 5종 프리셋 캡처 (표준 · 사막 · 시가지 · 다도해 · 해협)
 ![표준 4인전 (Map4P)](Docs/status_images/map_standard.png)

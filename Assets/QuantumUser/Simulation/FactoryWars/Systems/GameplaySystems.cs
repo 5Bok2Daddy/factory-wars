@@ -741,6 +741,9 @@ namespace Quantum.FactoryWars {
           amount *= weapon.Spec.AbilityMultiplier;
         }
         amount *= DepthSystem.ProtocolFactor(f, building);
+        if (f.Number >= FactoryWarsUtil.SecondsToFrames(f, (FP)540)) {
+          amount *= f.Number >= FactoryWarsUtil.SecondsToFrames(f, (FP)780) ? (FP)3 : (FP)2;
+        }
         building->Health -= amount;
         DepthSystem.CheckProtocol(f, target, building);
         if (building->Health <= FP._0) {

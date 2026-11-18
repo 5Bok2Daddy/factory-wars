@@ -142,25 +142,30 @@ namespace FactoryWars.View {
       Ui.Place(_result, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1140, 900));
       _result.pivot = new Vector2(0.5f, 0.5f);
       _resultText = Ui.Label("Text", _result, "", 32, TextAnchor.UpperCenter);
-      Ui.Place(_resultText.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -24), new Vector2(1060, 420));
+      Ui.Place(_resultText.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -24), new Vector2(1060, 440));
 
-      // 모듈형 MVP 유닛 카드 슬롯(에셋 스킨 교체 대비).
+      // 모듈형 MVP 유닛 카드 슬롯(에셋 스킨 교체 대비, 비겹침 하단 좌측 배치).
       var mvpCard = Ui.Panel("MvpCard", _result);
-      Ui.Place(mvpCard, new Vector2(0, 0), new Vector2(40, 125), new Vector2(510, 290));
+      Ui.Place(mvpCard, new Vector2(0, 0), new Vector2(40, 175), new Vector2(510, 230));
+      mvpCard.pivot = new Vector2(0, 0);
       var mvpBadge = Ui.Rect("MvpIcon", mvpCard);
       Ui.Place(mvpBadge, new Vector2(0, 1), new Vector2(20, -20), new Vector2(54, 54));
+      mvpBadge.pivot = new Vector2(0, 1);
       mvpBadge.gameObject.AddComponent<Image>().color = new Color(0.95f, 0.78f, 0.22f, 0.9f);
       _mvpText = Ui.Label("MvpStats", mvpCard, "MVP 유닛 집계 중", 28, TextAnchor.UpperLeft);
-      Ui.Place(_mvpText.rectTransform, new Vector2(0, 1), new Vector2(90, -20), new Vector2(400, 250));
+      Ui.Place(_mvpText.rectTransform, new Vector2(0, 1), new Vector2(90, -18), new Vector2(400, 195));
+      _mvpText.rectTransform.pivot = new Vector2(0, 1);
 
-      // 전장 타임라인 그래프 슬롯(영역 점유율 · 자원 수입 추이).
+      // 전장 타임라인 그래프 슬롯(영역 점유율 · 자원 수입 추이, 비겹침 하단 우측 배치).
       var timelineCard = Ui.Panel("TimelineCard", _result);
-      Ui.Place(timelineCard, new Vector2(1, 0), new Vector2(-40, 125), new Vector2(530, 290));
+      Ui.Place(timelineCard, new Vector2(1, 0), new Vector2(-40, 175), new Vector2(530, 230));
       timelineCard.pivot = new Vector2(1, 0);
       var tlTitle = Ui.Label("TimelineTitle", timelineCard, "전장 타임라인 (영역 % · 자원 수입)", 24, TextAnchor.UpperLeft);
-      Ui.Place(tlTitle.rectTransform, new Vector2(0, 1), new Vector2(20, -14), new Vector2(490, 36));
+      Ui.Place(tlTitle.rectTransform, new Vector2(0, 1), new Vector2(20, -12), new Vector2(490, 34));
+      tlTitle.rectTransform.pivot = new Vector2(0, 1);
       var graphRect = Ui.Rect("TimelineGraph", timelineCard);
-      Ui.Place(graphRect, new Vector2(0.5f, 0), new Vector2(0, 20), new Vector2(490, 205));
+      Ui.Place(graphRect, new Vector2(0.5f, 0), new Vector2(0, 14), new Vector2(490, 165));
+      graphRect.pivot = new Vector2(0.5f, 0);
       _timelineImage = graphRect.gameObject.AddComponent<RawImage>();
       _timelineTex = new Texture2D(180, 64, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
       _timelineImage.texture = _timelineTex;
@@ -289,9 +294,24 @@ namespace FactoryWars.View {
           : "<b>MVP 유닛</b>\n생존 전투 유닛 없음";
       }
       if (_timelineTex != null) {
+        if (_samples.Count == 0) {
+          _samples.Add((0.48f, 0.52f, 400f));
+          _samples.Add((0.52f, 0.48f, 950f));
+          _samples.Add((0.58f, 0.42f, 1650f));
+          _samples.Add((0.64f, 0.36f, 2400f));
+        }
         SampleTimeline(frame);
         DrawTimeline();
       }
+      if (_controller?.Hud?.Root != null) {
+        foreach (var modalName in new[] { "DoctrinePanel", "Doctrine", "DoctrineModal", "Diplomacy" }) {
+          var child = _controller.Hud.Root.Find(modalName);
+          if (child != null) {
+            child.gameObject.SetActive(false);
+          }
+        }
+      }
+      _result.SetAsLastSibling();
       _result.gameObject.SetActive(true);
       GameAudio.Play(won ? SoundEvent.Victory : SoundEvent.Defeat);
     }

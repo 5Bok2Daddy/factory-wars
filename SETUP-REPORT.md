@@ -1,18 +1,25 @@
 # TASK-01 결과 보고서
 
 <!-- 밤사이 요약 시작 -->
-## 최종 완료 요약 (2026-11-18 20:14, `[gemini]` — TASK-32 ~ 37 완료 (100%) + 모바일 전술 기능 3종 + 절차적 효과음)
+## 최종 완료 요약 (2026-11-18 22:32, `[gemini]` — TASK-32 ~ 37 완료 (100%) + 4인전 <20분 밸런스 완성 + 최신 Android APK 빌드)
 - **승인된 모바일 전술 기능 3종 & 오디오 구현 (터치 전용, PC 단축키/자동보충 미포함):**
   1. **주둔 고지대 전투 보너스 & 창문 예광탄 (`GameplaySystems`, `SniperSystem`, `BattleView`, `CityView`):** 주둔 보병·저격수 사거리 `+15%`, 받는 피해 `-25%`, 건물 상부 창문 총구 섬광·예광탄(`#FFD166`) 발사 연출, 주둔 방패/갈매기형 휘장 표시.
   2. **경량 전술 무전 토스트 배너 (`MatchHud`):** 보급 35초/10초 예고·7분 수문 개방·블랙박스 추락·암시장 적대 시 상단 중앙 `2.5s` 자동 페이드 토스트 배너 및 미니맵 핑 고리 표시.
-  3. **전후 MVP 유닛 카드 · 전장 타임라인 그래프 모달 (`MatchFlow`):** 승리/패배 결과 화면에 모듈형 `MvpCard`(유닛 이름·계급 별 `★~★★★`·처치·저격 견제·승급) 및 `TimelineCard`(`180x64` 영역 점유율 파랑/빨강 · 누적 자원 금색 그래프 + 항공 출격·암시장 거래 요약) 표시 (`46_post_match_mvp_timeline.png`).
+  3. **전후 MVP 유닛 카드 · 전장 타임라인 그래프 모달 (`MatchFlow`):** 승리/패배 결과 화면에 비겹침 모듈형 `MvpCard`(유닛 이름·계급 별 `★~★★★`·처치·저격 견제·승급) 및 `TimelineCard`(`180x64` 영역 점유율 파랑/빨강 · 누적 자원 금색 그래프 + 항공 출격·암시장 거래 요약) 표시 및 배경 `DoctrinePanel` 자동 닫기 (`46_post_match_mvp_timeline.png`).
   4. **절차적 군용 효과음 (`GameFeel`, `BattleFx`):** `AudioClip.Create` 기반 소총 점사(`RifleFire`), 전차 포격(`TankCannon`), 폭발(`Explosion`), 경보(`Warning`), 터치 클릭(`Click`) 절차적 합성음 재생.
-- **`TASK-33` · `35` AI 타임아웃 해결 및 밸런스 완성:** `BotSystem`에서 `SendSquad`가 진격 중인 본대 유닛을 차출하던 문제 수정, `OrderArmy` 본대 소집 통합, 적 사령부 전멸(`noEnemyHq`)·자원 고갈(`noIron`) 시 직행 소탕(`sweeping`) 활성화.
-- **최종 검증 (2026-11-18 20:14):**
-  - PlayMode 통합(로직/오디오 35종 + AI 10판 배치) **45/45 통과** (`final45_clean.xml`, `EXIT:0`), GPU 맵 5종 캡처(`CaptureMaps35_AllFive`) **통과** (`Docs/status_images/map_*.png`), GPU 전투·안개·HUD·리포트 캡처 **5/5 통과** (`46_*.png`, `kubold_anim_verify.png`), 결정론 금지어 **0건**.
-  - AI 10판 배치(`AiBatch_DesertTwoPlayer(0..4)` + `AiBatch_FourPlayer(0..4)`): **10/10 전승부 결정 완주 (타임아웃 0건!)** (`final45_clean.xml`). 사막 2인전은 5/5 결정 승부(자유 연방 2승 : 대륙 연방 3승, **승률 40%:60%**, 평균 **17.99분**), 4인전은 5/5 결정 승부(타임아웃 0건, 평균 **22.45분**).
+- **`TASK-33` · `35` AI 타임아웃 해결 및 4인전 `<20분` · 승률 `40%–60%` 달성:** `BotSystem`에서 `SendSquad` 본대 차출 버그 수정, 11분 이후 측면 우회 생략, `GameplaySystems` 9분(`2배`)·13분(`3배`) 건물 공성 피해 배율 및 Tier 3 대륙 연방 유닛(`cf_gale_gunship`, `cf_longwall_mlrs`, `cf_fortress_tank`) 보정 적용.
+- **최신 Android APK 빌드 완료 (`2026-11-18 22:31`):**
+  - 경로: `C:\Users\MinGyu\FactoryWars\Builds\FW-Release-Full.apk` (동일 본 `C:\Users\MinGyu\FactoryWars\Builds\FactoryWars-dev.apk`)
+  - 파일 크기: **78.66 MB** (`82,483,585 bytes`)
+  - SHA-256 태그: **`FW3-0a2931a9a693`** (`AndroidBuild: Succeeded`, 오류 0)
+- **최종 검증 (`2026-11-18 22:32`):**
+  - PlayMode 통합(로직/오디오 35종 + AI 10판 배치) **45/45 통과**, GPU 맵 5종 고유 전경 캡처(`CaptureMaps35_AllFive`) **통과** (`Docs/status_images/map_*.png`), GPU 전투·안개·HUD·리포트 캡처 **6/6 통과** (`46_*.png`, `kubold_anim_verify.png`), 결정론 금지어 **0건**.
+  - AI 10판 배치(`AiBatch_DesertTwoPlayer(0..4)` + `AiBatch_FourPlayer(0..4)`): **10/10 전승부 결정 완주 (타임아웃 0건!)** (`aibatch_final10_v2.xml`):
+    - **4인전 (`Map4P` 5판):** 자유 연방 3승(`4P,2: 965.95s`, `4P,3: 1255.75s`, `4P,4: 1040.15s`) : 대륙 연방 2승(`4P,0: 1044.25s`, `4P,1: 1117.55s`) → **자유 연방 승률 60% : 대륙 연방 40%**, **평균 경기 시간 18.08분 (`1084.73s`, 목표 `15–20분` 달성)**
+    - **사막 2인전 (`MapDesert` 5판):** 자유 연방 2승(`2P,0: 1074.1s`, `2P,4: 992.25s`) : 대륙 연방 3승(`2P,1: 1137.75s`, `2P,2: 1290.4s`, `2P,3: 1001.5s`) → **자유 연방 승률 40% : 대륙 연방 60%**, **평균 경기 시간 18.32분 (`1099.20s`, 목표 `15–20분` 달성)**
+    - **10판 전체 합산:** 자유 연방 5승 : 대륙 연방 5승 (**승률 50% : 50%**), **전체 평균 경기 시간 18.20분 (`1091.97s`)**, **타임아웃 0/10건**
 
-마지막 작업: `[gemini]` 2026-11-18 20:14 / `TASK-32 ~ 37` 전체 완료 (100%) 및 `origin main` 푸시
+마지막 작업: `[gemini]` 2026-11-18 22:32 / 4인전 18.08분(60%:40%) 밸런스 완성, GitHub 이미지 대소문자·파일명 일치, Android APK(`FW-Release-Full.apk`, `FW3-0a2931a9a693`) 빌드 및 `origin main` 푸시
 
 ## 다음 단계 (2026-11-14, 항목 34 부분 완료) — 재개할 때 여기부터
 - **2026-11-15 사용자 지시: 순서 36 → 34 → 35 → 37.** 36 추가 지시(수문·깊이 거품·모래주머니)는 끝났다("항목 36 추가 지시 결과").
@@ -3493,4 +3500,4 @@ OVERNIGHT-QUEUE.md 규칙 1에 따라 묻지 않고 기본값으로 진행했다
 | 원본 수정 | 없음(Assets_PackFilesUnchanged 통과) |
 | 사면 좋은 것 | 소총 사격·조준 애니메이션 팩(Kubold Rifle 계열), URP용 폭발·연기 VFX 팩 |
 
-마지막 작업: `[gemini]` 2026-11-18 20:14 / `TASK-32 ~ 37` 전체 완료 (100%), PlayMode+AI 배치 45/45 통과(타임아웃 0건) 및 `origin main` 푸시
+마지막 작업: `[gemini]` 2026-11-18 22:32 / 4인전 18.08분(60%:40%) 밸런스 완성, GitHub 이미지 경로 일치, Android APK(`FW-Release-Full.apk`, `FW3-0a2931a9a693`) 빌드 및 `origin main` 푸시

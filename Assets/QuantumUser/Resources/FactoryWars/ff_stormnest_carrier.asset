@@ -33,7 +33,7 @@ MonoBehaviour:
   BuildTimeSeconds:
     RawValue: 11796480
   MaxHealth:
-    RawValue: 393216000
+    RawValue: 275251200
   Attack: 4
   Damage:
     RawValue: 4587520

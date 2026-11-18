@@ -306,10 +306,10 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "cf_dragonscale_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(175, 0, 45, 60), Build = 28, Health = 610, Attack = AttackType.AntiArmor, Damage = 50, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
       new UnitRow { Id = "cf_thunder_aa", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(170, 0, 50, 60), Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
       // 항목 31 새 중형 공중: 비행장의 공격헬기(B2: 대륙 연방 비행장이 만들 것이 없던 문제).
-      new UnitRow { Id = "cf_gale_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(210, 0, 80, 80), Build = 34, Health = 400, Attack = AttackType.AntiArmor, Damage = 45, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
-      new UnitRow { Id = "cf_longwall_mlrs", At = "heavy_works", Size = UnitSize.Large, Cost = R(400, 0, 200, 200), Build = 55, Health = 1000, Attack = AttackType.Area, Damage = 120, Range = 18, MinRange = 6, Splash = 4, Interval = 6, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
+      new UnitRow { Id = "cf_gale_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(200, 0, 75, 75), Build = 30, Health = 480, Attack = AttackType.AntiArmor, Damage = 56, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
+      new UnitRow { Id = "cf_longwall_mlrs", At = "heavy_works", Size = UnitSize.Large, Cost = R(360, 0, 170, 170), Build = 48, Health = 1100, Attack = AttackType.Area, Damage = 195, Range = 18, MinRange = 6, Splash = 4, Interval = 4.5, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
       // 항목 31 새 대형: 중공업 기지의 요새 전차(물량형이라 자유 연방 중전차보다 싸고 약하다).
-      new UnitRow { Id = "cf_fortress_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(380, 0, 160, 120), Build = 50, Health = 1650, Attack = AttackType.AntiArmor, Damage = 100, Range = 9, Interval = 2.5, Speed = 3.5, Population = 5 },
+      new UnitRow { Id = "cf_fortress_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(340, 0, 140, 100), Build = 42, Health = 2200, Attack = AttackType.AntiArmor, Damage = 140, Range = 9, Interval = 2.5, Speed = 3.5, Population = 5 },
       new UnitRow { Id = "ff_scout_boat", At = "shipyard", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
       new UnitRow { Id = "ff_artillery_ship", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
       // 항목 34-D 작전기(비조작, 비행장 격납 칸). 전투기=기총소사(2단계), 공격기=폭격(3단계), 수송기=공수 투하(2단계). 수치는 ApplySortie 표.
@@ -327,7 +327,7 @@ namespace FactoryWars.EditorTools {
     // 비용 칸은 AI의 가치 계산용이다(실제 비용은 UltimateSpec). 인구는 BuildUltimates에서 따로 정한다.
     static readonly UnitRow[] UltimateUnits = {
       // 공중 항모 "스톰네스트": 매우 느리고 튼튼하다. 주포는 지상 중거리 범위 포격. 대공 무기에 1.5배로 맞는다(UltimateSpec).
-      new UnitRow { Id = "ff_stormnest_carrier", Size = UnitSize.Large, Air = true, Cost = R(1700, 0, 900, 600), Build = 180, Health = 6000, Attack = AttackType.Area, Damage = 70, Range = 12, Splash = 3, Interval = 3, Speed = 2.2 },
+      new UnitRow { Id = "ff_stormnest_carrier", Size = UnitSize.Large, Air = true, Cost = R(1700, 0, 900, 600), Build = 180, Health = 4200, Attack = AttackType.Area, Damage = 70, Range = 12, Splash = 3, Interval = 3, Speed = 2.2 },
       // 함재 드론 "둥지 드론": 소형 공중, 대전차 경무장. 항모 반경 안에서만 싸운다.
       new UnitRow { Id = "ff_nest_drone", Size = UnitSize.Small, Air = true, Cost = R(60, 0, 20, 20), Build = 12, Health = 160, Attack = AttackType.AntiArmor, Damage = 14, Range = 6, Interval = 1, Speed = 9 },
       // 상륙정 "파도머리": 탑재 부대를 해안에 내리고 포격 지원한다(차기 진영용, 시험 전용 진영에만 연결).

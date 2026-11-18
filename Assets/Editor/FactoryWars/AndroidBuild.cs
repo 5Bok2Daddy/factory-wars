@@ -46,6 +46,9 @@ namespace FactoryWars.EditorTools {
       };
       var report = BuildPipeline.BuildPlayer(options);
       var summary = report.summary;
+      if (summary.result == BuildResult.Succeeded && File.Exists(output)) {
+        File.Copy(output, Path.Combine(folder, "FW-Release-Full.apk"), true);
+      }
       Debug.Log($"AndroidBuild: {summary.result}, 크기 {summary.totalSize / (1024f * 1024f):0.0}MB, 시간 {summary.totalTime}, 경고 {summary.totalWarnings}, 오류 {summary.totalErrors}, 경로 {summary.outputPath}");
       if (Application.isBatchMode) {
         EditorApplication.Exit(summary.result == BuildResult.Succeeded ? 0 : 1);

@@ -66,22 +66,31 @@ namespace FactoryWars.Tests {
     [UnityTest, Explicit]
     public IEnumerator CaptureMaps35_AllFive() {
       var pairs = new[] {
-        ("Map4P", "map_standard"),
-        ("MapDesert", "map_desert"),
-        ("MapUrban", "map_urban"),
-        ("MapArchipelago", "map_archipelago"),
-        ("MapStrait", "map_strait"),
+        ("Map4P", "map_standard", new Vector2(0f, 0f), 115f),
+        ("MapDesert", "map_desert", new Vector2(-70f, -30f), 95f),
+        ("MapUrban", "map_urban", new Vector2(-36f, -36f), 72f),
+        ("MapArchipelago", "map_archipelago", new Vector2(-74f, -52f), 105f),
+        ("MapStrait", "map_strait", new Vector2(-120f, -92f), 88f),
       };
-      foreach (var (sceneId, shotName) in pairs) {
+      var statusDir = System.IO.Path.Combine(Application.dataPath, "..", "Docs", "status_images");
+      System.IO.Directory.CreateDirectory(statusDir);
+      foreach (var (sceneId, shotName, focus, height) in pairs) {
+        TearDown();
+        yield return null;
         yield return StartMatch($"Assets/QuantumUser/Scenes/{sceneId}.unity", 4, truce: 0);
         yield return WaitForHud();
+        yield return WaitForBattle();
         Time.timeScale = 1f;
         var cam = Controller().Camera;
-        cam.MoveTo(Vector2.zero);
-        cam.Height = 140f;
+        cam.MoveTo(focus);
+        cam.Height = height;
         cam.Apply();
         yield return new WaitForSeconds(0.4f);
         ShootUrban(shotName);
+        var src = System.IO.Path.Combine(UrbanFolder(), shotName + ".png");
+        if (System.IO.File.Exists(src)) {
+          System.IO.File.Copy(src, System.IO.Path.Combine(statusDir, shotName + ".png"), true);
+        }
       }
     }
   }
