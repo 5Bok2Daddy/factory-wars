@@ -513,6 +513,9 @@ namespace Quantum.Prototypes.Unity {
     public Int32 Kills;
     public Int32 VetRank;
     public Int32 LastDamagedFrame;
+    public Quantum.QuantumEntityPrototype Transport;
+    public Quantum.QuantumEntityPrototype BoardTarget;
+    public Int32 RampOpenUntilFrame;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.UnitPrototype prototype);
     public override Quantum.Prototypes.UnitPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.UnitPrototype();
@@ -553,6 +556,9 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Kills, out result.Kills);
       converter.Convert(this.VetRank, out result.VetRank);
       converter.Convert(this.LastDamagedFrame, out result.LastDamagedFrame);
+      converter.Convert(this.Transport, out result.Transport);
+      converter.Convert(this.BoardTarget, out result.BoardTarget);
+      converter.Convert(this.RampOpenUntilFrame, out result.RampOpenUntilFrame);
       ConvertUser(converter, ref result);
       return result;
     }

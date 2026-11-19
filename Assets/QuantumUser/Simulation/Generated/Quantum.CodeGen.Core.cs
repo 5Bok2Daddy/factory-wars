@@ -2135,19 +2135,21 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct ScorchedZone : Quantum.IComponent {
-    public const Int32 SIZE = 56;
+    public const Int32 SIZE = 64;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(4)]
-    public PlayerRef Owner;
-    [FieldOffset(32)]
-    public FPVector3 Position;
-    [FieldOffset(16)]
-    public FP Radius;
     [FieldOffset(8)]
-    public FP DamagePerSecond;
+    public PlayerRef Owner;
+    [FieldOffset(40)]
+    public FPVector3 Position;
     [FieldOffset(24)]
+    public FP Radius;
+    [FieldOffset(16)]
+    public FP DamagePerSecond;
+    [FieldOffset(32)]
     public FP SlowMultiplier;
     [FieldOffset(0)]
+    public Int32 StartFrame;
+    [FieldOffset(4)]
     public Int32 UntilFrame;
     public override readonly Int32 GetHashCode() {
       unchecked { 
@@ -2157,12 +2159,14 @@ namespace Quantum {
         hash = hash * 31 + Radius.GetHashCode();
         hash = hash * 31 + DamagePerSecond.GetHashCode();
         hash = hash * 31 + SlowMultiplier.GetHashCode();
+        hash = hash * 31 + StartFrame.GetHashCode();
         hash = hash * 31 + UntilFrame.GetHashCode();
         return hash;
       }
     }
     public static void Serialize(void* ptr, FrameSerializer serializer) {
         var p = (ScorchedZone*)ptr;
+        serializer.Stream.Serialize(&p->StartFrame);
         serializer.Stream.Serialize(&p->UntilFrame);
         PlayerRef.Serialize(&p->Owner, serializer);
         FP.Serialize(&p->DamagePerSecond, serializer);
@@ -2281,66 +2285,66 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Unit : Quantum.IComponent {
-    public const Int32 SIZE = 256;
+    public const Int32 SIZE = 272;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(80)]
+    [FieldOffset(84)]
     public PlayerRef Owner;
     [FieldOffset(120)]
     public AssetRef<UnitSpec> Spec;
-    [FieldOffset(192)]
+    [FieldOffset(208)]
     public FP Health;
     [FieldOffset(0)]
     public UnitOrder Order;
-    [FieldOffset(232)]
+    [FieldOffset(248)]
     public FPVector3 TargetPosition;
-    [FieldOffset(160)]
+    [FieldOffset(168)]
     public EntityRef TargetEntity;
-    [FieldOffset(176)]
+    [FieldOffset(192)]
     public FP AttackCooldown;
-    [FieldOffset(200)]
+    [FieldOffset(216)]
     public FP ReactiveArmorCooldown;
     [FieldOffset(96)]
     [FramePrinter.FixedArrayAttribute(typeof(AssetRef<ModuleSpec>), 3)]
     private fixed Byte _Modules_[24];
-    [FieldOffset(168)]
+    [FieldOffset(184)]
     public FP AbilityCooldown;
     [FieldOffset(16)]
     public Int32 EngagedUntilFrame;
     [FieldOffset(8)]
     public Int32 DesignatedUntilFrame;
-    [FieldOffset(76)]
+    [FieldOffset(80)]
     public PlayerRef DesignatedBy;
-    [FieldOffset(184)]
+    [FieldOffset(200)]
     public FP DesignatedBonus;
-    [FieldOffset(56)]
-    public Int32 SlideTurn;
-    [FieldOffset(52)]
-    public Int32 SlideFace;
     [FieldOffset(60)]
+    public Int32 SlideTurn;
+    [FieldOffset(56)]
+    public Int32 SlideFace;
+    [FieldOffset(64)]
     public Int32 SlideUntilFrame;
     [FieldOffset(32)]
     public Int32 LastFiredFrame;
-    [FieldOffset(44)]
+    [FieldOffset(48)]
     public Int32 ReservedUntilFrame;
-    [FieldOffset(88)]
+    [FieldOffset(92)]
     public QBoolean Swarming;
-    [FieldOffset(136)]
-    public EntityRef Garrison;
     [FieldOffset(144)]
+    public EntityRef Garrison;
+    [FieldOffset(152)]
     public EntityRef GarrisonTarget;
-    [FieldOffset(208)]
+    [FieldOffset(224)]
     public FPVector3 PatrolOrigin;
-    [FieldOffset(128)]
+    [FieldOffset(136)]
     public EntityRef Cover;
-    [FieldOffset(84)]
+    [FieldOffset(88)]
     public QBoolean InCover;
     [FieldOffset(4)]
     public Int32 AssaultUntilFrame;
-    [FieldOffset(48)]
+    [FieldOffset(52)]
     public Int32 SetupUntilFrame;
-    [FieldOffset(68)]
+    [FieldOffset(72)]
     public Int32 StealthUntilFrame;
-    [FieldOffset(64)]
+    [FieldOffset(68)]
     public Int32 StealthReadyFrame;
     [FieldOffset(36)]
     public Int32 MuzzleRevealUntilFrame;
@@ -2350,14 +2354,20 @@ namespace Quantum {
     public Int32 DetectedMask;
     [FieldOffset(20)]
     public Int32 JammerUntilFrame;
-    [FieldOffset(152)]
+    [FieldOffset(160)]
     public EntityRef JammerNode;
     [FieldOffset(24)]
     public Int32 Kills;
-    [FieldOffset(72)]
+    [FieldOffset(76)]
     public Int32 VetRank;
     [FieldOffset(28)]
     public Int32 LastDamagedFrame;
+    [FieldOffset(176)]
+    public EntityRef Transport;
+    [FieldOffset(128)]
+    public EntityRef BoardTarget;
+    [FieldOffset(44)]
+    public Int32 RampOpenUntilFrame;
     public readonly FixedArray<AssetRef<ModuleSpec>> Modules {
       get {
         fixed (byte* p = _Modules_) { return new FixedArray<AssetRef<ModuleSpec>>(p, 8, 3); }
@@ -2403,6 +2413,9 @@ namespace Quantum {
         hash = hash * 31 + Kills.GetHashCode();
         hash = hash * 31 + VetRank.GetHashCode();
         hash = hash * 31 + LastDamagedFrame.GetHashCode();
+        hash = hash * 31 + Transport.GetHashCode();
+        hash = hash * 31 + BoardTarget.GetHashCode();
+        hash = hash * 31 + RampOpenUntilFrame.GetHashCode();
         return hash;
       }
     }
@@ -2419,6 +2432,7 @@ namespace Quantum {
         serializer.Stream.Serialize(&p->LastFiredFrame);
         serializer.Stream.Serialize(&p->MuzzleRevealUntilFrame);
         serializer.Stream.Serialize(&p->MuzzleVictimMask);
+        serializer.Stream.Serialize(&p->RampOpenUntilFrame);
         serializer.Stream.Serialize(&p->ReservedUntilFrame);
         serializer.Stream.Serialize(&p->SetupUntilFrame);
         serializer.Stream.Serialize(&p->SlideFace);
@@ -2433,11 +2447,13 @@ namespace Quantum {
         QBoolean.Serialize(&p->Swarming, serializer);
         FixedArray.Serialize(p->Modules, serializer, Statics.SerializeAssetRef);
         AssetRef.Serialize(&p->Spec, serializer);
+        EntityRef.Serialize(&p->BoardTarget, serializer);
         EntityRef.Serialize(&p->Cover, serializer);
         EntityRef.Serialize(&p->Garrison, serializer);
         EntityRef.Serialize(&p->GarrisonTarget, serializer);
         EntityRef.Serialize(&p->JammerNode, serializer);
         EntityRef.Serialize(&p->TargetEntity, serializer);
+        EntityRef.Serialize(&p->Transport, serializer);
         FP.Serialize(&p->AbilityCooldown, serializer);
         FP.Serialize(&p->AttackCooldown, serializer);
         FP.Serialize(&p->DesignatedBonus, serializer);

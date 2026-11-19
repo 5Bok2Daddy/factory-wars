@@ -98,6 +98,9 @@ namespace FactoryWars.View {
     Image _cardHealthFill;
     Text _cardDetail;
     readonly List<Image> _queueIcons = new List<Image>();
+    readonly List<Button> _passengerButtons = new List<Button>();
+    readonly List<EntityRef> _passengerEntities = new List<EntityRef>();
+    EntityRef _passengerTransport;
     readonly List<Button> _typeButtons = new List<Button>();
     readonly List<AssetRef<UnitSpec>> _typeSpecs = new List<AssetRef<UnitSpec>>();
     RectTransform _diplomacy;
@@ -819,6 +822,21 @@ namespace FactoryWars.View {
         var icon = Ui.Icon($"Queue{i}", _card, "", new Vector2(0, 0), new Vector2(176 + i * 64, Pad), new Vector2(56, 56));
         _queueIcons.Add(icon);
       }
+      // 수송 유닛 선택 시 하단 카드 승객 초상화 스트립(최대 6칸, 탭 시 해당 승객만 개별 하차).
+      for (var i = 0; i < 6; i++) {
+        var idx = i;
+        var pBtn = Ui.Button($"Passenger{i}", _card, "", () => UnloadPassengerSlot(idx), theme.FontSmall - 4);
+        Ui.Place((RectTransform)pBtn.transform, new Vector2(0, 0), new Vector2(176 + i * 66, Pad), new Vector2(60, 58));
+        var bgImg = pBtn.GetComponent<Image>();
+        if (bgImg != null) {
+          bgImg.color = new Color(0.11f, 0.16f, 0.24f, 0.96f);
+        }
+        var pOutline = pBtn.gameObject.AddComponent<Outline>();
+        pOutline.effectColor = new Color(0.18f, 0.90f, 1f, 0.85f);
+        pOutline.effectDistance = new Vector2(1.5f, -1.5f);
+        pBtn.gameObject.SetActive(false);
+        _passengerButtons.Add(pBtn);
+      }
       // 여러 종류 선택: 종류별 아이콘 + 개수. 누르면 그 종류만 남긴다.
       for (var i = 0; i < MaxTypeButtons; i++) {
         var index = i;
@@ -1391,6 +1409,7 @@ namespace FactoryWars.View {
         foreach (var icon in _queueIcons) {
           icon.gameObject.SetActive(false);
         }
+        HidePassengers();
       }
       for (var i = 0; i < _typeButtons.Count; i++) {
         _typeButtons[i].gameObject.SetActive(single == false && i < _typeSpecs.Count);
@@ -1470,6 +1489,23 @@ namespace FactoryWars.View {
       foreach (var icon in _queueIcons) {
         icon.gameObject.SetActive(false);
       }
+      HidePassengers();
+    }
+
+    void HidePassengers() {
+      _passengerEntities.Clear();
+      _passengerTransport = EntityRef.None;
+      foreach (var btn in _passengerButtons) {
+        btn.gameObject.SetActive(false);
+      }
+    }
+
+    void UnloadPassengerSlot(int index) {
+      if (_passengerTransport == EntityRef.None || index < 0 || index >= _passengerEntities.Count) {
+        return;
+      }
+      Controller.Send(new UnloadTransportCommand { Transport = _passengerTransport, SpecificUnit = _passengerEntities[index] });
+      ShowAlert("지정 승객 개별 하차");
     }
 
     void CardUnit(Frame frame, PlayerState* state, EntityRef entity) {
@@ -1502,6 +1538,27 @@ namespace FactoryWars.View {
         lines += $"\n드론 출격 {flying} · 격납 {carrier.Docked}  (대공 무기에 취약)";
       } else if (UltimateSystem.IsAutonomous(frame, entity)) {
         lines += "\n스스로 움직입니다(명령을 받지 않음)";
+      }
+      // 수송 유닛(APC · 상륙정 · 수송헬기): 탑승 슬롯 현황 및 개별 하차 초상화 스트립 표시.
+      if (spec.TransportCapacity > 0) {
+        var passengers = TransportSystem.Passengers(frame, entity);
+        var used = TransportSystem.UsedSlots(frame, entity);
+        lines += $"\n탑승 {used}/{spec.TransportCapacity}  " + (passengers.Count > 0 ? "(초상화 탭: 개별 하차)" : "(아군 선택 후 탭: 탑승)");
+        _passengerTransport = entity;
+        _passengerEntities.Clear();
+        for (var i = 0; i < _passengerButtons.Count; i++) {
+          var show = i < passengers.Count;
+          _passengerButtons[i].gameObject.SetActive(show);
+          if (show) {
+            var pe = passengers[i];
+            var pUnit = frame.Get<Unit>(pe);
+            var pSpec = frame.FindAsset(pUnit.Spec);
+            _passengerEntities.Add(pe);
+            Ui.SetIcon(_passengerButtons[i], Ui.IconSprite(UnitIcon(pSpec.name)));
+            var hpPct = Mathf.RoundToInt(100f * pUnit.Health.AsFloat / Mathf.Max(1f, TechSystem.MaxHealth(frame, pUnit.Owner, pUnit.Spec).AsFloat));
+            Ui.SetLabel(_passengerButtons[i], $"{hpPct}%");
+          }
+        }
       }
       _cardDetail.text = lines;
     }
@@ -1576,7 +1633,7 @@ namespace FactoryWars.View {
           status = EngineerEntries(frame, state);
           showPanel = true;
         } else {
-          UnitCommandEntries();
+          UnitCommandEntries(frame);
           showPanel = true;
         }
         if (input.Mode == MatchInput.TapMode.Jammer) {
@@ -1614,9 +1671,26 @@ namespace FactoryWars.View {
       }
     }
 
-    void UnitCommandEntries() {
+    void UnitCommandEntries(Frame frame) {
       var input = Controller.Input;
       var selectedUnits = input.Selection.Units.ToArray();
+      // 선택한 수송 유닛이 있으면 우측 하단 엄지 바 맨 앞에 '하차 (전원)' 버튼을 배치한다.
+      var transports = selectedUnits.Where(e => frame.Exists(e) && frame.Has<Unit>(e) && frame.FindAsset(frame.Get<Unit>(e).Spec).TransportCapacity > 0).ToArray();
+      if (transports.Length > 0) {
+        var totalUsed = transports.Sum(t => TransportSystem.UsedSlots(frame, t));
+        Entries.Add(new ContextEntry {
+          Label = totalUsed > 0 ? $"하차 (전원 {totalUsed})" : "하차 (비어있음)",
+          Icon = "ui_garrison",
+          Enabled = totalUsed > 0,
+          Detail = "수송기 후면 램프를 열고 탑승 중인 아군 전원을 겹침 없이 하차",
+          Action = () => {
+            foreach (var t in transports) {
+              Controller.Send(new UnloadTransportCommand { Transport = t, SpecificUnit = EntityRef.None });
+            }
+            ShowAlert("탑승 부대 전원 하차!");
+          }
+        });
+      }
       // 모바일 엄지 전술 명령 클러스터(핵심 4종 우선 배치: 공격 이동 · 대형 정렬 · 산개 · 정지).
       Entries.Add(new ContextEntry { Label = input.Mode == MatchInput.TapMode.AttackMove ? "공격 이동 중" : "공격 이동", Icon = "ui_attack_move", Enabled = true,
         Detail = "땅을 누르면 가는 길의 적을 공격하며 자동 정렬 진격",

@@ -271,6 +271,9 @@ namespace FactoryWars.EditorTools {
       public double AbilityMultiplier, AbilitySeconds, AbilityRadius, AbilityCooldown;
       public int AbilityCount;
       public int Population;
+      public int TransportCapacity;
+      public bool TransportAllowsVehicles;
+      public double TransportEjectHealthRatio;
       /// <summary>생산 건물 id 뒷부분(barracks, vehicle_factory, airfield, heavy_works, shipyard, headquarters). 항목 31.</summary>
       public string At;
     }
@@ -287,12 +290,13 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "ff_breacher", At = "barracks", Size = UnitSize.Small, Cost = R(55, 25, 15, 0), Build = 10, Health = 78, Attack = AttackType.AntiInfantry, Damage = 14, Range = 4, Splash = 2.4, Interval = 1.2, Speed = 4.2, Ability = SpecialAbility.GarrisonBreach, AbilityMultiplier = 1.5 },
       // 항목 31 새 소형: 군수공장의 빠른 정찰차.
       new UnitRow { Id = "ff_scout_buggy", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Small, Cost = R(90, 30, 0, 10), Build = 14, Health = 160, Attack = AttackType.AntiInfantry, Damage = 12, Range = 7, Interval = 1, Speed = 7.5 },
-      new UnitRow { Id = "ff_eagle_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(220, 0, 68, 55), Build = 31, Health = 720, Attack = AttackType.AntiArmor, Damage = 58, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble, AbilityMultiplier = 2, AbilitySeconds = 8 },
-      // 항목 31 새 중형: 주변 아군 차량을 고치는 야전 정비차(가벼운 기관총).
-      new UnitRow { Id = "ff_field_support", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(200, 50, 60, 40), Build = 30, Health = 500, Attack = AttackType.AntiInfantry, Damage = 8, Range = 6, Interval = 1, Speed = 5, Population = 2, Ability = SpecialAbility.FieldRepair, AbilityMultiplier = 15, AbilityRadius = 7, AbilityCount = 3 },
+      new UnitRow { Id = "ff_eagle_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(220, 0, 68, 60), Build = 31, Health = 720, Attack = AttackType.AntiArmor, Damage = 58, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble, AbilityMultiplier = 2, AbilitySeconds = 8 },
+      // 항목 31 새 중형: 주변 아군 차량을 고치는 야전 정비차 + 보병 6기 수송 장갑차(APC).
+      new UnitRow { Id = "ff_field_support", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(200, 50, 60, 40), Build = 30, Health = 500, Attack = AttackType.AntiInfantry, Damage = 8, Range = 6, Interval = 1, Speed = 5, Population = 2, Ability = SpecialAbility.FieldRepair, AbilityMultiplier = 15, AbilityRadius = 7, AbilityCount = 3, TransportCapacity = 6, TransportEjectHealthRatio = 0.4 },
       new UnitRow { Id = "ff_mlrs_artillery", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(220, 0, 85, 50), Build = 30, Health = 340, Attack = AttackType.Area, Damage = 24, Range = 16, MinRange = 5, Splash = 2.6, Interval = 4.8, Speed = 4.2, Population = 3, Ability = SpecialAbility.RocketSalvo, AbilityCount = 4 },
       new UnitRow { Id = "ff_mobile_sam", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(190, 0, 70, 55), Build = 26, Health = 400, Attack = AttackType.AntiAir, Damage = 38, Range = 13, Interval = 1.6, Speed = 6.5, Population = 2, Ability = SpecialAbility.CarrierHunter, AbilityMultiplier = 1.5 },
       new UnitRow { Id = "ff_hawk_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(250, 0, 100, 100), Build = 40, Health = 450, Attack = AttackType.AntiArmor, Damage = 55, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
+      new UnitRow { Id = "ff_transport_heli", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(210, 0, 75, 70), Build = 28, Health = 420, Attack = AttackType.None, Speed = 7.8, Population = 2, TransportCapacity = 4, TransportEjectHealthRatio = 0 },
       new UnitRow { Id = "ff_skyfortress_bomber", At = "airfield", Size = UnitSize.Large, Air = true, Cost = R(500, 0, 250, 350), Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, Ability = SpecialAbility.CarpetBomb, AbilityMultiplier = 1.5, AbilityRadius = 8, AbilityCount = 5, AbilityCooldown = 45 },
       // 항목 31 새 대형: 중공업 기지의 중전차(B1: 자유 연방 중공업 기지가 만들 것이 없던 문제).
       new UnitRow { Id = "ff_bulwark_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(400, 0, 170, 125), Build = 50, Health = 2000, Attack = AttackType.AntiArmor, Damage = 125, Range = 9, Interval = 2.5, Speed = 3.5 },
@@ -315,13 +319,16 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "cf_thunder_aa", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(170, 0, 50, 60), Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
       new UnitRow { Id = "cf_rocket_artillery", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(205, 0, 80, 45), Build = 28, Health = 360, Attack = AttackType.Area, Damage = 23, Range = 16, MinRange = 5, Splash = 2.6, Interval = 4.8, Speed = 4.2, Population = 3, Ability = SpecialAbility.RocketSalvo, AbilityCount = 4 },
       new UnitRow { Id = "cf_mobile_sam", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(180, 0, 65, 50), Build = 25, Health = 420, Attack = AttackType.AntiAir, Damage = 37, Range = 13, Interval = 1.6, Speed = 6.5, Population = 2, Ability = SpecialAbility.CarrierHunter, AbilityMultiplier = 1.5 },
+      new UnitRow { Id = "cf_apc_transport", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(185, 45, 55, 35), Build = 26, Health = 520, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 1, Speed = 5.2, Population = 2, TransportCapacity = 6, TransportEjectHealthRatio = 0.4 },
       // 항목 31 새 중형 공중: 비행장의 공격헬기(B2: 대륙 연방 비행장이 만들 것이 없던 문제).
       new UnitRow { Id = "cf_gale_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(200, 0, 75, 75), Build = 30, Health = 480, Attack = AttackType.AntiArmor, Damage = 56, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
+      new UnitRow { Id = "cf_transport_heli", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(210, 0, 75, 70), Build = 28, Health = 420, Attack = AttackType.None, Speed = 7.8, Population = 2, TransportCapacity = 4, TransportEjectHealthRatio = 0 },
       new UnitRow { Id = "cf_longwall_mlrs", At = "heavy_works", Size = UnitSize.Large, Cost = R(360, 0, 170, 170), Build = 48, Health = 1100, Attack = AttackType.Area, Damage = 195, Range = 18, MinRange = 6, Splash = 4, Interval = 4.5, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
       // 항목 31 새 대형: 중공업 기지의 요새 전차(물량형이라 자유 연방 중전차보다 싸고 약하다).
       new UnitRow { Id = "cf_fortress_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(340, 0, 140, 100), Build = 42, Health = 2000, Attack = AttackType.AntiArmor, Damage = 128, Range = 9, Interval = 2.5, Speed = 3.5, Population = 5 },
       new UnitRow { Id = "ff_scout_boat", At = "shipyard", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
       new UnitRow { Id = "ff_artillery_ship", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
+      new UnitRow { Id = "ff_landing_craft", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(200, 60, 60, 40), Build = 24, Health = 550, Attack = AttackType.AntiInfantry, Damage = 12, Range = 7, Interval = 1.2, Speed = 6.5, Population = 2, TransportCapacity = 6, TransportAllowsVehicles = true, TransportEjectHealthRatio = 0 },
       // 항목 34-D 작전기(비조작, 비행장 격납 칸). 전투기=기총소사(2단계), 공격기=폭격(3단계), 수송기=공수 투하(2단계). 수치는 ApplySortie 표.
       new UnitRow { Id = "ff_sortie_fighter", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(180, 0, 60, 80), Build = 24, Health = 300, Attack = AttackType.AntiInfantry, Damage = 8, Range = 0, Interval = 1, Speed = 0 },
       new UnitRow { Id = "ff_sortie_striker", At = "airfield", Size = UnitSize.Large, Air = true, Cost = R(300, 0, 140, 160), Build = 40, Health = 450, Attack = AttackType.Area, Damage = 160, Range = 0, Interval = 1, Speed = 0 },
@@ -331,15 +338,16 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "cf_sortie_transport", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(170, 0, 50, 70), Build = 28, Health = 320, Attack = AttackType.None, Speed = 0 },
       new UnitRow { Id = "cf_scout_boat", At = "shipyard", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
       new UnitRow { Id = "cf_artillery_ship", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
+      new UnitRow { Id = "cf_landing_craft", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(200, 60, 60, 40), Build = 24, Health = 550, Attack = AttackType.AntiInfantry, Damage = 12, Range = 7, Interval = 1.2, Speed = 6.5, Population = 2, TransportCapacity = 6, TransportAllowsVehicles = true, TransportEjectHealthRatio = 0 },
     };
 
     // 항목 33 궁극 전력 유닛(가칭, 실존 함정·항공기 이름과 무관). 진영 유닛 목록(FactionSpec.Units)에는 넣지 않고 UltimateSpec에서만 가리킨다.
     // 비용 칸은 AI의 가치 계산용이다(실제 비용은 UltimateSpec). 인구는 BuildUltimates에서 따로 정한다.
     static readonly UnitRow[] UltimateUnits = {
       // 공중 항모 "스톰네스트": 철 2800·강철 2200, 80초 지상 조립. 선체 직사 기관포 + 6기 드론 윙 + 광역 정찰·은신 탐지(26m) + 지휘 오라(14m).
-      new UnitRow { Id = "ff_stormnest_carrier", Size = UnitSize.Large, Air = true, Cost = R(2800, 0, 2200, 700), Build = 80, Health = 5200, Attack = AttackType.Area, Damage = 75, Range = 14, Splash = 3, Interval = 2, Speed = 2.2 },
-      // 함재 드론 "둥지 드론": 소형 공중, 대전차 경무장. 항모 반경 안에서만 싸운다.
-      new UnitRow { Id = "ff_nest_drone", Size = UnitSize.Small, Air = true, Cost = R(60, 0, 20, 20), Build = 12, Health = 160, Attack = AttackType.AntiArmor, Damage = 14, Range = 6, Interval = 1, Speed = 9 },
+      new UnitRow { Id = "ff_stormnest_carrier", Size = UnitSize.Large, Air = true, Cost = R(2800, 0, 2200, 500), Build = 80, Health = 5200, Attack = AttackType.Area, Damage = 75, Range = 14, Splash = 3, Interval = 2, Speed = 2.8 },
+      // 함재 드론 "둥지 드론": 소형 공중, 대전차 경무장(6기 정예 윙). 항모 반경 안에서만 싸운다.
+      new UnitRow { Id = "ff_nest_drone", Size = UnitSize.Small, Air = true, Cost = R(60, 0, 20, 20), Build = 12, Health = 180, Attack = AttackType.AntiArmor, Damage = 18, Range = 6, Interval = 1, Speed = 9 },
       // 상륙정 "파도머리": 탑재 부대를 해안에 내리고 포격 지원한다(차기 진영용, 시험 전용 진영에만 연결).
       new UnitRow { Id = "tf_wavecrest_lander", Size = UnitSize.Medium, Naval = true, Cost = R(300, 0, 150, 100), Build = 30, Health = 900, Attack = AttackType.Area, Damage = 50, Range = 14, Splash = 3, Interval = 4, Speed = 5 },
     };
@@ -381,6 +389,9 @@ namespace FactoryWars.EditorTools {
       spec.AbilityRadius = N(row.AbilityRadius);
       spec.AbilityCount = row.AbilityCount;
       spec.AbilityCooldownSeconds = N(row.AbilityCooldown);
+      spec.TransportCapacity = row.TransportCapacity;
+      spec.TransportAllowsVehicles = row.TransportAllowsVehicles;
+      spec.TransportEjectHealthRatio = N(row.TransportEjectHealthRatio);
       ApplySniper(spec, row);
       ApplySortie(spec, row);
       EditorUtility.SetDirty(spec);
@@ -743,9 +754,9 @@ namespace FactoryWars.EditorTools {
       carrier.RequiredTier = 3;
       carrier.Research = Ref(freeResearch);
       // 공중 항모: 철 2800, 강철 2200, 지상 조립 80초, 보유 상한 1기, 자율 6드론 윙, 14m 지휘 오라(+15% 연사·+10% 이동).
-      carrier.Cost = R(2800, 0, 2200, 700);
+      carrier.Cost = R(2800, 0, 2200, 500);
       carrier.PrepareSeconds = 80;
-      carrier.RearmCost = R(2800, 0, 2200, 700);
+      carrier.RearmCost = R(2800, 0, 2200, 500);
       carrier.RearmSeconds = 80;
       carrier.OwnedLimit = 1;
       carrier.CooldownSeconds = 120;
@@ -777,7 +788,7 @@ namespace FactoryWars.EditorTools {
       missile.RequiredTier = 3;
       missile.Research = Ref(continentalResearch);
       // 전략 미사일 격납고: 철 2500, 강철 2000, 준비 75초, 재충전 120초 + 발사당 강철 300, 비행 궤적 7초(300 HP), 폭발 12m(2400 피해), EMP 5초, 초토화 15초.
-      missile.Cost = R(2500, 0, 2000, 700);
+      missile.Cost = R(2500, 0, 2000, 500);
       missile.PrepareSeconds = 75;
       missile.RearmCost = R(0, 0, 300, 350);
       missile.RearmSeconds = 60;

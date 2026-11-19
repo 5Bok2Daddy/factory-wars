@@ -403,11 +403,13 @@ namespace FactoryWars.View {
 
     static Material _pipePowerMat;
     static Material _pipeSteelMat;
+    static Material _pipFullMat;
+    static Material _pipEmptyMat;
 
     /// <summary>12m 인접 시너지 발광 지상 파이프라인(제련소=용광로 주황, 발전소=고압 시안).</summary>
     public static GameObject BuildSynergyPipeline(Transform parent, Vector3 from, Vector3 to, bool isPower) {
-      var a = new Vector3(from.x, 0.28f, from.z);
-      var b = new Vector3(to.x, 0.28f, to.z);
+      var a = new Vector3(from.x, 0.44f, from.z);
+      var b = new Vector3(to.x, 0.44f, to.z);
       var delta = b - a;
       var len = delta.magnitude;
       if (len < 1f) return null;
@@ -420,11 +422,11 @@ namespace FactoryWars.View {
       var shellGo = new GameObject("PipeShell", typeof(MeshFilter), typeof(MeshRenderer));
       shellGo.transform.SetParent(go.transform, false);
       var sk = new MeshKit();
-      sk.Paint(Swatch.MetalDark).Box(new Vector3(0f, 0f, 0f), new Vector3(0.56f, 0.26f, len));
+      sk.Paint(Swatch.MetalDark).Box(new Vector3(0f, 0f, 0f), new Vector3(0.66f, 0.30f, len));
       var rings = Mathf.Max(2, Mathf.FloorToInt(len / 2.6f));
       for (var i = 0; i <= rings; i++) {
         var z = -len * 0.5f + (len * i / rings);
-        sk.Paint(Swatch.StripeYellow).Box(new Vector3(0f, 0.04f, z), new Vector3(0.72f, 0.34f, 0.24f));
+        sk.Paint(Swatch.StripeYellow).Box(new Vector3(0f, 0.04f, z), new Vector3(0.84f, 0.38f, 0.26f));
       }
       shellGo.GetComponent<MeshFilter>().sharedMesh = sk.ToMesh("synergy_pipe_shell");
       shellGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
@@ -433,7 +435,7 @@ namespace FactoryWars.View {
       var glowGo = new GameObject("PipeGlow", typeof(MeshFilter), typeof(MeshRenderer));
       glowGo.transform.SetParent(go.transform, false);
       var gk = new MeshKit().Paint(Swatch.White);
-      gk.Box(new Vector3(0f, 0.16f, 0f), new Vector3(0.24f, 0.10f, len * 0.96f));
+      gk.Box(new Vector3(0f, 0.19f, 0f), new Vector3(0.34f, 0.12f, len * 0.96f));
       glowGo.GetComponent<MeshFilter>().sharedMesh = gk.ToMesh("synergy_pipe_glow");
       if (isPower) {
         if (_pipePowerMat == null) {
@@ -449,6 +451,119 @@ namespace FactoryWars.View {
         glowGo.GetComponent<MeshRenderer>().sharedMaterial = _pipeSteelMat;
       }
       return go;
+    }
+
+    /// <summary>수륙양용 상륙정(Landing Craft) 전용 PBR 강철 화물선 + 장갑 갑판 + 후면 브리지 킷배시.</summary>
+    public static void BuildLandingCraft(ArtView view, int color) {
+      if (view == null || view.Model == null) return;
+      view.Slot = null;
+      var model = view.Model.transform;
+      model.localPosition = Vector3.zero;
+      model.localRotation = Quaternion.identity;
+      model.localScale = Vector3.one * 1.15f;
+      foreach (var r in model.GetComponents<Renderer>()) r.enabled = false;
+      for (var i = model.childCount - 1; i >= 0; i--) Object.DestroyImmediate(model.GetChild(i).gameObject);
+
+      var kit = new MeshKit();
+      // 평저 강철 선체 & 측면 방탄 현측 + 화물 갑판.
+      kit.Paint(Swatch.MetalDark).Chamfer(new Vector3(0f, 0.35f, 0f), new Vector3(3.1f, 0.7f, 6.0f), 0.14f);
+      kit.Paint(Swatch.ConcreteDark).Box(new Vector3(0f, 0.72f, 0.3f), new Vector3(2.3f, 0.1f, 4.4f));
+      kit.Team().Box(new Vector3(-1.42f, 1.05f, 0.1f), new Vector3(0.32f, 0.85f, 5.4f));
+      kit.Team().Box(new Vector3(1.42f, 1.05f, 0.1f), new Vector3(0.32f, 0.85f, 5.4f));
+      // 선미 장갑 조타실 + 레이더 마스트 + 안전 줄무늬.
+      kit.Paint(Swatch.ArmorDark).Chamfer(new Vector3(0f, 1.45f, -2.15f), new Vector3(2.4f, 1.2f, 1.45f), 0.1f);
+      kit.Paint(Swatch.GlowCyan).Box(new Vector3(0f, 1.72f, -1.42f), new Vector3(1.8f, 0.32f, 0.08f));
+      kit.Paint(Swatch.StripeYellow).Box(new Vector3(0f, 0.78f, 2.55f), new Vector3(2.3f, 0.14f, 0.32f));
+      var go = new GameObject("HeroLandingCraft", typeof(MeshFilter), typeof(MeshRenderer));
+      go.transform.SetParent(model, false);
+      go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("hero_landing_craft");
+      go.GetComponent<MeshRenderer>().sharedMaterial = TeamMat(color);
+    }
+
+    /// <summary>수송 유닛 후면 경첩식 장갑 램프(CargoRamp) 부착. 탑승·하차 시 아래로 열리고 완료 후 닫힌다.</summary>
+    public static Transform AttachTransportRamp(Transform turn, bool isAir, bool isNaval, int color) {
+      if (turn == null) return null;
+      var pivot = new GameObject("CargoRampPivot").transform;
+      pivot.SetParent(turn, false);
+      // APC 후미 바닥 / 상륙정 선미·함수 화물문 / 수송헬기 후방 꼬리 램프 위치.
+      pivot.localPosition = isNaval ? new Vector3(0f, 0.65f, 3.35f)
+        : isAir ? new Vector3(0f, 0.45f, -2.35f)
+        : new Vector3(0f, 0.38f, -2.42f);
+      var kit = new MeshKit();
+      var w = isNaval ? 2.25f : 1.55f;
+      var h = isNaval ? 1.45f : 1.15f;
+      kit.Paint(Swatch.ArmorDark).Box(new Vector3(0f, h * 0.5f, 0f), new Vector3(w, h, 0.18f));
+      kit.Paint(Swatch.StripeYellow).Box(new Vector3(0f, h - 0.14f, 0f), new Vector3(w * 0.92f, 0.18f, 0.22f));
+      kit.Paint(Swatch.GlowCyan).Box(new Vector3(0f, h * 0.35f, -0.09f), new Vector3(w * 0.55f, 0.16f, 0.08f));
+      var meshGo = new GameObject("CargoRampMesh", typeof(MeshFilter), typeof(MeshRenderer));
+      meshGo.transform.SetParent(pivot, false);
+      meshGo.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("transport_cargo_ramp");
+      meshGo.GetComponent<MeshRenderer>().sharedMaterial = TeamMat(color);
+      return pivot;
+    }
+
+    public static Material PipMaterial(bool occupied) {
+      if (occupied) {
+        if (_pipFullMat == null) {
+          _pipFullMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default")) { name = "PassengerPipFull" };
+          _pipFullMat.color = new Color(0.18f, 0.96f, 1f, 1f);
+        }
+        return _pipFullMat;
+      }
+      if (_pipEmptyMat == null) {
+        _pipEmptyMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default")) { name = "PassengerPipEmpty" };
+        _pipEmptyMat.color = new Color(0.14f, 0.18f, 0.24f, 0.92f);
+      }
+      return _pipEmptyMat;
+    }
+
+    /// <summary>월드 공간 탑승 인원 핍([■][■][■][□])을 유닛 체력바 바로 아래에 생성한다.</summary>
+    public static GameObject CreatePassengerPips(ArtView view, int capacity, out MeshRenderer[] pips) {
+      pips = null;
+      if (view == null || capacity <= 0) return null;
+      var count = Mathf.Clamp(capacity, 1, 6);
+      var root = new GameObject("PassengerPips");
+      root.transform.SetParent(view.transform, false);
+      var barY = view.Bar != null ? view.Bar.transform.localPosition.y : view.Entry.BarHeight;
+      root.transform.localPosition = new Vector3(0f, barY - 0.36f, 0f);
+      root.transform.localRotation = Quaternion.Euler(VisualProfile.Current.Pitch, 0f, 0f);
+
+      const float pipSize = 0.24f;
+      const float pipGap = 0.09f;
+      var totalW = count * pipSize + (count - 1) * pipGap;
+      // 짙은 슬레이트 외곽 프레임.
+      var bg = new GameObject("PipFrame", typeof(MeshFilter), typeof(MeshRenderer));
+      bg.transform.SetParent(root.transform, false);
+      var bgKit = new MeshKit().Paint(Swatch.Black);
+      var fw = (totalW + 0.18f) * 0.5f;
+      var fh = (pipSize + 0.14f) * 0.5f;
+      bgKit.Quad(new Vector3(-fw, -fh, 0.02f), new Vector3(fw, -fh, 0.02f), new Vector3(fw, fh, 0.02f), new Vector3(-fw, fh, 0.02f), Vector3.back);
+      bg.GetComponent<MeshFilter>().sharedMesh = bgKit.ToMesh("passenger_pip_frame");
+      var bgR = bg.GetComponent<MeshRenderer>();
+      bgR.sharedMaterial = ArtLook.NeutralMaterial;
+      bgR.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      bgR.receiveShadows = false;
+
+      var pipKit = new MeshKit().Paint(Swatch.White);
+      var h = pipSize * 0.5f;
+      pipKit.Quad(new Vector3(-h, -h, 0f), new Vector3(h, -h, 0f), new Vector3(h, h, 0f), new Vector3(-h, h, 0f), Vector3.back);
+      var pipMesh = pipKit.ToMesh("passenger_pip_quad");
+
+      pips = new MeshRenderer[count];
+      for (var i = 0; i < count; i++) {
+        var go = new GameObject($"Pip{i}", typeof(MeshFilter), typeof(MeshRenderer));
+        go.transform.SetParent(root.transform, false);
+        var x = -totalW * 0.5f + pipSize * 0.5f + i * (pipSize + pipGap);
+        go.transform.localPosition = new Vector3(x, 0f, 0f);
+        go.GetComponent<MeshFilter>().sharedMesh = pipMesh;
+        var mr = go.GetComponent<MeshRenderer>();
+        mr.sharedMaterial = PipMaterial(false);
+        mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        mr.receiveShadows = false;
+        pips[i] = mr;
+      }
+      root.SetActive(false);
+      return root;
     }
   }
 }

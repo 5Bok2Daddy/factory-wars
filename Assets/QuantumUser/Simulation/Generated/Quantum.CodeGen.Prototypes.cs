@@ -863,6 +863,7 @@ namespace Quantum.Prototypes {
     public FP Radius;
     public FP DamagePerSecond;
     public FP SlowMultiplier;
+    public Int32 StartFrame;
     public Int32 UntilFrame;
     partial void MaterializeUser(Frame frame, ref Quantum.ScorchedZone result, in PrototypeMaterializationContext context);
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
@@ -876,6 +877,7 @@ namespace Quantum.Prototypes {
         result.Radius = this.Radius;
         result.DamagePerSecond = this.DamagePerSecond;
         result.SlowMultiplier = this.SlowMultiplier;
+        result.StartFrame = this.StartFrame;
         result.UntilFrame = this.UntilFrame;
         MaterializeUser(frame, ref result, in context);
     }
@@ -985,6 +987,9 @@ namespace Quantum.Prototypes {
     public Int32 Kills;
     public Int32 VetRank;
     public Int32 LastDamagedFrame;
+    public MapEntityId Transport;
+    public MapEntityId BoardTarget;
+    public Int32 RampOpenUntilFrame;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Unit component = default;
         Materialize((Frame)f, ref component, in context);
@@ -1030,6 +1035,9 @@ namespace Quantum.Prototypes {
         result.Kills = this.Kills;
         result.VetRank = this.VetRank;
         result.LastDamagedFrame = this.LastDamagedFrame;
+        PrototypeValidator.FindMapEntity(this.Transport, in context, out result.Transport);
+        PrototypeValidator.FindMapEntity(this.BoardTarget, in context, out result.BoardTarget);
+        result.RampOpenUntilFrame = this.RampOpenUntilFrame;
     }
   }
   [System.SerializableAttribute()]

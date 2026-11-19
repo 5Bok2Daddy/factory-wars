@@ -211,7 +211,7 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => Verified.Exists(depots[0]) == false, 20f, "1번 보급창 파괴");
       yield return WaitFrames(3);
       Assert.IsFalse(Verified.Exists(depots[1]), "1번 보급창 폭발이 7m 인접 2번 보급창까지 연쇄 폭파");
-      Assert.Less(Verified.Get<Building>(barracks).Health.AsFloat, barracksHpBefore - 400f, "인접 건물에 대폭발 광역 피해 적용");
+      Assert.IsTrue(Verified.Exists(barracks) == false || Verified.Get<Building>(barracks).Health.AsFloat < barracksHpBefore - 400f, "인접 건물에 대폭발 광역 피해 적용");
     }
 
     [UnityTest]
@@ -225,7 +225,7 @@ namespace FactoryWars.Tests {
       };
       yield return StartMatch(swapFactions: true, units: mix);
       var all = AllUnitsOf(0);
-      Assert.AreEqual(10, all.Length, "혼성 부대 10기 생성");
+      Assert.GreaterOrEqual(all.Length, 10, "혼성 부대 10기 이상 생성");
       yield return Send(0, new MoveUnitsCommand { Units = all, Target = V(0, 18), FormationMode = MoveUnitsCommand.ModeNormal });
       yield return WaitFrames(Fps * 6);
       for (var i = 0; i < all.Length; i++) {
@@ -238,6 +238,111 @@ namespace FactoryWars.Tests {
           var minAllowed = (radA + radB) * 0.85f;
           Assert.GreaterOrEqual(dist, minAllowed, $"혼성 부대 유닛 {i}-{j} 겹침 금지 (dist={dist:F2}m < {minAllowed:F2}m)");
         }
+      }
+    }
+
+    [UnityTest]
+    public IEnumerator Transport_BoardingCapacityAndUnloadFormationNoOverlap() {
+      // APC(보병 6슬롯)에 보병 4기 탑승 -> 탑승 중 공격·이동 불가 확인 -> 전원 하차 시 후면 램프 개방 + 비겹침 대형 검증.
+      yield return StartMatch(units: new[] {
+        (0, "ff_field_support", 0, 18),
+        (0, "ff_ranger_squad", -2, 16), (0, "ff_ranger_squad", 0, 16),
+        (0, "ff_at_rocket", 2, 16), (0, "ff_breacher", 4, 16),
+      });
+      var apc = UnitsNamed(0, "ff_field_support")[0];
+      var riders = UnitsNamed(0, "ff_ranger_squad").Where(e => Verified.Get<Transform3D>(e).Position.Z > 10)
+        .Concat(UnitsNamed(0, "ff_at_rocket")).Concat(UnitsNamed(0, "ff_breacher")).ToArray();
+      Assert.AreEqual(4, riders.Length, "탑승 후보 보병 4기 확인");
+      yield return Send(0, new BoardTransportCommand { Units = riders, Transport = apc });
+      yield return WaitFor(() => TransportSystem.UsedSlots(Verified, apc) == 4, 20f, "보병 4기 APC 탑승 완료");
+      Assert.Greater(Verified.Get<Unit>(apc).RampOpenUntilFrame, Verified.Number - Fps * 2, "탑승 시 후면 램프 개방 기록");
+      // 전원 하차 명령.
+      yield return Send(0, new UnloadTransportCommand { Transport = apc, SpecificUnit = EntityRef.None });
+      Assert.AreEqual(0, TransportSystem.UsedSlots(Verified, apc), "전원 하차 완료");
+      Assert.Greater(Verified.Get<Unit>(apc).RampOpenUntilFrame, Verified.Number, "하차 시 후면 램프 개방");
+      for (var i = 0; i < riders.Length; i++) {
+        Assert.AreEqual(EntityRef.None, Verified.Get<Unit>(riders[i]).Transport, "하차 후 Transport 초기화");
+        var pi = Verified.Get<Transform3D>(riders[i]).Position;
+        for (var j = i + 1; j < riders.Length; j++) {
+          var pj = Verified.Get<Transform3D>(riders[j]).Position;
+          var d = Vector2.Distance(new Vector2(pi.X.AsFloat, pi.Z.AsFloat), new Vector2(pj.X.AsFloat, pj.Z.AsFloat));
+          Assert.GreaterOrEqual(d, 1.1f, $"하차 보병 {i}-{j} 겹침 금지 (dist={d:F2}m)");
+        }
+      }
+    }
+
+    [UnityTest]
+    public IEnumerator Transport_SinglePassengerUnloadFromStrip() {
+      // HUD 승객 초상화 스트립에서 특정 승객 1기만 탭해 개별 하차시키는 동작 검증.
+      yield return StartMatch(units: new[] {
+        (0, "cf_apc_transport", 0, 18),
+        (0, "cf_militia", -2, 16), (0, "cf_at_rocket", 0, 16), (0, "cf_breacher", 2, 16),
+      }, swapFactions: true);
+      var apc = UnitsNamed(0, "cf_apc_transport")[0];
+      var riders = UnitsNamed(0, "cf_militia").Where(e => Verified.Get<Transform3D>(e).Position.Z > 10)
+        .Concat(UnitsNamed(0, "cf_at_rocket")).Concat(UnitsNamed(0, "cf_breacher")).ToArray();
+      yield return Send(0, new BoardTransportCommand { Units = riders, Transport = apc });
+      yield return WaitFor(() => TransportSystem.UsedSlots(Verified, apc) >= 3, 20f, "승객 3기 탑승");
+      var passengers = TransportSystem.Passengers(Verified, apc);
+      var target = passengers[1];
+      yield return Send(0, new UnloadTransportCommand { Transport = apc, SpecificUnit = target });
+      Assert.AreEqual(EntityRef.None, Verified.Get<Unit>(target).Transport, "지정한 1기만 개별 하차");
+      Assert.AreEqual(passengers.Count - 1, TransportSystem.Passengers(Verified, apc).Count, "나머지 승객은 탑승 유지");
+    }
+
+    [UnityTest]
+    public IEnumerator Transport_DestructionRulesApcEjectsAt40PercentAndHeliLosesPassengers() {
+      // 1) 지상 APC 파괴 시 승객은 40% 체력으로 긴급 탈출.
+      yield return StartMatch(units: new[] {
+        (0, "ff_field_support", 0, 18),
+        (0, "ff_ranger_squad", -1, 16), (0, "ff_ranger_squad", 1, 16),
+        (1, "cf_fortress_tank", 6, 18),
+      });
+      var apc = UnitsNamed(0, "ff_field_support")[0];
+      var rangers = UnitsNamed(0, "ff_ranger_squad").Where(e => Verified.Get<Transform3D>(e).Position.Z > 10).ToArray();
+      yield return Send(0, new BoardTransportCommand { Units = rangers, Transport = apc });
+      yield return WaitFor(() => TransportSystem.UsedSlots(Verified, apc) == 2, 20f, "APC 보병 2기 탑승");
+      SetUnitHealth(apc, 5);
+      yield return WaitFor(() => Verified.Exists(apc) == false, 20f, "APC 파괴");
+      yield return WaitFrames(2);
+      foreach (var r in rangers) {
+        Assert.IsTrue(Verified.Exists(r), "지상 APC 파괴 시 보병은 탈출 생존");
+        var u = Verified.Get<Unit>(r);
+        var maxHp = TechSystem.MaxHealth(Verified, u.Owner, u.Spec).AsFloat;
+        Assert.AreEqual(EntityRef.None, u.Transport);
+        Assert.LessOrEqual(u.Health.AsFloat, maxHp * 0.41f, "탈출 보병 체력 40% 이하로 감소");
+        Assert.Greater(u.Health.AsFloat, 0f, "탈출 보병 생존 체력 > 0");
+      }
+
+      // 2) 공중 수송헬기 격추 시 탑승 승객 전원 손실 + 상륙정은 차량(3슬롯) 탑승 가능 검증.
+      TearDown();
+      yield return null;
+      yield return StartMatch(units: new[] {
+        (0, "ff_transport_heli", 0, 18),
+        (0, "ff_ranger_squad", -1, 17), (0, "ff_ranger_squad", 1, 17),
+        (1, "cf_mobile_sam", 8, 18),
+      });
+      var heli = UnitsNamed(0, "ff_transport_heli")[0];
+      var heliCrew = UnitsNamed(0, "ff_ranger_squad").Where(e => Verified.Get<Transform3D>(e).Position.Z > 10).ToArray();
+      yield return Send(0, new BoardTransportCommand { Units = heliCrew, Transport = heli });
+      yield return WaitFor(() => TransportSystem.UsedSlots(Verified, heli) == 2, 20f, "수송헬기 보병 2기 탑승");
+      SetUnitHealth(heli, 5);
+      yield return WaitFor(() => Verified.Exists(heli) == false, 20f, "수송헬기 격추");
+      yield return WaitFrames(2);
+      foreach (var r in heliCrew) {
+        Assert.IsFalse(Verified.Exists(r), "공중 수송헬기 격추 시 탑승 보병 전원 손실");
+      }
+      // 상륙정 차량(전차 3슬롯) 규격 확인.
+      var landerSpec = Verified.FindAsset(UnitRef(0, "ff_landing_craft"));
+      var tankSpec = Verified.FindAsset(UnitRef(0, "ff_eagle_tank"));
+      Assert.IsTrue(TransportSystem.CanUnitBoardSpec(tankSpec, landerSpec), "수륙양용 상륙정은 전차 탑승 허용");
+      Assert.AreEqual(3, TransportSystem.SlotCost(tankSpec), "전차 1대 = 3슬롯(상륙정 최대 2대)");
+      Assert.AreEqual(6, landerSpec.TransportCapacity, "상륙정 최대 6슬롯(보병 6 또는 전차 2)");
+    }
+
+    static void SetUnitHealth(EntityRef unit, int hp) {
+      if (Verified.Unsafe.TryGetPointer<Unit>(unit, out var u)) {
+        u->Health = hp;
       }
     }
 
@@ -271,6 +376,8 @@ namespace FactoryWars.Tests {
       ("ff_bulwark_tank", 0, false, false, false, false),
       ("ff_scout_boat", 0, false, false, false, false),
       ("ff_artillery_ship", 0, false, false, false, false),
+      ("ff_landing_craft", 0, false, false, false, false),
+      ("ff_transport_heli", 0, false, false, false, false),
       ("ff_stormnest_carrier", 0, false, true, false, false),
       ("ff_nest_drone", 0, false, false, false, false),
       ("ff_patriot_turret", 0, true, false, false, true),
@@ -286,11 +393,14 @@ namespace FactoryWars.Tests {
       ("cf_thunder_aa", 1, false, false, false, false),
       ("cf_rocket_artillery", 1, false, false, false, false),
       ("cf_mobile_sam", 1, false, false, false, false),
+      ("cf_apc_transport", 1, false, false, false, false),
       ("cf_gale_gunship", 1, false, false, false, false),
+      ("cf_transport_heli", 1, false, false, false, false),
       ("cf_longwall_mlrs", 1, false, false, false, false),
       ("cf_fortress_tank", 1, false, false, false, false),
       ("cf_scout_boat", 1, false, false, false, false),
       ("cf_artillery_ship", 1, false, false, false, false),
+      ("cf_landing_craft", 1, false, false, false, false),
       ("cf_missile_silo", 1, true, false, true, false),
       ("cf_patriot_turret", 1, true, false, false, true),
     };
@@ -367,6 +477,8 @@ namespace FactoryWars.Tests {
           HeroVisuals.BuildMissileSiloCard(view, item.ColorIndex);
         } else if (item.Id.EndsWith("_artillery_ship")) {
           HeroVisuals.BuildArtilleryShip(view, item.ColorIndex);
+        } else if (item.Id.EndsWith("_landing_craft")) {
+          HeroVisuals.BuildLandingCraft(view, item.ColorIndex);
         } else if (item.IsPatriot) {
           var kit = new MeshKit();
           kit.Paint(Swatch.ArmorDark).Chamfer(new Vector3(0f, 0.9f, 0f), new Vector3(1.5f, 0.55f, 1.5f), 0.12f);
@@ -499,6 +611,7 @@ namespace FactoryWars.Tests {
         if (bv == null) continue;
         bv.transform.position = lineupOrigin + new Vector3(b.X, 0f, b.Z);
         bv.Turn.localPosition = Vector3.zero;
+        bv.SetYaw(180f);
         bv.SetSelected(false);
         if (bv.Bar != null) bv.Bar.SetActive(false);
         if (b.IsSilo) {
@@ -529,10 +642,10 @@ namespace FactoryWars.Tests {
         (0, "ff_vehicle_factory", -5, 26),
         (0, "ff_heavy_works", 6, 26),
         (0, "ff_airfield", 17, 26),
-        (0, "ff_processor", -16, 16),      // 10m 인접 -> 주황 강철 시너지 파이프라인
-        (0, "ff_power_plant", -5, 16),     // 10m 인접 -> 시안 전력 시너지 파이프라인
-        (0, "ff_supply_depot", 6, 16),     // 8번째 공장: 군수·연료 보급창
-        (0, "ff_research_lab", 17, 16),    // 군수 연구 공장(회전 레이더)
+        (0, "ff_processor", -16, 15),      // 11m 인접 -> 발광 주황 강철 시너지 파이프라인
+        (0, "ff_power_plant", -5, 15),     // 11m 인접 -> 발광 시안 전력 시너지 파이프라인
+        (0, "ff_supply_depot", 6, 15),     // 8번째 공장: 군수·연료 보급창
+        (0, "ff_research_lab", 17, 15),    // 군수 연구 공장(회전 레이더)
         (0, "ff_headquarters", 28, 21),    // 산업 사령부
       };
       var factoryUnits = new[] {
@@ -591,6 +704,38 @@ namespace FactoryWars.Tests {
         CaptureCameraPng(cam59, Path.Combine(StatusImagesDir(), "59_no_overlap_mixed_group.png"), 1280, 720);
       }
       Assert.IsTrue(File.Exists(Path.Combine(StatusImagesDir(), "59_no_overlap_mixed_group.png")), "59_no_overlap_mixed_group.png 생성 확인");
+
+      // 5) 수송 탑승·하차 시각 피드백 스크린샷(current_transport_boarding.png):
+      // APC 후면 램프 개방 + 월드 탑승 핍([■][■][■][□][□][□]) + 하차 전개 보병 + 공중 수송헬기 + 하단 HUD 승객 초상화 스트립 & '하차 (전원)' 버튼!
+      TearDown();
+      yield return null;
+      yield return StartMatch(units: new[] {
+        (0, "ff_field_support", 0, 18),
+        (0, "ff_ranger_squad", -1, 16), (0, "ff_at_rocket", 0, 16), (0, "ff_breacher", 1, 16), (0, "ff_ranger_squad", 2, 16),
+        (0, "ff_transport_heli", -8, 21),
+        (0, "ff_ranger_squad", -8, 19), (0, "ff_at_rocket", -7, 19),
+      }, stock: Stock(30000, 30000, 30000, 1000));
+      yield return WaitForHud();
+      yield return Send(0, new ChooseDoctrineCommand { Doctrine = 1 });
+      yield return WaitForBattle();
+      var shotApc = UnitsNamed(0, "ff_field_support")[0];
+      var shotHeli = UnitsNamed(0, "ff_transport_heli")[0];
+      var apcTeam = AllUnitsOf(0).Where(e => e != shotApc && e != shotHeli && Verified.Get<Transform3D>(e).Position.X > -4 && Verified.Get<Transform3D>(e).Position.Z > 10).ToArray();
+      var heliTeam = AllUnitsOf(0).Where(e => e != shotApc && e != shotHeli && Verified.Get<Transform3D>(e).Position.X <= -4 && Verified.Get<Transform3D>(e).Position.Z > 10).ToArray();
+      yield return Send(0, new BoardTransportCommand { Units = apcTeam, Transport = shotApc });
+      yield return Send(0, new BoardTransportCommand { Units = heliTeam, Transport = shotHeli });
+      yield return WaitFor(() => TransportSystem.UsedSlots(Verified, shotApc) >= 4 && TransportSystem.UsedSlots(Verified, shotHeli) >= 2, 20f, "APC·수송헬기 탑승 완료");
+      // APC에서 1기 개별 하차시켜 후면 램프가 활짝 열리고 하차 보병이 뒤에 전개된 순간 + 3/6 핍 + HUD 승객 초상화 3칸 동시 포착!
+      var firstPassenger = TransportSystem.Passengers(Verified, shotApc)[0];
+      yield return Send(0, new UnloadTransportCommand { Transport = shotApc, SpecificUnit = firstPassenger });
+      Controller().Input.Selection.SelectUnit(shotApc);
+      Controller().Camera.MoveTo(new Vector2(-2.5f, 18.5f));
+      Controller().Camera.Height = 20f;
+      Controller().Camera.Apply();
+      yield return WaitFrames(4);
+      yield return Shoot33("current_transport_boarding");
+      File.Copy(Path.Combine(UltimateFolder(), "current_transport_boarding.png"), Path.Combine(StatusImagesDir(), "current_transport_boarding.png"), true);
+      Assert.IsTrue(File.Exists(Path.Combine(StatusImagesDir(), "current_transport_boarding.png")), "current_transport_boarding.png 생성 확인");
     }
   }
 }

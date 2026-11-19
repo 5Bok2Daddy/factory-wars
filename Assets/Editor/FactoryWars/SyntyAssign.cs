@@ -145,6 +145,7 @@ namespace FactoryWars.EditorTools {
       yield return Vehicle("ff_bulwark_tank", "tank_a", LandFree, 7.0f, "Turret", "Barrel", "Barrel");
       yield return Vehicle("cf_fortress_tank", "tank_b", LandContinental, 7.0f, "Turret", "Barrel", "Barrel");
       yield return Vehicle("ff_field_support", "apc", LandFree, 5.0f);
+      yield return Vehicle("cf_apc_transport", "apc", LandContinental, 5.0f);
       yield return Vehicle("cf_thunder_aa", "radar_tank", LandContinental, 5.0f, null, null, null, "Radar_Base:Y");
       yield return Vehicle("cf_longwall_mlrs", "rocket_truck", LandContinental, 6.6f, "_Base", null, "Rocket_Battery");
       yield return Vehicle("ff_mlrs_artillery", "rocket_truck", LandFree, 5.8f, "_Base", null, "Rocket_Battery");
@@ -153,11 +154,15 @@ namespace FactoryWars.EditorTools {
       yield return Vehicle("cf_mobile_sam", "radar_tank", LandContinental, 5.0f, null, null, null, "Radar_Base:Y");
       yield return Vehicle("ff_hawk_gunship", "heli_a", None, 6.4f, null, null, null, "Blades_Main", "Blades_Back");
       yield return Vehicle("cf_gale_gunship", "heli_b", HeliContinental, 6.4f, null, null, null, "Blades_Main", "Blades_Back");
+      yield return Vehicle("ff_transport_heli", "heli_a", None, 6.6f, null, null, null, "Blades_Main", "Blades_Back");
+      yield return Vehicle("cf_transport_heli", "heli_b", HeliContinental, 6.6f, null, null, null, "Blades_Main", "Blades_Back");
       yield return Vehicle("ff_skyfortress_bomber", "transport_plane", None, 9.0f);
       yield return Vehicle("ff_stormnest_carrier", "cargo_plane", None, 10.5f, null, null, null, "Prop_0");
       yield return Vehicle("ff_nest_drone", "drone", None, 1.8f, null, null, null, "Drone_Prop");
       yield return Vehicle("ff_scout_boat", "boat", LightFree, 5.0f);
       yield return Vehicle("cf_scout_boat", "boat", LightContinental, 5.0f);
+      yield return Vehicle("ff_landing_craft", "boat", LightFree, 6.8f);
+      yield return Vehicle("cf_landing_craft", "boat", LightContinental, 6.8f);
       // 공장·사령부·기지 건물: 1.25x 스케일(도로 이격 및 NavMesh 재굽기 기준).
       foreach (var faction in new[] { "ff", "cf" }) {
         var swap = faction == "ff" ? BuildingsFree : BuildingsContinental;

@@ -87,6 +87,12 @@ namespace FactoryWars.View {
       public int FactoryLevel = 1;
       public GameObject FactoryUpgradeGo;
       public float OverdriveFxAt;
+      // 수송 유닛(APC · 상륙정 · 수송헬기): 후면 램프 & 월드 공간 탑승 핍([■][■][■][□]).
+      public Transform CargoRamp;
+      public float RampAngle;
+      public GameObject PipRoot;
+      public MeshRenderer[] PipRenderers;
+      public int TransportCapacity;
     }
 
     readonly List<(GameObject Root, Transform Turn, Vector3 StartPos, float Elapsed, float NextSmoke)> _crashingCarriers =
@@ -248,6 +254,12 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventDepotExploded>(this, e => {
         var pos = e.Position.ToUnityVector3();
         Fx.MushroomExplosion(pos, 3.2f);
+      });
+      QuantumEvent.Subscribe<EventTransportRamp>(this, e => {
+        if (_actors.TryGetValue(e.Transport, out var a) && a.View != null) {
+          var p = a.View.transform.position - a.View.Turn.forward * 2.2f + Vector3.up * 0.25f;
+          Fx.Burst(p, e.Unload ? new Color(0.24f, 0.94f, 1f, 0.85f) : new Color(0.85f, 0.82f, 0.72f, 0.75f), 0.75f);
+        }
       });
       QuantumEvent.Subscribe<EventMissileInterceptShot>(this, e => {
         var from = e.From.ToUnityVector3();
@@ -558,7 +570,7 @@ namespace FactoryWars.View {
       if (view == null) {
         return null;
       }
-      var actor = new Actor { View = view, Entity = entity, IsBuilding = isBuilding, IsAir = isAir, IsNaval = id.Contains("boat") || id.Contains("ship"), Radius = view.Entry.RingRadius, Height = view.Entry.BarHeight, Phase = Random.value * 10f };
+      var actor = new Actor { View = view, Entity = entity, IsBuilding = isBuilding, IsAir = isAir, IsNaval = id.Contains("boat") || id.Contains("ship") || id.Contains("landing_craft"), Radius = view.Entry.RingRadius, Height = view.Entry.BarHeight, Phase = Random.value * 10f };
       var model = view.Model.transform;
       actor.Turret = FindDeep(model, "Turret") ?? FindDeep(model, "Launcher");
       actor.Barrel = FindDeep(model, "Barrel") ?? FindDeep(model, "Guns") ?? FindDeep(model, "Tubes");
@@ -626,6 +638,8 @@ namespace FactoryWars.View {
         BuildPatriotAccent(actor);
       } else if (id == "ff_artillery_ship" || id == "cf_artillery_ship") {
         HeroVisuals.BuildArtilleryShip(actor.View, actor.Color);
+      } else if (id == "ff_landing_craft" || id == "cf_landing_craft") {
+        HeroVisuals.BuildLandingCraft(actor.View, actor.Color);
       } else if (isBuilding && HeroVisuals.TryBuildFactory(actor.View, id, actor.Color, out var chimneys, out var beacon, out var radarDish)) {
         actor.FactorySmoke = chimneys;
         actor.FactoryBeacon = beacon;
@@ -1195,6 +1209,13 @@ namespace FactoryWars.View {
         actor.Color = color;
         ArtLook.Apply(actor.View.Model, color);
       }
+      // 탑승 중인 승객 유닛은 수송기 내부에 들어가므로 월드 모델을 숨긴다.
+      if (unit->Transport != EntityRef.None) {
+        if (actor.View.gameObject.activeSelf) {
+          actor.View.gameObject.SetActive(false);
+        }
+        return;
+      }
       // 진지 안: 모델은 숨기고 사격은 건물 창문에서 보인다.
       if (unit->Garrison != EntityRef.None) {
         if (actor.View.gameObject.activeSelf) {
@@ -1254,6 +1275,7 @@ namespace FactoryWars.View {
       UpdateShield(actor, unit->InCover);
       UpdateVetBadge(actor, unit->VetRank);
       UpdateUpgradeVisual(frame, actor, unit, spec);
+      UpdateTransportVisual(frame, actor, entity, unit, spec, dt);
 
       var cooldown = unit->AttackCooldown.AsFloat;
       if (cooldown > actor.Cooldown + 0.05f && spec.Attack != AttackType.None) {
@@ -1967,12 +1989,51 @@ namespace FactoryWars.View {
         } else if (frame.Unsafe.TryGetPointer<Building>(pair.Key, out var building)) {
           ratio = building->Health.AsFloat / Mathf.Max(1f, frame.FindAsset(building->Spec).MaxHealth.AsFloat);
         }
-        var show = ratio < 0.995f || _targeted.Contains(pair.Key);
+        var show = ratio < 0.995f || _targeted.Contains(pair.Key) || (actor.TransportCapacity > 0 && TransportSystem.UsedSlots(frame, pair.Key) > 0);
         if (actor.View.Bar.activeSelf != show) {
           actor.View.Bar.SetActive(show);
         }
         if (show) {
           actor.View.SetHealth(ratio);
+        }
+      }
+    }
+
+    /// <summary>수송 유닛 후면 램프 개폐 애니메이션 및 월드 공간 탑승 인원 핍([■][■][■][□]) 갱신.</summary>
+    void UpdateTransportVisual(Frame frame, Actor actor, EntityRef entity, Unit* unit, UnitSpec spec, float dt) {
+      if (spec.TransportCapacity <= 0) {
+        return;
+      }
+      if (actor.TransportCapacity != spec.TransportCapacity) {
+        actor.TransportCapacity = spec.TransportCapacity;
+        if (actor.CargoRamp == null) {
+          actor.CargoRamp = HeroVisuals.AttachTransportRamp(actor.View.Turn, spec.IsAir, spec.IsNaval, actor.Color);
+        }
+        if (actor.PipRoot == null) {
+          actor.PipRoot = HeroVisuals.CreatePassengerPips(actor.View, spec.TransportCapacity, out actor.PipRenderers);
+        }
+      }
+      if (actor.CargoRamp != null) {
+        var open = unit->RampOpenUntilFrame > frame.Number;
+        var targetAngle = open ? (spec.IsNaval ? 74f : -74f) : 0f;
+        actor.RampAngle = Mathf.MoveTowards(actor.RampAngle, targetAngle, 260f * dt);
+        actor.CargoRamp.localRotation = Quaternion.Euler(actor.RampAngle, 0f, 0f);
+      }
+      if (actor.PipRoot != null && actor.PipRenderers != null) {
+        var used = TransportSystem.UsedSlots(frame, entity);
+        var showPips = used > 0 || _marked.Contains(actor);
+        if (actor.PipRoot.activeSelf != showPips) {
+          actor.PipRoot.SetActive(showPips);
+        }
+        if (showPips) {
+          var barY = actor.View.Bar != null ? actor.View.Bar.transform.localPosition.y : actor.View.Entry.BarHeight;
+          actor.PipRoot.transform.localPosition = new Vector3(0f, barY - 0.36f, 0f);
+          for (var i = 0; i < actor.PipRenderers.Length; i++) {
+            var mat = HeroVisuals.PipMaterial(i < used);
+            if (actor.PipRenderers[i].sharedMaterial != mat) {
+              actor.PipRenderers[i].sharedMaterial = mat;
+            }
+          }
         }
       }
     }

@@ -50,6 +50,9 @@ namespace FactoryWars.View {
       var best = EntityRef.None;
       var bestScore = 1f;
       foreach (var pair in frame.GetComponentIterator<Unit>()) {
+        if (pair.Component.Transport != EntityRef.None || pair.Component.Garrison != EntityRef.None) {
+          continue;
+        }
         var id = frame.FindAsset(pair.Component.Spec).name;
         var position = frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3();
         var distance = new Vector2(position.x - world.x, position.z + AirTapOffset(id) - world.z).magnitude;
@@ -206,6 +209,14 @@ namespace FactoryWars.View {
       var unit = PickUnit(frame, world);
       if (unit != EntityRef.None) {
         if (frame.Get<Unit>(unit).Owner == player) {
+          // 보병·전차 선택 상태에서 아군 수송 유닛(APC·상륙정·수송헬기)을 탭하면 즉시 탑승 명령을 내린다.
+          var targetSpec = frame.FindAsset(frame.Get<Unit>(unit).Spec);
+          if (targetSpec.TransportCapacity > 0 && Selection.Units.Count > 0) {
+            var boarders = SelectedUnits(frame).Where(e => e != unit && TransportSystem.CanUnitBoardSpec(frame.FindAsset(frame.Get<Unit>(e).Spec), targetSpec)).ToArray();
+            if (boarders.Length > 0) {
+              return new BoardTransportCommand { Units = boarders, Transport = unit };
+            }
+          }
           Selection.SelectUnit(unit);
           return null;
         }

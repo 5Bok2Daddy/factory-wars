@@ -40,7 +40,8 @@ namespace FactoryWars.View {
     public void SelectBox(Frame frame, PlayerRef player, Rect box, Func<Vector3, Vector2> project) {
       Clear();
       foreach (var pair in frame.GetComponentIterator<Unit>()) {
-        if (pair.Component.Owner == player && box.Contains(project(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3()))) {
+        if (pair.Component.Owner == player && pair.Component.Transport == EntityRef.None && pair.Component.Garrison == EntityRef.None
+            && box.Contains(project(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3()))) {
           Units.Add(pair.Entity);
         }
       }
@@ -51,7 +52,8 @@ namespace FactoryWars.View {
       var spec = frame.Get<Unit>(unit).Spec;
       Clear();
       foreach (var pair in frame.GetComponentIterator<Unit>()) {
-        if (pair.Component.Owner == player && pair.Component.Spec == spec && isVisible(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3())) {
+        if (pair.Component.Owner == player && pair.Component.Spec == spec && pair.Component.Transport == EntityRef.None && pair.Component.Garrison == EntityRef.None
+            && isVisible(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3())) {
           Units.Add(pair.Entity);
         }
       }
@@ -69,9 +71,9 @@ namespace FactoryWars.View {
 
     public int GroupSize(int index) => _groups[index].Count;
 
-    /// <summary>죽은 유닛과 파괴된 건물을 뺀다.</summary>
+    /// <summary>죽은 유닛과 파괴된 건물, 탑승 완료된 유닛을 뺀다.</summary>
     public void Prune(Frame frame) {
-      Units.RemoveAll(e => frame.Exists(e) == false);
+      Units.RemoveAll(e => frame.Exists(e) == false || (frame.Has<Unit>(e) && frame.Get<Unit>(e).Transport != EntityRef.None));
       foreach (var group in _groups) {
         group.RemoveAll(e => frame.Exists(e) == false);
       }

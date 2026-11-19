@@ -870,6 +870,9 @@ namespace Quantum.FactoryWars {
         if (candidate.GarrisonFireOnly && (hasGarrison == false || snipers >= 2)) {
           continue;
         }
+        if (candidate.TransportCapacity > 0 && candidate.Ability != SpecialAbility.FieldRepair) {
+          continue;
+        }
         if (TechSystem.CanProduce(f, player, candidate, out _)) {
           allowed |= 1 << i;
         }

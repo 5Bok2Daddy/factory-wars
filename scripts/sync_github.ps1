@@ -33,11 +33,8 @@ if ($oversized) {
 $statusDir = Join-Path $RepoDir "Docs\status_images"
 $allowedTopImages = @(
   "map_standard.png", "map_desert.png", "map_urban.png", "map_archipelago.png", "map_strait.png",
-  "current_scale_overview.png", "current_factory_base.png", "current_factory_complex.png",
-  "53_ultimate_flying_carrier.png", "54_ultimate_missile_silo_strike.png",
-  "55_individual_units_formation.png", "56_mobile_thumb_hud.png", "57_persistent_battlefield_scars.png",
-  "58_unit_scale_comparison.png", "59_no_overlap_mixed_group.png", "46_post_match_mvp_timeline.png",
-  "kubold_anim_verify.png"
+  "current_scale_overview.png", "current_factory_complex.png", "current_transport_boarding.png",
+  "53_ultimate_flying_carrier.png", "54_ultimate_missile_silo_strike.png", "57_persistent_battlefield_scars.png"
 )
 if (Test-Path $statusDir) {
   $stray = Get-ChildItem -Path $statusDir -File -Filter "*.png" | Where-Object { $allowedTopImages -notcontains $_.Name }

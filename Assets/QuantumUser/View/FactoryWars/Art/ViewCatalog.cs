@@ -74,6 +74,12 @@ namespace FactoryWars.View {
       ("cf_mobile_sam", "cf_thunder_aa", 0.95f),
       ("ff_patriot_turret", "ff_air_defense", 1.15f),
       ("cf_patriot_turret", "cf_air_defense", 1.15f),
+      // 플레이어 조종 수송 유닛(APC · 수륙양용 상륙정 · 전술 수송헬기).
+      ("cf_apc_transport", "ff_field_support", 1.0f),
+      ("ff_landing_craft", "ff_scout_boat", 1.35f),
+      ("cf_landing_craft", "cf_scout_boat", 1.35f),
+      ("ff_transport_heli", "ff_hawk_gunship", 1.0f),
+      ("cf_transport_heli", "cf_gale_gunship", 1.0f),
     };
 
     public static string BorrowedId(string id) {

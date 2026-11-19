@@ -33,6 +33,10 @@ namespace FactoryWars.View {
       // 항목 31 새 유닛(가칭, 실존 무기명과 무관)
       { "ff_scout_buggy", "정찰 버기" }, { "ff_field_support", "야전 정비차" }, { "ff_bulwark_tank", "방벽 중전차" },
       { "cf_scout_bike", "척후 오토바이" }, { "cf_gale_gunship", "돌풍 공격헬기" }, { "cf_fortress_tank", "요새 전차" },
+      // 플레이어 조종 수송 유닛(APC · 수륙양용 상륙정 · 전술 수송헬기).
+      { "cf_apc_transport", "장갑 병력수송차" },
+      { "ff_landing_craft", "수륙양용 상륙정" }, { "cf_landing_craft", "수륙양용 상륙정" },
+      { "ff_transport_heli", "전술 수송헬기" }, { "cf_transport_heli", "전술 수송헬기" },
       // 항목 34-C 주둔 저격수(가칭)
       { "ff_sortie_fighter", "제비 전투기" }, { "ff_sortie_striker", "벼락 공격기" }, { "ff_sortie_transport", "구름 수송기" },
       { "cf_sortie_fighter", "참새 전투기" }, { "cf_sortie_striker", "철매 공격기" }, { "cf_sortie_transport", "기러기 수송기" },
