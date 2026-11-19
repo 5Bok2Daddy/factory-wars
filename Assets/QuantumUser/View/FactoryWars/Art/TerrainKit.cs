@@ -10,6 +10,28 @@ namespace FactoryWars.View {
   /// 화면 전용이다. 통과와 건설 판정은 시뮬레이션의 MapSpec 그대로다.
   /// </summary>
   public static partial class TerrainKit {
+    public enum Biome { Standard, Desert, Urban, Archipelago, Strait }
+
+    public static Biome BiomeOf(MapSpec map) {
+      var theme = map != null ? (map.Theme ?? "") : "";
+      if (theme.Contains("사막")) return Biome.Desert;
+      if (theme.Contains("시가")) return Biome.Urban;
+      if (theme.Contains("다도해")) return Biome.Archipelago;
+      if (theme.Contains("해협")) return Biome.Strait;
+      return Biome.Standard;
+    }
+
+    static MapSpec _cachedPathsMap;
+    static List<List<RiverPoint>> _cachedPaths;
+
+    static List<List<RiverPoint>> CachedRiverPaths(MapSpec map) {
+      if (map != _cachedPathsMap || _cachedPaths == null) {
+        _cachedPathsMap = map;
+        _cachedPaths = RiverPaths(map);
+      }
+      return _cachedPaths;
+    }
+
     /// <summary>수면 높이. 프로필의 강 깊이를 따른다.</summary>
     public static float WaterLevel => -Mathf.Max(0.8f, VisualProfile.Current.WaterDepth);
     const float Step = 4f;
@@ -143,10 +165,83 @@ namespace FactoryWars.View {
     }
 
     /// <summary>
-    /// 정점 하나의 바닥 색(항목 25-1). 기존 구역 규칙(GroundColor)으로 칸을 고른 뒤, 풀·흙 칸은 프로필의 차분한 색으로 바꾼다.
-    /// 이웃 삼각형이 같은 정점 색을 나눠 가지므로 면 단위 체크무늬가 생기지 않는다.
+    /// 정점 하나의 바닥 색(항목 25-1 + 5개 맵 바이옴 차별화).
+    /// 사막(모래 100%, 초록 0%), 시가전(콘크리트·아스팔트 도심), 다도해(황금 해변 + 열대 섬), 해협(암반 해안 + 북부 고지대), 표준(온대 계곡).
     /// </summary>
     public static Color GroundTint(MapSpec map, float x, float z, int seed) {
+      var biome = BiomeOf(map);
+      var noise = Noise(x, z, seed);
+      var outside = x < map.BoundsMin.X.AsFloat || x > map.BoundsMax.X.AsFloat || z < map.BoundsMin.Y.AsFloat || z > map.BoundsMax.Y.AsFloat;
+      if (biome == Biome.Desert) {
+        if (outside) return new Color(0.58f, 0.45f, 0.28f);
+        if (Inside(map.BaseAreas, x, z)) {
+          return Color.Lerp(new Color(0.76f, 0.65f, 0.47f), new Color(0.84f, 0.72f, 0.52f), noise);
+        }
+        // 100% 따뜻한 사막 황금 모래·사구·황토 톤 (초록색 0%).
+        var sandLight = new Color(0.91f, 0.80f, 0.56f); // #E8CC8F
+        var sandMid = new Color(0.84f, 0.70f, 0.45f);   // #D6B373
+        var sandOchre = new Color(0.74f, 0.58f, 0.36f); // #BD945C
+        var duneShade = new Color(0.65f, 0.49f, 0.30f); // #A67D4D
+        if (NearRoadOrCity(map, x, z, 3.6f)) {
+          return Color.Lerp(sandOchre, sandMid, noise);
+        }
+        return noise < 0.32f ? Color.Lerp(duneShade, sandOchre, noise / 0.32f)
+          : noise < 0.72f ? Color.Lerp(sandOchre, sandMid, (noise - 0.32f) / 0.40f)
+          : Color.Lerp(sandMid, sandLight, (noise - 0.72f) / 0.28f);
+      }
+      if (biome == Biome.Urban) {
+        if (outside) return new Color(0.16f, 0.17f, 0.19f);
+        // 95%+ 중후한 시가지 짙은 콘크리트·아스팔트 격자 (푸른 눈 느낌 제거, 무채색 도심 콘크리트 톤).
+        var plaza = new Color(0.38f, 0.39f, 0.41f);
+        var concrete = new Color(0.30f, 0.31f, 0.33f);
+        var asphalt = new Color(0.21f, 0.22f, 0.24f);
+        var slate = new Color(0.17f, 0.18f, 0.20f);
+        if (Inside(map.BaseAreas, x, z)) {
+          return Color.Lerp(concrete, plaza, noise * 0.6f);
+        }
+        if (NearRoadOrCity(map, x, z, 5.5f)) {
+          return Color.Lerp(concrete, plaza, noise * 0.5f);
+        }
+        return noise < 0.45f ? Color.Lerp(slate, asphalt, noise / 0.45f) : Color.Lerp(asphalt, concrete, (noise - 0.45f) / 0.55f);
+      }
+      if (biome == Biome.Archipelago) {
+        var shore = RiverDistance(CachedRiverPaths(map), new Vector2(x, z));
+        var edgeDist = Mathf.Min(
+          Mathf.Min(x - map.BoundsMin.X.AsFloat, map.BoundsMax.X.AsFloat - x),
+          Mathf.Min(z - map.BoundsMin.Y.AsFloat, map.BoundsMax.Y.AsFloat - z));
+        var coast = Mathf.Min(shore, edgeDist);
+        var wetSand = new Color(0.93f, 0.87f, 0.68f);   // #EDE0AD 밝은 백사장
+        var warmSand = new Color(0.86f, 0.75f, 0.52f);  // #DBBF85 황금 모래해변
+        var tropGrass = new Color(0.31f, 0.57f, 0.25f); // #4F9140 열대 섬 녹지
+        var tropDeep = new Color(0.24f, 0.47f, 0.20f);  // #3D7833
+        if (coast < 9.5f) {
+          return Color.Lerp(wetSand, warmSand, Mathf.Clamp01(coast / 9.5f));
+        }
+        var inland = Color.Lerp(tropDeep, tropGrass, noise);
+        if (coast < 16f) {
+          return Color.Lerp(warmSand, inland, (coast - 9.5f) / 6.5f);
+        }
+        return Inside(map.BaseAreas, x, z) ? Color.Lerp(warmSand, new Color(0.68f, 0.66f, 0.56f), 0.55f) : inland;
+      }
+      if (biome == Biome.Strait) {
+        if (outside) return new Color(0.18f, 0.23f, 0.28f);
+        var shore = RiverDistance(CachedRiverPaths(map), new Vector2(x, z));
+        var rockCoast = new Color(0.47f, 0.51f, 0.55f);
+        var cliffSlate = new Color(0.36f, 0.40f, 0.45f);
+        var highland = new Color(0.29f, 0.43f, 0.27f);
+        var highlandDark = new Color(0.23f, 0.35f, 0.22f);
+        var grass = Color.Lerp(highlandDark, highland, noise);
+        if (shore < 8.5f) {
+          return Color.Lerp(rockCoast, cliffSlate, Mathf.Clamp01(shore / 8.5f));
+        }
+        if (shore < 13.5f) {
+          return Color.Lerp(cliffSlate, grass, (shore - 8.5f) / 5f);
+        }
+        if (Inside(map.BaseAreas, x, z)) {
+          return Color.Lerp(cliffSlate, rockCoast, noise * 0.6f);
+        }
+        return NearRoadOrCity(map, x, z, 3.2f) ? Color.Lerp(cliffSlate, grass, 0.45f) : grass;
+      }
       var profile = VisualProfile.Current;
       var swatch = GroundColor(map, x, z, seed);
       switch (swatch) {
@@ -299,6 +394,22 @@ namespace FactoryWars.View {
     /// <summary>강 자리를 파낸 바닥.</summary>
     public static void Ground(MeshKit k, MapSpec map, int seed) {
       var paths = RiverPaths(map);
+      var biome = BiomeOf(map);
+      // 다도해는 외곽 콘크리트 육지 테두리를 만들지 않고 끝없는 에메랄드 바다가 수평선까지 펼쳐지도록 Bounds 안쪽 섬만 생성한다.
+      if (biome == Biome.Archipelago) {
+        var minA = new Vector2(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat);
+        var maxA = new Vector2(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
+        var xsA = new List<float>();
+        var zsA = new List<float>();
+        for (var x = minA.x; x <= maxA.x + 0.01f; x += Step) xsA.Add(x);
+        for (var z = minA.y; z <= maxA.y + 0.01f; z += Step) zsA.Add(z);
+        for (var i = 0; i + 1 < xsA.Count; i++) {
+          for (var j = 0; j + 1 < zsA.Count; j++) {
+            Carve(k, map, seed, paths, xsA[i], xsA[i + 1], zsA[j], zsA[j + 1], (i + j) % 2 == 0);
+          }
+        }
+        return;
+      }
       // 외곽 수로가 있으면 바닥을 수로 바깥 둑까지 넓혀 수로를 같은 방식으로 파낸다(항목 24).
       var extra = Channel(map) > 0f ? Channel(map) + 6f : 0f;
       var min = new Vector2(map.BoundsMin.X.AsFloat - extra, map.BoundsMin.Y.AsFloat - extra);
@@ -336,7 +447,7 @@ namespace FactoryWars.View {
     }
 
     /// <summary>물 면, 경사 강변, 땅 위의 모래 띠. 강줄기 하나를 리본으로 잇는다.</summary>
-    public static void River(MeshKit k, List<RiverPoint> path, int seed, Rect land, MeshKit water = null, Rect? banks = null) {
+    public static void River(MeshKit k, List<RiverPoint> path, int seed, Rect land, MeshKit water = null, Rect? banks = null, Biome biome = Biome.Standard) {
       // 물 면은 외곽 수로까지 이어지고, 둑(벽)은 banks(해안 옹벽 선) 안에서 끊는다(항목 36 시각 교정: 벽이 바다로 튀어나오지 않게).
       var bankLand = banks ?? land;
       Vector3 Edge(RiverPoint point, float side, float offset, float y) => Clip(Bank(point, side, offset, y), land);
@@ -347,6 +458,10 @@ namespace FactoryWars.View {
         var a = path[i];
         var b = path[i + 1];
         if (land.Contains(a.Position) == false && land.Contains(b.Position) == false) {
+          continue;
+        }
+        // 다도해의 초대형 외해 채널(Half >= 18)은 연속 바다판(WaterBase)으로 이음새 없이 렌더링해 직선 거품 줄무늬를 제거한다.
+        if (biome == Biome.Archipelago && a.Half >= 18f) {
           continue;
         }
         surface.Paint(Swatch.WaterDeep);
@@ -360,16 +475,18 @@ namespace FactoryWars.View {
         foreach (var side in new[] { -1f, 1f }) {
           var middle = (BankY + WaterLevel) * 0.5f;
           var ledge = (BandInner + SlopeInner) * 0.5f;
-          // 항목 36: 시가지는 흙 둑 대신 콘크리트 제방. 야전 룩은 팔레트 콘크리트가 거의 흰색이라(위에서 보면 흰 띠) 흙·바위 둑으로 그린다.
-          var urban = VisualProfile.Current.UrbanDecor && VisualProfile.Current.FieldLook == false;
-          k.Paint(urban ? Swatch.Concrete : MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.CanyonMid);
+          var urban = biome == Biome.Urban || (VisualProfile.Current.UrbanDecor && VisualProfile.Current.FieldLook == false);
+          var sandy = biome == Biome.Desert || biome == Biome.Archipelago;
+          var rocky = biome == Biome.Strait;
+          k.Paint(urban ? Swatch.Concrete : sandy ? Swatch.Sand : rocky ? Swatch.Boulder : MeshKit.Hash(seed, i * 2 + (side > 0 ? 1 : 0)) < 0.5f ? Swatch.Earth : Swatch.CanyonMid);
           k.Quad(BankEdge(a, side, BandInner, BankY), BankEdge(a, side, ledge, middle), BankEdge(b, side, ledge, middle), BankEdge(b, side, BandInner, BankY), Vector3.up);
-          k.Paint(urban ? Swatch.ConcreteDark : Swatch.CanyonDark);
+          k.Paint(urban ? Swatch.ConcreteDark : sandy ? Swatch.Dirt : rocky ? Swatch.BoulderDark : Swatch.CanyonDark);
           k.Quad(BankEdge(a, side, ledge, middle), BankEdge(a, side, SlopeInner, WaterLevel - 0.1f), BankEdge(b, side, SlopeInner, WaterLevel - 0.1f), BankEdge(b, side, ledge, middle), Vector3.up);
           if (Folded(path, a, side) || Folded(path, b, side)) {
             continue;
           }
-          k.Paint(urban ? Swatch.Concrete : VisualProfile.Current.FieldLook ? ArtPalette.Turf(Swatch.GrassDark) : MeshKit.Hash(seed, i * 2 + 300 + (side > 0 ? 1 : 0)) < 0.55f ? Swatch.Sand : Swatch.Dirt);
+          var bandSwatch = urban ? Swatch.ConcreteDark : sandy ? Swatch.Sand : rocky ? Swatch.Boulder : VisualProfile.Current.FieldLook ? ArtPalette.Turf(Swatch.GrassDark) : MeshKit.Hash(seed, i * 2 + 300 + (side > 0 ? 1 : 0)) < 0.55f ? Swatch.Sand : Swatch.Dirt;
+          k.Paint(bandSwatch);
           k.Quad(BankEdge(a, side, BandOuter, BankY), BankEdge(a, side, BandInner, BankY), BankEdge(b, side, BandInner, BankY), BankEdge(b, side, BandOuter, BankY), Vector3.up);
         }
       }
@@ -745,8 +862,9 @@ namespace FactoryWars.View {
           case TerrainKind.Rock: Boulders(k, features[i].Shape, seed); break;
         }
       }
+      var biome = BiomeOf(map);
       for (var i = 0; i < paths.Count; i++) {
-        River(k, paths[i], 40 + i, Land(map), water, Channel(map) > 0f ? new Rect(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat, map.BoundsMax.X.AsFloat - map.BoundsMin.X.AsFloat, map.BoundsMax.Y.AsFloat - map.BoundsMin.Y.AsFloat) : (Rect?)null);
+        River(k, paths[i], 40 + i, Land(map), water, Channel(map) > 0f ? new Rect(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat, map.BoundsMax.X.AsFloat - map.BoundsMin.X.AsFloat, map.BoundsMax.Y.AsFloat - map.BoundsMin.Y.AsFloat) : (Rect?)null, biome);
         RiverRocks(k, paths[i], 70 + i, map);
       }
       if (roads) {

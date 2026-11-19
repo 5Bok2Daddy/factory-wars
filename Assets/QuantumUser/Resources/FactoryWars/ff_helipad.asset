@@ -66,6 +66,8 @@ MonoBehaviour:
   Producible:
   - Id:
       Value: 489920977364748690
+  - Id:
+      Value: 291390139975329609
   Attack: 0
   GroundOnly: 0
   Damage:

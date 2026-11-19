@@ -1,7 +1,27 @@
 # TASK-01 결과 보고서
 
 <!-- 밤사이 요약 시작 -->
-## 최신 동기화 요약 (2026-11-19 17:56, `[gemini]` — GitHub 대시보드 전면 갱신, 구버전 스크린샷 정리 완료, 8대 산업 공장 & 비주얼 교정 반영)
+## 최신 동기화 요약 (2026-11-19 18:45, `[gemini]` — 엄격 아트 오버홀: 원시 도형 전면 금지, 100% 실제 Synty + War FX 연동, 5종 고유 바이옴 맵 차별화 완료)
+- **원시 플레이스홀더(`Cube`/`Cylinder`/`Sphere`) 전면 제거 & 100% 실제 Synty 킷배시 (`SyntyAssign.cs`, `BattleView.cs`, `HeroVisuals.cs`):**
+  - 8대 산업 공장(`barracks`·`vehicle_factory`·`heavy_works`·`airfield`·`processor`·`power_plant`·`supply_depot`·`research_lab`) + 군사 사령부(`headquarters`) + 전략 미사일 격납고(`cf_missile_silo`) + 스톰네스트 공중 항모(`ff_stormnest_carrier`) + 현대식 군용 포격함(`artillery_ship`) + 수륙양용 상륙정(`landing_craft`) + 수송헬기(`transport_heli`) + 패트리어트 요격 포대 + `Lv.2/3` 공장 증축 + 직선 시너지 배관을 **100% 실제 Synty 프리팹**으로 조립·연결 완료 (`[FW-Synty] 칸 80개 연결`, 누락 0건).
+  - `BattleView.cs`의 원시 도형 덮어쓰기 코드(`BuildHelicarrierVisual`, `BuildMissileSiloVisual`, `BuildPatriotAccent`) 및 `BattleFx.cs`의 원시 주황 구체/충격파 링(`SpawnShockwaveMesh`) 완전 삭제.
+- **Jean Moreno `War FX` 실전 VFX 직결 (`BattleFx.cs`, `SyntyAssign.cs`):**
+  - `Assets/ExternalAssets/JMO Assets/WarFX/`(gitignore 적용)에서 `WFXMR_Nuke`, `WFXMR_ExplosiveSmokeGround Big`, `WFXMR_ExplosiveSmokeGround`, `WFXMR_Explosion Small`, `WFX_MF 4P RIFLE1`, `WFXMR_FlameThrower`, `WFXMR_Fire Natural Broad (Black Smoke)`, `WFX_SmokeGrenade AlphaBlend Black/Gray` 바인딩 및 URP 호환 변환 완료 (핑크 셰이더 0건).
+  - `54_ultimate_missile_silo_strike.png`, `53_ultimate_flying_carrier.png`, `57_persistent_battlefield_scars.png`에서 실제 War FX 버섯구름·화염·연기 육안 검수 통과.
+- **5종 고유 바이옴 맵 1초 즉시 차별화 (`FactoryWarsMaps.cs`, `FactoryWarsSetup.cs`, `FactoryWarsCity.cs`, `TerrainKit.cs`, `TerrainLook.cs`, `WorldView.cs`, `UrbanDecor.cs`, `Dressing.cs`):**
+  - `Map4P`: 온대 녹지 계곡 + 2차선 도로 + 중앙 암시장.
+  - `MapDesert`: 황금 모래 100%(초록 잔디 0%), 사암 사막 도로, 실제 Synty 사구·선인장·사막 바위·고사목·따뜻한 사막 일광 (`Map_Desert_PresetData` 통과).
+  - `MapUrban`: 95%+ 중후한 무채색 콘크리트·아스팔트 도심 격자 + 고밀도 실제 `PolygonCity` 빌딩·오피스·아파트.
+  - `MapArchipelago`: 70%+ 끊김 없는 에메랄드 청록 바다 + 5개 황금 백사장 열대 섬(중앙 환형 라군 + 4방위 외해 + 4개 대각 여울).
+  - `MapStrait`: 맵 정중앙을 남북으로 양분하는 48m 짙은 군청 대양 해협 + 북·중·남 3대 전략 교량(수상 침범 건물 0건).
+- **검증 및 GitHub 동기화:**
+  - `SyntyAssign.Run`, `UrbanAssign.Run`, `BuildMapsAndMenu` 모두 `EXIT=0`.
+  - GPU PlayMode 캡처 & 맵 프리셋 검증 `5/5 통과` (`Map_Desert_PresetData`, `Map_Catalog_CyclesAndFindsScenes`, `CaptureMaps35_AllFive`, `Capture33_CarrierMissileLanding`, `CaptureAllUnitsAndBattlefieldScars`).
+  - 시뮬레이션 결정론 금지어 **0건**, `Game/Docs/status_images/` 최신 53장(핵심 6 + 맵 5 + 유닛 42) 정리 및 `Game/README.md` 깨진 링크 **0건** 확인.
+
+마지막 작업: `[gemini]` 2026-11-19 18:45 / 원시 도형 전면 금지(실제 Synty 킷배시 + War FX + 5종 고유 바이옴 맵) 육안 검수 완료, README/SETUP-REPORT 갱신 및 `origin main` 푸시
+
+### 이전 동기화 요약 (2026-11-19 17:56, `[gemini]` — GitHub 대시보드 전면 갱신, 구버전 스크린샷 정리 완료, 8대 산업 공장 & 비주얼 교정 반영)
 - **GitHub 대시보드 & 스크린샷 정리 완료 (`origin/main`):**
   - 구버전(`24_*`–`52_*`) 및 중복 캡처 전면 삭제 — `Docs/status_images/` 내 최신 맵 5장 + 최신 핵심 현황 5장(`current_factory_complex.png`, `current_scale_overview.png`, `53_ultimate_flying_carrier.png`, `54_ultimate_missile_silo_strike.png`, `57_persistent_battlefield_scars.png`) + 유닛 쇼케이스 37장 = **총 47장**만 유지(깨진 링크 **0건**).
   - 저장소 루트 `Game/README.md`를 2026-11-19 실제 현황·AI 밸런스 표·최신 스크린샷 47장으로 전면 재작성.

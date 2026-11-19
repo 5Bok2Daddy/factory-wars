@@ -39,7 +39,6 @@ namespace FactoryWars.View {
     Mesh _rubble;
     readonly Queue<(GameObject Item, float Born, Vector3 Pos, float Radius, float NextSmoke)> _wrecks = new Queue<(GameObject, float, Vector3, float, float)>();
     readonly List<GameObject> _permanentRubble = new List<GameObject>();
-    readonly List<(GameObject Go, Material Mat, float Born, float Duration, float MaxScale, bool IsDome)> _shockwaves = new List<(GameObject, Material, float, float, float, bool)>();
     readonly List<(Vector3 Position, float Size, float Born, bool Permanent)> _craters = new List<(Vector3, float, float, bool)>();
     MeshFilter _craterFilter;
     bool _cratersDirty;
@@ -159,8 +158,32 @@ namespace FactoryWars.View {
       Emitted++;
     }
 
+    /// <summary>Jean Moreno War FX 또는 VisualCatalog FX 프리팹을 생성하고 필요 시 simulateSeconds만큼 선행 시뮬레이션한다.</summary>
+    public GameObject SpawnWarFx(string fxName, Vector3 position, Quaternion rotation, float scaleMultiplier = 1f, float simulateSeconds = 0f) {
+      if (VisualCatalog.TryFilled(VisualCatalog.FxId(fxName), out var slot) == false || slot.Prefab == null) {
+        return null;
+      }
+      var item = Instantiate(slot.Prefab, position, rotation);
+      item.transform.SetParent(transform, true);
+      var s = Mathf.Max(0.05f, scaleMultiplier * (slot.Scale > 0f ? slot.Scale : 1f));
+      item.transform.localScale *= s;
+      // 모바일 성능 보호 및 즉각 캡처 가시성 확보: War FX 파티클이 생성 즉시 불꽃·연기를 분출하도록 선행 시뮬레이션.
+      var systems = item.GetComponentsInChildren<ParticleSystem>(true);
+      foreach (var ps in systems) {
+        if (simulateSeconds > 0f) {
+          ps.Simulate(simulateSeconds, false, true);
+        }
+        ps.Play(false);
+      }
+      // 불필요한 포인트 라이트 과다 방지(모바일 성능 보호).
+      var life = Mathf.Max(0.18f, slot.Lifetime);
+      Destroy(item, life);
+      return item;
+    }
+
     public void MuzzleFlash(Vector3 position, Vector3 forward, float size) {
-      if (VisualCatalog.SpawnEffect("muzzle", position, forward, size)) {
+      var rot = forward.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(forward) : Quaternion.identity;
+      if (SpawnWarFx("muzzle", position, rot, Mathf.Clamp(size, 0.45f, 1.5f), 0.02f) != null) {
         return;
       }
       var count = Scaled(4);
@@ -170,7 +193,8 @@ namespace FactoryWars.View {
     }
 
     public void FlameJet(Vector3 position, Vector3 forward, float reach) {
-      if (VisualCatalog.SpawnEffect("flame", position, forward, reach)) {
+      var rot = forward.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(forward) : Quaternion.identity;
+      if (SpawnWarFx("flame", position, rot, Mathf.Clamp(reach * 0.25f, 0.7f, 1.6f), 0.12f) != null) {
         return;
       }
       var count = Scaled(10);
@@ -363,8 +387,14 @@ namespace FactoryWars.View {
       _craterFilter.sharedMesh = count > 0 ? mesh : null;
     }
 
-    /// <summary>손상된 건물의 연기와 불. fire면 불꽃을 더한다.</summary>
+    /// <summary>손상된 건물의 연기와 불(War FX WFXMR_Fire Natural + WFX_Smoke 연동).</summary>
     public void Burning(Vector3 position, bool fire) {
+      if (fire && SpawnWarFx("fire_black", position, Quaternion.identity, 0.55f, 0.25f) != null) {
+        return;
+      }
+      if (fire == false && SpawnWarFx("smoke_black", position, Quaternion.identity, 0.55f, 0.2f) != null) {
+        return;
+      }
       Emit(_smoke, position + Random.insideUnitSphere * 0.6f, new Vector3(Random.Range(-0.3f, 0.3f), Random.Range(1.2f, 2f), Random.Range(-0.3f, 0.3f)), Random.Range(0.8f, 1.3f), Random.Range(1.6f, 2.4f), SmokeDark);
       if (fire) {
         Emit(_glow, position + Random.insideUnitSphere * 0.8f, Vector3.up * Random.Range(0.6f, 1.4f), Random.Range(0.6f, 1.1f), Random.Range(0.3f, 0.5f), Flame);
@@ -416,42 +446,34 @@ namespace FactoryWars.View {
 
     public void Explosion(Vector3 position, float size) {
       GameAudio.Play(SoundEvent.Explosion);
-      GameAudio.Play(SoundEvent.Explosion);
-      // 충격파 고리 + 그을음 자국(큰 폭발만).
       if (size >= 1.2f) {
-        Ring(new Vector3(position.x, 0.1f, position.z), new Color(1f, 0.9f, 0.75f, 0.8f), size * 2.6f, 0.35f);
         Crater(position, size * 0.9f);
-      }
-      if (VisualCatalog.SpawnEffect("explosion", position, Vector3.up, size)) {
-        if (size >= 2f) {
-          Shake(size * 0.12f);
-        }
-        return;
       }
       if (size >= 2f) {
         Shake(size * 0.12f);
       }
-      // 1) 중심 섬광: 0.25초 동안 커지며 사라지는 주황·노랑 불덩이 두 겹.
+      // Jean Moreno War FX(WFXMR_ExplosiveSmokeGround / WFXMR_Explosion Small) 직접 재생.
+      var wfx = SpawnWarFx(size >= 1.1f ? "explosion" : "explosion_small", position + Vector3.up * 0.15f, Quaternion.identity, Mathf.Clamp(size * 0.72f, 0.55f, 2.6f), 0.15f);
+      if (wfx != null) {
+        if (size < 1.2f) Crater(position, size * 0.7f);
+        return;
+      }
+      // 폴백 파티클(원시 구체·링 없음).
       Emit(_flash, position + Vector3.up * (0.6f * size), Vector3.zero, size * 1.7f, 0.25f, FlashCore);
-      Emit(_flash, position + Vector3.up * (0.4f * size), Vector3.zero, size * 0.9f, 0.18f, new Color(1f, 0.95f, 0.75f, 1f));
-      // 2) 불길: 몇 덩이만 위로.
       var flames = Scaled(4);
       for (var i = 0; i < flames; i++) {
         Emit(_glow, position + Random.insideUnitSphere * size * 0.4f, Random.insideUnitSphere * size * 1.2f + Vector3.up * size * 1.4f, size * Random.Range(0.8f, 1.3f), Random.Range(0.3f, 0.45f), Flame);
       }
-      // 3) 짙은 회색 연기: 부풀며 천천히 오르고 사라진다.
       var smoke = Scaled(7);
       for (var i = 0; i < smoke; i++) {
         var drift = new Vector3(Random.Range(-0.5f, 0.5f), Random.Range(0.9f, 1.8f), Random.Range(-0.5f, 0.5f));
         Emit(_smoke, position + Vector3.up * (0.5f * size) + Random.insideUnitSphere * size * 0.5f, drift, size * Random.Range(1f, 1.5f), Random.Range(2f, 3.2f), SmokeBillow);
       }
-      // 4) 가는 불티 몇 개(네모 파편 없음).
       var sparks = Scaled(4);
       for (var i = 0; i < sparks; i++) {
         var velocity = (Random.onUnitSphere + Vector3.up * 1.2f) * size * Random.Range(3f, 6f);
         Emit(_needle, position, velocity, 0.04f, Random.Range(0.1f, 0.2f), Spark);
       }
-      // 5) 그을음 자국(작은 폭발도 옅게).
       if (size < 1.2f) {
         Crater(position, size * 0.7f);
       }
@@ -459,6 +481,10 @@ namespace FactoryWars.View {
 
     /// <summary>전략 미사일 발사 시 격납고 문 주변으로 뿜어져 나오는 하얀 배기 증기.</summary>
     public void SiloSteam(Vector3 position) {
+      if (SpawnWarFx("smoke", position + Vector3.up * 0.5f, Quaternion.identity, 1.8f, 0.2f) != null) {
+        Emit(_flash, position + Vector3.up * 1.4f, Vector3.zero, 3.2f, 0.35f, FlashCore);
+        return;
+      }
       var steamCol = new Color(0.92f, 0.94f, 0.96f, 0.85f);
       for (var i = 0; i < 14; i++) {
         var angle = i * (Mathf.PI * 2f / 14f);
@@ -468,7 +494,7 @@ namespace FactoryWars.View {
       Emit(_flash, position + Vector3.up * 1.4f, Vector3.zero, 3.2f, 0.35f, FlashCore);
     }
 
-    /// <summary>전략 미사일 초음속 착탄 · 공중항모 추락 시 거대 3D 확장 충격파 링 + 화염구 돔 + 버섯구름 연기 + 영구 암흑 크레이터.</summary>
+    /// <summary>전략 미사일 착탄 · 공중항모 추락: 원시 주황 구체·링 전면 제거 -> 실제 War FX WFXMR_Nuke + WFXMR_ExplosiveSmokeGround Big + WFXMR_Fire Natural + 영구 크레이터.</summary>
     public void MushroomExplosion(Vector3 position, float size) {
       GameAudio.Play(SoundEvent.Explosion);
       Shake(1.15f);
@@ -479,54 +505,24 @@ namespace FactoryWars.View {
         var ang = c * (Mathf.PI * 2f / 5f) + 0.3f;
         Crater(ground + new Vector3(Mathf.Cos(ang) * size * 1.45f, 0f, Mathf.Sin(ang) * size * 1.45f), size * 1.15f, permanent: true);
       }
-      // 3D 확장 충격파 링 메쉬(주황/금색 발광) + 반투명 중심 화염구 코어.
-      SpawnShockwaveMesh(ground + Vector3.up * 0.25f, new Color(1f, 0.56f, 0.12f, 0.86f), size * 3.4f, 1.35f, isDome: false);
-      SpawnShockwaveMesh(ground + Vector3.up * 0.35f, new Color(1f, 0.88f, 0.42f, 0.82f), size * 2.2f, 0.95f, isDome: false);
-      SpawnShockwaveMesh(ground + Vector3.up * 0.1f, new Color(1f, 0.48f, 0.08f, 0.58f), size * 1.15f, 1.0f, isDome: true);
-
-      Emit(_flash, ground + Vector3.up * (0.85f * size), Vector3.zero, size * 3.4f, 0.65f, FlashCore);
-      Emit(_flash, ground + Vector3.up * (0.55f * size), Vector3.zero, size * 2.2f, 0.45f, new Color(1f, 0.96f, 0.78f, 1f));
-      // 솟구치는 화염 기둥(Stem).
-      for (var h = 0; h < 12; h++) {
-        var y = 0.6f + h * (size * 0.35f);
-        Emit(_glow, ground + new Vector3(Random.Range(-0.8f, 0.8f), y, Random.Range(-0.8f, 0.8f)), Vector3.up * (3.2f + h * 0.4f), size * Random.Range(1.1f, 1.6f), Random.Range(0.75f, 1.15f), Flame);
+      // 실제 War FX 핵폭발(WFXMR_Nuke) + 다층 충격파 연기(WFXMR_ExplosiveSmokeGround Big) + 잔존 화염·검은 연기 3개소!
+      var nukeScale = Mathf.Clamp(size * 0.24f, 0.72f, 1.45f);
+      var spawnedNuke = SpawnWarFx("nuke", ground + Vector3.up * 0.1f, Quaternion.identity, nukeScale, 0.95f);
+      SpawnWarFx("nuke_extra", ground + Vector3.up * 0.2f, Quaternion.identity, nukeScale * 0.88f, 0.65f);
+      for (var f = 0; f < 3; f++) {
+        var a = f * (Mathf.PI * 2f / 3f) + 0.4f;
+        SpawnWarFx("fire_black", ground + new Vector3(Mathf.Cos(a) * size * 1.15f, 0.05f, Mathf.Sin(a) * size * 1.15f), Quaternion.identity, 0.9f, 0.55f);
       }
-      // 상층 버섯구름 갓(Cap) 화염 + 검은 연기 기둥.
-      var capY = size * 1.85f;
-      for (var i = 0; i < 20; i++) {
-        var a = i * (Mathf.PI * 2f / 20f);
-        var radial = new Vector3(Mathf.Cos(a), 0.18f, Mathf.Sin(a));
-        Emit(_glow, ground + Vector3.up * capY + radial * (size * 0.75f), radial * 2.8f + Vector3.up * 1.6f, size * 1.45f, 0.95f, Flame);
-        Emit(_smoke, ground + Vector3.up * (capY + 0.7f) + radial * (size * 0.95f), radial * 2.2f + Vector3.up * 1.4f, size * 1.95f, 3.2f, SmokeDark);
+      if (spawnedNuke == null) {
+        // War FX 미연결 환경 폴백(순수 ParticleSystem 버스트 — 원시 메쉬 없음).
+        Emit(_flash, ground + Vector3.up * (0.85f * size), Vector3.zero, size * 3.4f, 0.65f, FlashCore);
+        for (var i = 0; i < 20; i++) {
+          var a = i * (Mathf.PI * 2f / 20f);
+          var radial = new Vector3(Mathf.Cos(a), 0.18f, Mathf.Sin(a));
+          Emit(_glow, ground + Vector3.up * (size * 1.4f) + radial * (size * 0.65f), radial * 2.8f + Vector3.up * 1.6f, size * 1.45f, 0.95f, Flame);
+          Emit(_smoke, ground + Vector3.up * (size * 2.1f) + radial * (size * 0.95f), radial * 2.2f + Vector3.up * 1.4f, size * 1.95f, 3.2f, SmokeDark);
+        }
       }
-    }
-
-    void SpawnShockwaveMesh(Vector3 position, Color color, float maxScale, float duration, bool isDome) {
-      var go = new GameObject(isDome ? "ExplosionFireDome" : "ExplosionShockwave", typeof(MeshFilter), typeof(MeshRenderer));
-      go.transform.SetParent(transform, false);
-      go.transform.position = position;
-      var kit = new MeshKit().Paint(Swatch.White);
-      if (isDome) {
-        kit.Cylinder(new Vector3(0f, 0.35f, 0f), 0.95f, 0.7f, 18);
-        kit.Cylinder(new Vector3(0f, 0.95f, 0f), 0.78f, 0.75f, 16);
-        kit.Cone(new Vector3(0f, 1.65f, 0f), 0.75f, 0.95f, 16);
-      } else {
-        kit.Annulus(Vector3.zero, 0.78f, 1.0f, 40);
-      }
-      go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh(isDome ? "fx_fire_dome" : "fx_shockwave_ring");
-      var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-      mat.color = color;
-      if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 1f);
-      if (mat.HasProperty("_SrcBlend")) mat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
-      if (mat.HasProperty("_DstBlend")) mat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-      if (mat.HasProperty("_ZWrite")) mat.SetFloat("_ZWrite", 0f);
-      mat.renderQueue = 3050;
-      var rend = go.GetComponent<MeshRenderer>();
-      rend.sharedMaterial = mat;
-      rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      rend.receiveShadows = false;
-      go.transform.localScale = Vector3.one * (maxScale * 0.38f);
-      _shockwaves.Add((go, mat, Time.time, duration, maxScale, isDome));
     }
 
     /// <summary>울타리가 내려갈 때 바닥 먼지. 낮음 품질에서는 끈다.</summary>
@@ -542,7 +538,7 @@ namespace FactoryWars.View {
     }
 
     public void ChimneySmoke(Vector3 position) {
-      if (VisualCatalog.SpawnEffect("smoke", position, Vector3.up, 1f)) {
+      if (SpawnWarFx("smoke", position, Quaternion.identity, 0.55f, 0.25f) != null) {
         return;
       }
       Emit(_smoke, position, new Vector3(Random.Range(0.2f, 0.6f), Random.Range(1.4f, 2.2f), Random.Range(-0.2f, 0.2f)), Random.Range(0.5f, 0.8f), Random.Range(2.2f, 3.2f), SmokeGray);
@@ -576,6 +572,26 @@ namespace FactoryWars.View {
     /// <summary>파괴된 기갑 잔해(30초간 연소·연기 후 가라앉으며 오일·그을음 자국을 남긴다).</summary>
     public void Wreck(Vector3 position, float radius) => Wreck(position, radius, WreckSeconds);
 
+    GameObject CreateRubbleVisual(string name, Vector3 flat, float scaleXz, float scaleY) {
+      if (VisualCatalog.TryFilled(VisualCatalog.FxId("rubble_pile"), out var slot) && slot.Prefab != null) {
+        var go = Instantiate(slot.Prefab, flat, Quaternion.Euler(0, Random.Range(0f, 360f), 0));
+        go.name = name;
+        go.transform.SetParent(transform, true);
+        var s = Mathf.Clamp(scaleXz * 0.62f, 0.6f, 2.4f);
+        go.transform.localScale = new Vector3(s, Mathf.Clamp(scaleY * 0.55f, 0.45f, 1.5f), s);
+        return go;
+      }
+      var item = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+      item.transform.SetParent(transform, false);
+      item.transform.SetPositionAndRotation(flat, Quaternion.Euler(0, Random.Range(0f, 360f), 0));
+      item.transform.localScale = new Vector3(scaleXz, scaleY, scaleXz);
+      item.GetComponent<MeshFilter>().sharedMesh = Rubble();
+      var renderer = item.GetComponent<MeshRenderer>();
+      renderer.sharedMaterial = ArtLook.NeutralMaterial;
+      renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      return item;
+    }
+
     public void Wreck(Vector3 position, float radius, float seconds) {
       if (_wrecks.Count >= MaxWrecks) {
         var old = _wrecks.Dequeue();
@@ -583,19 +599,13 @@ namespace FactoryWars.View {
           Destroy(old.Item);
         }
       }
-      var item = new GameObject("Wreck", typeof(MeshFilter), typeof(MeshRenderer));
-      item.transform.SetParent(transform, false);
       var flat = new Vector3(position.x, 0f, position.z);
-      item.transform.SetPositionAndRotation(flat, Quaternion.Euler(0, Random.Range(0f, 360f), 0));
-      item.transform.localScale = new Vector3(radius, radius * 0.8f, radius);
-      item.GetComponent<MeshFilter>().sharedMesh = Rubble();
-      var renderer = item.GetComponent<MeshRenderer>();
-      renderer.sharedMaterial = ArtLook.NeutralMaterial;
-      renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      _wrecks.Enqueue((item, Time.time - (WreckSeconds - seconds), flat, radius, Time.time + 0.35f));
+      var item = CreateRubbleVisual("Wreck", flat, radius, radius * 0.8f);
+      SpawnWarFx("fire_black", flat + Vector3.up * 0.35f, Quaternion.identity, 0.65f, 0.35f);
+      _wrecks.Enqueue((item, Time.time - (WreckSeconds - seconds), flat, radius, Time.time + 2.8f));
     }
 
-    /// <summary>파괴된 기지 건물의 영구 붕괴 콘크리트 잔해 더미(경기 종료까지 유지).</summary>
+    /// <summary>파괴된 기지 건물의 영구 붕괴 콘크리트 잔해 더미(실제 Synty SM_Prop_Rubble_Pile_01 + 영구 그을음).</summary>
     public void PermanentRubble(Vector3 position, float radius) {
       if (_permanentRubble.Count >= MaxPermanentRubble) {
         var oldest = _permanentRubble[0];
@@ -605,34 +615,9 @@ namespace FactoryWars.View {
         _permanentRubble.RemoveAt(0);
       }
       var flat = new Vector3(position.x, 0f, position.z);
-      var item = new GameObject("CollapsedBuildingRubble", typeof(MeshFilter), typeof(MeshRenderer));
-      item.transform.SetParent(transform, false);
-      item.transform.SetPositionAndRotation(flat, Quaternion.Euler(0, Random.Range(0f, 360f), 0));
-      item.transform.localScale = new Vector3(radius * 1.05f, radius * 0.52f, radius * 1.05f);
-      item.GetComponent<MeshFilter>().sharedMesh = Rubble();
-      var renderer = item.GetComponent<MeshRenderer>();
-      renderer.sharedMaterial = ArtLook.NeutralMaterial;
-      renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      var item = CreateRubbleVisual("CollapsedBuildingRubble", flat, radius * 1.05f, radius * 0.52f);
       _permanentRubble.Add(item);
       Crater(flat, radius * 1.45f, permanent: true);
-    }
-
-    void UpdateShockwaves(float now) {
-      for (var i = _shockwaves.Count - 1; i >= 0; i--) {
-        var s = _shockwaves[i];
-        var t = (now - s.Born) / Mathf.Max(0.05f, s.Duration);
-        if (s.Go == null || t >= 1f) {
-          if (s.Go != null) Destroy(s.Go);
-          if (s.Mat != null) Destroy(s.Mat);
-          _shockwaves.RemoveAt(i);
-          continue;
-        }
-        var scale = Mathf.Lerp(s.MaxScale * 0.35f, s.MaxScale, 1f - (1f - t) * (1f - t));
-        s.Go.transform.localScale = s.IsDome ? new Vector3(scale, scale * (1.1f - 0.3f * t), scale) : new Vector3(scale, 1f, scale);
-        var col = s.Mat.color;
-        col.a = Mathf.Clamp01((1f - t) * 0.95f);
-        s.Mat.color = col;
-      }
     }
 
     void LateUpdate() {
@@ -646,7 +631,6 @@ namespace FactoryWars.View {
     void Update() {
       UpdateFlights(Time.deltaTime);
       var now = Time.time;
-      UpdateShockwaves(now);
       var maxAge = CraterHoldSeconds + CraterFadeSeconds;
       var hasFading = false;
       for (var i = _craters.Count - 1; i >= 0; i--) {

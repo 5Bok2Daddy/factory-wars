@@ -198,6 +198,7 @@ namespace FactoryWars.View {
       var scars = new GameObject("BattleScars").AddComponent<BattleScars>();
       scars.transform.SetParent(_stage, false);
       World = new WorldView(_stage, frame.FindAsset<MapSpec>(frame.Map.UserAsset), _catalog);
+      WorldView.ApplyBiomeAtmosphere(World.Map, Camera.main);
       Fx = new GameObject("Fx").AddComponent<BattleFx>();
       Fx.transform.SetParent(_stage, false);
       World.Fx = Fx;
@@ -630,42 +631,35 @@ namespace FactoryWars.View {
       Slide("Forklift", new Vector3(1.3f, 0, 0), 0.32f);
       Slide("Hoist", new Vector3(1.9f, 0, 0), 0.22f);
       Slide("Door", new Vector3(0, 0.9f, 0), 0.4f);
+      // 원시 도형(큐브·실린더·파란 원) 전면 금지: VisualCatalog의 100% 실제 Synty/Kenney 프리팹을 그대로 유지한다.
       if (id == "ff_stormnest_carrier") {
-        BuildHelicarrierVisual(actor);
-      } else if (id == "cf_missile_silo") {
-        BuildMissileSiloVisual(actor);
-      } else if (id.EndsWith("_patriot_turret")) {
-        BuildPatriotAccent(actor);
-      } else if (id == "ff_artillery_ship" || id == "cf_artillery_ship") {
-        HeroVisuals.BuildArtilleryShip(actor.View, actor.Color);
-      } else if (id == "ff_landing_craft" || id == "cf_landing_craft") {
-        HeroVisuals.BuildLandingCraft(actor.View, actor.Color);
-      } else if (isBuilding && HeroVisuals.TryBuildFactory(actor.View, id, actor.Color, out var chimneys, out var beacon, out var radarDish)) {
-        actor.FactorySmoke = chimneys;
-        actor.FactoryBeacon = beacon;
-        if (radarDish != null) {
-          actor.Spinners.Add((radarDish, Vector3.up, 52f, true));
-        }
+        actor.IsCarrier = true;
+        AttachCarrierGroundShadow(actor);
+      } else if (isBuilding && (id.EndsWith("_barracks") || id.EndsWith("_vehicle_factory") || id.EndsWith("_heavy_works")
+          || id.EndsWith("_processor") || id.EndsWith("_power_plant") || id.EndsWith("_airfield") || id.EndsWith("_carrier_yard"))) {
+        actor.FactorySmoke = new[] { new Vector3(-2.0f, Mathf.Max(5.2f, actor.Height * 0.78f), -1.2f) };
       }
       _actors[entity] = actor;
       return actor;
     }
 
-    void BuildPatriotAccent(Actor actor) {
-      var kit = new MeshKit();
-      kit.Paint(Swatch.ArmorDark).Chamfer(new Vector3(0f, 0.9f, 0f), new Vector3(1.5f, 0.55f, 1.5f), 0.12f);
-      for (var c = 0; c < 4; c++) {
-        var ox = (c % 2 == 0 ? -0.34f : 0.34f);
-        var oy = 1.5f + (c / 2) * 0.38f;
-        kit.Paint(Swatch.MetalLight).Box(new Vector3(ox, oy, 0.1f), new Vector3(0.28f, 0.28f, 1.65f));
-        kit.Paint(Swatch.GlowCyan).Box(new Vector3(ox, oy, 0.96f), new Vector3(0.22f, 0.22f, 0.08f));
-      }
-      var go = new GameObject("PatriotQuadRack", typeof(MeshFilter), typeof(MeshRenderer));
-      go.transform.SetParent(actor.View.Model.transform, false);
-      go.transform.localRotation = Quaternion.Euler(-28f, 0f, 0f);
-      go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("patriot_rack");
-      go.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
-      ArtLook.Apply(go, actor.Color, true);
+    /// <summary>실제 Synty 공중 항모(SM_Veh_TransportPlane_01) 아래 부드러운 지상 그림자 데칼만 부착한다(파란 원·원시 블록 금지).</summary>
+    void AttachCarrierGroundShadow(Actor actor) {
+      var shadowGo = new GameObject("CarrierShadow", typeof(MeshFilter), typeof(MeshRenderer));
+      shadowGo.transform.SetParent(actor.View.transform, false);
+      shadowGo.transform.localPosition = new Vector3(0f, 0.08f, 0f);
+      var sMesh = new Mesh { name = "carrier_ground_shadow" };
+      const float sx = 6.8f;
+      const float sz = 7.6f;
+      sMesh.vertices = new[] { new Vector3(-sx, 0f, -sz), new Vector3(-sx, 0f, sz), new Vector3(sx, 0f, sz), new Vector3(sx, 0f, -sz) };
+      sMesh.uv = new[] { new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 0f) };
+      sMesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+      sMesh.RecalculateNormals();
+      shadowGo.GetComponent<MeshFilter>().sharedMesh = sMesh;
+      var sRenderer = shadowGo.GetComponent<MeshRenderer>();
+      sRenderer.sharedMaterial = BattleFx.ScorchMaterial();
+      sRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      sRenderer.receiveShadows = false;
     }
 
     void UpdatePlacementRings(Frame frame) {
@@ -718,19 +712,25 @@ namespace FactoryWars.View {
         active.Add(pair.Entity);
         var pos = pair.Component.CurrentPosition.ToUnityVector3();
         if (_strikeRockets.TryGetValue(pair.Entity, out var rocket) == false || rocket == null) {
-          rocket = new GameObject("StrikeICBM", typeof(MeshFilter), typeof(MeshRenderer));
-          rocket.transform.SetParent(_stage, false);
-          var kit = new MeshKit();
-          kit.Paint(Swatch.White).Cylinder(new Vector3(0f, 0f, 0f), 0.46f, 3.0f, 10);
-          kit.Paint(Swatch.GlowRed).Cone(new Vector3(0f, 1.95f, 0f), 0.48f, 1.0f, 10);
-          rocket.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("strike_icbm");
-          rocket.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
-          rocket.transform.position = pos;
+          if (VisualCatalog.TryFilled(VisualCatalog.FxId("icbm_rocket"), out var mSlot) && mSlot.Prefab != null) {
+            rocket = Instantiate(mSlot.Prefab, pos, Quaternion.identity, _stage);
+            rocket.name = "StrikeICBM";
+            rocket.transform.localScale = Vector3.one * (mSlot.Scale > 0f ? mSlot.Scale : 2.2f);
+          } else {
+            rocket = new GameObject("StrikeICBM", typeof(MeshFilter), typeof(MeshRenderer));
+            rocket.transform.SetParent(_stage, false);
+            var kit = new MeshKit();
+            kit.Paint(Swatch.White).Cylinder(new Vector3(0f, 0f, 0f), 0.46f, 3.0f, 10);
+            kit.Paint(Swatch.GlowRed).Cone(new Vector3(0f, 1.95f, 0f), 0.48f, 1.0f, 10);
+            rocket.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("strike_icbm");
+            rocket.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+            rocket.transform.position = pos;
+          }
           _strikeRockets[pair.Entity] = rocket;
         }
         var delta = pos - rocket.transform.position;
         if (delta.sqrMagnitude > 0.001f) {
-          rocket.transform.rotation = Quaternion.LookRotation(delta.normalized) * Quaternion.Euler(90f, 0f, 0f);
+          rocket.transform.rotation = Quaternion.LookRotation(delta.normalized);
         }
         rocket.transform.position = pos;
         Fx.MuzzleFlash(pos - delta.normalized * 1.2f, -delta.normalized, 0.9f);
@@ -792,20 +792,23 @@ namespace FactoryWars.View {
       if (_stage == null) {
         return;
       }
-      var go = new GameObject("FlyingICBM", typeof(MeshFilter), typeof(MeshRenderer));
-      go.transform.SetParent(_stage, false);
-      go.transform.position = start;
-      go.transform.rotation = velocity.y >= 0f ? Quaternion.identity : Quaternion.Euler(180f, 0f, 0f);
-      var kit = new MeshKit();
-      kit.Paint(Swatch.White).Cylinder(new Vector3(0f, 1.4f, 0f), 0.42f, 2.8f, 10);
-      kit.Paint(Swatch.MetalDark).Cylinder(new Vector3(0f, 0.3f, 0f), 0.46f, 0.6f, 10);
-      kit.Paint(Swatch.GlowRed).Cone(new Vector3(0f, 3.25f, 0f), 0.44f, 0.95f, 10);
-      for (var f = 0; f < 4; f++) {
-        var yaw = f * 90f;
-        kit.Paint(Swatch.GlowRed).Box(Quaternion.Euler(0f, yaw, 0f) * new Vector3(0.45f, 0.35f, 0f), Quaternion.Euler(0f, yaw, 0f) * new Vector3(0.38f, 0.65f, 0.08f));
+      GameObject go;
+      if (VisualCatalog.TryFilled(VisualCatalog.FxId("icbm_rocket"), out var mSlot) && mSlot.Prefab != null) {
+        go = Instantiate(mSlot.Prefab, start, Quaternion.LookRotation(velocity.sqrMagnitude > 0.001f ? velocity.normalized : Vector3.up), _stage);
+        go.name = "FlyingICBM";
+        go.transform.localScale = Vector3.one * (mSlot.Scale > 0f ? mSlot.Scale : 2.2f);
+      } else {
+        go = new GameObject("FlyingICBM", typeof(MeshFilter), typeof(MeshRenderer));
+        go.transform.SetParent(_stage, false);
+        go.transform.position = start;
+        go.transform.rotation = velocity.y >= 0f ? Quaternion.identity : Quaternion.Euler(180f, 0f, 0f);
+        var kit = new MeshKit();
+        kit.Paint(Swatch.White).Cylinder(new Vector3(0f, 1.4f, 0f), 0.42f, 2.8f, 10);
+        kit.Paint(Swatch.MetalDark).Cylinder(new Vector3(0f, 0.3f, 0f), 0.46f, 0.6f, 10);
+        kit.Paint(Swatch.GlowRed).Cone(new Vector3(0f, 3.25f, 0f), 0.44f, 0.95f, 10);
+        go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("icbm_rocket");
+        go.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
       }
-      go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("icbm_rocket");
-      go.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
       _flyingMissiles.Add((go, velocity, Time.time + duration, 0f));
     }
 
@@ -854,167 +857,6 @@ namespace FactoryWars.View {
         }
         _crashingCarriers[i] = c;
       }
-    }
-
-    void BuildHelicarrierVisual(Actor actor) {
-      actor.IsCarrier = true;
-      actor.View.Slot = null;
-      var model = actor.View.Model.transform;
-      model.localPosition = Vector3.zero;
-      model.localRotation = Quaternion.identity;
-      model.localScale = Vector3.one * 1.35f;
-      foreach (var r in model.GetComponents<Renderer>()) {
-        r.enabled = false;
-      }
-      for (var i = model.childCount - 1; i >= 0; i--) {
-        DestroyImmediate(model.GetChild(i).gameObject);
-      }
-      actor.Spinners.Clear();
-      var kit = new MeshKit();
-      // 장갑 선체 + 상부 활주 비행갑판 + 우현 함교 아일랜드 + 발광 활주로 유도선(GlowCyan).
-      kit.Team().Chamfer(new Vector3(0f, 0.1f, 0f), new Vector3(2.2f, 0.75f, 5.4f), 0.22f);
-      kit.Paint(Swatch.MetalDark).Chamfer(new Vector3(0f, 0.58f, 0.1f), new Vector3(3.4f, 0.24f, 6.2f), 0.14f);
-      kit.Paint(Swatch.ConcreteDark).Box(new Vector3(-0.35f, 0.72f, 0.1f), new Vector3(1.55f, 0.05f, 5.8f));
-      kit.Team().Chamfer(new Vector3(1.18f, 1.15f, -0.35f), new Vector3(0.68f, 0.95f, 1.45f), 0.08f);
-      kit.Paint(Swatch.GlowCyan).Box(new Vector3(1.18f, 1.38f, 0.39f), new Vector3(0.52f, 0.22f, 0.08f));
-      // 활주로 청록색 발광 유도등 2열.
-      for (var s = -5; s <= 5; s++) {
-        var z = s * 0.5f;
-        kit.Paint(Swatch.GlowCyan).Box(new Vector3(-1.02f, 0.75f, z), new Vector3(0.11f, 0.06f, 0.28f));
-        kit.Paint(Swatch.GlowCyan).Box(new Vector3(0.32f, 0.75f, z), new Vector3(0.11f, 0.06f, 0.28f));
-      }
-      // 4기 VTOL 터빈 나셀 암 & 덕트 링.
-      var mounts = new[] {
-        new Vector3(-2.35f, 0.42f, -1.75f),
-        new Vector3(2.35f, 0.42f, -1.75f),
-        new Vector3(-2.45f, 0.42f, 1.85f),
-        new Vector3(2.45f, 0.42f, 1.85f),
-      };
-      for (var m = 0; m < mounts.Length; m++) {
-        var p = mounts[m];
-        kit.Paint(Swatch.MetalDark).Box(new Vector3(p.x * 0.55f, p.y, p.z), new Vector3(Mathf.Abs(p.x), 0.22f, 0.42f));
-        kit.Team().Cylinder(p, 0.92f, 0.34f, 14);
-        kit.Paint(Swatch.Black).Cylinder(p + Vector3.up * 0.04f, 0.76f, 0.36f, 14);
-        kit.Paint(Swatch.GlowCyan).Cylinder(p + Vector3.up * 0.08f, 0.24f, 0.38f, 10);
-
-        var rotorGo = new GameObject($"VTOLRotor{m}", typeof(MeshFilter), typeof(MeshRenderer));
-        rotorGo.transform.SetParent(model, false);
-        rotorGo.transform.localPosition = p + Vector3.up * 0.16f;
-        var rKit = new MeshKit();
-        rKit.Paint(Swatch.MetalLight).Box(Vector3.zero, new Vector3(1.42f, 0.04f, 0.16f));
-        rKit.Paint(Swatch.MetalLight).Box(Vector3.zero, new Vector3(0.16f, 0.04f, 1.42f));
-        rKit.Paint(Swatch.GlowCyan).Cylinder(Vector3.zero, 0.22f, 0.12f, 8);
-        rotorGo.GetComponent<MeshFilter>().sharedMesh = rKit.ToMesh($"vtol_rotor_{m}");
-        rotorGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
-        actor.Spinners.Add((rotorGo.transform, Vector3.up, 1480f * (m % 2 == 0 ? 1f : -1f), false));
-      }
-      var hullGo = new GameObject("HelicarrierHull", typeof(MeshFilter), typeof(MeshRenderer));
-      hullGo.transform.SetParent(model, false);
-      hullGo.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("helicarrier_hull");
-      hullGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(actor.Color, true) ?? ArtLook.NeutralMaterial;
-
-      var radarGo = new GameObject("BridgeRadar", typeof(MeshFilter), typeof(MeshRenderer));
-      radarGo.transform.SetParent(model, false);
-      radarGo.transform.localPosition = new Vector3(1.18f, 1.75f, -0.35f);
-      var radKit = new MeshKit();
-      radKit.Paint(Swatch.GlowCyan).Box(Vector3.zero, new Vector3(0.65f, 0.22f, 0.1f));
-      radarGo.GetComponent<MeshFilter>().sharedMesh = radKit.ToMesh("helicarrier_radar");
-      radarGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(actor.Color, true) ?? ArtLook.NeutralMaterial;
-      actor.Spinners.Add((radarGo.transform, Vector3.up, 180f, false));
-
-      // 건물·도로 위를 스쳐 지나가는 거대한 지상 그림자 데칼(CarrierShadow).
-      var shadowGo = new GameObject("CarrierShadow", typeof(MeshFilter), typeof(MeshRenderer));
-      shadowGo.transform.SetParent(actor.View.transform, false);
-      shadowGo.transform.localPosition = new Vector3(0f, 0.08f, 0f);
-      var sMesh = new Mesh { name = "carrier_ground_shadow" };
-      const float sx = 7.2f;
-      const float sz = 9.4f;
-      sMesh.vertices = new[] { new Vector3(-sx, 0f, -sz), new Vector3(-sx, 0f, sz), new Vector3(sx, 0f, sz), new Vector3(sx, 0f, -sz) };
-      sMesh.uv = new[] { new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(1f, 0f) };
-      sMesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
-      sMesh.RecalculateNormals();
-      shadowGo.GetComponent<MeshFilter>().sharedMesh = sMesh;
-      var sRenderer = shadowGo.GetComponent<MeshRenderer>();
-      sRenderer.sharedMaterial = BattleFx.ScorchMaterial();
-      sRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      sRenderer.receiveShadows = false;
-
-      // 깔끔하게 회전하는 전술 지휘 오라 링(CarrierAuraRing, 반경 14m, 얇은 세그먼트 링).
-      var auraGo = new GameObject("CarrierAuraRing", typeof(MeshFilter), typeof(MeshRenderer));
-      auraGo.transform.SetParent(actor.View.transform, false);
-      auraGo.transform.localPosition = new Vector3(0f, 0.14f, 0f);
-      var auraKit = new MeshKit().Paint(Swatch.GlowCyan);
-      ArtView.DashedRing(auraKit, 13.78f, 14.0f, 72);
-      auraGo.GetComponent<MeshFilter>().sharedMesh = auraKit.ToMesh("carrier_aura_ring");
-      var auraMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-      auraMat.color = new Color(0.22f, 0.90f, 1f, 0.42f);
-      if (auraMat.HasProperty("_Surface")) auraMat.SetFloat("_Surface", 1f);
-      if (auraMat.HasProperty("_SrcBlend")) auraMat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
-      if (auraMat.HasProperty("_DstBlend")) auraMat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-      if (auraMat.HasProperty("_ZWrite")) auraMat.SetFloat("_ZWrite", 0f);
-      auraMat.renderQueue = 3000;
-      var auraRend = auraGo.GetComponent<MeshRenderer>();
-      auraRend.sharedMaterial = auraMat;
-      auraRend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      auraRend.receiveShadows = false;
-      actor.Spinners.Add((auraGo.transform, Vector3.up, 14f, false));
-      ArtLook.Apply(actor.View.Model, actor.Color, true);
-    }
-
-    void BuildMissileSiloVisual(Actor actor) {
-      actor.View.Slot = null;
-      var model = actor.View.Model.transform;
-      model.localPosition = Vector3.zero;
-      model.localRotation = Quaternion.identity;
-      model.localScale = Vector3.one * 1.65f;
-      foreach (var r in model.GetComponents<Renderer>()) {
-        r.enabled = false;
-      }
-      for (var i = model.childCount - 1; i >= 0; i--) {
-        DestroyImmediate(model.GetChild(i).gameObject);
-      }
-      var kit = new MeshKit();
-      // 철근 콘크리트 요새 벙커 + 중앙 발사 수직 갱도 + 경보 램프.
-      kit.Paint(Swatch.ConcreteDark).Chamfer(new Vector3(0f, 0.55f, 0f), new Vector3(4.6f, 1.1f, 4.6f), 0.35f);
-      kit.Team().Chamfer(new Vector3(0f, 1.18f, 0f), new Vector3(3.6f, 0.36f, 3.6f), 0.2f);
-      kit.Paint(Swatch.Black).Cylinder(new Vector3(0f, 0.85f, 0f), 1.25f, 1.5f, 16);
-      kit.Paint(Swatch.MetalDark).Box(new Vector3(-1.95f, 1.65f, 0f), new Vector3(0.35f, 1.3f, 2.8f));
-      kit.Paint(Swatch.MetalDark).Box(new Vector3(1.95f, 1.65f, 0f), new Vector3(0.35f, 1.3f, 2.8f));
-      kit.Paint(Swatch.GlowRed).Box(new Vector3(-1.95f, 2.4f, 1.2f), new Vector3(0.28f, 0.28f, 0.28f));
-      kit.Paint(Swatch.GlowRed).Box(new Vector3(1.95f, 2.4f, -1.2f), new Vector3(0.28f, 0.28f, 0.28f));
-      var bunkerGo = new GameObject("SiloBunker", typeof(MeshFilter), typeof(MeshRenderer));
-      bunkerGo.transform.SetParent(model, false);
-      bunkerGo.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("silo_bunker");
-      bunkerGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(actor.Color, true) ?? ArtLook.NeutralMaterial;
-
-      // 좌우 슬라이딩 방폭문(BlastDoorL / BlastDoorR).
-      for (var side = -1; side <= 1; side += 2) {
-        var dKit = new MeshKit();
-        dKit.Paint(Swatch.MetalLight).Chamfer(Vector3.zero, new Vector3(1.32f, 0.24f, 2.65f), 0.06f);
-        dKit.Paint(Swatch.GlowRed).Box(new Vector3(-side * 0.52f, 0.14f, 0f), new Vector3(0.16f, 0.05f, 2.4f));
-        var doorGo = new GameObject(side < 0 ? "BlastDoorL" : "BlastDoorR", typeof(MeshFilter), typeof(MeshRenderer));
-        doorGo.transform.SetParent(model, false);
-        doorGo.transform.localPosition = new Vector3(side * 0.68f, 1.48f, 0f);
-        doorGo.GetComponent<MeshFilter>().sharedMesh = dKit.ToMesh(side < 0 ? "silo_door_l" : "silo_door_r");
-        doorGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
-        if (side < 0) {
-          actor.SiloDoorL = doorGo.transform;
-        } else {
-          actor.SiloDoorR = doorGo.transform;
-        }
-      }
-
-      // 격납고 내부 수직 ICBM 탄두 미사일.
-      var mKit = new MeshKit();
-      mKit.Paint(Swatch.White).Cylinder(new Vector3(0f, 1.3f, 0f), 0.44f, 2.6f, 12);
-      mKit.Paint(Swatch.GlowRed).Cone(new Vector3(0f, 3.05f, 0f), 0.45f, 0.95f, 12);
-      var mGo = new GameObject("SiloMissile", typeof(MeshFilter), typeof(MeshRenderer));
-      mGo.transform.SetParent(model, false);
-      mGo.transform.localPosition = new Vector3(0f, 0.1f, 0f);
-      mGo.GetComponent<MeshFilter>().sharedMesh = mKit.ToMesh("silo_icbm");
-      mGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
-      actor.SiloMissile = mGo.transform;
-      ArtLook.Apply(actor.View.Model, actor.Color, true);
     }
 
     static float Wave(float time, float speed, float phase) => 0.5f + 0.5f * Mathf.Sin(time * speed * Mathf.PI * 2f + phase);

@@ -205,6 +205,11 @@ namespace FactoryWars.View {
       if (Dressing.Collecting == false || Dressing.Has(DressKind.Grass) == false) {
         return 0;
       }
+      var biome = TerrainKit.BiomeOf(map);
+      // 사막(초록 잡풀 0% — 사구·선인장·사막 바위는 WorldView.BuildBiomeProps에서 실제 Synty 프리팹으로 배치)과 시가전(콘크리트 도심)은 초록 들판 흩뿌리기를 건너뛴다.
+      if (biome == TerrainKit.Biome.Desert || biome == TerrainKit.Biome.Urban) {
+        return 0;
+      }
       var urban = VisualProfile.Current.UrbanDecor;
       var paths = TerrainKit.RiverPaths(map);
       var terrain = map.Terrain?.Select(t => t.Shape).ToArray();

@@ -87,9 +87,15 @@ namespace FactoryWars.View {
       if (profile.UrbanDecor == false || Dressing.Collecting == false) {
         return;
       }
-      Boundary(map, profile);
+      var biome = TerrainKit.BiomeOf(map);
+      // 다도해·사막은 수평선까지 열린 바다/사구를 유지하기 위해 외곽 도심 빌딩 벽과 항만 옹벽을 생략한다.
+      if (biome != TerrainKit.Biome.Archipelago && biome != TerrainKit.Biome.Desert) {
+        Boundary(map, profile);
+      }
       Checkpoints(map, profile);
-      Seawall(map, profile);
+      if (biome != TerrainKit.Biome.Archipelago && biome != TerrainKit.Biome.Desert) {
+        Seawall(map, profile);
+      }
       Street(map, profile);
       Roadside(map, profile);
     }
@@ -133,13 +139,20 @@ namespace FactoryWars.View {
                 Side(map, road, DressKind.RoadWreck, center + turn * new Vector3(x - 5f, 0f, side * (edge + 3.6f)), 6300 + n * 7, yaw + (Hash(n, 43) - 0.5f) * 30f + (Hash(n, 44) < 0.5f ? 0f : 180f), "wreck", profile);
               }
             }
-            // 갓길 뒤 자연: 5m마다 바위·잡풀·덤불·나무(갓길 4.5~8m).
-            var v = 0;
-            for (var x = -half + 2f; x <= half - 2f; x += 5f, v++, n++) {
-              var pick = Hash(n, 45);
-              var kind = pick < 0.38f ? DressKind.Grass : pick < 0.58f ? DressKind.RockSmall : pick < 0.78f ? DressKind.Bush : pick < 0.9f ? DressKind.Broadleaf : DressKind.Conifer;
-              var off = edge + 4.5f + Hash(n, 46) * 3.5f;
-              Side(map, road, kind, center + turn * new Vector3(x + (Hash(n, 47) - 0.5f) * 2.5f, 0f, side * off), 6400 + n * 7, Hash(n, 48) * 360f, "verge", profile);
+            // 갓길 뒤 자연: 사막·시가전에는 초록 잔디/덤불/나무를 절대 놓지 않는다.
+            var rBiome = TerrainKit.BiomeOf(map);
+            if (rBiome != TerrainKit.Biome.Urban) {
+              var v = 0;
+              for (var x = -half + 2f; x <= half - 2f; x += 5f, v++, n++) {
+                var pick = Hash(n, 45);
+                var kind = rBiome == TerrainKit.Biome.Desert ? DressKind.RockSmall
+                  : pick < 0.38f ? DressKind.Grass : pick < 0.58f ? DressKind.RockSmall : pick < 0.78f ? DressKind.Bush : pick < 0.9f ? DressKind.Broadleaf : DressKind.Conifer;
+                if (rBiome == TerrainKit.Biome.Desert && pick > 0.25f) {
+                  continue;
+                }
+                var off = edge + 4.5f + Hash(n, 46) * 3.5f;
+                Side(map, road, kind, center + turn * new Vector3(x + (Hash(n, 47) - 0.5f) * 2.5f, 0f, side * off), 6400 + n * 7, Hash(n, 48) * 360f, "verge", profile);
+              }
             }
           }
         }
@@ -581,6 +594,49 @@ namespace FactoryWars.View {
       }
       RefreshWater();
       return _water;
+    }
+
+    /// <summary>바이옴별 물 색상·거품 폭을 실시간 반영한다(다도해=에메랄드 청록, 해협=짙은 군청 대양, 사막=오아시스 청록, 시가전=항만 슬레이트).</summary>
+    public static void ApplyWaterBiome(MapSpec map) {
+      var mat = WaterMaterial();
+      if (mat == null) {
+        return;
+      }
+      var profile = VisualProfile.Current;
+      switch (TerrainKit.BiomeOf(map)) {
+        case TerrainKit.Biome.Archipelago:
+          mat.SetColor("_Shallow", new Color(0.18f, 0.87f, 0.94f, 1f)); // #2EDEF0
+          mat.SetColor("_Deep", new Color(0.04f, 0.49f, 0.66f, 1f));    // #0A7DA8
+          mat.SetColor("_Foam", new Color(0.96f, 1f, 1f, 1f));
+          mat.SetFloat("_FoamWidth", 2.6f);
+          break;
+        case TerrainKit.Biome.Strait:
+          mat.SetColor("_Shallow", new Color(0.11f, 0.46f, 0.70f, 1f)); // #1C75B3
+          mat.SetColor("_Deep", new Color(0.04f, 0.22f, 0.42f, 1f));    // #0A386B
+          mat.SetColor("_Foam", new Color(0.88f, 0.95f, 1f, 1f));
+          mat.SetFloat("_FoamWidth", 2.0f);
+          break;
+        case TerrainKit.Biome.Desert:
+          mat.SetColor("_Shallow", new Color(0.28f, 0.64f, 0.60f, 1f));
+          mat.SetColor("_Deep", new Color(0.15f, 0.42f, 0.41f, 1f));
+          mat.SetColor("_Foam", new Color(0.92f, 0.88f, 0.76f, 1f));
+          mat.SetFloat("_FoamWidth", 1.4f);
+          break;
+        case TerrainKit.Biome.Urban:
+          mat.SetColor("_Shallow", new Color(0.19f, 0.39f, 0.49f, 1f));
+          mat.SetColor("_Deep", new Color(0.10f, 0.25f, 0.34f, 1f));
+          mat.SetColor("_Foam", new Color(0.82f, 0.88f, 0.92f, 1f));
+          mat.SetFloat("_FoamWidth", 1.4f);
+          break;
+        default:
+          var baseColor = profile.WaterColor.a > 0f ? (Color)profile.WaterColor : new Color(0.29f, 0.64f, 0.84f);
+          mat.SetColor("_Shallow", profile.WaterShallowTint.a > 0f ? (Color)profile.WaterShallowTint : Color.Lerp(baseColor, Color.white, 0.28f));
+          mat.SetColor("_Deep", profile.WaterDeepTint.a > 0f ? (Color)profile.WaterDeepTint : baseColor * 0.78f);
+          mat.SetColor("_Foam", profile.WaterFoamTint);
+          mat.SetFloat("_FoamWidth", profile.WaterFoamWidth);
+          break;
+      }
+      RefreshWater();
     }
 
     /// <summary>깊이 거품은 높음·보통에서만 켠다(낮음은 깊이 텍스처를 읽지 않고 불투명 단색+가장자리 줄무늬). 품질을 바꿀 때도 부른다.</summary>

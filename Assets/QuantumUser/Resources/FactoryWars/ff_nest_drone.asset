@@ -33,10 +33,10 @@ MonoBehaviour:
   BuildTimeSeconds:
     RawValue: 786432
   MaxHealth:
-    RawValue: 10485760
+    RawValue: 11796480
   Attack: 2
   Damage:
-    RawValue: 917504
+    RawValue: 1179648
   Range:
     RawValue: 393216
   MinRange:
@@ -128,3 +128,7 @@ MonoBehaviour:
     Id:
       Value: 0
   SortieCargoCount: 0
+  TransportCapacity: 0
+  TransportAllowsVehicles: 0
+  TransportEjectHealthRatio:
+    RawValue: 0

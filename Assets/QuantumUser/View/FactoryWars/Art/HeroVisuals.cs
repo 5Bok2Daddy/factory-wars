@@ -375,81 +375,53 @@ namespace FactoryWars.View {
       return true;
     }
 
-    /// <summary>공장 Lv.2 / Lv.3 시각적 확장: 추가 굴뚝 · 대형 갠트리 트러스 · 진영색 발광 배관 장착.</summary>
+    /// <summary>공장 Lv.2 / Lv.3 시각적 확장: 100% 실제 Synty 산업 굴뚝·발전기·통신탑·변압기 프리팹 부착(원시 큐브/실린더 금지).</summary>
     public static GameObject AttachFactoryUpgrade(Transform model, int level, int color) {
       if (model == null || level <= 1) return null;
-      var kit = new MeshKit();
-      // Lv.2: 좌우 추가 증기 굴뚝 + 진영색 가압 배관 + 상단 강철 프레임.
-      kit.Paint(Swatch.MetalDark).Cylinder(new Vector3(-2.65f, 2.75f, -0.25f), 0.26f, 3.8f, 10);
-      kit.Team().Cylinder(new Vector3(-2.65f, 4.15f, -0.25f), 0.29f, 0.35f, 10);
-      kit.Team().Box(new Vector3(-2.65f, 1.65f, 0.85f), new Vector3(0.24f, 0.24f, 2.2f));
-      kit.Paint(Swatch.GlowCyan).Box(new Vector3(2.65f, 1.65f, 0.45f), new Vector3(0.22f, 0.22f, 2.6f));
-      if (level >= 3) {
-        // Lv.3: 쌍대형 터보 배기 스택 + 지붕 대형 오버헤드 트러스 크레인 + 황금/시안 고출력 코어 배관.
-        kit.Paint(Swatch.MetalDark).Cylinder(new Vector3(2.65f, 3.25f, -0.35f), 0.32f, 4.8f, 12);
-        kit.Paint(Swatch.StripeYellow).Cylinder(new Vector3(2.65f, 4.95f, -0.35f), 0.36f, 0.38f, 12);
-        kit.Paint(Swatch.StripeYellow).Box(new Vector3(-2.85f, 2.65f, 0.5f), new Vector3(0.26f, 4.8f, 0.26f));
-        kit.Paint(Swatch.StripeYellow).Box(new Vector3(2.85f, 2.65f, 0.5f), new Vector3(0.26f, 4.8f, 0.26f));
-        kit.Paint(Swatch.StripeYellow).Box(new Vector3(0f, 5.05f, 0.5f), new Vector3(6.1f, 0.34f, 0.38f));
-        kit.Paint(Swatch.GlowCyan).Box(new Vector3(0f, 5.26f, 0.5f), new Vector3(4.2f, 0.14f, 0.16f));
-        kit.Paint(Swatch.GlowOrange).Box(new Vector3(0f, 4.78f, 0.5f), new Vector3(1.1f, 0.42f, 0.58f));
+      var root = new GameObject($"FactoryUpgrade_Lv{level}");
+      root.transform.SetParent(model.parent != null ? model.parent : model, false);
+      root.transform.localPosition = Vector3.zero;
+      root.transform.localRotation = Quaternion.identity;
+      if (VisualCatalog.TryFilled(VisualCatalog.FxId("factory_lv2"), out var lv2) && lv2.Prefab != null) {
+        var g2 = Object.Instantiate(lv2.Prefab, root.transform);
+        g2.name = "SyntyUpgradeLv2";
+        g2.transform.localPosition = Vector3.zero;
       }
-      var go = new GameObject($"FactoryUpgrade_Lv{level}", typeof(MeshFilter), typeof(MeshRenderer));
-      go.transform.SetParent(model, false);
-      go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh($"factory_upgrade_lv{level}");
-      go.GetComponent<MeshRenderer>().sharedMaterial = TeamMat(color);
-      return go;
+      if (level >= 3 && VisualCatalog.TryFilled(VisualCatalog.FxId("factory_lv3"), out var lv3) && lv3.Prefab != null) {
+        var g3 = Object.Instantiate(lv3.Prefab, root.transform);
+        g3.name = "SyntyUpgradeLv3";
+        g3.transform.localPosition = Vector3.zero;
+      }
+      return root;
     }
 
-    static Material _pipePowerMat;
-    static Material _pipeSteelMat;
     static Material _pipFullMat;
     static Material _pipEmptyMat;
 
-    /// <summary>12m 인접 시너지 발광 지상 파이프라인(제련소=용광로 주황, 발전소=고압 시안).</summary>
+    /// <summary>12m 인접 시너지 파이프라인: 100% 실제 Synty 산업 배관(SM_Prop_Pipeline_Pipe_Large_01) 연결(원시 박스 금지).</summary>
     public static GameObject BuildSynergyPipeline(Transform parent, Vector3 from, Vector3 to, bool isPower) {
-      var a = new Vector3(from.x, 0.44f, from.z);
-      var b = new Vector3(to.x, 0.44f, to.z);
+      var a = new Vector3(from.x, 0.08f, from.z);
+      var b = new Vector3(to.x, 0.08f, to.z);
       var delta = b - a;
       var len = delta.magnitude;
       if (len < 1f) return null;
-      var go = new GameObject("SynergyPipeline");
+      if (VisualCatalog.TryFilled(VisualCatalog.FxId("synergy_pipe"), out var slot) == false || slot.Prefab == null) {
+        return null;
+      }
+      var go = new GameObject(isPower ? "SynergyPipeline_Power" : "SynergyPipeline_Steel");
       go.transform.SetParent(parent, false);
       go.transform.position = (a + b) * 0.5f;
       go.transform.rotation = Quaternion.LookRotation(delta / len, Vector3.up);
-
-      // 외곽 강철 파이프 하우징 + 지지대.
-      var shellGo = new GameObject("PipeShell", typeof(MeshFilter), typeof(MeshRenderer));
-      shellGo.transform.SetParent(go.transform, false);
-      var sk = new MeshKit();
-      sk.Paint(Swatch.MetalDark).Box(new Vector3(0f, 0f, 0f), new Vector3(0.66f, 0.30f, len));
-      var rings = Mathf.Max(2, Mathf.FloorToInt(len / 2.6f));
-      for (var i = 0; i <= rings; i++) {
-        var z = -len * 0.5f + (len * i / rings);
-        sk.Paint(Swatch.StripeYellow).Box(new Vector3(0f, 0.04f, z), new Vector3(0.84f, 0.38f, 0.26f));
-      }
-      shellGo.GetComponent<MeshFilter>().sharedMesh = sk.ToMesh("synergy_pipe_shell");
-      shellGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
-
-      // 상단 발광 에너지 도관 스트립.
-      var glowGo = new GameObject("PipeGlow", typeof(MeshFilter), typeof(MeshRenderer));
-      glowGo.transform.SetParent(go.transform, false);
-      var gk = new MeshKit().Paint(Swatch.White);
-      gk.Box(new Vector3(0f, 0.19f, 0f), new Vector3(0.34f, 0.12f, len * 0.96f));
-      glowGo.GetComponent<MeshFilter>().sharedMesh = gk.ToMesh("synergy_pipe_glow");
-      if (isPower) {
-        if (_pipePowerMat == null) {
-          _pipePowerMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default")) { name = "SynergyPipePower" };
-          _pipePowerMat.color = new Color(0.18f, 0.92f, 1f, 1f);
-        }
-        glowGo.GetComponent<MeshRenderer>().sharedMaterial = _pipePowerMat;
-      } else {
-        if (_pipeSteelMat == null) {
-          _pipeSteelMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default")) { name = "SynergyPipeSteel" };
-          _pipeSteelMat.color = new Color(1f, 0.54f, 0.08f, 1f);
-        }
-        glowGo.GetComponent<MeshRenderer>().sharedMaterial = _pipeSteelMat;
-      }
+      var pipe = Object.Instantiate(slot.Prefab, go.transform);
+      pipe.name = "SyntyPipelineMesh";
+      var bounds = VisualCatalog.LocalBounds(slot.Prefab);
+      var pipeLen = Mathf.Max(0.5f, Mathf.Max(bounds.size.x, bounds.size.z));
+      var alongX = bounds.size.x > bounds.size.z;
+      pipe.transform.localRotation = Quaternion.Euler(0f, alongX ? 90f : 0f, 0f);
+      var s = slot.Scale > 0f ? slot.Scale : 0.55f;
+      var lenScale = Mathf.Max(0.25f, (len - 2.6f) / pipeLen);
+      pipe.transform.localScale = alongX ? new Vector3(lenScale, s, s) : new Vector3(s, s, lenScale);
+      pipe.transform.localPosition = new Vector3(0f, -bounds.min.y * s, 0f);
       return go;
     }
 

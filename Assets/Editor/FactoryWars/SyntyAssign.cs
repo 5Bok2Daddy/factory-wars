@@ -275,6 +275,7 @@ namespace FactoryWars.EditorTools {
         csv.AppendLine(string.Join(",", row.Id, row.Kind, string.Join("+", row.Models), string.Join("+", row.Models.Select(m => Path.GetFileNameWithoutExtension(AssetDatabase.GUIDToAssetPath(Pack[m])))), row.Swap.Length >= 2 ? row.Swap[1] : "", slot.Scale.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture), slot.Notes));
         count++;
       }
+      BuildRealSyntyCompositesAndFx(catalog);
       catalog.Invalidate();
       EditorUtility.SetDirty(catalog);
       AssetDatabase.SaveAssets();
@@ -282,6 +283,398 @@ namespace FactoryWars.EditorTools {
       Directory.CreateDirectory(logs);
       File.WriteAllText(Path.Combine(logs, "slot-table.csv"), csv.ToString(), new UTF8Encoding(true));
       return count;
+    }
+
+    struct KitPart {
+      public string Path;
+      public Vector3 Pos;
+      public Vector3 Rot;
+      public Vector3 Scale;
+      public KitPart(string path, Vector3 pos, Vector3 rot, float scale = 1f) {
+        Path = path; Pos = pos; Rot = rot; Scale = Vector3.one * scale;
+      }
+      public KitPart(string path, Vector3 pos, Vector3 rot, Vector3 scale) {
+        Path = path; Pos = pos; Rot = rot; Scale = scale;
+      }
+    }
+
+    /// <summary>
+    /// 100% 실제 Synty/Kenney 텍스처 프리팹으로 8대 산업 공장 · 미사일 격납고 · 공중 항모 · 포격함 · 패트리어트 · 상륙정 · 수송헬기 복합 프리팹을 조립하고,
+    /// Jean Moreno War FX 프리팹과 바이옴(사막·시가전) 프리팹을 VisualCatalog에 바인딩한다. (PrimitiveType 큐브·실린더·구체 전면 금지)
+    /// </summary>
+    static void BuildRealSyntyCompositesAndFx(VisualCatalog catalog) {
+      const string PM = PackRoot + "/PolygonMilitary/Prefabs/";
+      const string BR = PackRoot + "/PolygonBattleRoyale/Prefabs/";
+      const string PC = PackRoot + "/PolygonCity/Prefabs/";
+      const string KW = "Assets/ExternalAssets/Kenney/watercraft-pack/";
+
+      // 1) War FX 머티리얼 중 Built-in Surface 셰이더(URP에서 핑크로 보일 수 있음)를 URP Particles/Unlit으로 안전 변환.
+      UpgradeWarFxMaterialsForUrp();
+
+      GameObject Assemble(string assetName, string[] swap, params KitPart[] parts) {
+        var root = new GameObject(assetName);
+        var map = new Dictionary<string, Material>();
+        for (var i = 0; swap != null && i + 1 < swap.Length; i += 2) {
+          var mat = FindMaterial(swap[i + 1]);
+          if (mat != null) map[swap[i]] = mat;
+        }
+        var added = 0;
+        for (var p = 0; p < parts.Length; p++) {
+          var src = AssetDatabase.LoadAssetAtPath<GameObject>(parts[p].Path);
+          if (src == null) {
+            Debug.LogWarning($"[FW-Synty] Composite part missing: {parts[p].Path}");
+            continue;
+          }
+          var inst = (GameObject)PrefabUtility.InstantiatePrefab(src, root.transform);
+          if (inst == null) {
+            inst = UnityEngine.Object.Instantiate(src, root.transform);
+          }
+          inst.name = $"Part{p}_{src.name}";
+          inst.transform.localPosition = parts[p].Pos;
+          inst.transform.localRotation = Quaternion.Euler(parts[p].Rot);
+          inst.transform.localScale = parts[p].Scale;
+          if (map.Count > 0) {
+            foreach (var r in inst.GetComponentsInChildren<Renderer>(true)) {
+              var mats = r.sharedMaterials;
+              var touched = false;
+              for (var m = 0; m < mats.Length; m++) {
+                if (mats[m] != null && map.TryGetValue(mats[m].name, out var to)) {
+                  mats[m] = to;
+                  touched = true;
+                }
+              }
+              if (touched) r.sharedMaterials = mats;
+            }
+          }
+          added++;
+        }
+        if (added == 0) {
+          UnityEngine.Object.DestroyImmediate(root);
+          return null;
+        }
+        var saved = PrefabUtility.SaveAsPrefabAsset(root, $"{OutRoot}/Prefabs/{assetName}.prefab");
+        UnityEngine.Object.DestroyImmediate(root);
+        return saved;
+      }
+
+      void RegisterComposite(string slotId, VisualCategory category, GameObject prefab, float targetSpan, float maxHeight, string[] spin = null, string notes = "") {
+        if (prefab == null) return;
+        var slot = catalog.Slots.FirstOrDefault(s => s != null && s.Id == slotId);
+        if (slot == null) {
+          slot = new VisualSlot { Id = slotId };
+          catalog.Slots.Add(slot);
+        }
+        var (pivot, size) = MeasureActive(prefab);
+        slot.Category = category;
+        slot.Prefabs = new List<GameObject> { prefab };
+        slot.PivotOffset = pivot;
+        slot.Size = size;
+        slot.YawOffset = 0f;
+        slot.TeamColor = TeamColorMode.None;
+        slot.TeamTextures = new Texture2D[0];
+        slot.RealWorld = RealWorldCheck.Clear;
+        slot.OwnerRing = category == VisualCategory.Unit;
+        slot.Animator = null;
+        slot.AutoFit = false;
+        var horiz = Mathf.Max(0.1f, Mathf.Max(size.x, size.z));
+        slot.Scale = maxHeight > 0f ? Mathf.Min(targetSpan / horiz, maxHeight / Mathf.Max(0.1f, size.y)) : (targetSpan / horiz);
+        slot.SpinParts = spin ?? new string[0];
+        slot.Notes = string.IsNullOrEmpty(notes) ? "Real Synty composite prefab" : notes;
+      }
+
+      // 2) 8대 산업 공장 + 산업 사령부 (양 진영 모두 100% 실제 Synty 건물·소품 킷배시)
+      foreach (var faction in new[] { "ff", "cf" }) {
+        var bSwap = faction == "ff" ? BuildingsFree : BuildingsContinental;
+        var pSwap = faction == "ff" ? PropsFree : PropsContinental;
+
+        // (1) 보병 무장 공장: SM_Bld_Barracks_01 + 탄약 상자 스택 + 방벽
+        RegisterComposite($"building/{faction}_barracks", VisualCategory.Building,
+          Assemble($"{faction}_barracks_kit", bSwap,
+            new KitPart(PM + "Buildings/SM_Bld_Barracks_01.prefab", Vector3.zero, Vector3.zero, 1f),
+            new KitPart(PM + "Props/Military/SM_Prop_Crate_Stack_01.prefab", new Vector3(-4.2f, 0f, 3.2f), new Vector3(0f, 15f, 0f), 1.3f),
+            new KitPart(PM + "Props/Military/SM_Prop_Barrier_Base_Row_01.prefab", new Vector3(3.8f, 0f, 3.6f), new Vector3(0f, 0f, 0f), 1.0f),
+            new KitPart(PM + "Props/Military/SM_Prop_AmmoBox_01.prefab", new Vector3(-2.6f, 0f, 3.6f), new Vector3(0f, -20f, 0f), 1.5f)),
+          9.0f, 10.5f);
+
+        // (2) 기동·화력 조립 공장: SM_Bld_Hangar_01 + 발전기 + 드럼통 스택 + 방벽
+        RegisterComposite($"building/{faction}_vehicle_factory", VisualCategory.Building,
+          Assemble($"{faction}_vehicle_factory_kit", bSwap,
+            new KitPart(PM + "Buildings/SM_Bld_Hangar_01.prefab", Vector3.zero, Vector3.zero, 1f),
+            new KitPart(BR + "Props/SM_Prop_Generator_01.prefab", new Vector3(7.2f, 0f, -2.5f), new Vector3(0f, 90f, 0f), 1.5f),
+            new KitPart(PM + "Props/Military/SM_Prop_Barrel_Stack_01.prefab", new Vector3(-7.0f, 0f, 3.2f), new Vector3(0f, 20f, 0f), 1.4f),
+            new KitPart(PM + "Props/Military/SM_Prop_Crate_Stack_01.prefab", new Vector3(6.8f, 0f, 3.4f), new Vector3(0f, -15f, 0f), 1.4f)),
+          11.4f, 9.6f);
+
+        // (3) 중기갑 전차 공장: SM_Bld_Hangar_Open_01 + 현실 비율 산업 굴뚝 + 직선 배관 + 강철 컨테이너
+        RegisterComposite($"building/{faction}_heavy_works", VisualCategory.Building,
+          Assemble($"{faction}_heavy_works_kit", bSwap,
+            new KitPart(PM + "Buildings/SM_Bld_Hangar_Open_01.prefab", Vector3.zero, Vector3.zero, 1f),
+            new KitPart(PM + "Props/Pipeline/SM_Prop_Pipeline_SmokeStack_02.prefab", new Vector3(-6.2f, 0f, -3.6f), Vector3.zero, 0.36f),
+            new KitPart(PM + "Props/Pipeline/SM_Prop_Pipeline_Pipe_Small_Straight_01.prefab", new Vector3(-5.8f, 0f, 0.5f), new Vector3(0f, 90f, 0f), 1.0f),
+            new KitPart(BR + "Props/SM_Prop_Container_01.prefab", new Vector3(6.6f, 0f, -1.8f), new Vector3(0f, 90f, 0f), 0.95f)),
+          11.2f, 9.6f);
+
+        // (4) 항공·드론 조립 격납고: SM_Bld_ControlTower_01 + SM_Env_Helipad_01 + 연료 블래더 + 레이더
+        RegisterComposite($"building/{faction}_airfield", VisualCategory.Building,
+          Assemble($"{faction}_airfield_kit", bSwap,
+            new KitPart(PM + "Environment/SM_Env_Helipad_01.prefab", new Vector3(0f, 0.04f, 0.8f), Vector3.zero, 0.82f),
+            new KitPart(PM + "Buildings/SM_Bld_ControlTower_01.prefab", new Vector3(-4.2f, 0f, -3.2f), new Vector3(0f, 180f, 0f), 0.72f),
+            new KitPart(PM + "Props/Military/SM_Prop_Fuel_Bladder_01.prefab", new Vector3(4.5f, 0f, -3.2f), Vector3.zero, 0.9f),
+            new KitPart(PM + "Props/Military/SM_Prop_Mobile_Radar_01.prefab", new Vector3(4.2f, 0f, 3.0f), Vector3.zero, 0.7f)),
+          10.6f, 12.2f, new[] { "Radar:Y" });
+
+        // (5) 강철 제련소: SM_Bld_GasTower_01 + 균형 잡힌 산업 굴뚝(SmokeStack_01 & 03) + 직선 배관
+        RegisterComposite($"building/{faction}_processor", VisualCategory.Building,
+          Assemble($"{faction}_processor_kit", bSwap,
+            new KitPart(PM + "Buildings/SM_Bld_GasTower_01.prefab", Vector3.zero, Vector3.zero, 0.88f),
+            new KitPart(PM + "Props/Pipeline/SM_Prop_Pipeline_SmokeStack_01.prefab", new Vector3(-4.2f, 0f, -2.4f), Vector3.zero, 0.34f),
+            new KitPart(PM + "Props/Pipeline/SM_Prop_Pipeline_SmokeStack_03.prefab", new Vector3(4.2f, 0f, -2.4f), Vector3.zero, 0.32f),
+            new KitPart(PM + "Props/Pipeline/SM_Prop_Pipeline_Pipe_Small_Straight_01.prefab", new Vector3(0f, 0f, 3.8f), Vector3.zero, 1.0f)),
+          9.6f, 9.8f);
+
+        // (6) 터빈 발전소: SM_Bld_GasTower_02 + 변압기(Transformer_01) + 발전기(Generator_01)
+        RegisterComposite($"building/{faction}_power_plant", VisualCategory.Building,
+          Assemble($"{faction}_power_plant_kit", bSwap,
+            new KitPart(PM + "Buildings/SM_Bld_GasTower_02.prefab", new Vector3(-1.4f, 0f, 0f), Vector3.zero, 0.78f),
+            new KitPart(BR + "Props/SM_Prop_Transformer_01.prefab", new Vector3(3.6f, 0f, 1.4f), Vector3.zero, 1.25f),
+            new KitPart(BR + "Props/SM_Prop_Generator_01.prefab", new Vector3(3.4f, 0f, -2.2f), new Vector3(0f, 90f, 0f), 1.3f)),
+          8.8f, 9.4f);
+
+        // (7) 군수·연료 보급창: SM_Bld_Warehouse_01 + 이격 배치된 연료 탱크(Pipeline_Tank_01) + 연료 블래더 + 탄약 상자
+        RegisterComposite($"building/{faction}_supply_depot", VisualCategory.Building,
+          Assemble($"{faction}_supply_depot_kit", bSwap,
+            new KitPart(BR + "Buildings/SM_Bld_Warehouse_01.prefab", new Vector3(-2.0f, 0f, 0f), Vector3.zero, 0.70f),
+            new KitPart(PM + "Props/Pipeline/SM_Prop_Pipeline_Tank_01.prefab", new Vector3(5.6f, 0f, -1.8f), Vector3.zero, 0.44f),
+            new KitPart(PM + "Props/Military/SM_Prop_Fuel_Bladder_01.prefab", new Vector3(4.8f, 0f, 2.8f), Vector3.zero, 0.85f),
+            new KitPart(PM + "Props/Military/SM_Prop_Crate_Ammo_01.prefab", new Vector3(-3.4f, 0f, 4.4f), Vector3.zero, 1.4f)),
+          9.6f, 9.2f);
+
+        // (8) 군수 연구 공장: SM_Prop_Drone_Control_Room_01 + 이동식 레이더 + 무선 송신탑
+        RegisterComposite($"building/{faction}_research_lab", VisualCategory.Building,
+          Assemble($"{faction}_research_lab_kit", bSwap,
+            new KitPart(PM + "Props/Military/SM_Prop_Drone_Control_Room_01.prefab", new Vector3(0f, 0f, 0.6f), Vector3.zero, 1.15f),
+            new KitPart(PM + "Props/Military/SM_Prop_Mobile_Radar_01.prefab", new Vector3(3.8f, 0f, -1.6f), Vector3.zero, 0.9f),
+            new KitPart(BR + "Props/SM_Prop_RadioTower_01.prefab", new Vector3(-3.6f, 0f, -2.0f), Vector3.zero, 0.48f),
+            new KitPart(BR + "Props/SM_Prop_Generator_01.prefab", new Vector3(-3.2f, 0f, 2.2f), Vector3.zero, 1.2f)),
+          9.4f, 11.2f, new[] { "Radar:Y" });
+
+        // (9) 군사 산업 사령부(HQ): SM_Bld_Warehouse_01 + 지휘 통제실(Drone_Control_Room_01) + 관제탑 + 레이더 + 방호벽 (모스크 돔 제거!)
+        RegisterComposite($"building/{faction}_headquarters", VisualCategory.Building,
+          Assemble($"{faction}_headquarters_kit", bSwap,
+            new KitPart(BR + "Buildings/SM_Bld_Warehouse_01.prefab", new Vector3(0f, 0f, -0.4f), Vector3.zero, 0.82f),
+            new KitPart(PM + "Props/Military/SM_Prop_Drone_Control_Room_01.prefab", new Vector3(-3.4f, 0f, 3.6f), Vector3.zero, 0.95f),
+            new KitPart(PM + "Buildings/SM_Bld_ControlTower_01.prefab", new Vector3(5.0f, 0f, -3.2f), new Vector3(0f, 180f, 0f), 0.72f),
+            new KitPart(PM + "Props/Military/SM_Prop_Mobile_Radar_01.prefab", new Vector3(-5.0f, 0f, -2.8f), Vector3.zero, 0.9f),
+            new KitPart(PM + "Props/Military/SM_Prop_Barrier_Base_Group_01.prefab", new Vector3(2.2f, 0f, 5.0f), Vector3.zero, 0.95f)),
+          11.4f, 12.6f, new[] { "Radar:Y" });
+
+        // (10) 패트리어트 대탄도 요격 포대: SM_Prop_Missile_Launcher_02 + 이동식 레이더 + 방벽
+        RegisterComposite($"building/{faction}_patriot_turret", VisualCategory.Building,
+          Assemble($"{faction}_patriot_turret_kit", pSwap,
+            new KitPart(PM + "Props/Military/SM_Prop_Missile_Launcher_02.prefab", Vector3.zero, Vector3.zero, 1.3f),
+            new KitPart(PM + "Props/Military/SM_Prop_Mobile_Radar_01.prefab", new Vector3(2.8f, 0f, -1.6f), Vector3.zero, 0.8f),
+            new KitPart(PM + "Props/Military/SM_Prop_Barrier_Base_Group_01.prefab", new Vector3(0f, 0f, 2.4f), Vector3.zero, 0.75f)),
+          7.6f, 10.2f, new[] { "Radar:Y" });
+      }
+
+      // 3) 항모 조립창(ff_carrier_yard)
+      RegisterComposite("building/ff_carrier_yard", VisualCategory.Building,
+        Assemble("ff_carrier_yard_kit", BuildingsFree,
+          new KitPart(PM + "Buildings/SM_Bld_Hangar_Open_01.prefab", Vector3.zero, Vector3.zero, 1f),
+          new KitPart(PM + "Buildings/SM_Bld_ControlTower_01.prefab", new Vector3(-6.4f, 0f, -3.0f), new Vector3(0f, 180f, 0f), 0.78f),
+          new KitPart(PM + "Props/Military/SM_Prop_Mobile_Radar_01.prefab", new Vector3(6.2f, 0f, -2.6f), Vector3.zero, 0.9f)),
+        11.8f, 12.2f, new[] { "Radar:Y" });
+
+      // 4) 전략 미사일 격납고(cf_missile_silo): 어두운 콘크리트 발사대(Helipad) + 중형 미사일 발사기(SM_Prop_Missile_Launcher_01) + 초대형 직립 탄도탄(SM_Prop_Missile_01) + 발사 통제 벙커 + 레이더 + 4면 방폭벽
+      RegisterComposite("building/cf_missile_silo", VisualCategory.Building,
+        Assemble("cf_missile_silo_kit", BuildingsContinental,
+          new KitPart(PM + "Environment/SM_Env_Helipad_01.prefab", new Vector3(0f, 0.03f, 0f), Vector3.zero, 0.95f),
+          new KitPart(PM + "Props/Military/SM_Prop_Missile_Launcher_01.prefab", new Vector3(-0.6f, 0.08f, -0.4f), Vector3.zero, 1.75f),
+          new KitPart(PM + "Props/Military/SM_Prop_Missile_01.prefab", new Vector3(0.4f, 0.35f, 0.4f), new Vector3(-90f, 0f, 0f), 3.6f),
+          new KitPart(PM + "Props/Military/SM_Prop_Drone_Control_Room_02.prefab", new Vector3(4.5f, 0f, -2.6f), new Vector3(0f, -30f, 0f), 1.0f),
+          new KitPart(PM + "Props/Military/SM_Prop_Mobile_Radar_01.prefab", new Vector3(-4.4f, 0f, -2.4f), Vector3.zero, 0.9f),
+          new KitPart(PM + "Props/Military/SM_Prop_Barrier_Base_Row_01.prefab", new Vector3(0f, 0f, 4.9f), Vector3.zero, 1.3f),
+          new KitPart(PM + "Props/Military/SM_Prop_Barrier_Base_Row_01.prefab", new Vector3(0f, 0f, -4.9f), new Vector3(0f, 180f, 0f), 1.3f),
+          new KitPart(PM + "Props/Military/SM_Prop_Barrier_Base_Row_01.prefab", new Vector3(-4.9f, 0f, 0f), new Vector3(0f, 90f, 0f), 1.15f)),
+        10.6f, 13.6f, new[] { "Radar:Y" }, "Real Synty Strategic Missile Silo kitbash");
+
+      // 5) 스톰네스트 공중 항모(ff_stormnest_carrier): 실제 Synty 대형 수송기(SM_Veh_TransportPlane_01) + 좌우 제트 편대 포드 + 상부 레이더 + 드론
+      RegisterComposite("unit/ff_stormnest_carrier", VisualCategory.Unit,
+        Assemble("ff_stormnest_carrier_kit", None,
+          new KitPart(PM + "Vehicles/SM_Veh_TransportPlane_01.prefab", Vector3.zero, Vector3.zero, 1.0f),
+          new KitPart(PM + "Vehicles/SM_Veh_Jet_01.prefab", new Vector3(-6.2f, 0.8f, -0.8f), Vector3.zero, 0.36f),
+          new KitPart(PM + "Vehicles/SM_Veh_Jet_01.prefab", new Vector3(6.2f, 0.8f, -0.8f), Vector3.zero, 0.36f),
+          new KitPart(PM + "Props/Military/SM_Prop_Mobile_Radar_01.prefab", new Vector3(0f, 4.2f, -0.6f), Vector3.zero, 0.45f),
+          new KitPart(PM + "Vehicles/SM_Veh_Drone_01.prefab", new Vector3(-3.8f, 1.1f, 2.2f), Vector3.zero, 0.85f),
+          new KitPart(PM + "Vehicles/SM_Veh_Drone_01.prefab", new Vector3(3.8f, 1.1f, 2.2f), Vector3.zero, 0.85f)),
+        13.2f, 0f, new[] { "Prop_0:Z", "Radar:Y" }, "Real Synty Flying Carrier kitbash");
+
+      // 6) 전술 수송헬기(ff/cf_transport_heli): 실제 Synty SM_Veh_Helicopter_Transport_01
+      RegisterComposite("unit/ff_transport_heli", VisualCategory.Unit,
+        Assemble("ff_transport_heli_kit", None,
+          new KitPart(PM + "Vehicles/SM_Veh_Helicopter_Transport_01.prefab", Vector3.zero, Vector3.zero, 1f)),
+        6.8f, 0f, new[] { "Blades_Main:Y", "Blades_Back:X" });
+      RegisterComposite("unit/cf_transport_heli", VisualCategory.Unit,
+        Assemble("cf_transport_heli_kit", HeliContinental,
+          new KitPart(PM + "Vehicles/SM_Veh_Helicopter_Transport_01.prefab", Vector3.zero, Vector3.zero, 1f)),
+        6.8f, 0f, new[] { "Blades_Main:Y", "Blades_Back:X" });
+
+      // 7) 현대식 포격함(ff/cf_artillery_ship): 실제 Synty 군용 위장 보트(SM_Veh_Boat_01) 확장 선체 + 전·후방 미사일 발사대 2기 + 장갑 함교 통제실 + 회전 레이더 마스트 (목조 범선 완전 제거!)
+      foreach (var faction in new[] { "ff", "cf" }) {
+        var pSwap = faction == "ff" ? PropsFree : PropsContinental;
+        var bSwapNaval = faction == "ff" ? LightFree : LightContinental;
+        RegisterComposite($"unit/{faction}_artillery_ship", VisualCategory.Unit,
+          Assemble($"{faction}_artillery_ship_kit", pSwap,
+            new KitPart(BR + "Vehicles/SM_Veh_Boat_01.prefab", Vector3.zero, Vector3.zero, new Vector3(2.15f, 1.35f, 2.35f)),
+            new KitPart(PM + "Props/Military/SM_Prop_Missile_Launcher_02.prefab", new Vector3(0f, 1.05f, 3.3f), Vector3.zero, 0.58f),
+            new KitPart(PM + "Props/Military/SM_Prop_Missile_Launcher_02.prefab", new Vector3(0f, 1.05f, -3.1f), new Vector3(0f, 180f, 0f), 0.58f),
+            new KitPart(PM + "Props/Military/SM_Prop_Drone_Control_Room_01.prefab", new Vector3(0f, 0.72f, -0.35f), Vector3.zero, 0.42f),
+            new KitPart(PM + "Props/Military/SM_Prop_Mobile_Radar_01.prefab", new Vector3(0f, 2.25f, -0.35f), Vector3.zero, 0.38f)),
+          9.6f, 0f, new[] { "Radar:Y" }, "Real Synty military gunboat + VLS missile turrets + naval radar kitbash");
+
+        // 8) 현대식 수륙양용 상륙정(ff/cf_landing_craft): 실제 Synty 군용 보트 광폭 선체 + 함수 장갑 상륙 램프 + 양현 방호벽 + 탄약·화물 스택 (알록달록 민간 화물선 제거!)
+        RegisterComposite($"unit/{faction}_landing_craft", VisualCategory.Unit,
+          Assemble($"{faction}_landing_craft_kit", bSwapNaval,
+            new KitPart(BR + "Vehicles/SM_Veh_Boat_01.prefab", Vector3.zero, Vector3.zero, new Vector3(2.1f, 1.15f, 1.75f)),
+            new KitPart(PM + "Vehicles/Veh_Attachments/SM_Veh_Attach_Ramp_01.prefab", new Vector3(0f, 0.42f, 3.65f), Vector3.zero, 1.35f),
+            new KitPart(PM + "Props/Military/SM_Prop_Barrier_Base_Single_01.prefab", new Vector3(-1.45f, 0.72f, 0.3f), new Vector3(0f, 90f, 0f), 0.72f),
+            new KitPart(PM + "Props/Military/SM_Prop_Barrier_Base_Single_01.prefab", new Vector3(1.45f, 0.72f, 0.3f), new Vector3(0f, 90f, 0f), 0.72f),
+            new KitPart(PM + "Props/Military/SM_Prop_Crate_Stack_01.prefab", new Vector3(0f, 0.52f, -0.4f), Vector3.zero, 0.75f)),
+          7.4f, 0f, null, "Real Synty military assault landing craft kitbash");
+      }
+
+      // 9) 실제 Synty 공장 업그레이드(Lv.2/Lv.3) · 직선 시너지 배관 · 잔해 · 사막/시가전 바이옴 소품 슬롯
+      void BindFx(string fxName, string prefabPath, float scale, float lifetime = 5f) {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (prefab == null) {
+          Debug.LogWarning($"[FW-Synty] FX/Prop prefab missing: {prefabPath}");
+          return;
+        }
+        var id = VisualCatalog.FxId(fxName);
+        var slot = catalog.Slots.FirstOrDefault(s => s != null && s.Id == id);
+        if (slot == null) {
+          slot = new VisualSlot { Id = id };
+          catalog.Slots.Add(slot);
+        }
+        slot.Category = VisualCategory.Effect;
+        slot.Prefabs = new List<GameObject> { prefab };
+        slot.Scale = scale;
+        slot.Lifetime = lifetime;
+        slot.AutoFit = false;
+        slot.Notes = Path.GetFileNameWithoutExtension(prefabPath);
+      }
+
+      var lv2Prefab = Assemble("factory_upgrade_lv2", BuildingsFree,
+        new KitPart(PM + "Props/Pipeline/SM_Prop_Pipeline_SmokeStack_01.prefab", new Vector3(-3.8f, 0f, -2.2f), Vector3.zero, 0.30f),
+        new KitPart(BR + "Props/SM_Prop_Generator_01.prefab", new Vector3(3.8f, 0f, 1.6f), Vector3.zero, 1.15f));
+      if (lv2Prefab != null) BindFx("factory_lv2", AssetDatabase.GetAssetPath(lv2Prefab), 1f, 999f);
+
+      var lv3Prefab = Assemble("factory_upgrade_lv3", BuildingsFree,
+        new KitPart(PM + "Props/Pipeline/SM_Prop_Pipeline_SmokeStack_03.prefab", new Vector3(3.9f, 0f, -2.4f), Vector3.zero, 0.34f),
+        new KitPart(BR + "Props/SM_Prop_RadioTower_01.prefab", new Vector3(-4.1f, 0f, 2.0f), Vector3.zero, 0.38f),
+        new KitPart(BR + "Props/SM_Prop_Transformer_01.prefab", new Vector3(0f, 0f, -4.2f), Vector3.zero, 1.05f));
+      if (lv3Prefab != null) BindFx("factory_lv3", AssetDatabase.GetAssetPath(lv3Prefab), 1f, 999f);
+
+      BindFx("synergy_pipe", PM + "Props/Pipeline/SM_Prop_Pipeline_Pipe_Small_Straight_01.prefab", 0.85f, 999f);
+      BindFx("rubble_pile", PM + "Props/Debris/SM_Prop_Rubble_Pile_01.prefab", 1.1f, 999f);
+      BindFx("icbm_rocket", PM + "Props/Military/SM_Prop_Missile_01.prefab", 2.2f, 30f);
+
+      // 사막 바이옴 실제 Synty 소품 (모래언덕 · 선인장 · 사막 바위 · 아치 · 폐허 · 오아시스 · 고사목)
+      BindFx("desert_dune_1", PM + "Environment/SM_Env_SandDunes_01.prefab", 1.0f, 999f);
+      BindFx("desert_dune_2", PM + "Environment/SM_Env_SandDunes_02.prefab", 1.0f, 999f);
+      BindFx("desert_dune_3", PM + "Environment/SM_Env_SandDunes_03.prefab", 1.0f, 999f);
+      BindFx("desert_cactus_1", PM + "Environment/SM_Env_Cactus_01.prefab", 1.25f, 999f);
+      BindFx("desert_cactus_2", PM + "Environment/SM_Env_Cactus_02.prefab", 1.25f, 999f);
+      BindFx("desert_cactus_3", PM + "Environment/SM_Env_Cactus_03.prefab", 1.25f, 999f);
+      BindFx("desert_rock_1", PM + "Environment/SM_Env_Rock_01.prefab", 0.85f, 999f);
+      BindFx("desert_rock_2", PM + "Environment/SM_Env_Rock_02.prefab", 0.85f, 999f);
+      BindFx("desert_rock_3", PM + "Environment/SM_Env_Rock_03.prefab", 0.85f, 999f);
+      BindFx("desert_rock_arch", PM + "Environment/SM_Env_Rock_Archway_01.prefab", 0.9f, 999f);
+      BindFx("desert_ruin_1", PM + "Environment/SM_Env_Ruin_01.prefab", 0.85f, 999f);
+      BindFx("desert_oasis", PM + "Environment/SM_Env_Ground_Oasis_01.prefab", 0.85f, 999f);
+      BindFx("desert_tree", BR + "Generic/SM_Generic_TreeDead_01.prefab", 0.85f, 999f);
+
+      // 시가전 바이옴 실제 PolygonCity 고밀도 건물 소품
+      BindFx("urban_bld_1", PC + "Buildings/SM_Bld_Apartment_01.prefab", 1.0f, 999f);
+      BindFx("urban_bld_2", PC + "Buildings/SM_Bld_Apartment_02.prefab", 1.0f, 999f);
+      BindFx("urban_bld_3", PC + "Buildings/SM_Bld_Apartment_03.prefab", 1.0f, 999f);
+      BindFx("urban_bld_4", PC + "Buildings/SM_Bld_OfficeOld_Large_01.prefab", 1.0f, 999f);
+      BindFx("urban_bld_5", PC + "Buildings/SM_Bld_OfficeSquare_01.prefab", 1.0f, 999f);
+      BindFx("urban_bld_6", PC + "Buildings/SM_Bld_CityHall_01.prefab", 0.9f, 999f);
+
+      // 10) Jean Moreno War FX 프리팹 직접 바인딩 (주황 구체·링 전면 대체)
+      const string WFX = "Assets/ExternalAssets/JMO Assets/WarFX/";
+      BindFx("nuke", WFX + "_Effects (Mobile)/Explosions/WFXMR_Nuke.prefab", 1.35f, 7.5f);
+      BindFx("nuke_extra", WFX + "_Effects (Mobile)/Explosions/WFXMR_ExplosiveSmokeGround Big.prefab", 1.15f, 5.5f);
+      BindFx("explosion", WFX + "_Effects (Mobile)/Explosions/WFXMR_ExplosiveSmokeGround.prefab", 1.25f, 3.8f);
+      BindFx("explosion_small", WFX + "_Effects (Mobile)/Explosions/WFXMR_Explosion Small.prefab", 0.95f, 2.2f);
+      BindFx("muzzle", WFX + "_Effects/MuzzleFlashes/4Planes/WFX_MF 4P RIFLE1.prefab", 0.72f, 0.22f);
+      BindFx("flame", WFX + "_Effects (Mobile)/Fire/WFXMR_FlameThrower.prefab", 1.15f, 1.1f);
+      BindFx("fire_black", WFX + "_Effects (Mobile)/Fire/Black Smoke/WFXMR_Fire Natural Broad (Black Smoke).prefab", 1.25f, 6.5f);
+      BindFx("smoke_black", WFX + "_Effects/Smoke/WFX_SmokeGrenade AlphaBlend Black.prefab", 0.85f, 3.8f);
+      BindFx("smoke", WFX + "_Effects/Smoke/WFX_SmokeGrenade AlphaBlend Gray.prefab", 0.65f, 3.2f);
+    }
+
+    static void UpgradeWarFxMaterialsForUrp() {
+      const string wfxRoot = "Assets/ExternalAssets/JMO Assets/WarFX";
+      if (AssetDatabase.IsValidFolder(wfxRoot) == false) return;
+      var urpParticle = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+      if (urpParticle == null) return;
+      var fixedCount = 0;
+      foreach (var guid in AssetDatabase.FindAssets("t:Material", new[] { wfxRoot })) {
+        var path = AssetDatabase.GUIDToAssetPath(guid);
+        var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (mat == null || mat.shader == null) continue;
+        var sName = mat.shader.name ?? "";
+        // Surface 셰이더(Diffuse/Specular)나 Legacy/Error 셰이더만 URP Particles/Unlit으로 변환, 이미 동작하는 WFX/Additive·AlphaBlend도 안전하게 통일.
+        var isAdditive = sName.IndexOf("Add", StringComparison.OrdinalIgnoreCase) >= 0;
+        var isMultiply = sName.IndexOf("Mult", StringComparison.OrdinalIgnoreCase) >= 0;
+        // #pragma surface 기반 Built-in 셰이더(Diffuse/Specular) 및 구형 Mobile/Particles 셰이더만 URP Particles/Unlit으로 변환하고,
+        // Alpha8 전용 vert/frag WFX 셰이더는 그대로 보존한다.
+        var isUnconverted = sName.IndexOf("Diffuse", StringComparison.OrdinalIgnoreCase) >= 0
+          || sName.IndexOf("Specular", StringComparison.OrdinalIgnoreCase) >= 0
+          || sName.StartsWith("Particles/", StringComparison.OrdinalIgnoreCase)
+          || sName.StartsWith("Mobile/Particles/", StringComparison.OrdinalIgnoreCase)
+          || sName.StartsWith("Legacy Shaders/", StringComparison.OrdinalIgnoreCase)
+          || sName.Contains("Error");
+        if (isUnconverted) {
+          var mainTex = mat.HasProperty("_MainTex") ? mat.GetTexture("_MainTex") : null;
+          var tint = mat.HasProperty("_TintColor") ? mat.GetColor("_TintColor")
+            : mat.HasProperty("_Color") ? mat.GetColor("_Color") : Color.white;
+          mat.shader = urpParticle;
+          if (mainTex != null) {
+            mat.SetTexture("_BaseMap", mainTex);
+            mat.mainTexture = mainTex;
+          }
+          mat.SetColor("_BaseColor", isAdditive ? new Color(tint.r * 1.4f, tint.g * 1.4f, tint.b * 1.4f, tint.a) : tint);
+          mat.SetFloat("_Surface", 1f); // Transparent
+          mat.SetFloat("_ZWrite", 0f);
+          if (isAdditive) {
+            mat.SetFloat("_Blend", 2f); // Additive
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.EnableKeyword("_BLENDMODE_ADD");
+          } else if (isMultiply) {
+            mat.SetFloat("_Blend", 3f); // Multiply
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.DstColor);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.EnableKeyword("_BLENDMODE_MULTIPLY");
+          } else {
+            mat.SetFloat("_Blend", 0f); // Alpha
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+          }
+          mat.renderQueue = 3000;
+          EditorUtility.SetDirty(mat);
+          fixedCount++;
+        }
+      }
+      if (fixedCount > 0) {
+        Debug.Log($"[FW-WarFX] Converted {fixedCount} WarFX materials to URP Particles/Unlit.");
+      }
     }
 
     /// <summary>모델 하나(필요하면 색 변형 프리팹 변형). 색 변형은 머티리얼 참조만 바꾼 우리 폴더의 프리팹 변형이다.</summary>

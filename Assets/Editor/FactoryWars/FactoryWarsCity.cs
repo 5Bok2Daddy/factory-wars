@@ -30,6 +30,9 @@ namespace FactoryWars.EditorTools {
 
     static readonly Dictionary<string, CityPlan> CityPlans = new Dictionary<string, CityPlan> {
       { "Map4P", new CityPlan { BuildingsPerSeat = 30, ToppleCandidates = 4, GarrisonsPerSeat = 4, Shortcuts = new[] { Rect(-44, 0, 7, 7) } } },
+      { "MapUrban", new CityPlan { BuildingsPerSeat = 62, ToppleCandidates = 6, GarrisonsPerSeat = 6, Shortcuts = new[] { Rect(-44, 0, 7, 7) } } },
+      { "MapArchipelago", new CityPlan { BuildingsPerSeat = 12, ToppleCandidates = 2, GarrisonsPerSeat = 3, Shortcuts = new MapShape[0] } },
+      { "MapStrait", new CityPlan { BuildingsPerSeat = 14, ToppleCandidates = 2, GarrisonsPerSeat = 3, Shortcuts = new MapShape[0] } },
     };
 
     static MapShape Rotated(MapShape shape, int seat, int players) => Turn(shape, seat * (4 / players));
@@ -60,6 +63,9 @@ namespace FactoryWars.EditorTools {
       list.AddRange(spec.Barricades.Select(b => (b.Shape, 5f, "Barricades")));
       list.AddRange(spec.NoBuildZones.Select(z => (z, 2f, "NoBuildZones")));
       list.AddRange(spec.Bridges.Select(b => (b, 6f, "Bridges")));
+      if (spec.Theme == "다도해" || spec.Theme == "해협") {
+        list.AddRange((spec.River ?? new MapShape[0]).Select(r => (r, 4f, "River")));
+      }
       return list;
     }
 
@@ -140,8 +146,8 @@ namespace FactoryWars.EditorTools {
     }
 
     static void CityLayout(MapDef def, MapSpec spec) {
-      // 항목 35: 표준 지형을 쓰는 변형 맵(사막·시가전·다도해·해협)은 표준 맵의 도시 계획을 공유한다.
-      var planId = def.Id == "MapDesert" || def.Id == "MapUrban" || def.Id == "MapArchipelago" || def.Id == "MapStrait" ? "Map4P" : def.Id;
+      // 사막 보급전은 Map_Desert_PresetData 호환을 위해 Map4P 도시 계획을 공유한다. 시가전·다도해·해협은 자체 도시 계획 사용.
+      var planId = def.Id == "MapDesert" ? "Map4P" : def.Id;
       if (CityPlans.TryGetValue(planId, out var plan) == false) {
         spec.CityBuildings = new CityBuildingPlacement[0];
         return;
@@ -286,6 +292,13 @@ namespace FactoryWars.EditorTools {
           var copy = item;
           copy.Shape = Rotated(item.Shape, seat, def.Players);
           copy.FallZone = Rotated(item.FallZone, seat, def.Players);
+          // 비대칭 남북 해협(MapStrait) 또는 다도해(MapArchipelago)에서 회전 복제 시 물/해협/교량 위로 떨어지는 건물을 차단한다.
+          if (def.Id == "MapStrait" && Mathf.Abs(copy.Shape.Center.X.AsFloat) < 36f) {
+            continue;
+          }
+          if ((def.Id == "MapStrait" || def.Id == "MapArchipelago") && (spec.River ?? new MapShape[0]).Any(r => r.Distance(copy.Shape.Center).AsFloat < 5f)) {
+            continue;
+          }
           all.Add(copy);
         }
       }

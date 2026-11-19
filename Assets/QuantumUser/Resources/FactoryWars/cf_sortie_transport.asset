@@ -128,3 +128,7 @@ MonoBehaviour:
     Id:
       Value: 442872915998123145
   SortieCargoCount: 6
+  TransportCapacity: 0
+  TransportAllowsVehicles: 0
+  TransportEjectHealthRatio:
+    RawValue: 0

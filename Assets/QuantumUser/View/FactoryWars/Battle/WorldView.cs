@@ -161,6 +161,8 @@ namespace FactoryWars.View {
     }
 
     void BuildStatic() {
+      var biome = TerrainKit.BiomeOf(_map);
+      UrbanDecor.ApplyWaterBiome(_map);
       var ground = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
       TerrainKit.Ground(ground, _map, 3);
       var groundMesh = ground.ToMesh("world_ground");
@@ -194,8 +196,21 @@ namespace FactoryWars.View {
           var linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
           for (var v = 0; v < uvs.Length; v++) {
             var swatch = (Swatch)Mathf.Clamp(Mathf.FloorToInt(uvs[v].x * ArtPalette.Size), 0, ArtPalette.CellCount - 1);
-            var tint = swatch == Swatch.Concrete || swatch == Swatch.ConcreteDark ? VisualProfile.Current.GroundPlaza
-              : swatch == Swatch.Asphalt && VisualProfile.Current.RoadColor.a > 0f ? VisualProfile.Current.RoadColor : ArtPalette.ColorOf(swatch);
+            Color tint;
+            if (biome == TerrainKit.Biome.Desert) {
+              tint = swatch == Swatch.Asphalt ? new Color(0.62f, 0.51f, 0.36f)
+                : swatch == Swatch.Concrete || swatch == Swatch.ConcreteDark ? new Color(0.79f, 0.69f, 0.51f)
+                : swatch == Swatch.RockDark ? new Color(0.72f, 0.58f, 0.39f)
+                : swatch == Swatch.LaneWhite ? new Color(0.95f, 0.90f, 0.78f)
+                : ArtPalette.ColorOf(swatch);
+            } else if (biome == TerrainKit.Biome.Urban) {
+              tint = swatch == Swatch.Asphalt ? new Color(0.22f, 0.24f, 0.28f)
+                : swatch == Swatch.Concrete || swatch == Swatch.ConcreteDark ? new Color(0.50f, 0.54f, 0.59f)
+                : ArtPalette.ColorOf(swatch);
+            } else {
+              tint = swatch == Swatch.Concrete || swatch == Swatch.ConcreteDark ? VisualProfile.Current.GroundPlaza
+                : swatch == Swatch.Asphalt && VisualProfile.Current.RoadColor.a > 0f ? VisualProfile.Current.RoadColor : ArtPalette.ColorOf(swatch);
+            }
             roadColors[v] = linear ? tint.linear : tint;
           }
           roadMesh.colors = roadColors;
@@ -222,12 +237,28 @@ namespace FactoryWars.View {
         waterMesh.colors = waterColors;
         MeshObject(_root, "Water", waterMesh, false).GetComponent<MeshRenderer>().sharedMaterial = UrbanDecor.WaterMaterial();
       }
+      // 다도해·해협: 수면 아래 연속 바다 기저판(WaterBase)을 깔아 만·라군·외해·교차 수로에 구멍/이음새가 전혀 없도록 보장한다.
+      if ((biome == TerrainKit.Biome.Archipelago || biome == TerrainKit.Biome.Strait) && UrbanDecor.WaterMaterial() != null) {
+        var extent = biome == TerrainKit.Biome.Archipelago ? 540f : 260f;
+        var wy = TerrainKit.WaterLevel - 0.04f;
+        var baseMesh = new Mesh { name = "world_water_base" };
+        baseMesh.vertices = new[] {
+          new Vector3(-extent, wy, -extent), new Vector3(extent, wy, -extent),
+          new Vector3(extent, wy, extent), new Vector3(-extent, wy, extent),
+        };
+        baseMesh.normals = new[] { Vector3.up, Vector3.up, Vector3.up, Vector3.up };
+        baseMesh.colors = new[] { new Color(0f, 0f, 0f, 1f), new Color(0f, 0f, 0f, 1f), new Color(0f, 0f, 0f, 1f), new Color(0f, 0f, 0f, 1f) };
+        baseMesh.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+        baseMesh.RecalculateBounds();
+        MeshObject(_root, "WaterBase", baseMesh, false).GetComponent<MeshRenderer>().sharedMaterial = UrbanDecor.WaterMaterial();
+      }
       Dressing.Begin();
       UrbanDecor.Build(_map);
       Dressing.End("urban");
       Dressing.Begin();
       Scatter.Fill(_map);
       Dressing.End("scatter");
+      BuildBiomeProps(biome);
       if (features.TriangleCount > 0) {
         MeshObject(_root, "Features", features.ToMesh("world_features"), true);
       }
@@ -251,25 +282,53 @@ namespace FactoryWars.View {
         var holder = new GameObject("BridgeSlot");
         holder.transform.SetParent(_root, false);
         holder.transform.localPosition = new Vector3(rect.center.x, 0, rect.center.y);
-        var yaw = rect.width < rect.height ? 90f : 0f;
+        var span = Mathf.Max(rect.width, rect.height);
+        var width = Mathf.Min(rect.width, rect.height);
+        var longStrait = span > 20f;
+        var yaw = longStrait ? (rect.width >= rect.height ? 90f : 0f) : (rect.width < rect.height ? 90f : 0f);
         holder.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
 
-        var view = ArtView.Create(_catalog, "bridge", holder.transform, 0);
-        // 29: 갈색 나무판자 다리를 city-kit-roads의 화이트/라이트그레이 난간 교량 FBX로 교체
-        if (Dressing.Collecting && Dressing.Has(DressKind.BridgeDeck)) {
-          var dressed = DressingSpawn.Place(DressKind.BridgeDeck, view.transform, Vector3.zero, 0f, 9800);
-          if (dressed != null) {
-            foreach (var r in view.GetComponentsInChildren<Renderer>()) {
-              if (r.transform.IsChildOf(dressed.transform) == false) {
-                r.enabled = false;
+        GameObject intactGo;
+        if (longStrait) {
+          // 해협 54m 장대 전략 교량: 전체 교각·상판·아스팔트 차선·중앙선·양측 콘크리트 난간을 빈틈없이 연결한다.
+          intactGo = new GameObject("StraitBridgeDeck", typeof(MeshFilter), typeof(MeshRenderer));
+          intactGo.transform.SetParent(holder.transform, false);
+          var sk = new MeshKit();
+          sk.Paint(Swatch.ConcreteDark).Box(new Vector3(0f, -0.18f, 0f), new Vector3(width + 0.8f, 0.55f, span + 2.4f));
+          sk.Paint(Swatch.Asphalt).Box(new Vector3(0f, 0.14f, 0f), new Vector3(width - 0.8f, 0.10f, span + 2.2f));
+          sk.Paint(Swatch.Concrete).Box(new Vector3(-(width * 0.5f + 0.1f), 0.52f, 0f), new Vector3(0.65f, 0.95f, span + 2.2f));
+          sk.Paint(Swatch.Concrete).Box(new Vector3(width * 0.5f + 0.1f, 0.52f, 0f), new Vector3(0.65f, 0.95f, span + 2.2f));
+          sk.Paint(Swatch.LaneWhite).Box(new Vector3(-(width * 0.5f - 0.85f), 0.21f, 0f), new Vector3(0.22f, 0.02f, span + 1.8f));
+          sk.Paint(Swatch.LaneWhite).Box(new Vector3(width * 0.5f - 0.85f, 0.21f, 0f), new Vector3(0.22f, 0.02f, span + 1.8f));
+          sk.Paint(Swatch.LaneYellow);
+          for (var z = -span * 0.48f; z < span * 0.48f; z += 5.5f) {
+            sk.Box(new Vector3(0f, 0.215f, z + 1.3f), new Vector3(0.24f, 0.02f, 2.8f));
+          }
+          // 교량 양측 조명 기둥 + 진입 아치 프레임.
+          sk.Paint(Swatch.MetalDark);
+          for (var z = -span * 0.42f; z <= span * 0.42f + 0.1f; z += span * 0.21f) {
+            sk.Box(new Vector3(-(width * 0.5f + 0.15f), 1.65f, z), new Vector3(0.32f, 2.2f, 0.32f));
+            sk.Box(new Vector3(width * 0.5f + 0.15f, 1.65f, z), new Vector3(0.32f, 2.2f, 0.32f));
+          }
+          intactGo.GetComponent<MeshFilter>().sharedMesh = sk.ToMesh("strait_bridge");
+          intactGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+        } else {
+          var view = ArtView.Create(_catalog, "bridge", holder.transform, 0);
+          // 29: 갈색 나무판자 다리를 city-kit-roads의 화이트/라이트그레이 난간 교량 FBX로 교체
+          if (Dressing.Collecting && Dressing.Has(DressKind.BridgeDeck)) {
+            var dressed = DressingSpawn.Place(DressKind.BridgeDeck, view.transform, Vector3.zero, 0f, 9800);
+            if (dressed != null) {
+              foreach (var r in view.GetComponentsInChildren<Renderer>()) {
+                if (r.transform.IsChildOf(dressed.transform) == false) {
+                  r.enabled = false;
+                }
               }
             }
           }
+          intactGo = view.gameObject;
         }
 
         // 파괴된 교량 양단 교각/잔해.
-        var span = Mathf.Max(rect.width, rect.height);
-        var width = Mathf.Min(rect.width, rect.height);
         var broken = new GameObject("BrokenBridge", typeof(MeshFilter), typeof(MeshRenderer));
         broken.transform.SetParent(holder.transform, false);
         var bkit = new MeshKit();
@@ -299,8 +358,183 @@ namespace FactoryWars.View {
         pontoon.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
         pontoon.SetActive(false);
 
-        _bridges.Add(new BridgeVisual { Intact = view.gameObject, Broken = broken, Pontoon = pontoon, State = 0 });
+        _bridges.Add(new BridgeVisual { Intact = intactGo, Broken = broken, Pontoon = pontoon, State = 0 });
       }
+    }
+
+    /// <summary>바이옴별 실제 Synty 프리팹(사막 모래언덕·선인장·바위·폐허·고사목, 시가전 PolygonCity 고층/아파트 빌딩)을 배치한다.</summary>
+    void BuildBiomeProps(TerrainKit.Biome biome) {
+      if (biome != TerrainKit.Biome.Desert && biome != TerrainKit.Biome.Urban) {
+        return;
+      }
+      var holder = new GameObject($"BiomeProps_{biome}").transform;
+      holder.SetParent(_root, false);
+      GameObject LoadFx(string fxName) => VisualCatalog.TryFilled(VisualCatalog.FxId(fxName), out var s) ? s.Prefab : null;
+
+      if (biome == TerrainKit.Biome.Desert) {
+        var dunes = new[] { LoadFx("desert_dune_1"), LoadFx("desert_dune_2"), LoadFx("desert_dune_3") };
+        var cacti = new[] { LoadFx("desert_cactus_1"), LoadFx("desert_cactus_2"), LoadFx("desert_cactus_3") };
+        var rocks = new[] { LoadFx("desert_rock_1"), LoadFx("desert_rock_2"), LoadFx("desert_rock_3"), LoadFx("desert_rock_arch"), LoadFx("desert_ruin_1") };
+        var deadTree = LoadFx("desert_tree");
+        var oasis = LoadFx("desert_oasis");
+        var idx = 0;
+        var placed = 0;
+        for (var x = _map.BoundsMin.X.AsFloat + 10f; x <= _map.BoundsMax.X.AsFloat - 10f; x += 15f) {
+          for (var z = _map.BoundsMin.Y.AsFloat + 10f; z <= _map.BoundsMax.Y.AsFloat - 10f; z += 15f) {
+            idx++;
+            var jx = (MeshKit.Hash(idx, 11) - 0.5f) * 10f;
+            var jz = (MeshKit.Hash(idx, 13) - 0.5f) * 10f;
+            var spot = new Vector3(x + jx, 0f, z + jz);
+            if (UrbanDecor.Allowed(_map, spot) == false || Dressing.IsOnAnyRoad(spot, 4.5f) || Dressing.InTraderClear(spot)) {
+              continue;
+            }
+            var roll = MeshKit.Hash(idx, 17);
+            GameObject prefab = null;
+            var scale = 1f;
+            if (roll < 0.16f && Dressing.IsOnAnyRoad(spot, 15f) == false) {
+              // 대형 모래언덕은 도로와 15m 이상 떨어진 외곽 사막 평원에만 배치해 사막 도로를 가리지 않는다.
+              prefab = dunes[idx % dunes.Length];
+              scale = 0.45f + MeshKit.Hash(idx, 19) * 0.35f;
+            } else if (roll < 0.54f) {
+              prefab = cacti[idx % cacti.Length];
+              scale = 1.45f + MeshKit.Hash(idx, 19) * 0.85f;
+            } else if (roll < 0.80f) {
+              prefab = rocks[idx % rocks.Length];
+              scale = 0.65f + MeshKit.Hash(idx, 19) * 0.55f;
+            } else if (roll < 0.92f && deadTree != null) {
+              prefab = deadTree;
+              scale = 0.85f + MeshKit.Hash(idx, 19) * 0.45f;
+            } else if (roll < 0.96f && oasis != null && spot.magnitude > 52f && Dressing.IsOnAnyRoad(spot, 12f) == false) {
+              prefab = oasis;
+              scale = 0.42f;
+            }
+            if (prefab == null) continue;
+            var go = Object.Instantiate(prefab, spot, Quaternion.Euler(0f, MeshKit.Hash(idx, 23) * 360f, 0f), holder);
+            go.transform.localScale = Vector3.one * scale;
+            placed++;
+            if (placed >= 240) return;
+          }
+        }
+        return;
+      }
+
+      if (biome == TerrainKit.Biome.Urban) {
+        var blds = new[] {
+          LoadFx("urban_bld_1"), LoadFx("urban_bld_2"), LoadFx("urban_bld_3"),
+          LoadFx("urban_bld_4"), LoadFx("urban_bld_5"), LoadFx("urban_bld_6"),
+        };
+        var idx = 0;
+        var placed = 0;
+        var placedSpots = new List<Vector2>();
+        for (var x = _map.BoundsMin.X.AsFloat + 12f; x <= _map.BoundsMax.X.AsFloat - 12f; x += 13.5f) {
+          for (var z = _map.BoundsMin.Y.AsFloat + 12f; z <= _map.BoundsMax.Y.AsFloat - 12f; z += 13.5f) {
+            idx++;
+            var spot = new Vector3(x + (MeshKit.Hash(idx, 31) - 0.5f) * 3.5f, 0f, z + (MeshKit.Hash(idx, 33) - 0.5f) * 3.5f);
+            if (UrbanDecor.Allowed(_map, spot) == false || Dressing.IsOnAnyRoad(spot, 6.2f) || Dressing.InTraderClear(spot)) {
+              continue;
+            }
+            var tooClose = false;
+            var p2 = new Vector2(spot.x, spot.z);
+            for (var c = 0; _map.CityBuildings != null && c < _map.CityBuildings.Length; c++) {
+              var cc = _map.CityBuildings[c].Shape.Center;
+              if ((new Vector2(cc.X.AsFloat, cc.Z.AsFloat) - p2).sqrMagnitude < 10.2f * 10.2f) {
+                tooClose = true;
+                break;
+              }
+            }
+            if (tooClose) continue;
+            for (var p = 0; p < placedSpots.Count; p++) {
+              if ((placedSpots[p] - p2).sqrMagnitude < 10.6f * 10.6f) {
+                tooClose = true;
+                break;
+              }
+            }
+            if (tooClose) continue;
+            var prefab = blds[idx % blds.Length];
+            if (prefab == null) continue;
+            var yaw = Mathf.FloorToInt(MeshKit.Hash(idx, 37) * 4f) * 90f;
+            var go = Object.Instantiate(prefab, spot, Quaternion.Euler(0f, yaw, 0f), holder);
+            var sc = 0.78f + MeshKit.Hash(idx, 41) * 0.28f;
+            go.transform.localScale = Vector3.one * sc;
+            placedSpots.Add(p2);
+            placed++;
+            if (placed >= 150) return;
+          }
+        }
+      }
+    }
+
+    /// <summary>바이옴별 태양광·환경광·배경색·안개 분위기를 적용해 5개 맵의 첫인상을 1초 만에 구분되게 한다.</summary>
+    public static void ApplyBiomeAtmosphere(MapSpec map, Camera camera) {
+      if (map == null) {
+        return;
+      }
+      var biome = TerrainKit.BiomeOf(map);
+      if (biome == TerrainKit.Biome.Standard) {
+        return;
+      }
+      var sun = RenderSettings.sun;
+      if (sun == null) {
+        foreach (var l in Object.FindObjectsByType<Light>(FindObjectsSortMode.InstanceID)) {
+          if (l.type == LightType.Directional) {
+            sun = l;
+            break;
+          }
+        }
+      }
+      switch (biome) {
+        case TerrainKit.Biome.Desert:
+          if (sun != null) {
+            sun.color = new Color(1f, 0.87f, 0.64f);
+            sun.intensity = 1.42f;
+            sun.transform.rotation = Quaternion.Euler(46f, 38f, 0f);
+          }
+          RenderSettings.ambientSkyColor = new Color(0.92f, 0.81f, 0.62f);
+          RenderSettings.ambientEquatorColor = new Color(0.84f, 0.69f, 0.46f);
+          RenderSettings.ambientGroundColor = new Color(0.62f, 0.47f, 0.28f);
+          if (camera != null) camera.backgroundColor = new Color(0.76f, 0.62f, 0.41f);
+          break;
+        case TerrainKit.Biome.Urban:
+          if (sun != null) {
+            sun.color = new Color(0.95f, 0.94f, 0.92f);
+            sun.intensity = 1.12f;
+            sun.transform.rotation = Quaternion.Euler(54f, 25f, 0f);
+          }
+          RenderSettings.ambientSkyColor = new Color(0.56f, 0.58f, 0.61f);
+          RenderSettings.ambientEquatorColor = new Color(0.42f, 0.43f, 0.46f);
+          RenderSettings.ambientGroundColor = new Color(0.26f, 0.27f, 0.29f);
+          if (camera != null) camera.backgroundColor = new Color(0.18f, 0.19f, 0.21f);
+          break;
+        case TerrainKit.Biome.Archipelago:
+          if (sun != null) {
+            sun.color = new Color(1f, 0.98f, 0.90f);
+            sun.intensity = 1.34f;
+            sun.transform.rotation = Quaternion.Euler(52f, 32f, 0f);
+          }
+          RenderSettings.ambientSkyColor = new Color(0.56f, 0.84f, 0.94f);
+          RenderSettings.ambientEquatorColor = new Color(0.42f, 0.72f, 0.84f);
+          RenderSettings.ambientGroundColor = new Color(0.28f, 0.52f, 0.48f);
+          if (camera != null) {
+            camera.backgroundColor = new Color(0.05f, 0.49f, 0.66f);
+            camera.farClipPlane = 1200f;
+          }
+          break;
+        case TerrainKit.Biome.Strait:
+          if (sun != null) {
+            sun.color = new Color(0.88f, 0.94f, 1f);
+            sun.intensity = 1.18f;
+            sun.transform.rotation = Quaternion.Euler(48f, 42f, 0f);
+          }
+          RenderSettings.ambientSkyColor = new Color(0.54f, 0.67f, 0.80f);
+          RenderSettings.ambientEquatorColor = new Color(0.39f, 0.49f, 0.60f);
+          RenderSettings.ambientGroundColor = new Color(0.24f, 0.31f, 0.38f);
+          if (camera != null) {
+            camera.backgroundColor = new Color(0.04f, 0.22f, 0.42f);
+            camera.farClipPlane = 1200f;
+          }
+          break;
+      }
+      DynamicGI.UpdateEnvironment();
     }
 
     public void UpdateBridges(Frame frame) {

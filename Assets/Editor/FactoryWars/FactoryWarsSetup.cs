@@ -1435,16 +1435,76 @@ namespace FactoryWars.EditorTools {
       var pieces = RiverBuilder.Build(corner, -def.HalfSize, bridges, def.RiverAmplitude, def.RiverSeed);
       MapShape Shape(RiverBuilder.Piece piece) => Rect(piece.Center.x, piece.Center.y, piece.HalfLength, piece.HalfWidth, piece.Yaw);
       var step = 4 / def.Players;
-      spec.River = Enumerable.Range(0, def.Players).SelectMany(player => pieces.Select(piece => Turn(Shape(piece), player * step))).ToArray();
+      var riverList = Enumerable.Range(0, def.Players).SelectMany(player => pieces.Select(piece => Turn(Shape(piece), player * step))).ToList();
+      var extraRiver = new List<MapShape>();
+      if (def.ExtraWater != null) {
+        foreach (var strip in def.ExtraWater) {
+          if (strip.Ring) {
+            const int RingSegs = 40;
+            for (var r = 0; r <= RingSegs; r++) {
+              var a0 = (r % RingSegs) * (Mathf.PI * 2f / RingSegs);
+              var a1 = ((r + 1) % RingSegs) * (Mathf.PI * 2f / RingSegs);
+              var p0 = new Vector2(Mathf.Cos(a0), Mathf.Sin(a0)) * strip.RingRadius;
+              var p1 = new Vector2(Mathf.Cos(a1), Mathf.Sin(a1)) * strip.RingRadius;
+              var mid = (p0 + p1) * 0.5f;
+              var d = p1 - p0;
+              var yaw = Mathf.Atan2(-d.y, d.x) * Mathf.Rad2Deg;
+              extraRiver.Add(Rect(mid.x, mid.y, d.magnitude * 0.62f, strip.HalfWidth, yaw));
+            }
+          } else {
+            var delta = strip.To - strip.From;
+            var totalLen = delta.magnitude;
+            var dir = totalLen > 0.001f ? delta / totalLen : Vector2.right;
+            var yaw = Mathf.Atan2(-dir.y, dir.x) * Mathf.Rad2Deg;
+            var count = Mathf.Max(2, Mathf.CeilToInt(totalLen / 6f));
+            for (var k = 0; k <= count; k++) {
+              var pt = strip.From + dir * (totalLen * k / count);
+              extraRiver.Add(Rect(pt.x, pt.y, 4.2f, strip.HalfWidth, yaw));
+            }
+          }
+        }
+      }
+      riverList.AddRange(extraRiver);
+      spec.River = riverList.ToArray();
+
+      var bridgesList = def.Bridges.SelectMany(bridge => Orbit(def, bridge)).ToList();
+      if (def.ExtraBridges != null && def.ExtraBridges.Length > 0) {
+        bridgesList.AddRange(def.ExtraBridges);
+      }
+      spec.Bridges = bridgesList.ToArray();
+
+      var allFords = def.Fords.SelectMany(shape => Orbit(def, shape)).ToArray();
+      bool OverlapsExtraWater(FPVector3 pos, float margin) {
+        for (var e = 0; e < extraRiver.Count; e++) {
+          if (extraRiver[e].Distance(pos).AsFloat < margin) return true;
+        }
+        return false;
+      }
+      bool IsCrossing(MapShape piece) {
+        for (var b = 0; b < spec.Bridges.Length; b++) {
+          if (spec.Bridges[b].Distance(piece.Center).AsFloat < 3.5f) return true;
+        }
+        for (var f = 0; f < allFords.Length; f++) {
+          if (allFords[f].Distance(piece.Center).AsFloat < 4.5f) return true;
+        }
+        return false;
+      }
+
       var edge = def.HalfSize + 2f;
       var blocks = pieces.Where(p => p.UnderBridge == false && Mathf.Abs(p.Center.x) < edge && Mathf.Abs(p.Center.y) < edge)
-        .SelectMany(p => Orbit(def, Shape(p)).Select(shape => Feature(TerrainKind.River, shape)));
-      spec.Terrain = def.Terrain.SelectMany(feature => Orbit(def, feature.Shape).Select(shape => Feature(feature.Kind, shape))).Concat(blocks).ToArray();
+        .SelectMany(p => Orbit(def, Shape(p)).Select(shape => Feature(TerrainKind.River, shape))).ToList();
+      foreach (var er in extraRiver) {
+        if (Mathf.Abs(er.Center.X.AsFloat) < edge && Mathf.Abs(er.Center.Z.AsFloat) < edge && IsCrossing(er) == false) {
+          blocks.Add(Feature(TerrainKind.River, er));
+        }
+      }
+      var landTerrain = def.Terrain.SelectMany(feature => Orbit(def, feature.Shape).Select(shape => Feature(feature.Kind, shape)))
+        .Where(f => extraRiver.Count == 0 || OverlapsExtraWater(f.Shape.Center, 4.5f) == false);
+      spec.Terrain = landTerrain.Concat(blocks).ToArray();
       spec.NoBuildZones = def.NoBuildZones.SelectMany(zone => Orbit(def, zone)).ToArray();
-      spec.Bridges = def.Bridges.SelectMany(bridge => Orbit(def, bridge)).ToArray();
       spec.BaseAreas = Orbit(def, def.BaseArea).ToArray();
       FillChannel(def, spec, pieces);
-      FillBattlefield(def, spec);
+      FillBattlefield(def, spec, extraRiver);
       EditorUtility.SetDirty(spec);
     }
 
@@ -1479,14 +1539,23 @@ namespace FactoryWars.EditorTools {
     }
 
     /// <summary>점령지·바리케이드·상자·고지대·도로·여울·확장 후보. 규칙은 항목 20의 시스템이 읽는다.</summary>
-    static void FillBattlefield(MapDef def, MapSpec spec) {
+    static void FillBattlefield(MapDef def, MapSpec spec, List<MapShape> extraRiver) {
       var step = 4 / def.Players;
       FPVector3 Turned(FPVector3 position, int seat) => Turn(new MapShape { Center = position }, seat * step).Center;
+      bool InExtraWater(FPVector3 pos, float margin) {
+        if (extraRiver == null || extraRiver.Count == 0) return false;
+        for (var i = 0; i < extraRiver.Count; i++) {
+          if (extraRiver[i].Distance(pos).AsFloat < margin) return true;
+        }
+        return false;
+      }
 
       spec.CaptureSites = def.CaptureSites
         .SelectMany(site => Enumerable.Range(0, def.Players).Select(seat => new CaptureSitePlacement { Kind = site.Kind, Center = Turned(site.Center, seat), Radius = site.Radius }))
-        .Concat(def.CenterSites).ToArray();
+        .Concat(def.CenterSites)
+        .Where(s => InExtraWater(s.Center, 3f) == false).ToArray();
       spec.Barricades = def.Barricades.SelectMany(shape => Orbit(def, shape))
+        .Where(shape => InExtraWater(shape.Center, 3.5f) == false)
         .Select((shape, index) => new BarricadePlacement { Shape = shape, Region = $"{BarricadeRegionPrefix}{index}" }).ToArray();
 
       var crates = new List<CrateSpot>();
@@ -1495,22 +1564,44 @@ namespace FactoryWars.EditorTools {
       }
       for (var group = 0; group < def.DropCrates.Length; group++) {
         for (var seat = 0; seat < def.Players; seat++) {
-          crates.Add(new CrateSpot { Position = Turned(def.DropCrates[group], seat), Seat = -1, Group = group });
+          var pos = Turned(def.DropCrates[group], seat);
+          if (InExtraWater(pos, 3f) == false) {
+            crates.Add(new CrateSpot { Position = pos, Seat = -1, Group = group });
+          }
         }
       }
       spec.CrateSpots = crates.ToArray();
 
-      spec.HighGrounds = def.HighGrounds.SelectMany(shape => Orbit(def, shape)).ToArray();
-      spec.Ramps = def.Ramps.SelectMany(shape => Orbit(def, shape)).ToArray();
-      spec.Roads = def.Roads.SelectMany(shape => Orbit(def, shape)).ToArray();
+      spec.HighGrounds = def.HighGrounds.SelectMany(shape => Orbit(def, shape)).Where(s => InExtraWater(s.Center, 6f) == false).ToArray();
+      spec.Ramps = def.Ramps.SelectMany(shape => Orbit(def, shape)).Where(s => InExtraWater(s.Center, 4f) == false).ToArray();
+      bool RoadTouchesExtraWater(MapShape road) {
+        if (extraRiver == null || extraRiver.Count == 0) return false;
+        var c = new Vector2(road.Center.X.AsFloat, road.Center.Z.AsFloat);
+        var rad = road.Yaw.AsFloat * Mathf.Deg2Rad;
+        var along = new Vector2(Mathf.Cos(rad), -Mathf.Sin(rad)) * road.HalfLength.AsFloat;
+        foreach (var t in new[] { -1f, -0.5f, 0f, 0.5f, 1f }) {
+          var pt = c + along * t;
+          if (InExtraWater(new FPVector3(FP.FromFloat_UNSAFE(pt.x), default, FP.FromFloat_UNSAFE(pt.y)), 4f)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      var roadsList = def.Roads.SelectMany(shape => Orbit(def, shape)).Where(s => RoadTouchesExtraWater(s) == false).ToList();
+      if (def.ExtraRoads != null && def.ExtraRoads.Length > 0) {
+        roadsList.AddRange(def.ExtraRoads);
+      }
+      spec.Roads = roadsList.ToArray();
       spec.Fords = def.Fords.SelectMany(shape => Orbit(def, shape)).ToArray();
 
       var sites = new List<ExpansionSite>();
       for (var seat = 0; seat < def.Players; seat++) {
         sites.AddRange(def.Expansions.Select(site => new ExpansionSite { Kind = site.Kind, Position = Turned(site.Position, seat), SeatMask = 1 << seat }));
         foreach (var site in def.SharedExpansions) {
+          var pos = Turned(site.Position, seat);
+          if (InExtraWater(pos, 5f)) continue;
           var mask = def.SharedSeatOffsets.Aggregate(0, (bits, offset) => bits | 1 << (seat + offset) % def.Players);
-          sites.Add(new ExpansionSite { Kind = site.Kind, Position = Turned(site.Position, seat), SeatMask = mask });
+          sites.Add(new ExpansionSite { Kind = site.Kind, Position = pos, SeatMask = mask });
         }
       }
       var everyone = (1 << def.Players) - 1;

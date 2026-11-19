@@ -171,7 +171,13 @@ namespace FactoryWars.View {
       // 윗면: 맨 위 고리를 가운데 점으로 덮는다.
       var last = rings[layers];
       var cap = new Vector3(center.x, height, center.y);
-      k.Paint(dark ? Swatch.RockFace : ArtPalette.Turf(Swatch.Grass));
+      var pBiome = BiomeOf(Dressing.RoadMask);
+      var capSwatch = dark ? Swatch.RockFace
+        : pBiome == Biome.Desert ? Swatch.Sand
+        : pBiome == Biome.Urban ? Swatch.ConcreteDark
+        : pBiome == Biome.Strait ? Swatch.Boulder
+        : ArtPalette.Turf(Swatch.Grass);
+      k.Paint(capSwatch);
       for (var i = 0; i < last.Length; i++) {
         var j = (i + 1) % last.Length;
         var top = height * (0.92f + 0.08f * MeshKit.Hash(seed, 900 + layers - 1));
@@ -198,8 +204,14 @@ namespace FactoryWars.View {
       var rot = Quaternion.Euler(0f, yaw, 0f);
       var axisL = rot * Vector3.right;
       var axisW = rot * Vector3.forward;
-      // 낮은 대지 판(풀 높이 0.03m): 통과 불가 구역이 길과 구분되게.
-      k.Paint(ArtPalette.Turf(Swatch.GrassDark));
+      // 낮은 대지 판(높이 0.03m): 바이옴별 바닥색(사막=모래, 시가전=어두운 콘크리트, 해협=암반, 표준=잔디).
+      var biome = BiomeOf(map);
+      var lotSwatch = biome == Biome.Desert ? Swatch.Sand
+        : biome == Biome.Urban ? Swatch.ConcreteDark
+        : biome == Biome.Archipelago ? Swatch.Sand
+        : biome == Biome.Strait ? Swatch.Rock
+        : ArtPalette.Turf(Swatch.GrassDark);
+      k.Paint(lotSwatch);
       var ring = Outline(shape, OutlineSpacing);
       for (var i = 0; i < ring.Count; i++) {
         var a = ring[i];
@@ -230,9 +242,16 @@ namespace FactoryWars.View {
           // 가까운 길 쪽을 보게 0/90/180/270 중에서 고른다.
           var face = yaw + FaceRoad(map, world, yaw);
           var kind = MeshKit.Hash(seed, 300 + i * 7 + j) < 0.6f ? DressKind.CitySmall : DressKind.CityMedium;
-          // 칸 셋 중 하나는 건물 대신 작은 숲(나무 3~4그루 + 덤불)으로 비워 에란겔식 들판·숲 느낌을 낸다.
-          if (MeshKit.Hash(seed, 400 + i * 7 + j) < 0.33f) {
-            Grove(world, cellL, cellW, seed * 211 + i * 13 + j);
+          // 사막에서는 초록 숲 대신 바위, 시가전에서는 100% 고밀도 건물, 표준/다도해/해협에서는 33% 작은 숲.
+          if (biome != Biome.Urban && MeshKit.Hash(seed, 400 + i * 7 + j) < 0.33f) {
+            if (biome == Biome.Desert) {
+              for (var r = 0; r < 3; r++) {
+                var off = new Vector3((MeshKit.Hash(seed + i * 13 + j, 30 + r) - 0.5f) * cellL * 0.7f, 0f, (MeshKit.Hash(seed + i * 13 + j, 40 + r) - 0.5f) * cellW * 0.7f);
+                Dressing.Add(DressKind.RockSmall, world + off, seed * 11 + r);
+              }
+            } else {
+              Grove(world, cellL, cellW, seed * 211 + i * 13 + j);
+            }
             Lots.Add((spot, radius));
             continue;
           }
@@ -553,7 +572,8 @@ namespace FactoryWars.View {
               Dressing.Add(DressKind.RoadProp, lampB, 9301 + b * 5, null, b * 90f + 180f);
             }
           }
-          if (Dressing.Has(DressKind.Bush)) {
+          var roadBiome = BiomeOf(map);
+          if (roadBiome != Biome.Desert && roadBiome != Biome.Urban && Dressing.Has(DressKind.Bush)) {
             var flowerA = center + new Vector3(signX * (hx * 0.52f), 0f, -signZ * (hz * 0.15f));
             var flowerB = center + new Vector3(-signX * (hx * 0.15f), 0f, signZ * (hz * 0.52f));
             if (Inside(map.Roads, flowerA.x, flowerA.z) == false) {
@@ -591,8 +611,19 @@ namespace FactoryWars.View {
     /// </summary>
     public static void HighGrounds(MeshKit k, MapSpec map) {
       var height = HighGroundHeight;
+      var hgBiome = BiomeOf(map);
       if (VisualProfile.Current.FieldLook) {
-        // 야전 룩: 고지대(사거리 이점, 판정 그대로)를 흰 경사로가 달린 원판 대신 흙·풀 언덕으로 그린다. 비탈이 경사로를 겸한다.
+        var topSw = hgBiome == Biome.Desert ? Swatch.Sand
+          : hgBiome == Biome.Urban ? Swatch.Asphalt
+          : hgBiome == Biome.Archipelago ? Swatch.Olive
+          : hgBiome == Biome.Strait ? Swatch.OliveDark
+          : ArtPalette.Turf(Swatch.Grass);
+        var slopeSw = hgBiome == Biome.Desert ? Swatch.Dirt
+          : hgBiome == Biome.Urban ? Swatch.ConcreteDark
+          : hgBiome == Biome.Archipelago ? Swatch.Sand
+          : hgBiome == Biome.Strait ? Swatch.RockDark
+          : Swatch.OliveDark;
+        // 야전 룩: 고지대(사거리 이점, 판정 그대로)를 바이옴별 사암 메사/도심 고가/열대 언덕/암반 구릉으로 그린다.
         for (var g = 0; map.HighGrounds != null && g < map.HighGrounds.Length; g++) {
           var ground = map.HighGrounds[g];
           var c = new Vector3(ground.Center.X.AsFloat, 0f, ground.Center.Z.AsFloat);
@@ -606,9 +637,9 @@ namespace FactoryWars.View {
             var db = new Vector3(Mathf.Cos(b), 0, Mathf.Sin(b));
             var wobA = 1f + (MeshKit.Hash(g * 97 + i, 3) - 0.5f) * 0.12f;
             var wobB = 1f + (MeshKit.Hash(g * 97 + (i + 1) % Sides, 3) - 0.5f) * 0.12f;
-            k.Paint(ArtPalette.Turf(Swatch.Grass));
+            k.Paint(topSw);
             k.Tri(c + Vector3.up * height, c + da * top * wobA + Vector3.up * height, c + db * top * wobB + Vector3.up * height, Vector3.up);
-            k.Paint(Swatch.OliveDark);
+            k.Paint(slopeSw);
             k.Quad(c + da * top * wobA + Vector3.up * height, c + db * top * wobB + Vector3.up * height, c + db * foot * wobB + Vector3.up * 0.02f, c + da * foot * wobA + Vector3.up * 0.02f, Vector3.up);
           }
         }
@@ -694,13 +725,15 @@ namespace FactoryWars.View {
     public static void BridgePiers(MeshKit k, MapSpec map) {
       foreach (var bridge in map.Bridges ?? System.Array.Empty<MapShape>()) {
         var rect = Extent(bridge);
-        var acrossX = rect.width < rect.height;
+        var longStrait = Mathf.Max(rect.width, rect.height) > 20f;
+        var acrossX = longStrait ? rect.width >= rect.height : rect.width < rect.height;
         var span = acrossX ? rect.width : rect.height;
         var deck = acrossX ? rect.height : rect.width;
-        foreach (var t in new[] { -0.28f, 0.28f }) {
+        var stops = longStrait ? new[] { -0.36f, -0.12f, 0.12f, 0.36f } : new[] { -0.28f, 0.28f };
+        foreach (var t in stops) {
           var offset = span * t;
           var center = new Vector3(rect.center.x + (acrossX ? offset : 0f), WaterLevel - 0.5f, rect.center.y + (acrossX ? 0f : offset));
-          var size = acrossX ? new Vector3(1.4f, 0, deck * 0.8f) : new Vector3(deck * 0.8f, 0, 1.4f);
+          var size = acrossX ? new Vector3(1.6f, 0, deck * 0.85f) : new Vector3(deck * 0.85f, 0, 1.6f);
           var height = -0.25f - (WaterLevel - 0.5f);
           k.Paint(Swatch.ConcreteDark);
           k.Box(center + Vector3.up * height / 2, new Vector3(size.x, height, size.z));

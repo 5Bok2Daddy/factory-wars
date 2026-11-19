@@ -32,7 +32,7 @@ MonoBehaviour:
     Steel:
       RawValue: 144179200
     Power:
-      RawValue: 45875200
+      RawValue: 32768000
   PrepareSeconds:
     RawValue: 5242880
   RearmCost:
@@ -43,7 +43,7 @@ MonoBehaviour:
     Steel:
       RawValue: 144179200
     Power:
-      RawValue: 45875200
+      RawValue: 32768000
   RearmSeconds:
     RawValue: 5242880
   OwnedLimit: 1

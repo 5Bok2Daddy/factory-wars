@@ -22,7 +22,7 @@ MonoBehaviour:
   Scene: MapStrait
   ScenePath: Assets/QuantumUser/Scenes/MapStrait.unity
   SceneGuid: ae7e5e112542e9547b133855b6c09ba1
-  WorldSize: 416
+  WorldSize: 408
   BucketsCount: 16
   BucketsSubdivisions: 8
   BucketingAxis: 0
@@ -34,8 +34,8 @@ MonoBehaviour:
     Id:
       Value: 390534441152215200
   SerializeTrianglesMetadata: 0
-  GridSizeX: 104
-  GridSizeY: 104
+  GridSizeX: 102
+  GridSizeY: 102
   GridNodeSize: 4
   NavMeshLinks:
   - Id:
@@ -46,16 +46,17 @@ MonoBehaviour:
   - MainArea
   - Barricade0
   - Barricade1
-  - Barricade2
-  - Barricade3
   - Bridge0
   - Bridge1
+  - Bridge10
   - Bridge2
   - Bridge3
   - Bridge4
   - Bridge5
   - Bridge6
   - Bridge7
+  - Bridge8
+  - Bridge9
   - City0
   - City1
   - City10
@@ -64,19 +65,7 @@ MonoBehaviour:
   - City13
   - City14
   - City15
-  - City16
-  - City17
-  - City18
-  - City19
   - City2
-  - City20
-  - City21
-  - City22
-  - City23
-  - City24
-  - City25
-  - City26
-  - City27
   - City3
   - City4
   - City5
@@ -84,20 +73,10 @@ MonoBehaviour:
   - City7
   - City8
   - City9
+  - Fall0
   - Fall1
-  - Fall10
-  - Fall11
-  - Fall15
-  - Fall16
-  - Fall17
-  - Fall18
-  - Fall2
-  - Fall22
-  - Fall23
-  - Fall24
-  - Fall25
-  - Fall3
-  - Fall4
+  - Fall13
+  - Fall5
   - Fall8
   - Fall9
   - WaterGate0

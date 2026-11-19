@@ -66,11 +66,11 @@ namespace FactoryWars.Tests {
     [UnityTest, Explicit]
     public IEnumerator CaptureMaps35_AllFive() {
       var pairs = new[] {
-        ("Map4P", "map_standard", new Vector2(0f, 0f), 115f),
-        ("MapDesert", "map_desert", new Vector2(-70f, -30f), 95f),
-        ("MapUrban", "map_urban", new Vector2(-36f, -36f), 72f),
-        ("MapArchipelago", "map_archipelago", new Vector2(-74f, -52f), 105f),
-        ("MapStrait", "map_strait", new Vector2(-120f, -92f), 88f),
+        ("Map4P", "map_standard", new Vector2(0f, 0f), 125f),
+        ("MapDesert", "map_desert", new Vector2(-62f, -36f), 98f),
+        ("MapUrban", "map_urban", new Vector2(-44f, -44f), 92f),
+        ("MapArchipelago", "map_archipelago", new Vector2(0f, 0f), 235f),
+        ("MapStrait", "map_strait", new Vector2(0f, 0f), 210f),
       };
       var statusDir = System.IO.Path.Combine(Application.dataPath, "..", "Docs", "status_images");
       System.IO.Directory.CreateDirectory(statusDir);

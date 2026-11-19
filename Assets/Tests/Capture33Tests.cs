@@ -98,10 +98,10 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => FirstOf<MissileStrike>().Component.ImpactFrame - Verified.Number < 6 * Fps, 30f, "카운트다운");
       yield return Shoot33("33_missile_warning");
       yield return WaitFor(() => Noticed(0, UltimateStage.Impact), 60f, "착탄");
-      Controller().Camera.MoveTo(new Vector2(0f, 21f));
-      Controller().Camera.Height = 32f;
+      Controller().Camera.MoveTo(new Vector2(0f, 23f));
+      Controller().Camera.Height = 58f;
       Controller().Camera.Apply();
-      yield return WaitFrames(2);
+      yield return WaitFrames(3);
       yield return Shoot33("33_missile_impact");
       File.Copy(Path.Combine(UltimateFolder(), "33_missile_impact.png"), Path.Combine(statusDir, "54_ultimate_missile_silo_strike.png"), true);
 

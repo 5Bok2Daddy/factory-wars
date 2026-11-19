@@ -470,33 +470,8 @@ namespace FactoryWars.Tests {
             r.AimPoint = studio.transform.position + new Vector3(4f, 1.15f, 6f);
           }
         }
-        // 공중 항모 · 미사일 격납고 · 패트리어트 포대 · 포격함 전용 PBR 킷배시 모델 적용.
-        if (item.IsCarrier) {
-          HeroVisuals.BuildHelicarrierCard(view, item.ColorIndex);
-        } else if (item.IsSilo) {
-          HeroVisuals.BuildMissileSiloCard(view, item.ColorIndex);
-        } else if (item.Id.EndsWith("_artillery_ship")) {
-          HeroVisuals.BuildArtilleryShip(view, item.ColorIndex);
-        } else if (item.Id.EndsWith("_landing_craft")) {
-          HeroVisuals.BuildLandingCraft(view, item.ColorIndex);
-        } else if (item.IsPatriot) {
-          var kit = new MeshKit();
-          kit.Paint(Swatch.ArmorDark).Chamfer(new Vector3(0f, 0.9f, 0f), new Vector3(1.5f, 0.55f, 1.5f), 0.12f);
-          for (var c = 0; c < 4; c++) {
-            var ox = (c % 2 == 0 ? -0.34f : 0.34f);
-            var oy = 1.5f + (c / 2) * 0.38f;
-            kit.Paint(Swatch.MetalLight).Box(new Vector3(ox, oy, 0.1f), new Vector3(0.28f, 0.28f, 1.65f));
-            kit.Paint(Swatch.GlowCyan).Box(new Vector3(ox, oy, 0.96f), new Vector3(0.22f, 0.22f, 0.08f));
-          }
-          var rack = new GameObject("HeroPatriot", typeof(MeshFilter), typeof(MeshRenderer));
-          rack.transform.SetParent(view.Model.transform, false);
-          rack.transform.localRotation = Quaternion.Euler(-28f, 0f, 0f);
-          rack.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("hero_patriot_card");
-          rack.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(item.ColorIndex, true) ?? ArtLook.NeutralMaterial;
-          ArtLook.Apply(view.Model, item.ColorIndex, true);
-        } else {
-          ArtLook.Apply(view.Model, item.ColorIndex, true);
-        }
+        // 100% 실제 Synty/Kenney 텍스처 프리팹 렌더링(원시 큐브·실린더·구체 오버라이드 전면 금지).
+        ArtLook.Apply(view.Model, item.ColorIndex, true);
 
         // Kubold Animator가 첫 자세를 평가한 뒤 무기를 실제 손바닥에 밀착시킨다.
         yield return null;
@@ -614,13 +589,7 @@ namespace FactoryWars.Tests {
         bv.SetYaw(180f);
         bv.SetSelected(false);
         if (bv.Bar != null) bv.Bar.SetActive(false);
-        if (b.IsSilo) {
-          HeroVisuals.BuildMissileSiloCard(bv, b.Color);
-          bv.Model.transform.localScale = Vector3.one * 1.35f;
-        } else {
-          HeroVisuals.TryBuildFactory(bv, b.Id, b.Color, out _, out var beacon, out _);
-          if (beacon != null) beacon.sharedMaterial = HeroVisuals.BeaconMaterial(true);
-        }
+        ArtLook.Apply(bv.Model, b.Color, true);
       }
       yield return null;
       if (openCam != null) {

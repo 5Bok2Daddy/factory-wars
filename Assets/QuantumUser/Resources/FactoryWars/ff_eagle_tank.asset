@@ -29,7 +29,7 @@ MonoBehaviour:
     Steel:
       RawValue: 4456448
     Power:
-      RawValue: 3604480
+      RawValue: 3932160
   BuildTimeSeconds:
     RawValue: 2031616
   MaxHealth:
@@ -128,3 +128,7 @@ MonoBehaviour:
     Id:
       Value: 0
   SortieCargoCount: 0
+  TransportCapacity: 0
+  TransportAllowsVehicles: 0
+  TransportEjectHealthRatio:
+    RawValue: 0

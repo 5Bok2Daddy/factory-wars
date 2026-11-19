@@ -11,6 +11,14 @@ namespace FactoryWars.EditorTools {
   /// 배치 근거와 측정값은 SETUP-REPORT.md "항목 17"에 있다.
   /// </summary>
   public static partial class FactoryWarsSetup {
+    struct WaterStrip {
+      public Vector2 From;
+      public Vector2 To;
+      public float HalfWidth;
+      public bool Ring;
+      public float RingRadius;
+    }
+
     class MapDef {
       public string Id;
       public int Players;
@@ -21,6 +29,9 @@ namespace FactoryWars.EditorTools {
       public TerrainFeature[] Terrain;
       public MapShape[] NoBuildZones;
       public MapShape[] Bridges;
+      public MapShape[] ExtraBridges;
+      public MapShape[] ExtraRoads;
+      public WaterStrip[] ExtraWater;
       public MapShape BaseArea;
       public Vector3 CameraPosition;
       public float RiverAmplitude;
@@ -255,36 +266,94 @@ namespace FactoryWars.EditorTools {
       return def;
     }
 
-    /// <summary>항목 35 다도해: 넓은 외곽·섬 수로, 얕은 여울, 해무 기상(60초 주기).</summary>
+    /// <summary>항목 35 다도해: 65%+ 에메랄드 바다와 5개의 뚜렷한 모래해변 섬(4코너 본진 섬 + 중앙 섬), 얕은 여울·해상/상륙전 중심.</summary>
     static MapDef BuildArchipelago() {
       var def = FourPlayerMap.Clone();
       def.Id = "MapArchipelago";
       def.Theme = "다도해";
-      def.ChannelWidth = 28f;
+      def.ChannelWidth = 56f;
       def.SupplyInterval = 0.85;
       def.SupplyReward = 1.25;
       def.WeatherFirst = 420;
       def.WeatherDuration = 60;
       def.WeatherPeriod = 240;
       def.WeatherSight = 0.65;
-      def.Fords = new[] { Segment(P(-74, -30), P(-30, -74), FordHalfWidth), Segment(P(-108, -74), P(-74, -108), FordHalfWidth) };
-      def.CaptureSites = new[] { Site(CaptureKind.Relay, -134, 0, 8), Site(CaptureKind.Radar, -24, -24, 7), Site(CaptureKind.Fuel, -84, -84, 7) };
+      // 중앙 섬(반경 42m)을 360도 감싸는 환형 라군(r=42~90) + 4방위 100m 광폭 외해 해협 -> 플레이 영역 내 65%+(화면 75%+) 에메랄드 바다!
+      def.ExtraWater = new[] {
+        new WaterStrip { Ring = true, RingRadius = 66f, HalfWidth = 24f },
+        new WaterStrip { From = P(0f, 74f), To = P(0f, 210f), HalfWidth = 50f },
+        new WaterStrip { From = P(0f, -210f), To = P(0f, -74f), HalfWidth = 50f },
+        new WaterStrip { From = P(-210f, 0f), To = P(-74f, 0f), HalfWidth = 50f },
+        new WaterStrip { From = P(74f, 0f), To = P(210f, 0f), HalfWidth = 50f },
+      };
+      // 섬 육지 위에만 정확히 안착하는 자원·거점·블랙박스 배치(바다에 뜨는 광산/언덕 0).
+      def.Nodes = new[] {
+        Mine(-145, -118, 4600), Mine(-118, -145, 4600), Grove(-146, -146, 9, 6000),
+        Mine(-148, -76, 3200), Mine(-124, -66, 3200), Grove(-150, -64, 5, 2200),
+        Grove(-76, -147, 9, 5000), Grove(-68, -122, 6, 3000), Mine(-82, -118, 2200, 2.5),
+        Grove(-18, -18, 5, 2400),
+      };
+      def.Fords = new[] { Segment(P(-66f, -66f), P(-26f, -26f), 4.8f) };
+      def.CaptureSites = new[] {
+        Site(CaptureKind.Relay, -88, -88, 7),
+        Site(CaptureKind.Radar, -22, -22, 6),
+        Site(CaptureKind.Fuel, -66, -114, 6),
+      };
+      def.SharedExpansions = new ExpansionSite[0];
+      def.BlackBoxSpots = new[] { Position(-30, 0), Position(0, 30), Position(30, 0), Position(0, -30) };
+      def.DropCrates = new[] { Position(-86, -86), Position(-132, -66), Position(-28, -14) };
       return def;
     }
 
-    /// <summary>항목 35 해협/운하: 넓은 해협·7분 강철 수문·교량 요충지·해무 기상.</summary>
+    /// <summary>항목 35 해협 도하전: 맵 정중앙을 수직으로 양분하는 48m 광폭 짙은 남색 해협 + 북·중·남 3대 전략 교량.</summary>
     static MapDef BuildStrait() {
       var def = FourPlayerMap.Clone();
       def.Id = "MapStrait";
       def.Theme = "해협";
-      def.ChannelWidth = 32f;
+      def.ChannelWidth = 28f;
       def.SupplyInterval = 0.9;
       def.SupplyReward = 1.2;
       def.WeatherFirst = 450;
       def.WeatherDuration = 60;
       def.WeatherPeriod = 240;
       def.WeatherSight = 0.65;
-      def.CaptureSites = new[] { Site(CaptureKind.Relay, -134, 0, 8), Site(CaptureKind.Radar, -26, -26, 6), Site(CaptureKind.Fuel, -54, -90, 7) };
+      def.Trader = false;
+      // 중앙을 남북으로 완벽히 가르는 48m(HalfWidth=24) 대양 해협.
+      def.ExtraWater = new[] {
+        new WaterStrip { From = P(0f, -205f), To = P(0f, 205f), HalfWidth = 24f },
+      };
+      // 해협을 가로지르는 3개의 뚜렷한 전략 교량(북·중앙 대교·남).
+      def.ExtraBridges = new[] {
+        Rect(0, 84, 27, 5.5),
+        Rect(0, 0, 27, 6.5),
+        Rect(0, -84, 27, 5.5),
+      };
+      // 3개 교량 진입 도로 + 동·서 해안 종단 간선도로.
+      def.ExtraRoads = new[] {
+        Segment(P(-106f, 84f), P(-26f, 84f), RoadHalfWidth),
+        Segment(P(26f, 84f), P(106f, 84f), RoadHalfWidth),
+        Segment(P(-106f, 0f), P(-26f, 0f), RoadHalfWidth),
+        Segment(P(26f, 0f), P(106f, 0f), RoadHalfWidth),
+        Segment(P(-106f, -84f), P(-26f, -84f), RoadHalfWidth),
+        Segment(P(26f, -84f), P(106f, -84f), RoadHalfWidth),
+        Segment(P(-54f, -108f), P(-54f, 108f), RoadHalfWidth),
+        Segment(P(54f, -108f), P(54f, 108f), RoadHalfWidth),
+      };
+      def.Fords = new MapShape[0];
+      def.Nodes = new[] {
+        Mine(-145, -118, 4600), Mine(-118, -145, 4600), Grove(-146, -146, 9, 6000),
+        Mine(-148, -76, 3000), Mine(-124, -66, 3000), Grove(-150, -58, 5, 2000),
+        Grove(-76, -147, 10, 5000), Grove(-67, -122, 7, 3000), Mine(-82, -118, 1500, 2.5),
+        Mine(-118, 10, 5000, 3.5), Grove(-118, -6, 6, 5000),
+        Grove(-62, -46, 6, 2500),
+      };
+      def.CaptureSites = new[] {
+        Site(CaptureKind.Relay, -134, 0, 8),
+        Site(CaptureKind.Radar, -44, -44, 6),
+        Site(CaptureKind.Fuel, -60, -98, 7),
+      };
+      def.BlackBoxSpots = new[] { Position(-44, 0), Position(44, 0), Position(-44, 84), Position(44, -84) };
+      def.DropCrates = new[] { Position(-68, -32), Position(-142, 12), Position(-44, 42) };
       return def;
     }
 

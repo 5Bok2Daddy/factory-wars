@@ -29,7 +29,7 @@ MonoBehaviour:
     Steel:
       RawValue: 144179200
     Power:
-      RawValue: 45875200
+      RawValue: 32768000
   BuildTimeSeconds:
     RawValue: 5242880
   MaxHealth:
@@ -47,7 +47,7 @@ MonoBehaviour:
     RawValue: 131072
   IsRanged: 1
   MoveSpeed:
-    RawValue: 144179
+    RawValue: 183500
   ColliderRadius:
     RawValue: 209715
   Population:
@@ -128,3 +128,7 @@ MonoBehaviour:
     Id:
       Value: 0
   SortieCargoCount: 0
+  TransportCapacity: 0
+  TransportAllowsVehicles: 0
+  TransportEjectHealthRatio:
+    RawValue: 0
