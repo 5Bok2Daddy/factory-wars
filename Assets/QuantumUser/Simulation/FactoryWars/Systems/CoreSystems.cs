@@ -542,10 +542,11 @@ namespace Quantum.FactoryWars {
           if (relation != Relation.Allied) {
             return RejectReason.Invalid;
           }
-          if (state->Stock.Iron < rules.BreakCost) {
+          var breakCost = BreakCostFor(f, sender, target);
+          if (state->Stock.Iron < breakCost) {
             return RejectReason.InsufficientResources;
           }
-          state->Stock.Iron -= rules.BreakCost;
+          state->Stock.Iron -= breakCost;
           var grace = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.BreakGraceSeconds);
           var ban = f.Number + FactoryWarsUtil.SecondsToFrames(f, rules.RealliableSeconds);
           d->BreakExpireFrames[cell] = grace;
@@ -558,6 +559,24 @@ namespace Quantum.FactoryWars {
         }
       }
       return RejectReason.Invalid;
+    }
+
+    /// <summary>공동의 적이 사라지고 맵의 철 자원도 고갈되면 동맹 파기 비용을 면제해 교착을 막는다.</summary>
+    public static FP BreakCostFor(Frame f, PlayerRef a, PlayerRef b) {
+      if (HasCommonEnemy(f, a, b) == false && HasIronLeft(f) == false) {
+        return FP._0;
+      }
+      return FactoryWarsUtil.Rules(f).BreakCost;
+    }
+
+    static bool HasIronLeft(Frame f) {
+      var nodes = f.Filter<ResourceNode>();
+      while (nodes.NextUnsafe(out _, out var node)) {
+        if (node->Kind == ResourceKind.Iron && node->Remaining > FP._0) {
+          return true;
+        }
+      }
+      return false;
     }
 
     static void RefundProposal(Frame f, Diplomacy* d, GameRulesSpec rules, int index) {

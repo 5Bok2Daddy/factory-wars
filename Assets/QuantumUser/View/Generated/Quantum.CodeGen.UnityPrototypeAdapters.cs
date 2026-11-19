@@ -136,6 +136,10 @@ namespace Quantum.Prototypes.Unity {
     public Quantum.Prototypes.HangarSlotPrototype[] Hangar = new Quantum.Prototypes.HangarSlotPrototype[4];
     public Int32 ProtocolUntilFrame;
     public Int32 ProtocolNextShotFrame;
+    public Int32 EmpUntilFrame;
+    public Int32 FactoryLevel;
+    public Int32 OverdriveUntilFrame;
+    public Int32 OverdriveCooldownFrame;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BuildingPrototype prototype);
     public override Quantum.Prototypes.BuildingPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BuildingPrototype();
@@ -164,6 +168,10 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Hangar, out result.Hangar);
       converter.Convert(this.ProtocolUntilFrame, out result.ProtocolUntilFrame);
       converter.Convert(this.ProtocolNextShotFrame, out result.ProtocolNextShotFrame);
+      converter.Convert(this.EmpUntilFrame, out result.EmpUntilFrame);
+      converter.Convert(this.FactoryLevel, out result.FactoryLevel);
+      converter.Convert(this.OverdriveUntilFrame, out result.OverdriveUntilFrame);
+      converter.Convert(this.OverdriveCooldownFrame, out result.OverdriveCooldownFrame);
       ConvertUser(converter, ref result);
       return result;
     }
@@ -175,6 +183,8 @@ namespace Quantum.Prototypes.Unity {
     public FP LaunchCooldown;
     public Int32 LastContactFrame;
     public Quantum.QuantumEntityPrototype Target;
+    public QBoolean Assembling;
+    public Quantum.QuantumEntityPrototype Site;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.CarrierPrototype prototype);
     public override Quantum.Prototypes.CarrierPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.CarrierPrototype();
@@ -183,6 +193,8 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.LaunchCooldown, out result.LaunchCooldown);
       converter.Convert(this.LastContactFrame, out result.LastContactFrame);
       converter.Convert(this.Target, out result.Target);
+      converter.Convert(this.Assembling, out result.Assembling);
+      converter.Convert(this.Site, out result.Site);
       ConvertUser(converter, ref result);
       return result;
     }

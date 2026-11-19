@@ -21,6 +21,8 @@ namespace Quantum {
     public FP AttackInterval;
     public bool IsRanged;
     public FP MoveSpeed;
+    /// <summary>충돌·분리·대형 간격 계산용 반경(m). 보병 0.65, 경차량 1.4, 중형 전차/MLRS 2.2, 대형 중전차 2.6.</summary>
+    public FP ColliderRadius;
     /// <summary>유닛 한 기가 차지하는 인구. 민병대는 2명이 인구 1이라 0.5.</summary>
     public FP Population;
     public int ModuleSlots;
@@ -85,5 +87,13 @@ namespace Quantum {
     /// <summary>공수 투하로 내려놓는 유닛 종류와 수.</summary>
     public AssetRef<UnitSpec> SortieCargo;
     public int SortieCargoCount;
+
+    // ---- 플레이어 조종 수송 탑승(APC · 수륙양용 상륙정 · 수송헬기) ----
+    /// <summary>수송 슬롯 용량(APC 6 보병, 상륙정 6 보병 또는 전차 2대, 수송헬기 4 보병). 0이면 수송 불가.</summary>
+    public int TransportCapacity;
+    /// <summary>true면 보병 외에 지상 차량/전차(3슬롯)도 탑승 가능(수륙양용 상륙정).</summary>
+    public bool TransportAllowsVehicles;
+    /// <summary>수송기 파괴 시 승객 탈출 체력 비율(지상 APC 0.40 = 40% 체력 생존 탈출, 공중·해상은 0 = 전원 손실).</summary>
+    public FP TransportEjectHealthRatio;
   }
 }

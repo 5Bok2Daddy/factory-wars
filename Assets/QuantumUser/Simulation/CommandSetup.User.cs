@@ -36,6 +36,10 @@ namespace Quantum
             factories.Add(new FactoryWars.TradeCommand());
             factories.Add(new FactoryWars.WorkBridgeCommand());
             factories.Add(new FactoryWars.SalvageCommand());
+            factories.Add(new FactoryWars.UpgradeFactoryCommand());
+            factories.Add(new FactoryWars.OverdriveFactoryCommand());
+            factories.Add(new FactoryWars.BoardTransportCommand());
+            factories.Add(new FactoryWars.UnloadTransportCommand());
         }
     }
 }

@@ -19,5 +19,7 @@ namespace Quantum {
     public FP EliteHealthMultiplier = 1;
     public FP EliteRangeBonus;
     public FP EliteDamageMultiplier = 1;
+    /// <summary>진영 특화 업그레이드 효과(Kind == ResearchKind.Special일 때 적용).</summary>
+    public FactionSpecial Special;
   }
 }

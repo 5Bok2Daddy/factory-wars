@@ -258,6 +258,25 @@ namespace Quantum {
     public FP NoteGroupCost;
     /// <summary>정전이 시작되면 전기가 이만큼 쌓여야 풀린다. 0 근처에서 켜고 꺼지기를 막는다.</summary>
     public FP PowerResumeLevel;
+    /// <summary>전력 부족(순발전량 음수) 시 모든 공장 생산 속도 배율(0.65 = -35% 감속, 패트리어트·사일로 정지).</summary>
+    public FP LowPowerProductionMultiplier = 1;
+    // ---- 심화 산업 공장 시스템(Lv.1~3 증축 · 인접 시너지 · 비상 과부하 · 군수/연료 보급창) ----
+    public ResourceCost FactoryLv2Cost;
+    public ResourceCost FactoryLv3Cost;
+    public FP FactoryLv2SpeedBonus;
+    public FP FactoryLv3SpeedBonus;
+    public FP FactorySynergyRadius;
+    public FP FactorySynergyBonus;
+    public FP OverdriveDurationSeconds;
+    public FP OverdriveCooldownSeconds;
+    public FP OverdriveSpeedBonus;
+    public FP OverdrivePowerMultiplier = 2;
+    public FP OverdriveHeatDamagePerSecond;
+    public FP DepotVehicleSpeedBonus;
+    public FP DepotArtilleryReloadBonus;
+    public FP DepotSortieCooldownReduction;
+    public FP DepotExplosionRadius;
+    public FP DepotExplosionDamage;
     /// <summary>정전 중 방어탑 공격 간격 배율.</summary>
     public FP OutageTowerIntervalMultiplier;
     /// <summary>고를 수 있는 플레이어 색 수.</summary>

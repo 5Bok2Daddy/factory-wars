@@ -251,6 +251,10 @@ component Unit {
     Int32 Kills;
     Int32 VetRank;
     Int32 LastDamagedFrame;
+    // 플레이어 조종 수송 탑승: 탑승 중인 수송 유닛, 탑승하러 접근 중인 수송 유닛, 후면 램프 열림 유지 프레임.
+    entity_ref Transport;
+    entity_ref BoardTarget;
+    Int32 RampOpenUntilFrame;
 }
 
 // 항목 34-C 채굴 교란 장치. 은신 저격수가 적 자원 노드 곁에 둔다. 노드 채집 속도가 줄고, 탐지된 쪽에게만 보인다. DetectedMask는 탐지한 진영 비트.
@@ -291,13 +295,26 @@ component NpcTrader {
     player_ref Killer;
 }
 
-// 항목 33 공중 항모. Docked는 격납 중인 드론 수, BuildProgress는 잃은 드론 재생산 진행(초), LastContactFrame은 반경 안에서 적을 마지막으로 본 프레임.
+// 항목 33 공중 항모. Docked는 격납 중인 드론 수, BuildProgress는 잃은 드론 재생산 진행(초), Assembling=true면 비행장 패드 지상 조립 중(지상 공격 가능).
 component Carrier {
     Int32 Docked;
     FP BuildProgress;
     FP LaunchCooldown;
     Int32 LastContactFrame;
     entity_ref Target;
+    QBoolean Assembling;
+    entity_ref Site;
+}
+
+// 전략 미사일 착탄 후 15초간 남는 초토화·방사능 구역(지속 피해 + 이동 속도 저하).
+component ScorchedZone {
+    player_ref Owner;
+    FPVector3 Position;
+    FP Radius;
+    FP DamagePerSecond;
+    FP SlowMultiplier;
+    Int32 StartFrame;
+    Int32 UntilFrame;
 }
 
 // 항모 드론. 항모가 사라지면 함께 추락한다. 플레이어 명령을 받지 않는다.
@@ -305,11 +322,15 @@ component Drone {
     entity_ref Carrier;
 }
 
-// 날아오는 전략 미사일. ImpactFrame에 Target을 때린다. 모든 플레이어가 본다.
+// 날아오는 전략 미사일. Origin에서 Target으로 포물선 비행하며 Health(300)를 가진다. 패트리어트 요격으로 체력이 0이 되면 공중 폭발한다.
 component MissileStrike {
     player_ref Owner;
     asset_ref<UltimateSpec> Spec;
+    FPVector3 Origin;
     FPVector3 Target;
+    FPVector3 CurrentPosition;
+    FP Health;
+    FP MaxHealth;
     Int32 LaunchFrame;
     Int32 ImpactFrame;
 }
@@ -383,6 +404,13 @@ component Building {
     // 항목 37: 사령부 비상 방어 프로토콜(피해 감소·자동 사격이 끝나는 프레임, 다음 사격 프레임).
     Int32 ProtocolUntilFrame;
     Int32 ProtocolNextShotFrame;
+    // 전략 미사일 EMP 충격파: 이 프레임까지 적 방어 포탑·생산 건물 작동 정지(5초).
+    Int32 EmpUntilFrame;
+    // 산업 공장 확장 레벨(0/1 = Lv.1, 2 = Lv.2 +25%, 3 = Lv.3 +50%).
+    Int32 FactoryLevel;
+    // 비상 과부하(Overdrive): 이 프레임까지 생산 속도 +50%, 전력 소비 2배, 초당 소량 과열 피해.
+    Int32 OverdriveUntilFrame;
+    Int32 OverdriveCooldownFrame;
 }
 
 // 항목 37: 기갑 잔해. 30초 동안 임시 엄폐점을 만들고 공병이 분해하면 고철(Scrap)을 준다.
@@ -547,8 +575,12 @@ synced event BaseTierChanged { player_ref Player; Int32 Tier; }
 synced event ResearchCompleted { player_ref Player; Int32 Index; }
 // 항목 32: 레이더 범위에 적이 들어옴.
 synced event RadarContact { player_ref Player; FPVector3 Position; }
-// 항목 33 궁극 전력 알림. 모든 플레이어가 받는다. Position은 전용 건물(준비)·목표(발사·착탄·상륙)·격추 자리, Value는 남은 초(Started·Half·Launched) 또는 요격 단계(Impact).
+// 항목 33 궁극 전력 알림. 모든 플레이어가 받는다. Position은 전용 건물(준비)·목표(발사·착탄·상륙)·격추 자리, Value는 남은 초(Started·Half·Launched) 또는 요격 단계(Impact, -1=공중 완전 요격).
 synced event UltimateNotice { player_ref Player; UltimateStage Stage; UltimateKind Kind; FPVector3 Position; Int32 Value; }
+synced event MissileBackblast { FPVector3 Position; FP Radius; }
+event MissileInterceptShot { FPVector3 From; FPVector3 To; QBoolean Killed; }
+synced event DepotExploded { FPVector3 Position; FP Radius; }
+synced event TransportRamp { entity_ref Transport; QBoolean Unload; }
 // 항목 27: 범위 피해가 난 자리(포격·폭격·폭발). 화면 손상 지도·크레이터용.
 synced event AreaImpact { FPVector3 Position; FP Radius; }
 // 항목 27: 유닛·건물이 부서진 자리. Size는 유닛이면 UnitSize 값, 건물이면 -1이고 Footprint가 반지름이다.

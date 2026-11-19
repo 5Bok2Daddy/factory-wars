@@ -56,8 +56,9 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(3, DoctrineOf(0), "바뀌지 않는다");
       var factory = OwnBuilding(0, "ff_vehicle_factory");
       var before = ExactFunds(0);
+      var eagleIron = Verified.FindAsset(UnitRef(0, "ff_eagle_tank")).Cost.Iron.AsFloat;
       yield return Send(0, new ProduceCommand { Building = factory, Unit = UnitRef(0, "ff_eagle_tank"), Count = 1 });
-      Assert.AreEqual(250f * 0.85f, before - ExactFunds(0), 1f, "전차 철 250 → 212.5");
+      Assert.AreEqual(eagleIron * 0.85f, before - ExactFunds(0), 1f, "전차 철 비용 -15% 할인");
     }
 
     /// <summary>그림자 특수전단: 저격수 보유 한도가 3 → 4. 도크린 없이는 3기에서 막힌다.</summary>

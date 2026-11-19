@@ -24,6 +24,13 @@ namespace FactoryWars.View {
       Units.Add(unit);
     }
 
+    public void SelectUnits(IEnumerable<EntityRef> units) {
+      Clear();
+      if (units != null) {
+        Units.AddRange(units);
+      }
+    }
+
     public void SelectBuilding(EntityRef building) {
       Clear();
       Building = building;

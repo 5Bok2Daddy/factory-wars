@@ -52,7 +52,7 @@ namespace Quantum {
   public unsafe partial class Frame {
     public unsafe partial struct FrameEvents {
       static partial void GetEventTypeCountCodeGen(ref Int32 eventCount) {
-        eventCount = 48;
+        eventCount = 51;
       }
       static partial void GetParentEventIDCodeGen(Int32 eventID, ref Int32 parentEventID) {
         switch (eventID) {
@@ -106,6 +106,9 @@ namespace Quantum {
           case EventResearchCompleted.ID: result = typeof(EventResearchCompleted); return;
           case EventRadarContact.ID: result = typeof(EventRadarContact); return;
           case EventUltimateNotice.ID: result = typeof(EventUltimateNotice); return;
+          case EventMissileBackblast.ID: result = typeof(EventMissileBackblast); return;
+          case EventMissileInterceptShot.ID: result = typeof(EventMissileInterceptShot); return;
+          case EventDepotExploded.ID: result = typeof(EventDepotExploded); return;
           case EventAreaImpact.ID: result = typeof(EventAreaImpact); return;
           case EventWrecked.ID: result = typeof(EventWrecked); return;
           default: break;
@@ -489,6 +492,30 @@ namespace Quantum {
         ev.Kind = Kind;
         ev.Position = Position;
         ev.Value = Value;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventMissileBackblast MissileBackblast(FPVector3 Position, FP Radius) {
+        if (_f.IsPredicted) return null;
+        var ev = _f.Context.AcquireEvent<EventMissileBackblast>(EventMissileBackblast.ID);
+        ev.Position = Position;
+        ev.Radius = Radius;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventMissileInterceptShot MissileInterceptShot(FPVector3 From, FPVector3 To, QBoolean Killed) {
+        var ev = _f.Context.AcquireEvent<EventMissileInterceptShot>(EventMissileInterceptShot.ID);
+        ev.From = From;
+        ev.To = To;
+        ev.Killed = Killed;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventDepotExploded DepotExploded(FPVector3 Position, FP Radius) {
+        if (_f.IsPredicted) return null;
+        var ev = _f.Context.AcquireEvent<EventDepotExploded>(EventDepotExploded.ID);
+        ev.Position = Position;
+        ev.Radius = Radius;
         _f.AddEvent(ev);
         return ev;
       }
@@ -1772,14 +1799,14 @@ namespace Quantum {
       }
     }
   }
-  public unsafe partial class EventAreaImpact : EventBase {
+  public unsafe partial class EventMissileBackblast : EventBase {
     public new const Int32 ID = 46;
     public FPVector3 Position;
     public FP Radius;
-    protected EventAreaImpact(Int32 id, EventFlags flags) : 
+    protected EventMissileBackblast(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventAreaImpact() : 
+    public EventMissileBackblast() : 
         base(46, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
     }
     public new QuantumGame Game {
@@ -1799,16 +1826,16 @@ namespace Quantum {
       }
     }
   }
-  public unsafe partial class EventWrecked : EventBase {
+  public unsafe partial class EventMissileInterceptShot : EventBase {
     public new const Int32 ID = 47;
-    public FPVector3 Position;
-    public Int32 Size;
-    public FP Footprint;
-    protected EventWrecked(Int32 id, EventFlags flags) : 
+    public FPVector3 From;
+    public FPVector3 To;
+    public QBoolean Killed;
+    protected EventMissileInterceptShot(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventWrecked() : 
-        base(47, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
+    public EventMissileInterceptShot() : 
+        base(47, EventFlags.Server|EventFlags.Client) {
     }
     public new QuantumGame Game {
       get {
@@ -1821,6 +1848,89 @@ namespace Quantum {
     public override Int32 GetHashCode() {
       unchecked {
         var hash = 277;
+        hash = hash * 31 + From.GetHashCode();
+        hash = hash * 31 + To.GetHashCode();
+        hash = hash * 31 + Killed.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventDepotExploded : EventBase {
+    public new const Int32 ID = 48;
+    public FPVector3 Position;
+    public FP Radius;
+    protected EventDepotExploded(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventDepotExploded() : 
+        base(48, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 281;
+        hash = hash * 31 + Position.GetHashCode();
+        hash = hash * 31 + Radius.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventAreaImpact : EventBase {
+    public new const Int32 ID = 49;
+    public FPVector3 Position;
+    public FP Radius;
+    protected EventAreaImpact(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventAreaImpact() : 
+        base(49, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 283;
+        hash = hash * 31 + Position.GetHashCode();
+        hash = hash * 31 + Radius.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventWrecked : EventBase {
+    public new const Int32 ID = 50;
+    public FPVector3 Position;
+    public Int32 Size;
+    public FP Footprint;
+    protected EventWrecked(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventWrecked() : 
+        base(50, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 293;
         hash = hash * 31 + Position.GetHashCode();
         hash = hash * 31 + Size.GetHashCode();
         hash = hash * 31 + Footprint.GetHashCode();

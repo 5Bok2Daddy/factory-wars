@@ -51,12 +51,12 @@ MonoBehaviour:
     RawValue: 163840000
   UltimateHoldSeconds:
     RawValue: 2949120
-  FinishCoreBuildings: 2
+  FinishCoreBuildings: 4
   FinishDistanceFactor:
     RawValue: 6553
   StalledWaveSize: 0
   StalledSeconds:
-    RawValue: 1310720
+    RawValue: 786432
   LastStand: 1
   BunkerSquads: 1
   SizeShares:
@@ -161,8 +161,8 @@ MonoBehaviour:
   SteelCap:
     RawValue: 98304000
   SiteGrid:
-    RawValue: 524288
-  SiteRings: 7
+    RawValue: 589824
+  SiteRings: 8
   StrategicDiplomacy: 0
   AcceptChance:
     RawValue: 19660

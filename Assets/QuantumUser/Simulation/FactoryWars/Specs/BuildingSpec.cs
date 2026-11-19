@@ -58,5 +58,11 @@ namespace Quantum {
     public int GarrisonCapacity;
       /// <summary>항목 34: 시야 반경(m).</summary>
     public FP SightRange;
+    /// <summary>true면 점령한 중립 거점 또는 암시장 반경(18m) 안에서만 건설할 수 있다(전략 미사일 격납고).</summary>
+    public bool RequiresNeutralOutpost;
+    /// <summary>패트리어트 대탄도 요격 포대: 비행 중 전략 미사일 요격 반경·1발 피해·발사 간격.</summary>
+    public FP InterceptRange;
+    public FP InterceptDamage;
+    public FP InterceptInterval;
 }
 }

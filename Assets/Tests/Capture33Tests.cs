@@ -55,6 +55,7 @@ namespace FactoryWars.Tests {
       yield return StartMatch(buildings: UltimateBase(0, "ff", "ff_carrier_yard"), units: enemies, stock: Stock(20000, 20000, 20000, 1000));
       ListenNotices();
       yield return WaitForHud();
+      yield return Send(0, new ChooseDoctrineCommand { Doctrine = 1 });
       yield return WaitForBattle();
       Controller().Camera.MoveTo(new Vector2(-18, 16));
       yield return ResearchUltimate(0, "ff");
@@ -65,9 +66,19 @@ namespace FactoryWars.Tests {
       yield return Shoot33("33_carrier_preparing");
       yield return WaitFor(() => CountComponent<Drone>(0) >= 4, 90f, "드론 발진");
       yield return WaitFrames(Fps);
+      var carrierEntity = FirstOf<Carrier>().Entity;
+      Controller().Input.Selection.SelectUnit(carrierEntity);
+      var cPos = Verified.Get<Transform3D>(carrierEntity).Position.ToUnityVector3();
+      Controller().Camera.MoveTo(new Vector2(cPos.x, cPos.z + 2f));
+      Controller().Camera.Height = 38f;
+      Controller().Camera.Apply();
+      yield return null;
       yield return Shoot33("33_carrier_drones");
+      var statusDir = Path.Combine(Application.dataPath, "..", "Docs", "status_images");
+      Directory.CreateDirectory(statusDir);
+      File.Copy(Path.Combine(UltimateFolder(), "33_carrier_drones.png"), Path.Combine(statusDir, "53_ultimate_flying_carrier.png"), true);
 
-      // 2. 전략 미사일: 착탄 경고(붉은 고리·카운트다운)와 착탄.
+      // 2. 전략 미사일: 착탄 좌표 (0, 21) 정중앙 고정 + 피크 화염구/충격파 링/영구 크레이터 + 전술 레드 경보 배너 캡처.
       TearDown();
       yield return null;
       ShortenUltimates(warning: 10);
@@ -76,16 +87,23 @@ namespace FactoryWars.Tests {
       yield return StartMatch(swapFactions: true, buildings: bases, units: targets, stock: Stock(20000, 20000, 20000, 1000));
       ListenNotices();
       yield return WaitForHud();
+      yield return Send(0, new ChooseDoctrineCommand { Doctrine = 1 });
       yield return WaitForBattle();
       yield return PrepareUltimate(0, "cf", UltimatePhase.Ready);
       Time.timeScale = 1f;
-      Controller().Camera.MoveTo(new Vector2(0, 20));
+      Controller().Camera.MoveTo(new Vector2(0f, 21f));
+      Controller().Camera.Height = 32f;
+      Controller().Camera.Apply();
       yield return Send(0, new LaunchUltimateCommand { Target = V(0, 21) });
       yield return WaitFor(() => FirstOf<MissileStrike>().Component.ImpactFrame - Verified.Number < 6 * Fps, 30f, "카운트다운");
       yield return Shoot33("33_missile_warning");
       yield return WaitFor(() => Noticed(0, UltimateStage.Impact), 60f, "착탄");
-      yield return WaitFrames(4);
+      Controller().Camera.MoveTo(new Vector2(0f, 21f));
+      Controller().Camera.Height = 32f;
+      Controller().Camera.Apply();
+      yield return WaitFrames(2);
       yield return Shoot33("33_missile_impact");
+      File.Copy(Path.Combine(UltimateFolder(), "33_missile_impact.png"), Path.Combine(statusDir, "54_ultimate_missile_silo_strike.png"), true);
 
       // 3. 상륙 강습: 상륙정이 해안에 부대를 내린다(4인 맵 수로).
       TearDown();

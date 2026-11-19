@@ -31,6 +31,16 @@ namespace FactoryWars.Tests {
       return TechSystem.OutgoingMultiplier(Verified, unit->Owner, unit, Verified.FindAsset(unit->Spec));
     }
 
+    static bool IsEntrenchedUnit(EntityRef entity) {
+      var unit = Verified.Unsafe.GetPointer<Unit>(entity);
+      return TechSystem.IsEntrenched(Verified, entity, unit, Verified.FindAsset(unit->Spec));
+    }
+
+    static FP SpecialIncomingOf(EntityRef entity) {
+      var unit = Verified.Unsafe.GetPointer<Unit>(entity);
+      return TechSystem.SpecialIncomingMultiplier(Verified, entity, unit, Verified.FindAsset(unit->Spec));
+    }
+
     static AssetRef<UnitSpec> UnitRef(int player, string name) => Verified.FindAsset(StateOf(player).Faction).Units.First(u => Verified.FindAsset(u).name == name);
 
     [UnityTest]
@@ -144,9 +154,9 @@ namespace FactoryWars.Tests {
       var rules = Resources.Load<GameRulesSpec>("FactoryWars/game_rules");
       foreach (var faction in Resources.LoadAll<FactionSpec>("FactoryWars")) {
         var units = faction.Units.Select(u => Resources.LoadAll<UnitSpec>("FactoryWars").First(s => s.Guid == u.Id)).Where(u => u.GarrisonFireOnly == false && u.SortieKind == SortieKind.None).ToArray();
-        // 항목 34: 주둔 저격수·작전기는 크기별 구성 수에 넣지 않는다. 진영마다 지상·공중 소형 3, 중형 3, 대형 2(해군 제외).
-        Assert.AreEqual(3, units.Count(u => u.Size == UnitSize.Small && u.IsNaval == false), $"{faction.name} 소형");
-        Assert.AreEqual(3, units.Count(u => u.Size == UnitSize.Medium && u.IsNaval == false), $"{faction.name} 중형");
+        // 항목 34 + 신규 공격 유닛 4종: 주둔 저격수·작전기는 크기별 구성 수에 넣지 않는다. 진영마다 지상·공중 소형 5, 중형 5, 대형 2(해군 제외).
+        Assert.AreEqual(5, units.Count(u => u.Size == UnitSize.Small && u.IsNaval == false), $"{faction.name} 소형");
+        Assert.AreEqual(5, units.Count(u => u.Size == UnitSize.Medium && u.IsNaval == false), $"{faction.name} 중형");
         Assert.AreEqual(2, units.Count(u => u.Size == UnitSize.Large && u.IsNaval == false), $"{faction.name} 대형");
         foreach (var unit in units.Where(u => u.Size != UnitSize.Engineer && u.IsNaval == false)) {
           Assert.IsTrue(TechSystem.FindSizeRule(rules, unit.Size, out var rule), unit.name);
@@ -161,8 +171,114 @@ namespace FactoryWars.Tests {
             Assert.Greater(building.Producible.Length, 0, $"{building.name} 생산 유닛 있음");
           }
         }
-        Assert.GreaterOrEqual(faction.Researches.Length, 13, $"{faction.name} 연구 12 + 정예화 1");
+        Assert.GreaterOrEqual(faction.Researches.Length, 15, $"{faction.name} 연구 12 + 정예화 1 + 궁극 1 + 특화 2");
       }
+    }
+
+    [UnityTest]
+    public IEnumerator Tech_MkUpgradesAndFactionSpecialsAndPassives() {
+      // 사령부(HQ)에서 직접 연구 시작(모바일 UX) + Mk.1->Mk.2->Mk.3 단계 진화 + 자유/대륙 고유 패시브 및 진영 특화 연구 검증.
+      yield return StartMatch(
+        units: new[] {
+          (0, "ff_ranger_squad", -24, 0),   // 자유 연방 사령부(-30,0) 반경 25m 안(전술 네트워크 활성)
+          (0, "ff_ranger_squad", -4, 34),   // 사령부·레이더 밖(전술 네트워크 비활성, 적 전차와 교전 거리 밖)
+          (0, "ff_hawk_gunship", -22, 6),
+          (1, "cf_dragonscale_tank", 32, 20),
+        },
+        buildings: new[] {
+          (0, "ff_research_lab", -42, -22),
+          (0, "ff_power_plant", -42, 22),
+          (1, "cf_research_lab", 42, -22),
+          (1, "cf_power_plant", 42, 22),
+        },
+        stock: Stock(12000, 12000, 12000, 600));
+
+      var rangers = UnitsNamed(0, "ff_ranger_squad");
+      var nearHq = rangers.OrderBy(e => (Verified.Get<Transform3D>(e).Position - V(-24, 0)).SqrMagnitude.AsFloat).First();
+      var farHq = rangers.OrderBy(e => (Verified.Get<Transform3D>(e).Position - V(-4, 34)).SqrMagnitude.AsFloat).First();
+      var rangerSpec = Verified.FindAsset(Verified.Get<Unit>(nearHq).Spec);
+      var hawk = UnitsNamed(0, "ff_hawk_gunship")[0];
+      var hawkSpec = Verified.FindAsset(Verified.Get<Unit>(hawk).Spec);
+      var cfTank = UnitsNamed(1, "cf_dragonscale_tank").OrderBy(e => (Verified.Get<Transform3D>(e).Position - V(32, 20)).SqrMagnitude.AsFloat).First();
+      var cfTankSpec = Verified.FindAsset(Verified.Get<Unit>(cfTank).Spec);
+
+      // 1) 초기 Mk.1 확인.
+      Assert.AreEqual(1, TechSystem.UnitMark(Verified, 0, rangerSpec), "초기 Mk.1");
+
+      // 2) 자유 연방 패시브(전술 네트워크): HQ 25m 안 연사 +10% · 이동 +8%, 밖은 기본값.
+      Assert.IsTrue(TechSystem.InTacticalNetwork(Verified, 0, Verified.Get<Transform3D>(nearHq).Position), "HQ 반경 내 전술 네트워크 활성");
+      Assert.IsFalse(TechSystem.InTacticalNetwork(Verified, 0, Verified.Get<Transform3D>(farHq).Position), "HQ·레이더 밖 비활성");
+      Assert.AreEqual(10f / 11f, TechSystem.AttackCooldownMultiplier(Verified, 0, rangerSpec, Verified.Get<Transform3D>(nearHq).Position).AsFloat, 0.01f, "전술 네트워크 연사 +10%");
+      Assert.AreEqual(1.08f, TechSystem.MoveSpeedMultiplier(Verified, 0, rangerSpec, Verified.Get<Transform3D>(nearHq).Position).AsFloat, 0.01f, "전술 네트워크 이동 +8%");
+
+      // 3) 대륙 연방 패시브(참호 교리): 정지(Hold) 명령 시 피격 피해 -15%.
+      yield return Send(1, new HoldUnitsCommand { Units = new[] { cfTank } });
+      Assert.IsTrue(IsEntrenchedUnit(cfTank), "대륙 연방 Hold 참호 교리 활성");
+      Assert.AreEqual(0.85f, SpecialIncomingOf(cfTank).AsFloat, 0.01f, "참호 교리 피격 -15%");
+
+      // 4) HQ에서 직접 소형 공격 Mk.2 -> Mk.3 연구 수행 + 진영 특화 연구(고속 볼트 / 스텔스 도료 / 반응장갑 ERA / 고폭 철갑탄).
+      var hq0 = Headquarters(0);
+      var lab0 = OwnBuilding(0, "ff_research_lab");
+      var hq1 = Headquarters(1);
+      var lab1 = OwnBuilding(1, "cf_research_lab");
+      var atk1 = ResearchIndex(0, "research_attack_small_1");
+      var atk2 = ResearchIndex(0, "research_attack_small_2");
+      var bolts = ResearchIndex(0, "research_ff_rapid_bolts");
+      var stealth = ResearchIndex(0, "research_ff_stealth_coating");
+      var era = ResearchIndex(1, "research_cf_era");
+      var heap = ResearchIndex(1, "research_cf_heap");
+
+      yield return Send(0, new ResearchCommand { Building = hq0, Index = atk1 });
+      yield return Send(0, new ResearchCommand { Building = lab0, Index = bolts });
+      yield return Send(1, new ResearchCommand { Building = hq1, Index = era });
+      yield return Send(1, new ResearchCommand { Building = lab1, Index = heap });
+      var cfHpBefore = Verified.Get<Unit>(cfTank).Health.AsFloat;
+
+      yield return WaitFor(() => TechSystem.IsResearched(Verified, 0, atk1) && TechSystem.IsResearched(Verified, 0, bolts)
+        && TechSystem.IsResearched(Verified, 1, era) && TechSystem.IsResearched(Verified, 1, heap), 60f, "1차 연구 4종 완료");
+
+      Assert.AreEqual(2, TechSystem.UnitMark(Verified, 0, rangerSpec), "공격 1단계 완료 -> Mk.2");
+      Assert.AreEqual(5f / 6f, TechSystem.AttackCooldownMultiplier(Verified, 0, rangerSpec, Verified.Get<Transform3D>(farHq).Position).AsFloat, 0.01f, "고속 볼트 보병 연사 +20%");
+      Assert.AreEqual(cfHpBefore * 1.25f, Verified.Get<Unit>(cfTank).Health.AsFloat, 1f, "반응장갑 ERA 중형 전차 HP +25%");
+      Assert.AreEqual(1.25f, TechSystem.SplashRadiusMultiplier(Verified, 1, cfTankSpec).AsFloat, 0.01f, "반응장갑 ERA 폭발 반경 +25%");
+      Assert.AreEqual(1.30f, TechSystem.StructureDamageMultiplier(Verified, 1).AsFloat, 0.01f, "고폭 철갑탄 건물 피해 +30%");
+
+      yield return Send(0, new ResearchCommand { Building = hq0, Index = atk2 });
+      yield return Send(0, new ResearchCommand { Building = lab0, Index = stealth });
+      yield return WaitFor(() => TechSystem.IsResearched(Verified, 0, atk2) && TechSystem.IsResearched(Verified, 0, stealth), 75f, "Mk.3 및 스텔스 도료 완료");
+
+      Assert.AreEqual(3, TechSystem.UnitMark(Verified, 0, rangerSpec), "공격 2단계 완료 -> Mk.3");
+      Assert.AreEqual(0.75f, TechSystem.SortieRearmMultiplier(Verified, 0).AsFloat, 0.01f, "스텔스 도료 재정비 -25%");
+      Assert.AreEqual(0.85f, SpecialIncomingOf(hawk).AsFloat, 0.01f, "스텔스 도료 공중 피격 -15%");
+    }
+
+    [UnityTest]
+    public IEnumerator Tech_ThirdFactionBattlefieldSalvageAndSpecials() {
+      yield return StartMatch(
+        factionNames: new[] { "faction_test_assault", null },
+        units: new[] { (0, "ff_eagle_tank", -6, 26), (0, "ff_eagle_tank", -3, 26), (1, "cf_militia", 14, 26) },
+        buildings: new[] { (0, "ff_research_lab", -42, -22), (0, "ff_power_plant", -42, 22) },
+        stock: Stock(5000, 5000, 5000, 400));
+
+      var ironBefore = StateOf(0).Stock.Iron.AsFloat;
+      var steelBefore = StateOf(0).Stock.Steel.AsFloat;
+      var killedBefore = StateOf(0).UnitsKilled;
+      var attackers = UnitsNamed(0, "ff_eagle_tank").ToArray();
+      yield return Send(0, new MoveUnitsCommand { Units = attackers, Target = V(14, 26), AttackMove = true });
+      yield return WaitFor(() => StateOf(0).UnitsKilled > killedBefore, 35f, "제3진영 적 유닛 격파");
+      var kills = StateOf(0).UnitsKilled - killedBefore;
+      Assert.GreaterOrEqual(StateOf(0).Stock.Iron.AsFloat, ironBefore + 15f * kills - 0.1f, "전장 노획 철 +15/킬");
+      Assert.GreaterOrEqual(StateOf(0).Stock.Steel.AsFloat, steelBefore + 5f * kills - 0.1f, "전장 노획 강철 +5/킬");
+
+      var rapid = ResearchIndex(0, "research_tf_rapid_deploy");
+      var smoke = ResearchIndex(0, "research_tf_tactical_smoke");
+      yield return Send(0, new ResearchCommand { Building = Headquarters(0), Index = rapid });
+      yield return Send(0, new ResearchCommand { Building = OwnBuilding(0, "ff_research_lab"), Index = smoke });
+      yield return WaitFor(() => TechSystem.IsResearched(Verified, 0, rapid) && TechSystem.IsResearched(Verified, 0, smoke), 60f, "제3진영 특화 연구 완료");
+      var tank = UnitsNamed(0, "ff_eagle_tank")[0];
+      var tankSpec = Verified.FindAsset(Verified.Get<Unit>(tank).Spec);
+      Assert.AreEqual(1.25f, TechSystem.MoveSpeedMultiplier(Verified, 0, tankSpec, Verified.Get<Transform3D>(tank).Position).AsFloat, 0.01f, "신속 전개 이동 +25%");
+      Assert.AreEqual(0.85f, SpecialIncomingOf(tank).AsFloat, 0.01f, "전술 연막 피격 -15%");
     }
   }
 }

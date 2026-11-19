@@ -166,7 +166,39 @@ namespace Quantum.FactoryWars {
         return;
       }
       var weapon = WeaponOf(sortie, spec, position);
+      var airWeapon = new Weapon {
+        Owner = sortie->Owner, Attack = AttackType.AntiAir, IsAir = true, IsRanged = true, Spec = spec, Origin = position, AntiCarrierBonus = true,
+      };
       var along = new FPVector2(direction.X, direction.Z);
+      var airWidth = spec.SortieWidth + (FP)6;
+      // 전투기 작전기 대공 요격: 호위 드론을 우선 격추하고 공중 항모 선체를 직접 기총소사한다.
+      var hitDrone = false;
+      var drones = f.Filter<Transform3D, Unit, Drone>();
+      while (drones.NextUnsafe(out var entity, out var transform, out var unit, out _)) {
+        if (unit->Health <= FP._0 || DiplomacySystem.CanAttack(f, sortie->Owner, unit->Owner) == false) {
+          continue;
+        }
+        var offset = new FPVector2(transform->Position.X - position.X, transform->Position.Z - position.Z);
+        var forward = FPMath.Abs(FPVector2.Dot(offset, along));
+        var lateral = FPMath.Abs(offset.X * along.Y - offset.Y * along.X);
+        if (forward <= airWidth && lateral <= airWidth) {
+          CombatSystem.Damage(f, airWeapon, entity, spec.Damage * FP._2);
+          hitDrone = true;
+        }
+      }
+      var carriers = f.Filter<Transform3D, Unit, Carrier>();
+      while (carriers.NextUnsafe(out var entity, out var transform, out var unit, out _)) {
+        if (unit->Health <= FP._0 || DiplomacySystem.CanAttack(f, sortie->Owner, unit->Owner) == false) {
+          continue;
+        }
+        var offset = new FPVector2(transform->Position.X - position.X, transform->Position.Z - position.Z);
+        var forward = FPMath.Abs(FPVector2.Dot(offset, along));
+        var lateral = FPMath.Abs(offset.X * along.Y - offset.Y * along.X);
+        if (forward <= airWidth && lateral <= airWidth) {
+          var hullMul = hitDrone ? FP._1 + FP._0_20 : FP._1 + FP._0_75;
+          CombatSystem.Damage(f, airWeapon, entity, spec.Damage * hullMul);
+        }
+      }
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
         if (unit->Garrison != EntityRef.None || unit->Health <= FP._0 || f.FindAsset(unit->Spec).IsAir || DiplomacySystem.CanAttack(f, sortie->Owner, unit->Owner) == false) {
@@ -249,6 +281,8 @@ namespace Quantum.FactoryWars {
           // 항목 37 공군 타격 사령부: 재정비 시간 단축.
           var rearm = TacticalSystem.DoctrineOf(f, sortie->Owner) == 1 ? spec.SortieRearmSeconds * FactoryWarsUtil.Rules(f).AirRearmMultiplier : spec.SortieRearmSeconds;
           rearm *= DepthSystem.RearmMultiplier(f, sortie->Owner);
+          rearm *= TechSystem.SortieRearmMultiplier(f, sortie->Owner);
+          rearm *= FactorySystem.SortieRearmMultiplier(f, sortie->Owner);
           hangar->ReadyFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, rearm);
         }
       }
@@ -300,8 +334,9 @@ namespace Quantum.FactoryWars {
           bestPriority = 4;
           break;
         }
+        var readySpec = f.FindAsset(building->Hangar.GetPointer(readySlot)->Spec);
         var units = f.Filter<Transform3D, Unit>();
-        while (units.NextUnsafe(out _, out var uTransform, out var u)) {
+        while (units.NextUnsafe(out var uEntity, out var uTransform, out var u)) {
           if (u->Health <= FP._0 || DiplomacySystem.CanAttack(f, building->Owner, u->Owner) == false) {
             continue;
           }
@@ -309,7 +344,8 @@ namespace Quantum.FactoryWars {
             continue;
           }
           var uSpec = f.FindAsset(u->Spec);
-          var priority = uSpec.Size >= UnitSize.Large || uSpec.Ability == SpecialAbility.LongRangeBarrage ? 2 : 1;
+          var priority = (readySpec.SortieKind == SortieKind.Strafe && f.Has<Carrier>(uEntity)) ? 5
+            : (uSpec.Size >= UnitSize.Large || uSpec.Ability == SpecialAbility.LongRangeBarrage) ? 2 : 1;
           if (priority > bestPriority) {
             bestPriority = priority;
             target = uTransform->Position;

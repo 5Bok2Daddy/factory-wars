@@ -115,8 +115,8 @@ namespace FactoryWars.EditorTools {
       yield return Sized(DressKind.QuayPillar, 1.8f, "SM_Bld_Base_Pillar_Half_01");
       yield return Sized(DressKind.QuayRail, 4.4f, "SM_Bld_Railing_01");
       yield return Sized(DressKind.QuayBollard, 1.1f, "SM_Env_Port_Boat_Tie_01");
-      yield return Sized(DressKind.OutpostTower, 3.2f, "SM_Prop_GuardTower_01");
-      yield return Sized(DressKind.OutpostWall, 3f, "SM_Prop_BaseWall_01", "SM_Prop_Cinderblock_Wall_01");
+      yield return Sized(DressKind.OutpostTower, 3.9f, "SM_Prop_GuardTower_01");
+      yield return Sized(DressKind.OutpostWall, 3.6f, "SM_Prop_BaseWall_01", "SM_Prop_Cinderblock_Wall_01");
       yield return Scaled(DressKind.LumberYard, 1f, "SM_Bld_Warehouse_01");
       yield return Sized(DressKind.Checkpoint, 3.2f, "SM_Prop_WireFence_01", "SM_Prop_BaseWall_01");
       // 중앙 암시장 주둔지: 철조망 2.5m 칸(0.825배), 차단기 4.9m, 단층 막사 0.8배, 감시탑 0.8배, 착륙장 5m.
@@ -144,14 +144,17 @@ namespace FactoryWars.EditorTools {
       yield return Scaled(DressKind.ForwardRadar, 0.8f, "SM_Prop_Mobile_Radar_01");
       yield return Scaled(DressKind.Rifle, 1f, "SM_Wep_Rifle_Assault_03");
       yield return Scaled(DressKind.SniperRifle, 1f, "SM_Wep_Sniper_Mil_01");
+      yield return Scaled(DressKind.RocketLauncher, 1f, "SM_Wep_RPG_01");
+      yield return Scaled(DressKind.BreacherWeapon, 1f, "SM_Wep_Grenade_Launcher_01");
+      yield return Scaled(DressKind.EngineerCarbine, 1f, "SM_Wep_SubMGun_01");
       // 길가: 가로등·소화전·쓰레기통·고깔.
       yield return Scaled(DressKind.RoadProp, 1f, "SM_Prop_LightPole_Base_01", "SM_Prop_LightPole_Base_01", "SM_Prop_Hydrant_01", "SM_Prop_TrashCan_01", "SM_Prop_Cone_01");
-      // 도시 건물(칸 크기에 맞춰 늘어난다: Fit). 세로는 칸 데이터의 목표 높이 쪽으로 0.8~1.3배.
-      yield return Scaled(DressKind.CitySmall, 1f, "SM_Bld_Shop_01", "SM_Bld_Shop_02", "SM_Bld_Shop_04", "SM_Bld_Shop_05", "SM_Bld_Shop_06", "SM_Bld_Apartment_01", "SM_Bld_Apartment_02", "SM_Bld_Apartment_03");
-      yield return Scaled(DressKind.CityMedium, 1f, "SM_Bld_Shop_03", "SM_Bld_Apartment_Stack_01", "SM_Bld_Apartment_Stack_02", "SM_Bld_Shop_Corner_01", "SM_Bld_Shop_Corner_02");
-      yield return Scaled(DressKind.CityIndustrial, 1f, "SM_Bld_GasStation_01", "SM_Bld_Shop_03", "SM_Bld_Apartment_Stack_03");
-      yield return Scaled(DressKind.CityTower, 1f, "SM_Bld_OfficeOld_Small_02", "SM_Bld_OfficeOld_Large_02");
-      yield return Scaled(DressKind.CityGarrison, 1f, "SM_Bld_Station_01", "SM_Bld_Station_02", "SM_Bld_Shop_Corner_01");
+      // 도시 건물(1.25x 스케일 밸런스: 0.8x 보병·1.0x 전차와 자연스러운 조화 + 도로 이격 준수).
+      yield return Scaled(DressKind.CitySmall, 1.25f, "SM_Bld_Shop_01", "SM_Bld_Shop_02", "SM_Bld_Shop_04", "SM_Bld_Shop_05", "SM_Bld_Shop_06", "SM_Bld_Apartment_01", "SM_Bld_Apartment_02", "SM_Bld_Apartment_03");
+      yield return Scaled(DressKind.CityMedium, 1.25f, "SM_Bld_Shop_03", "SM_Bld_Apartment_Stack_01", "SM_Bld_Apartment_Stack_02", "SM_Bld_Shop_Corner_01", "SM_Bld_Shop_Corner_02");
+      yield return Scaled(DressKind.CityIndustrial, 1.25f, "SM_Bld_GasStation_01", "SM_Bld_Shop_03", "SM_Bld_Apartment_Stack_03");
+      yield return Scaled(DressKind.CityTower, 1.25f, "SM_Bld_OfficeOld_Small_02", "SM_Bld_OfficeOld_Large_02");
+      yield return Scaled(DressKind.CityGarrison, 1.25f, "SM_Bld_Station_01", "SM_Bld_Station_02", "SM_Bld_Shop_Corner_01");
     }
 
     [MenuItem("Tools/Factory Wars/Assets/6. Assign Urban Dressing")]

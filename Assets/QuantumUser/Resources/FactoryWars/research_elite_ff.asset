@@ -43,3 +43,4 @@ MonoBehaviour:
     RawValue: 65536
   EliteDamageMultiplier:
     RawValue: 72089
+  Special: 0

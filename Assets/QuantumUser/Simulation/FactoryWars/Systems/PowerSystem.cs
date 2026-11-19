@@ -107,7 +107,12 @@ namespace Quantum.FactoryWars {
           SetPaused(f, entity, building, PauseReason.None);
           continue;
         }
-        var amount = spec.PowerUpkeep * f.DeltaTime;
+        var upkeep = spec.PowerUpkeep;
+        if (FactorySystem.IsOverdriving(f, building)) {
+          var mult = FactoryWarsUtil.Rules(f).OverdrivePowerMultiplier;
+          upkeep *= mult > FP._0 ? mult : FP._2;
+        }
+        var amount = upkeep * f.DeltaTime;
         if (state->Outage) {
           SetPaused(f, entity, building, PauseReason.Outage);
         } else if (state->Stock.Power < amount) {
@@ -115,7 +120,7 @@ namespace Quantum.FactoryWars {
           shortage |= 1 << (int)building->Owner;
         } else {
           state->Stock.Power -= amount;
-          state->PowerRate -= spec.PowerUpkeep;
+          state->PowerRate -= upkeep;
           SetPaused(f, entity, building, PauseReason.None);
         }
       }

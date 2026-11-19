@@ -246,11 +246,11 @@ MonoBehaviour:
     RawValue: 196608
   VetKillsRank1: 3
   VetKillsRank2: 6
-  VetKillsRank3: 10
+  VetKillsRank3: 9
   VetHealthBonus:
-  - RawValue: 6553
-  - RawValue: 13107
-  - RawValue: 19660
+  - RawValue: 5242
+  - RawValue: 10485
+  - RawValue: 15728
   VetDamageBonus:
   - RawValue: 5242
   - RawValue: 10485
@@ -434,6 +434,54 @@ MonoBehaviour:
     RawValue: 6553600
   PowerResumeLevel:
     RawValue: 327680
+  LowPowerProductionMultiplier:
+    RawValue: 42598
+  FactoryLv2Cost:
+    Iron:
+      RawValue: 13107200
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 6553600
+    Power:
+      RawValue: 0
+  FactoryLv3Cost:
+    Iron:
+      RawValue: 24903680
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 14417920
+    Power:
+      RawValue: 0
+  FactoryLv2SpeedBonus:
+    RawValue: 16384
+  FactoryLv3SpeedBonus:
+    RawValue: 32768
+  FactorySynergyRadius:
+    RawValue: 786432
+  FactorySynergyBonus:
+    RawValue: 9830
+  OverdriveDurationSeconds:
+    RawValue: 1310720
+  OverdriveCooldownSeconds:
+    RawValue: 2293760
+  OverdriveSpeedBonus:
+    RawValue: 32768
+  OverdrivePowerMultiplier:
+    RawValue: 131072
+  OverdriveHeatDamagePerSecond:
+    RawValue: 524288
+  DepotVehicleSpeedBonus:
+    RawValue: 6553
+  DepotArtilleryReloadBonus:
+    RawValue: 7864
+  DepotSortieCooldownReduction:
+    RawValue: 9830
+  DepotExplosionRadius:
+    RawValue: 655360
+  DepotExplosionDamage:
+    RawValue: 31457280
   OutageTowerIntervalMultiplier:
     RawValue: 131072
   PlayerColorCount: 8

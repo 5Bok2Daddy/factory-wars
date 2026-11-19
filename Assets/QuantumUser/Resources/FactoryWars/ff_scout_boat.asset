@@ -48,6 +48,8 @@ MonoBehaviour:
   IsRanged: 1
   MoveSpeed:
     RawValue: 524288
+  ColliderRadius:
+    RawValue: 131072
   Population:
     RawValue: 131072
   ModuleSlots: 1

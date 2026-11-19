@@ -214,51 +214,45 @@ namespace FactoryWars.View {
         return;
       }
       var n = 0;
-      Dressing.AllowOnRoad = true;
-      try {
-        foreach (var road in map.Roads) {
-          var c = new Vector3(road.Center.X.AsFloat, 0f, road.Center.Z.AsFloat);
-          var dir = Quaternion.Euler(0f, road.Yaw.AsFloat, 0f) * Vector3.right;
-          var half = road.HalfLength.AsFloat;
-          var a = c - dir * half;
-          var b = c + dir * half;
-          var inner = a.magnitude < b.magnitude ? a : b;
-          var outward = (inner == a ? dir : -dir);
-          if (inner.magnitude > 70f || half < 14f) {
-            continue;
-          }
-          Gate(inner + outward * (map.HasTrader ? Dressing.TraderClearRadius + 8f : 16f), outward, road.HalfWidth.AsFloat, 7700 + n++ * 13, profile);
+      foreach (var road in map.Roads) {
+        var c = new Vector3(road.Center.X.AsFloat, 0f, road.Center.Z.AsFloat);
+        var dir = Quaternion.Euler(0f, road.Yaw.AsFloat, 0f) * Vector3.right;
+        var half = road.HalfLength.AsFloat;
+        var a = c - dir * half;
+        var b = c + dir * half;
+        var inner = a.magnitude < b.magnitude ? a : b;
+        var outward = (inner == a ? dir : -dir);
+        if (inner.magnitude > 70f || half < 14f) {
+          continue;
         }
-        foreach (var bridge in map.Bridges ?? new MapShape[0]) {
-          var c = new Vector3(bridge.Center.X.AsFloat, 0f, bridge.Center.Z.AsFloat);
-          var alongX = bridge.HalfLength.AsFloat >= bridge.HalfWidth.AsFloat;
-          var dir = Quaternion.Euler(0f, bridge.Yaw.AsFloat + (alongX ? 0f : 90f), 0f) * Vector3.right;
-          var half = Mathf.Max(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
-          var width = Mathf.Min(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
-          Gate(c + dir * (half + 5f), dir, width, 7900 + n++ * 13, profile);
-          Gate(c - dir * (half + 5f), -dir, width, 7900 + n++ * 13, profile);
-        }
-      } finally {
-        Dressing.AllowOnRoad = false;
+        Gate(inner + outward * (map.HasTrader ? Dressing.TraderClearRadius + 8f : 16f), outward, road.HalfWidth.AsFloat, 7700 + n++ * 13, profile);
+      }
+      foreach (var bridge in map.Bridges ?? new MapShape[0]) {
+        var c = new Vector3(bridge.Center.X.AsFloat, 0f, bridge.Center.Z.AsFloat);
+        var alongX = bridge.HalfLength.AsFloat >= bridge.HalfWidth.AsFloat;
+        var dir = Quaternion.Euler(0f, bridge.Yaw.AsFloat + (alongX ? 0f : 90f), 0f) * Vector3.right;
+        var half = Mathf.Max(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
+        var width = Mathf.Min(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
+        Gate(c + dir * (half + 5f), dir, width, 7900 + n++ * 13, profile);
+        Gate(c - dir * (half + 5f), -dir, width, 7900 + n++ * 13, profile);
       }
     }
 
-    /// <summary>길과 직각인 한 줄: 양쪽 갓길에서 안쪽으로 방벽 2개씩, 가운데 약 3m 통로.</summary>
+    /// <summary>길 바깥 갓길 양옆에만 검문 방벽 배치(아스팔트 차선 침범 금지).</summary>
     static void Gate(Vector3 at, Vector3 along, float halfWidth, int seed, VisualProfile profile) {
       var across = new Vector3(-along.z, 0f, along.x);
       var yaw = Mathf.Atan2(across.x, across.z) * Mathf.Rad2Deg;
       foreach (var side in new[] { -1f, 1f }) {
-        for (var i = 0; i < 2; i++) {
-          var offset = side * (1.6f + 1.3f + i * 2.6f);
-          if (Mathf.Abs(offset) > halfWidth + 2.5f) {
-            continue;
-          }
-          Put(i == 0 ? DressKind.OutpostWall : DressKind.Checkpoint, at + across * offset, seed + i * 2 + (side > 0 ? 1 : 0), yaw, "checkpoint", profile);
+        var offset = side * (halfWidth + 3.6f);
+        var spot = at + across * offset;
+        if (Dressing.IsOnAnyRoad(spot, 2.6f)) {
+          continue;
         }
+        Put(DressKind.OutpostWall, spot, seed + (side > 0 ? 1 : 0), yaw, "checkpoint", profile);
       }
     }
 
-    /// <summary>길가 장식 소품. 길 옆 땅에 12m마다 확률로 놓고 비스듬히 돌려 엄폐 시설이 아닌 장식임이 보이게 한다.</summary>
+    /// <summary>길가 장식 소품. 길 바깥 충분한 여유 거리(4.8m)에만 배치해 도로 침범 차단.</summary>
     static void Street(MapSpec map, VisualProfile profile) {
       var idx = 0;
       foreach (var road in map.Roads ?? new MapShape[0]) {
@@ -271,8 +265,8 @@ namespace FactoryWars.View {
             continue;
           }
           var side = Hash(idx, 32) < 0.5f ? 1f : -1f;
-          var spot = center + turn * new Vector3(x + (Hash(idx, 33) - 0.5f) * 3f, 0f, side * (half.y + (profile.FieldLook ? Dressing.RoadClearance + 0.8f : CurbGap)));
-          if (Allowed(map, spot, road) == false) {
+          var spot = center + turn * new Vector3(x + (Hash(idx, 33) - 0.5f) * 3f, 0f, side * (half.y + 4.8f));
+          if (Allowed(map, spot, road) == false || Dressing.IsOnAnyRoad(spot, 3.8f)) {
             continue;
           }
           // 항목 36 시각 교정: 초소형 잔해를 빼고 실제 엄폐가 되는 컨테이너·방벽만 길 방향에 맞춰 놓는다.

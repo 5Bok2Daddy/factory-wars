@@ -81,7 +81,35 @@ MonoBehaviour:
     RawValue: 0
   AntiAirTakenMultiplier:
     RawValue: 65536
+  CarrierDamagedRatio:
+    RawValue: 0
+  CarrierDamagedMultiplier:
+    RawValue: 0
+  CarrierAuraRadius:
+    RawValue: 0
+  CarrierAuraAttackBonus:
+    RawValue: 0
+  CarrierAuraSpeedBonus:
+    RawValue: 0
   WarningSeconds:
+    RawValue: 0
+  MissileHealth:
+    RawValue: 0
+  LaunchBackblastRadius:
+    RawValue: 0
+  LaunchBackblastDamage:
+    RawValue: 0
+  SiloOutpostRadius:
+    RawValue: 0
+  ConstructionVulnerabilityMultiplier:
+    RawValue: 0
+  EmpDurationSeconds:
+    RawValue: 0
+  ScorchedDurationSeconds:
+    RawValue: 0
+  ScorchedDamagePerSecond:
+    RawValue: 0
+  ScorchedSlowMultiplier:
     RawValue: 0
   BlastRadius:
     RawValue: 0

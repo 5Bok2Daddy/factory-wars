@@ -60,7 +60,8 @@ namespace FactoryWars.View {
         }
         var radius = e.Radius.AsFloat;
         Add(e.Position.ToUnityVector3(), Mathf.Max(3.5f, radius * 2f), 0.3f);
-        Fx?.Crater(e.Position.ToUnityVector3(), Mathf.Clamp(radius, 0.8f, 3.5f));
+        // 중포격·전략 미사일(반경 3.5m 이상)은 경기 내내 영구 크레이터로 잔존.
+        Fx?.Crater(e.Position.ToUnityVector3(), Mathf.Clamp(radius, 0.8f, 5.2f), permanent: radius >= 3.5f);
       });
       QuantumEvent.Subscribe<EventWrecked>(this, e => {
         if (Take(e) == false) {

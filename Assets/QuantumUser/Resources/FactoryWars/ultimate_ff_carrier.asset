@@ -26,26 +26,26 @@ MonoBehaviour:
       Value: 460647318795114522
   Cost:
     Iron:
-      RawValue: 111411200
+      RawValue: 183500800
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 58982400
+      RawValue: 144179200
     Power:
-      RawValue: 39321600
+      RawValue: 45875200
   PrepareSeconds:
-    RawValue: 11796480
+    RawValue: 5242880
   RearmCost:
     Iron:
-      RawValue: 111411200
+      RawValue: 183500800
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 58982400
+      RawValue: 144179200
     Power:
-      RawValue: 39321600
+      RawValue: 45875200
   RearmSeconds:
-    RawValue: 11796480
+    RawValue: 5242880
   OwnedLimit: 1
   CooldownSeconds:
     RawValue: 7864320
@@ -59,7 +59,7 @@ MonoBehaviour:
   Drone:
     Id:
       Value: 487705595668243861
-  DroneCount: 8
+  DroneCount: 6
   DroneRadius:
     RawValue: 1048576
   DroneLaunchSeconds:
@@ -81,7 +81,35 @@ MonoBehaviour:
     RawValue: 131072
   AntiAirTakenMultiplier:
     RawValue: 98304
+  CarrierDamagedRatio:
+    RawValue: 32768
+  CarrierDamagedMultiplier:
+    RawValue: 45875
+  CarrierAuraRadius:
+    RawValue: 917504
+  CarrierAuraAttackBonus:
+    RawValue: 9830
+  CarrierAuraSpeedBonus:
+    RawValue: 6553
   WarningSeconds:
+    RawValue: 0
+  MissileHealth:
+    RawValue: 0
+  LaunchBackblastRadius:
+    RawValue: 0
+  LaunchBackblastDamage:
+    RawValue: 0
+  SiloOutpostRadius:
+    RawValue: 0
+  ConstructionVulnerabilityMultiplier:
+    RawValue: 85196
+  EmpDurationSeconds:
+    RawValue: 0
+  ScorchedDurationSeconds:
+    RawValue: 0
+  ScorchedDamagePerSecond:
+    RawValue: 0
+  ScorchedSlowMultiplier:
     RawValue: 0
   BlastRadius:
     RawValue: 0

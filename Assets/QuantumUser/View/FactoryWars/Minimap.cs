@@ -568,9 +568,20 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>궁극 전력 표시(모두에게 보인다): 준비 중·발동 대기인 전용 건물에 흰 고리, 미사일 착탄 지점에 폭발 반경만큼 붉은 고리.</summary>
+    /// <summary>궁극 전력 표시(모두에게 보인다): 건설 중 궁극 건물 붉은 비콘, 준비 중·발동 대기 전용 건물 고리, 미사일 착탄 폭발 반경.</summary>
     unsafe void DrawUltimates(Frame frame) {
       UltimateMarks = 0;
+      var pulse = Mathf.PingPong(Time.unscaledTime * 3.5f, 1f) > 0.5f;
+      // 건설 중인 전략 미사일 격납고·항모 조립창: 모든 플레이어에게 상시 붉은 경보 비콘 표시.
+      foreach (var pair in frame.GetComponentIterator<Building>()) {
+        if (pair.Component.ConstructionRemaining > FP._0 && frame.FindAsset(pair.Component.Spec).Role == BuildingRole.UltimateSite) {
+          var world = frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3();
+          Square(world, 6, StrikeColor, true);
+          Ring(world, pulse ? 8 : 6, StrikeColor);
+          Ring(world, pulse ? 10 : 7, StrikeColor);
+          UltimateMarks++;
+        }
+      }
       for (var i = 0; i < frame.PlayerCount; i++) {
         var state = frame.Global->Players.GetPointer(i);
         if (state->Active == false || (state->UltimatePhase != UltimatePhase.Preparing && state->UltimatePhase != UltimatePhase.Ready)
@@ -579,8 +590,9 @@ namespace FactoryWars.View {
         }
         var world = frame.Get<Transform3D>(state->UltimateSite).Position.ToUnityVector3();
         Square(world, 5, Palette.Of(frame, i), true);
-        Ring(world, 6, UltimateColor);
-        Ring(world, 7, UltimateColor);
+        var ringColor = state->UltimatePhase == UltimatePhase.Preparing ? StrikeColor : UltimateColor;
+        Ring(world, pulse ? 7 : 6, ringColor);
+        Ring(world, pulse ? 9 : 7, ringColor);
         UltimateMarks++;
       }
       foreach (var pair in frame.GetComponentIterator<MissileStrike>()) {
@@ -665,9 +677,9 @@ namespace FactoryWars.View {
     public int PingCount => _pings.Count;
 
     /// <summary>미니맵에 퍼지는 경보 고리를 잠시 띄운다(보급 낙하·공격받음·암시장 적대 등).</summary>
-    public void Ping(Vector3 world) => Ping(world, PingColor);
+    public void Ping(Vector3 world) => Ping(world, PingColor, PingSeconds);
 
-    public void Ping(Vector3 world, Color32 color) => _pings.Add((world, Time.unscaledTime + PingSeconds, color));
+    public void Ping(Vector3 world, Color32 color, float seconds = PingSeconds) => _pings.Add((world, Time.unscaledTime + seconds, color));
 
     void DrawPings() {
       _pings.RemoveAll(p => Time.unscaledTime >= p.Until);

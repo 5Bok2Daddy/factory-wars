@@ -66,6 +66,12 @@ namespace FactoryWars.View {
       }
       ArtLook.Apply(view.Model, color, powered);
 
+      if (entry.Unit && IsIndividualInfantry(id)) {
+        entry.RingRadius = 0.72f;
+        view.Entry = entry;
+        EnforceSingleSoldierVisual(view.Model.transform);
+      }
+
       view.Ring = Marker("Ring", view.transform, RingMesh(entry.RingRadius * extra));
       view.Ring.transform.localPosition = Vector3.up * RingLift;
       view.Ring.transform.localScale = new Vector3(entry.RingRadius * extra, 1, entry.RingRadius * extra);
@@ -79,34 +85,27 @@ namespace FactoryWars.View {
       view.Fill = Marker("Fill", view.Bar.transform, BarFillMesh()).transform;
       view.Bar.SetActive(false);
 
-      if (entry.Unit) {
-        ArrangeSquadTwoRows(view.Model.transform, entry.RingRadius * extra, Mathf.Max(0.01f, entry.DisplayScale * extra));
-      }
-
       view.ApplyQuality();
       return view;
     }
 
-    /// <summary>항목 36: 6인 분대를 선택 링 안쪽 2열(3×2) 대형으로 정돈한다.</summary>
-    static void ArrangeSquadTwoRows(Transform model, float ringRadius, float modelScale) {
-      var count = 0;
-      while (model.Find("Member" + count) != null) {
-        count++;
+    static bool IsIndividualInfantry(string id) {
+      return id == "ff_ranger_squad" || id == "ff_skyguard_squad" || id == "cf_militia" || id == "cf_flame_squad"
+        || id == "ff_sniper" || id == "cf_sniper" || id == "ff_engineer" || id == "cf_engineer"
+        || id.EndsWith("_at_rocket") || id.EndsWith("_breacher");
+    }
+
+    /// <summary>1 엔티티 = 1 개별 병사: 구형 3인 묶음 프리팹에서도 Member0만 중앙(0,0)에 남기고 나머지 분대원을 숨긴다.</summary>
+    static void EnforceSingleSoldierVisual(Transform model) {
+      var m0 = model.Find("Member0");
+      if (m0 != null) {
+        m0.localPosition = new Vector3(0f, m0.localPosition.y, 0f);
       }
-      if (count != 6) {
-        return;
-      }
-      var maxSpan = Mathf.Max(0.6f, ringRadius * 0.65f);
-      var colGap = (maxSpan * 0.85f) / modelScale;
-      var rowGap = (maxSpan * 0.62f) / modelScale;
-      for (var i = 0; i < count; i++) {
-        var member = model.Find("Member" + i);
-        if (member == null) {
-          continue;
+      for (var i = 1; i < 8; i++) {
+        var extra = model.Find("Member" + i);
+        if (extra != null) {
+          extra.gameObject.SetActive(false);
         }
-        var row = i / 3;
-        var col = i % 3;
-        member.localPosition = new Vector3((col - 1f) * colGap, member.localPosition.y, (0.5f - row) * rowGap);
       }
     }
 
@@ -121,8 +120,8 @@ namespace FactoryWars.View {
       return item;
     }
 
-    /// <summary>선택 고리 두께(m). 반지름과 무관하게 얇게(전차도 보병도 같은 두께).</summary>
-    public const float RingThickness = 0.06f;
+    /// <summary>선택 고리 두께(m). 개별 보병에 맞춰 얇고 선명한 0.05m 점선 링.</summary>
+    public const float RingThickness = 0.05f;
     static readonly System.Collections.Generic.Dictionary<int, Mesh> Rings = new System.Collections.Generic.Dictionary<int, Mesh>();
     static readonly System.Collections.Generic.Dictionary<int, Mesh> OwnerRings = new System.Collections.Generic.Dictionary<int, Mesh>();
 
@@ -337,8 +336,10 @@ namespace FactoryWars.View {
       if (Entry.Unit == false) {
         return;
       }
-      // 분대 교체 모델: 품질이 낮으면 분대원을 덜 그린다(스킨드 메시 수 예산, 항목 32).
-      if (Slot != null && Slot.MembersByQuality != null && Slot.MembersByQuality.Length > (int)GraphicsQuality.Current) {
+      // 개별 보병(1 엔티티 = 1 병사)은 항상 Member0 1명만 중앙에 표시한다.
+      if (IsIndividualInfantry(Entry.Id)) {
+        EnforceSingleSoldierVisual(Model.transform);
+      } else if (Slot != null && Slot.MembersByQuality != null && Slot.MembersByQuality.Length > (int)GraphicsQuality.Current) {
         var keep = Slot.MembersByQuality[(int)GraphicsQuality.Current];
         for (var i = 0; keep > 0; i++) {
           var member = Model.transform.Find("Member" + i);

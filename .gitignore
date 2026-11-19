@@ -21,10 +21,12 @@
 *.pidb
 *.userprefs
 
-# 빌드 산출물
+# 빌드 산출물 및 대용량 아카이브
 *.apk
 *.aab
 *.unitypackage
+*.zip
+temp-assets/
 crashlytics-build.properties
 
 # OS

@@ -832,11 +832,12 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Matchups_AppliedInBattle() {
-      // 레인저(대인 15)가 공병(소형 x1.5)과 대공차(중형 x0.6)를 각각 공격한다.
+      // 레인저(대인)가 대공차(중형 x0.6)를 공격한다.
       yield return StartMatch(units: new[] { (0, "ff_ranger_squad", 0, ArenaZ), (1, "cf_thunder_aa", 4, ArenaZ) });
       var target = UnitsNamed(1, "cf_thunder_aa")[0];
+      var dmg = Verified.FindAsset(Verified.Get<Unit>(UnitsNamed(0, "ff_ranger_squad").Last()).Spec).Damage.AsFloat * 0.6f;
       yield return WaitFor(() => Health(target) < 450f, 30f, "첫 피해");
-      Assert.AreEqual(441f, Health(target), Tolerance, "15 x 0.6");
+      Assert.AreEqual(450f - dmg, Health(target), Tolerance, "대인 x 0.6");
     }
 
     // 유닛 특수 기능
@@ -845,28 +846,33 @@ namespace FactoryWars.Tests {
     public IEnumerator Ability_TargetDesignator_BoostsNextRangedHit() {
       yield return StartMatch(units: new[] { (0, "ff_ranger_squad", 0, ArenaZ), (1, "cf_thunder_aa", 4, ArenaZ) });
       var target = UnitsNamed(1, "cf_thunder_aa")[0];
+      var dmg = Verified.FindAsset(Verified.Get<Unit>(UnitsNamed(0, "ff_ranger_squad").Last()).Spec).Damage.AsFloat * 0.6f;
       yield return WaitFor(() => Health(target) < 450f, 30f, "첫 피해");
-      Assert.AreEqual(441f, Health(target), Tolerance, "표적 지시 전");
-      yield return WaitFor(() => Health(target) < 441f, 30f, "두 번째 피해");
-      Assert.AreEqual(429.75f, Health(target), Tolerance, "9 x 1.25");
+      var afterFirst = 450f - dmg;
+      Assert.AreEqual(afterFirst, Health(target), Tolerance, "표적 지시 전");
+      yield return WaitFor(() => Health(target) < afterFirst - 0.01f, 30f, "두 번째 피해");
+      Assert.AreEqual(afterFirst - dmg * 1.25f, Health(target), Tolerance, "표적 지시 x 1.25");
     }
 
     [UnityTest]
     public IEnumerator Ability_FirstShotDouble() {
       yield return StartMatch(units: new[] { (0, "ff_eagle_tank", 0, ArenaZ), (1, "cf_thunder_aa", 5, ArenaZ) });
       var target = UnitsNamed(1, "cf_thunder_aa")[0];
+      var dmg = Verified.FindAsset(Verified.Get<Unit>(UnitsNamed(0, "ff_eagle_tank").Last()).Spec).Damage.AsFloat * 1.5f;
       yield return WaitFor(() => Health(target) < 450f, 30f, "첫 발");
-      Assert.AreEqual(270f, Health(target), Tolerance, "60 x 1.5 x 2");
-      yield return WaitFor(() => Health(target) < 270f, 30f, "둘째 발");
-      Assert.AreEqual(180f, Health(target), Tolerance, "60 x 1.5");
+      var afterFirst = 450f - dmg * 2f;
+      Assert.AreEqual(afterFirst, Health(target), Tolerance, "대장갑 x 1.5 x 2");
+      yield return WaitFor(() => Health(target) < afterFirst - 0.01f, 30f, "둘째 발");
+      Assert.AreEqual(afterFirst - dmg, Health(target), Tolerance, "대장갑 x 1.5");
     }
 
     [UnityTest]
     public IEnumerator Ability_GroundArmorResist_HitByGroundArmorAtHalf() {
       yield return StartMatch(units: new[] { (0, "ff_eagle_tank", 0, ArenaZ), (1, "ff_hawk_gunship", 5, ArenaZ) });
       var target = UnitsNamed(1, "ff_hawk_gunship")[0];
+      var dmg = Verified.FindAsset(Verified.Get<Unit>(UnitsNamed(0, "ff_eagle_tank").Last()).Spec).Damage.AsFloat;
       yield return WaitFor(() => Health(target) < 450f, 30f, "헬기 피격");
-      Assert.AreEqual(390f, Health(target), Tolerance, "60 x 공중 1 x 저공 0.5 x 첫 발 2");
+      Assert.AreEqual(450f - dmg, Health(target), Tolerance, "피해 x 공중 1 x 저공 0.5 x 첫 발 2");
     }
 
     [UnityTest]
@@ -890,8 +896,9 @@ namespace FactoryWars.Tests {
     public IEnumerator Ability_AirPriority_ShootsGroundWhenNoAir() {
       yield return StartMatch(units: new[] { (0, "ff_skyguard_squad", 0, ArenaZ), (1, "cf_thunder_aa", 3, ArenaZ) });
       var target = UnitsNamed(1, "cf_thunder_aa")[0];
+      var dmg = Verified.FindAsset(Verified.Get<Unit>(UnitsNamed(0, "ff_skyguard_squad").Last()).Spec).Damage.AsFloat * 0.25f;
       yield return WaitFor(() => Health(target) < 450f, 30f, "지상 공격");
-      Assert.AreEqual(445f, Health(target), Tolerance, "20 x 0.25");
+      Assert.AreEqual(450f - dmg, Health(target), Tolerance, "대공 x 0.25");
     }
 
     [UnityTest]
@@ -965,19 +972,22 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(60f, BuildingState(site).Health.AsFloat, Tolerance);
 
       Game.SendCommand(1, new AttackTargetCommand { Units = new[] { flame }, Target = site });
-      yield return WaitFor(() => BuildingState(site).Health < 50, 30f, "건물 피해");
-      Assert.AreEqual(30f, BuildingState(site).Health.AsFloat, Tolerance, "20 x 건물 0.5 x 화염 3");
+      var flameSpec = Verified.FindAsset(Verified.Get<Unit>(flame).Spec);
+      var shot = flameSpec.Damage.AsFloat * 0.5f * flameSpec.AbilityMultiplier.AsFloat;
+      yield return WaitFor(() => BuildingState(site).Health < 59, 30f, "건물 피해");
+      Assert.AreEqual(60f - shot, BuildingState(site).Health.AsFloat, Tolerance, "화염 피해 x 건물 0.5 x 화염 배율");
     }
 
     [UnityTest]
     public IEnumerator Ability_MinRange_CannotHitCloseTargets() {
       yield return StartMatch(units: new[] { (1, "cf_longwall_mlrs", 0, ArenaZ), (0, "ff_skyguard_squad", 4, ArenaZ) });
       var target = UnitsNamed(0, "ff_skyguard_squad")[0];
+      var maxHp = Verified.FindAsset(Verified.Get<Unit>(target).Spec).MaxHealth.AsFloat;
       yield return WaitFrames(8 * Fps);
-      Assert.AreEqual(120f, Health(target), Tolerance, "최소 사거리 안");
+      Assert.AreEqual(maxHp, Health(target), Tolerance, "최소 사거리 안");
 
       yield return Send(0, new MoveUnitsCommand { Units = new[] { target }, Target = V(12, ArenaZ) });
-      yield return WaitFor(() => Health(target) < 120f, 30f, "사거리 안으로 나오면 공격");
+      yield return WaitFor(() => Health(target) < maxHp, 30f, "사거리 안으로 나오면 공격");
     }
 
     [UnityTest]

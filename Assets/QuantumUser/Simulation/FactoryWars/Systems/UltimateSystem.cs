@@ -23,6 +23,100 @@ namespace Quantum.FactoryWars {
     /// <summary>궁극 전력에 속한 유닛(항모·드론·상륙정). 측정용 구분이다.</summary>
     public static bool IsUltimateUnit(Frame f, EntityRef entity) => f.Has<Carrier>(entity) || f.Has<Drone>(entity) || f.Has<LandingCraft>(entity);
 
+    /// <summary>전략 미사일 격납고 배치 제한: player가 점령한 중립 거점 또는 비적대 암시장 반경(radius) 안이면 true.</summary>
+    public static bool IsNearNeutralOutpost(Frame f, PlayerRef player, FPVector3 position, FP radius) {
+      var r = radius > FP._0 ? radius : (FP)18;
+      var rSqr = r * r;
+      var sites = f.Filter<Transform3D, CaptureSite>();
+      while (sites.NextUnsafe(out _, out var transform, out var site)) {
+        if (site->Owner == player && FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) <= rSqr) {
+          return true;
+        }
+      }
+      var traders = f.Filter<Transform3D, NpcTrader>();
+      var playerBit = player.IsValid ? (1 << (int)player) : 0;
+      while (traders.NextUnsafe(out _, out var transform, out var trader)) {
+        if (trader->Destroyed == false && (trader->HostileMask & playerBit) == 0
+            && FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) <= rSqr) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// <summary>공중 항모가 50% 미만 체력으로 로터 손상 상태인지 여부.</summary>
+    public static bool IsCarrierRotorDamaged(Frame f, EntityRef entity, Unit* unit) {
+      if (unit == null || unit->Health <= FP._0 || f.Unsafe.TryGetPointer<Carrier>(entity, out var c) == false || c->Assembling) {
+        return false;
+      }
+      var spec = SpecOf(f, unit->Owner);
+      var ratio = spec != null && spec.CarrierDamagedRatio > FP._0 ? spec.CarrierDamagedRatio : FP._0_50;
+      return unit->Health < TechSystem.MaxHealth(f, unit->Owner, unit->Spec) * ratio;
+    }
+
+    /// <summary>공중 항모 지휘 오라: 완공 비행 중인 아군 공중 항모 반경(14m) 이내인지 여부.</summary>
+    public static bool InCarrierAura(Frame f, PlayerRef owner, FPVector3 position) {
+      var carriers = f.Filter<Transform3D, Unit, Carrier>();
+      while (carriers.NextUnsafe(out _, out var transform, out var unit, out var carrier)) {
+        if (carrier->Assembling || unit->Health <= FP._0) {
+          continue;
+        }
+        if (unit->Owner != owner && DiplomacySystem.GetRelation(f, owner, unit->Owner) != Relation.Allied) {
+          continue;
+        }
+        var spec = SpecOf(f, unit->Owner);
+        var radius = spec != null && spec.CarrierAuraRadius > FP._0 ? spec.CarrierAuraRadius : (FP)14;
+        if (FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) <= radius * radius) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// <summary>초토화 구역(15초) 내부에 있는 적 지상 유닛 이동 속도 배율(0.65).</summary>
+    public static FP ScorchedSpeedMultiplier(Frame f, PlayerRef owner, FPVector3 position) {
+      var zones = f.Filter<ScorchedZone>();
+      while (zones.NextUnsafe(out _, out var zone)) {
+        if (f.Number >= zone->UntilFrame) {
+          continue;
+        }
+        if (zone->Owner != owner && DiplomacySystem.GetRelation(f, zone->Owner, owner) != Relation.Allied
+            && FactoryWarsUtil.FlatDistanceSqr(zone->Position, position) <= zone->Radius * zone->Radius) {
+          return zone->SlowMultiplier > FP._0 ? zone->SlowMultiplier : (FP)65 / (FP)100;
+        }
+      }
+      return FP._1;
+    }
+
+    static void DestroyAssemblingCarriers(Frame f, PlayerRef player) {
+      var carriers = f.Filter<Unit, Carrier>();
+      while (carriers.NextUnsafe(out var entity, out var unit, out var carrier)) {
+        if (unit->Owner == player && carrier->Assembling) {
+          unit->Health = FP._0;
+          f.Destroy(entity);
+        }
+      }
+    }
+
+    static EntityRef FindAssemblingCarrier(Frame f, PlayerRef player) {
+      var carriers = f.Filter<Unit, Carrier>();
+      while (carriers.NextUnsafe(out var entity, out var unit, out var carrier)) {
+        if (unit->Owner == player && carrier->Assembling && unit->Health > FP._0) {
+          return entity;
+        }
+      }
+      return EntityRef.None;
+    }
+
+    /// <summary>공중 항모 로터 손상 시 이동 속도·드론 출격 속도 배율(0.7 = -30%).</summary>
+    public static FP CarrierSpeedMultiplier(Frame f, EntityRef entity, Unit* unit) {
+      if (IsCarrierRotorDamaged(f, entity, unit) == false) {
+        return FP._1;
+      }
+      var spec = SpecOf(f, unit->Owner);
+      return spec != null && spec.CarrierDamagedMultiplier > FP._0 ? spec.CarrierDamagedMultiplier : (FP)70 / (FP)100;
+    }
+
     /// <summary>완공된 전용 건물. 없으면 None.</summary>
     public static EntityRef FindSite(Frame f, PlayerRef player, UltimateSpec spec) {
       var buildings = f.Filter<Building>();
@@ -58,7 +152,7 @@ namespace Quantum.FactoryWars {
       var locks = UltimateLock.None;
       if (state->UltimatePhase == UltimatePhase.Cooldown) {
         locks |= UltimateLock.Cooldown;
-      } else if (state->UltimatePhase != UltimatePhase.None) {
+      } else if (state->UltimatePhase != UltimatePhase.None || (spec.Kind == UltimateKind.Carrier && CountOwned<Carrier>(f, player) >= spec.OwnedLimit)) {
         locks |= UltimateLock.Busy;
       }
       if (TechSystem.Tier(f, player) < spec.RequiredTier) {
@@ -113,6 +207,19 @@ namespace Quantum.FactoryWars {
       if (state->UltimateStartFrame == 0) {
         state->UltimateStartFrame = f.Number;
       }
+      // 공중 항모 지상 조립 취약 상태: 80초 동안 패드 위 지상 표적으로 배치되어 지상군 공격을 받는다.
+      if (spec.Kind == UltimateKind.Carrier) {
+        var padPos = PositionOf(f, site);
+        var hull = ProductionSystem.SpawnUnitAt(f, player, spec.Carrier, padPos, null);
+        if (f.Unsafe.TryGetPointer<Transform3D>(hull, out var t)) {
+          t->Position = new FPVector3(padPos.X, FP._0, padPos.Z);
+        }
+        if (f.Unsafe.TryGetPointer<Unit>(hull, out var u)) {
+          u->Health = TechSystem.MaxHealth(f, player, spec.Carrier) * FP._0_25;
+          u->ReservedUntilFrame = int.MaxValue;
+        }
+        f.Add(hull, new Carrier { Docked = 0, Assembling = true, Site = site });
+      }
       Notice(f, player, UltimateStage.Started, spec, PositionOf(f, site), FPMath.CeilToInt(seconds));
       BotSystem.OnUltimateStarted(f, player, site);
       return true;
@@ -141,6 +248,7 @@ namespace Quantum.FactoryWars {
         return;
       }
       var position = PositionOf(f, state->UltimateSite);
+      DestroyAssemblingCarriers(f, player);
       Refund(state, spec.CancelRefundFraction);
       Clear(state);
       Notice(f, player, UltimateStage.Cancelled, spec, position, 0);
@@ -161,12 +269,41 @@ namespace Quantum.FactoryWars {
         return;
       }
       if (spec.Kind == UltimateKind.StrategicMissile) {
+        if (FactorySystem.IsCriticalLowPower(state)) {
+          f.Events.ActionRejected(player, ActionKind.Ultimate, RejectReason.InsufficientResources, 0);
+          return;
+        }
+        var origin = PositionOf(f, state->UltimateSite);
+        var missileHp = spec.MissileHealth > FP._0 ? spec.MissileHealth : (FP)300;
         var entity = f.Create();
-        f.Add(entity, Transform3D.Create(target));
+        var startPos = new FPVector3(origin.X, FP._2, origin.Z);
+        f.Add(entity, Transform3D.Create(startPos));
         f.Add(entity, new MissileStrike {
-          Owner = player, Spec = f.FindAsset(state->Faction).Ultimate, Target = target, LaunchFrame = f.Number,
+          Owner = player, Spec = f.FindAsset(state->Faction).Ultimate,
+          Origin = origin, Target = target, CurrentPosition = startPos,
+          Health = missileHp, MaxHealth = missileHp,
+          LaunchFrame = f.Number,
           ImpactFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, spec.WarningSeconds),
         });
+        // 발사 후폭풍(Backblast): 격납고 반경 6m 내 피아 구분 없이 모든 유닛에 화염·폭풍 피해.
+        var backblastRadius = spec.LaunchBackblastRadius > FP._0 ? spec.LaunchBackblastRadius : (FP)6;
+        var backblastDamage = spec.LaunchBackblastDamage > FP._0 ? spec.LaunchBackblastDamage : (FP)180;
+        if (backblastRadius > FP._0 && backblastDamage > FP._0) {
+          var blastR2 = backblastRadius * backblastRadius;
+          var blastWeapon = new Weapon {
+            Owner = player, Attack = AttackType.Area, IsRanged = true, Origin = origin, Area = true, IgnoreCover = true, Ultimate = true,
+          };
+          var units = f.Filter<Transform3D, Unit>();
+          while (units.NextUnsafe(out var uEntity, out var uTransform, out var uUnit)) {
+            if (uUnit->Health <= FP._0 || uUnit->Garrison != EntityRef.None || uUnit->Transport != EntityRef.None) {
+              continue;
+            }
+            if (FactoryWarsUtil.FlatDistanceSqr(uTransform->Position, origin) <= blastR2) {
+              CombatSystem.DamageUnit(f, blastWeapon, uEntity, uUnit, backblastDamage);
+            }
+          }
+          f.Events.MissileBackblast(origin, backblastRadius);
+        }
         Used(f, state);
         state->UltimatePhase = UltimatePhase.Cooldown;
         state->UltimateRemaining = spec.CooldownSeconds;
@@ -245,9 +382,41 @@ namespace Quantum.FactoryWars {
         UpdatePlayer(f, i);
       }
       UpdateStrikes(f);
+      UpdateScorchedZones(f);
       UpdateCarriers(f);
       UpdateOrphans(f);
       UpdateCraft(f);
+    }
+
+    static void UpdateScorchedZones(Frame f) {
+      var zones = f.Filter<ScorchedZone>();
+      while (zones.NextUnsafe(out var entity, out var zone)) {
+        if (f.Number >= zone->UntilFrame) {
+          f.Destroy(entity);
+          continue;
+        }
+        if (f.Number < zone->StartFrame) {
+          continue;
+        }
+        var rSqr = zone->Radius * zone->Radius;
+        var dot = zone->DamagePerSecond * f.DeltaTime;
+        if (dot <= FP._0) {
+          continue;
+        }
+        var weapon = new Weapon {
+          Owner = zone->Owner, Attack = AttackType.Area, IsRanged = true, Origin = zone->Position, Area = true, IgnoreCover = true, Ultimate = true,
+        };
+        var units = f.Filter<Transform3D, Unit>();
+        while (units.NextUnsafe(out var uEntity, out var uTransform, out var uUnit)) {
+          if (uUnit->Health <= FP._0 || uUnit->Garrison != EntityRef.None || uUnit->Transport != EntityRef.None || f.FindAsset(uUnit->Spec).IsAir) {
+            continue;
+          }
+          if (zone->Owner != uUnit->Owner && DiplomacySystem.GetRelation(f, zone->Owner, uUnit->Owner) != Relation.Allied
+              && FactoryWarsUtil.FlatDistanceSqr(uTransform->Position, zone->Position) <= rSqr) {
+            CombatSystem.DamageUnit(f, weapon, uEntity, uUnit, dot);
+          }
+        }
+      }
     }
 
     static void UpdatePlayer(Frame f, PlayerRef player) {
@@ -265,11 +434,28 @@ namespace Quantum.FactoryWars {
         case UltimatePhase.Ready:
           if (f.Unsafe.TryGetPointer<Building>(state->UltimateSite, out var site) == false || site->Owner != player) {
             // 전용 건물을 잃었다: 취소되고 일부만 돌려받는다.
+            DestroyAssemblingCarriers(f, player);
             Refund(state, spec.RefundFraction);
             Clear(state);
             state->UltimateSitesLost++;
             Notice(f, player, UltimateStage.Cancelled, spec, default, 1);
             return;
+          }
+          // 공중 항모 지상 조립 중 선체가 파괴되면 즉시 취소된다.
+          if (state->UltimatePhase == UltimatePhase.Preparing && spec.Kind == UltimateKind.Carrier) {
+            var hull = FindAssemblingCarrier(f, player);
+            if (hull == EntityRef.None) {
+              Refund(state, spec.RefundFraction);
+              Clear(state);
+              state->UltimateSitesLost++;
+              Notice(f, player, UltimateStage.Cancelled, spec, PositionOf(f, state->UltimateSite), 1);
+              return;
+            }
+            if (site->Paused == PauseReason.None && state->UltimateTotal > FP._0 && f.Unsafe.TryGetPointer<Unit>(hull, out var hullUnit)) {
+              var maxHp = TechSystem.MaxHealth(f, player, hullUnit->Spec);
+              var regen = maxHp * FP._0_75 / state->UltimateTotal * f.DeltaTime;
+              hullUnit->Health = FPMath.Min(maxHp, hullUnit->Health + regen);
+            }
           }
           // 정전이면 준비가 멈춘다.
           if (state->UltimatePhase == UltimatePhase.Ready || site->Paused != PauseReason.None) {
@@ -317,9 +503,23 @@ namespace Quantum.FactoryWars {
         state->UltimateReadyFrame = f.Number;
       }
       if (spec.Kind == UltimateKind.Carrier) {
-        // 항모는 조립이 끝나면 조립창 위에 바로 뜬다.
-        var carrier = ProductionSystem.SpawnUnitAt(f, player, spec.Carrier, position, null);
-        f.Add(carrier, new Carrier { Docked = spec.DroneCount });
+        // 지상 조립 선체가 완성되면 고도 AirAltitude로 이륙하며 완편 드론 윙(6기)을 탑재한다.
+        var carrier = FindAssemblingCarrier(f, player);
+        if (carrier == EntityRef.None) {
+          carrier = ProductionSystem.SpawnUnitAt(f, player, spec.Carrier, position, null);
+          f.Add(carrier, new Carrier { Docked = spec.DroneCount, Assembling = false, Site = state->UltimateSite });
+        } else {
+          var c = f.Unsafe.GetPointer<Carrier>(carrier);
+          c->Assembling = false;
+          c->Docked = spec.DroneCount;
+          if (f.Unsafe.TryGetPointer<Transform3D>(carrier, out var ct)) {
+            ct->Position = new FPVector3(ct->Position.X, FactoryWarsUtil.Rules(f).AirAltitude, ct->Position.Z);
+          }
+          if (f.Unsafe.TryGetPointer<Unit>(carrier, out var cu)) {
+            cu->Health = TechSystem.MaxHealth(f, player, cu->Spec);
+            cu->ReservedUntilFrame = 0;
+          }
+        }
         Used(f, state);
         state->UltimatePhase = UltimatePhase.Active;
         state->UltimatePaid = default;
@@ -351,7 +551,7 @@ namespace Quantum.FactoryWars {
           continue;
         }
         var role = f.FindAsset(building->Spec).Role;
-        airDefenses += role == BuildingRole.AirDefense ? 1 : 0;
+        airDefenses += (role == BuildingRole.AirDefense || role == BuildingRole.PatriotTurret) ? 1 : 0;
         radars += role == BuildingRole.Radar ? 1 : 0;
       }
       if (airDefenses == 0) {
@@ -379,16 +579,94 @@ namespace Quantum.FactoryWars {
     static void UpdateStrikes(Frame f) {
       var strikes = f.Filter<MissileStrike>();
       while (strikes.NextUnsafe(out var entity, out var strike)) {
+        var spec = f.FindAsset(strike->Spec);
         if (f.Number < strike->ImpactFrame) {
+          // 6~8초 결정론적 포물선 비행 궤적 업데이트.
+          var span = System.Math.Max(1, strike->ImpactFrame - strike->LaunchFrame);
+          var t = FPMath.Clamp01((FP)(f.Number - strike->LaunchFrame) / (FP)span);
+          var flat = FPVector3.Lerp(strike->Origin, strike->Target, t);
+          var arcY = (FP)2 + (FP)4 * t * (FP._1 - t) * (FP)36;
+          strike->CurrentPosition = new FPVector3(flat.X, arcY, flat.Z);
+          if (f.Unsafe.TryGetPointer<Transform3D>(entity, out var mTransform)) {
+            mTransform->Position = strike->CurrentPosition;
+          }
+          // 패트리어트 대탄도 요격 포대: 사거리 내 비행 중인 적 전략 미사일을 자동 요격.
+          var destroyedInFlight = false;
+          var buildings = f.Filter<Transform3D, Building>();
+          while (buildings.NextUnsafe(out _, out var bTransform, out var building)) {
+            if (building->ConstructionRemaining > FP._0 || building->Health <= FP._0 || building->Paused != PauseReason.None
+                || building->Owner == strike->Owner || DiplomacySystem.GetRelation(f, strike->Owner, building->Owner) == Relation.Allied) {
+              continue;
+            }
+            var bOwner = FactoryWarsUtil.Player(f, building->Owner);
+            if (bOwner == null || FactorySystem.IsCriticalLowPower(bOwner)) {
+              continue;
+            }
+            var bSpec = f.FindAsset(building->Spec);
+            if (bSpec.InterceptRange <= FP._0 || bSpec.InterceptDamage <= FP._0 || building->AttackCooldown > FP._0) {
+              continue;
+            }
+            if (FactoryWarsUtil.FlatDistanceSqr(bTransform->Position, strike->CurrentPosition) <= bSpec.InterceptRange * bSpec.InterceptRange) {
+              building->AttackCooldown = bSpec.InterceptInterval > FP._0 ? bSpec.InterceptInterval : FP._0_75;
+              strike->Health -= bSpec.InterceptDamage;
+              var killed = strike->Health <= FP._0;
+              f.Events.MissileInterceptShot(bTransform->Position + new FPVector3(FP._0, FP._3, FP._0), strike->CurrentPosition, killed);
+              if (killed) {
+                var shooter = FactoryWarsUtil.Player(f, strike->Owner);
+                if (shooter != null) {
+                  shooter->UltimateIntercepted++;
+                }
+                Notice(f, strike->Owner, UltimateStage.Impact, spec, strike->CurrentPosition, -1);
+                f.Destroy(entity);
+                destroyedInFlight = true;
+                break;
+              }
+            }
+          }
+          if (destroyedInFlight) {
+            continue;
+          }
           continue;
         }
-        var spec = f.FindAsset(strike->Spec);
-        var multiplier = InterceptMultiplier(spec, InterceptScore(f, strike->Owner, strike->Target, spec), out var step);
+        var hpRatio = strike->MaxHealth > FP._0 ? FPMath.Clamp01(strike->Health / strike->MaxHealth) : FP._1;
+        var scoreMul = InterceptMultiplier(spec, InterceptScore(f, strike->Owner, strike->Target, spec), out var step);
+        var multiplier = FPMath.Min(hpRatio, scoreMul);
+        if (hpRatio < FP._1 && step == 0) {
+          step = 1;
+        }
         var weapon = new Weapon {
           Owner = strike->Owner, Attack = AttackType.None, IsRanged = true, Origin = strike->Target, Area = true, IgnoreCover = true, Ultimate = true,
         };
         CombatSystem.Blast(f, weapon, strike->Target, spec.BlastRadius, spec.BlastDamage * multiplier, spec.BlastEdgeFraction,
           spec.BlastBuildingMultiplier, spec.BlastCityMultiplier, spec.FriendlyFire);
+        // EMP 충격파(5초): 생존한 적 방어 포탑·생산 건물을 일시 마비시킨다.
+        var empSec = spec.EmpDurationSeconds > FP._0 ? spec.EmpDurationSeconds : (FP)5;
+        var empUntil = f.Number + FactoryWarsUtil.SecondsToFrames(f, empSec);
+        var blastR2 = spec.BlastRadius * spec.BlastRadius;
+        var empBuildings = f.Filter<Transform3D, Building>();
+        while (empBuildings.NextUnsafe(out _, out var bt, out var b)) {
+          if (b->Health <= FP._0 || b->Owner == strike->Owner || DiplomacySystem.GetRelation(f, strike->Owner, b->Owner) == Relation.Allied) {
+            continue;
+          }
+          if (FactoryWarsUtil.FlatDistanceSqr(bt->Position, strike->Target) <= blastR2) {
+            var bs = f.FindAsset(b->Spec);
+            if (bs.Attack != AttackType.None || (bs.Producible != null && bs.Producible.Length > 0)) {
+              b->EmpUntilFrame = System.Math.Max(b->EmpUntilFrame, empUntil);
+            }
+          }
+        }
+        // 초토화·방사능 구역(15초): 적 지상 유닛 지속 화상 피해 및 이동 속도 저하.
+        var scorchSec = spec.ScorchedDurationSeconds > FP._0 ? spec.ScorchedDurationSeconds : (FP)15;
+        var scorchDps = spec.ScorchedDamagePerSecond > FP._0 ? spec.ScorchedDamagePerSecond : (FP)28;
+        var scorchSlow = spec.ScorchedSlowMultiplier > FP._0 ? spec.ScorchedSlowMultiplier : (FP)65 / (FP)100;
+        var zoneEntity = f.Create();
+        f.Add(zoneEntity, Transform3D.Create(strike->Target));
+        f.Add(zoneEntity, new ScorchedZone {
+          Owner = strike->Owner, Position = strike->Target, Radius = spec.BlastRadius,
+          DamagePerSecond = scorchDps, SlowMultiplier = scorchSlow,
+          StartFrame = f.Number + 1,
+          UntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, scorchSec),
+        });
         var owner = FactoryWarsUtil.Player(f, strike->Owner);
         if (owner != null && step > 0) {
           owner->UltimateIntercepted++;
@@ -405,7 +683,7 @@ namespace Quantum.FactoryWars {
       while (carriers.NextUnsafe(out var entity, out var transform, out var unit, out var carrier)) {
         var spec = SpecOf(f, unit->Owner);
         var state = FactoryWarsUtil.Player(f, unit->Owner);
-        if (spec == null || state == null || unit->Health <= FP._0) {
+        if (spec == null || state == null || unit->Health <= FP._0 || carrier->Assembling) {
           continue;
         }
         var droneSpec = f.FindAsset(spec.Drone);
@@ -439,7 +717,8 @@ namespace Quantum.FactoryWars {
         }
         var engaged = carrier->LastContactFrame > 0 && f.Number - carrier->LastContactFrame <= FactoryWarsUtil.SecondsToFrames(f, spec.DroneRecoverSeconds);
 
-        carrier->LaunchCooldown = FPMath.Max(FP._0, carrier->LaunchCooldown - f.DeltaTime);
+        var rateFactor = CarrierSpeedMultiplier(f, entity, unit);
+        carrier->LaunchCooldown = FPMath.Max(FP._0, carrier->LaunchCooldown - f.DeltaTime * rateFactor);
         if (carrier->Target != EntityRef.None && carrier->Docked > 0 && carrier->LaunchCooldown <= FP._0) {
           var angle = FP.PiTimes2 * (flying % 8) / 8;
           var drone = ProductionSystem.SpawnUnitAt(f, unit->Owner, spec.Drone, position + new FPVector3(FPMath.Cos(angle), FP._0, FPMath.Sin(angle)), null);
@@ -491,8 +770,11 @@ namespace Quantum.FactoryWars {
 
     /// <summary>CombatSystem이 항모가 부서질 때 부른다(알림·측정).</summary>
     public static void OnUnitKilled(Frame f, EntityRef entity, Unit* unit) {
-      var isCarrier = f.Has<Carrier>(entity);
-      if (isCarrier == false && f.Unsafe.TryGetPointer<LandingCraft>(entity, out var craft) == false) {
+      var isCarrier = f.Unsafe.TryGetPointer<Carrier>(entity, out var carrier);
+      if (isCarrier && carrier->Assembling) {
+        return;
+      }
+      if (isCarrier == false && f.Unsafe.TryGetPointer<LandingCraft>(entity, out _) == false) {
         return;
       }
       var state = FactoryWarsUtil.Player(f, unit->Owner);

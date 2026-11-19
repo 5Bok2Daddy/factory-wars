@@ -14,12 +14,12 @@ namespace FactoryWars.EditorTools {
     const int KindMedium = 1;
     const int KindLarge = 2;
     const int KindTall = 3;
-    const float AlleyWidth = 2.5f;
-    const float RoadClearance = 1.5f;
+    const float AlleyWidth = 3.4f;
+    const float RoadClearance = 3.8f;
     const float CityStep = 2f;
     const float FallGap = 1f;
 
-    static readonly Vector2[] KindHalf = { new Vector2(3.5f, 3.5f), new Vector2(5, 4.5f), new Vector2(7, 6), new Vector2(3.5f, 3.5f) };
+    static readonly Vector2[] KindHalf = { new Vector2(4.3f, 4.3f), new Vector2(6.0f, 5.4f), new Vector2(8.2f, 7.2f), new Vector2(4.3f, 4.3f) };
 
     class CityPlan {
       public int BuildingsPerSeat;

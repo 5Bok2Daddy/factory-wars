@@ -64,7 +64,7 @@ namespace FactoryWars.View {
     public RectTransform Root { get; private set; }
     public string MenuName => _menu.ToString() + (_menu == Menu.Build ? _menuTier.ToString() : _menu == Menu.Research ? _menuSize.ToString() : "");
 
-    enum Menu { Root, Build, Research, Hangar }
+    enum Menu { Root, Build, Research, Hangar, HqResearch }
 
     static readonly (string Icon, float Width)[] ResourceSlots = {
       ("res_iron", 150), ("res_wood", 150), ("res_steel", 150), ("res_power", 280), ("res_population", 150),
@@ -119,6 +119,11 @@ namespace FactoryWars.View {
     /// <summary>궁극 전력 막대 칠의 최대 불투명도(글자가 비치도록).</summary>
     public const float UltimateFillAlpha = 0.6f;
     readonly List<(RectTransform Root, RectTransform Fill, Image FillImage, Text Label)> _ultimateBars = new List<(RectTransform, RectTransform, Image, Text)>();
+    Button _ultimateQuickButton;
+    Image _ultimateQuickFrame;
+    RectTransform _ultimateQuickFill;
+    Image _ultimateQuickFillImage;
+    Text _ultimateQuickText;
     public int UltimateBars => _ultimateBars.Count(b => b.Root.gameObject.activeSelf);
     public string UltimateBarText(int index) => _ultimateBars.Where(b => b.Root.gameObject.activeSelf).Select(b => b.Label.text).ElementAtOrDefault(index) ?? "";
     public int MinimapUltimateMarks => _minimap.UltimateMarks;
@@ -325,6 +330,25 @@ namespace FactoryWars.View {
     void BuildUltimateBars(UiTheme theme) {
       _ultimateBars.Clear();
       var width = 2 * Cell + Gap;
+      // 우측 전용 궁극기 터치 슬롯(골드/레드 발광 프레임 + 건조 진행/재충전 게이지 + 원탭 목표 지정).
+      _ultimateQuickButton = IconButton("UltimateQuickSlot", Root, "ui_attack", "궁극 전력", PressUltimateQuickSlot);
+      var qRect = (RectTransform)_ultimateQuickButton.transform;
+      Ui.Place(qRect, Vector2.one, new Vector2(-12 - 2 * (Cell + Gap), -8), new Vector2(Cell, Cell));
+      _ultimateQuickFrame = qRect.GetComponent<Image>();
+      _ultimateQuickFill = Ui.Rect("QuickFill", qRect);
+      _ultimateQuickFill.anchorMin = Vector2.zero;
+      _ultimateQuickFill.anchorMax = new Vector2(1f, 0f);
+      _ultimateQuickFill.offsetMin = Vector2.zero;
+      _ultimateQuickFill.offsetMax = Vector2.zero;
+      _ultimateQuickFillImage = _ultimateQuickFill.gameObject.AddComponent<Image>();
+      _ultimateQuickFillImage.color = new Color(0.95f, 0.76f, 0.22f, 0.32f);
+      _ultimateQuickFillImage.raycastTarget = false;
+      _ultimateQuickText = qRect.GetComponentsInChildren<Text>(true).LastOrDefault();
+      if (_ultimateQuickText != null) {
+        _ultimateQuickText.fontStyle = FontStyle.Bold;
+        _ultimateQuickText.rectTransform.SetAsLastSibling();
+      }
+
       for (var i = 0; i < MaxUltimateBars; i++) {
         var bar = Ui.Capsule($"UltimateBar{i}", Root, theme.Panel);
         Ui.Place(bar, Vector2.one, new Vector2(-12, -8 - Cell - Gap - i * 52), new Vector2(width, 46));
@@ -397,6 +421,124 @@ namespace FactoryWars.View {
       for (var i = used; i < _ultimateBars.Count; i++) {
         _ultimateBars[i].Root.gameObject.SetActive(false);
       }
+      RefreshUltimateQuickSlot(frame);
+    }
+
+    void RefreshUltimateQuickSlot(Frame frame) {
+      if (_ultimateQuickButton == null) {
+        return;
+      }
+      var state = frame.Global->Players.GetPointer(Controller.Player);
+      var spec = UltimateSystem.SpecOf(frame, Controller.Player);
+      if (spec == null) {
+        _ultimateQuickButton.gameObject.SetActive(false);
+        return;
+      }
+      _ultimateQuickButton.gameObject.SetActive(true);
+      var shortName = spec.Kind == UltimateKind.StrategicMissile ? "전략 미사일" : "공중항모";
+      var fill = 0f;
+      var frameCol = new Color(0.35f, 0.38f, 0.44f, 0.92f);
+      var fillCol = new Color(0.95f, 0.76f, 0.22f, 0.45f);
+      var label = shortName;
+      switch (state->UltimatePhase) {
+        case UltimatePhase.Preparing:
+          var pTotal = Mathf.Max(1f, state->UltimateTotal.AsFloat);
+          fill = Mathf.Clamp01(1f - state->UltimateRemaining.AsFloat / pTotal);
+          frameCol = new Color(0.95f, 0.75f, 0.2f, 0.95f);
+          label = $"{shortName}\n{Mathf.CeilToInt(state->UltimateRemaining.AsFloat)}초";
+          break;
+        case UltimatePhase.Ready:
+          fill = 1f;
+          var aiming = Controller.Input != null && Controller.Input.Mode == MatchInput.TapMode.Ultimate;
+          frameCol = aiming ? new Color(0.96f, 0.22f, 0.22f, 1f) : new Color(0.98f, 0.78f, 0.18f, 1f);
+          fillCol = new Color(0.95f, 0.25f, 0.2f, 0.5f);
+          label = aiming ? "목표 터치" : "발사 준비!";
+          break;
+        case UltimatePhase.Active:
+          fill = 1f;
+          frameCol = new Color(0.95f, 0.78f, 0.22f, 0.96f);
+          label = "보유 중\n(1/1)";
+          break;
+        case UltimatePhase.Cooldown:
+          var cTotal = Mathf.Max(1f, state->UltimateTotal.AsFloat);
+          fill = Mathf.Clamp01(1f - state->UltimateRemaining.AsFloat / cTotal);
+          frameCol = new Color(0.72f, 0.24f, 0.24f, 0.92f);
+          fillCol = new Color(0.92f, 0.32f, 0.22f, 0.42f);
+          label = $"재충전\n{Mathf.CeilToInt(state->UltimateRemaining.AsFloat)}초";
+          break;
+        default:
+          var locks = UltimateSystem.Locks(frame, Controller.Player);
+          if (locks == UltimateLock.None) {
+            fill = 1f;
+            frameCol = new Color(0.92f, 0.74f, 0.22f, 0.95f);
+            label = $"{shortName}\n건조 가능";
+          } else {
+            var sites = ProductionSystem.CountRole(frame, Controller.Player, BuildingRole.UltimateSite);
+            label = sites >= 1 ? $"{shortName}\n보유(1/1)" : $"{shortName}\n3단계";
+          }
+          break;
+      }
+      _ultimateQuickFrame.color = frameCol;
+      _ultimateQuickFill.anchorMax = new Vector2(1f, fill);
+      _ultimateQuickFillImage.color = fillCol;
+      if (_ultimateQuickText != null) {
+        _ultimateQuickText.text = label;
+        _ultimateQuickText.fontStyle = FontStyle.Bold;
+        _ultimateQuickText.rectTransform.SetAsLastSibling();
+        // 골드 배경에는 짙은 차콜(#1A1A1A) 굵은 글씨, 어두운 레드/회색 배경에는 순백 + 검은 외곽선으로 모바일 시인성 극대화.
+        var brightBg = (frameCol.r * 0.299f + frameCol.g * 0.587f + frameCol.b * 0.114f) > 0.55f;
+        _ultimateQuickText.color = brightBg ? new Color(0.10f, 0.10f, 0.10f, 1f) : Color.white;
+        var outl = _ultimateQuickText.GetComponent<Outline>() ?? _ultimateQuickText.gameObject.AddComponent<Outline>();
+        outl.enabled = brightBg == false;
+        outl.effectColor = new Color(0f, 0f, 0f, 0.92f);
+        outl.effectDistance = new Vector2(1.4f, -1.4f);
+      }
+    }
+
+    void PressUltimateQuickSlot() {
+      var frame = Controller.Frame;
+      if (frame == null) {
+        return;
+      }
+      var state = frame.Global->Players.GetPointer(Controller.Player);
+      var spec = UltimateSystem.SpecOf(frame, Controller.Player);
+      if (spec == null) {
+        return;
+      }
+      if (state->UltimatePhase == UltimatePhase.Ready) {
+        var aiming = Controller.Input.Mode == MatchInput.TapMode.Ultimate;
+        Controller.Input.Mode = aiming ? MatchInput.TapMode.None : MatchInput.TapMode.Ultimate;
+        ShowAlert(aiming ? "전략 미사일 목표 지정 취소" : "전장이나 미니맵을 터치해 전략 미사일을 발사하세요!");
+        return;
+      }
+      if (state->UltimatePhase == UltimatePhase.Active) {
+        foreach (var pair in frame.GetComponentIterator<Carrier>()) {
+          if (frame.Get<Unit>(pair.Entity).Owner == Controller.Player) {
+            Controller.Input.Selection.SelectUnit(pair.Entity);
+            Controller.Camera.MoveTo(frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector2());
+            return;
+          }
+        }
+      }
+      var site = UltimateSystem.FindSite(frame, Controller.Player, spec);
+      if (site != EntityRef.None) {
+        Controller.Input.Selection.SelectBuilding(site);
+        if (state->UltimatePhase == UltimatePhase.None && UltimateSystem.Locks(frame, Controller.Player) == UltimateLock.None) {
+          Controller.Send(new StartUltimateCommand());
+        }
+      } else {
+        Controller.Input.Selection.SelectBuilding(Headquarters(frame, Controller.Player));
+      }
+    }
+
+    static EntityRef Headquarters(Frame frame, PlayerRef player) {
+      var buildings = frame.Filter<Building>();
+      while (buildings.NextUnsafe(out var entity, out var b)) {
+        if (b->Owner == player && frame.FindAsset(b->Spec).Role == BuildingRole.Headquarters) {
+          return entity;
+        }
+      }
+      return EntityRef.None;
     }
 
     /// <summary>궁극 전력 알림은 모든 플레이어에게 보인다(누가·무엇을·남은 시간). 알림을 누르면 그 자리로 간다.</summary>
@@ -404,10 +546,23 @@ namespace FactoryWars.View {
       var frame = e.Game.Frames.Verified;
       var mine = e.Player == Controller.Player;
       ShowAlert(Texts.UltimateNotice(Who(frame, e.Player), e.Stage, e.Kind, e.Value));
-      if (e.Stage != UltimateStage.Cancelled || e.Position != default) {
-        PingAlert(e.Position.ToUnityVector3());
+      if (_alertBubble != null && (e.Stage == UltimateStage.Started || e.Stage == UltimateStage.Launched || e.Stage == UltimateStage.Ready || e.Stage == UltimateStage.Impact || e.Stage == UltimateStage.Lost)) {
+        // 전술 레드(#B91C1C) 배경 + 굵은 순백 텍스트 + 검은 외곽선.
+        _alertBubble.GetComponent<Image>().color = new Color(0.725f, 0.110f, 0.110f, 0.96f);
+        _alert.color = Color.white;
+        _alert.fontStyle = FontStyle.Bold;
+        var outl = _alert.GetComponent<Outline>() ?? _alert.gameObject.AddComponent<Outline>();
+        outl.enabled = true;
+        outl.effectColor = new Color(0f, 0f, 0f, 0.88f);
+        outl.effectDistance = new Vector2(1.4f, -1.4f);
+        _alertUntil = Time.unscaledTime + 5f;
       }
-      if (mine == false || e.Stage == UltimateStage.Lost) {
+      if (e.Stage != UltimateStage.Cancelled || e.Position != default) {
+        var pos = e.Position.ToUnityVector3();
+        PingAlert(pos);
+        _minimap?.Ping(pos, new Color32(240, 36, 36, 255), 5f);
+      }
+      if (mine == false || e.Stage == UltimateStage.Lost || e.Stage == UltimateStage.Launched) {
         GameAudio.Play(SoundEvent.Warning);
       }
       _nextRefresh = 0f;
@@ -444,7 +599,7 @@ namespace FactoryWars.View {
           });
           return;
         case UltimatePhase.Active:
-          Entries.Add(new ContextEntry { Label = $"{name}\n운용 중", Icon = UltimateIcon(frame, spec), Enabled = false, Locked = true, Reason = $"{name} 운용 중(보유 상한 {spec.OwnedLimit})" });
+          Entries.Add(new ContextEntry { Label = $"{name}\n보유 중 (1/1)", Icon = UltimateIcon(frame, spec), Enabled = false, Locked = true, Reason = $"{name} 보유 중 (1/1) — 보유 상한 {spec.OwnedLimit}" });
           return;
       }
       var locks = UltimateSystem.Locks(frame, Controller.Player);
@@ -625,6 +780,7 @@ namespace FactoryWars.View {
       var frameImage = frame.gameObject.AddComponent<Image>();
       frameImage.sprite = UiCatalog.SpriteFor("icon_frame");
       frameImage.type = Image.Type.Sliced;
+      frameImage.color = new Color(0.14f, 0.17f, 0.23f, 0.96f);
       frameImage.raycastTarget = false;
       Ui.Place(frame, new Vector2(0, 0.5f), new Vector2(Pad, 0), new Vector2(150, 150));
       _cardIcon = Ui.Icon("Icon", frame, "", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(124, 124));
@@ -1026,6 +1182,8 @@ namespace FactoryWars.View {
       _alert.text = text;
       _alertAt = null;
       if (_alertBubble != null) {
+        _alertBubble.GetComponent<Image>().color = UiTheme.Current.Panel;
+        _alert.color = UiTheme.Current.PanelText;
         _alertBubble.gameObject.SetActive(!string.IsNullOrEmpty(text));
       }
       _alertUntil = Time.unscaledTime + AlertSeconds;
@@ -1433,7 +1591,10 @@ namespace FactoryWars.View {
         status = "궁극 전력: 목표 지점을 누르세요";
       }
       if (input.IsPlacing) {
-        status = "건설할 곳을 누르세요";
+        var placeSpec = frame.FindAsset(input.Placing);
+        status = placeSpec != null && placeSpec.RequiresNeutralOutpost
+          ? "건설: 점령한 중립 거점·암시장 18m 이내(녹색 구역)를 누르세요"
+          : "건설할 곳을 누르세요";
         showPanel = true;
       }
       _status.text = status;
@@ -1455,15 +1616,29 @@ namespace FactoryWars.View {
 
     void UnitCommandEntries() {
       var input = Controller.Input;
+      var selectedUnits = input.Selection.Units.ToArray();
+      // 모바일 엄지 전술 명령 클러스터(핵심 4종 우선 배치: 공격 이동 · 대형 정렬 · 산개 · 정지).
       Entries.Add(new ContextEntry { Label = input.Mode == MatchInput.TapMode.AttackMove ? "공격 이동 중" : "공격 이동", Icon = "ui_attack_move", Enabled = true,
-        Detail = "땅을 누르면 가는 길의 적을 공격하며 이동",
+        Detail = "땅을 누르면 가는 길의 적을 공격하며 자동 정렬 진격",
         Action = () => input.Mode = input.Mode == MatchInput.TapMode.AttackMove ? MatchInput.TapMode.None : MatchInput.TapMode.AttackMove });
-      Entries.Add(new ContextEntry { Label = "위치 고수", Icon = "ui_hold", Enabled = true, Detail = "제자리에서 사거리 안의 적만 쏩니다",
+      Entries.Add(new ContextEntry { Label = "대형 정렬", Icon = "ui_group", Enabled = selectedUnits.Length > 0,
+        Detail = "전차 앞열·소총수 중간·저격/지원 뒷열로 즉시 전술 대형 정렬",
+        Action = () => {
+          Controller.Send(new MoveUnitsCommand { Units = selectedUnits, FormationMode = MoveUnitsCommand.ModeFormUp });
+          ShowAlert("전술 대형 정렬 완료");
+        } });
+      Entries.Add(new ContextEntry { Label = "산개", Icon = "ui_box", Enabled = selectedUnits.Length > 0,
+        Detail = "포격·폭발 회피를 위해 바깥쪽으로 빠르게 산개",
+        Action = () => {
+          Controller.Send(new MoveUnitsCommand { Units = selectedUnits, FormationMode = MoveUnitsCommand.ModeSpread });
+          ShowAlert("유닛 긴급 산개!");
+        } });
+      Entries.Add(new ContextEntry { Label = "정지", Icon = "ui_hold", Enabled = true, Detail = "제자리에서 위치 고수 및 사격",
         Action = () => Controller.Send(input.Hold(Controller.Frame)) });
       Entries.Add(new ContextEntry { Label = input.Mode == MatchInput.TapMode.Patrol ? "순찰 지정 중" : "순찰", Icon = "ui_patrol", Enabled = true,
         Detail = "지금 위치와 누른 곳 사이를 오가며 적을 공격",
         Action = () => input.Mode = input.Mode == MatchInput.TapMode.Patrol ? MatchInput.TapMode.None : MatchInput.TapMode.Patrol });
-      Entries.Add(new ContextEntry { Label = "정지", Icon = "ui_stop", Enabled = true, Detail = "하던 일을 멈춥니다", Action = () => Controller.Stop() });
+      Entries.Add(new ContextEntry { Label = "이동 중단", Icon = "ui_stop", Enabled = true, Detail = "하던 일을 완전히 멈춥니다", Action = () => Controller.Stop() });
       SniperEntries();
     }
 
@@ -1566,8 +1741,20 @@ namespace FactoryWars.View {
       return faction.Buildings.Select(b => frame.FindAsset(b)).Where(b => b.Defensive == false).Select(b => Mathf.Max(1, b.RequiredTier)).Distinct().OrderBy(t => t).Where(t => t <= tier + 1).ToList();
     }
 
-    /// <summary>건설 하위 메뉴의 건물인가. 묶음 0은 방어 건물(항목 32), 1~3은 그 단계의 방어 아닌 건물.</summary>
-    static bool InBuildMenu(BuildingSpec spec, int menu) => menu == 0 ? spec.Defensive : spec.Defensive == false && Mathf.Max(1, spec.RequiredTier) == menu;
+    /// <summary>건설 하위 메뉴 3분류: 1=생산 공장(보병·기동·중기갑·항공·항모/미사일·조선소), 2=산업·연구(제련소·발전소·연구 공장·보급·사령부), 0=방어·지원.</summary>
+    static bool InBuildMenu(BuildingSpec spec, int menu) {
+      if (menu == 0) {
+        return spec.Defensive || spec.Role == BuildingRole.MedicTent || spec.Role == BuildingRole.RepairBay
+          || spec.Role == BuildingRole.Radar || spec.Role == BuildingRole.Artillery;
+      }
+      if (menu == 1) {
+        return spec.Role == BuildingRole.Barracks || spec.Role == BuildingRole.VehicleFactory || spec.Role == BuildingRole.HeavyWorks
+          || spec.Role == BuildingRole.Airfield || spec.Role == BuildingRole.UltimateSite || spec.Role == BuildingRole.Shipyard
+          || spec.Role == BuildingRole.Helipad;
+      }
+      return spec.Role == BuildingRole.Processor || spec.Role == BuildingRole.PowerPlant || spec.Role == BuildingRole.ResearchLab
+        || spec.Role == BuildingRole.SupplyDepot || spec.Role == BuildingRole.CollectionYard || spec.Role == BuildingRole.Headquarters;
+    }
 
     string EngineerEntries(Frame frame, PlayerState* state) {
       var faction = frame.FindAsset(state->Faction);
@@ -1575,7 +1762,7 @@ namespace FactoryWars.View {
       if (_menu == Menu.Build) {
         foreach (var buildingRef in faction.Buildings) {
           var spec = frame.FindAsset(buildingRef);
-          if (InBuildMenu(spec, _menuTier) == false || spec.RequiredTier >= tier + 2) {
+          if (InBuildMenu(spec, _menuTier) == false) {
             continue;
           }
           var target = buildingRef;
@@ -1592,32 +1779,23 @@ namespace FactoryWars.View {
         }
         PadTo(ContextSlots - 1);
         Entries.Add(new ContextEntry { Label = "뒤로", Icon = "ui_back", Enabled = true, Action = () => _menu = Menu.Root });
-        return $"건설: {(_menuTier == 0 ? "방어" : _menuTier == 1 ? "기본" : $"{_menuTier}단계")} 건물";
+        return $"건설: {(_menuTier == 1 ? "병기 공장" : _menuTier == 2 ? "산업·보급" : "방어·지원")}";
       }
-      foreach (var buildTier in BuildTiers(frame, faction, tier)) {
-        var value = buildTier;
-        var locked = buildTier > tier;
-        Entries.Add(new ContextEntry {
-          Label = buildTier == 1 ? "기본 건물" : $"{buildTier}단계 건물",
-          Icon = buildTier >= 3 ? "ui_build3" : buildTier == 2 ? "ui_build2" : "ui_build1",
-          // 잠긴 단계도 열어서 무엇이 있는지 볼 수 있다(칸마다 잠김 이유).
-          Enabled = true,
-          Detail = locked ? Texts.TierLock(buildTier) : null,
-          Action = () => {
-            _menu = Menu.Build;
-            _menuTier = value;
-          },
-        });
-      }
-      if (faction.Buildings.Any(b => frame.FindAsset(b).Defensive)) {
-        Entries.Add(new ContextEntry {
-          Label = "방어 건물", Icon = "ui_hold", Enabled = true, Detail = "방어탑·방공포대·모래주머니 진지·벙커",
-          Action = () => {
-            _menu = Menu.Build;
-            _menuTier = 0;
-          },
-        });
-      }
+      Entries.Add(new ContextEntry {
+        Label = "병기 공장", Icon = "ui_build1", Enabled = true,
+        Detail = "보병 무장 · 기동·화력 · 중기갑 전차 · 항공·드론 조립 공장",
+        Action = () => { _menu = Menu.Build; _menuTier = 1; },
+      });
+      Entries.Add(new ContextEntry {
+        Label = "산업·보급", Icon = "ui_build2", Enabled = true,
+        Detail = "강철 제련소 · 터빈 발전소 · 군수·연료 보급창 · 군수 연구 공장 · 사령부",
+        Action = () => { _menu = Menu.Build; _menuTier = 2; },
+      });
+      Entries.Add(new ContextEntry {
+        Label = "방어·지원", Icon = "ui_hold", Enabled = true,
+        Detail = "방어탑 · 방공포대 · 패트리어트 · 벙커 · 레이더 · 의무/정비",
+        Action = () => { _menu = Menu.Build; _menuTier = 0; },
+      });
       PadTo(ContextColumns + (Entries.Count > ContextColumns ? ContextColumns : 0));
       Entries.Add(new ContextEntry { Label = "정지", Icon = "ui_stop", Enabled = true, Action = () => Controller.Stop() });
       return $"공병  {Texts.TierName(tier)}";
@@ -1640,6 +1818,9 @@ namespace FactoryWars.View {
     }
 
     string BuildingLock(Frame frame, FactionSpec faction, BuildingSpec spec, int tier) {
+      if (spec.Role == BuildingRole.UltimateSite && ProductionSystem.CountRole(frame, Controller.Player, BuildingRole.UltimateSite) >= 1) {
+        return "보유 중 (1/1)";
+      }
       var reasons = new List<string>();
       if (spec.RequiredTier > tier) {
         reasons.Add(Texts.TierLock(spec.RequiredTier));
@@ -1705,7 +1886,10 @@ namespace FactoryWars.View {
       }
       var tier = TechSystem.Tier(frame, Controller.Player);
       if (spec.Role == BuildingRole.ResearchLab) {
-        return ResearchEntries(frame, state, entity, building, tier);
+        return ResearchEntries(frame, state, entity, building, tier, false);
+      }
+      if (spec.Role == BuildingRole.Headquarters && (_menu == Menu.HqResearch || _menu == Menu.Research)) {
+        return ResearchEntries(frame, state, entity, building, tier, true);
       }
       if (spec.Role == BuildingRole.UltimateSite) {
         UltimateEntries(frame, state);
@@ -1764,8 +1948,43 @@ namespace FactoryWars.View {
           Action = () => Controller.Send(new ProduceCommand { Building = entity, Unit = last, Count = 1, Cancel = true }),
         });
       }
+      // 심화 산업 공장 제어: Lv.1 -> Lv.2(+25%) -> Lv.3(+50%) 증축 & 비상 과부하(Overdrive +50%, 20초).
+      var fLevel = FactorySystem.LevelOf(&building);
+      var hasSynergy = FactorySystem.HasAdjacencySynergy(frame, entity, &building);
+      if (FactorySystem.IsUpgradeableFactory(spec.Role)) {
+        status += $"  Lv.{fLevel}";
+        if (hasSynergy) status += " · 시너지 +15%";
+        if (fLevel < 3) {
+          var nextLv = fLevel + 1;
+          var upCost = FactorySystem.UpgradeCost(frame, nextLv);
+          var canAfford = stock.Covers(upCost);
+          Entries.Add(new ContextEntry {
+            Label = $"공장 증축 Lv.{nextLv}\n{Texts.Cost(upCost, stock)}", Icon = "ui_build2", Enabled = canAfford, Locked = canAfford == false,
+            Reason = canAfford ? null : "자원 부족",
+            Detail = $"공장을 Lv.{nextLv}로 확장 (생산 속도 +{(nextLv == 2 ? 25 : 50)}%, 추가 굴뚝/배관)",
+            Action = () => Controller.Send(new UpgradeFactoryCommand { Building = entity }),
+          });
+        }
+      }
+      if (FactorySystem.IsProductionFactory(spec.Role)) {
+        var odActive = FactorySystem.IsOverdriving(frame, &building);
+        var odCd = Mathf.Max(0, Mathf.CeilToInt((building.OverdriveCooldownFrame - frame.Number) / (float)frame.SessionConfig.UpdateFPS));
+        var odLeft = Mathf.Max(0, Mathf.CeilToInt((building.OverdriveUntilFrame - frame.Number) / (float)frame.SessionConfig.UpdateFPS));
+        if (odActive) status += $" · 과부하 {odLeft}초";
+        Entries.Add(new ContextEntry {
+          Label = odActive ? $"과부하 중지\n({odLeft}초)" : odCd > 0 ? $"과부하 대기\n{odCd}초" : "과부하\n속도 +50%",
+          Icon = "ui_attack", Enabled = odActive || odCd == 0, Locked = odActive == false && odCd > 0,
+          Detail = "비상 과부하(20초): 생산 속도 +50%, 전력 소비 2배, 소량 과열 피해",
+          Action = () => Controller.Send(new OverdriveFactoryCommand { Building = entity }),
+        });
+      }
       if (spec.Role == BuildingRole.Headquarters) {
         UpgradeEntry(frame, state, entity, building, tier);
+        Entries.Add(new ContextEntry {
+          Label = "유닛 연구\nMk.2·Mk.3", Icon = "ui_research", Enabled = true,
+          Detail = "보병·기갑·공군 Mk.2/Mk.3 진화 및 진영 특화 업그레이드",
+          Action = () => _menu = Menu.HqResearch,
+        });
         // 항목 33: 3단계가 가까워지면(2단계부터) 궁극 전력 칸을 보인다.
         if (tier >= 2) {
           UltimateEntries(frame, state);
@@ -1829,10 +2048,10 @@ namespace FactoryWars.View {
       });
     }
 
-    string ResearchEntries(Frame frame, PlayerState* state, EntityRef entity, Building building, int tier) {
+    string ResearchEntries(Frame frame, PlayerState* state, EntityRef entity, Building building, int tier, bool fromHq = false) {
       var faction = frame.FindAsset(state->Faction);
       var list = faction.Researches ?? Array.Empty<AssetRef<ResearchSpec>>();
-      var status = "연구소";
+      var status = fromHq ? "사령부 연구" : "연구소";
       if (_menu == Menu.Research) {
         foreach (var kind in new[] { ResearchKind.Attack, ResearchKind.Armor }) {
           // 크기·종류별로 아직 안 한 가장 낮은 단계 하나만 보인다.
@@ -1845,17 +2064,17 @@ namespace FactoryWars.View {
             }
           }
           if (index < 0) {
-            Entries.Add(new ContextEntry { Label = $"{Texts.SizeWord(_menuSize)} {(kind == ResearchKind.Attack ? "공격" : "방어")}\n완료", Icon = kind == ResearchKind.Attack ? "ui_attack" : "ui_armor", Enabled = false, Locked = true, Reason = "모든 단계를 끝냈습니다" });
+            Entries.Add(new ContextEntry { Label = $"{Texts.SizeWord(_menuSize)} {(kind == ResearchKind.Attack ? "공격" : "방어")}\nMk.3 완료", Icon = kind == ResearchKind.Attack ? "ui_attack" : "ui_armor", Enabled = false, Locked = true, Reason = "모든 단계를 끝냈습니다" });
             continue;
           }
           AddResearch(frame, state, entity, building, list, index, tier);
         }
         PadTo(ContextSlots - 1);
-        Entries.Add(new ContextEntry { Label = "뒤로", Icon = "ui_back", Enabled = true, Action = () => _menu = Menu.Root });
-        return $"{Texts.SizeWord(_menuSize)} 연구";
+        Entries.Add(new ContextEntry { Label = "뒤로", Icon = "ui_back", Enabled = true, Action = () => _menu = fromHq ? Menu.HqResearch : Menu.Root });
+        return $"{Texts.SizeWord(_menuSize)} Mk 업그레이드";
       }
       foreach (var size in new[] { UnitSize.Small, UnitSize.Medium, UnitSize.Large }) {
-        var specs = list.Select(r => frame.FindAsset(r)).Where(r => r.Kind != ResearchKind.Elite && r.Size == size).ToList();
+        var specs = list.Select(r => frame.FindAsset(r)).Where(r => (r.Kind == ResearchKind.Attack || r.Kind == ResearchKind.Armor) && r.Size == size).ToList();
         if (specs.Count == 0 || specs.Min(r => r.RequiredTier) >= tier + 2) {
           continue;
         }
@@ -1863,7 +2082,7 @@ namespace FactoryWars.View {
         var minTier = specs.Min(r => r.RequiredTier);
         Entries.Add(new ContextEntry {
           Label = $"{Texts.SizeWord(size)} 연구", Icon = "ui_research", Enabled = true,
-          Detail = minTier > tier ? Texts.TierLock(minTier) : $"{Texts.SizeWord(size)} 유닛 공격·방어 강화",
+          Detail = minTier > tier ? Texts.TierLock(minTier) : $"{Texts.SizeWord(size)} 유닛 Mk.2/Mk.3 공격·방어 진화",
           Action = () => {
             _menu = Menu.Research;
             _menuSize = value;
@@ -1871,9 +2090,16 @@ namespace FactoryWars.View {
         });
       }
       for (var i = 0; i < list.Length; i++) {
-        if (frame.FindAsset(list[i]).Kind == ResearchKind.Elite && frame.FindAsset(list[i]).RequiredTier < tier + 2) {
+        var r = frame.FindAsset(list[i]);
+        if ((r.Kind == ResearchKind.Elite || r.Kind == ResearchKind.Special) && r.RequiredTier < tier + 2) {
           AddResearch(frame, state, entity, building, list, i, tier);
         }
+      }
+      if (fromHq) {
+        if (Entries.Count < ContextSlots) {
+          PadTo(ContextSlots - 1);
+        }
+        Entries.Add(new ContextEntry { Label = "뒤로", Icon = "ui_back", Enabled = true, Action = () => _menu = Menu.Root });
       }
       if (building.Research > 0) {
         var current = TechSystem.ResearchAt(frame, Controller.Player, building.Research - 1);
@@ -1899,13 +2125,14 @@ namespace FactoryWars.View {
         reason = "다른 연구 중";
       }
       var target = index;
+      var extra = research.Kind == ResearchKind.Special ? "\n" + Texts.SpecialDetail(research.Special) : "";
       Entries.Add(new ContextEntry {
         Label = $"{Texts.ResearchName(research, UnitName)}\n{(reason == null ? Texts.Cost(research.Cost, state->Stock) : reason)}",
-        Icon = research.Kind == ResearchKind.Elite ? "ui_elite" : research.Kind == ResearchKind.Attack ? "ui_attack" : "ui_armor",
+        Icon = research.Kind == ResearchKind.Elite ? "ui_elite" : research.Kind == ResearchKind.Special ? "ui_upgrade" : research.Kind == ResearchKind.Attack ? "ui_attack" : "ui_armor",
         Enabled = reason == null,
         Locked = reason != null,
         Reason = reason != null ? $"{Texts.ResearchName(research, UnitName)}: {reason}" : null,
-        Detail = $"{Texts.ResearchName(research, UnitName)}: {Texts.Cost(research.Cost, state->Stock)}  {research.Seconds.AsInt}초 (연구 중 전기 사용)",
+        Detail = $"{Texts.ResearchName(research, UnitName)}: {Texts.Cost(research.Cost, state->Stock)}  {research.Seconds.AsInt}초{extra}",
         Action = () => Controller.Send(new ResearchCommand { Building = entity, Index = target }),
       });
     }

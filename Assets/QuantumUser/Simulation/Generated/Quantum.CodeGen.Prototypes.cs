@@ -215,6 +215,10 @@ namespace Quantum.Prototypes {
     public Quantum.Prototypes.HangarSlotPrototype[] Hangar = new Quantum.Prototypes.HangarSlotPrototype[4];
     public Int32 ProtocolUntilFrame;
     public Int32 ProtocolNextShotFrame;
+    public Int32 EmpUntilFrame;
+    public Int32 FactoryLevel;
+    public Int32 OverdriveUntilFrame;
+    public Int32 OverdriveCooldownFrame;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Building component = default;
         Materialize((Frame)f, ref component, in context);
@@ -252,6 +256,10 @@ namespace Quantum.Prototypes {
         }
         result.ProtocolUntilFrame = this.ProtocolUntilFrame;
         result.ProtocolNextShotFrame = this.ProtocolNextShotFrame;
+        result.EmpUntilFrame = this.EmpUntilFrame;
+        result.FactoryLevel = this.FactoryLevel;
+        result.OverdriveUntilFrame = this.OverdriveUntilFrame;
+        result.OverdriveCooldownFrame = this.OverdriveCooldownFrame;
     }
   }
   [System.SerializableAttribute()]
@@ -289,6 +297,8 @@ namespace Quantum.Prototypes {
     public FP LaunchCooldown;
     public Int32 LastContactFrame;
     public MapEntityId Target;
+    public QBoolean Assembling;
+    public MapEntityId Site;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Carrier component = default;
         Materialize((Frame)f, ref component, in context);
@@ -300,6 +310,8 @@ namespace Quantum.Prototypes {
         result.LaunchCooldown = this.LaunchCooldown;
         result.LastContactFrame = this.LastContactFrame;
         PrototypeValidator.FindMapEntity(this.Target, in context, out result.Target);
+        result.Assembling = this.Assembling;
+        PrototypeValidator.FindMapEntity(this.Site, in context, out result.Site);
     }
   }
   [System.SerializableAttribute()]
@@ -577,7 +589,11 @@ namespace Quantum.Prototypes {
   public unsafe partial class MissileStrikePrototype : ComponentPrototype<Quantum.MissileStrike> {
     public PlayerRef Owner;
     public AssetRef<UltimateSpec> Spec;
+    public FPVector3 Origin;
     public FPVector3 Target;
+    public FPVector3 CurrentPosition;
+    public FP Health;
+    public FP MaxHealth;
     public Int32 LaunchFrame;
     public Int32 ImpactFrame;
     partial void MaterializeUser(Frame frame, ref Quantum.MissileStrike result, in PrototypeMaterializationContext context);
@@ -589,7 +605,11 @@ namespace Quantum.Prototypes {
     public void Materialize(Frame frame, ref Quantum.MissileStrike result, in PrototypeMaterializationContext context = default) {
         result.Owner = this.Owner;
         result.Spec = this.Spec;
+        result.Origin = this.Origin;
         result.Target = this.Target;
+        result.CurrentPosition = this.CurrentPosition;
+        result.Health = this.Health;
+        result.MaxHealth = this.MaxHealth;
         result.LaunchFrame = this.LaunchFrame;
         result.ImpactFrame = this.ImpactFrame;
         MaterializeUser(frame, ref result, in context);
@@ -832,6 +852,31 @@ namespace Quantum.Prototypes {
         result.Kind = this.Kind;
         result.Remaining = this.Remaining;
         this.Shape.Materialize(frame, ref result.Shape, in context);
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.ScorchedZone))]
+  public unsafe partial class ScorchedZonePrototype : ComponentPrototype<Quantum.ScorchedZone> {
+    public PlayerRef Owner;
+    public FPVector3 Position;
+    public FP Radius;
+    public FP DamagePerSecond;
+    public FP SlowMultiplier;
+    public Int32 UntilFrame;
+    partial void MaterializeUser(Frame frame, ref Quantum.ScorchedZone result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.ScorchedZone component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.ScorchedZone result, in PrototypeMaterializationContext context = default) {
+        result.Owner = this.Owner;
+        result.Position = this.Position;
+        result.Radius = this.Radius;
+        result.DamagePerSecond = this.DamagePerSecond;
+        result.SlowMultiplier = this.SlowMultiplier;
+        result.UntilFrame = this.UntilFrame;
         MaterializeUser(frame, ref result, in context);
     }
   }

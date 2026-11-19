@@ -17,32 +17,173 @@ namespace Quantum.FactoryWars {
     }
 
     protected static bool IsOwnWorker(Frame f, PlayerRef player, EntityRef entity) {
-      return f.Unsafe.TryGetPointer<Unit>(entity, out var unit) && unit->Owner == player && f.Has<Worker>(entity);
+      return f.Unsafe.TryGetPointer<Unit>(entity, out var unit) && unit->Owner == player && unit->Transport == EntityRef.None && f.Has<Worker>(entity);
     }
 
     /// <summary>내 유닛이고 명령을 받는 유닛이면 true. 항모 드론·상륙정은 스스로 움직인다(항목 33).</summary>
     protected static bool IsOwnCommandable(Frame f, PlayerRef player, EntityRef entity, out Unit* unit) {
-      return f.Unsafe.TryGetPointer<Unit>(entity, out unit) && unit->Owner == player && UltimateSystem.IsAutonomous(f, entity) == false;
+      return f.Unsafe.TryGetPointer<Unit>(entity, out unit) && unit->Owner == player && unit->Transport == EntityRef.None && UltimateSystem.IsAutonomous(f, entity) == false;
     }
   }
 
   public unsafe class MoveUnitsCommand : FactoryCommand {
     public const int MaxUnits = 64;
+    public const byte ModeNormal = 0;
+    public const byte ModeFormUp = 1;
+    public const byte ModeSpread = 2;
 
     public EntityRef[] Units = System.Array.Empty<EntityRef>();
     public FPVector3 Target;
     public bool AttackMove;
+    /// <summary>0=일반 자동 정렬 이동, 1=현재 위치 기준 전술 대형 정렬(Form Up), 2=포격 회피 산개(Spread).</summary>
+    public byte FormationMode;
 
     public override void Serialize(BitStream stream) {
       SerializeUnits(stream, ref Units);
       stream.Serialize(ref Target);
       stream.Serialize(ref AttackMove);
+      stream.Serialize(ref FormationMode);
+    }
+
+    static int RoleTier(UnitSpec spec) {
+      // 앞열(0): 전차·중기갑 / 중간열(1): 소총수·일반 보병 / 뒷열(2): 저격수·지원·포병·공병.
+      if (spec.Size == UnitSize.Large || (spec.Size == UnitSize.Medium && spec.Attack == AttackType.AntiArmor) || spec.IsVehicle) {
+        return 0;
+      }
+      if (spec.Range >= (FP)15 || spec.Attack == AttackType.None || spec.Ability == SpecialAbility.FieldRepair || spec.Size == UnitSize.Engineer) {
+        return 2;
+      }
+      return 1;
+    }
+
+    static FPVector3 FindFrontlineDirection(Frame f, PlayerRef player, FPVector3 centroid) {
+      var best = FP.MaxValue;
+      var enemyPos = FPVector3.Zero;
+      var found = false;
+      var units = f.Filter<Transform3D, Unit>();
+      while (units.NextUnsafe(out var entity, out var transform, out var u)) {
+        if (u->Health <= FP._0 || DiplomacySystem.CanAttack(f, player, u->Owner) == false || FactoryWarsUtil.IsVisibleTo(f, player, entity) == false) {
+          continue;
+        }
+        var d = FactoryWarsUtil.FlatDistanceSqr(transform->Position, centroid);
+        if (d < best) {
+          best = d;
+          enemyPos = transform->Position;
+          found = true;
+        }
+      }
+      var dir = (found ? enemyPos : FPVector3.Zero) - centroid;
+      dir.Y = FP._0;
+      var len = dir.Magnitude;
+      return len > FP._0_10 ? dir / len : new FPVector3(FP._0, FP._0, FP._1);
     }
 
     public override void Execute(Frame f, PlayerRef player) {
+      var valid = new System.Collections.Generic.List<(EntityRef Entity, int Tier, int Index)>(Units.Length);
+      var centroid = FPVector3.Zero;
       for (var i = 0; i < Units.Length; i++) {
-        if (IsOwnCommandable(f, player, Units[i], out var unit)) {
-          MovementSystem.Order(f, Units[i], unit, AttackMove ? UnitOrder.AttackMove : UnitOrder.Move, Target);
+        if (IsOwnCommandable(f, player, Units[i], out var unit) && f.Unsafe.TryGetPointer<Transform3D>(Units[i], out var t)) {
+          var spec = f.FindAsset(unit->Spec);
+          valid.Add((Units[i], RoleTier(spec), i));
+          centroid += t->Position;
+        }
+      }
+      if (valid.Count == 0) {
+        return;
+      }
+      var order = AttackMove ? UnitOrder.AttackMove : UnitOrder.Move;
+      if (valid.Count == 1 && FormationMode == ModeNormal) {
+        MovementSystem.Order(f, valid[0].Entity, f.Unsafe.GetPointer<Unit>(valid[0].Entity), order, Target);
+        return;
+      }
+      centroid /= valid.Count;
+      centroid.Y = FP._0;
+      var map = FactoryWarsUtil.MapInfo(f);
+      FPVector3 ClampMap(FPVector3 p) => new FPVector3(
+        FPMath.Clamp(p.X, map.BoundsMin.X + FP._2, map.BoundsMax.X - FP._2),
+        FP._0,
+        FPMath.Clamp(p.Z, map.BoundsMin.Y + FP._2, map.BoundsMax.Y - FP._2));
+
+      if (FormationMode == ModeSpread) {
+        // 산개(Spread): 중심에서 바깥으로 방사형 전개(대형 차량은 반경에 비례해 넓게 전개).
+        var baseRadius = FP._3 + FP._0_50;
+        for (var i = 0; i < valid.Count; i++) {
+          var e = valid[i].Entity;
+          var uPtr = f.Unsafe.GetPointer<Unit>(e);
+          var uRadius = MovementSystem.UnitRadius(f.FindAsset(uPtr->Spec));
+          var radius = FPMath.Max(baseRadius, uRadius * FP._2 + FP._1_50);
+          var pos = f.Unsafe.GetPointer<Transform3D>(e)->Position;
+          var delta = new FPVector3(pos.X - centroid.X, FP._0, pos.Z - centroid.Z);
+          var len = delta.Magnitude;
+          FPVector3 dir;
+          if (len > FP._0_10) {
+            dir = delta / len;
+          } else {
+            var angle = (FP)(i * 360 / valid.Count) * FP.Deg2Rad;
+            dir = new FPVector3(FPMath.Cos(angle), FP._0, FPMath.Sin(angle));
+          }
+          MovementSystem.Order(f, e, uPtr, UnitOrder.Move, ClampMap(pos + dir * radius));
+        }
+        return;
+      }
+
+      // 반경 인지 자동 대형 정렬: 각 열의 최대 유닛 지름 + 0.8m 여백으로 전차·보병 혼성 부대도 절대 겹치지 않게 배치.
+      valid.Sort((a, b) => a.Tier != b.Tier ? a.Tier.CompareTo(b.Tier) : a.Index.CompareTo(b.Index));
+      var anchor = FormationMode == ModeFormUp ? centroid : new FPVector3(Target.X, FP._0, Target.Z);
+      FPVector3 forward;
+      if (FormationMode == ModeFormUp) {
+        forward = FindFrontlineDirection(f, player, centroid);
+      } else {
+        var d = anchor - centroid;
+        d.Y = FP._0;
+        var len = d.Magnitude;
+        forward = len > FP._0_10 ? d / len : new FPVector3(FP._0, FP._0, FP._1);
+      }
+      var right = new FPVector3(-forward.Z, FP._0, forward.X);
+      var colPad = (FP)8 / (FP)10; // 0.8m padding
+      var rowPad = FP._1; // 1.0m row depth padding
+      const int MaxPerRow = 6;
+      var rows = new System.Collections.Generic.List<System.Collections.Generic.List<EntityRef>>();
+      var rowRadii = new System.Collections.Generic.List<FP>();
+      for (var tier = 0; tier <= 2; tier++) {
+        var bucket = new System.Collections.Generic.List<EntityRef>();
+        for (var i = 0; i < valid.Count; i++) {
+          if (valid[i].Tier == tier) {
+            bucket.Add(valid[i].Entity);
+          }
+        }
+        for (var offset = 0; offset < bucket.Count; offset += MaxPerRow) {
+          var take = System.Math.Min(MaxPerRow, bucket.Count - offset);
+          var row = new System.Collections.Generic.List<EntityRef>(take);
+          var maxR = (FP)65 / (FP)100;
+          for (var k = 0; k < take; k++) {
+            var e = bucket[offset + k];
+            row.Add(e);
+            var r = MovementSystem.UnitRadius(f.FindAsset(f.Unsafe.GetPointer<Unit>(e)->Spec));
+            if (r > maxR) {
+              maxR = r;
+            }
+          }
+          rows.Add(row);
+          rowRadii.Add(maxR);
+        }
+      }
+      // 행별 누적 깊이 계산 후 전체 중심을 anchor에 맞춘다(전차 앞열 · 보병 중간 · 저격/지원 뒷열).
+      var depths = new FP[rows.Count];
+      for (var r = 1; r < rows.Count; r++) {
+        depths[r] = depths[r - 1] + rowRadii[r - 1] + rowRadii[r] + rowPad;
+      }
+      var midDepth = rows.Count > 0 ? depths[rows.Count - 1] * FP._0_50 : FP._0;
+      for (var r = 0; r < rows.Count; r++) {
+        var row = rows[r];
+        var colSpacing = rowRadii[r] * FP._2 + colPad;
+        var halfCols = (FP)(row.Count - 1) * FP._0_50;
+        var depthOffset = midDepth - depths[r];
+        for (var c = 0; c < row.Count; c++) {
+          var sideOffset = (c - halfCols) * colSpacing;
+          var slot = ClampMap(anchor + right * sideOffset + forward * depthOffset);
+          var e = row[c];
+          MovementSystem.Order(f, e, f.Unsafe.GetPointer<Unit>(e), order, slot);
         }
       }
     }
@@ -684,6 +825,62 @@ namespace Quantum.FactoryWars {
 
     public override void Execute(Frame f, PlayerRef player) {
       NpcTraderSystem.Trade(f, player, Offer, Target);
+    }
+  }
+
+  /// <summary>공장 증축 명령: 선택한 공장을 Lv.1 -> Lv.2(+25%) -> Lv.3(+50%)로 확장한다.</summary>
+  public unsafe class UpgradeFactoryCommand : FactoryCommand {
+    public EntityRef Building;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Building);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      FactorySystem.TryUpgradeFactory(f, player, Building);
+    }
+  }
+
+  /// <summary>비상 과부하(Overdrive) 명령: 20초간 생산 속도 +50%, 전력 소비 2배, 초당 소량 과열 피해.</summary>
+  public unsafe class OverdriveFactoryCommand : FactoryCommand {
+    public EntityRef Building;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Building);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      FactorySystem.ToggleOverdrive(f, player, Building);
+    }
+  }
+
+  /// <summary>수송 탑승 명령: 선택한 보병·전차가 아군 수송 유닛(APC·상륙정·수송헬기) 후면 램프로 이동해 탑승한다.</summary>
+  public unsafe class BoardTransportCommand : FactoryCommand {
+    public EntityRef[] Units = System.Array.Empty<EntityRef>();
+    public EntityRef Transport;
+
+    public override void Serialize(BitStream stream) {
+      SerializeUnits(stream, ref Units);
+      stream.Serialize(ref Transport);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      TransportSystem.OrderBoard(f, player, Units, Transport);
+    }
+  }
+
+  /// <summary>수송 하차 명령: SpecificUnit이 None이면 전원 하차, 지정되어 있으면 해당 승객 1기만 하차시킨다.</summary>
+  public unsafe class UnloadTransportCommand : FactoryCommand {
+    public EntityRef Transport;
+    public EntityRef SpecificUnit;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Transport);
+      stream.Serialize(ref SpecificUnit);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      TransportSystem.Unload(f, player, Transport, SpecificUnit);
     }
   }
 }

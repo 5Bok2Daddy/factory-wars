@@ -55,7 +55,7 @@ MonoBehaviour:
     RawValue: 0
   ModuleSlots: 0
   FootprintRadius:
-    RawValue: 196608
+    RawValue: 229376
   IsDropOff: 0
   Prerequisites:
   - Id:
@@ -90,3 +90,10 @@ MonoBehaviour:
   GarrisonCapacity: 0
   SightRange:
     RawValue: 524288
+  RequiresNeutralOutpost: 0
+  InterceptRange:
+    RawValue: 0
+  InterceptDamage:
+    RawValue: 0
+  InterceptInterval:
+    RawValue: 0

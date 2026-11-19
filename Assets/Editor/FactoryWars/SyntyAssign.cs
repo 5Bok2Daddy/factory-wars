@@ -115,68 +115,76 @@ namespace FactoryWars.EditorTools {
     static readonly string[] LightContinental = { "PolygonBattleRoyale_Veh_01", "PolygonBattleRoyale_Veh_02" };
 
     static Row Squad(string id, float scale, string[] swap, params string[] members) => new Row { Id = "unit/" + id, Kind = Kind.Squad, Models = members, Swap = swap, Scale = scale };
-    static Row Vehicle(string id, string model, string[] swap, string turret = null, string barrel = null, string muzzle = null, params string[] spin) =>
-      new Row { Id = "unit/" + id, Kind = Kind.Vehicle, Models = new[] { model }, Swap = swap, Turret = turret, Barrel = barrel, Muzzle = muzzle, Spin = spin };
+    static Row Vehicle(string id, string model, string[] swap, float targetLength, string turret = null, string barrel = null, string muzzle = null, params string[] spin) =>
+      new Row { Id = "unit/" + id, Kind = Kind.Vehicle, Models = new[] { model }, Swap = swap, Scale = targetLength, Turret = turret, Barrel = barrel, Muzzle = muzzle, Spin = spin };
     static Row Building(string id, string model, string[] swap, float width = 6.4f, float height = 9f) =>
       new Row { Id = "building/" + id, Kind = Kind.Building, Models = new[] { model }, Swap = swap, Scale = width, Height = height };
 
     static readonly string[] None = new string[0];
 
     static IEnumerable<Row> Rows() {
-      // 보병(캐릭터는 실제 크기 1.8m, 배율은 화면 가독성용 슬롯 데이터)
-      yield return Squad("ff_engineer", 1.3f, SoldiersFree, "chr_contractor_1");
-      yield return Squad("cf_engineer", 1.3f, None, "chr_contractor_2");
-      yield return Squad("ff_ranger_squad", 1.25f, SoldiersFree, "chr_soldier_1", "chr_soldier_1", "chr_soldier_1");
-      yield return Squad("ff_skyguard_squad", 1.25f, SoldiersFree, "chr_soldier_1", "chr_soldier_1", "chr_soldier_1");
-      yield return Squad("cf_militia", 1.25f, None, "chr_soldier_2", "chr_soldier_2");
-      yield return Squad("cf_flame_squad", 1.25f, None, "chr_bombsuit", "chr_bombsuit");
-      // 저격수: 위장복 한 명. 중앙 암시장 경비: 진영 색이 아닌 다른 군복 한 명(TraderView가 칸에서 직접 꺼내 쓴다).
-      yield return Squad("ff_sniper", 1.25f, SoldiersFree, "chr_ghillie");
-      yield return Squad("cf_sniper", 1.25f, None, "chr_ghillie");
-      yield return Squad("trader_guard", 1.25f, None, "chr_soldier_2_alt3");
-      // 차량·배·공중
-      yield return Vehicle("ff_scout_buggy", "buggy", LightFree);
-      yield return Vehicle("cf_scout_bike", "bike", LightContinental);
-      yield return Vehicle("ff_eagle_tank", "tank_c", LandFree, "Turret", "Barrel", "Barrel");
-      yield return Vehicle("cf_dragonscale_tank", "tank_light", LandContinental, "Turret", "Barrel", "Barrel");
-      yield return Vehicle("ff_bulwark_tank", "tank_a", LandFree, "Turret", "Barrel", "Barrel");
-      yield return Vehicle("cf_fortress_tank", "tank_b", LandContinental, "Turret", "Barrel", "Barrel");
-      yield return Vehicle("ff_field_support", "apc", LandFree);
-      yield return Vehicle("cf_thunder_aa", "radar_tank", LandContinental, null, null, null, "Radar_Base:Y");
-      yield return Vehicle("cf_longwall_mlrs", "rocket_truck", LandContinental, "_Base", null, "Rocket_Battery");
-      yield return Vehicle("ff_hawk_gunship", "heli_a", None, null, null, null, "Blades_Main", "Blades_Back");
-      yield return Vehicle("cf_gale_gunship", "heli_b", HeliContinental, null, null, null, "Blades_Main", "Blades_Back");
-      yield return Vehicle("ff_skyfortress_bomber", "transport_plane", None);
-      yield return Vehicle("ff_stormnest_carrier", "cargo_plane", None, null, null, null, "Prop_0");
-      yield return Vehicle("ff_nest_drone", "drone", None, null, null, null, "Drone_Prop");
-      yield return Vehicle("ff_scout_boat", "boat", LightFree);
-      yield return Vehicle("cf_scout_boat", "boat", LightContinental);
-      // 건물(양 진영이 같은 모델, 색 변형만 다르다)
+      // 모바일 최적 스케일 밸런스: 보병 시각 모델 0.8x(터치 선택 반경 1.0x+ 유지), 차량·전차 1.0~1.1x, 공장·건물 1.25x.
+      yield return Squad("ff_engineer", 0.8f, SoldiersFree, "chr_contractor_1");
+      yield return Squad("cf_engineer", 0.8f, None, "chr_contractor_2");
+      yield return Squad("ff_ranger_squad", 0.8f, SoldiersFree, "chr_soldier_1");
+      yield return Squad("ff_skyguard_squad", 0.8f, SoldiersFree, "chr_soldier_1");
+      yield return Squad("cf_militia", 0.8f, None, "chr_soldier_2");
+      yield return Squad("cf_flame_squad", 0.8f, None, "chr_bombsuit");
+      yield return Squad("ff_at_rocket", 0.8f, SoldiersFree, "chr_soldier_1");
+      yield return Squad("cf_at_rocket", 0.8f, None, "chr_soldier_2");
+      yield return Squad("ff_breacher", 0.8f, SoldiersFree, "chr_bombsuit");
+      yield return Squad("cf_breacher", 0.8f, None, "chr_bombsuit");
+      yield return Squad("ff_sniper", 0.8f, SoldiersFree, "chr_ghillie");
+      yield return Squad("cf_sniper", 0.8f, None, "chr_ghillie");
+      yield return Squad("trader_guard", 0.8f, None, "chr_soldier_2_alt3");
+      // 차량·전차·공중·해상: 1.0x~1.1x 전술 비율(0.8x 보병 대비 확연한 덩치 차이 + 1.25x 공장과 자연스러운 조화).
+      yield return Vehicle("ff_scout_buggy", "buggy", LightFree, 4.2f);
+      yield return Vehicle("cf_scout_bike", "bike", LightContinental, 3.3f);
+      yield return Vehicle("ff_eagle_tank", "tank_c", LandFree, 6.0f, "Turret", "Barrel", "Barrel");
+      yield return Vehicle("cf_dragonscale_tank", "tank_light", LandContinental, 6.0f, "Turret", "Barrel", "Barrel");
+      yield return Vehicle("ff_bulwark_tank", "tank_a", LandFree, 7.0f, "Turret", "Barrel", "Barrel");
+      yield return Vehicle("cf_fortress_tank", "tank_b", LandContinental, 7.0f, "Turret", "Barrel", "Barrel");
+      yield return Vehicle("ff_field_support", "apc", LandFree, 5.0f);
+      yield return Vehicle("cf_thunder_aa", "radar_tank", LandContinental, 5.0f, null, null, null, "Radar_Base:Y");
+      yield return Vehicle("cf_longwall_mlrs", "rocket_truck", LandContinental, 6.6f, "_Base", null, "Rocket_Battery");
+      yield return Vehicle("ff_mlrs_artillery", "rocket_truck", LandFree, 5.8f, "_Base", null, "Rocket_Battery");
+      yield return Vehicle("cf_rocket_artillery", "rocket_truck", LandContinental, 5.8f, "_Base", null, "Rocket_Battery");
+      yield return Vehicle("ff_mobile_sam", "radar_tank", LandFree, 5.0f, null, null, null, "Radar_Base:Y");
+      yield return Vehicle("cf_mobile_sam", "radar_tank", LandContinental, 5.0f, null, null, null, "Radar_Base:Y");
+      yield return Vehicle("ff_hawk_gunship", "heli_a", None, 6.4f, null, null, null, "Blades_Main", "Blades_Back");
+      yield return Vehicle("cf_gale_gunship", "heli_b", HeliContinental, 6.4f, null, null, null, "Blades_Main", "Blades_Back");
+      yield return Vehicle("ff_skyfortress_bomber", "transport_plane", None, 9.0f);
+      yield return Vehicle("ff_stormnest_carrier", "cargo_plane", None, 10.5f, null, null, null, "Prop_0");
+      yield return Vehicle("ff_nest_drone", "drone", None, 1.8f, null, null, null, "Drone_Prop");
+      yield return Vehicle("ff_scout_boat", "boat", LightFree, 5.0f);
+      yield return Vehicle("cf_scout_boat", "boat", LightContinental, 5.0f);
+      // 공장·사령부·기지 건물: 1.25x 스케일(도로 이격 및 NavMesh 재굽기 기준).
       foreach (var faction in new[] { "ff", "cf" }) {
         var swap = faction == "ff" ? BuildingsFree : BuildingsContinental;
-        yield return Building(faction + "_barracks", "bld_barracks", swap);
-        yield return Building(faction + "_supply_depot", "bld_shed", swap);
-        yield return Building(faction + "_power_plant", "bld_gas_tower_2", swap, 6.8f, 7f);
-        yield return Building(faction + "_processor", "bld_gas_tower_1", swap, 8f, 6f);
-        yield return Building(faction + "_research_lab", "bld_control_room", swap);
-        yield return Building(faction + "_vehicle_factory", "bld_hangar", swap, 9f, 7f);
-        yield return Building(faction + "_airfield", "bld_control_tower", swap, 6.4f, 10f);
-        yield return Building(faction + "_heavy_works", "bld_gas_station", swap, 8f, 6f);
-        yield return Building(faction + "_ground_tower", "bld_guard_tower_2", swap);
+        yield return Building(faction + "_barracks", "bld_barracks", swap, 8.2f, 11.2f);
+        yield return Building(faction + "_supply_depot", "bld_shed", swap, 8.0f, 11.0f);
+        yield return Building(faction + "_power_plant", "bld_gas_tower_2", swap, 8.6f, 9.0f);
+        yield return Building(faction + "_processor", "bld_gas_tower_1", swap, 10.0f, 7.8f);
+        yield return Building(faction + "_research_lab", "bld_control_room", swap, 8.2f, 11.2f);
+        yield return Building(faction + "_vehicle_factory", "bld_hangar", swap, 11.2f, 9.0f);
+        yield return Building(faction + "_airfield", "bld_control_tower", swap, 8.4f, 12.8f);
+        yield return Building(faction + "_heavy_works", "bld_gas_station", swap, 10.2f, 7.8f);
+        yield return Building(faction + "_ground_tower", "bld_guard_tower_2", swap, 8.0f, 11.2f);
         var props = faction == "ff" ? PropsFree : PropsContinental;
-        yield return Building(faction + "_air_defense", "prop_launcher_2", props);
-        yield return Building(faction + "_collection_yard", "bld_tent_open", swap);
-        yield return Building(faction + "_sandbags", "prop_barrier_2", swap, 5.4f);
-        yield return Building(faction + "_bunker", "prop_barrier_1", swap, 4.6f);
-        yield return Building(faction + "_medic_tent", "bld_tent_closed", swap);
-        yield return Building(faction + "_repair_bay", "bld_tent_shelter", swap);
-        yield return Building(faction + "_radar", "prop_radar", props);
-        yield return Building(faction + "_helipad", "bld_tent_cover", swap);
-        yield return Building(faction + "_artillery", "prop_launcher_1", props);
-        yield return Building(faction + "_headquarters", faction == "ff" ? "bld_tent_sandbags" : "bld_tent_entrance", swap, 7.8f);
+        yield return Building(faction + "_air_defense", "prop_launcher_2", props, 8.0f, 11.2f);
+        yield return Building(faction + "_collection_yard", "bld_tent_open", swap, 8.0f, 11.0f);
+        yield return Building(faction + "_sandbags", "prop_barrier_2", swap, 6.8f, 8.5f);
+        yield return Building(faction + "_bunker", "prop_barrier_1", swap, 5.8f, 8.5f);
+        yield return Building(faction + "_medic_tent", "bld_tent_closed", swap, 8.0f, 11.0f);
+        yield return Building(faction + "_repair_bay", "bld_tent_shelter", swap, 8.0f, 11.0f);
+        yield return Building(faction + "_radar", "prop_radar", props, 8.0f, 11.2f);
+        yield return Building(faction + "_helipad", "bld_tent_cover", swap, 8.0f, 11.0f);
+        yield return Building(faction + "_artillery", "prop_launcher_1", props, 8.0f, 11.2f);
+        yield return Building(faction + "_patriot_turret", "prop_launcher_2", props, 8.0f, 11.2f);
+        yield return Building(faction + "_headquarters", faction == "ff" ? "bld_tent_sandbags" : "bld_tent_entrance", swap, 10.0f, 11.8f);
       }
-      yield return Building("ff_carrier_yard", "bld_hangar_open", BuildingsFree, 9f, 7f);
-      yield return Building("cf_missile_silo", "bld_oil_tower", BuildingsContinental, 6.4f, 10f);
+      yield return Building("ff_carrier_yard", "bld_hangar_open", BuildingsFree, 11.4f, 9.2f);
+      yield return Building("cf_missile_silo", "bld_oil_tower", BuildingsContinental, 8.4f, 12.8f);
     }
 
     [MenuItem("Tools/Factory Wars/Assets/5. Assign Synty Pack")]
@@ -247,8 +255,8 @@ namespace FactoryWars.EditorTools {
             slot.MuzzleOffset = new Vector3(0f, 1.2f, 0.7f);
             break;
           case Kind.Vehicle:
-            slot.AutoFit = true;
-            slot.Scale = 1f;
+            slot.AutoFit = false;
+            slot.Scale = row.Scale / Mathf.Max(0.1f, Mathf.Max(size.x, size.z));
             slot.MuzzleOffset = MuzzleOf(prefab, row.Muzzle, size);
             break;
           default:

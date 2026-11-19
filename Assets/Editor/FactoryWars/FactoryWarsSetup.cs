@@ -278,19 +278,24 @@ namespace FactoryWars.EditorTools {
     // 비용은 DESIGN-RESOURCE-TERRAIN.md 5장. 생산·체력·공격 유형은 GDD. 피해·사거리·간격·속도는 임시값(SETUP-REPORT.md 참조).
     static readonly UnitRow[] Units = {
       new UnitRow { Id = "ff_engineer", At = "headquarters", Size = UnitSize.Engineer, Cost = R(100), Build = 10, Health = 80, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
-      new UnitRow { Id = "ff_ranger_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 50), Build = 15, Health = 150, Attack = AttackType.AntiInfantry, Damage = 15, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
+      new UnitRow { Id = "ff_ranger_squad", At = "barracks", Size = UnitSize.Small, Cost = R(28, 20), Build = 6, Health = 54, Attack = AttackType.AntiInfantry, Damage = 5.4, Range = 7, Interval = 1, Speed = 4, Ability = SpecialAbility.TargetDesignator, AbilityMultiplier = 1.25, AbilitySeconds = 5 },
       // 항목 34-C 주둔 저격수(진영별 수치가 약간 다름). 2단계, 보유 3, 인구 2. 사격·은신·교란 값은 아래 SniperTable.
       new UnitRow { Id = "ff_sniper", At = "barracks", Size = UnitSize.Small, Cost = R(120, 60, 40), Build = 20, Health = 60, Attack = AttackType.AntiInfantry, Damage = 140, Range = 24, Interval = 6, Speed = 2.4, Population = 2 },
-      new UnitRow { Id = "ff_skyguard_squad", At = "barracks", Size = UnitSize.Small, Cost = R(80, 50, 0, 20), Build = 18, Health = 120, Attack = AttackType.AntiAir, Damage = 20, Range = 8, Interval = 1, Speed = 4, Ability = SpecialAbility.AirPriority },
+      new UnitRow { Id = "ff_skyguard_squad", At = "barracks", Size = UnitSize.Small, Cost = R(28, 18, 0, 8), Build = 7, Health = 45, Attack = AttackType.AntiAir, Damage = 7, Range = 8, Interval = 1, Speed = 4, Ability = SpecialAbility.AirPriority },
+      // 신규 공격 유닛 4종(자유 연방): 대전차 로켓병(T1.5), 화염 돌격병(T1.5), 다연장 로켓차(T2), 기동 대공차(T2).
+      new UnitRow { Id = "ff_at_rocket", At = "barracks", Size = UnitSize.Small, Cost = R(65, 25, 15, 10), Build = 11, Health = 62, Attack = AttackType.AntiArmor, Damage = 26, Range = 8.5, Interval = 2.8, Speed = 3.6, Ability = SpecialAbility.AntiArmorBonus, AbilityMultiplier = 1.6 },
+      new UnitRow { Id = "ff_breacher", At = "barracks", Size = UnitSize.Small, Cost = R(55, 25, 15, 0), Build = 10, Health = 78, Attack = AttackType.AntiInfantry, Damage = 14, Range = 4, Splash = 2.4, Interval = 1.2, Speed = 4.2, Ability = SpecialAbility.GarrisonBreach, AbilityMultiplier = 1.5 },
       // 항목 31 새 소형: 군수공장의 빠른 정찰차.
       new UnitRow { Id = "ff_scout_buggy", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Small, Cost = R(90, 30, 0, 10), Build = 14, Health = 160, Attack = AttackType.AntiInfantry, Damage = 12, Range = 7, Interval = 1, Speed = 7.5 },
-      new UnitRow { Id = "ff_eagle_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(265, 0, 85, 65), Build = 35, Health = 660, Attack = AttackType.AntiArmor, Damage = 58, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble, AbilityMultiplier = 2, AbilitySeconds = 8 },
+      new UnitRow { Id = "ff_eagle_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(220, 0, 68, 55), Build = 31, Health = 720, Attack = AttackType.AntiArmor, Damage = 58, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.FirstShotDouble, AbilityMultiplier = 2, AbilitySeconds = 8 },
       // 항목 31 새 중형: 주변 아군 차량을 고치는 야전 정비차(가벼운 기관총).
       new UnitRow { Id = "ff_field_support", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(200, 50, 60, 40), Build = 30, Health = 500, Attack = AttackType.AntiInfantry, Damage = 8, Range = 6, Interval = 1, Speed = 5, Population = 2, Ability = SpecialAbility.FieldRepair, AbilityMultiplier = 15, AbilityRadius = 7, AbilityCount = 3 },
+      new UnitRow { Id = "ff_mlrs_artillery", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(220, 0, 85, 50), Build = 30, Health = 340, Attack = AttackType.Area, Damage = 24, Range = 16, MinRange = 5, Splash = 2.6, Interval = 4.8, Speed = 4.2, Population = 3, Ability = SpecialAbility.RocketSalvo, AbilityCount = 4 },
+      new UnitRow { Id = "ff_mobile_sam", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(190, 0, 70, 55), Build = 26, Health = 400, Attack = AttackType.AntiAir, Damage = 38, Range = 13, Interval = 1.6, Speed = 6.5, Population = 2, Ability = SpecialAbility.CarrierHunter, AbilityMultiplier = 1.5 },
       new UnitRow { Id = "ff_hawk_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(250, 0, 100, 100), Build = 40, Health = 450, Attack = AttackType.AntiArmor, Damage = 55, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
       new UnitRow { Id = "ff_skyfortress_bomber", At = "airfield", Size = UnitSize.Large, Air = true, Cost = R(500, 0, 250, 350), Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, Ability = SpecialAbility.CarpetBomb, AbilityMultiplier = 1.5, AbilityRadius = 8, AbilityCount = 5, AbilityCooldown = 45 },
       // 항목 31 새 대형: 중공업 기지의 중전차(B1: 자유 연방 중공업 기지가 만들 것이 없던 문제).
-      new UnitRow { Id = "ff_bulwark_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(450, 0, 200, 150), Build = 60, Health = 1800, Attack = AttackType.AntiArmor, Damage = 110, Range = 9, Interval = 2.5, Speed = 3.5 },
+      new UnitRow { Id = "ff_bulwark_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(400, 0, 170, 125), Build = 50, Health = 2000, Attack = AttackType.AntiArmor, Damage = 125, Range = 9, Interval = 2.5, Speed = 3.5 },
       new UnitRow { Id = "cf_engineer", At = "headquarters", Size = UnitSize.Engineer, Cost = R(80), Build = 8, Health = 70, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
       // 항목 30 밸런스(AI 40판: 자유 연방 75~85%): 용린 전차 체력·사거리 보강. 항목 31: 테크 단계로 자유 연방 전차가 2단계로 늦어져
       // 대륙 연방이 94%를 이겨(ai-31-2p-v1) 민병대 90→80·사거리 7→6, 화염 145→130으로 되돌림. v4(대륙 80%)에서 민병대 비용 철 40→50·목재 50→55, v5(자유 67%)에서 철 45·목재 50으로 중간값. 항목 32(엄폐 후 2인 자유 67%·4인 79%, 대륙 중형 생산 적음): 용린 전차 철 190→175·강철 50→45.
@@ -298,18 +303,23 @@ namespace FactoryWars.EditorTools {
       // 1차(ai-33-*-t1): 민병대 사거리 6→7·공격 간격 1→0.9, 용린 전차 체력 570→620(같은 값 교전 2승 2패) → 2인 대륙 79%, 4인 자유 71%.
       // 2차: 2인이 대륙으로 넘어가 간격 0.9→1, 용린 체력 620→570으로 되돌리고 사거리 7만 남긴다(같은 값 교전에서 자유 연방이 30~40% 남기고 이김).
       // 3차(ai-33-*-t2: 2인 대륙 81%, 4인 자유 64%): 사거리 7→6.5.
-      new UnitRow { Id = "cf_militia", At = "barracks", Size = UnitSize.Small, Cost = R(45, 50), Build = 12, Health = 88, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6.5, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
+      new UnitRow { Id = "cf_militia", At = "barracks", Size = UnitSize.Small, Cost = R(44, 48), Build = 12, Health = 49, Attack = AttackType.AntiInfantry, Damage = 5.3, Range = 6.5, Interval = 1, Speed = 4, Spawn = 2, Ability = SpecialAbility.MilitiaPair },
       new UnitRow { Id = "cf_sniper", At = "barracks", Size = UnitSize.Small, Cost = R(100, 60, 30), Build = 18, Health = 70, Attack = AttackType.AntiInfantry, Damage = 140, Range = 22, Interval = 5.5, Speed = 2.4, Population = 2 },
-      new UnitRow { Id = "cf_flame_squad", At = "barracks", Size = UnitSize.Small, Cost = R(70, 60), Build = 15, Health = 130, Attack = AttackType.AntiInfantry, Damage = 20, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
+      new UnitRow { Id = "cf_flame_squad", At = "barracks", Size = UnitSize.Small, Cost = R(35, 30), Build = 8, Health = 65, Attack = AttackType.AntiInfantry, Damage = 10, Range = 3, Splash = 2, Interval = 1, Speed = 4, Ability = SpecialAbility.FlameBurst, AbilityMultiplier = 3 },
+      // 신규 공격 유닛 4종(대륙 연방): 대전차 로켓병(T1.5), 화염 돌격병(T1.5), 화력지원 로켓차(T2), 기동 대공미사일차(T2).
+      new UnitRow { Id = "cf_at_rocket", At = "barracks", Size = UnitSize.Small, Cost = R(60, 25, 15, 10), Build = 10, Health = 66, Attack = AttackType.AntiArmor, Damage = 25, Range = 8, Interval = 2.8, Speed = 3.6, Ability = SpecialAbility.AntiArmorBonus, AbilityMultiplier = 1.6 },
+      new UnitRow { Id = "cf_breacher", At = "barracks", Size = UnitSize.Small, Cost = R(50, 25, 15, 0), Build = 9, Health = 82, Attack = AttackType.AntiInfantry, Damage = 14, Range = 4, Splash = 2.4, Interval = 1.2, Speed = 4.2, Ability = SpecialAbility.GarrisonBreach, AbilityMultiplier = 1.5 },
       // 항목 31 새 소형: 군수공장의 싸고 빠른 척후 오토바이.
       new UnitRow { Id = "cf_scout_bike", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Small, Cost = R(60, 30), Build = 10, Health = 110, Attack = AttackType.AntiInfantry, Damage = 10, Range = 6, Interval = 0.8, Speed = 8 },
-      new UnitRow { Id = "cf_dragonscale_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(175, 0, 45, 60), Build = 28, Health = 610, Attack = AttackType.AntiArmor, Damage = 50, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
+      new UnitRow { Id = "cf_dragonscale_tank", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(175, 0, 45, 60), Build = 28, Health = 575, Attack = AttackType.AntiArmor, Damage = 50, Range = 9, Interval = 2, Speed = 5, Ability = SpecialAbility.SwarmSpeed, AbilityMultiplier = 1.15, AbilityCount = 5 },
       new UnitRow { Id = "cf_thunder_aa", At = "vehicle_factory", Size = UnitSize.Medium, Cost = R(170, 0, 50, 60), Build = 28, Health = 450, Attack = AttackType.AntiAir, Damage = 40, Range = 10, Interval = 1.5, Speed = 5, Ability = SpecialAbility.MultiAirTarget, AbilityCount = 3 },
+      new UnitRow { Id = "cf_rocket_artillery", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(205, 0, 80, 45), Build = 28, Health = 360, Attack = AttackType.Area, Damage = 23, Range = 16, MinRange = 5, Splash = 2.6, Interval = 4.8, Speed = 4.2, Population = 3, Ability = SpecialAbility.RocketSalvo, AbilityCount = 4 },
+      new UnitRow { Id = "cf_mobile_sam", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(180, 0, 65, 50), Build = 25, Health = 420, Attack = AttackType.AntiAir, Damage = 37, Range = 13, Interval = 1.6, Speed = 6.5, Population = 2, Ability = SpecialAbility.CarrierHunter, AbilityMultiplier = 1.5 },
       // 항목 31 새 중형 공중: 비행장의 공격헬기(B2: 대륙 연방 비행장이 만들 것이 없던 문제).
       new UnitRow { Id = "cf_gale_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(200, 0, 75, 75), Build = 30, Health = 480, Attack = AttackType.AntiArmor, Damage = 56, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
       new UnitRow { Id = "cf_longwall_mlrs", At = "heavy_works", Size = UnitSize.Large, Cost = R(360, 0, 170, 170), Build = 48, Health = 1100, Attack = AttackType.Area, Damage = 195, Range = 18, MinRange = 6, Splash = 4, Interval = 4.5, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
       // 항목 31 새 대형: 중공업 기지의 요새 전차(물량형이라 자유 연방 중전차보다 싸고 약하다).
-      new UnitRow { Id = "cf_fortress_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(340, 0, 140, 100), Build = 42, Health = 2200, Attack = AttackType.AntiArmor, Damage = 140, Range = 9, Interval = 2.5, Speed = 3.5, Population = 5 },
+      new UnitRow { Id = "cf_fortress_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(340, 0, 140, 100), Build = 42, Health = 2000, Attack = AttackType.AntiArmor, Damage = 128, Range = 9, Interval = 2.5, Speed = 3.5, Population = 5 },
       new UnitRow { Id = "ff_scout_boat", At = "shipyard", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
       new UnitRow { Id = "ff_artillery_ship", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
       // 항목 34-D 작전기(비조작, 비행장 격납 칸). 전투기=기총소사(2단계), 공격기=폭격(3단계), 수송기=공수 투하(2단계). 수치는 ApplySortie 표.
@@ -326,8 +336,8 @@ namespace FactoryWars.EditorTools {
     // 항목 33 궁극 전력 유닛(가칭, 실존 함정·항공기 이름과 무관). 진영 유닛 목록(FactionSpec.Units)에는 넣지 않고 UltimateSpec에서만 가리킨다.
     // 비용 칸은 AI의 가치 계산용이다(실제 비용은 UltimateSpec). 인구는 BuildUltimates에서 따로 정한다.
     static readonly UnitRow[] UltimateUnits = {
-      // 공중 항모 "스톰네스트": 매우 느리고 튼튼하다. 주포는 지상 중거리 범위 포격. 대공 무기에 1.5배로 맞는다(UltimateSpec).
-      new UnitRow { Id = "ff_stormnest_carrier", Size = UnitSize.Large, Air = true, Cost = R(1700, 0, 900, 600), Build = 180, Health = 4200, Attack = AttackType.Area, Damage = 70, Range = 12, Splash = 3, Interval = 3, Speed = 2.2 },
+      // 공중 항모 "스톰네스트": 철 2800·강철 2200, 80초 지상 조립. 선체 직사 기관포 + 6기 드론 윙 + 광역 정찰·은신 탐지(26m) + 지휘 오라(14m).
+      new UnitRow { Id = "ff_stormnest_carrier", Size = UnitSize.Large, Air = true, Cost = R(2800, 0, 2200, 700), Build = 80, Health = 5200, Attack = AttackType.Area, Damage = 75, Range = 14, Splash = 3, Interval = 2, Speed = 2.2 },
       // 함재 드론 "둥지 드론": 소형 공중, 대전차 경무장. 항모 반경 안에서만 싸운다.
       new UnitRow { Id = "ff_nest_drone", Size = UnitSize.Small, Air = true, Cost = R(60, 0, 20, 20), Build = 12, Health = 160, Attack = AttackType.AntiArmor, Damage = 14, Range = 6, Interval = 1, Speed = 9 },
       // 상륙정 "파도머리": 탑재 부대를 해안에 내리고 포격 지원한다(차기 진영용, 시험 전용 진영에만 연결).
@@ -351,6 +361,12 @@ namespace FactoryWars.EditorTools {
       spec.AttackInterval = N(row.Interval);
       spec.IsRanged = row.Range > 3;
       spec.MoveSpeed = N(row.Speed);
+      spec.ColliderRadius = N(row.Air ? (row.Size == UnitSize.Large ? 3.2 : row.Size == UnitSize.Medium ? 1.8 : 1.2)
+        : row.Naval ? (row.Size == UnitSize.Small ? 2.0 : 3.0)
+        : row.Size == UnitSize.Large ? 2.6
+        : row.Size == UnitSize.Medium ? 2.2
+        : row.Vehicle ? 1.4
+        : 0.65);
       spec.SpawnCount = row.Spawn > 0 ? row.Spawn : 1;
       spec.IsNaval = row.Naval;
       spec.IsVehicle = row.Vehicle;
@@ -387,8 +403,11 @@ namespace FactoryWars.EditorTools {
       spec.JammerSeconds = 0;
       spec.JammerHealth = 0;
       spec.JammerGatherMultiplier = 1;
-      // 정찰 버기·척후 오토바이는 은신·숨긴 장치를 10m에서 드러낸다.
-      spec.DetectRadius = row.Id.EndsWith("scout_buggy") || row.Id.EndsWith("scout_bike") ? N(10) : 0;
+      // 정찰 버기·척후 오토바이는 10m 탐지, 공중 항모(ff_stormnest_carrier)는 26m 광역 정찰 및 주둔 저격수 은신 탐지.
+      spec.DetectRadius = row.Id == "ff_stormnest_carrier" ? N(26) : (row.Id.EndsWith("scout_buggy") || row.Id.EndsWith("scout_bike")) ? N(10) : 0;
+      if (row.Id == "ff_stormnest_carrier") {
+        spec.SightRange = N(26);
+      }
       if (row.Id.EndsWith("_sniper") == false) {
         return;
       }
@@ -469,7 +488,9 @@ namespace FactoryWars.EditorTools {
       spec.MaxHealth = health;
       spec.PopulationCapBonus = population;
       spec.ModuleSlots = slots;
-      spec.FootprintRadius = 3;
+      var isGrand = id.EndsWith("_headquarters") || id.EndsWith("_airfield") || id.EndsWith("_vehicle_factory")
+        || id.EndsWith("_heavy_works") || id.EndsWith("_carrier_yard") || id.EndsWith("_missile_silo") || id.EndsWith("_assault_dock");
+      spec.FootprintRadius = isGrand ? N(3.8) : N(3.5);
       // 항목 34: 건물 시야 8m, 레이더 기지 40m.
       spec.SightRange = id.EndsWith("_radar") ? 40 : 8;
       spec.IsDropOff = id.EndsWith("_headquarters") || id.EndsWith("_collection_yard");
@@ -510,14 +531,16 @@ namespace FactoryWars.EditorTools {
         BuildBuilding($"{prefix}_radar", R(200, 0, 60, 120), 25, 700, 0, 0),
         BuildBuilding($"{prefix}_helipad", R(250, 0, 60, 150), 25, 800, 0, 0, At("airfield").Where(u => u.IsAir && u.Size == UnitSize.Medium && u.name.Contains("_sortie_") == false).ToArray()),
         BuildBuilding($"{prefix}_artillery", R(350, 0, 150, 150), 35, 1200, 0, 0),
-        // 항목 33 궁극 전력 전용 건물(20): 항모 조립창 / 미사일 격납고. 3단계, 준비·보유 중에만 전기 4/초. 건설 45→30초(3차: AI 첫 사용이 21~23분으로 늦었다).
-        BuildBuilding(siteId, R(600, 0, 300, 300), 30, 2200, 0, 0),
+        // 항목 33 궁극 전력 전용 건물(20): 항모 조립창 / 미사일 격납고. 미사일 격납고는 75초 취약 건설(+30% 피해).
+        BuildBuilding(siteId, R(600, 0, 300, 300), siteId.EndsWith("_missile_silo") ? 75 : 30, 2200, 0, 0),
+        // 패트리어트 대탄도 요격 포대(21, T2.5): 비행 중인 전략 미사일을 자동 요격하고 공중 항모에 +50% 추가 대공 피해.
+        BuildBuilding($"{prefix}_patriot_turret", R(280, 0, 120, 140), 28, 950, 0, 1),
       };
-      // 항목 31 기지 단계: 군수공장·비행장·중공업 기지·방공포대·조선소는 2단계. 항목 32: 의무대·정비소·레이더·헬기장 2단계, 포병 진지 3단계.
-      var tiers = new Dictionary<int, int> { { 6, 2 }, { 7, 2 }, { 8, 2 }, { 11, 2 }, { 12, 2 }, { 15, 2 }, { 16, 2 }, { 17, 2 }, { 18, 2 }, { 19, 3 }, { 20, 3 } };
+      // 항목 31 기지 단계: 군수공장·비행장·중공업 기지·방공포대·조선소는 2단계. 항목 32: 의무대·정비소·레이더·헬기장 2단계, 포병 진지 3단계. 패트리어트(21): 2단계 + 방공포대·레이더(T2.5).
+      var tiers = new Dictionary<int, int> { { 6, 2 }, { 7, 2 }, { 8, 2 }, { 11, 2 }, { 12, 2 }, { 15, 2 }, { 16, 2 }, { 17, 2 }, { 18, 2 }, { 19, 3 }, { 20, 3 }, { 21, 2 } };
       for (var i = 0; i < buildings.Length; i++) {
         buildings[i].RequiredTier = tiers.TryGetValue(i, out var tier) ? tier : 1;
-        buildings[i].Defensive = i == 9 || i == 11 || i == 13 || i == 14;
+        buildings[i].Defensive = i == 9 || i == 11 || i == 13 || i == 14 || i == 21;
         buildings[i].MinRange = 0;
         buildings[i].SplashRadius = 0;
         buildings[i].CoverSpots = 0;
@@ -529,9 +552,15 @@ namespace FactoryWars.EditorTools {
         buildings[i].RevealRadius = 0;
         buildings[i].NeedsWater = false;
         buildings[i].GarrisonCapacity = 0;
+        buildings[i].RequiresNeutralOutpost = false;
+        buildings[i].InterceptRange = 0;
+        buildings[i].InterceptDamage = 0;
+        buildings[i].InterceptInterval = 0;
       }
+      // 전략 미사일 격납고는 점령한 중립 거점·암시장 반경 18m 이내에만 배치 가능.
+      buildings[20].RequiresNeutralOutpost = siteId.EndsWith("_missile_silo");
       // 모래주머니: 작고 낮은 엄폐(25%) 4칸.
-      buildings[13].FootprintRadius = 2;
+      buildings[13].FootprintRadius = N(2.5);
       buildings[13].CoverSpots = 4;
       buildings[13].CoverReduction = N(0.25);
       // 벙커(항목 33): 보병 분대 4개가 실제로 들어가 안에서 쏜다. 안에서는 맞지 않고 벙커가 대신 맞는다. 둘레 엄폐점은 없앴다(항목 32의 임시 구현).
@@ -570,6 +599,7 @@ namespace FactoryWars.EditorTools {
       Requires(18, 6, 1);
       Requires(19, 8);
       Requires(20, sitePrerequisites);
+      Requires(21, 11, 17);
       void Power(int building, int output, int storage, double upkeep, UpkeepMode mode) {
         buildings[building].PowerOutput = output;
         buildings[building].PowerStorage = storage;
@@ -594,6 +624,7 @@ namespace FactoryWars.EditorTools {
       Power(18, 0, 0, 1.5, UpkeepMode.WhileProducing);
       Power(19, 0, 0, 1, UpkeepMode.Always);
       Power(20, 0, 0, 4, UpkeepMode.WhileUltimate);
+      Power(21, 0, 0, 1.5, UpkeepMode.Always);
       for (var i = 0; i < buildings.Length; i++) {
         buildings[i].Role = (BuildingRole)i;
       }
@@ -639,6 +670,17 @@ namespace FactoryWars.EditorTools {
       bunker.AttackInterval = 1;
       EditorUtility.SetDirty(bunker);
 
+      // 패트리어트 대탄도 요격 포대(T2.5): 대공 + 항모 저격(+50%) + 비행 중 전략 미사일 요격(반경 36m, 60 피해 / 0.8초).
+      var patriot = buildings[21];
+      patriot.Attack = AttackType.AntiAir;
+      patriot.Damage = 48;
+      patriot.Range = 24;
+      patriot.AttackInterval = N(1.2);
+      patriot.InterceptRange = 36;
+      patriot.InterceptDamage = 60;
+      patriot.InterceptInterval = N(0.8);
+      EditorUtility.SetDirty(patriot);
+
       var faction = Asset<FactionSpec>($"faction_{factionId}");
       faction.FactionId = factionId;
       faction.RangedRangeMultiplier = N(ranged);
@@ -660,7 +702,7 @@ namespace FactoryWars.EditorTools {
       return faction;
     }
 
-    static ResearchSpec Research(string id, ResearchKind kind, UnitSize size, int level, ResourceCost cost, int seconds, int tier) {
+    static ResearchSpec Research(string id, ResearchKind kind, UnitSize size, int level, ResourceCost cost, int seconds, int tier, FactionSpecial special = FactionSpecial.None) {
       var spec = Asset<ResearchSpec>(id);
       spec.Kind = kind;
       spec.Size = size;
@@ -673,6 +715,7 @@ namespace FactoryWars.EditorTools {
       spec.EliteHealthMultiplier = 1;
       spec.EliteRangeBonus = 0;
       spec.EliteDamageMultiplier = 1;
+      spec.Special = special;
       EditorUtility.SetDirty(spec);
       return spec;
     }
@@ -699,18 +742,18 @@ namespace FactoryWars.EditorTools {
       carrier.Site = Ref(Site(free));
       carrier.RequiredTier = 3;
       carrier.Research = Ref(freeResearch);
-      // 3차: 강철 1000→900(철 1600→1700). 대형 3.6기 값.
-      carrier.Cost = R(1700, 0, 900, 600);
-      carrier.PrepareSeconds = 180;
-      carrier.RearmCost = R(1700, 0, 900, 600);
-      carrier.RearmSeconds = 180;
+      // 공중 항모: 철 2800, 강철 2200, 지상 조립 80초, 보유 상한 1기, 자율 6드론 윙, 14m 지휘 오라(+15% 연사·+10% 이동).
+      carrier.Cost = R(2800, 0, 2200, 700);
+      carrier.PrepareSeconds = 80;
+      carrier.RearmCost = R(2800, 0, 2200, 700);
+      carrier.RearmSeconds = 80;
       carrier.OwnedLimit = 1;
       carrier.CooldownSeconds = 120;
       carrier.RefundFraction = N(0.5);
       carrier.CancelRefundFraction = N(0.75);
       carrier.Carrier = Ref(extra["ff_stormnest_carrier"]);
       carrier.Drone = Ref(extra["ff_nest_drone"]);
-      carrier.DroneCount = 8;
+      carrier.DroneCount = 6;
       carrier.DroneRadius = 16;
       carrier.DroneLaunchSeconds = N(1.5);
       carrier.DroneBuildSeconds = 12;
@@ -718,6 +761,12 @@ namespace FactoryWars.EditorTools {
       carrier.DroneRecoverSeconds = 8;
       carrier.DroneDockDistance = 2;
       carrier.AntiAirTakenMultiplier = N(1.5);
+      carrier.CarrierDamagedRatio = N(0.5);
+      carrier.CarrierDamagedMultiplier = N(0.7);
+      carrier.CarrierAuraRadius = 14;
+      carrier.CarrierAuraAttackBonus = N(0.15);
+      carrier.CarrierAuraSpeedBonus = N(0.10);
+      carrier.ConstructionVulnerabilityMultiplier = N(1.3);
       EditorUtility.SetDirty(carrier);
       free.Ultimate = Ref(carrier);
       EditorUtility.SetDirty(free);
@@ -727,20 +776,29 @@ namespace FactoryWars.EditorTools {
       missile.Site = Ref(Site(continental));
       missile.RequiredTier = 3;
       missile.Research = Ref(continentalResearch);
-      // 3차: 강철 900→800. 대형 4.1기 값.
-      missile.Cost = R(1400, 0, 800, 700);
-      missile.PrepareSeconds = 180;
-      missile.RearmCost = R(700, 0, 450, 350);
-      missile.RearmSeconds = 120;
+      // 전략 미사일 격납고: 철 2500, 강철 2000, 준비 75초, 재충전 120초 + 발사당 강철 300, 비행 궤적 7초(300 HP), 폭발 12m(2400 피해), EMP 5초, 초토화 15초.
+      missile.Cost = R(2500, 0, 2000, 700);
+      missile.PrepareSeconds = 75;
+      missile.RearmCost = R(0, 0, 300, 350);
+      missile.RearmSeconds = 60;
       missile.OwnedLimit = 1;
-      missile.CooldownSeconds = 60;
+      missile.CooldownSeconds = 120;
       missile.RefundFraction = N(0.5);
       missile.CancelRefundFraction = N(0.75);
-      missile.WarningSeconds = 10;
-      missile.BlastRadius = 14;
-      missile.BlastDamage = 1500;
-      missile.BlastEdgeFraction = N(0.35);
-      missile.BlastBuildingMultiplier = N(1.6);
+      missile.WarningSeconds = 7;
+      missile.MissileHealth = 300;
+      missile.LaunchBackblastRadius = 6;
+      missile.LaunchBackblastDamage = 180;
+      missile.SiloOutpostRadius = 18;
+      missile.ConstructionVulnerabilityMultiplier = N(1.3);
+      missile.EmpDurationSeconds = 5;
+      missile.ScorchedDurationSeconds = 15;
+      missile.ScorchedDamagePerSecond = 28;
+      missile.ScorchedSlowMultiplier = N(0.65);
+      missile.BlastRadius = 12;
+      missile.BlastDamage = 2400;
+      missile.BlastEdgeFraction = N(0.45);
+      missile.BlastBuildingMultiplier = N(1.0);
       missile.BlastCityMultiplier = 2;
       missile.FriendlyFire = true;
       // 요격: 착탄 지점 30m 안의 방공포대 하나당 2점, 방공포대가 있을 때 레이더 기지가 있으면 +2점. 2점 70%, 4점 45%, 6점 25% 피해.
@@ -810,9 +868,22 @@ namespace FactoryWars.EditorTools {
       test.Units = free.Units;
       test.Modules = modules;
       test.StartingUnits = free.StartingUnits;
-      test.Researches = free.Researches.Select(r => r == Ref(freeResearch) ? Ref(assaultResearch) : r).ToArray();
+      var tfRapidDeploy = Research("research_tf_rapid_deploy", ResearchKind.Special, UnitSize.Small, 1, R(180, 0, 90, 60), 45, 2, FactionSpecial.RapidDeployment);
+      var tfTacticalSmoke = Research("research_tf_tactical_smoke", ResearchKind.Special, UnitSize.Medium, 1, R(200, 0, 110, 80), 50, 2, FactionSpecial.TacticalSmoke);
+      test.Researches = free.Researches
+        .Where(r => r != Ref(freeResearch) && AssetOfResearch(r).Kind != ResearchKind.Special)
+        .Append(Ref(assaultResearch))
+        .Append(Ref(tfRapidDeploy))
+        .Append(Ref(tfTacticalSmoke))
+        .ToArray();
       test.Ultimate = Ref(assault);
       EditorUtility.SetDirty(test);
+    }
+
+    static ResearchSpec AssetOfResearch(AssetRef<ResearchSpec> reference) {
+      return AssetDatabase.FindAssets("t:ResearchSpec", new[] { DataRoot })
+        .Select(guid => AssetDatabase.LoadAssetAtPath<ResearchSpec>(AssetDatabase.GUIDToAssetPath(guid)))
+        .First(asset => Ref(asset) == reference);
     }
 
     static BuildingSpec AssetOf(AssetRef<BuildingSpec> reference) {
@@ -879,11 +950,11 @@ namespace FactoryWars.EditorTools {
       ai.EvacuateBlast = normal;
       ai.MissileMinValue = 2500;
       ai.UltimateHoldSeconds = 45;
-      // 항목 33 소탕·후반: 사령부 없이 핵심 건물 2채 이하인 적을 먼저 끝낸다. 생산이 20초 넘게 멈췄으면 10기만 있어도 나간다.
-      ai.FinishCoreBuildings = 2;
+      // 항목 33 소탕·후반: 사령부 없이 핵심 건물 4채 이하인 적을 먼저 끝낸다. 생산이 12초 넘게 멈췄으면 6기만 있어도 나간다.
+      ai.FinishCoreBuildings = 4;
       ai.FinishDistanceFactor = N(0.1);
-      ai.StalledWaveSize = normal ? 10 : 0;
-      ai.StalledSeconds = 20;
+      ai.StalledWaveSize = normal ? 6 : 0;
+      ai.StalledSeconds = 12;
       ai.LastStand = true;
       ai.BunkerSquads = normal ? 2 : 1;
       ai.SizeShares = normal ? new[] { N(0.35), N(0.45), N(0.2) } : new[] { N(0.5), N(0.4), N(0.1) };
@@ -951,9 +1022,9 @@ namespace FactoryWars.EditorTools {
       ai.BreakReserveIronLeft = 4000;
       ai.PowerMargin = 3;
       ai.PopulationMargin = 4;
-      // 건물 지름 6m + 간격(BuildingGap) 2m. 7이면 이웃 칸이 모두 막혀 4인 본진이 차서 인구가 막혔다(항목 19).
-      ai.SiteGrid = 8;
-      ai.SiteRings = 7;
+      // 1.25x 산업 공장·건물 지름(7~7.6m) + 간격(BuildingGap 2m)에 맞춰 AI 배치 격자 9m·8링 확보.
+      ai.SiteGrid = 9;
+      ai.SiteRings = 8;
       ai.StrategicDiplomacy = strategic;
       // 보통은 점수로만, 쉬움은 낮은 기준에 무작위를 더해 판단한다.
       ai.AcceptOpinion = strategic ? 40 : 10;
@@ -1008,10 +1079,17 @@ namespace FactoryWars.EditorTools {
       var ffUltimate = UltimateResearch("research_ultimate_ff");
       var cfUltimate = UltimateResearch("research_ultimate_cf");
       var tfUltimate = UltimateResearch("research_ultimate_tf");
+      // 진영 특화 업그레이드(2단계): 자유 연방(고속 볼트 · 스텔스 도료), 대륙 연방(반응장갑 ERA · 고폭 철갑탄).
+      var ffRapidBolts = Research("research_ff_rapid_bolts", ResearchKind.Special, UnitSize.Small, 1, R(180, 0, 90, 60), 45, 2, FactionSpecial.RapidCycleBolts);
+      var ffStealthCoating = Research("research_ff_stealth_coating", ResearchKind.Special, UnitSize.Medium, 1, R(240, 0, 140, 100), 55, 2, FactionSpecial.StealthCoating);
+      var cfEra = Research("research_cf_era", ResearchKind.Special, UnitSize.Medium, 1, R(220, 0, 120, 80), 50, 2, FactionSpecial.ReactiveArmorEra);
+      var cfHeap = Research("research_cf_heap", ResearchKind.Special, UnitSize.Large, 1, R(250, 0, 150, 100), 55, 2, FactionSpecial.HighExplosiveAp);
       // 전용 건물 선행: 항모 조립창 = 비행장(7) + 중공업 기지(8), 미사일 격납고 = 중공업 기지(8) + 레이더 기지(17).
-      var free = BuildFaction("free_federation", "ff", units, 1.1, 1, 1, new[] { "ranger_squad", "ranger_squad", "eagle_tank" }, modules, shared.Append(Ref(ffElite)).Append(Ref(ffUltimate)).ToArray(),
+      var free = BuildFaction("free_federation", "ff", units, 1.1, 1, 1, new[] { "ranger_squad", "ranger_squad", "eagle_tank" }, modules,
+        shared.Append(Ref(ffElite)).Append(Ref(ffUltimate)).Append(Ref(ffRapidBolts)).Append(Ref(ffStealthCoating)).ToArray(),
         "ff_carrier_yard", new[] { 7, 8 });
-      var continental = BuildFaction("continental_federation", "cf", units, 1, 0.75, 1.2, new[] { "militia", "militia", "dragonscale_tank" }, modules, shared.Append(Ref(cfElite)).Append(Ref(cfUltimate)).ToArray(),
+      var continental = BuildFaction("continental_federation", "cf", units, 1, 0.75, 1.2, new[] { "militia", "militia", "dragonscale_tank" }, modules,
+        shared.Append(Ref(cfElite)).Append(Ref(cfUltimate)).Append(Ref(cfEra)).Append(Ref(cfHeap)).ToArray(),
         "cf_missile_silo", new[] { 8, 17 });
       BuildUltimates(units, free, continental, modules, ffUltimate, cfUltimate, tfUltimate);
 
@@ -1081,11 +1159,11 @@ namespace FactoryWars.EditorTools {
       rules.JammerDisarmPerSecond = 10;
       rules.JammerDisarmRadius = 4;
       rules.SortieAntiAirFactor = N(3);
-      // 항목 37 베테랑: 킬 3·6·10에 계급 1·2·3. 체력 +10/20/30%, 피해 +8/16/24%, 사거리 +4/8/12%, 재장전 -5/10/15%, 비전투 5초 뒤 초당 0.5/1/1.5% 회복.
+      // 베테랑 9킬 상한: 킬 3(★)·6(★★)·9(★★★ MAX). 별당 체력 +8%, 피해 +8%, 공격 속도 +5%(재장전 -5%).
       rules.VetKillsRank1 = 3;
       rules.VetKillsRank2 = 6;
-      rules.VetKillsRank3 = 10;
-      rules.VetHealthBonus = new[] { N(0.10), N(0.20), N(0.30) };
+      rules.VetKillsRank3 = 9;
+      rules.VetHealthBonus = new[] { N(0.08), N(0.16), N(0.24) };
       rules.VetDamageBonus = new[] { N(0.08), N(0.16), N(0.24) };
       rules.VetRangeBonus = new[] { N(0.04), N(0.08), N(0.12) };
       rules.VetReloadBonus = new[] { N(0.05), N(0.10), N(0.15) };
@@ -1169,6 +1247,23 @@ namespace FactoryWars.EditorTools {
       rules.NoteSingleCost = 50;
       rules.NoteGroupCost = 100;
       rules.PowerResumeLevel = 5;
+      rules.LowPowerProductionMultiplier = N(0.65);
+      rules.FactoryLv2Cost = R(200, 0, 100);
+      rules.FactoryLv3Cost = R(380, 0, 220);
+      rules.FactoryLv2SpeedBonus = N(0.25);
+      rules.FactoryLv3SpeedBonus = N(0.50);
+      rules.FactorySynergyRadius = 12;
+      rules.FactorySynergyBonus = N(0.15);
+      rules.OverdriveDurationSeconds = 20;
+      rules.OverdriveCooldownSeconds = 35;
+      rules.OverdriveSpeedBonus = N(0.50);
+      rules.OverdrivePowerMultiplier = 2;
+      rules.OverdriveHeatDamagePerSecond = 8;
+      rules.DepotVehicleSpeedBonus = N(0.10);
+      rules.DepotArtilleryReloadBonus = N(0.12);
+      rules.DepotSortieCooldownReduction = N(0.15);
+      rules.DepotExplosionRadius = 10;
+      rules.DepotExplosionDamage = 480;
       rules.OutageTowerIntervalMultiplier = 2;
       rules.SpawnOffset = 6;
       // 항목 32 엄폐: 10m 안에서 찾고, 막는 방향 ±60도(cos 0.5) 안의 사격만 줄인다. 광역(포격·폭격·화염)은 절반 효과.

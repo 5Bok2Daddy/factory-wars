@@ -702,6 +702,25 @@ namespace Quantum.FactoryWars {
 
     /// <summary>중심에서 바깥으로 격자를 돌며 지을 수 있는 첫 칸을 찾는다.</summary>
     static bool FindSite(Frame f, PlayerRef player, AiSpec ai, BuildingSpec spec, FPVector3 center, out FPVector3 site) {
+      if (spec.RequiresNeutralOutpost) {
+        // 전략 미사일 격납고는 점령한 중립 거점 또는 암시장 주변을 중심으로 탐색한다.
+        var sites = f.Filter<Transform3D, CaptureSite>();
+        while (sites.NextUnsafe(out _, out var t, out var c)) {
+          if (c->Owner == player) {
+            center = t->Position;
+            break;
+          }
+        }
+        if (UltimateSystem.IsNearNeutralOutpost(f, player, center, (FP)18) == false) {
+          var traders = f.Filter<Transform3D, NpcTrader>();
+          while (traders.NextUnsafe(out _, out var t, out var tr)) {
+            if (tr->Destroyed == false && (tr->HostileMask & (1 << (int)player)) == 0) {
+              center = t->Position;
+              break;
+            }
+          }
+        }
+      }
       var isShipyard = spec.Role == BuildingRole.Shipyard;
       var step = isShipyard ? ai.SiteGrid / System.Math.Max(1, ai.ShipyardGridDivisor) : ai.SiteGrid;
       var rings = isShipyard ? ai.SiteRings * System.Math.Max(1, ai.ShipyardRingMultiplier) : ai.SiteRings;
@@ -712,7 +731,7 @@ namespace Quantum.FactoryWars {
               continue;
             }
             site = center + new FPVector3(step * x, FP._0, step * z);
-            if (FactoryWarsUtil.IsReachable(f, player, site) && ProductionSystem.CanPlace(f, spec, site)) {
+            if (FactoryWarsUtil.IsReachable(f, player, site) && ProductionSystem.CanPlace(f, spec, site, player)) {
               return true;
             }
           }
@@ -1146,7 +1165,7 @@ namespace Quantum.FactoryWars {
       var units = f.Filter<Unit>();
       while (ordered < MaxOrder && units.NextUnsafe(out var entity, out var unit)) {
         var spec = f.FindAsset(unit->Spec);
-        if (unit->Owner != player || spec.Attack == AttackType.None || unit->Garrison != EntityRef.None || unit->GarrisonTarget != EntityRef.None) {
+        if (unit->Owner != player || spec.Attack == AttackType.None || unit->Garrison != EntityRef.None || unit->GarrisonTarget != EntityRef.None || unit->Transport != EntityRef.None) {
           continue;
         }
         unit->ReservedUntilFrame = 0;
@@ -1313,7 +1332,7 @@ namespace Quantum.FactoryWars {
         var until = strike->ImpactFrame + FactoryWarsUtil.SecondsToFrames(f, FP._1);
         var units = f.Filter<Transform3D, Unit>();
         while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
-          if (unit->Owner != player || unit->Garrison != EntityRef.None || f.FindAsset(unit->Spec).IsAir || UltimateSystem.IsAutonomous(f, entity)
+          if (unit->Owner != player || unit->Garrison != EntityRef.None || unit->Transport != EntityRef.None || f.FindAsset(unit->Spec).IsAir || UltimateSystem.IsAutonomous(f, entity)
               || FactoryWarsUtil.FlatDistanceSqr(transform->Position, strike->Target) > radiusSqr) {
             continue;
           }
@@ -1360,7 +1379,7 @@ namespace Quantum.FactoryWars {
         }
         var units = f.Filter<Transform3D, Unit>();
         while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
-          if (unit->Garrison != EntityRef.None || FactoryWarsUtil.FlatDistanceSqr(transform->Position, center->Position) > radiusSqr) {
+          if (unit->Garrison != EntityRef.None || unit->Transport != EntityRef.None || FactoryWarsUtil.FlatDistanceSqr(transform->Position, center->Position) > radiusSqr) {
             continue;
           }
           var unitSpec = f.FindAsset(unit->Spec);
@@ -1526,7 +1545,7 @@ namespace Quantum.FactoryWars {
           var pick = EntityRef.None;
           var units = f.Filter<Transform3D, Unit>();
           while (units.NextUnsafe(out var candidate, out var position, out var unit)) {
-            if (unit->Owner != player || unit->Garrison != EntityRef.None || unit->GarrisonTarget != EntityRef.None || f.Number < unit->ReservedUntilFrame
+            if (unit->Owner != player || unit->Garrison != EntityRef.None || unit->GarrisonTarget != EntityRef.None || unit->Transport != EntityRef.None || f.Number < unit->ReservedUntilFrame
                 || CitySystem.IsInfantry(f.FindAsset(unit->Spec)) == false) {
               continue;
             }
@@ -1683,7 +1702,7 @@ namespace Quantum.FactoryWars {
         while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
           var spec = f.FindAsset(unit->Spec);
           if (unit->Owner != player || spec.Attack == AttackType.None || spec.IsAir || spec.IsNaval || spec.Range < minRange
-              || unit->Order != UnitOrder.Stop || f.Number < unit->ReservedUntilFrame || unit->Garrison != EntityRef.None) {
+              || unit->Order != UnitOrder.Stop || f.Number < unit->ReservedUntilFrame || unit->Garrison != EntityRef.None || unit->Transport != EntityRef.None) {
             continue;
           }
           var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, target);
@@ -1804,7 +1823,7 @@ namespace Quantum.FactoryWars {
         var sent = 0;
         var units = f.Filter<Transform3D, Unit>();
         while (sent < capacity && units.NextUnsafe(out var entity, out var transform, out var unit)) {
-          if (unit->Owner != player || unit->Garrison != EntityRef.None || unit->GarrisonTarget != EntityRef.None || f.Number < unit->ReservedUntilFrame
+          if (unit->Owner != player || unit->Garrison != EntityRef.None || unit->GarrisonTarget != EntityRef.None || unit->Transport != EntityRef.None || f.Number < unit->ReservedUntilFrame
               || CitySystem.IsInfantry(f.FindAsset(unit->Spec)) == false) {
             continue;
           }
@@ -2165,7 +2184,7 @@ namespace Quantum.FactoryWars {
       for (var i = 0; i < f.PlayerCount; i++) {
         PlayerRef other = i;
         if (other != player && DiplomacySystem.GetRelation(f, player, other) == Relation.Allied
-            && state->Stock.Iron >= rules.BreakCost && ShouldBreak(f, player, other, ai)) {
+            && state->Stock.Iron >= DiplomacySystem.BreakCostFor(f, player, other) && ShouldBreak(f, player, other, ai)) {
           DiplomacySystem.Handle(f, player, other, DiplomacyAction.Break);
           return;
         }

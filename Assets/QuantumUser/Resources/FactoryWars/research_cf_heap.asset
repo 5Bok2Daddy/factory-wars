@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf63a0194e7e6f642ba6543a457acd64, type: 3}
+  m_Name: research_cf_heap
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/research_cf_heap
+    Guid:
+      Value: 424366504479132218
+  Kind: 4
+  Size: 3
+  Level: 1
+  Cost:
+    Iron:
+      RawValue: 16384000
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 9830400
+    Power:
+      RawValue: 6553600
+  Seconds:
+    RawValue: 3604480
+  RequiredTier: 2
+  Requires:
+    Id:
+      Value: 0
+  EliteUnit:
+    Id:
+      Value: 0
+  EliteHealthMultiplier:
+    RawValue: 65536
+  EliteRangeBonus:
+    RawValue: 0
+  EliteDamageMultiplier:
+    RawValue: 65536
+  Special: 4

@@ -63,6 +63,17 @@ namespace FactoryWars.View {
       ("ff_carrier_yard", "ff_airfield", 0.95f),
       ("cf_missile_silo", "cf_heavy_works", 0.95f),
       ("tf_assault_dock", "ff_shipyard", 0.95f),
+      // 신규 공격 유닛 4종(양 진영) & 패트리어트 대탄도 요격 포대(T2.5).
+      ("ff_at_rocket", "ff_ranger_squad", 1.0f),
+      ("cf_at_rocket", "cf_militia", 1.0f),
+      ("ff_breacher", "cf_flame_squad", 1.05f),
+      ("cf_breacher", "cf_flame_squad", 1.05f),
+      ("ff_mlrs_artillery", "cf_longwall_mlrs", 0.9f),
+      ("cf_rocket_artillery", "cf_longwall_mlrs", 0.9f),
+      ("ff_mobile_sam", "cf_thunder_aa", 0.95f),
+      ("cf_mobile_sam", "cf_thunder_aa", 0.95f),
+      ("ff_patriot_turret", "ff_air_defense", 1.15f),
+      ("cf_patriot_turret", "cf_air_defense", 1.15f),
     };
 
     public static string BorrowedId(string id) {
@@ -109,11 +120,15 @@ namespace FactoryWars.View {
     static readonly Material[] Materials = new Material[Palette.Count * 2];
     static Material _neutral;
 
-    public static string MaterialName(int color, bool powered) => $"{TeamPrefix}{color % Palette.Count}{(powered ? "On" : "Off")}";
+    public static string MaterialName(int color, bool powered) {
+      var safe = ((color % Palette.Count) + Palette.Count) % Palette.Count;
+      return $"{TeamPrefix}{safe}{(powered ? "On" : "Off")}";
+    }
 
     public static Material Team(int color, bool powered) {
-      var index = color % Palette.Count * 2 + (powered ? 1 : 0);
-      return Materials[index] != null ? Materials[index] : Materials[index] = Resources.Load<Material>(Root + MaterialName(color, powered));
+      var safe = ((color % Palette.Count) + Palette.Count) % Palette.Count;
+      var index = safe * 2 + (powered ? 1 : 0);
+      return Materials[index] != null ? Materials[index] : Materials[index] = Resources.Load<Material>(Root + MaterialName(safe, powered));
     }
 
     public static Material NeutralMaterial => _neutral != null ? _neutral : _neutral = Resources.Load<Material>(Root + Neutral);

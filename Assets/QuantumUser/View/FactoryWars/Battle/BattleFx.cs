@@ -8,12 +8,14 @@ namespace FactoryWars.View {
   /// </summary>
   public class BattleFx : MonoBehaviour {
     const int MaxWrecks = 24;
+    const int MaxPermanentRubble = 48;
     const float WreckSeconds = 30f;
     const float WreckSink = 1.2f;
-    // 항목 27 K-2: 크레이터는 영구로 남는다. 상한을 넘으면 오래된 것부터 지운다(손상 지도에는 이미 그을음으로 남아 있다).
-    static int MaxCraters => GraphicsQuality.Current == QualityTier.Low ? 48 : 96;
-    // 그을음 자국은 25초 뒤 사라진다(전장이 지저분해지지 않게).
-    const float CraterSeconds = 25f;
+    // 모바일 안전 링-버퍼 데칼 풀: 최대 120개, 일반 그을음은 75초 유지 + 10초 부드러운 알파 페이드아웃, 중화기/전략 미사일 크레이터는 영구 유지.
+    public const int MaxDecalPool = 120;
+    public const float CraterHoldSeconds = 75f;
+    public const float CraterFadeSeconds = 10f;
+    static int MaxCraters => GraphicsQuality.Current == QualityTier.Low ? 64 : MaxDecalPool;
 
     // 전투 가독성: 포구 섬광 주황(#FF6B00 계열), 소총·기관총 예광 호박색(#FFD166), 포탄 연노랑(#FFF3B0), 미사일 주황 불꽃.
     static readonly Color Muzzle = new Color(1f, 0.42f, 0f, 1f);
@@ -35,11 +37,16 @@ namespace FactoryWars.View {
     static readonly Color FlashCore = new Color(1f, 0.78f, 0.38f, 1f);
     static readonly Color SmokeBillow = new Color(0.2f, 0.2f, 0.21f, 0.62f);
     Mesh _rubble;
-    readonly Queue<(GameObject Item, float Born, float Y)> _wrecks = new Queue<(GameObject, float, float)>();
-    readonly List<(Vector3 Position, float Size, float Born)> _craters = new List<(Vector3, float, float)>();
+    readonly Queue<(GameObject Item, float Born, Vector3 Pos, float Radius, float NextSmoke)> _wrecks = new Queue<(GameObject, float, Vector3, float, float)>();
+    readonly List<GameObject> _permanentRubble = new List<GameObject>();
+    readonly List<(GameObject Go, Material Mat, float Born, float Duration, float MaxScale, bool IsDome)> _shockwaves = new List<(GameObject, Material, float, float, float, bool)>();
+    readonly List<(Vector3 Position, float Size, float Born, bool Permanent)> _craters = new List<(Vector3, float, float, bool)>();
     MeshFilter _craterFilter;
     bool _cratersDirty;
+    float _nextCraterFadeRebuild;
     public int CraterCount => _craters.Count;
+    public int PermanentCraterCount { get { var n = 0; foreach (var c in _craters) { if (c.Permanent) n++; } return n; } }
+    public int PermanentRubbleCount => _permanentRubble.Count;
     public float ShakeAmount { get; private set; }
 
     public int Emitted { get; private set; }
@@ -173,26 +180,26 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>소총 예광탄: 총구에서 표적까지 바늘처럼 가는 빛줄기(#FFE066 계열) 하나.</summary>
-    public void Needle(Vector3 from, Vector3 to, float speed) {
+    /// <summary>소총 예광탄: 총구에서 표적까지 바늘처럼 가는 빛줄기(기본 #FFE066, Mk.2/Mk.3 색상 진화 지원).</summary>
+    public void Needle(Vector3 from, Vector3 to, float speed, Color? tint = null) {
       var delta = to - from;
       var distance = delta.magnitude;
       if (distance < 0.5f) {
         return;
       }
-      Emit(_needle, from, delta / distance * speed, BattleView.NeedleWidth, distance / speed + 0.03f, NeedleColor);
+      Emit(_needle, from, delta / distance * speed, BattleView.NeedleWidth, distance / speed + 0.03f, tint ?? NeedleColor);
     }
 
     public int NeedleCount => _needle != null ? _needle.particleCount : 0;
 
-    /// <summary>탄 궤적. 빠른 입자 하나를 쏘고 도착 시점에 사라지게 한다.</summary>
-    public void Tracer(Vector3 from, Vector3 to, float speed, float width, bool missile) {
+    /// <summary>탄 궤적. 빠른 입자 하나를 쏘고 도착 시점에 사라지게 한다(Mk.2/Mk.3 색상 진화 지원).</summary>
+    public void Tracer(Vector3 from, Vector3 to, float speed, float width, bool missile, Color? tint = null) {
       var delta = to - from;
       var distance = delta.magnitude;
       if (distance < 0.5f) {
         return;
       }
-      Emit(_tracer, from, delta / distance * speed, width, distance / speed + 0.04f, missile ? Missile : width > 0.25f ? Shell : Bullet);
+      Emit(_tracer, from, delta / distance * speed, width, distance / speed + 0.04f, tint ?? (missile ? Missile : width > 0.25f ? Shell : Bullet));
       if (missile == false && width > 0.25f) {
         // 포탄: 옅은 흰·회색 연기 꼬리.
         var ribbon = Scaled(4);
@@ -237,19 +244,28 @@ namespace FactoryWars.View {
       Emit(_glow, position, Vector3.zero, size, 0.18f, Spark);
     }
 
-    /// <summary>땅에 남는 크레이터. 최대 64개를 메쉬 하나로 합쳐 그린다. 60초 뒤 사라진다.</summary>
-    public void Crater(Vector3 position, float size) {
-      if (_craters.Count >= MaxCraters) {
-        _craters.RemoveAt(0);
+    /// <summary>땅에 남는 그을음·크레이터 링-버퍼(최대 120개, 1 드로우콜). permanent=true면 경기 끝까지 영구 잔존.</summary>
+    public void Crater(Vector3 position, float size, bool permanent = false) {
+      var cap = MaxCraters;
+      if (_craters.Count >= cap) {
+        // 영구 크레이터는 보존하고 가장 오래된 일반 그을음부터 재활용한다.
+        var evict = -1;
+        for (var i = 0; i < _craters.Count; i++) {
+          if (_craters[i].Permanent == false) {
+            evict = i;
+            break;
+          }
+        }
+        _craters.RemoveAt(evict >= 0 ? evict : 0);
       }
-      _craters.Add((new Vector3(position.x, 0f, position.z), size, Time.time));
+      _craters.Add((new Vector3(position.x, 0f, position.z), size, Time.time, permanent));
       _cratersDirty = true;
     }
 
     static Material _scorchMat;
     static Texture2D _scorchTex;
 
-    static Material ScorchMaterial() {
+    public static Material ScorchMaterial() {
       if (_scorchMat != null) {
         return _scorchMat;
       }
@@ -274,7 +290,7 @@ namespace FactoryWars.View {
       }
       _scorchTex.SetPixels32(pixels);
       _scorchTex.Apply(false);
-      var shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Transparent") ?? Shader.Find("Sprites/Default");
+      var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Sprites/Default") ?? Shader.Find("Universal Render Pipeline/Unlit");
       _scorchMat = new Material(shader) { name = "FlatScorchDecal" };
       _scorchMat.mainTexture = _scorchTex;
       if (_scorchMat.HasProperty("_BaseMap")) {
@@ -309,11 +325,16 @@ namespace FactoryWars.View {
       var mesh = new Mesh { name = "scorch_decals" };
       var count = _craters.Count;
       if (count > 0) {
+        var now = Time.time;
         var verts = new Vector3[count * 4];
         var uvs = new Vector2[count * 4];
+        var cols = new Color32[count * 4];
         var tris = new int[count * 6];
         for (var c = 0; c < count; c++) {
-          var (center, size, _) = _craters[c];
+          var (center, size, born, permanent) = _craters[c];
+          var age = now - born;
+          var alpha = permanent || age <= CraterHoldSeconds ? 1f : 1f - Mathf.Clamp01((age - CraterHoldSeconds) / CraterFadeSeconds);
+          var col = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
           var y = 0.02f + c * 0.0002f;
           var r = size * 1.15f;
           var v = c * 4;
@@ -325,12 +346,14 @@ namespace FactoryWars.View {
           uvs[v + 1] = new Vector2(1f, 0f);
           uvs[v + 2] = new Vector2(1f, 1f);
           uvs[v + 3] = new Vector2(0f, 1f);
+          cols[v + 0] = col; cols[v + 1] = col; cols[v + 2] = col; cols[v + 3] = col;
           var t = c * 6;
           tris[t + 0] = v + 0; tris[t + 1] = v + 2; tris[t + 2] = v + 1;
           tris[t + 3] = v + 0; tris[t + 4] = v + 3; tris[t + 5] = v + 2;
         }
         mesh.vertices = verts;
         mesh.uv = uvs;
+        mesh.colors32 = cols;
         mesh.triangles = tris;
         mesh.RecalculateNormals();
       }
@@ -434,6 +457,78 @@ namespace FactoryWars.View {
       }
     }
 
+    /// <summary>전략 미사일 발사 시 격납고 문 주변으로 뿜어져 나오는 하얀 배기 증기.</summary>
+    public void SiloSteam(Vector3 position) {
+      var steamCol = new Color(0.92f, 0.94f, 0.96f, 0.85f);
+      for (var i = 0; i < 14; i++) {
+        var angle = i * (Mathf.PI * 2f / 14f);
+        var dir = new Vector3(Mathf.Cos(angle), 0.35f, Mathf.Sin(angle)).normalized;
+        Emit(_smoke, position + Vector3.up * 0.8f + dir * 1.1f, dir * Random.Range(3.5f, 6.5f) + Vector3.up * 2.2f, Random.Range(1.6f, 2.6f), Random.Range(1.1f, 1.8f), steamCol);
+      }
+      Emit(_flash, position + Vector3.up * 1.4f, Vector3.zero, 3.2f, 0.35f, FlashCore);
+    }
+
+    /// <summary>전략 미사일 초음속 착탄 · 공중항모 추락 시 거대 3D 확장 충격파 링 + 화염구 돔 + 버섯구름 연기 + 영구 암흑 크레이터.</summary>
+    public void MushroomExplosion(Vector3 position, float size) {
+      GameAudio.Play(SoundEvent.Explosion);
+      Shake(1.15f);
+      var ground = new Vector3(position.x, 0f, position.z);
+      // 중심 거대 영구 크레이터 + 외곽 방사형 그을음 얼룩.
+      Crater(ground, size * 2.75f, permanent: true);
+      for (var c = 0; c < 5; c++) {
+        var ang = c * (Mathf.PI * 2f / 5f) + 0.3f;
+        Crater(ground + new Vector3(Mathf.Cos(ang) * size * 1.45f, 0f, Mathf.Sin(ang) * size * 1.45f), size * 1.15f, permanent: true);
+      }
+      // 3D 확장 충격파 링 메쉬(주황/금색 발광) + 반투명 중심 화염구 코어.
+      SpawnShockwaveMesh(ground + Vector3.up * 0.25f, new Color(1f, 0.56f, 0.12f, 0.86f), size * 3.4f, 1.35f, isDome: false);
+      SpawnShockwaveMesh(ground + Vector3.up * 0.35f, new Color(1f, 0.88f, 0.42f, 0.82f), size * 2.2f, 0.95f, isDome: false);
+      SpawnShockwaveMesh(ground + Vector3.up * 0.1f, new Color(1f, 0.48f, 0.08f, 0.58f), size * 1.15f, 1.0f, isDome: true);
+
+      Emit(_flash, ground + Vector3.up * (0.85f * size), Vector3.zero, size * 3.4f, 0.65f, FlashCore);
+      Emit(_flash, ground + Vector3.up * (0.55f * size), Vector3.zero, size * 2.2f, 0.45f, new Color(1f, 0.96f, 0.78f, 1f));
+      // 솟구치는 화염 기둥(Stem).
+      for (var h = 0; h < 12; h++) {
+        var y = 0.6f + h * (size * 0.35f);
+        Emit(_glow, ground + new Vector3(Random.Range(-0.8f, 0.8f), y, Random.Range(-0.8f, 0.8f)), Vector3.up * (3.2f + h * 0.4f), size * Random.Range(1.1f, 1.6f), Random.Range(0.75f, 1.15f), Flame);
+      }
+      // 상층 버섯구름 갓(Cap) 화염 + 검은 연기 기둥.
+      var capY = size * 1.85f;
+      for (var i = 0; i < 20; i++) {
+        var a = i * (Mathf.PI * 2f / 20f);
+        var radial = new Vector3(Mathf.Cos(a), 0.18f, Mathf.Sin(a));
+        Emit(_glow, ground + Vector3.up * capY + radial * (size * 0.75f), radial * 2.8f + Vector3.up * 1.6f, size * 1.45f, 0.95f, Flame);
+        Emit(_smoke, ground + Vector3.up * (capY + 0.7f) + radial * (size * 0.95f), radial * 2.2f + Vector3.up * 1.4f, size * 1.95f, 3.2f, SmokeDark);
+      }
+    }
+
+    void SpawnShockwaveMesh(Vector3 position, Color color, float maxScale, float duration, bool isDome) {
+      var go = new GameObject(isDome ? "ExplosionFireDome" : "ExplosionShockwave", typeof(MeshFilter), typeof(MeshRenderer));
+      go.transform.SetParent(transform, false);
+      go.transform.position = position;
+      var kit = new MeshKit().Paint(Swatch.White);
+      if (isDome) {
+        kit.Cylinder(new Vector3(0f, 0.35f, 0f), 0.95f, 0.7f, 18);
+        kit.Cylinder(new Vector3(0f, 0.95f, 0f), 0.78f, 0.75f, 16);
+        kit.Cone(new Vector3(0f, 1.65f, 0f), 0.75f, 0.95f, 16);
+      } else {
+        kit.Annulus(Vector3.zero, 0.78f, 1.0f, 40);
+      }
+      go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh(isDome ? "fx_fire_dome" : "fx_shockwave_ring");
+      var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
+      mat.color = color;
+      if (mat.HasProperty("_Surface")) mat.SetFloat("_Surface", 1f);
+      if (mat.HasProperty("_SrcBlend")) mat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+      if (mat.HasProperty("_DstBlend")) mat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+      if (mat.HasProperty("_ZWrite")) mat.SetFloat("_ZWrite", 0f);
+      mat.renderQueue = 3050;
+      var rend = go.GetComponent<MeshRenderer>();
+      rend.sharedMaterial = mat;
+      rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      rend.receiveShadows = false;
+      go.transform.localScale = Vector3.one * (maxScale * 0.38f);
+      _shockwaves.Add((go, mat, Time.time, duration, maxScale, isDome));
+    }
+
     /// <summary>울타리가 내려갈 때 바닥 먼지. 낮음 품질에서는 끈다.</summary>
     public void GroundDust(Vector3 position) {
       if (GraphicsQuality.Current == QualityTier.Low) {
@@ -453,38 +548,91 @@ namespace FactoryWars.View {
       Emit(_smoke, position, new Vector3(Random.Range(0.2f, 0.6f), Random.Range(1.4f, 2.2f), Random.Range(-0.2f, 0.2f)), Random.Range(0.5f, 0.8f), Random.Range(2.2f, 3.2f), SmokeGray);
     }
 
+    /// <summary>어둡게 그을린 파쇄 콘크리트 슬래브 + 돌출 철근 잔해 메쉬(둥근 청회색 바위 제거).</summary>
     Mesh Rubble() {
       if (_rubble == null) {
         var kit = new MeshKit();
-        kit.ShadeFaces(5, Swatch.BoulderDark, Swatch.Black, Swatch.Rubber);
-        for (var i = 0; i < 7; i++) {
-          var angle = i * 0.9f;
-          var distance = 0.25f + MeshKit.Hash(5, i) * 0.7f;
-          var size = 0.2f + MeshKit.Hash(5, i + 10) * 0.3f;
-          kit.Rock(new Vector3(Mathf.Cos(angle) * distance, 0, Mathf.Sin(angle) * distance), size, size * 0.9f, i + 2);
+        // 납작하게 부서진 암회색·검은 콘크리트 바닥 파편.
+        kit.Paint(Swatch.Black).Chamfer(new Vector3(0f, 0.06f, 0f), new Vector3(1.55f, 0.14f, 1.45f), 0.05f);
+        for (var i = 0; i < 9; i++) {
+          var angle = i * 0.72f + 0.2f;
+          var dist = 0.22f + MeshKit.Hash(7, i) * 0.62f;
+          var w = 0.34f + MeshKit.Hash(7, i + 10) * 0.42f;
+          var h = 0.10f + MeshKit.Hash(7, i + 20) * 0.24f;
+          var d = 0.30f + MeshKit.Hash(7, i + 30) * 0.38f;
+          var sw = i % 3 == 0 ? Swatch.Asphalt : i % 3 == 1 ? Swatch.Rubber : Swatch.Black;
+          kit.Paint(sw).Chamfer(new Vector3(Mathf.Cos(angle) * dist, h * 0.55f, Mathf.Sin(angle) * dist), new Vector3(w, h, d), 0.03f);
         }
-        kit.EndShade();
-        _rubble = kit.ToMesh("rubble");
+        // 콘크리트 더미 사이로 비스듬히 솟은 검붉은 철근·H빔 파편.
+        kit.Paint(Swatch.MetalDark).Box(new Vector3(-0.32f, 0.32f, 0.18f), new Vector3(0.06f, 0.64f, 0.06f));
+        kit.Paint(Swatch.MetalDark).Box(new Vector3(0.28f, 0.28f, -0.24f), new Vector3(0.06f, 0.56f, 0.06f));
+        kit.Paint(Swatch.Rubber).Box(new Vector3(0.05f, 0.22f, 0.35f), new Vector3(0.72f, 0.07f, 0.08f));
+        kit.Paint(Swatch.MetalDark).Box(new Vector3(-0.18f, 0.25f, -0.30f), new Vector3(0.58f, 0.06f, 0.06f));
+        _rubble = kit.ToMesh("charred_concrete_rubble");
       }
       return _rubble;
     }
 
-    /// <summary>파괴된 자리에 잠시 남는 잔해. 오래되면 땅으로 가라앉는다.</summary>
+    /// <summary>파괴된 기갑 잔해(30초간 연소·연기 후 가라앉으며 오일·그을음 자국을 남긴다).</summary>
     public void Wreck(Vector3 position, float radius) => Wreck(position, radius, WreckSeconds);
 
     public void Wreck(Vector3 position, float radius, float seconds) {
       if (_wrecks.Count >= MaxWrecks) {
-        Destroy(_wrecks.Dequeue().Item);
+        var old = _wrecks.Dequeue();
+        if (old.Item != null) {
+          Destroy(old.Item);
+        }
       }
       var item = new GameObject("Wreck", typeof(MeshFilter), typeof(MeshRenderer));
       item.transform.SetParent(transform, false);
-      item.transform.SetPositionAndRotation(new Vector3(position.x, 0, position.z), Quaternion.Euler(0, Random.Range(0f, 360f), 0));
+      var flat = new Vector3(position.x, 0f, position.z);
+      item.transform.SetPositionAndRotation(flat, Quaternion.Euler(0, Random.Range(0f, 360f), 0));
       item.transform.localScale = new Vector3(radius, radius * 0.8f, radius);
       item.GetComponent<MeshFilter>().sharedMesh = Rubble();
       var renderer = item.GetComponent<MeshRenderer>();
       renderer.sharedMaterial = ArtLook.NeutralMaterial;
       renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      _wrecks.Enqueue((item, Time.time - (WreckSeconds - seconds), 0f));
+      _wrecks.Enqueue((item, Time.time - (WreckSeconds - seconds), flat, radius, Time.time + 0.35f));
+    }
+
+    /// <summary>파괴된 기지 건물의 영구 붕괴 콘크리트 잔해 더미(경기 종료까지 유지).</summary>
+    public void PermanentRubble(Vector3 position, float radius) {
+      if (_permanentRubble.Count >= MaxPermanentRubble) {
+        var oldest = _permanentRubble[0];
+        if (oldest != null) {
+          Destroy(oldest);
+        }
+        _permanentRubble.RemoveAt(0);
+      }
+      var flat = new Vector3(position.x, 0f, position.z);
+      var item = new GameObject("CollapsedBuildingRubble", typeof(MeshFilter), typeof(MeshRenderer));
+      item.transform.SetParent(transform, false);
+      item.transform.SetPositionAndRotation(flat, Quaternion.Euler(0, Random.Range(0f, 360f), 0));
+      item.transform.localScale = new Vector3(radius * 1.05f, radius * 0.52f, radius * 1.05f);
+      item.GetComponent<MeshFilter>().sharedMesh = Rubble();
+      var renderer = item.GetComponent<MeshRenderer>();
+      renderer.sharedMaterial = ArtLook.NeutralMaterial;
+      renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      _permanentRubble.Add(item);
+      Crater(flat, radius * 1.45f, permanent: true);
+    }
+
+    void UpdateShockwaves(float now) {
+      for (var i = _shockwaves.Count - 1; i >= 0; i--) {
+        var s = _shockwaves[i];
+        var t = (now - s.Born) / Mathf.Max(0.05f, s.Duration);
+        if (s.Go == null || t >= 1f) {
+          if (s.Go != null) Destroy(s.Go);
+          if (s.Mat != null) Destroy(s.Mat);
+          _shockwaves.RemoveAt(i);
+          continue;
+        }
+        var scale = Mathf.Lerp(s.MaxScale * 0.35f, s.MaxScale, 1f - (1f - t) * (1f - t));
+        s.Go.transform.localScale = s.IsDome ? new Vector3(scale, scale * (1.1f - 0.3f * t), scale) : new Vector3(scale, 1f, scale);
+        var col = s.Mat.color;
+        col.a = Mathf.Clamp01((1f - t) * 0.95f);
+        s.Mat.color = col;
+      }
     }
 
     void LateUpdate() {
@@ -497,21 +645,50 @@ namespace FactoryWars.View {
 
     void Update() {
       UpdateFlights(Time.deltaTime);
-      if (_craters.Count > 0 && Time.time - _craters[0].Born > CraterSeconds) {
-        _craters.RemoveAll(c => Time.time - c.Born > CraterSeconds);
+      var now = Time.time;
+      UpdateShockwaves(now);
+      var maxAge = CraterHoldSeconds + CraterFadeSeconds;
+      var hasFading = false;
+      for (var i = _craters.Count - 1; i >= 0; i--) {
+        if (_craters[i].Permanent) {
+          continue;
+        }
+        var age = now - _craters[i].Born;
+        if (age >= maxAge) {
+          _craters.RemoveAt(i);
+          _cratersDirty = true;
+        } else if (age > CraterHoldSeconds) {
+          hasFading = true;
+        }
+      }
+      if (hasFading && now >= _nextCraterFadeRebuild) {
+        _nextCraterFadeRebuild = now + 0.25f;
         _cratersDirty = true;
       }
       if (_cratersDirty) {
         RebuildCraters();
       }
-      while (_wrecks.Count > 0 && Time.time - _wrecks.Peek().Born > WreckSeconds + 2f) {
-        Destroy(_wrecks.Dequeue().Item);
-      }
-      foreach (var wreck in _wrecks) {
-        var age = Time.time - wreck.Born;
-        if (age > WreckSeconds) {
-          wreck.Item.transform.position += Vector3.down * (WreckSink * Time.deltaTime);
+      while (_wrecks.Count > 0 && now - _wrecks.Peek().Born > WreckSeconds + 2f) {
+        var expired = _wrecks.Dequeue();
+        if (expired.Item != null) {
+          Destroy(expired.Item);
         }
+        // 기갑 잔해가 가라앉은 자리에 어두운 기름·그을음 흔적 잔존.
+        Crater(expired.Pos, Mathf.Max(1.1f, expired.Radius * 1.05f), permanent: false);
+      }
+      var wreckCount = _wrecks.Count;
+      for (var w = 0; w < wreckCount; w++) {
+        var wreck = _wrecks.Dequeue();
+        var age = now - wreck.Born;
+        if (wreck.Item != null) {
+          if (age > WreckSeconds) {
+            wreck.Item.transform.position += Vector3.down * (WreckSink * Time.deltaTime);
+          } else if (now >= wreck.NextSmoke) {
+            wreck.NextSmoke = now + 0.55f / Mathf.Max(0.35f, GraphicsQuality.FxScale);
+            Burning(wreck.Pos + Vector3.up * 0.35f, age < 10f);
+          }
+        }
+        _wrecks.Enqueue(wreck);
       }
     }
   }

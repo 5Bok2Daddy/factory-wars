@@ -144,24 +144,35 @@ namespace FactoryWars.Tests {
         Assert.AreEqual(ResearchKind.Ultimate, research.Kind);
         Assert.IsTrue(faction.Researches.Any(r => r.Id == research.Guid), "궁극 전력 연구가 진영 연구 목록에 있음");
         Assert.GreaterOrEqual(research.Seconds.AsFloat, 60f, "연구 시간 큼");
-        // 비용: 대형 유닛 4~5기 수준, 강철 비중 큼. 준비 3~4분.
+        // 비용: 대형 유닛 3.5~11기 수준(고위험·고보상 슈퍼웨폰), 강철 비중 큼. 준비 60~240초.
         var large = faction.Units.Select(u => units.First(s => s.Guid == u.Id)).Where(u => u.Size == UnitSize.Large && u.IsNaval == false).ToArray();
         var average = large.Average(u => (u.Cost.Iron + u.Cost.Wood + u.Cost.Power + u.Cost.Steel * 3).AsFloat);
         var worth = (spec.Cost.Iron + spec.Cost.Wood + spec.Cost.Power + spec.Cost.Steel * 3).AsFloat;
-        Assert.That(worth / average, Is.InRange(3.5f, 5.5f), $"{faction.name}: 대형 {worth / average:0.0}기 수준");
+        Assert.That(worth / average, Is.InRange(3.5f, 11.5f), $"{faction.name}: 대형 {worth / average:0.0}기 수준");
         Assert.GreaterOrEqual((spec.Cost.Steel * 3).AsFloat, spec.Cost.Iron.AsFloat, "강철 비중");
-        Assert.That(spec.PrepareSeconds.AsFloat, Is.InRange(180f, 240f), "준비 3~4분");
+        Assert.That(spec.PrepareSeconds.AsFloat, Is.InRange(60f, 240f), "준비 60~240초");
         Assert.AreEqual(1, spec.OwnedLimit, "보유 상한 1");
         Assert.AreEqual(0.5f, spec.RefundFraction.AsFloat, 0.001f, "전용 건물 파괴 시 절반 환불");
         Assert.Greater(spec.CooldownSeconds.AsFloat, 0f);
       }
       Assert.AreEqual(3, kinds.Count, "항모·미사일·상륙 세 종류");
       var carrier = Resources.Load<UltimateSpec>("FactoryWars/ultimate_ff_carrier");
-      Assert.AreEqual(8, carrier.DroneCount);
+      Assert.AreEqual(6, carrier.DroneCount, "자율 6드론 윙");
+      Assert.AreEqual(2800, carrier.Cost.Iron.AsInt, "항모 철 2800");
+      Assert.AreEqual(2200, carrier.Cost.Steel.AsInt, "항모 강철 2200");
+      Assert.AreEqual(80, carrier.PrepareSeconds.AsInt, "항모 지상 조립 80초");
       Assert.Greater(carrier.AntiAirTakenMultiplier.AsFloat, 1f, "항모는 대공에 취약");
       var missile = Resources.Load<UltimateSpec>("FactoryWars/ultimate_cf_missile");
       Assert.IsTrue(missile.FriendlyFire, "아군 피해 기본 켬");
-      Assert.GreaterOrEqual(missile.WarningSeconds.AsFloat, 8f, "착탄 경고");
+      Assert.AreEqual(2500, missile.Cost.Iron.AsInt, "미사일 철 2500");
+      Assert.AreEqual(2000, missile.Cost.Steel.AsInt, "미사일 강철 2000");
+      Assert.AreEqual(75, missile.PrepareSeconds.AsInt, "미사일 준비 75초");
+      Assert.AreEqual(120, missile.CooldownSeconds.AsInt, "미사일 재충전 120초");
+      Assert.AreEqual(300, missile.RearmCost.Steel.AsInt, "미사일 재장전 강철 300");
+      Assert.AreEqual(12, missile.BlastRadius.AsInt, "폭발 반경 12m");
+      Assert.AreEqual(5, missile.EmpDurationSeconds.AsInt, "EMP 마비 5초");
+      Assert.AreEqual(15, missile.ScorchedDurationSeconds.AsInt, "초토화 구역 15초");
+      Assert.GreaterOrEqual(missile.WarningSeconds.AsFloat, 6f, "비행 궤적 6~8초");
       Assert.Greater(missile.InterceptSteps.Length, 1, "요격 단계");
       // 메뉴·AI 대전에 나오는 두 진영은 항모와 미사일이고, 상륙은 시험 전용 진영에만 붙어 있다.
       Assert.AreEqual(UltimateKind.Carrier, Resources.LoadAll<UltimateSpec>("FactoryWars").First(u => u.Guid == Resources.Load<FactionSpec>("FactoryWars/faction_free_federation").Ultimate.Id).Kind);
@@ -169,6 +180,60 @@ namespace FactoryWars.Tests {
       Assert.IsFalse(rules.EasyAi.Id == rules.NormalAi.Id);
       Assert.IsFalse(Resources.Load<AiSpec>("FactoryWars/ai_easy").UseUltimate, "쉬움은 궁극 전력을 쓰지 않음");
       Assert.IsTrue(Resources.Load<AiSpec>("FactoryWars/ai_normal").UseUltimate, "보통은 씀");
+    }
+
+    [UnityTest]
+    public IEnumerator Ultimate_MaxCountOneSiteAndMissileThreeSecondDelay() {
+      // 1) 미사일 격납고(UltimateSite)는 안전 본진 배치 불가(BlockedLocation), 암시장·점령 거점 18m 이내 건설 시 즉시 경고 방송 & 1채 상한(Limit).
+      var bases = UltimateBase(0, "cf", null, withSite: false)
+        .Concat(new[] { (0, "cf_heavy_works", -18, -30), (0, "cf_radar", -18, -20), (0, "cf_power_plant", -46, -2) }).ToArray();
+      yield return StartMatch(swapFactions: true, buildings: bases, stock: Stock(30000, 30000, 30000, 1400));
+      ShortenUltimates(prepare: 2, warning: 7);
+      ListenNotices();
+      yield return WaitForHud();
+
+      // 본진 내 배치 시도 -> 중립 거점·암시장 18m 제한에 걸려 BlockedLocation 거부.
+      _rejected.Clear();
+      yield return Build(0, "_missile_silo", V(-18, 14));
+      AssertRejected(0, ActionKind.Build, RejectReason.BlockedLocation);
+
+      // 암시장(40, 20) 반경 18m 이내(30, 14) 건설 -> 허용 + 즉시 전장 경고 방송.
+      var validSpot = V(30, 14);
+      yield return Build(0, "_missile_silo", validSpot);
+      yield return WaitFrames(CommandFrames + 2);
+      Assert.AreEqual(1, ProductionSystem.CountRole(Verified, 0, BuildingRole.UltimateSite), "격납고 1채 건설 중");
+      Assert.IsTrue(_notices.Any(n => n.Stage == UltimateStage.Started && n.Value < 0), "격납고 착공 즉시 전장 경고 방송");
+
+      // 2번째 미사일 격납고 건설 시도 -> Limit 거부.
+      _rejected.Clear();
+      yield return Build(0, "_missile_silo", V(28, 24));
+      AssertRejected(0, ActionKind.Build, RejectReason.Limit);
+
+      // 기존 격납고가 파괴되면 다시 지을 수 있다.
+      var firstSilo = BuildingAt(validSpot);
+      Verified.Destroy(firstSilo);
+      yield return WaitFrames(2);
+      Assert.AreEqual(0, ProductionSystem.CountRole(Verified, 0, BuildingRole.UltimateSite), "파괴 후 0채");
+      ProductionSystem.CreateFinishedBuilding(Verified, 0, BuildingOf(0, "_missile_silo"), validSpot);
+      yield return WaitFrames(2);
+
+      // 2) 전략 미사일 비행 궤적 7초(WarningSeconds = 7) 및 비행 체력 300 HP 검증.
+      var spec = UltimateOf(0);
+      Assert.AreEqual(7, spec.WarningSeconds.AsInt, "7초 포물선 비행 궤적");
+      Assert.AreEqual(300, spec.MissileHealth.AsInt, "비행 중 요격 체력 300 HP");
+      var beforePrep = spec.PrepareSeconds;
+      spec.PrepareSeconds = 2;
+      Restores.Add(() => spec.PrepareSeconds = beforePrep);
+      yield return ResearchUltimate(0, "cf");
+      yield return Send(0, new StartUltimateCommand());
+      yield return WaitFor(() => PhaseOf(0) == UltimatePhase.Ready, 15f, "미사일 준비 완료");
+      _notices.Clear();
+      yield return Send(0, new LaunchUltimateCommand { Target = V(0, 20) });
+      var launched = _notices.Single(n => n.Stage == UltimateStage.Launched);
+      Assert.AreEqual(7, launched.Value, "7초 비행 알림");
+      var strike = FirstOf<MissileStrike>().Component;
+      Assert.AreEqual(strike.LaunchFrame + 7 * Fps, strike.ImpactFrame, "정확히 7초(140프레임) 뒤 착탄");
+      Assert.AreEqual(300, strike.Health.AsInt, "초기 비행 체력 300");
     }
 
     [UnityTest]

@@ -23,31 +23,33 @@ MonoBehaviour:
   IsVehicle: 0
   Cost:
     Iron:
-      RawValue: 111411200
+      RawValue: 183500800
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 58982400
+      RawValue: 144179200
     Power:
-      RawValue: 39321600
+      RawValue: 45875200
   BuildTimeSeconds:
-    RawValue: 11796480
+    RawValue: 5242880
   MaxHealth:
-    RawValue: 275251200
+    RawValue: 340787200
   Attack: 4
   Damage:
-    RawValue: 4587520
+    RawValue: 4915200
   Range:
-    RawValue: 786432
+    RawValue: 917504
   MinRange:
     RawValue: 0
   SplashRadius:
     RawValue: 196608
   AttackInterval:
-    RawValue: 196608
+    RawValue: 131072
   IsRanged: 1
   MoveSpeed:
     RawValue: 144179
+  ColliderRadius:
+    RawValue: 209715
   Population:
     RawValue: 524288
   ModuleSlots: 0
@@ -63,7 +65,7 @@ MonoBehaviour:
   AbilityCooldownSeconds:
     RawValue: 0
   SightRange:
-    RawValue: 917504
+    RawValue: 1703936
   GarrisonFireOnly: 0
   GarrisonSightRange:
     RawValue: 0
@@ -91,7 +93,7 @@ MonoBehaviour:
   JammerGatherMultiplier:
     RawValue: 65536
   DetectRadius:
-    RawValue: 0
+    RawValue: 1703936
   SortieKind: 0
   SortieSpeed:
     RawValue: 0

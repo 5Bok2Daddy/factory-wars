@@ -81,5 +81,85 @@ namespace FactoryWars.Tests {
         }
       }
     }
+
+    [UnityTest]
+    public IEnumerator Formation_AutoAlignSpreadAndAntiClumping() {
+      var units = new[] {
+        (0, "ff_eagle_tank", 0, 10), (0, "ff_eagle_tank", 0, 10),
+        (0, "ff_ranger_squad", 0, 10), (0, "ff_ranger_squad", 0, 10), (0, "ff_ranger_squad", 0, 10),
+        (0, "ff_sniper", 0, 10),
+      };
+      yield return StartMatch(units: units, stock: Stock(5000, 5000, 2000, 500));
+      var mine = UnitsNamed(0, "ff_eagle_tank").Concat(UnitsNamed(0, "ff_ranger_squad")).Concat(UnitsNamed(0, "ff_sniper")).ToArray();
+      // 1) 동일 좌표에 스폰된 유닛들이 결정론적 소프트 분리로 서로 떨어져 뭉침이 해소된다.
+      yield return WaitFrames(Fps * 2);
+      var minPair = float.MaxValue;
+      for (var i = 0; i < mine.Length; i++) {
+        for (var j = i + 1; j < mine.Length; j++) {
+          var d = (At(mine[i]).ToUnityVector3() - At(mine[j]).ToUnityVector3()).magnitude;
+          if (d < minPair) {
+            minPair = d;
+          }
+        }
+      }
+      Assert.Greater(minPair, 0.9f, "소프트 분리로 유닛 겹침 해소");
+
+      // 2) 다중 선택 이동 시 각 유닛이 서로 다른 목표 슬롯(전차 앞열 · 소총수 중간 · 저격수 뒷열)을 받는다.
+      yield return Send(0, new Quantum.FactoryWars.MoveUnitsCommand { Units = mine, Target = V(0, 26), AttackMove = true });
+      yield return WaitFrames(CommandFrames + 2);
+      var tankZ = UnitsNamed(0, "ff_eagle_tank").Average(e => Verified.Get<Unit>(e).TargetPosition.Z.AsFloat);
+      var rangerZ = UnitsNamed(0, "ff_ranger_squad").Average(e => Verified.Get<Unit>(e).TargetPosition.Z.AsFloat);
+      var sniperZ = UnitsNamed(0, "ff_sniper").Average(e => Verified.Get<Unit>(e).TargetPosition.Z.AsFloat);
+      Assert.Greater(tankZ, rangerZ + 0.5f, "전차가 소총수보다 앞열");
+      Assert.Greater(rangerZ, sniperZ + 0.5f, "소총수가 저격수보다 앞열");
+
+      // 3) 산개(Spread) 명령 시 중심으로부터 방사형으로 퍼진다.
+      yield return Send(0, new Quantum.FactoryWars.MoveUnitsCommand { Units = mine, FormationMode = Quantum.FactoryWars.MoveUnitsCommand.ModeSpread });
+      yield return WaitFrames(CommandFrames + 2);
+      var distinctTargets = mine.Select(e => Verified.Get<Unit>(e).TargetPosition).Distinct().Count();
+      Assert.GreaterOrEqual(distinctTargets, mine.Length - 1, "산개 시 각기 다른 외곽 목표 지정");
+    }
+
+    [UnityTest, Explicit, Category("CaptureUrban")]
+    public IEnumerator CaptureIndividualFormationAndThumbHud() {
+      var units = new[] {
+        (0, "ff_eagle_tank", -2, 8), (0, "ff_eagle_tank", 2, 8),
+        (0, "ff_ranger_squad", -4, 6), (0, "ff_ranger_squad", -2, 6), (0, "ff_ranger_squad", 0, 6), (0, "ff_ranger_squad", 2, 6), (0, "ff_ranger_squad", 4, 6),
+        (0, "ff_sniper", -1, 4), (0, "ff_sniper", 1, 4),
+        (1, "cf_militia", -3, 24), (1, "cf_militia", 0, 24), (1, "cf_militia", 3, 24), (1, "cf_flame_squad", 1, 26),
+      };
+      yield return StartMatch(units: units, stock: Stock(5000, 5000, 2000, 500));
+      yield return WaitForHud();
+      yield return Send(0, new Quantum.FactoryWars.ChooseDoctrineCommand { Doctrine = 1 });
+      Time.timeScale = 1f;
+      var mine = UnitsNamed(0, "ff_eagle_tank").Concat(UnitsNamed(0, "ff_ranger_squad")).Concat(UnitsNamed(0, "ff_sniper")).ToArray();
+      Controller().Input.Selection.Clear();
+      foreach (var u in mine) {
+        Controller().Input.Selection.Units.Add(u);
+      }
+      // 전술 자동 정렬(대형 정렬) 후 전진 교전.
+      yield return Send(0, new Quantum.FactoryWars.MoveUnitsCommand { Units = mine, Target = V(0, 14), AttackMove = true });
+      var cam = Controller().Camera;
+      cam.MoveTo(new Vector2(0f, 14f));
+      cam.Height = 20f;
+      cam.Apply();
+      for (var i = 0; i < 18; i++) {
+        yield return new WaitForSeconds(0.15f);
+      }
+      var statusDir = System.IO.Path.Combine(Application.dataPath, "..", "Docs", "status_images");
+      System.IO.Directory.CreateDirectory(statusDir);
+      ShootUrban("individual_units_formation");
+      var src1 = System.IO.Path.Combine(UrbanFolder(), "individual_units_formation.png");
+      if (System.IO.File.Exists(src1)) {
+        System.IO.File.Copy(src1, System.IO.Path.Combine(statusDir, "55_individual_units_formation.png"), true);
+      }
+      Controller().Hud.Refresh(Controller().Frame);
+      yield return null;
+      yield return ShootHud("mobile_thumb_hud");
+      var src2 = System.IO.Path.Combine(UrbanFolder(), "mobile_thumb_hud.png");
+      if (System.IO.File.Exists(src2)) {
+        System.IO.File.Copy(src2, System.IO.Path.Combine(statusDir, "56_mobile_thumb_hud.png"), true);
+      }
+    }
   }
 }

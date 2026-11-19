@@ -53,13 +53,36 @@ namespace FactoryWars.View {
     /// <summary>틴트를 곱해 놓는다(합친 메쉬에서만 보인다).</summary>
     /// <summary>야전 룩 길 비우기: 지금 그리는 맵(WorldView가 넣는다). 길 폭 + RoadClearance 안에는 건물·소품·바위를 놓지 않는다.</summary>
     public static MapSpec RoadMask;
-    public const float RoadClearance = 2f;
+    public const float RoadClearance = 3.6f;
     /// <summary>검문소처럼 일부러 길 위에 두는 소품을 놓는 동안 true.</summary>
     public static bool AllowOnRoad;
 
     static bool Exempt(DressKind kind) => kind == DressKind.RoadProp || kind == DressKind.QuayPillar || kind == DressKind.QuayRail || kind == DressKind.QuayBollard
-      || kind == DressKind.OutpostTower || kind == DressKind.OutpostWall || kind == DressKind.Checkpoint || kind == DressKind.WaterGate || kind == DressKind.BridgeDeck || kind == DressKind.BridgePillar || kind == DressKind.Grass
-      || kind == DressKind.RoadLight || kind == DressKind.RoadPole || kind == DressKind.RoadSign || kind == DressKind.RoadBin || kind == DressKind.RoadBusStop || kind == DressKind.RoadCover || kind == DressKind.RoadWreck;
+      || kind == DressKind.WaterGate || kind == DressKind.BridgeDeck || kind == DressKind.BridgePillar || kind == DressKind.Grass
+      || kind == DressKind.RoadLight || kind == DressKind.RoadPole || kind == DressKind.RoadSign || kind == DressKind.RoadBin || kind == DressKind.RoadBusStop;
+
+    /// <summary>모든 2차선 도로·교량 폴리곤 침범 검사(컨테이너·감시탑·방벽 도로 위 배치 절대 차단).</summary>
+    public static bool IsOnAnyRoad(Vector3 position, float clearance = 3.5f) {
+      if (RoadMask == null) {
+        return false;
+      }
+      var p = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(position.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(position.z));
+      if (RoadMask.Roads != null) {
+        foreach (var road in RoadMask.Roads) {
+          if (road.Distance(p).AsFloat < clearance) {
+            return true;
+          }
+        }
+      }
+      if (RoadMask.Bridges != null) {
+        foreach (var bridge in RoadMask.Bridges) {
+          if (bridge.Distance(p).AsFloat < clearance) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
 
     /// <summary>중앙 암시장 비움 반경: 이 안에는 건물·바위·잡풀 등 흩뿌림 개체를 하나도 놓지 않는다(주둔지만 남는다).</summary>
     public const float TraderClearRadius = 22f;
@@ -73,18 +96,12 @@ namespace FactoryWars.View {
       return dx * dx + dz * dz < TraderClearRadius * TraderClearRadius;
     }
 
-    /// <summary>야전 룩에서 이 자리가 길(폭 + 4m) 안이라 놓으면 안 되는가.</summary>
+    /// <summary>이 자리가 2차선 도로 폴리곤(+ RoadClearance) 안이라 소품·건물·컨테이너를 놓으면 안 되는가.</summary>
     public static bool OnRoad(DressKind kind, Vector3 position, float radius = 0f) {
-      if (AllowOnRoad || RoadMask == null || RoadMask.Roads == null || VisualProfile.Current.FieldLook == false || Exempt(kind)) {
+      if (AllowOnRoad || RoadMask == null || RoadMask.Roads == null || Exempt(kind)) {
         return false;
       }
-      var p = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(position.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(position.z));
-      foreach (var road in RoadMask.Roads) {
-        if (road.Distance(p).AsFloat < RoadClearance + radius) {
-          return true;
-        }
-      }
-      return false;
+      return IsOnAnyRoad(position, RoadClearance + radius);
     }
 
     public static bool Add(DressKind kind, Vector3 position, int seed, Color tint, Vector3? scale = null, float? yaw = null) {

@@ -26,29 +26,29 @@ MonoBehaviour:
       Value: 292304934711439803
   Cost:
     Iron:
-      RawValue: 91750400
+      RawValue: 163840000
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 52428800
+      RawValue: 131072000
     Power:
       RawValue: 45875200
   PrepareSeconds:
-    RawValue: 11796480
+    RawValue: 4915200
   RearmCost:
     Iron:
-      RawValue: 45875200
+      RawValue: 0
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 29491200
+      RawValue: 19660800
     Power:
       RawValue: 22937600
   RearmSeconds:
-    RawValue: 7864320
+    RawValue: 3932160
   OwnedLimit: 1
   CooldownSeconds:
-    RawValue: 3932160
+    RawValue: 7864320
   RefundFraction:
     RawValue: 32768
   CancelRefundFraction:
@@ -81,16 +81,44 @@ MonoBehaviour:
     RawValue: 0
   AntiAirTakenMultiplier:
     RawValue: 65536
+  CarrierDamagedRatio:
+    RawValue: 0
+  CarrierDamagedMultiplier:
+    RawValue: 0
+  CarrierAuraRadius:
+    RawValue: 0
+  CarrierAuraAttackBonus:
+    RawValue: 0
+  CarrierAuraSpeedBonus:
+    RawValue: 0
   WarningSeconds:
-    RawValue: 655360
+    RawValue: 458752
+  MissileHealth:
+    RawValue: 19660800
+  LaunchBackblastRadius:
+    RawValue: 393216
+  LaunchBackblastDamage:
+    RawValue: 11796480
+  SiloOutpostRadius:
+    RawValue: 1179648
+  ConstructionVulnerabilityMultiplier:
+    RawValue: 85196
+  EmpDurationSeconds:
+    RawValue: 327680
+  ScorchedDurationSeconds:
+    RawValue: 983040
+  ScorchedDamagePerSecond:
+    RawValue: 1835008
+  ScorchedSlowMultiplier:
+    RawValue: 42598
   BlastRadius:
-    RawValue: 917504
+    RawValue: 786432
   BlastDamage:
-    RawValue: 98304000
+    RawValue: 157286400
   BlastEdgeFraction:
-    RawValue: 22937
+    RawValue: 29491
   BlastBuildingMultiplier:
-    RawValue: 104857
+    RawValue: 65536
   BlastCityMultiplier:
     RawValue: 131072
   FriendlyFire: 1

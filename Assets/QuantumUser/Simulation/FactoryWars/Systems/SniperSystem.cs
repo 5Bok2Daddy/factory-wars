@@ -219,6 +219,18 @@ namespace Quantum.FactoryWars {
     static void UpdateDetection(Frame f, GameRulesSpec rules) {
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out _, out var transform, out var unit)) {
+        var spec = f.FindAsset(unit->Spec);
+        if (unit->Garrison != EntityRef.None && spec.GarrisonFireOnly) {
+          // 공중 항모 광역 정찰: 건물 내부에 주둔한 적 은신 저격수를 탐지·노출시킨다.
+          var hostPos = f.Unsafe.TryGetPointer<Transform3D>(unit->Garrison, out var ht) ? ht->Position : transform->Position;
+          var carrierMask = DetectByCarrier(f, unit->Owner, hostPos, unit->DetectedMask);
+          unit->DetectedMask = carrierMask;
+          if (carrierMask != 0) {
+            unit->MuzzleRevealUntilFrame = System.Math.Max(unit->MuzzleRevealUntilFrame, f.Number + 10);
+            unit->MuzzleVictimMask |= carrierMask;
+          }
+          continue;
+        }
         if (unit->StealthUntilFrame <= f.Number) {
           unit->DetectedMask = 0;
           continue;
@@ -229,6 +241,30 @@ namespace Quantum.FactoryWars {
       while (jammers.NextUnsafe(out _, out var transform, out var jammer)) {
         jammer->DetectedMask = Detect(f, rules, jammer->Owner, transform->Position, jammer->DetectedMask);
       }
+    }
+
+    static int DetectByCarrier(Frame f, PlayerRef owner, FPVector3 position, int previous) {
+      var mask = 0;
+      var carriers = f.Filter<Transform3D, Unit, Carrier>();
+      while (carriers.NextUnsafe(out _, out var transform, out var unit, out var carrier)) {
+        if (carrier->Assembling || unit->Health <= FP._0 || Friendly(f, unit->Owner, owner)) {
+          continue;
+        }
+        var radius = f.FindAsset(unit->Spec).DetectRadius;
+        if (radius <= FP._0) {
+          radius = (FP)26;
+        }
+        if (FactoryWarsUtil.FlatDistanceSqr(transform->Position, position) <= radius * radius) {
+          var p = (int)unit->Owner;
+          if (p >= 0 && p < Players) {
+            mask |= 1 << p;
+            if ((previous & (1 << p)) == 0 && FactoryWarsUtil.Player(f, unit->Owner) != null) {
+              FactoryWarsUtil.Player(f, unit->Owner)->Detections++;
+            }
+          }
+        }
+      }
+      return mask;
     }
 
     /// <summary>owner 쪽이 아닌 진영 중에서, 레이더·탐지 유닛이 position을 덮는 진영의 비트. 새로 드러난 진영은 탐지 횟수를 센다.</summary>
@@ -267,8 +303,11 @@ namespace Quantum.FactoryWars {
         }
       }
       var units = f.Filter<Transform3D, Unit>();
-      while (units.NextUnsafe(out _, out var transform, out var unit)) {
+      while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
         if (Friendly(f, unit->Owner, viewer) == false || unit->Health <= FP._0) {
+          continue;
+        }
+        if (f.Unsafe.TryGetPointer<Carrier>(entity, out var carrier) && carrier->Assembling) {
           continue;
         }
         var radius = f.FindAsset(unit->Spec).DetectRadius;

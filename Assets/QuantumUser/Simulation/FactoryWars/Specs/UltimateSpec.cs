@@ -49,10 +49,31 @@ namespace Quantum {
     public FP DroneDockDistance;
     /// <summary>항모가 대공 무기에 받는 피해 배율(카운터).</summary>
     public FP AntiAirTakenMultiplier = 1;
+    /// <summary>항모 로터 손상 발동 체력 비율(0.5 = 50% 미만) 및 이동·드론 출격 속도 배율(0.7 = -30%).</summary>
+    public FP CarrierDamagedRatio;
+    public FP CarrierDamagedMultiplier;
+    /// <summary>공중 항모 지휘 오라: 반경(14m) 내 아군 지상 유닛 연사 +15%, 이동 속도 +10%.</summary>
+    public FP CarrierAuraRadius;
+    public FP CarrierAuraAttackBonus;
+    public FP CarrierAuraSpeedBonus;
 
     // ---------- 전략 미사일 ----------
-    /// <summary>발사부터 착탄까지. 이 동안 모든 플레이어에게 착탄 지점이 보인다.</summary>
+    /// <summary>발사부터 착탄까지(6~8초 비행 궤적). 이 동안 모든 플레이어에게 착탄 지점과 비행체가 보인다.</summary>
     public FP WarningSeconds;
+    /// <summary>비행 중 전략 미사일 요격 체력(기본 300 HP).</summary>
+    public FP MissileHealth;
+    /// <summary>발사 시 격납고 주변 후폭풍 반경(6m)과 피아 구분 없는 화염 피해.</summary>
+    public FP LaunchBackblastRadius;
+    public FP LaunchBackblastDamage;
+    /// <summary>전략 미사일 격납고 배치 제한: 점령한 중립 거점/암시장 허용 반경(18m).</summary>
+    public FP SiloOutpostRadius;
+    /// <summary>건설 중(100% 미만) 궁극 전용 건물 피격 피해 배율(1.3 = +30% 취약).</summary>
+    public FP ConstructionVulnerabilityMultiplier;
+    /// <summary>전략 미사일 EMP 충격파 지속 시간(5초) 및 초토화 구역(15초, 초당 피해, 둔화 배율).</summary>
+    public FP EmpDurationSeconds;
+    public FP ScorchedDurationSeconds;
+    public FP ScorchedDamagePerSecond;
+    public FP ScorchedSlowMultiplier;
     public FP BlastRadius;
     /// <summary>중심 피해. 가장자리에서는 BlastEdgeFraction배까지 직선으로 줄어든다.</summary>
     public FP BlastDamage;

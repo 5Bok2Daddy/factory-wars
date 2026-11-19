@@ -74,7 +74,31 @@ namespace FactoryWars.View {
       public GameObject Shield;
       public int VetRank;
       public TextMesh VetBadge;
+      public int UpgradeMark = 1;
+      public bool IsFreeFaction;
+      public GameObject UpgradeKit;
+      public TextMesh UpgradeChevron;
+      public bool IsCarrier;
+      public Transform SiloDoorL;
+      public Transform SiloDoorR;
+      public Transform SiloMissile;
+      public Renderer FactoryBeacon;
+      public Vector3[] FactorySmoke;
+      public int FactoryLevel = 1;
+      public GameObject FactoryUpgradeGo;
+      public float OverdriveFxAt;
     }
+
+    readonly List<(GameObject Root, Transform Turn, Vector3 StartPos, float Elapsed, float NextSmoke)> _crashingCarriers =
+      new List<(GameObject, Transform, Vector3, float, float)>();
+    readonly List<(GameObject Rocket, Vector3 Velocity, float Until, float NextTrail)> _flyingMissiles =
+      new List<(GameObject, Vector3, float, float)>();
+    readonly Dictionary<EntityRef, GameObject> _strikeRockets = new Dictionary<EntityRef, GameObject>();
+    readonly Dictionary<(EntityRef, EntityRef), GameObject> _synergyPipes = new Dictionary<(EntityRef, EntityRef), GameObject>();
+    float _synergyPipeAt;
+    float _placementRingAt;
+    float _rotorSmokeAt;
+    float _zoneFxAt;
 
     class BaseWorker {
       public GameObject Root;
@@ -201,10 +225,37 @@ namespace FactoryWars.View {
       });
       // 항목 33: 미사일 착탄·항모 격추는 기존 폭발 효과를 크게 쓴다(새 그래픽 없음).
       QuantumEvent.Subscribe<EventUltimateNotice>(this, e => {
-        if (e.Stage == UltimateStage.Impact) {
-          Fx.Explosion(e.Position.ToUnityVector3(), 4f);
+        if (e.Stage == UltimateStage.Launched && e.Kind == UltimateKind.StrategicMissile) {
+          var siloPos = FindSiloPosition(e.Game.Frames.Verified, e.Player, e.Position.ToUnityVector3());
+          Fx.SiloSteam(siloPos);
+        } else if (e.Stage == UltimateStage.Impact) {
+          if (e.Value < 0) {
+            Fx.Explosion(e.Position.ToUnityVector3(), 4.4f);
+            Fx.Burst(e.Position.ToUnityVector3(), new Color(0.28f, 0.95f, 1f), 3.2f);
+          } else {
+            Fx.MushroomExplosion(e.Position.ToUnityVector3(), 5.5f);
+          }
         } else if (e.Stage == UltimateStage.Lost) {
-          Fx.Explosion(e.Position.ToUnityVector3(), 2.5f);
+          Fx.MushroomExplosion(e.Position.ToUnityVector3(), 4.2f);
+        }
+      });
+      QuantumEvent.Subscribe<EventMissileBackblast>(this, e => {
+        var pos = e.Position.ToUnityVector3();
+        Fx.SiloSteam(pos);
+        Fx.Explosion(pos + Vector3.up * 0.6f, 2.2f);
+        Fx.Ring(pos, new Color(1f, 0.48f, 0.12f, 0.9f), e.Radius.AsFloat, 0.65f);
+      });
+      QuantumEvent.Subscribe<EventDepotExploded>(this, e => {
+        var pos = e.Position.ToUnityVector3();
+        Fx.MushroomExplosion(pos, 3.2f);
+      });
+      QuantumEvent.Subscribe<EventMissileInterceptShot>(this, e => {
+        var from = e.From.ToUnityVector3();
+        var to = e.To.ToUnityVector3();
+        Fx.LaunchMissile(from, to, 72f, e.Killed ? 3.2f : 1.1f);
+        if (e.Killed) {
+          Fx.Explosion(to, 4.0f);
+          Fx.Burst(to, new Color(0.32f, 0.95f, 1f), 2.8f);
         }
       });
       QuantumEvent.Subscribe<EventHqProtocol>(this, e => {
@@ -231,6 +282,7 @@ namespace FactoryWars.View {
         _stage = null;
       }
       _actors.Clear();
+      _strikeRockets.Clear();
       _baseWorkers.Clear();
       _marked.Clear();
       World = null;
@@ -330,6 +382,9 @@ namespace FactoryWars.View {
       _trader ??= new TraderView(_stage);
       _trader.Update(frame, _catalog, Fx, _controller != null && _controller.Input != null && _controller.Input.Selection.Building != EntityRef.None && frame.Has<NpcTrader>(_controller.Input.Selection.Building), dt);
       World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
+      UpdatePlacementRings(frame);
+      UpdateStrikeRockets(frame, dt);
+      UpdateScorchedAndEmpFx(frame);
       // 항목 33: 날아오는 전략 미사일의 착탄 지점을 모든 플레이어에게 보인다(폭발 반경만큼 붉은 고리 + 연막 신호).
       if (Time.time >= _strikeAt) {
         _strikeAt = Time.time + 0.3f;
@@ -337,13 +392,20 @@ namespace FactoryWars.View {
         foreach (var pair in frame.GetComponentIterator<MissileStrike>()) {
           var target = pair.Component.Target.ToUnityVector3();
           var radius = frame.FindAsset(pair.Component.Spec).BlastRadius.AsFloat;
-          // 반경 가장자리에 머무는 고리 + 안쪽으로 조이는 느낌의 반쪽 고리 + 중심 연막.
+          // 붉은 레이저 조준 레티클: 외곽 반경 고리 + 박동 내부 고리 + 십자선 레이저 4줄 + 상공 수직 유도 레이저.
+          var pulse = 0.25f + 0.45f * Mathf.PingPong(Time.time * 2.8f, 1f);
           Fx.Ring(target, StrikeColor, radius, 0.45f);
-          Fx.Ring(target, StrikeColor, radius * 0.5f, 0.45f);
+          Fx.Ring(target, new Color(1f, 0.14f, 0.14f, 0.95f), radius * pulse, 0.35f);
+          Fx.Ring(target, new Color(1f, 0.28f, 0.18f, 0.9f), 2.2f, 0.35f);
+          Fx.Needle(target + Vector3.up * 26f, target + Vector3.up * 0.2f, 130f);
+          foreach (var dir in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right }) {
+            Fx.Needle(target + dir * (radius * 0.85f) + Vector3.up * 0.25f, target + dir * 1.4f + Vector3.up * 0.25f, 80f);
+          }
           Fx.Signal(target);
           StrikeMarks++;
         }
       }
+      UpdateSuperweaponVisuals(dt);
 
       _seen.Clear();
       var units = frame.Filter<Transform3D, Unit>();
@@ -384,9 +446,22 @@ namespace FactoryWars.View {
         _actors.Remove(entity);
         return;
       }
+      if (actor.IsCarrier) {
+        actor.View.SetSelected(false);
+        if (actor.View.Bar != null) {
+          actor.View.Bar.SetActive(false);
+        }
+        _crashingCarriers.Add((actor.View.gameObject, actor.View.Turn, actor.View.Turn.localPosition, 0f, 0f));
+        _marked.Remove(actor);
+        _actors.Remove(entity);
+        return;
+      }
       Fx.Explosion(center, actor.IsBuilding ? 2.2f : Mathf.Clamp(actor.Radius * 0.5f, 0.5f, 1.5f));
-      if (actor.IsAir == false && actor.IsNaval == false && (actor.IsBuilding || actor.Radius > 1.8f)) {
-        Fx.Wreck(actor.View.transform.position, actor.IsBuilding ? 3.2f : actor.Radius * 0.8f, actor.IsBuilding ? 20f : 30f);
+      if (actor.IsBuilding) {
+        // 파괴된 기지 건물은 사라지지 않고 영구 붕괴 콘크리트 잔해 더미 + 영구 그을음으로 남는다.
+        Fx.PermanentRubble(actor.View.transform.position, Mathf.Max(2.8f, actor.Radius * 0.9f));
+      } else if (actor.IsAir == false && actor.IsNaval == false && actor.Radius > 1.8f) {
+        Fx.Wreck(actor.View.transform.position, actor.Radius * 0.85f, 30f);
       }
       _marked.Remove(actor);
       // 교체 모델에 사망 애니메이션이 있으면 그만큼 보여 주고 지운다.
@@ -543,8 +618,389 @@ namespace FactoryWars.View {
       Slide("Forklift", new Vector3(1.3f, 0, 0), 0.32f);
       Slide("Hoist", new Vector3(1.9f, 0, 0), 0.22f);
       Slide("Door", new Vector3(0, 0.9f, 0), 0.4f);
+      if (id == "ff_stormnest_carrier") {
+        BuildHelicarrierVisual(actor);
+      } else if (id == "cf_missile_silo") {
+        BuildMissileSiloVisual(actor);
+      } else if (id.EndsWith("_patriot_turret")) {
+        BuildPatriotAccent(actor);
+      } else if (id == "ff_artillery_ship" || id == "cf_artillery_ship") {
+        HeroVisuals.BuildArtilleryShip(actor.View, actor.Color);
+      } else if (isBuilding && HeroVisuals.TryBuildFactory(actor.View, id, actor.Color, out var chimneys, out var beacon, out var radarDish)) {
+        actor.FactorySmoke = chimneys;
+        actor.FactoryBeacon = beacon;
+        if (radarDish != null) {
+          actor.Spinners.Add((radarDish, Vector3.up, 52f, true));
+        }
+      }
       _actors[entity] = actor;
       return actor;
+    }
+
+    void BuildPatriotAccent(Actor actor) {
+      var kit = new MeshKit();
+      kit.Paint(Swatch.ArmorDark).Chamfer(new Vector3(0f, 0.9f, 0f), new Vector3(1.5f, 0.55f, 1.5f), 0.12f);
+      for (var c = 0; c < 4; c++) {
+        var ox = (c % 2 == 0 ? -0.34f : 0.34f);
+        var oy = 1.5f + (c / 2) * 0.38f;
+        kit.Paint(Swatch.MetalLight).Box(new Vector3(ox, oy, 0.1f), new Vector3(0.28f, 0.28f, 1.65f));
+        kit.Paint(Swatch.GlowCyan).Box(new Vector3(ox, oy, 0.96f), new Vector3(0.22f, 0.22f, 0.08f));
+      }
+      var go = new GameObject("PatriotQuadRack", typeof(MeshFilter), typeof(MeshRenderer));
+      go.transform.SetParent(actor.View.Model.transform, false);
+      go.transform.localRotation = Quaternion.Euler(-28f, 0f, 0f);
+      go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("patriot_rack");
+      go.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+      ArtLook.Apply(go, actor.Color, true);
+    }
+
+    void UpdatePlacementRings(Frame frame) {
+      if (_controller == null || _controller.Input == null || _controller.Input.IsPlacing == false || Time.time < _placementRingAt) {
+        return;
+      }
+      _placementRingAt = Time.time + 0.28f;
+      var spec = frame.FindAsset(_controller.Input.Placing);
+      if (spec == null) {
+        return;
+      }
+      var player = _controller.Player;
+      // 전략 미사일 격납고 배치 모드: 점령한 중립 거점·암시장 주변 18m 허용 반경을 녹색 링으로 표시.
+      if (spec.RequiresNeutralOutpost) {
+        var ult = UltimateSystem.SpecOf(frame, player);
+        var outpostRadius = ult != null && ult.SiloOutpostRadius > FP._0 ? ult.SiloOutpostRadius.AsFloat : 18f;
+        var sites = frame.Filter<Transform3D, CaptureSite>();
+        while (sites.NextUnsafe(out _, out var t, out var site)) {
+          var mine = site->Owner == player;
+          Fx.Ring(t->Position.ToUnityVector3(), mine ? new Color(0.2f, 0.95f, 0.38f, 0.9f) : new Color(0.95f, 0.25f, 0.2f, 0.7f), outpostRadius, 0.35f);
+        }
+        var traders = frame.Filter<Transform3D, NpcTrader>();
+        var bit = player.IsValid ? (1 << (int)player) : 0;
+        while (traders.NextUnsafe(out _, out var t, out var trader)) {
+          if (trader->Destroyed == false) {
+            var ok = (trader->HostileMask & bit) == 0;
+            Fx.Ring(t->Position.ToUnityVector3(), ok ? new Color(0.2f, 0.95f, 0.38f, 0.9f) : new Color(0.95f, 0.25f, 0.2f, 0.7f), outpostRadius, 0.35f);
+          }
+        }
+      }
+      // 카메라 중앙/포인터 지점의 건설 가능 여부를 녹색/적색 링으로 실시간 표시.
+      var cam = Camera.main;
+      if (cam != null) {
+        var ray = cam.ScreenPointToRay(new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f));
+        if (new UnityEngine.Plane(Vector3.up, Vector3.zero).Raycast(ray, out var hitDist)) {
+          var world = ray.GetPoint(hitDist);
+          var fp = new FPVector3(FP.FromFloat_UNSAFE(world.x), FP._0, FP.FromFloat_UNSAFE(world.z));
+          var valid = ProductionSystem.CanPlace(frame, spec, fp, player);
+          Fx.Ring(world, valid ? new Color(0.18f, 0.96f, 0.42f, 0.95f) : new Color(0.98f, 0.22f, 0.18f, 0.95f), spec.FootprintRadius.AsFloat + 0.6f, 0.32f);
+        }
+      }
+    }
+
+    void UpdateStrikeRockets(Frame frame, float dt) {
+      if (_stage == null) {
+        return;
+      }
+      var active = new HashSet<EntityRef>();
+      foreach (var pair in frame.GetComponentIterator<MissileStrike>()) {
+        active.Add(pair.Entity);
+        var pos = pair.Component.CurrentPosition.ToUnityVector3();
+        if (_strikeRockets.TryGetValue(pair.Entity, out var rocket) == false || rocket == null) {
+          rocket = new GameObject("StrikeICBM", typeof(MeshFilter), typeof(MeshRenderer));
+          rocket.transform.SetParent(_stage, false);
+          var kit = new MeshKit();
+          kit.Paint(Swatch.White).Cylinder(new Vector3(0f, 0f, 0f), 0.46f, 3.0f, 10);
+          kit.Paint(Swatch.GlowRed).Cone(new Vector3(0f, 1.95f, 0f), 0.48f, 1.0f, 10);
+          rocket.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("strike_icbm");
+          rocket.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+          rocket.transform.position = pos;
+          _strikeRockets[pair.Entity] = rocket;
+        }
+        var delta = pos - rocket.transform.position;
+        if (delta.sqrMagnitude > 0.001f) {
+          rocket.transform.rotation = Quaternion.LookRotation(delta.normalized) * Quaternion.Euler(90f, 0f, 0f);
+        }
+        rocket.transform.position = pos;
+        Fx.MuzzleFlash(pos - delta.normalized * 1.2f, -delta.normalized, 0.9f);
+      }
+      var stale = new List<EntityRef>();
+      foreach (var kv in _strikeRockets) {
+        if (active.Contains(kv.Key) == false) {
+          if (kv.Value != null) {
+            Destroy(kv.Value);
+          }
+          stale.Add(kv.Key);
+        }
+      }
+      foreach (var key in stale) {
+        _strikeRockets.Remove(key);
+      }
+    }
+
+    void UpdateScorchedAndEmpFx(Frame frame) {
+      if (Time.time < _zoneFxAt) {
+        return;
+      }
+      _zoneFxAt = Time.time + 0.38f;
+      // 전략 미사일 초토화 구역(15초): 지속 암흑 크레이터 + 중앙 잔불 스파크(점선 도트 링 대신 현실적인 그을음/화염).
+      foreach (var pair in frame.GetComponentIterator<ScorchedZone>()) {
+        var z = pair.Component;
+        if (frame.Number >= z.UntilFrame) {
+          continue;
+        }
+        var pos = z.Position.ToUnityVector3();
+        var r = z.Radius.AsFloat;
+        var ember = pos + new Vector3(Random.Range(-r * 0.45f, r * 0.45f), 0.35f, Random.Range(-r * 0.45f, r * 0.45f));
+        Fx.Explosion(ember, 0.72f);
+      }
+      // EMP 충격파 마비(5초) 건물: 청록색 전기 스파크.
+      foreach (var pair in frame.GetComponentIterator<Building>()) {
+        if (pair.Component.EmpUntilFrame > frame.Number) {
+          var pos = frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3() + Vector3.up * 2.2f;
+          Fx.Burst(pos, new Color(0.25f, 0.92f, 1f), 1.1f);
+        }
+      }
+      // 완공 비행 중인 공중 항모 지휘 오라(14m)는 BuildHelicarrierVisual의 회전 전술 오라 링(CarrierAuraRing)으로 깔끔하게 표시한다(흩어진 청록 점 제거).
+    }
+
+    Vector3 FindSiloPosition(Frame frame, PlayerRef owner, Vector3 fallback) {
+      if (frame == null) {
+        return fallback;
+      }
+      var buildings = frame.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out _, out var t, out var b)) {
+        if (b->Owner == owner && frame.FindAsset(b->Spec).Role == BuildingRole.UltimateSite) {
+          return t->Position.ToUnityVector3();
+        }
+      }
+      return fallback;
+    }
+
+    void SpawnFlyingIcbm(Vector3 start, Vector3 velocity, float duration) {
+      if (_stage == null) {
+        return;
+      }
+      var go = new GameObject("FlyingICBM", typeof(MeshFilter), typeof(MeshRenderer));
+      go.transform.SetParent(_stage, false);
+      go.transform.position = start;
+      go.transform.rotation = velocity.y >= 0f ? Quaternion.identity : Quaternion.Euler(180f, 0f, 0f);
+      var kit = new MeshKit();
+      kit.Paint(Swatch.White).Cylinder(new Vector3(0f, 1.4f, 0f), 0.42f, 2.8f, 10);
+      kit.Paint(Swatch.MetalDark).Cylinder(new Vector3(0f, 0.3f, 0f), 0.46f, 0.6f, 10);
+      kit.Paint(Swatch.GlowRed).Cone(new Vector3(0f, 3.25f, 0f), 0.44f, 0.95f, 10);
+      for (var f = 0; f < 4; f++) {
+        var yaw = f * 90f;
+        kit.Paint(Swatch.GlowRed).Box(Quaternion.Euler(0f, yaw, 0f) * new Vector3(0.45f, 0.35f, 0f), Quaternion.Euler(0f, yaw, 0f) * new Vector3(0.38f, 0.65f, 0.08f));
+      }
+      go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("icbm_rocket");
+      go.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+      _flyingMissiles.Add((go, velocity, Time.time + duration, 0f));
+    }
+
+    void UpdateSuperweaponVisuals(float dt) {
+      for (var i = _flyingMissiles.Count - 1; i >= 0; i--) {
+        var m = _flyingMissiles[i];
+        if (m.Rocket == null || Time.time >= m.Until) {
+          if (m.Rocket != null) {
+            Destroy(m.Rocket);
+          }
+          _flyingMissiles.RemoveAt(i);
+          continue;
+        }
+        m.Rocket.transform.position += m.Velocity * dt;
+        if (Time.time >= m.NextTrail) {
+          var tail = m.Rocket.transform.position - m.Velocity.normalized * 0.6f;
+          Fx.MuzzleFlash(tail, -m.Velocity.normalized, 1.1f);
+          Fx.Signal(tail);
+          m.NextTrail = Time.time + 0.06f;
+        }
+        _flyingMissiles[i] = m;
+      }
+      for (var i = _crashingCarriers.Count - 1; i >= 0; i--) {
+        var c = _crashingCarriers[i];
+        if (c.Root == null) {
+          _crashingCarriers.RemoveAt(i);
+          continue;
+        }
+        c.Elapsed += dt;
+        var t = Mathf.Clamp01(c.Elapsed / 3f);
+        if (c.Turn != null) {
+          c.Turn.localPosition = Vector3.Lerp(c.StartPos, Vector3.up * 0.4f, t * t);
+          c.Turn.localRotation = Quaternion.Euler(28f * t, c.Elapsed * 55f, 42f * t);
+        }
+        c.Root.transform.position += c.Root.transform.forward * (3.2f * (1f - 0.5f * t) * dt);
+        if (c.Elapsed >= c.NextSmoke) {
+          c.NextSmoke = c.Elapsed + 0.16f;
+          var smokePos = c.Turn != null ? c.Turn.position : c.Root.transform.position;
+          Fx.Explosion(smokePos + Random.insideUnitSphere * 1.4f, 0.9f);
+        }
+        if (c.Elapsed >= 3f) {
+          Fx.MushroomExplosion(c.Root.transform.position, 4.8f);
+          Destroy(c.Root);
+          _crashingCarriers.RemoveAt(i);
+          continue;
+        }
+        _crashingCarriers[i] = c;
+      }
+    }
+
+    void BuildHelicarrierVisual(Actor actor) {
+      actor.IsCarrier = true;
+      actor.View.Slot = null;
+      var model = actor.View.Model.transform;
+      model.localPosition = Vector3.zero;
+      model.localRotation = Quaternion.identity;
+      model.localScale = Vector3.one * 1.35f;
+      foreach (var r in model.GetComponents<Renderer>()) {
+        r.enabled = false;
+      }
+      for (var i = model.childCount - 1; i >= 0; i--) {
+        DestroyImmediate(model.GetChild(i).gameObject);
+      }
+      actor.Spinners.Clear();
+      var kit = new MeshKit();
+      // 장갑 선체 + 상부 활주 비행갑판 + 우현 함교 아일랜드 + 발광 활주로 유도선(GlowCyan).
+      kit.Team().Chamfer(new Vector3(0f, 0.1f, 0f), new Vector3(2.2f, 0.75f, 5.4f), 0.22f);
+      kit.Paint(Swatch.MetalDark).Chamfer(new Vector3(0f, 0.58f, 0.1f), new Vector3(3.4f, 0.24f, 6.2f), 0.14f);
+      kit.Paint(Swatch.ConcreteDark).Box(new Vector3(-0.35f, 0.72f, 0.1f), new Vector3(1.55f, 0.05f, 5.8f));
+      kit.Team().Chamfer(new Vector3(1.18f, 1.15f, -0.35f), new Vector3(0.68f, 0.95f, 1.45f), 0.08f);
+      kit.Paint(Swatch.GlowCyan).Box(new Vector3(1.18f, 1.38f, 0.39f), new Vector3(0.52f, 0.22f, 0.08f));
+      // 활주로 청록색 발광 유도등 2열.
+      for (var s = -5; s <= 5; s++) {
+        var z = s * 0.5f;
+        kit.Paint(Swatch.GlowCyan).Box(new Vector3(-1.02f, 0.75f, z), new Vector3(0.11f, 0.06f, 0.28f));
+        kit.Paint(Swatch.GlowCyan).Box(new Vector3(0.32f, 0.75f, z), new Vector3(0.11f, 0.06f, 0.28f));
+      }
+      // 4기 VTOL 터빈 나셀 암 & 덕트 링.
+      var mounts = new[] {
+        new Vector3(-2.35f, 0.42f, -1.75f),
+        new Vector3(2.35f, 0.42f, -1.75f),
+        new Vector3(-2.45f, 0.42f, 1.85f),
+        new Vector3(2.45f, 0.42f, 1.85f),
+      };
+      for (var m = 0; m < mounts.Length; m++) {
+        var p = mounts[m];
+        kit.Paint(Swatch.MetalDark).Box(new Vector3(p.x * 0.55f, p.y, p.z), new Vector3(Mathf.Abs(p.x), 0.22f, 0.42f));
+        kit.Team().Cylinder(p, 0.92f, 0.34f, 14);
+        kit.Paint(Swatch.Black).Cylinder(p + Vector3.up * 0.04f, 0.76f, 0.36f, 14);
+        kit.Paint(Swatch.GlowCyan).Cylinder(p + Vector3.up * 0.08f, 0.24f, 0.38f, 10);
+
+        var rotorGo = new GameObject($"VTOLRotor{m}", typeof(MeshFilter), typeof(MeshRenderer));
+        rotorGo.transform.SetParent(model, false);
+        rotorGo.transform.localPosition = p + Vector3.up * 0.16f;
+        var rKit = new MeshKit();
+        rKit.Paint(Swatch.MetalLight).Box(Vector3.zero, new Vector3(1.42f, 0.04f, 0.16f));
+        rKit.Paint(Swatch.MetalLight).Box(Vector3.zero, new Vector3(0.16f, 0.04f, 1.42f));
+        rKit.Paint(Swatch.GlowCyan).Cylinder(Vector3.zero, 0.22f, 0.12f, 8);
+        rotorGo.GetComponent<MeshFilter>().sharedMesh = rKit.ToMesh($"vtol_rotor_{m}");
+        rotorGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+        actor.Spinners.Add((rotorGo.transform, Vector3.up, 1480f * (m % 2 == 0 ? 1f : -1f), false));
+      }
+      var hullGo = new GameObject("HelicarrierHull", typeof(MeshFilter), typeof(MeshRenderer));
+      hullGo.transform.SetParent(model, false);
+      hullGo.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("helicarrier_hull");
+      hullGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(actor.Color, true) ?? ArtLook.NeutralMaterial;
+
+      var radarGo = new GameObject("BridgeRadar", typeof(MeshFilter), typeof(MeshRenderer));
+      radarGo.transform.SetParent(model, false);
+      radarGo.transform.localPosition = new Vector3(1.18f, 1.75f, -0.35f);
+      var radKit = new MeshKit();
+      radKit.Paint(Swatch.GlowCyan).Box(Vector3.zero, new Vector3(0.65f, 0.22f, 0.1f));
+      radarGo.GetComponent<MeshFilter>().sharedMesh = radKit.ToMesh("helicarrier_radar");
+      radarGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(actor.Color, true) ?? ArtLook.NeutralMaterial;
+      actor.Spinners.Add((radarGo.transform, Vector3.up, 180f, false));
+
+      // 건물·도로 위를 스쳐 지나가는 거대한 지상 그림자 데칼(CarrierShadow).
+      var shadowGo = new GameObject("CarrierShadow", typeof(MeshFilter), typeof(MeshRenderer));
+      shadowGo.transform.SetParent(actor.View.transform, false);
+      shadowGo.transform.localPosition = new Vector3(0f, 0.08f, 0f);
+      var sMesh = new Mesh { name = "carrier_ground_shadow" };
+      const float sx = 7.2f;
+      const float sz = 9.4f;
+      sMesh.vertices = new[] { new Vector3(-sx, 0f, -sz), new Vector3(-sx, 0f, sz), new Vector3(sx, 0f, sz), new Vector3(sx, 0f, -sz) };
+      sMesh.uv = new[] { new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(1f, 0f) };
+      sMesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+      sMesh.RecalculateNormals();
+      shadowGo.GetComponent<MeshFilter>().sharedMesh = sMesh;
+      var sRenderer = shadowGo.GetComponent<MeshRenderer>();
+      sRenderer.sharedMaterial = BattleFx.ScorchMaterial();
+      sRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      sRenderer.receiveShadows = false;
+
+      // 깔끔하게 회전하는 전술 지휘 오라 링(CarrierAuraRing, 반경 14m, 얇은 세그먼트 링).
+      var auraGo = new GameObject("CarrierAuraRing", typeof(MeshFilter), typeof(MeshRenderer));
+      auraGo.transform.SetParent(actor.View.transform, false);
+      auraGo.transform.localPosition = new Vector3(0f, 0.14f, 0f);
+      var auraKit = new MeshKit().Paint(Swatch.GlowCyan);
+      ArtView.DashedRing(auraKit, 13.78f, 14.0f, 72);
+      auraGo.GetComponent<MeshFilter>().sharedMesh = auraKit.ToMesh("carrier_aura_ring");
+      var auraMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
+      auraMat.color = new Color(0.22f, 0.90f, 1f, 0.42f);
+      if (auraMat.HasProperty("_Surface")) auraMat.SetFloat("_Surface", 1f);
+      if (auraMat.HasProperty("_SrcBlend")) auraMat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+      if (auraMat.HasProperty("_DstBlend")) auraMat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+      if (auraMat.HasProperty("_ZWrite")) auraMat.SetFloat("_ZWrite", 0f);
+      auraMat.renderQueue = 3000;
+      var auraRend = auraGo.GetComponent<MeshRenderer>();
+      auraRend.sharedMaterial = auraMat;
+      auraRend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      auraRend.receiveShadows = false;
+      actor.Spinners.Add((auraGo.transform, Vector3.up, 14f, false));
+      ArtLook.Apply(actor.View.Model, actor.Color, true);
+    }
+
+    void BuildMissileSiloVisual(Actor actor) {
+      actor.View.Slot = null;
+      var model = actor.View.Model.transform;
+      model.localPosition = Vector3.zero;
+      model.localRotation = Quaternion.identity;
+      model.localScale = Vector3.one * 1.65f;
+      foreach (var r in model.GetComponents<Renderer>()) {
+        r.enabled = false;
+      }
+      for (var i = model.childCount - 1; i >= 0; i--) {
+        DestroyImmediate(model.GetChild(i).gameObject);
+      }
+      var kit = new MeshKit();
+      // 철근 콘크리트 요새 벙커 + 중앙 발사 수직 갱도 + 경보 램프.
+      kit.Paint(Swatch.ConcreteDark).Chamfer(new Vector3(0f, 0.55f, 0f), new Vector3(4.6f, 1.1f, 4.6f), 0.35f);
+      kit.Team().Chamfer(new Vector3(0f, 1.18f, 0f), new Vector3(3.6f, 0.36f, 3.6f), 0.2f);
+      kit.Paint(Swatch.Black).Cylinder(new Vector3(0f, 0.85f, 0f), 1.25f, 1.5f, 16);
+      kit.Paint(Swatch.MetalDark).Box(new Vector3(-1.95f, 1.65f, 0f), new Vector3(0.35f, 1.3f, 2.8f));
+      kit.Paint(Swatch.MetalDark).Box(new Vector3(1.95f, 1.65f, 0f), new Vector3(0.35f, 1.3f, 2.8f));
+      kit.Paint(Swatch.GlowRed).Box(new Vector3(-1.95f, 2.4f, 1.2f), new Vector3(0.28f, 0.28f, 0.28f));
+      kit.Paint(Swatch.GlowRed).Box(new Vector3(1.95f, 2.4f, -1.2f), new Vector3(0.28f, 0.28f, 0.28f));
+      var bunkerGo = new GameObject("SiloBunker", typeof(MeshFilter), typeof(MeshRenderer));
+      bunkerGo.transform.SetParent(model, false);
+      bunkerGo.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh("silo_bunker");
+      bunkerGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(actor.Color, true) ?? ArtLook.NeutralMaterial;
+
+      // 좌우 슬라이딩 방폭문(BlastDoorL / BlastDoorR).
+      for (var side = -1; side <= 1; side += 2) {
+        var dKit = new MeshKit();
+        dKit.Paint(Swatch.MetalLight).Chamfer(Vector3.zero, new Vector3(1.32f, 0.24f, 2.65f), 0.06f);
+        dKit.Paint(Swatch.GlowRed).Box(new Vector3(-side * 0.52f, 0.14f, 0f), new Vector3(0.16f, 0.05f, 2.4f));
+        var doorGo = new GameObject(side < 0 ? "BlastDoorL" : "BlastDoorR", typeof(MeshFilter), typeof(MeshRenderer));
+        doorGo.transform.SetParent(model, false);
+        doorGo.transform.localPosition = new Vector3(side * 0.68f, 1.48f, 0f);
+        doorGo.GetComponent<MeshFilter>().sharedMesh = dKit.ToMesh(side < 0 ? "silo_door_l" : "silo_door_r");
+        doorGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+        if (side < 0) {
+          actor.SiloDoorL = doorGo.transform;
+        } else {
+          actor.SiloDoorR = doorGo.transform;
+        }
+      }
+
+      // 격납고 내부 수직 ICBM 탄두 미사일.
+      var mKit = new MeshKit();
+      mKit.Paint(Swatch.White).Cylinder(new Vector3(0f, 1.3f, 0f), 0.44f, 2.6f, 12);
+      mKit.Paint(Swatch.GlowRed).Cone(new Vector3(0f, 3.05f, 0f), 0.45f, 0.95f, 12);
+      var mGo = new GameObject("SiloMissile", typeof(MeshFilter), typeof(MeshRenderer));
+      mGo.transform.SetParent(model, false);
+      mGo.transform.localPosition = new Vector3(0f, 0.1f, 0f);
+      mGo.GetComponent<MeshFilter>().sharedMesh = mKit.ToMesh("silo_icbm");
+      mGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+      actor.SiloMissile = mGo.transform;
+      ArtLook.Apply(actor.View.Model, actor.Color, true);
     }
 
     static float Wave(float time, float speed, float phase) => 0.5f + 0.5f * Mathf.Sin(time * speed * Mathf.PI * 2f + phase);
@@ -624,13 +1080,42 @@ namespace FactoryWars.View {
 
     public int PendingShots { get { var n = 0; foreach (var a in _actors.Values) { if (a.Pending) { n++; } } return n; } }
 
-    /// <summary>보병 무기 프리팹(팩 소총). 칸이 비어 있으면 null.</summary>
+    /// <summary>보병 병과별 전용 Synty 무기 선택(저격총 · 대전차 RPG · 돌격 유탄발사기 · 공병 카빈 · 돌격소총).</summary>
+    public static DressKind WeaponKindFor(string unitId) {
+      if (string.IsNullOrEmpty(unitId)) return DressKind.Rifle;
+      if (unitId.Contains("sniper")) return DressKind.SniperRifle;
+      if (unitId.Contains("at_rocket")) return DressKind.RocketLauncher;
+      if (unitId.Contains("breacher") || unitId.Contains("flame")) return DressKind.BreacherWeapon;
+      if (unitId.Contains("engineer")) return DressKind.EngineerCarbine;
+      return DressKind.Rifle;
+    }
+
+    /// <summary>보병 무기 프리팹(팩 소총·RPG·유탄·카빈). 칸이 비어 있으면 기본 소총으로 폴백.</summary>
     public static GameObject Weapon(DressKind kind) {
       var entry = Dressing.Map != null ? Dressing.Map.Get(kind) : null;
-      return entry != null && entry.Variants.Count > 0 ? entry.Variants[0].Prefab : null;
+      if (entry != null && entry.Variants.Count > 0) {
+        return entry.Variants[0].Prefab;
+      }
+      if (kind != DressKind.Rifle && Dressing.Map != null) {
+        var fallback = Dressing.Map.Get(DressKind.Rifle);
+        if (fallback != null && fallback.Variants.Count > 0) {
+          return fallback.Variants[0].Prefab;
+        }
+      }
+      return null;
     }
 
     public const float NeedleWidth = 0.035f;
+
+    static Color? TracerColor(Actor actor) {
+      if (actor.UpgradeMark <= 1) {
+        return null;
+      }
+      if (actor.UpgradeMark == 2) {
+        return new Color(1f, 0.48f, 0.1f, 1f);
+      }
+      return actor.IsFreeFaction ? new Color(0.2f, 0.94f, 1f, 1f) : new Color(1f, 0.23f, 0.19f, 1f);
+    }
 
     void Shoot(Actor actor, AttackType attack, float range, bool hasTarget, Vector3 target, bool flame) {
       if (actor.View.gameObject.activeSelf) {
@@ -638,6 +1123,7 @@ namespace FactoryWars.View {
       }
       actor.View.Animation?.Fire();
       actor.Recoil = RecoilDistance;
+      var tracerTint = TracerColor(actor);
       if (actor.Rigs.Count > 0 && flame == false) {
         // 보병: 분대원마다 소총 총구에서 섬광과 가는 예광탄(반동은 RiflemanRig가 그린다).
         foreach (var rig in actor.Rigs) {
@@ -647,7 +1133,7 @@ namespace FactoryWars.View {
           Fx.MuzzleFlash(tip, aim, 0.45f);
           if (hasTarget) {
             var spread = new Vector3(Random.Range(-0.3f, 0.3f), Random.Range(-0.05f, 0.25f), Random.Range(-0.3f, 0.3f));
-            Fx.Needle(tip, target + spread, BulletSpeed);
+            Fx.Needle(tip, target + spread, BulletSpeed, tracerTint);
           }
         }
         if (hasTarget) {
@@ -674,14 +1160,14 @@ namespace FactoryWars.View {
         // 소총·기관총: 예광탄 3발 연사, 약간 흩어짐.
         for (var i = 0; i < 3; i++) {
           var spread = new Vector3(Random.Range(-0.35f, 0.35f), Random.Range(-0.1f, 0.2f), Random.Range(-0.35f, 0.35f));
-          Fx.Needle(muzzle + forward * (0.3f * i), target + spread, speed);
+          Fx.Needle(muzzle + forward * (0.3f * i), target + spread, speed, tracerTint);
         }
       } else if (missile) {
         // 미사일: 위로 솟았다가 휘어 내려가는 비행, 배기 불꽃과 연기 꼬리, 도착할 때 착탄.
         Fx.LaunchMissile(muzzle, target, speed, 1.6f);
         return;
       } else {
-        Fx.Tracer(muzzle, target, speed, 0.34f, false);
+        Fx.Tracer(muzzle, target, speed, 0.34f, false, tracerTint);
       }
       Fx.Impact(target, attack == AttackType.AntiInfantry ? 0.8f : 1.6f, target - muzzle);
       if (attack == AttackType.Area) {
@@ -700,8 +1186,8 @@ namespace FactoryWars.View {
         start.y = 0f;
         actor.Position = start;
         actor.View.transform.position = start;
-        if (spec.IsVehicle == false && spec.IsAir == false && spec.IsNaval == false && spec.Ability != SpecialAbility.EngineerWork) {
-          actor.Rigs.AddRange(RiflemanRig.AttachAll(actor.View.Model, Weapon(spec.name.Contains("sniper") ? DressKind.SniperRifle : DressKind.Rifle)));
+        if (spec.IsVehicle == false && spec.IsAir == false && spec.IsNaval == false && (spec.Size == UnitSize.Small || spec.Size == UnitSize.Engineer)) {
+          actor.Rigs.AddRange(RiflemanRig.AttachAll(actor.View.Model, Weapon(WeaponKindFor(spec.name)), spec.name.Contains("at_rocket")));
         }
       }
       var color = frame.Global->Players.GetPointer(unit->Owner)->ColorIndex;
@@ -742,9 +1228,14 @@ namespace FactoryWars.View {
       var moved = goal - actor.Position;
       var before = actor.Position;
       actor.Position += moved * (1f - Mathf.Exp(-VisualProfile.Current.FollowRate * dt));
-      var hover = spec.IsAir ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.12f : 0f;
-      actor.View.transform.position = spec.IsAir ? actor.Position : actor.Position + Vector3.up * TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z);
-      actor.View.Turn.localPosition = Vector3.up * (actor.View.Entry.Altitude + hover);
+      var assemblingCarrier = actor.IsCarrier && frame.Unsafe.TryGetPointer<Carrier>(entity, out var cPtr) && cPtr->Assembling;
+      var hover = (spec.IsAir && assemblingCarrier == false) ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.14f : 0f;
+      actor.View.transform.position = (spec.IsAir && assemblingCarrier == false) ? actor.Position : actor.Position + Vector3.up * TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z);
+      var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(actor.View.Entry.Altitude, 10.5f) : actor.View.Entry.Altitude);
+      actor.View.Turn.localPosition = Vector3.up * (altitude + hover);
+      if (actor.IsCarrier && actor.View.Bar != null) {
+        actor.View.Bar.transform.localPosition = Vector3.up * (altitude + 3.6f);
+      }
 
       var hasTarget = TryTarget(frame, unit->TargetEntity, out var target, out var air);
       foreach (var rig in actor.Rigs) {
@@ -762,19 +1253,32 @@ namespace FactoryWars.View {
       Aim(actor, hasTarget, target, air, dt);
       UpdateShield(actor, unit->InCover);
       UpdateVetBadge(actor, unit->VetRank);
+      UpdateUpgradeVisual(frame, actor, unit, spec);
 
       var cooldown = unit->AttackCooldown.AsFloat;
       if (cooldown > actor.Cooldown + 0.05f && spec.Attack != AttackType.None) {
-        Fire(actor, spec.Attack, spec.Range.AsFloat, hasTarget, target, spec.Ability == SpecialAbility.FlameBurst);
+        Fire(actor, spec.Attack, spec.Range.AsFloat, hasTarget, target, spec.Ability == SpecialAbility.FlameBurst || spec.Ability == SpecialAbility.GarrisonBreach);
       }
       actor.Cooldown = cooldown;
 
-      var working = frame.Unsafe.TryGetPointer<Worker>(entity, out var worker) && worker->Task != WorkerTask.Idle && worker->Task != WorkerTask.Deliver;
-      Animate(actor, dt, true, working);
+      // 공중 항모 체력 50% 미만 로터 손상 연출: VTOL 터빈에서 검은 연기·스파크 분출 및 로터 회전 저하.
+      if (actor.IsCarrier && UltimateSystem.IsCarrierRotorDamaged(frame, entity, unit)) {
+        Animate(actor, dt * 0.45f, true, false);
+        if (Time.time >= _rotorSmokeAt) {
+          _rotorSmokeAt = Time.time + 0.14f;
+          var basePos = actor.View.Turn.position;
+          Fx.Explosion(basePos + actor.View.Turn.right * 2.2f + Vector3.up * 0.4f, 0.55f);
+          Fx.Impact(basePos - actor.View.Turn.right * 2.2f + Vector3.up * 0.4f, 0.7f, Vector3.down);
+        }
+      } else {
+        var working = frame.Unsafe.TryGetPointer<Worker>(entity, out var worker) && worker->Task != WorkerTask.Idle && worker->Task != WorkerTask.Deliver;
+        Animate(actor, dt, true, working);
+      }
       if (actor.View.Animation != null) {
+        var workingAnim = frame.Unsafe.TryGetPointer<Worker>(entity, out var wAnim) && wAnim->Task != WorkerTask.Idle && wAnim->Task != WorkerTask.Deliver;
         var speed = dt > 0f ? (actor.Position - before).magnitude / dt : 0f;
         actor.View.Animation.Cover = unit->InCover;
-        actor.View.Animation.Set(AnimState(speed, hasTarget, working ? worker->Task : WorkerTask.Idle), speed);
+        actor.View.Animation.Set(AnimState(speed, hasTarget, workingAnim ? wAnim->Task : WorkerTask.Idle), speed);
       }
     }
 
@@ -862,6 +1366,86 @@ namespace FactoryWars.View {
       var camera = Camera.main;
       if (camera != null) {
         actor.VetBadge.transform.rotation = camera.transform.rotation;
+      }
+    }
+
+    /// <summary>Mk.1 -> Mk.2 -> Mk.3 시각 진화(절차적 장갑판·포신 보강·진영 발광 트림 + 은/금 셰브론 배지).</summary>
+    void UpdateUpgradeVisual(Frame frame, Actor actor, Unit* unit, UnitSpec spec) {
+      if (spec.Size == UnitSize.Engineer || actor.IsCarrier) {
+        return;
+      }
+      var mark = TechSystem.UnitMark(frame, unit->Owner, spec);
+      actor.IsFreeFaction = TechSystem.FactionIdOf(frame, unit->Owner) == "free_federation";
+      if (mark != actor.UpgradeMark) {
+        actor.UpgradeMark = mark;
+        if (actor.UpgradeKit != null) {
+          Destroy(actor.UpgradeKit);
+          actor.UpgradeKit = null;
+        }
+        if (mark >= 2) {
+          var kit = new MeshKit();
+          var glow = actor.IsFreeFaction ? Swatch.GlowCyan : Swatch.GlowRed;
+          var infantry = spec.Size == UnitSize.Small && spec.IsVehicle == false && spec.IsAir == false && spec.IsNaval == false;
+          if (infantry) {
+            // 보병 Mk.2: 강화 어깨·흉부 장갑판 / Mk.3: 중장갑 견갑 + 진영 발광 바이저·백팩 코어.
+            kit.Paint(Swatch.ArmorDark).Box(new Vector3(-0.24f, 1.32f, 0f), new Vector3(0.14f, 0.14f, 0.22f));
+            kit.Paint(Swatch.ArmorDark).Box(new Vector3(0.24f, 1.32f, 0f), new Vector3(0.14f, 0.14f, 0.22f));
+            kit.Paint(Swatch.MetalLight).Box(new Vector3(0f, 1.18f, 0.14f), new Vector3(0.3f, 0.26f, 0.08f));
+            if (mark >= 3) {
+              kit.Paint(glow).Box(new Vector3(0f, 1.56f, 0.13f), new Vector3(0.2f, 0.07f, 0.08f));
+              kit.Paint(Swatch.ArmorDark).Box(new Vector3(0f, 1.24f, -0.18f), new Vector3(0.28f, 0.34f, 0.14f));
+              kit.Paint(glow).Box(new Vector3(0f, 1.26f, -0.26f), new Vector3(0.18f, 0.16f, 0.05f));
+            }
+          } else {
+            var s = spec.Size == UnitSize.Large ? 1.45f : spec.Size == UnitSize.Medium ? 1.05f : 0.72f;
+            var y = spec.IsAir ? 0.25f : 0.52f * s;
+            // 기갑·차량·항공 Mk.2: 반응장갑 사이드 스커트 + 연장 포신 덮개.
+            kit.Paint(Swatch.ArmorDark).Chamfer(new Vector3(-0.98f * s, y, 0f), new Vector3(0.22f * s, 0.44f * s, 1.9f * s), 0.05f);
+            kit.Paint(Swatch.ArmorDark).Chamfer(new Vector3(0.98f * s, y, 0f), new Vector3(0.22f * s, 0.44f * s, 1.9f * s), 0.05f);
+            kit.Paint(Swatch.MetalLight).Box(new Vector3(0f, y + 0.42f * s, 0.95f * s), new Vector3(0.28f * s, 0.22f * s, 0.95f * s));
+            if (mark >= 3) {
+              // Mk.3: 진영 발광 에너지 라인 + 이중 연장 포열/견부 중장갑.
+              kit.Paint(glow).Box(new Vector3(-1.11f * s, y + 0.04f, 0f), new Vector3(0.06f * s, 0.14f * s, 1.75f * s));
+              kit.Paint(glow).Box(new Vector3(1.11f * s, y + 0.04f, 0f), new Vector3(0.06f * s, 0.14f * s, 1.75f * s));
+              kit.Paint(Swatch.MetalLight).Cylinder(new Vector3(-0.22f * s, y + 0.46f * s, 1.35f * s), 0.08f * s, 0.95f * s, 8);
+              kit.Paint(Swatch.MetalLight).Cylinder(new Vector3(0.22f * s, y + 0.46f * s, 1.35f * s), 0.08f * s, 0.95f * s, 8);
+              kit.Paint(glow).Box(new Vector3(0f, y + 0.56f * s, 1.1f * s), new Vector3(0.36f * s, 0.08f * s, 0.65f * s));
+            }
+          }
+          var go = new GameObject($"UpgradeKit_Mk{mark}", typeof(MeshFilter), typeof(MeshRenderer));
+          go.transform.SetParent(actor.View.Model.transform, false);
+          go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh($"upgrade_mk{mark}_{spec.name}");
+          go.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+          ArtLook.Apply(go, actor.Color, true);
+          actor.UpgradeKit = go;
+        }
+      }
+      if (mark <= 1) {
+        if (actor.UpgradeChevron != null && actor.UpgradeChevron.gameObject.activeSelf) {
+          actor.UpgradeChevron.gameObject.SetActive(false);
+        }
+        return;
+      }
+      if (actor.UpgradeChevron == null) {
+        var go = new GameObject("UpgradeChevron");
+        go.transform.SetParent(actor.View.transform, false);
+        var tm = go.AddComponent<TextMesh>();
+        tm.anchor = TextAnchor.MiddleCenter;
+        tm.alignment = TextAlignment.Center;
+        tm.fontSize = 32;
+        tm.characterSize = 0.11f;
+        tm.fontStyle = FontStyle.Bold;
+        actor.UpgradeChevron = tm;
+      }
+      actor.UpgradeChevron.text = mark >= 3 ? "^^ Mk.3" : "^ Mk.2";
+      actor.UpgradeChevron.color = mark >= 3 ? new Color(1f, 0.84f, 0.2f, 1f) : new Color(0.86f, 0.91f, 0.97f, 1f);
+      actor.UpgradeChevron.transform.localPosition = Vector3.up * (actor.View.Entry.BarHeight + (actor.VetRank > 0 ? 0.92f : 0.44f));
+      if (actor.UpgradeChevron.gameObject.activeSelf == false) {
+        actor.UpgradeChevron.gameObject.SetActive(true);
+      }
+      var cam = Camera.main;
+      if (cam != null) {
+        actor.UpgradeChevron.transform.rotation = cam.transform.rotation;
       }
     }
 
@@ -1084,17 +1668,99 @@ namespace FactoryWars.View {
 
       var processing = spec.ProcessSeconds > FP._0 && building->ProcessorOff == false;
       var producing = building->QueueCount > 0;
+      var researching = building->Research > 0;
+      var ultimateBusy = spec.Role == BuildingRole.UltimateSite && (state->UltimatePhase == UltimatePhase.Preparing || state->UltimatePhase == UltimatePhase.Ready);
+      var overdriving = FactorySystem.IsOverdriving(frame, building);
       var yard = spec.IsDropOff && spec.Role == BuildingRole.CollectionYard;
-      var busy = powered && (processing || producing || yard || spec.Role == BuildingRole.Headquarters || spec.Role == BuildingRole.Barracks);
+      var operating = powered && (processing || producing || researching || ultimateBusy || overdriving || spec.Role == BuildingRole.PowerPlant);
+      var busy = operating || (powered && (yard || spec.Role == BuildingRole.Headquarters));
       Animate(actor, dt, powered, busy);
 
-      var smoke = actor.View.Entry.Smoke;
-      if (smoke != null && smoke.Length > 0 && Time.time >= actor.SmokeAt && (powered && (processing || producing || spec.Role == BuildingRole.PowerPlant))) {
-        actor.SmokeAt = Time.time + SmokeSeconds / Mathf.Max(GraphicsQuality.FxScale, 0.1f);
+      // 공장 Lv.2 / Lv.3 시각적 확장 동기화(추가 굴뚝 · 갠트리 크레인 · 발광 배관).
+      var fLevel = FactorySystem.LevelOf(building);
+      if (fLevel != actor.FactoryLevel) {
+        actor.FactoryLevel = fLevel;
+        if (actor.FactoryUpgradeGo != null) Destroy(actor.FactoryUpgradeGo);
+        actor.FactoryUpgradeGo = HeroVisuals.AttachFactoryUpgrade(actor.View.Model.transform, fLevel, actor.Color);
+      }
+      if (actor.FactoryBeacon != null) {
+        var freq = overdriving ? 16f : 7.5f;
+        var blinkOn = operating && Mathf.Sin(Time.time * freq + actor.Phase) > -0.15f;
+        actor.FactoryBeacon.sharedMaterial = HeroVisuals.BeaconMaterial(blinkOn, overdriving);
+      }
+      if (overdriving && Time.time >= actor.OverdriveFxAt) {
+        actor.OverdriveFxAt = Time.time + 0.28f;
+        var basePos = actor.View.transform.position;
+        Fx.Burning(basePos + Vector3.up * 3.6f, true);
+        Fx.Burst(basePos + Vector3.up * 2.4f, new Color(1f, 0.25f, 0.06f), 0.95f);
+      }
+      SyncSynergyPipelines(frame);
+      if (actor.SiloDoorL != null && actor.SiloDoorR != null) {
+        var open = state->UltimatePhase == UltimatePhase.Preparing || state->UltimatePhase == UltimatePhase.Ready
+          || (state->UltimateUseFrame > 0 && frame.Number - state->UltimateUseFrame < frame.SessionConfig.UpdateFPS * 4);
+        var doorX = open ? 1.55f : 0.68f;
+        actor.SiloDoorL.localPosition = Vector3.Lerp(actor.SiloDoorL.localPosition, new Vector3(-doorX, 1.48f, 0f), Mathf.Clamp01(dt * 4f));
+        actor.SiloDoorR.localPosition = Vector3.Lerp(actor.SiloDoorR.localPosition, new Vector3(doorX, 1.48f, 0f), Mathf.Clamp01(dt * 4f));
+        if (actor.SiloMissile != null) {
+          var raised = state->UltimatePhase == UltimatePhase.Ready ? 0.85f : state->UltimatePhase == UltimatePhase.Preparing ? 0.35f : -0.8f;
+          actor.SiloMissile.localPosition = Vector3.Lerp(actor.SiloMissile.localPosition, new Vector3(0f, raised, 0f), Mathf.Clamp01(dt * 4f));
+        }
+      }
+
+      var smoke = actor.FactorySmoke != null && actor.FactorySmoke.Length > 0 ? actor.FactorySmoke : actor.View.Entry.Smoke;
+      if (smoke != null && smoke.Length > 0 && Time.time >= actor.SmokeAt && operating) {
+        actor.SmokeAt = Time.time + (overdriving ? SmokeSeconds * 0.45f : SmokeSeconds) / Mathf.Max(GraphicsQuality.FxScale, 0.1f);
         foreach (var point in smoke) {
           Fx.ChimneySmoke(actor.View.Model.transform.TransformPoint(point));
         }
       }
+    }
+
+    /// <summary>12m 이내 인접한 생산 공장과 제련소·발전소 사이를 발광 지상 파이프라인으로 자동 연결한다.</summary>
+    void SyncSynergyPipelines(Frame frame) {
+      if (_stage == null || Time.time < _synergyPipeAt) {
+        return;
+      }
+      _synergyPipeAt = Time.time + 0.45f;
+      var rules = FactoryWarsUtil.Rules(frame);
+      var r = rules != null && rules.FactorySynergyRadius > FP._0 ? rules.FactorySynergyRadius.AsFloat : 12f;
+      var r2 = r * r;
+      var prods = new List<(EntityRef E, PlayerRef Owner, Vector3 Pos)>();
+      var srcs = new List<(EntityRef E, PlayerRef Owner, Vector3 Pos, bool IsPower)>();
+      var buildings = frame.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out var e, out var t, out var b)) {
+        if (b->ConstructionRemaining > FP._0 || b->Health <= FP._0) continue;
+        var role = frame.FindAsset(b->Spec).Role;
+        var pos = t->Position.ToUnityVector3();
+        if (FactorySystem.IsProductionFactory(role)) {
+          prods.Add((e, b->Owner, pos));
+        } else if (FactorySystem.IsSynergySource(role)) {
+          srcs.Add((e, b->Owner, pos, role == BuildingRole.PowerPlant));
+        }
+      }
+      var active = new HashSet<(EntityRef, EntityRef)>();
+      for (var i = 0; i < prods.Count; i++) {
+        for (var j = 0; j < srcs.Count; j++) {
+          if (prods[i].Owner != srcs[j].Owner) continue;
+          var dx = prods[i].Pos.x - srcs[j].Pos.x;
+          var dz = prods[i].Pos.z - srcs[j].Pos.z;
+          if (dx * dx + dz * dz > r2) continue;
+          var key = (prods[i].E, srcs[j].E);
+          active.Add(key);
+          if (_synergyPipes.ContainsKey(key) == false) {
+            var pipe = HeroVisuals.BuildSynergyPipeline(_stage, prods[i].Pos, srcs[j].Pos, srcs[j].IsPower);
+            if (pipe != null) _synergyPipes[key] = pipe;
+          }
+        }
+      }
+      var remove = new List<(EntityRef, EntityRef)>();
+      foreach (var kv in _synergyPipes) {
+        if (active.Contains(kv.Key) == false) {
+          if (kv.Value != null) Destroy(kv.Value);
+          remove.Add(kv.Key);
+        }
+      }
+      foreach (var k in remove) _synergyPipes.Remove(k);
     }
 
     void UpdateSelection(Frame frame) {
@@ -1181,15 +1847,49 @@ namespace FactoryWars.View {
     /// 고른 아군 유닛 → 표적: 붉은 공격선(#FF2A2A)과 표적 아래 맥동하는 붉은 점선 조준 고리. 이동 중이면 목적지까지 초록 이동선(#38F27A)과 목적지 고리.
     /// 화면 전용(시뮬레이션 TargetEntity·TargetPosition을 읽기만 함).
     /// </summary>
-    const float MoveLineWidth = 0.1f;
-    const float AttackLineWidth = 0.12f;
-    const float MoveLineHold = 1.2f;
-    const float MoveLineFade = 0.8f;
+    const float MoveLineWidth = 0.075f;
+    const float AttackLineWidth = 0.055f;
+    const float MoveLineHold = 0.8f;
+    const float MoveLineFade = 0.6f;
+    const float AttackLineDuration = 1.0f;
     readonly Dictionary<EntityRef, (Vector3 Goal, float Since)> _moveSeen = new Dictionary<EntityRef, (Vector3, float)>();
+    readonly Dictionary<EntityRef, (EntityRef Target, float Since)> _attackSeen = new Dictionary<EntityRef, (EntityRef, float)>();
+    static Texture2D _dashTex;
+
+    static Material DashedLineMaterial(Color color) {
+      if (_dashTex == null) {
+        _dashTex = new Texture2D(32, 4, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Repeat, filterMode = FilterMode.Bilinear };
+        var px = new Color32[32 * 4];
+        for (var y = 0; y < 4; y++) {
+          for (var x = 0; x < 32; x++) {
+            px[y * 32 + x] = x < 14 ? new Color32(255, 255, 255, 255) : new Color32(255, 255, 255, 0);
+          }
+        }
+        _dashTex.SetPixels32(px);
+        _dashTex.Apply(false);
+      }
+      var mat = LineMaterial(color);
+      mat.mainTexture = _dashTex;
+      if (mat.HasProperty("_BaseMap")) {
+        mat.SetTexture("_BaseMap", _dashTex);
+      }
+      if (mat.HasProperty("_Surface")) {
+        mat.SetFloat("_Surface", 1f);
+      }
+      if (mat.HasProperty("_ZWrite")) {
+        mat.SetFloat("_ZWrite", 0f);
+      }
+      mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+      mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+      mat.renderQueue = 2500;
+      return mat;
+    }
 
     void CommandLines(Frame frame, SelectionModel selection) {
-      _attackLine ??= LineMaterial(new Color(1f, 0.165f, 0.165f, 0.75f));
-      _moveLine ??= LineMaterial(new Color(0.22f, 0.95f, 0.48f, 0.7f));
+      _attackLine ??= DashedLineMaterial(new Color(1f, 0.34f, 0.24f, 0.58f));
+      _moveLine ??= DashedLineMaterial(new Color(0.22f, 0.95f, 0.48f, 0.62f));
+      _attackLine.mainTextureOffset = new Vector2(-Time.time * 1.8f, 0f);
+      _moveLine.mainTextureOffset = new Vector2(-Time.time * 1.4f, 0f);
       _targeted.Clear();
       var lines = 0;
       var reticles = 0;
@@ -1201,14 +1901,23 @@ namespace FactoryWars.View {
         }
         var from = actor.View.transform.position + Vector3.up * 0.5f;
         if (TryTarget(frame, unit->TargetEntity, out var at, out _)) {
-          var line = Line(lines++, _attackLine);
-          line.widthMultiplier = AttackLineWidth;
-          line.SetPosition(0, from);
-          line.SetPosition(1, new Vector3(at.x, Mathf.Max(at.y, 1.1f), at.z));
           attack++;
+          if (_attackSeen.TryGetValue(entity, out var aSeen) == false || aSeen.Target != unit->TargetEntity) {
+            aSeen = (unit->TargetEntity, Time.time);
+            _attackSeen[entity] = aSeen;
+          }
+          // 가혹한 실선 붉은 선 제거: 명령/조준 시작 시 1.0초만 은은한 점선으로 페이드아웃하고 이후 교전은 노란/호박색 예광탄으로 표현.
+          var aFade = 1f - Mathf.Clamp01((Time.time - aSeen.Since) / AttackLineDuration);
+          if (aFade > 0.02f) {
+            var line = Line(lines++, _attackLine);
+            line.textureMode = LineTextureMode.Tile;
+            line.widthMultiplier = AttackLineWidth * aFade;
+            line.SetPosition(0, from);
+            line.SetPosition(1, new Vector3(at.x, Mathf.Max(at.y, 1.1f), at.z));
+          }
           if (_targeted.Add(unit->TargetEntity) && reticles < 12) {
             var ring = Reticle(reticles++);
-            var radius = _actors.TryGetValue(unit->TargetEntity, out var targetActor) ? Mathf.Max(1f, targetActor.Radius) : 1.5f;
+            var radius = _actors.TryGetValue(unit->TargetEntity, out var targetActor) ? Mathf.Max(0.8f, targetActor.Radius) : 1.2f;
             var pulse = 1f + 0.12f * Mathf.Sin(Time.time * 6f);
             ring.transform.position = new Vector3(at.x, 0.12f, at.z);
             ring.transform.localScale = new Vector3(radius * pulse, 1f, radius * pulse);
@@ -1219,14 +1928,15 @@ namespace FactoryWars.View {
         if ((unit->Order == UnitOrder.Move || unit->Order == UnitOrder.AttackMove)) {
           var goal = unit->TargetPosition.ToUnityVector3();
           goal.y = 0.15f;
-          // 명령을 받은 뒤 1.2초 동안 보이고 0.8초에 걸쳐 가늘어지며 사라진다(새 목적지면 다시 처음부터).
+          // 명령을 받은 뒤 0.8초 동안 보이고 0.6초에 걸쳐 가늘어지며 사라진다(새 목적지면 다시 처음부터).
           if (_moveSeen.TryGetValue(entity, out var seen) == false || (seen.Goal - goal).sqrMagnitude > 0.25f) {
             seen = (goal, Time.time);
             _moveSeen[entity] = seen;
           }
           var fade = 1f - Mathf.Clamp01((Time.time - seen.Since - MoveLineHold) / MoveLineFade);
-          if ((goal - from).sqrMagnitude > 4f && fade > 0f) {
+          if ((goal - from).sqrMagnitude > 2.25f && fade > 0f) {
             var line = Line(lines++, _moveLine);
+            line.textureMode = LineTextureMode.Tile;
             line.widthMultiplier = MoveLineWidth * fade;
             line.SetPosition(0, new Vector3(from.x, 0.15f, from.z));
             line.SetPosition(1, goal);

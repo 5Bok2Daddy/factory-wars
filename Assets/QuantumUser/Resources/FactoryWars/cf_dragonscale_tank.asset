@@ -33,7 +33,7 @@ MonoBehaviour:
   BuildTimeSeconds:
     RawValue: 1835008
   MaxHealth:
-    RawValue: 39976960
+    RawValue: 37683200
   Attack: 2
   Damage:
     RawValue: 3276800
@@ -48,6 +48,8 @@ MonoBehaviour:
   IsRanged: 1
   MoveSpeed:
     RawValue: 327680
+  ColliderRadius:
+    RawValue: 144179
   Population:
     RawValue: 196608
   ModuleSlots: 2

@@ -15,16 +15,21 @@ namespace FactoryWars.View {
     };
 
     static readonly Dictionary<string, string> Names = new Dictionary<string, string> {
-      { "headquarters", "사령부" }, { "power_plant", "발전소" }, { "processor", "가공소" }, { "supply_depot", "보급창" }, { "barracks", "병영" },
-      { "research_lab", "연구소" }, { "vehicle_factory", "군수공장" }, { "airfield", "비행장" }, { "heavy_works", "중공업 기지" },
+      { "headquarters", "산업 사령부" }, { "power_plant", "터빈 발전소" }, { "processor", "강철 제련소" }, { "supply_depot", "군수·연료 보급창" }, { "barracks", "보병 무장 공장" },
+      { "research_lab", "군수 연구 공장" }, { "vehicle_factory", "기동·화력 조립 공장" }, { "airfield", "항공·드론 조립 격납고" }, { "heavy_works", "중기갑 전차 공장" },
       { "ground_tower", "지상 방어탑" }, { "air_defense", "방공포대" }, { "collection_yard", "집하장" },
       { "shipyard", "조선소" },
       { "sandbags", "모래주머니 진지" }, { "bunker", "벙커" }, { "medic_tent", "의무대" }, { "repair_bay", "정비소" },
-      { "radar", "레이더 기지" }, { "helipad", "헬기장" }, { "artillery", "포병 진지" }, { "scout_boat", "정찰선" }, { "artillery_ship", "포격함" },
-      { "ff_engineer", "공병" }, { "ff_ranger_squad", "레인저 분대" }, { "ff_skyguard_squad", "스카이가드 분대" }, { "ff_eagle_tank", "이글 전차" },
+      { "radar", "레이더 기지" }, { "helipad", "헬기장" }, { "artillery", "포병 진지" }, { "patriot_turret", "패트리어트 요격 포대" }, { "scout_boat", "정찰선" }, { "artillery_ship", "포격함" },
+      { "ff_engineer", "공병" }, { "ff_ranger_squad", "레인저" }, { "ff_skyguard_squad", "스카이가드" }, { "ff_eagle_tank", "이글 전차" },
       { "ff_hawk_gunship", "호크 공격헬기" }, { "ff_skyfortress_bomber", "스카이포트리스 폭격기" },
-      { "cf_engineer", "공병" }, { "cf_militia", "민병대" }, { "cf_flame_squad", "화염방사 분대" }, { "cf_dragonscale_tank", "용린 전차" },
+      { "cf_engineer", "공병" }, { "cf_militia", "민병대" }, { "cf_flame_squad", "화염방사병" }, { "cf_dragonscale_tank", "용린 전차" },
       { "cf_thunder_aa", "천둥 대공차" }, { "cf_longwall_mlrs", "만리 다연장포" },
+      // 신규 공격 유닛 4종(양 진영)
+      { "ff_at_rocket", "대전차 로켓병" }, { "cf_at_rocket", "대전차 로켓병" },
+      { "ff_breacher", "화염 돌격병" }, { "cf_breacher", "중화염 돌격병" },
+      { "ff_mlrs_artillery", "다연장 로켓차" }, { "cf_rocket_artillery", "화력지원 로켓차" },
+      { "ff_mobile_sam", "기동 대공차" }, { "cf_mobile_sam", "기동 대공미사일차" },
       // 항목 31 새 유닛(가칭, 실존 무기명과 무관)
       { "ff_scout_buggy", "정찰 버기" }, { "ff_field_support", "야전 정비차" }, { "ff_bulwark_tank", "방벽 중전차" },
       { "cf_scout_bike", "척후 오토바이" }, { "cf_gale_gunship", "돌풍 공격헬기" }, { "cf_fortress_tank", "요새 전차" },
@@ -72,12 +77,20 @@ namespace FactoryWars.View {
     public static string UltimateNotice(string who, UltimateStage stage, UltimateKind kind, int value) {
       var name = UltimateName(kind);
       switch (stage) {
-        case UltimateStage.Started: return $"{who}: {name} 준비 시작 ({value}초)";
+        case UltimateStage.Started:
+          if (value < 0) {
+            return kind == UltimateKind.StrategicMissile
+              ? $"경고: {who} 전략 미사일 포대 건설을 시작했습니다! ({-value}초)"
+              : $"경고: {who} {name} 조립창 건설을 시작했습니다! ({-value}초)";
+          }
+          return kind == UltimateKind.Carrier
+            ? $"경고: {who}: {name} 준비 시작 — 적 공중항모 출격 준비! ({value}초)"
+            : $"경고: {who}: {name} 준비 시작 ({value}초)";
         case UltimateStage.Half: return $"{who}: {name} 준비 절반 (남은 {value}초)";
-        case UltimateStage.Ready: return kind == UltimateKind.Carrier ? $"{who}: {name} 출격" : $"{who}: {name} 준비 완료";
+        case UltimateStage.Ready: return kind == UltimateKind.Carrier ? $"경고: {who}: {name} 출격!" : $"경고: {who}: {name} 준비 완료!";
         case UltimateStage.Cancelled: return value > 0 ? $"{who}: 전용 건물 파괴로 {name} 취소" : $"{who}: {name} 취소";
-        case UltimateStage.Launched: return kind == UltimateKind.StrategicMissile ? $"{who}: {name} 발사! {value}초 뒤 착탄" : $"{who}: {name} 출발";
-        case UltimateStage.Impact: return value > 0 ? $"{name} 착탄 (요격 {value}단계)" : $"{name} 착탄";
+        case UltimateStage.Launched: return kind == UltimateKind.StrategicMissile ? $"경고: {who}: {name} 발사! {value}초 뒤 착탄" : $"{who}: {name} 출발";
+        case UltimateStage.Impact: return value < 0 ? "적 전략 미사일 공중 요격 성공!" : value > 0 ? $"{name} 착탄 (요격 {value}단계)" : $"{name} 착탄";
         case UltimateStage.Landed: return $"{who}: 상륙 부대 {value}기 하선";
         default: return kind == UltimateKind.Carrier ? $"{who}: {name} 격추" : $"{who}: 상륙정 격침";
       }
@@ -92,7 +105,7 @@ namespace FactoryWars.View {
 
     public static string TierName(int tier) => tier >= 3 ? "사단 본부(3단계)" : tier == 2 ? "연대 본부(2단계)" : "기지 1단계";
 
-    /// <summary>연구 이름: "소형 공격 +1", "정예 레인저 분대".</summary>
+    /// <summary>연구 이름: "소형 공격 Mk.2", "정예 레인저", 진영 특화 연구.</summary>
     public static string ResearchName(ResearchSpec spec, System.Func<AssetRef<UnitSpec>, string> unitName = null) {
       if (spec.Kind == ResearchKind.Elite) {
         return "정예화: " + (unitName != null ? unitName(spec.EliteUnit) : "소형");
@@ -100,7 +113,30 @@ namespace FactoryWars.View {
       if (spec.Kind == ResearchKind.Ultimate) {
         return "궁극 전력 연구";
       }
-      return $"{SizeWord(spec.Size)} {(spec.Kind == ResearchKind.Attack ? "공격" : "방어")} +{spec.Level}";
+      if (spec.Kind == ResearchKind.Special) {
+        switch (spec.Special) {
+          case FactionSpecial.RapidCycleBolts: return "고속 볼트 개량";
+          case FactionSpecial.StealthCoating: return "스텔스 도료";
+          case FactionSpecial.ReactiveArmorEra: return "반응장갑 ERA";
+          case FactionSpecial.HighExplosiveAp: return "고폭 철갑탄";
+          case FactionSpecial.RapidDeployment: return "신속 전개";
+          case FactionSpecial.TacticalSmoke: return "전술 연막";
+          default: return "진영 특화 연구";
+        }
+      }
+      return $"{SizeWord(spec.Size)} {(spec.Kind == ResearchKind.Attack ? "공격" : "방어")} Mk.{spec.Level + 1}";
+    }
+
+    public static string SpecialDetail(FactionSpecial special) {
+      switch (special) {
+        case FactionSpecial.RapidCycleBolts: return "보병·함재 드론 연사 속도 +20%";
+        case FactionSpecial.StealthCoating: return "작전기 재정비 시간 -25%, 공중 유닛 피격 피해 -15%";
+        case FactionSpecial.ReactiveArmorEra: return "중·대형 지상 차량 체력 +25%, 포격 폭발 반경 +25%";
+        case FactionSpecial.HighExplosiveAp: return "모든 유닛의 적 건물 대상 피해 +30%";
+        case FactionSpecial.RapidDeployment: return "전 부대 이동 속도 +25%";
+        case FactionSpecial.TacticalSmoke: return "전 부대 받는 피해 -15%";
+        default: return "";
+      }
     }
 
     public static string TierLock(int tier) => $"기지 {tier}단계 필요";

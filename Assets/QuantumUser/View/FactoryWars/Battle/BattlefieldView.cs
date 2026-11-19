@@ -247,15 +247,36 @@ namespace FactoryWars.View {
       DressingSpawn.Place(DressKind.SpaceProp, station.transform, new Vector3(-1.3f, 0.15f, 0.2f), 90f, seed);
       DressingSpawn.Place(site->Kind == CaptureKind.Comms ? DressKind.SpaceProp : DressKind.Hopper, station.transform, new Vector3(1.3f, 0.15f, -0.2f), -90f, seed + 1);
       DressingSpawn.Place(DressKind.Prop, station.transform, new Vector3(0f, 0.15f, 1.1f), 0f, seed + 2);
-      // 항목 36 시각 교정 2: 거점 중앙 패드 둘레에 관측 초소와 낮은 방벽을 원형으로 둘러 전술 거점처럼 보이게 한다(팩 모델, 장식).
-      // 항목 36 시각 교정(4차): 초소·컨테이너·낮은 벽을 거점 원 둘레(대각선 네 방향)에 두고 가운데는 보병이 설 자리로 비운다.
+      // 도로 침범 엄격 차단: 관측 초소·컨테이너·방벽은 2차선 아스팔트 도로 밖 안전 각도에만 배치한다.
       var edge = Mathf.Max(6f, site->Radius.AsFloat - 2.5f);
       Vector3 Rim(float degrees, float r) => new Vector3(Mathf.Sin(degrees * Mathf.Deg2Rad) * r, 0.1f, Mathf.Cos(degrees * Mathf.Deg2Rad) * r);
-      DressingSpawn.Place(DressKind.OutpostTower, root, Rim(315f, edge), 135f, seed + 20);
-      DressingSpawn.Place(DressKind.Container, root, Rim(135f, edge), 45f, seed + 21);
+      bool TrySafeRim(float preferredDeg, float r, float clearance, out float safeDeg, out Vector3 local) {
+        for (var step = 0; step < 12; step++) {
+          var cand = preferredDeg + (step % 2 == 0 ? step / 2 : -(step + 1) / 2) * 30f;
+          var loc = Rim(cand, r);
+          if (Dressing.IsOnAnyRoad(position + loc, clearance) == false) {
+            safeDeg = cand;
+            local = loc;
+            return true;
+          }
+        }
+        safeDeg = preferredDeg;
+        local = Vector3.zero;
+        return false;
+      }
+      if (TrySafeRim(315f, edge + 2.5f, 4.5f, out var towerDeg, out var towerLoc)) {
+        DressingSpawn.Place(DressKind.OutpostTower, root, towerLoc, towerDeg + 180f, seed + 20);
+      }
+      if (TrySafeRim(135f, edge + 2.8f, 5.0f, out var contDeg, out var contLoc)) {
+        DressingSpawn.Place(DressKind.Container, root, contLoc, contDeg + 90f, seed + 21);
+      }
       foreach (var degrees in new[] { 45f, 225f }) {
         for (var i = -1; i <= 1; i++) {
-          DressingSpawn.Place(DressKind.OutpostWall, root, Rim(degrees + i * 11f, edge), degrees + i * 11f + 90f, seed + 30 + (int)degrees + i);
+          var deg = degrees + i * 11f;
+          var loc = Rim(deg, edge + 1.5f);
+          if (Dressing.IsOnAnyRoad(position + loc, 3.6f) == false) {
+            DressingSpawn.Place(DressKind.OutpostWall, root, loc, deg + 90f, seed + 30 + (int)degrees + i);
+          }
         }
       }
       return new Site {
