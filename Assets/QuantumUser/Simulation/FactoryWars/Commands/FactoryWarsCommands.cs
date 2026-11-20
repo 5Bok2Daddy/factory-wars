@@ -309,12 +309,7 @@ namespace Quantum.FactoryWars {
             || CitySystem.CanOccupy(f, Units[i], unit, Building) == false) {
           continue;
         }
-        if (f.Has<Worker>(Units[i])) {
-          WorkerSystem.Assign(f, Units[i], WorkerTask.Idle, EntityRef.None);
-        }
-        var from = f.Unsafe.GetPointer<Transform3D>(Units[i])->Position;
-        MovementSystem.Order(f, Units[i], unit, UnitOrder.Move, shape.Approach(from, FP._1));
-        unit->GarrisonTarget = Building;
+        CitySystem.OrderEntry(f, Units[i], unit, Building, shape);
       }
     }
   }

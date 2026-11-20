@@ -1343,6 +1343,7 @@ namespace Quantum.FactoryWars {
       unit->TargetPosition = target;
       unit->TargetEntity = EntityRef.None;
       unit->BoardTarget = EntityRef.None;
+      unit->GarrisonTarget = EntityRef.None;
       if (f.Unsafe.TryGetPointer<Worker>(entity, out var worker)) {
         worker->Task = WorkerTask.Idle;
       }
@@ -1354,6 +1355,7 @@ namespace Quantum.FactoryWars {
       unit->Order = UnitOrder.Stop;
       unit->TargetEntity = EntityRef.None;
       unit->BoardTarget = EntityRef.None;
+      unit->GarrisonTarget = EntityRef.None;
       if (f.Unsafe.TryGetPointer<Worker>(entity, out var worker)) {
         worker->Task = WorkerTask.Idle;
       }

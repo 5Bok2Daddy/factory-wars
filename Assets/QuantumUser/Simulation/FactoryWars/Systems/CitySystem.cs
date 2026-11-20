@@ -92,6 +92,15 @@ namespace Quantum.FactoryWars {
       return IsInfantry(f.FindAsset(unit->Spec));
     }
 
+    public static void OrderEntry(Frame f, EntityRef entity, Unit* unit, EntityRef building, MapShape shape) {
+      if (f.Has<Worker>(entity)) {
+        WorkerSystem.Assign(f, entity, WorkerTask.Idle, EntityRef.None);
+      }
+      var from = f.Unsafe.GetPointer<Transform3D>(entity)->Position;
+      MovementSystem.Order(f, entity, unit, UnitOrder.Move, shape.Approach(from, FP._1));
+      unit->GarrisonTarget = building;
+    }
+
     public override void Update(Frame f) {
       if (f.Global->GameEnded) {
         return;

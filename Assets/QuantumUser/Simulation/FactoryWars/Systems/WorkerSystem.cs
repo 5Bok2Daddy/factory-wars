@@ -8,6 +8,7 @@ namespace Quantum.FactoryWars {
       var unit = f.Unsafe.GetPointer<Unit>(entity);
       unit->Order = UnitOrder.Stop;
       unit->TargetEntity = EntityRef.None;
+      unit->GarrisonTarget = EntityRef.None;
       var worker = f.Unsafe.GetPointer<Worker>(entity);
       worker->Task = task;
       worker->Target = target;
@@ -214,6 +215,14 @@ namespace Quantum.FactoryWars {
         if (extra > FP._0 && building->ConstructionRemaining == extra) worker->NextPathFrame = 0;
       }
       if (building->ConstructionRemaining <= FP._0) {
+        var site = worker->Target;
+        var unit = f.Unsafe.GetPointer<Unit>(entity);
+        if (spec.RequiresResourceNode && CitySystem.CanOccupy(f, entity, unit, site)
+            && CitySystem.TryHost(f, site, out var shape, out _, out _)
+            && CitySystem.CanEnter(f, unit->Owner, site)) {
+          CitySystem.OrderEntry(f, entity, unit, site, shape);
+          return;
+        }
         SetTask(worker, WorkerTask.Idle);
       }
     }

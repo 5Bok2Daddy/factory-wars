@@ -9,7 +9,7 @@ namespace FactoryWars.View {
   /// 기지 상주 건설·물류 작업자(순수 Unity View 전용, Quantum 시뮬레이션 무영향 · 비선택 · 콜라이더/NavMesh 차단 0).
   /// - POLYGON - Construction Pack 안전모 작업자 + ANIMATION - Base Locomotion(Idle/Walk/Run)
   /// - 목재 상자/보급 박스 운반(양손 2-Bone IK 파지) 및 핸드트럭 밀기
-  /// - 사령부 · 강철 제련소 · 발전소 · 보급창 · 생산 공장 · 건설 중(&lt;100%) 건물 출입구 사이를 왕복하며 적재/하역 정지
+  /// - 기지 안에서 운반과 적재를 하고, 근무 시간이 지나면 사령부 주변에서 휴식한 뒤 복귀
   /// - 건물 파괴 시 해당 경로 작업자가 바깥으로 대피(Run) 후 부드럽게 사라짐
   /// </summary>
   public unsafe class BaseAmbientWorkers : MonoBehaviour {
@@ -29,11 +29,12 @@ namespace FactoryWars.View {
       public bool UnderConstruction;
     }
 
-    enum WorkerState { Walking, Pausing, Scattering }
+    enum WorkerState { Walking, Working, WalkingToRest, Resting, Waiting, Scattering }
 
     class WorkerAgent {
       public GameObject Root;
       public Animator Animator;
+      public Animation LegacyAnimation;
       public WorkerCarryRig CarryRig;
       public int Owner;
       public EntityRef FromEntity;
@@ -43,15 +44,17 @@ namespace FactoryWars.View {
       public Vector3 TargetPoint;
       public float WalkSpeed;
       public float PauseTimer;
+      public float PauseDuration;
+      public float ShiftRemaining;
+      public float RestTravelRemaining;
+      public int Seed;
       public float ScatterTimer;
       public Vector3 ScatterDir;
       public WorkerState State;
       public bool IsTrolley;
-      public bool Carrying;
       public float CurrentSpeed;
       public float RepathAt;
       public Vector3 WalkingTarget;
-      public bool LegacyKenney;
     }
 
     /// <summary>운반 상자·핸드트럭을 손바닥에 자연스럽게 밀착시키는 경량 2-Bone IK(화면 전용).</summary>
@@ -65,6 +68,7 @@ namespace FactoryWars.View {
 
       public GameObject PropObject => _prop != null ? _prop.gameObject : null;
       public bool IsTrolley => _isTrolley;
+      public float LoadingProgress { get; set; }
 
       static Transform FindBone(Transform root, string boneName) {
         if (root.name == boneName) return root;
@@ -129,10 +133,10 @@ namespace FactoryWars.View {
         if (_isTrolley) {
           // 핸드트럭: 작업자 앞 바닥에 바퀴가 닿도록 세우고 약간 앞으로 기울여 미는 자세.
           _prop.localPosition = new Vector3(0f, 0.02f, 0.68f);
-          _prop.localRotation = Quaternion.Euler(14f, 0f, 0f);
+          _prop.localRotation = Quaternion.Euler(14f - 12f * LoadingProgress, 0f, 0f);
         } else {
           // 목재 상자/보급 박스: 가슴 앞 팔 안쪽에 밀착.
-          _prop.localPosition = new Vector3(0f, 1.06f, 0.44f);
+          _prop.localPosition = new Vector3(0f, 1.06f - 0.32f * LoadingProgress, 0.44f + 0.11f * LoadingProgress);
           _prop.localRotation = Quaternion.identity;
         }
       }
@@ -146,7 +150,8 @@ namespace FactoryWars.View {
         var right = transform.right;
         var up = Vector3.up;
         if (_isTrolley) {
-          var handleCenter = _prop.position + up * (0.94f * scale) - forward * (0.06f * scale);
+          var handleCenter = _prop.position + up * ((0.94f + 0.02f * LoadingProgress) * scale)
+            - forward * ((0.06f + 0.17f * LoadingProgress) * scale);
           var leftGrip = handleCenter - right * (0.20f * scale);
           var rightGrip = handleCenter + right * (0.20f * scale);
           SolveTwoBone(_shoulderL, _elbowL, _handL, leftGrip, _shoulderL.position - up * (0.45f * scale) - right * (0.28f * scale));
@@ -210,6 +215,16 @@ namespace FactoryWars.View {
           if (_workers[i].Root != null && _workers[i].State == WorkerState.Scattering) n++;
         }
         return n;
+      }
+    }
+
+    public int RestingCount {
+      get {
+        var count = 0;
+        foreach (var worker in _workers) {
+          if (worker.Root != null && worker.State == WorkerState.Resting) count++;
+        }
+        return count;
       }
     }
 
@@ -278,7 +293,7 @@ namespace FactoryWars.View {
         _nextScanAt = Time.time + RouteScanInterval;
         ScanBuildingsAndMaintainRoster(frame, viewer);
       }
-      UpdateAgents(dt);
+      UpdateAgents(frame, dt);
     }
 
     void ScanBuildingsAndMaintainRoster(Frame frame, PlayerRef viewer) {
@@ -340,6 +355,8 @@ namespace FactoryWars.View {
           w.ToPos = home.Position;
           w.TargetPoint = EntrancePoint(home, w.Root.transform.position);
           w.State = WorkerState.Walking;
+          w.RepathAt = 0f;
+          if (w.CarryRig != null) w.CarryRig.LoadingProgress = 0f;
           w.CarryRig?.SetCarrying(false);
           toGone = false;
         }
@@ -362,20 +379,14 @@ namespace FactoryWars.View {
         var nodes = kv.Value;
         if (nodes.Count == 0) continue;
         var hq = FindAnchor(nodes);
-        var localNodes = new List<BuildingNode>();
-        for (var i = 0; i < nodes.Count; i++) {
-          if (Vector2.Distance(new Vector2(nodes[i].Position.x, nodes[i].Position.z), new Vector2(hq.Position.x, hq.Position.z)) <= MaxBaseSpan) {
-            localNodes.Add(nodes[i]);
-          }
-        }
-        if (localNodes.Count == 0) localNodes.Add(hq);
-        var desired = MaxPerBase(localNodes.Count);
+        nodes.RemoveAll(node => (node.Position - hq.Position).sqrMagnitude > MaxBaseSpan * MaxBaseSpan);
+        var desired = MaxPerBase(nodes.Count);
         var existing = 0;
         for (var i = 0; i < _workers.Count; i++) {
           if (_workers[i].Owner == owner && _workers[i].State != WorkerState.Scattering) existing++;
         }
         while (existing < desired && ActiveWorkerCount < globalCap) {
-          var agent = SpawnWorker(owner, localNodes, existing);
+          var agent = SpawnWorker(owner, nodes, existing);
           if (agent == null) break;
           _workers.Add(agent);
           existing++;
@@ -454,8 +465,9 @@ namespace FactoryWars.View {
       if (nodes.Count == 1) {
         // 본진에 사령부 1채만 있는 경기 초반: 사령부 앞 야적장 ↔ 출입구 순환 경로.
         var ang = (seed % 6) * 60f * Mathf.Deg2Rad;
-        var aPt = anchor.Position + new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)) * (anchor.Footprint * 0.75f + 1.4f);
-        var bPt = anchor.Position + new Vector3(Mathf.Cos(ang + 1.15f), 0f, Mathf.Sin(ang + 1.15f)) * (anchor.Footprint + 5.2f);
+        var outward = new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang));
+        var aPt = EntrancePoint(anchor, anchor.Position + outward);
+        var bPt = aPt + outward * 5.2f + new Vector3(-outward.z, 0f, outward.x) * 3f;
         aPt.y = TerrainKit.SurfaceHeight(_map, aPt.x, aPt.z);
         bPt.y = TerrainKit.SurfaceHeight(_map, bPt.x, bPt.z);
         return (anchor, anchor, aPt, bPt);
@@ -508,9 +520,9 @@ namespace FactoryWars.View {
 
       GameObject go = null;
       Animator anim = null;
+      Animation legacy = null;
       WorkerCarryRig carryRig = null;
       var isTrolley = (seed % 3 == 2);
-      var legacyKenney = false;
 
       if (HasSyntyWorkers()) {
         var variantIdx = seed % 4;
@@ -558,19 +570,22 @@ namespace FactoryWars.View {
         foreach (var col in go.GetComponentsInChildren<Collider>(true)) Destroy(col);
         if (Dressing.Map != null && Dressing.Map.WorkerRun != null) {
           var targetObj = go.GetComponentInChildren<Animation>()?.gameObject ?? (go.transform.childCount > 0 ? go.transform.GetChild(0).gameObject : go);
-          var legacy = targetObj.GetComponent<Animation>() ?? targetObj.AddComponent<Animation>();
-          Dressing.Map.WorkerRun.legacy = true;
-          Dressing.Map.WorkerRun.wrapMode = WrapMode.Loop;
+          legacy = targetObj.GetComponent<Animation>() ?? targetObj.AddComponent<Animation>();
           legacy.AddClip(Dressing.Map.WorkerRun, "run");
+          legacy["run"].wrapMode = WrapMode.Loop;
+          if (Dressing.Map.WorkerIdle != null) {
+            legacy.AddClip(Dressing.Map.WorkerIdle, "idle");
+            legacy["idle"].wrapMode = WrapMode.Loop;
+          }
           legacy.clip = Dressing.Map.WorkerRun;
           legacy.Play("run");
         }
-        legacyKenney = true;
       }
 
       return new WorkerAgent {
         Root = go,
         Animator = anim,
+        LegacyAnimation = legacy,
         CarryRig = carryRig,
         Owner = owner,
         FromEntity = nodeA.Entity,
@@ -581,12 +596,60 @@ namespace FactoryWars.View {
         WalkSpeed = isTrolley ? 1.75f : (1.85f + (seed % 4) * 0.14f),
         State = WorkerState.Walking,
         IsTrolley = isTrolley,
-        Carrying = true,
-        LegacyKenney = legacyKenney,
+        Seed = seed,
+        ShiftRemaining = 9f + seed % 7,
       };
     }
 
-    void UpdateAgents(float frameDelta) {
+    static void SetMotion(WorkerAgent worker, float speed, float dt) {
+      if (worker.Animator != null) worker.Animator.SetFloat(SpeedParam, speed, 0.09f, dt);
+      if (worker.LegacyAnimation == null) return;
+      var clip = speed > 0f ? "run" : "idle";
+      if (worker.LegacyAnimation[clip] == null) {
+        worker.LegacyAnimation.Stop();
+      } else if (worker.LegacyAnimation.IsPlaying(clip) == false) {
+        worker.LegacyAnimation.CrossFade(clip, 0.12f);
+      }
+    }
+
+    bool StartRestTrip(Frame frame, WorkerAgent worker, List<BuildingNode> nodes) {
+      var home = FindAnchor(nodes);
+      var ground = frame.Map.GetNavMesh(FactoryWarsUtil.Rules(frame).NavMeshName);
+      if (ground == null) return false;
+      for (var i = 0; i < 8; i++) {
+        var angle = (worker.Seed % 16 + i * 2) * 22.5f * Mathf.Deg2Rad;
+        var direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+        var point = EntrancePoint(home, home.Position + direction) + direction * (3f + worker.Seed % 3);
+        var flat = new Vector3(point.x, 0f, point.z);
+        if (_buildingObstacles.Exists(bounds => bounds.Contains(flat))
+            || ground.Contains(flat.ToFPVector3(), *frame.NavMeshRegionMask, true) == false) continue;
+        worker.FromEntity = worker.ToEntity;
+        worker.FromPos = worker.ToPos;
+        worker.ToEntity = home.Entity;
+        worker.ToPos = home.Position;
+        worker.TargetPoint = point;
+        worker.RepathAt = 0f;
+        worker.RestTravelRemaining = MaxBaseSpan / worker.WalkSpeed + 4f;
+        worker.State = WorkerState.WalkingToRest;
+        worker.CarryRig?.SetCarrying(false);
+        return true;
+      }
+      return false;
+    }
+
+    void ResumeLogistics(WorkerAgent worker, List<BuildingNode> nodes) {
+      var (_, next, _, end) = PickRoute(nodes, ++worker.Seed, worker.ToEntity);
+      worker.FromEntity = worker.ToEntity;
+      worker.FromPos = worker.ToPos;
+      worker.ToEntity = next.Entity;
+      worker.ToPos = next.Position;
+      worker.TargetPoint = end;
+      worker.RepathAt = 0f;
+      worker.State = WorkerState.Walking;
+      worker.CarryRig?.SetCarrying(worker.IsTrolley || worker.Seed % 4 != 0);
+    }
+
+    void UpdateAgents(Frame frame, float frameDelta) {
       if (frameDelta <= 0f) return;
       var dt = frameDelta;
       for (var i = _workers.Count - 1; i >= 0; i--) {
@@ -609,7 +672,7 @@ namespace FactoryWars.View {
           tr.position = next;
           var runYaw = Mathf.Atan2(w.ScatterDir.x, w.ScatterDir.z) * Mathf.Rad2Deg;
           tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.Euler(0f, runYaw, 0f), 480f * dt);
-          if (w.Animator != null) w.Animator.SetFloat(SpeedParam, 4.1f);
+          SetMotion(w, 4.1f, dt);
           // 마지막 0.35초에 부드럽게 축소 퇴장.
           if (w.ScatterTimer < 0.35f) {
             var k = Mathf.Clamp01(w.ScatterTimer / 0.35f);
@@ -618,37 +681,37 @@ namespace FactoryWars.View {
           continue;
         }
 
-        if (w.State == WorkerState.Pausing) {
+        if (w.State == WorkerState.Walking || w.State == WorkerState.Working) w.ShiftRemaining -= dt;
+        if (w.State == WorkerState.WalkingToRest) {
+          w.RestTravelRemaining -= dt;
+          if (w.RestTravelRemaining <= 0f) {
+            w.State = WorkerState.Waiting;
+            w.PauseTimer = 0.5f;
+          }
+        }
+        if (w.State == WorkerState.Working || w.State == WorkerState.Resting || w.State == WorkerState.Waiting) {
           w.PauseTimer -= dt;
           w.CurrentSpeed = 0f;
-          if (w.Animator != null) w.Animator.SetFloat(SpeedParam, 0f, 0.09f, dt);
-          // 정지 중에는 배달 대상 건물을 바라본다.
-          var face = w.ToPos - tr.position;
-          face.y = 0f;
-          if (face.sqrMagnitude > 0.01f) {
-            var faceYaw = Mathf.Atan2(face.x, face.z) * Mathf.Rad2Deg;
-            tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.Euler(0f, faceYaw, 0f), 260f * dt);
-          }
-          if (w.PauseTimer <= 0f) {
-            // 적재/하역 완료 -> 다음 친선 건물(또는 건설 현장)로 출발!
-            if (_byOwner.TryGetValue(w.Owner, out var nodes) && nodes.Count > 0) {
-              var (_, nextB, _, nextEnd) = PickRoute(nodes, ++_spawnCounter + i * 7, w.ToEntity);
-              w.FromEntity = w.ToEntity;
-              w.FromPos = w.ToPos;
-              w.ToEntity = nextB.Entity;
-              w.ToPos = nextB.Position;
-              w.TargetPoint = nextEnd;
-            } else {
-              var tmp = w.FromPos;
-              w.FromPos = w.ToPos;
-              w.ToPos = tmp;
-              w.TargetPoint = w.ToPos;
+          SetMotion(w, 0f, dt);
+          if (w.State == WorkerState.Working) {
+            var face = w.ToPos - tr.position;
+            face.y = 0f;
+            if (face.sqrMagnitude > 0.01f) {
+              var faceYaw = Mathf.Atan2(face.x, face.z) * Mathf.Rad2Deg;
+              tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.Euler(0f, faceYaw, 0f), 260f * dt);
             }
-            // 핸드트럭은 항상 밀고 다니고, 상자는 하역 후 빈손/재적재를 번갈아 연출(대부분 적재 유지해 생동감 강화).
-            w.Carrying = w.IsTrolley || ((_spawnCounter + i) % 4 != 0);
-            w.CarryRig?.SetCarrying(w.Carrying);
-            w.State = WorkerState.Walking;
-            w.RepathAt = 0f;
+            if (w.CarryRig != null) {
+              var progress = 1f - Mathf.Clamp01(w.PauseTimer / w.PauseDuration);
+              w.CarryRig.LoadingProgress = Mathf.Sin(progress * Mathf.PI);
+            }
+          }
+          if (w.PauseTimer <= 0f && _byOwner.TryGetValue(w.Owner, out var nodes) && nodes.Count > 0) {
+            if (w.CarryRig != null) w.CarryRig.LoadingProgress = 0f;
+            if (w.State == WorkerState.Working && w.ShiftRemaining <= 0f && StartRestTrip(frame, w, nodes)) {
+              continue;
+            }
+            if (w.State == WorkerState.Resting) w.ShiftRemaining = 12f + w.Seed % 9;
+            ResumeLogistics(w, nodes);
           }
           continue;
         }
@@ -658,17 +721,26 @@ namespace FactoryWars.View {
         delta.y = 0f;
         var dist = delta.magnitude;
         if (dist <= 0.35f) {
-          w.State = WorkerState.Pausing;
-          w.PauseTimer = 1.15f + ((_spawnCounter + i * 3) % 4) * 0.25f;
-          if (w.Animator != null) w.Animator.SetFloat(SpeedParam, 0f, 0.09f, dt);
+          if (w.State == WorkerState.WalkingToRest) {
+            w.State = WorkerState.Resting;
+            w.PauseTimer = 3.5f + (w.Seed % 5) * 0.45f;
+          } else {
+            w.State = WorkerState.Working;
+            w.PauseDuration = w.PauseTimer = 1.15f + (w.Seed % 4) * 0.25f;
+            w.CarryRig?.SetCarrying(true);
+          }
+          SetMotion(w, 0f, dt);
           continue;
         }
         if (Time.time >= w.RepathAt) {
           w.RepathAt = Time.time + 0.12f;
           if (TryWalkingTarget(tr.position, w.TargetPoint, out w.WalkingTarget) == false) {
-            w.State = WorkerState.Pausing;
-            w.PauseTimer = 0.5f;
-            if (w.Animator != null) w.Animator.SetFloat(SpeedParam, 0f, 0.09f, dt);
+            if (w.State == WorkerState.Walking) {
+              w.State = WorkerState.Waiting;
+              w.PauseTimer = 0.5f;
+            }
+            w.CurrentSpeed = 0f;
+            SetMotion(w, 0f, dt);
             continue;
           }
         }
@@ -688,7 +760,7 @@ namespace FactoryWars.View {
         tr.position = pos;
         var targetYaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
         tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.Euler(0f, targetYaw, 0f), 360f * dt);
-        if (w.Animator != null) w.Animator.SetFloat(SpeedParam, move / dt, 0.09f, dt);
+        SetMotion(w, move / dt, dt);
       }
     }
   }

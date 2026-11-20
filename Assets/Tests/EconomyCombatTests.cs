@@ -123,12 +123,15 @@ namespace FactoryWars.Tests {
       Assert.AreNotEqual(EntityRef.None, site, string.Join(", ", _rejected.Select(rejection => rejection.Reason)));
       Assert.AreEqual(node, BuildingState(site).ExtractNode);
       Assert.IsFalse(ProductionSystem.CanPlace(Verified, spec, requested, 0));
-      yield return WaitFor(() => Finished(site), 60f, "채굴 공장 완공");
       Assert.AreEqual(remaining, NodeRemaining(node));
+      Assert.IsFalse(Finished(site));
+      Assert.AreEqual(EntityRef.None, Verified.Get<Unit>(engineer).Garrison);
 
       var stock = ExactFunds(0);
-      yield return Send(0, new EnterGarrisonCommand { Building = site, Units = new[] { engineer } });
-      yield return WaitFor(() => Verified.Get<Unit>(engineer).Garrison == site, 20f, "공병 배치");
+      yield return WaitFor(() => Verified.Get<Unit>(engineer).Garrison == site, 60f, "완공 후 시공 공병 자동 배치");
+      Assert.IsTrue(Finished(site));
+      Assert.AreEqual(BuildingState(site).Owner, Verified.Get<Unit>(engineer).Owner);
+      Assert.AreEqual(1, CitySystem.Occupants(Verified, site));
       Assert.AreEqual(WorkerTask.Station, WorkerOf(engineer).Task);
       yield return WaitFor(() => NodeRemaining(node) < remaining, 10f, "철 채굴");
       Assert.AreEqual(spec.ExtractAmountPerCycle.AsFloat, remaining - NodeRemaining(node), Tolerance);
@@ -156,13 +159,13 @@ namespace FactoryWars.Tests {
       var center = V(-38, 30);
       var node = NodeAt(center);
       var engineer = Engineers(0)[0];
-      yield return BuildAndFinish(0, "lumber_mill", center);
+      yield return Build(0, "lumber_mill", center, engineer);
       var site = BuildingAt(center);
       Assert.AreEqual(node, BuildingState(site).ExtractNode);
       var stock = ExactWood(0);
       var remaining = NodeRemaining(node);
 
-      yield return Send(0, new EnterGarrisonCommand { Building = site, Units = new[] { engineer } });
+      yield return WaitFor(() => Verified.Get<Unit>(engineer).Garrison == site, 60f, "제재소 완공 공병 자동 배치");
       yield return WaitFor(() => NodeRemaining(node) < remaining, 30f, "제재소 목재 생산");
       Assert.AreEqual(remaining - NodeRemaining(node), ExactWood(0) - stock, Tolerance);
     }
@@ -179,7 +182,9 @@ namespace FactoryWars.Tests {
       var center = V(-30, 14);
       yield return BuildAndFinish(0, "iron_extractor", center);
       var site = BuildingAt(center);
-      yield return Send(0, new EnterGarrisonCommand { Building = site, Units = engineers.ToArray() });
+      yield return WaitFor(() => CitySystem.Occupants(Verified, site) == 1, 30f, "시공 공병 자동 배치");
+      yield return Send(0, new EnterGarrisonCommand { Building = site,
+        Units = engineers.Where(entity => Verified.Get<Unit>(entity).Garrison == EntityRef.None).ToArray() });
       yield return WaitFor(() => CitySystem.Occupants(Verified, site) == 4, 30f, "철 채굴 공장 공병 4명 배치");
       yield return WaitFrames(Fps * 3);
       Assert.AreEqual(4, CitySystem.Occupants(Verified, site));

@@ -4,6 +4,7 @@ namespace FactoryWars.Tests {
   using System.Linq;
   using FactoryWars.View;
   using NUnit.Framework;
+  using Photon.Deterministic;
   using Quantum;
   using Quantum.FactoryWars;
   using UnityEngine;
@@ -745,11 +746,18 @@ namespace FactoryWars.Tests {
         yield return CheckExtractorMotion(tool, "construction", 48);
         CaptureCameraPng(camera, Path.Combine(evidence, "codex-extractor-construction.png"), 1280, 720);
         Time.timeScale = TimeScale;
-        yield return WaitFor(() => Finished(site), 60f, "채굴 공장 완공");
+        yield return WaitFor(() => BuildingState(site).ConstructionRemaining <= FP._1, 60f, "채굴 공장 완공 직전");
         Time.timeScale = 1f;
-        yield return null;
-        yield return Send(0, new EnterGarrisonCommand { Building = site, Units = new[] { engineer } });
         yield return WaitFor(() => CitySystem.Occupants(Verified, site) == 1, 30f, "철 채굴 공장 공병 배치");
+        Assert.AreEqual(site, Verified.Get<Unit>(engineer).Garrison);
+        var entering = view.Actors[engineer];
+        yield return WaitFor(() => entering.ExtractorEntryTime > 0f, 2f, "공병 진입 연출 시작");
+        var entryStart = entering.Position;
+        yield return new WaitForSeconds(0.18f);
+        Assert.That(Vector3.Distance(entryStart, entering.Position), Is.GreaterThan(0.1f), "공병이 시설 안쪽으로 이동");
+        Assert.IsTrue(entering.View.gameObject.activeInHierarchy, "진입하는 공병 표시");
+        CaptureCameraPng(camera, Path.Combine(evidence, "recovery-extractor-entry.png"), 1280, 720);
+        yield return WaitFor(() => entering.View.gameObject.activeSelf == false, 3f, "시설 내부 배치 후 공병 모델 숨김");
         yield return WaitFor(() => view.Actors.TryGetValue(site, out var actor) && actor.ExtractorEquipment != null
           && actor.ExtractorDelivery?.FirstCargo != null && actor.ExtractorDelivery.FirstCargo.gameObject.activeInHierarchy,
           10f, "사령부 컨베이어와 이동 화물 표시");
@@ -784,6 +792,35 @@ namespace FactoryWars.Tests {
         QualitySettings.vSyncCount = previousVSync;
         GraphicsQuality.Apply(previousQuality);
       }
+    }
+
+    [UnityTest, Explicit, Category("CaptureCatalog")]
+    public IEnumerator CaptureStaffedLumberMill() {
+      yield return StartMatch();
+      var center = V(-38, 30);
+      var engineer = Engineers(0)[0];
+      yield return Build(0, "lumber_mill", center, engineer);
+      var site = BuildingAt(center);
+      Assert.AreNotEqual(EntityRef.None, site);
+      yield return WaitFor(() => Verified.Get<Unit>(engineer).Garrison == site, 60f, "제재소 공병 자동 배치");
+      Time.timeScale = 1f;
+      var view = Object.FindAnyObjectByType<BattleView>();
+      yield return WaitFor(() => view.Actors.TryGetValue(site, out var actor) && actor.ExtractorEquipment != null, 10f, "제재소 톱 표시");
+      var saw = view.Actors[site].ExtractorEquipment;
+      var before = saw.localRotation;
+      yield return new WaitForSeconds(0.18f);
+      Assert.Greater(Quaternion.Angle(before, saw.localRotation), 5f, "배치 중 제재소 톱 회전");
+      var focus = center.ToUnityVector3();
+      var camera = Camera.main;
+      camera.transform.position = focus + new Vector3(10f, 13f, -14f);
+      camera.transform.LookAt(focus);
+      var path = Path.GetFullPath(Path.Combine(Application.dataPath, "../../Game-logs/recovery-staffed-lumber-mill.png"));
+      CaptureCameraPng(camera, path, 1280, 720);
+      yield return Send(0, new ExitGarrisonCommand { Building = site });
+      yield return null;
+      before = saw.localRotation;
+      yield return new WaitForSeconds(0.18f);
+      Assert.AreEqual(before, saw.localRotation, "퇴거 후 제재소 톱 정지");
     }
 
     static IEnumerator CheckExtractorMotion(Transform moving, string label, int samples) {

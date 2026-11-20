@@ -12,6 +12,25 @@ namespace FactoryWars.Tests {
   /// <summary>항목 25-1: 본진 장식 작업자가 실제로 걷는다(애니메이션이 돌고 뼈가 움직인다). 품질 낮음에서는 없다.</summary>
   public unsafe partial class LocalMatchTests {
     [UnityTest]
+    public IEnumerator AmbientWorkers_WorkRestAndResumeInDifferentPhases() {
+      var quality = GraphicsQuality.Current;
+      GraphicsQuality.Apply(QualityTier.Medium);
+      try {
+        yield return StartMatch(Map4PScene, 2, truce: 0);
+        yield return WaitForBattle();
+        var ambient = Object.FindAnyObjectByType<BattleView>().AmbientWorkers;
+        yield return WaitFor(() => ambient.ActiveWorkerCount > 1, 5f, "본진 작업자 배치");
+        Assert.AreEqual(0, ambient.RestingCount);
+        yield return WaitFor(() => ambient.RestingCount > 0, 20f, "근무 뒤 휴식");
+        var resting = ambient.RestingCount;
+        Assert.Less(resting, ambient.ActiveWorkerCount, "작업자가 서로 다른 시점에 쉼");
+        yield return WaitFor(() => ambient.RestingCount < resting, 25f, "휴식 후 작업에 복귀");
+      } finally {
+        GraphicsQuality.Apply(quality);
+      }
+    }
+
+    [UnityTest]
     public IEnumerator Kenney_BaseWorkersWalk() {
       GraphicsQuality.Apply(QualityTier.Medium);
       yield return StartMatch(Map4PScene, 2, truce: 0);

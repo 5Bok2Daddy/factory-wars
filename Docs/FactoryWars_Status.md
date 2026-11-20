@@ -41,3 +41,44 @@ Unity 6000.0.85f2에서 C# 컴파일 후 GPU 기반 PlayMode **13/13 통과**. `
 2. 건설을 끝낸 공병이 배치되도록 기존 Quantum 진입 경로를 재사용한다.
 3. 장식 작업자가 작업·휴식·복귀를 반복하도록 View의 운반 동작과 휴식 경로를 연결한다.
 4. 건설과 배치 전환, 작업자 동작을 GPU에서 재검증하고 최신 전체 PlayMode와 온라인 체크섬을 실행한다.
+
+## 개발 재개 결과
+
+| 기능 | 분류 | 확인 결과 |
+| --- | --- | --- |
+| 완공 공병의 자원 시설 자동 배치 | 완료 및 실제 동작 확인 | 완공 틱을 처리한 공병이 Quantum 진입 경로를 타고 자신이 지은 시설에 배치된다. 추가 공병 수동 배치와 한 명씩 퇴거도 유지된다. 철광산·제재소의 소유자 및 배치 엔티티를 검사했다. |
+| 자원 생산과 중단 | 완료 및 실제 동작 확인 | 시설 배치에 따라 광석·목재를 재고에 반영한다. 기존 생산량과 정원 데이터를 재사용했다. 퇴거 후 생산과 이송이 멈추는 것을 확인했다. |
+| 기지 작업자의 순환 근무와 휴식 | 완료 및 실제 동작 확인 | 개별 근무 시간, 적재·하역 동작, 사령부 주변 휴식 지점, 업무 복귀를 View에서 처리한다. 경기 중 일부 작업자가 쉴 때 다른 작업자가 활동했고 휴식 인원이 다시 줄었다. |
+| 공병 이동·시공·진입과 시설 가동 | 완료 및 실제 동작 확인 | Synty 모델·Idle/Walk와 기존 공구를 재사용했다. 시공 도구 이동, 공병의 진입 이동과 월드 모델 숨김, 철광산 벨트 및 제재소 톱 회전과 퇴거 후 정지를 확인했다. |
+| 건물 내부 작업 및 모바일 성능 | 일부 구현 | 건물 내부의 공병은 Quantum 엔티티로 배치된다. 내부 전용 카메라·모션은 없으며 외부 설비로 가동을 표시한다. Android 실기기 성능은 연결된 장치가 없어 미측정이다. |
+
+### 검증 화면
+
+| 화면 | Unity GPU 캡처 |
+| --- | --- |
+| 표준 4인 맵 전역 | [전체 맵](status_images/recovery/after/full-standard-map.png) |
+| 사령부·주변 장식 작업자 | [기지와 작업자](status_images/recovery/after/headquarters-workers.png) |
+| 공병의 건설과 시설 진입 | [시공](status_images/recovery/after/engineer-construction.png) · [진입](status_images/recovery/after/engineer-entry.png) |
+| 인력 배치 후 자원 생산 | [철광산과 이송](status_images/recovery/after/staffed-iron-extractor.png) · [제재소](status_images/recovery/after/staffed-lumber-mill.png) |
+| 자원 표시·미니맵·공장 선택 UI | [경기 HUD](status_images/recovery/after/factory-hud.png) |
+
+캡처는 Unity 6000.0.85f2 GPU PlayMode의 실제 프레임이다. 60fps 제한 표본에서 시공 도구 47/48, 광석 이송 30/30, 원거리 장식 작업자 36/36 프레임에서 위치 변화가 측정됐다. 표본 최대 프레임 간격은 각각 16.9ms, 16.9ms, 19.6ms였다.
+
+### Unity와 Photon Quantum
+
+- Unity 6000.0.85f2 최종 집중 실행에서 C#·셰이더 컴파일 오류 0건, GPU 및 실서버 PlayMode 16/16 통과. 결과는 `Game-logs/recovery-final-focused.xml`, 실행 로그는 `Game-logs/recovery-final-focused-retry.log`다.
+- Photon 서울 서버에서 방 생성과 참가, 없는 방 거부, 준비 상태 전달을 확인했다. 두 클라이언트가 동일한 확정 프레임의 체크섬 590개에서 일치했다. 시공 공병의 자동 배치와 소유자 철 생산을 상대 클라이언트에서도 확인했고 디싱크 콜백은 0건이었다. 관측 핑은 16/16ms였다. 두 클라이언트는 동일 PC에서 실행했다.
+- 자체 Quantum 시뮬레이션과 DSL의 금지 타입·API·시각 참조 정적 검색은 0건이다. 휴전 중 주둔 거절 사유의 기존 회귀 1건을 재현했다. 새 전체 PlayMode는 `Game-logs/recovery-final-full.xml`로 실행 중이다.
+
+### 개발 재개 변경 파일
+
+- 시뮬레이션 · `FactoryWarsCommands.cs`, `CitySystem.cs`, `GameplaySystems.cs`, `WorkerSystem.cs`
+- 화면 · `BaseAmbientWorkers.cs`, `BattleView.cs`
+- 검증 · `EconomyCombatTests.cs`, `MapPoolTests.cs`, `OnlineMatchTests.cs`, `UnitCatalogCaptureTests.cs`, `WorkerAnimationTests.cs`
+- 문서·증거 · 양쪽 README, SETUP-REPORT 세 사본, 이 보고서와 GitHub 사본, `Docs/status_images/current_base_alive.png` 및 `recovery/after/`
+- 로컬 동기화 · `scripts/sync_github.ps1`에 `-PreserveExisting`을 추가했다. 기존 캡처·보고서 이력과 Git 작업을 보존하면서 일반 푸시를 사용한다.
+
+### Git과 후속 확인
+
+- 인수 상태를 `7900bb6` (`[claude] Preserve recovered Codex work and verify extraction baseline`)로 커밋해 20:57 KST에 `origin/main`으로 푸시했다. Git에서 업스트림과 일치하며 작업 트리가 깨끗하다고 확인했다.
+- 다음 우선순위는 기준선 회귀 분류, Android에서 4인 경기 프레임 시간과 터치 검증, 필요 시 제재소 외부 작업과 시설 입구 연출의 추가 다듬기다.

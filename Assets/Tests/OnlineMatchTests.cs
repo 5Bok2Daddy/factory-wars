@@ -182,14 +182,14 @@ namespace FactoryWars.Tests {
 
     /// <summary>
     /// 두 클라이언트가 실제 Quantum 온라인 세션을 열고(1대1, 휴전 0), 같은 프레임의 체크섬이 같은지 본다.
-    /// 체크섬 오류 콜백(디싱크)이 없어야 한다. 입력 지연·핑을 기록한다.
+    /// 건설 명령부터 공병의 자동 배치 및 첫 자원 반영까지 비교하고 입력 지연·핑을 기록한다.
     /// </summary>
     [UnityTest, Explicit, Category("Online"), Timeout(600000)]
     public IEnumerator Online_Live_SessionChecksumsMatch() {
       Time.timeScale = 1f;
       LogAssert.ignoreFailingMessages = true;
 #if UNITY_EDITOR
-      yield return UnityEditor.SceneManagement.EditorSceneManager.LoadSceneAsyncInPlayMode(Map4PScene, new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
+      yield return UnityEditor.SceneManagement.EditorSceneManager.LoadSceneAsyncInPlayMode(TestScene, new UnityEngine.SceneManagement.LoadSceneParameters(UnityEngine.SceneManagement.LoadSceneMode.Single));
 #endif
       var local = Object.FindAnyObjectByType<QuantumRunnerLocalDebug>();
       local.enabled = false;
@@ -197,9 +197,14 @@ namespace FactoryWars.Tests {
       var factions = local.LocalPlayers.Take(2).Select(p => p.Faction).ToArray();
       var template = local.RuntimeConfig;
       template.Map = Object.FindAnyObjectByType<QuantumMapData>().AssetRef;
+      template.OverrideStartingResources = true;
+      template.StartingResources = Stock(5000, 5000, 5000, 500);
+      template.StartingTier = 3;
 
       var host = OnlineRoom.CreateExtra("HostRoom");
       var guest = OnlineRoom.CreateExtra("GuestRoom");
+      host.KeepScenario = true;
+      guest.KeepScenario = true;
       var errors = 0;
       var subscription = QuantumCallback.SubscribeManual<CallbackChecksumError>(e => errors++);
       try {
@@ -222,20 +227,59 @@ namespace FactoryWars.Tests {
         var gameA = host.Runner.Game;
         var gameB = guest.Runner.Game;
         yield return WaitForReal(() => gameA.Frames.Verified != null && gameB.Frames.Verified != null
-          && BothActive(gameA.Frames.Verified), 60f, "두 사람 합류");
+          && BothActive(gameA.Frames.Verified) && gameA.GetLocalPlayers().Count > 0, 60f, "두 사람 합류");
+        var frame = gameA.Frames.Verified;
+        var player = gameA.GetLocalPlayers()[0];
+        var engineer = EntityRef.None;
+        foreach (var pair in frame.GetComponentIterator<Unit>()) {
+          if (pair.Component.Owner != player || frame.Has<Worker>(pair.Entity) == false) continue;
+          engineer = pair.Entity;
+          break;
+        }
+        Assert.AreNotEqual(EntityRef.None, engineer, "온라인 시작 공병");
+        var origin = frame.Get<Transform3D>(engineer).Position;
+        var extractor = frame.FindAsset(frame.GetPlayerData(player).Faction).Buildings
+          .First(reference => frame.FindAsset(reference).Role == BuildingRole.IronExtractor);
+        var spec = frame.FindAsset(extractor);
+        var node = EntityRef.None;
+        var center = default(FPVector3);
+        var nearestDistance = FP.MaxValue;
+        foreach (var pair in frame.GetComponentIterator<ResourceNode>()) {
+          if (pair.Component.Kind != ResourceKind.Iron) continue;
+          var position = frame.Get<Transform3D>(pair.Entity).Position;
+          var distance = FactoryWarsUtil.FlatDistanceSqr(origin, position);
+          if (distance >= nearestDistance || ProductionSystem.CanPlace(frame, spec, position, player) == false) continue;
+          node = pair.Entity;
+          center = position;
+          nearestDistance = distance;
+        }
+        Assert.AreNotEqual(EntityRef.None, node, "온라인 철 노드에 건설 가능");
+        var initialRemaining = frame.Get<ResourceNode>(node).Remaining;
+        gameA.SendCommand(0, new BuildCommand { Engineer = engineer, Building = extractor, Position = center });
+
         var startReal = Time.realtimeSinceStartup;
         var checks = 0;
-        var target = gameA.Frames.Verified.Number + 20 * 30;
-        // 30초 동안 같은 확정 프레임 번호에서 체크섬 비교.
-        while (gameA.Frames.Verified.Number < target) {
+        var lastSharedFrame = -1;
+        var productionFrame = 0;
+        // 생산이 시작된 뒤에도 동기화 비교를 계속한다.
+        while (productionFrame == 0 || gameA.Frames.Verified.Number < productionFrame + 5 * Fps) {
           var fa = gameA.Frames.Verified;
           var fb = gameB.Frames.Verified;
-          if (fa.Number == fb.Number) {
+          if (fa.Number == fb.Number && fa.Number != lastSharedFrame) {
             Assert.AreEqual(fa.CalculateChecksum(), fb.CalculateChecksum(), $"프레임 {fa.Number} 체크섬");
+            lastSharedFrame = fa.Number;
             checks++;
+            if (productionFrame == 0 && fa.Get<ResourceNode>(node).Remaining < initialRemaining) {
+              var site = fa.Get<Unit>(engineer).Garrison;
+              Assert.AreNotEqual(EntityRef.None, site, "별도 진입 명령 없이 공병 배치");
+              Assert.AreEqual(node, fb.Get<Building>(site).ExtractNode);
+              Assert.AreEqual(WorkerTask.Station, fb.Get<Worker>(engineer).Task);
+              Assert.IsTrue(StateIn(fb, player).Earned.Iron > FP._0, "상대 클라이언트에서 소유자 철 자원 증가");
+              productionFrame = fa.Number;
+            }
           }
           if (Time.realtimeSinceStartup - startReal > 120f) {
-            Assert.Fail("세션이 진행하지 않음");
+            Assert.Fail("온라인 채굴 생산까지 진행하지 않음");
           }
           yield return null;
         }

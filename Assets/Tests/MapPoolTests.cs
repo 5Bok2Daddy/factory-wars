@@ -93,5 +93,33 @@ namespace FactoryWars.Tests {
         }
       }
     }
+
+    [UnityTest, Explicit]
+    public IEnumerator CaptureEntireStandardMap() {
+      yield return StartMatch(Map4PScene, 4, truce: 0);
+      yield return WaitForBattle();
+      var map = FactoryWarsUtil.MapInfo(Verified);
+      var size = (map.BoundsMax - map.BoundsMin).ToUnityVector2();
+      var center = ((map.BoundsMin + map.BoundsMax) / FP._2).ToUnityVector2();
+      var camera = Camera.main;
+      var position = camera.transform.position;
+      var rotation = camera.transform.rotation;
+      var clip = camera.farClipPlane;
+      var wasOrthographic = camera.orthographic;
+      var oldSize = camera.orthographicSize;
+      try {
+        camera.orthographic = true;
+        camera.orthographicSize = Mathf.Max(size.y, size.x) * 0.54f;
+        camera.farClipPlane = 1200f;
+        camera.transform.SetPositionAndRotation(new Vector3(center.x, 420f, center.y), Quaternion.Euler(90f, 0f, 0f));
+        var path = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "../../Game-logs/recovery-full-map.png"));
+        CaptureCameraPng(camera, path, 1440, 1440);
+      } finally {
+        camera.transform.SetPositionAndRotation(position, rotation);
+        camera.farClipPlane = clip;
+        camera.orthographic = wasOrthographic;
+        camera.orthographicSize = oldSize;
+      }
+    }
   }
 }

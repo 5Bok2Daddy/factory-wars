@@ -25,6 +25,7 @@ namespace FactoryWars.View {
     const float BulletSpeed = 120f;
     const float MissileSpeed = 42f;
     readonly HashSet<EntityRef> _workingSites = new HashSet<EntityRef>();
+    readonly HashSet<EntityRef> _enteringExtractorSites = new HashSet<EntityRef>();
 
     /// <summary>화면에 놓인 유닛·건물 하나의 연출 상태.</summary>
     public class Actor {
@@ -77,6 +78,8 @@ namespace FactoryWars.View {
       public float ShipWeldAt;
       public float BuildingModelY;
       public ConstructionWorkView EngineerWork;
+      public bool EngineerWasVisible;
+      public float ExtractorEntryTime;
       public readonly List<ConstructionWorkView> ConstructionWork = new List<ConstructionWorkView>();
       public float WeldFxAt;
       public float FootprintRadius;
@@ -409,6 +412,7 @@ namespace FactoryWars.View {
       _audio.Begin(Camera.main);
       _seen.Clear();
       _workingSites.Clear();
+      _enteringExtractorSites.Clear();
       var units = frame.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform3D, out var unit)) {
         _seen.Add(entity);
@@ -1063,6 +1067,8 @@ namespace FactoryWars.View {
       }
       // 탑승 중인 승객 유닛은 수송기 내부에 들어가므로 월드 모델을 숨긴다.
       if (unit->Transport != EntityRef.None) {
+        actor.EngineerWasVisible = false;
+        actor.ExtractorEntryTime = 0f;
         if (actor.View.gameObject.activeSelf) {
           actor.View.gameObject.SetActive(false);
         }
@@ -1070,6 +1076,9 @@ namespace FactoryWars.View {
       }
       // 진지 안: 모델은 숨기고 사격은 건물 창문에서 보인다.
       if (unit->Garrison != EntityRef.None) {
+        if (spec.Size == UnitSize.Engineer && DrawExtractorEntry(frame, actor, unit, dt)) {
+          return;
+        }
         if (actor.View.gameObject.activeSelf) {
           actor.View.gameObject.SetActive(false);
         }
@@ -1090,6 +1099,8 @@ namespace FactoryWars.View {
       // 고지대 은폐: 적에게 숨은 유닛은 그리지 않고, 내 숨은 유닛은 점선 고리로 알린다.
       var viewer = _controller != null ? _controller.Player : PlayerRef.None;
       var visible = viewer.IsValid == false || FactoryWarsUtil.IsVisibleTo(frame, viewer, entity);
+      actor.EngineerWasVisible = spec.Size == UnitSize.Engineer && visible;
+      actor.ExtractorEntryTime = 0f;
       if (actor.View.gameObject.activeSelf != visible) {
         actor.View.gameObject.SetActive(visible);
       }
@@ -1171,6 +1182,38 @@ namespace FactoryWars.View {
         actor.View.Animation.Cover = unit->InCover;
         actor.View.Animation.Set(AnimState(speed, hasTarget, workingAnim ? wAnim->Task : WorkerTask.Idle), speed);
       }
+    }
+
+    bool DrawExtractorEntry(Frame frame, Actor actor, Unit* unit, float dt) {
+      var site = unit->Garrison;
+      if (frame.TryGet<Building>(site, out var building) == false || frame.FindAsset(building.Spec).RequiresResourceNode == false) {
+        return false;
+      }
+      var viewer = _controller != null ? _controller.Player : PlayerRef.None;
+      if (viewer.IsValid && FactoryWarsUtil.IsVisibleTo(frame, viewer, site) == false) {
+        actor.EngineerWasVisible = false;
+        actor.ExtractorEntryTime = 0f;
+        return false;
+      }
+      const float entrySeconds = 0.65f;
+      if (actor.EngineerWasVisible) {
+        actor.EngineerWasVisible = false;
+        actor.ExtractorEntryTime = entrySeconds;
+        if (actor.EngineerWork != null) actor.EngineerWork.Working = false;
+      }
+      if (actor.ExtractorEntryTime <= 0f) return false;
+
+      actor.ExtractorEntryTime -= dt;
+      _enteringExtractorSites.Add(site);
+      var center = frame.Get<Transform3D>(site).Position.ToUnityVector3();
+      center.y = 0f;
+      var next = Vector3.MoveTowards(actor.Position, center, 4f * dt);
+      actor.HullYaw = Mathf.MoveTowardsAngle(actor.HullYaw, YawTo(actor.Position, center), TurnRate * dt);
+      actor.View.SetYaw(actor.HullYaw);
+      actor.View.Animation?.Set(UnitAnimState.Move, 4f);
+      actor.Position = next;
+      actor.View.transform.position = next + Vector3.up * TerrainKit.SurfaceHeight(World.Map, next.x, next.z);
+      return true;
     }
 
     /// <summary>
@@ -1829,6 +1872,8 @@ namespace FactoryWars.View {
     /// <summary>12m 이내 인접한 생산 공장과 제련소·발전소 사이를 발광 지상 파이프라인으로 자동 연결한다.</summary>
     void UpdateExtractorDelivery(Frame frame, Actor actor, PlayerRef owner, ResourceKind kind, bool extracting, float dt) {
       var route = actor.ExtractorDelivery;
+      // 첫 배치 때는 공병이 입구를 통과한 뒤 컨베이어를 표시한다.
+      if (route == null && (extracting == false || _enteringExtractorSites.Contains(actor.Entity))) return;
       if (Time.time >= actor.ExtractorRouteCheckAt || (route != null && frame.Exists(route.Headquarters) == false)) {
         actor.ExtractorRouteCheckAt = Time.time + 0.6f;
         var best = EntityRef.None;

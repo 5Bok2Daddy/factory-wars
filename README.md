@@ -1,11 +1,17 @@
 # Factory Wars — Mobile RTS Dashboard
 
-> **기준 일자:** **2026-11-19 18:45 (KST)**
+> **기준 일자:** **2026-11-20 21:07 (KST)**
 > **대상 플랫폼:** Android Mobile RTS (Touch-Only UI, Photon Quantum 3 결정론 `FP` 시뮬레이션 — 금지어 **0건**)
 > **Git 저장소 루트:** `Game/` (`origin/main` → `https://github.com/5Bok2Daddy/factory-wars.git`)
 > **아트 파이프라인:** 원시 플레이스홀더(`Cube`/`Cylinder`/`Sphere`) **전면 금지** → **100% 실제 Synty (`POLYGON Military` · `BattleRoyale` · `City`) + Jean Moreno `War FX` VFX + 5종 고유 바이옴 맵** 적용 (**총 53장**, 깨진 링크 **0건**)
 
 ---
+
+### 공병 자동 배치와 작업자 순환 근무 · 2026-11-20 KST
+
+철광산과 제재소 완공 공병이 자동 배치되고, 정원 내 추가 진입과 퇴거를 지원한다. 장식 작업자는 적재·하역과 사령부 주변의 휴식·복귀를 반복한다. Unity GPU·Photon 실서버 집중 검사 16/16 통과. 채굴 시나리오의 확정 프레임 체크섬 590개 일치.
+
+[전체 맵](Docs/status_images/recovery/after/full-standard-map.png) · [작업자](Docs/status_images/recovery/after/headquarters-workers.png) · [공병 시공](Docs/status_images/recovery/after/engineer-construction.png) · [공병 진입](Docs/status_images/recovery/after/engineer-entry.png) · [철광산](Docs/status_images/recovery/after/staffed-iron-extractor.png) · [제재소](Docs/status_images/recovery/after/staffed-lumber-mill.png) · [경기 HUD](Docs/status_images/recovery/after/factory-hud.png)
 
 ### 복구 검증 · 2026-11-20 KST
 
