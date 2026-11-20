@@ -40,6 +40,13 @@ namespace FactoryWars.View {
         return null;
       }
       VisualCatalog.Override(VisualCatalog.ViewSlotId(id, entry.Unit), ref entry, out var slot);
+      if (slot == null && (id.EndsWith("_lumber_mill") || id.EndsWith("_iron_extractor"))) {
+        var donor = ViewCatalog.BorrowedId(id);
+        VisualCatalog.Override(VisualCatalog.ViewSlotId(donor, false), ref entry, out slot);
+        if (slot == null) {
+          return null;
+        }
+      }
       var view = new GameObject(id).AddComponent<ArtView>();
       view.transform.SetParent(parent, false);
       view.Entry = entry;
@@ -60,7 +67,8 @@ namespace FactoryWars.View {
         var (offset, _) = VisualCatalog.Measure(slot.Prefab, slot);
         view.Model.transform.localPosition = view.Model.transform.localRotation * new Vector3(offset.x, offset.y, offset.z) * entry.DisplayScale * extra;
         view.KeepOriginalMaterials();
-        view.Animation = UnitAnimatorBridge.Attach(view.Model, slot);
+        var engineerController = id.EndsWith("_engineer") ? catalog.EngineerLocomotion : null;
+        view.Animation = UnitAnimatorBridge.Attach(view.Model, slot, engineerController);
       } else if (VisualProfile.Current.Outline == OutlineMode.Hull) {
         OutlineKit.Attach(view.Model, entry.DisplayScale * extra);
       }

@@ -5,14 +5,19 @@ namespace Quantum.FactoryWars {
   public unsafe class ProductionSystem : SystemMainThread {
     public static EntityRef CreateBuilding(Frame f, PlayerRef owner, AssetRef<BuildingSpec> specRef, FPVector3 position) {
       var spec = f.FindAsset(specRef);
+      var site = default(MapShape);
+      var hasWorks = AirfieldWorkSystem.Required(spec.Role) && AirfieldWorkSystem.TryFindSite(f, spec, position, owner, out site);
+      var duration = spec.BuildTimeSeconds;
+      if (hasWorks) duration += AirfieldWorkSystem.BuildSeconds(FactoryWarsUtil.Rules(f), spec.Role);
       var entity = f.Create();
       f.Add(entity, Transform3D.Create(position));
       f.Add(entity, new Building {
         Owner = owner,
         Spec = specRef,
         Health = spec.BuildTimeSeconds > FP._0 ? spec.MaxHealth * FactoryWarsUtil.Rules(f).FoundationHealthRatio : spec.MaxHealth,
-        ConstructionRemaining = spec.BuildTimeSeconds,
+        ConstructionRemaining = duration,
       });
+      if (hasWorks) f.Add(entity, new AirfieldWorks { Site = site });
       return entity;
     }
 
@@ -27,23 +32,65 @@ namespace Quantum.FactoryWars {
     public static EntityRef SpawnUnit(Frame f, PlayerRef owner, AssetRef<UnitSpec> specRef, FPVector3 origin, int index, Building* source) {
       // 배는 조선소 주변 여덟 방향 중 처음 물 위인 곳에 나온다.
       var unitSpec = f.FindAsset(specRef);
-      if (unitSpec != null && unitSpec.IsNaval) {
-        var rules = FactoryWarsUtil.Rules(f);
-        var waterNavMesh = f.Map.GetNavMesh(rules.WaterNavMeshName);
-        var radius = source != null ? f.FindAsset(source->Spec).FootprintRadius : rules.SpawnOffset;
-        var dist = radius + rules.ShipSpawnGap;
-        for (var d = 0; d < 8; d++) {
-          var a = FP.PiTimes2 * (index + d) / 8;
-          var p = origin + new FPVector3(FPMath.Cos(a), FP._0, FPMath.Sin(a)) * dist;
-          if (waterNavMesh != null && waterNavMesh.Contains(p, NavMeshRegionMask.Default, true)) {
-            return SpawnUnitAt(f, owner, specRef, p, source);
-          }
-        }
+      if (unitSpec != null && unitSpec.IsNaval && TryShipLaunchPoint(f, origin, source, index, out var water)) {
+        var entity = SpawnUnitAt(f, owner, specRef, water, source);
+        var direction = new FPVector3(water.Z - origin.Z, FP._0, origin.X - water.X);
+        f.Unsafe.GetPointer<Transform3D>(entity)->Rotation = FPQuaternion.LookRotation(direction);
+        return entity;
       }
       // 건물 주변에 골고루 놓는다.
       var angle = FP.PiTimes2 * (index % 8) / 8;
       var position = origin + new FPVector3(FPMath.Cos(angle), FP._0, FPMath.Sin(angle)) * FactoryWarsUtil.Rules(f).SpawnOffset;
       return SpawnUnitAt(f, owner, specRef, position, source);
+    }
+
+    public static bool TryShipLaunchPoint(Frame f, FPVector3 origin, Building* source, int index, out FPVector3 launch) {
+      var radius = source != null ? f.FindAsset(source->Spec).FootprintRadius : FactoryWarsUtil.Rules(f).SpawnOffset;
+      return TryShipLaunchPoint(f, origin, radius, index, out launch);
+    }
+
+    static bool TryShipLaunchPoint(Frame f, FPVector3 origin, FP radius, int index, out FPVector3 launch) {
+      var rules = FactoryWarsUtil.Rules(f);
+      var water = f.Map.GetNavMesh(rules.WaterNavMeshName);
+      var map = FactoryWarsUtil.MapInfo(f);
+      launch = default;
+      if (water == null) return false;
+      for (var ring = 0; ring < 3; ring++) {
+        var distance = radius + rules.ShipSpawnGap + ring * rules.ShipLaunchClearance;
+        var best = FP._0;
+        for (var step = 0; step < 8; step++) {
+          var angle = FP.PiTimes2 * (index + step) / 8;
+          var point = origin + new FPVector3(FPMath.Cos(angle), FP._0, FPMath.Sin(angle)) * distance;
+          if (water.Contains(point, NavMeshRegionMask.Default, true) == false || IsOpenWater(map, point, rules.ShipLaunchClearance) == false) continue;
+          var depth = FP._0;
+          foreach (var piece in map.River ?? System.Array.Empty<MapShape>()) {
+            // 운하 조각끼리 이어진 단면에서 양쪽 물가까지의 거리를 잰다.
+            if (piece.Distance(point) > FP._0) continue;
+            var delta = point - piece.Center;
+            var rad = piece.Yaw * FP.Deg2Rad;
+            var across = FPMath.Abs(delta.X * FPMath.Sin(rad) + delta.Z * FPMath.Cos(rad));
+            depth = FPMath.Max(depth, piece.HalfWidth - across);
+          }
+          foreach (var piece in map.Channel ?? System.Array.Empty<MapShape>())
+            depth = FPMath.Max(depth, -piece.Distance(point));
+          if (depth <= best) continue;
+          best = depth;
+          launch = point;
+        }
+        if (best >= rules.ShipLaunchClearance) return true;
+      }
+      launch = default;
+      return false;
+    }
+
+    static bool IsOpenWater(MapSpec map, FPVector3 point, FP clearance) {
+      foreach (var bridge in map.Bridges ?? System.Array.Empty<MapShape>())
+        if (bridge.Distance(point) < clearance) return false;
+      foreach (var gate in map.WaterGates ?? System.Array.Empty<MapShape>())
+        if (gate.Distance(point) < clearance) return false;
+      foreach (var road in map.Roads ?? System.Array.Empty<MapShape>())
+        if (road.Distance(point) < clearance) return false;
+      return true;
     }
 
     public static EntityRef SpawnUnitAt(Frame f, PlayerRef owner, AssetRef<UnitSpec> specRef, FPVector3 position, Building* source) {
@@ -92,11 +139,15 @@ namespace Quantum.FactoryWars {
         return;
       }
       position.Y = FP._0;
+      if (TryResolveBuildPosition(f, spec, ref position, out var extractNode) == false) {
+        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.BlockedLocation, 0);
+        return;
+      }
       if (FactoryWarsUtil.IsReachable(f, player, position) == false) {
         f.Events.ActionRejected(player, ActionKind.Build, RejectReason.Truce, 0);
         return;
       }
-      if (CanPlace(f, spec, position, player) == false) {
+      if (CanPlaceResolved(f, spec, position, player, extractNode) == false) {
         f.Events.ActionRejected(player, ActionKind.Build, RejectReason.BlockedLocation, 0);
         return;
       }
@@ -119,6 +170,9 @@ namespace Quantum.FactoryWars {
       }
       state->Stock -= spec.Cost;
       var created = CreateBuilding(f, player, specRef, position);
+      if (extractNode != default) {
+        f.Unsafe.GetPointer<Building>(created)->ExtractNode = extractNode;
+      }
       WorkerSystem.Assign(f, engineer, WorkerTask.Build, created);
       if (spec.Role == BuildingRole.UltimateSite) {
         var ult = UltimateSystem.SpecOf(f, player);
@@ -164,6 +218,43 @@ namespace Quantum.FactoryWars {
 
     /// <summary>맵 안, 걸어갈 수 있는 땅, 건물·자원·지형에서 떨어진 곳, 건설 금지 구역 밖에만 지을 수 있다. 전략 미사일 격납고는 점령한 중립 거점·암시장 18m 이내만 허용한다.</summary>
     public static bool CanPlace(Frame f, BuildingSpec spec, FPVector3 position, PlayerRef player = default) {
+      return TryGetBuildPlacement(f, spec, position, player, out _);
+    }
+
+    public static bool TryGetBuildPlacement(Frame f, BuildingSpec spec, FPVector3 position, PlayerRef player, out FPVector3 alignedPosition) {
+      alignedPosition = position;
+      return TryResolveBuildPosition(f, spec, ref alignedPosition, out var extractNode)
+          && (extractNode == default || FactoryWarsUtil.IsReachable(f, player, alignedPosition))
+          && CanPlaceResolved(f, spec, alignedPosition, player, extractNode);
+    }
+
+    static bool TryResolveBuildPosition(Frame f, BuildingSpec spec, ref FPVector3 position, out EntityRef extractNode) {
+      extractNode = default;
+      if (spec.RequiresResourceNode == false) {
+        return true;
+      }
+      var radius = FactoryWarsUtil.Rules(f).ExtractorNodeSnapRadius;
+      var bestDistance = radius * radius;
+      var nodes = f.Filter<ResourceNode>();
+      var alignedPosition = position;
+      while (nodes.NextUnsafe(out var entity, out var node)) {
+        var center = node->Shape.Center;
+        var distance = FactoryWarsUtil.FlatDistanceSqr(position, center);
+        if (node->Kind != spec.RequiredNodeKind || node->Remaining <= FP._0 || distance > bestDistance) {
+          continue;
+        }
+        if (extractNode != default && distance == bestDistance && entity.Index >= extractNode.Index) {
+          continue;
+        }
+        extractNode = entity;
+        alignedPosition = new FPVector3(center.X, FP._0, center.Z);
+        bestDistance = distance;
+      }
+      position = alignedPosition;
+      return extractNode != default;
+    }
+
+    static bool CanPlaceResolved(Frame f, BuildingSpec spec, FPVector3 position, PlayerRef player, EntityRef extractNode) {
       var map = FactoryWarsUtil.MapInfo(f);
       var rules = FactoryWarsUtil.Rules(f);
       var radius = spec.FootprintRadius;
@@ -175,7 +266,12 @@ namespace Quantum.FactoryWars {
       var isShipyard = spec.Role == BuildingRole.Shipyard || spec.NeedsWater;
       var navMesh = f.Map.GetNavMesh(rules.NavMeshName);
       var mask = NavMeshRegionMask.Default;
-      if (isShipyard) {
+      if (extractNode != EntityRef.None) {
+        // 자원 노드 자체는 NavMesh 장애물이다. 공병이 작업 범위까지 도달할 수 있어야 한다.
+        if (FactoryWarsUtil.FindNavPointNear(f, rules.NavMeshName, position, radius + rules.WorkRange, out _) == false) {
+          return false;
+        }
+      } else if (isShipyard) {
         if (navMesh.Contains(position, mask, true) == false) {
           return false;
         }
@@ -199,14 +295,19 @@ namespace Quantum.FactoryWars {
 
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out _, out var transform, out var building)) {
-        if (Overlaps(position, transform->Position, radius + f.FindAsset(building->Spec).FootprintRadius + rules.BuildingGap)) {
+        if ((extractNode != default && building->ExtractNode == extractNode)
+            || Overlaps(position, transform->Position, radius + f.FindAsset(building->Spec).FootprintRadius + rules.BuildingGap)) {
           return false;
         }
       }
+      var works = f.Filter<AirfieldWorks>();
+      while (works.NextUnsafe(out _, out var airfield)) {
+        if (AirfieldWorkSystem.IntersectsBuilding(airfield->Site, position, radius, rules.BuildingGap + rules.AirfieldWorkClearance)) return false;
+      }
       // 고갈된 노드도 그대로 남아 있어 같은 검사를 받는다.
       var nodes = f.Filter<ResourceNode>();
-      while (nodes.NextUnsafe(out _, out var node)) {
-        if (IsClear(node->Shape, position, radius, rules.ResourceBuildMargin) == false) {
+      while (nodes.NextUnsafe(out var entity, out var node)) {
+        if (entity != extractNode && IsClear(node->Shape, position, radius, rules.ResourceBuildMargin) == false) {
           return false;
         }
       }
@@ -233,7 +334,8 @@ namespace Quantum.FactoryWars {
             }
           }
         }
-        if (touchesWater == false) {
+        if (touchesWater == false
+            || (spec.Role == BuildingRole.Shipyard && TryShipLaunchPoint(f, position, radius, 0, out _) == false)) {
           return false;
         }
       }
@@ -255,7 +357,7 @@ namespace Quantum.FactoryWars {
           return false;
         }
       }
-      return true;
+      return AirfieldWorkSystem.Required(spec.Role) == false || AirfieldWorkSystem.TryFindSite(f, spec, position, player, out _);
     }
 
     /// <summary>정사각형 부지의 가장자리·중심 아홉 점이 모양에서 margin 이상 떨어져 있으면 true.</summary>
@@ -384,6 +486,38 @@ namespace Quantum.FactoryWars {
       return false;
     }
 
+    static void UpdateExtractor(Frame f, EntityRef entity, Building* building) {
+      if (building->Health <= FP._0 || building->ConstructionRemaining > FP._0
+          || building->Paused != PauseReason.None || building->EmpUntilFrame > f.Number
+          || f.Unsafe.TryGetPointer<ResourceNode>(building->ExtractNode, out var node) == false
+          || node->Remaining <= FP._0) {
+        return;
+      }
+      var occupants = CitySystem.Occupants(f, entity);
+      var yields = FactoryWarsUtil.Rules(f).ExtractorYieldMultipliers;
+      var spec = f.FindAsset(building->Spec);
+      if (occupants == 0 || yields == null || occupants >= yields.Length || spec.ExtractIntervalSeconds <= FP._0) {
+        return;
+      }
+      building->ExtractTimer += f.DeltaTime * SniperSystem.GatherMultiplier(f, building->ExtractNode);
+      while (building->ExtractTimer >= spec.ExtractIntervalSeconds && node->Remaining > FP._0) {
+        building->ExtractTimer -= spec.ExtractIntervalSeconds;
+        var amount = FPMath.Min(node->Remaining, spec.ExtractAmountPerCycle * yields[occupants]);
+        if (amount <= FP._0) {
+          return;
+        }
+        node->Remaining -= amount;
+        var state = FactoryWarsUtil.Player(f, building->Owner);
+        if (node->Kind == ResourceKind.Wood) {
+          state->Stock.Wood += amount;
+          state->Earned.Wood += amount;
+        } else if (node->Kind == ResourceKind.Iron) {
+          state->Stock.Iron += amount;
+          state->Earned.Iron += amount;
+        }
+      }
+    }
+
     public override void Update(Frame f) {
       if (f.Global->GameEnded) {
         return;
@@ -393,6 +527,9 @@ namespace Quantum.FactoryWars {
 
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out var entity, out var transform, out var building)) {
+        if (building->ExtractNode != EntityRef.None) {
+          UpdateExtractor(f, entity, building);
+        }
         // 건설은 공병이 진행한다 (WorkerSystem). 정전·EMP 마비 중에는 진행도를 유지한 채 멈춘다.
         if (building->ConstructionRemaining > FP._0 || building->QueueCount == 0 || building->Paused != PauseReason.None || building->EmpUntilFrame > f.Number) {
           continue;
@@ -400,7 +537,7 @@ namespace Quantum.FactoryWars {
 
         var state = FactoryWarsUtil.Player(f, building->Owner);
         var unit = f.FindAsset(building->Queue[0].Unit);
-        var buildTime = BuildTime(f, state, unit);
+        var buildTime = UnitProductionSeconds(f, state, unit);
         var speedMul = FactorySystem.ProductionSpeedMultiplier(f, entity, building, state);
 
         building->QueueProgress += f.DeltaTime * speedMul;
@@ -436,7 +573,7 @@ namespace Quantum.FactoryWars {
       }
     }
 
-    static FP BuildTime(Frame f, PlayerState* state, UnitSpec unit) {
+    public static FP UnitProductionSeconds(Frame f, PlayerState* state, UnitSpec unit) {
       var buildTime = unit.BuildTimeSeconds;
       if (unit.Size == UnitSize.Small) {
         buildTime *= f.FindAsset(state->Faction).SmallBuildTimeMultiplier;
@@ -446,7 +583,7 @@ namespace Quantum.FactoryWars {
 
     /// <summary>생산 타이머가 도는 중이면 true. 인구가 차서 완성 상태로 대기 중이면 false.</summary>
     public static bool IsProducing(Frame f, Building* building, PlayerState* state) {
-      return building->QueueCount > 0 && building->QueueProgress < BuildTime(f, state, f.FindAsset(building->Queue[0].Unit));
+      return building->QueueCount > 0 && building->QueueProgress < UnitProductionSeconds(f, state, f.FindAsset(building->Queue[0].Unit));
     }
 
     static void UpdateTotals(Frame f) {
@@ -832,7 +969,7 @@ namespace Quantum.FactoryWars {
             }
           }
           // 벙커 안 병력은 튕겨 나오며 피해를 입는다.
-          if (lost.GarrisonCapacity > 0) {
+          if (lost.GarrisonCapacity > 0 || lost.RequiresResourceNode) {
             CitySystem.ExitAll(f, PlayerRef.None, target, FactoryWarsUtil.Rules(f).GarrisonEjectFraction);
           }
           var destroyedPos = f.Unsafe.GetPointer<Transform3D>(target)->Position;

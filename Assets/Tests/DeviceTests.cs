@@ -102,6 +102,10 @@ namespace FactoryWars.Tests {
       yield return WaitForBattle();
 
       var hud = Controller().Hud;
+      if (hud.DoctrineOpen) {
+        yield return Send(0, new Quantum.FactoryWars.ChooseDoctrineCommand { Doctrine = 1 });
+        yield return WaitFor(() => hud.DoctrineOpen == false, 10f, "전술 도크린 선택 완료");
+      }
       var root = hud.Root;
 
       // 1. 초기 상태 (유닛 미선택): ContextPanel 비활성화 확인
@@ -153,13 +157,14 @@ namespace FactoryWars.Tests {
       var panelArea = contextRect.width * contextRect.height;
       Assert.LessOrEqual(panelArea, screenArea / 3f, "건설 패널은 화면 1/3 면적을 넘지 않음");
 
-      // 5. 일반 전투 유닛(비공병) 선택 시 건설 패널 비활성화 확인
+      // 5. 전투 유닛을 고르면 같은 자리에서 전투 명령을 표시한다.
       var combatUnits = UnitsNamed(0, "ff_eagle_tank").Concat(UnitsNamed(0, "ff_trooper_squad")).ToArray();
       if (combatUnits.Length > 0) {
         Controller().Input.Selection.SelectUnit(combatUnits[0]);
         hud.Refresh(Controller().Frame);
         yield return null;
-        Assert.IsFalse(contextPanel.gameObject.activeSelf, "전투 유닛 선택 시 건설 패널 비활성화");
+        Assert.IsTrue(contextPanel.gameObject.activeSelf, "전투 명령 패널 표시");
+        Assert.IsFalse(hud.Entries.Any(entry => entry.Label == "병기 공장"), "공병 건설 메뉴는 숨김");
       }
     }
   }

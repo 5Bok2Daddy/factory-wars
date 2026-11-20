@@ -64,7 +64,7 @@ namespace Quantum.FactoryWars {
       if (f.Unsafe.TryGetPointer<Building>(building, out var own) && own->ConstructionRemaining <= FP._0) {
         var spec = f.FindAsset(own->Spec);
         shape = new MapShape { Center = f.Unsafe.GetPointer<Transform3D>(building)->Position, HalfLength = spec.FootprintRadius, HalfWidth = spec.FootprintRadius };
-        capacity = spec.GarrisonCapacity;
+        capacity = spec.RequiresResourceNode ? spec.WorkerSlotCapacity : spec.GarrisonCapacity;
         holder = own->Owner;
         return capacity > 0;
       }
@@ -80,6 +80,16 @@ namespace Quantum.FactoryWars {
         return false;
       }
       return FactoryWarsUtil.IsReachable(f, player, shape.Center);
+    }
+
+    public static bool CanOccupy(Frame f, EntityRef entity, Unit* unit, EntityRef building) {
+      if (unit->Health <= FP._0 || unit->Garrison != EntityRef.None || unit->Transport != EntityRef.None) {
+        return false;
+      }
+      if (f.Unsafe.TryGetPointer<Building>(building, out var own) && f.FindAsset(own->Spec).RequiresResourceNode) {
+        return own->Owner == unit->Owner && f.Has<Worker>(entity);
+      }
+      return IsInfantry(f.FindAsset(unit->Spec));
     }
 
     public override void Update(Frame f) {
@@ -103,7 +113,7 @@ namespace Quantum.FactoryWars {
         }
         var target = unit->GarrisonTarget;
         unit->GarrisonTarget = EntityRef.None;
-        if (CanEnter(f, unit->Owner, target)) {
+        if (CanEnter(f, unit->Owner, target) && CanOccupy(f, entity, unit, target)) {
           Enter(f, entity, unit, target);
         } else {
           MovementSystem.Stop(f, entity, unit);
@@ -114,6 +124,11 @@ namespace Quantum.FactoryWars {
 
     public static void Enter(Frame f, EntityRef entity, Unit* unit, EntityRef building) {
       CoverSystem.Release(f, unit);
+      var isExtractor = f.Unsafe.TryGetPointer<Building>(building, out var extractor)
+          && f.FindAsset(extractor->Spec).RequiresResourceNode;
+      if (isExtractor && f.Has<Worker>(entity)) {
+        WorkerSystem.Assign(f, entity, WorkerTask.Station, building);
+      }
       unit->Garrison = building;
       // 항목 34-C: 저격수는 올라간 직후 SetupSeconds(올라가기 3초 + 자리 잡기 2초) 동안 사격 못 하고, 은신·교란 설치는 풀린다.
       var enterSpec = f.FindAsset(unit->Spec);
@@ -140,15 +155,32 @@ namespace Quantum.FactoryWars {
       }
       FactoryWarsUtil.Player(f, unit->Owner)->GarrisonEntries++;
       f.Events.GarrisonChanged(building, holder, Occupants(f, building));
+      if (isExtractor) {
+        f.Events.ExtractorStaffChanged(building, Occupants(f, building));
+      }
     }
 
     /// <summary>진지에서 나온다. 건물 둘레의 정해진 자리로 나오고, damageFraction만큼 최대 체력 피해를 입는다.</summary>
     public static void Exit(Frame f, EntityRef entity, Unit* unit, EntityRef building, MapShape shape, int slot, FP damageFraction) {
       unit->Garrison = EntityRef.None;
+      var wasStationed = f.Unsafe.TryGetPointer<Worker>(entity, out var worker) && worker->Task == WorkerTask.Station;
+      if (wasStationed) {
+        worker->Task = WorkerTask.Idle;
+        worker->Target = EntityRef.None;
+        f.Events.ExtractorStaffChanged(building, Occupants(f, building));
+      }
       var spec = f.FindAsset(unit->Spec);
       var angle = FP.PiTimes2 * slot / 6;
       var away = shape.Center + new FPVector3(FPMath.Cos(angle), FP._0, FPMath.Sin(angle)) * (shape.Reach + FP._3);
       var position = shape.Approach(away, FP._2);
+      if (wasStationed) {
+        var navMeshName = FactoryWarsUtil.Rules(f).NavMeshName;
+        var navMesh = f.Map.GetNavMesh(navMeshName);
+        if (navMesh.Contains(position, *f.NavMeshRegionMask, true) == false) {
+          position = FactoryWarsUtil.FindNavPointNear(f, navMeshName, position, shape.Reach + FP._3, out var safe)
+            ? safe : shape.Center;
+        }
+      }
       f.Unsafe.GetPointer<Transform3D>(entity)->Position = position;
       var config = f.FindAsset(f.SimulationConfig.Navigation.DefaultNavMeshAgent);
       f.Set(entity, NavMeshPathfinder.Create(f, entity, config));
@@ -168,7 +200,7 @@ namespace Quantum.FactoryWars {
       }
     }
 
-    public static void ExitAll(Frame f, PlayerRef player, EntityRef building, FP damageFraction) {
+    public static void ExitAll(Frame f, PlayerRef player, EntityRef building, FP damageFraction, int maxCount = int.MaxValue) {
       MapShape shape;
       if (f.Unsafe.TryGetPointer<CityBuilding>(building, out var city)) {
         shape = FactoryWarsUtil.MapInfo(f).CityBuildings[city->Index].Shape;
@@ -178,11 +210,12 @@ namespace Quantum.FactoryWars {
       } else {
         return;
       }
+      var startSlot = maxCount == 1 ? System.Math.Max(0, Occupants(f, building) - 1) : 0;
       var slot = 0;
       var units = f.Filter<Unit>();
-      while (units.NextUnsafe(out var entity, out var unit)) {
+      while (slot < maxCount && units.NextUnsafe(out var entity, out var unit)) {
         if (unit->Garrison == building && (player.IsValid == false || unit->Owner == player)) {
-          Exit(f, entity, unit, building, shape, slot++, damageFraction);
+          Exit(f, entity, unit, building, shape, startSlot + slot++, damageFraction);
         }
       }
     }

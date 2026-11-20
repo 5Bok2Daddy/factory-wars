@@ -1,6 +1,7 @@
 namespace FactoryWars.Tests {
   using System.Collections;
   using System.Linq;
+  using FactoryWars.View;
   using NUnit.Framework;
   using Assert = NUnit.Framework.Assert;
   using Photon.Deterministic;
@@ -148,25 +149,29 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest]
-    public IEnumerator Hud_BuildPanelPagesThroughAllTwelveBuildings() {
+    public IEnumerator Hud_IndustryMenuPlacesHeadquartersWithoutPaging() {
       yield return StartMatch();
       yield return WaitForHud();
       var hud = Controller().Hud;
       Controller().Input.Selection.SelectUnit(Engineers(0)[0]);
       hud.Refresh(Controller().Frame);
-      // 항목 31: 공병 명령 카드 → 기본 건물(사령부 포함 1단계 건물).
-      hud.PressContext(hud.Entries.FindIndex(e => e.Label == "기본 건물"));
-      Assert.GreaterOrEqual(hud.Entries.Count(e => e.Label.Length > 0 && e.Label != "뒤로"), 7);
+      var menu = hud.Entries.FindIndex(e => e.Label == "산업·보급");
+      Assert.GreaterOrEqual(menu, 0);
+      hud.PressContext(menu);
+      var industryRoles = new[] { BuildingRole.Headquarters, BuildingRole.PowerPlant, BuildingRole.Processor,
+        BuildingRole.SupplyDepot, BuildingRole.CollectionYard, BuildingRole.ResearchLab };
+      var buildings = Verified.FindAsset(StateOf(0).Faction).Buildings.Select(reference => Verified.FindAsset(reference));
+      var names = buildings.Where(spec => industryRoles.Contains(spec.Role)).Select(spec => Texts.NameOf(spec.name)).ToArray();
+      CollectionAssert.AreEquivalent(names, hud.Entries.Where(e => e.Label.Length > 0 && e.Label != "뒤로")
+        .Select(e => e.Label.Split('\n')[0]).ToArray());
       Assert.AreEqual(1, hud.ContextPages, "29 2-5: 단일 화면 한눈에 보기 패널로 쪽 넘김 없음");
       Assert.AreEqual(0, hud.ContextPage);
 
-      var hqIndex = hud.Entries.FindIndex(e => e.Label.StartsWith("사령부"));
+      var hqIndex = hud.Entries.FindIndex(e => e.Label.StartsWith(Texts.NameOf("ff_headquarters")));
       Assert.GreaterOrEqual(hqIndex, 0, "사령부 항목 존재");
-      if (hqIndex < 12) {
-        hud.PressContext(hqIndex);
-        Assert.IsTrue(Controller().Input.IsPlacing, "사령부 칸이 맞는 건물을 고름");
-        Assert.AreEqual(BuildingOf(0, "_headquarters"), Controller().Input.Placing);
-      }
+      hud.PressContext(hqIndex);
+      Assert.IsTrue(Controller().Input.IsPlacing, "사령부 칸이 맞는 건물을 고름");
+      Assert.AreEqual(BuildingOf(0, "_headquarters"), Controller().Input.Placing);
     }
 
     [UnityTest]

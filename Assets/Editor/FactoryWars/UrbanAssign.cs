@@ -157,6 +157,45 @@ namespace FactoryWars.EditorTools {
       yield return Scaled(DressKind.CityGarrison, 1.25f, "SM_Bld_Station_01", "SM_Bld_Station_02", "SM_Bld_Shop_Corner_01");
     }
 
+    [MenuItem("Tools/Factory Wars/Assets/Assign Cafe and Road Normal")]
+    public static void AssignFreeAssets() {
+      var cafe = AssetDatabase.LoadAssetAtPath<GameObject>(SyntyAssign.PackRoot + "/PolygonCoffeeShop/Prefabs/SM_Bld_Cafe_01.prefab");
+      var catalog = AssetDatabase.LoadAssetAtPath<VisualCatalog>("Assets/QuantumUser/Resources/" + VisualCatalog.ResourcePath + ".asset");
+      if (cafe == null || catalog == null) {
+        throw new InvalidOperationException("The Cafe prefab and the Visual Catalog must be installed");
+      }
+      var path = "Assets/QuantumUser/Resources/" + WorldView.AsphaltNormalPath + ".png";
+      if (AssetImporter.GetAtPath(path) is not TextureImporter importer) {
+        throw new InvalidOperationException("The Asphalt 02 normal map must be installed");
+      }
+      importer.textureType = TextureImporterType.NormalMap;
+      importer.sRGBTexture = false;
+      importer.wrapMode = TextureWrapMode.Repeat;
+      importer.filterMode = FilterMode.Trilinear;
+      importer.mipmapEnabled = true;
+      importer.maxTextureSize = 1024;
+      var android = importer.GetPlatformTextureSettings("Android");
+      android.overridden = true;
+      android.maxTextureSize = 1024;
+      android.format = TextureImporterFormat.ASTC_6x6;
+      importer.SetPlatformTextureSettings(android);
+      importer.SaveAndReimport();
+
+      var id = VisualCatalog.DressId(DressKind.CityCafe);
+      var slot = catalog.Get(id);
+      if (slot == null) {
+        slot = new VisualSlot { Id = id, Category = VisualCategory.City };
+        catalog.Slots.Add(slot);
+      }
+      slot.Prefabs = new List<GameObject> { cafe };
+      slot.Scale = 1f;
+      slot.RealWorld = RealWorldCheck.Clear;
+      slot.Notes = "Synty POLYGON Coffee Shop";
+      EditorUtility.SetDirty(catalog);
+      AssetDatabase.SaveAssetIfDirty(catalog);
+      Debug.Log("[FW-Urban] Cafe and Asphalt 02 normal map assigned");
+    }
+
     [MenuItem("Tools/Factory Wars/Assets/6. Assign Urban Dressing")]
     public static void Menu() {
       Debug.Log($"[FW-Urban] 칸 {Assign()}개 연결");
@@ -233,13 +272,8 @@ namespace FactoryWars.EditorTools {
         csv.AppendLine($"Cliff,1,{blocks.Count},{string.Join("+", blocks.Select(b => b.name))}");
         count++;
       }
-      // 효과 칸: 가진 팩의 FX를 그대로 연결(포구 섬광은 발사마다 생겨 모바일 부하가 커서 절차 효과를 유지한다).
+      // 기상 효과 칸: 가진 팩의 기상 FX만 연결한다(폭발·화염·연기·피격은 SyntyAssign에서 바인딩한 Jean Moreno War FX를 보존한다).
       foreach (var (fx, names, life, scale) in new[] {
-        // 폭발·피격·연기는 팩 FX가 네모난 파편(색종이처럼 보임)이라 연결하지 않는다: 절차 효과(부드러운 불꽃·연기)를 쓴다.
-        ("impact", new string[0], 2.5f, 0.8f),
-        ("explosion", new string[0], 4f, 1f),
-        ("flame", new[] { "FX_Fire_Small_01", "Fire_01_FX" }, 2f, 0.8f),
-        ("smoke", new string[0], 6f, 1f),
         ("weather_sand", new[] { "FX_Dust_Blowing_Soft_Large_01", "FX_Dust_Blowing_Soft_01" }, 0f, 1f),
         ("weather_rain", new[] { "FX_Rain_01", "FX_Rain" }, 0f, 1f),
         ("weather_fog", new[] { "FX_Fog_01" }, 0f, 1f),

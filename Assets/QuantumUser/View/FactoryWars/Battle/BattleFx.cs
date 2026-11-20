@@ -158,16 +158,38 @@ namespace FactoryWars.View {
       Emitted++;
     }
 
-    /// <summary>Jean Moreno War FX 또는 VisualCatalog FX 프리팹을 생성하고 필요 시 simulateSeconds만큼 선행 시뮬레이션한다.</summary>
+    static ViewCatalog _viewCatalog;
+
+    static bool TryResolveWarFx(string fxName, out GameObject prefab, out float scale, out float lifetime) {
+      if (VisualCatalog.TryFilled(VisualCatalog.FxId(fxName), out var slot) && slot.Prefab != null) {
+        prefab = slot.Prefab;
+        scale = slot.Scale > 0f ? slot.Scale : 1f;
+        lifetime = slot.Lifetime > 0f ? slot.Lifetime : 4f;
+        return true;
+      }
+      _viewCatalog ??= Resources.Load<ViewCatalog>(ViewCatalog.ResourcePath);
+      if (_viewCatalog != null && _viewCatalog.TryGetWarFx(fxName, out var wfx) && wfx.Prefab != null) {
+        prefab = wfx.Prefab;
+        scale = wfx.Scale > 0f ? wfx.Scale : 1f;
+        lifetime = wfx.Lifetime > 0f ? wfx.Lifetime : 4f;
+        return true;
+      }
+      prefab = null;
+      scale = 1f;
+      lifetime = 3f;
+      return false;
+    }
+
+    /// <summary>Jean Moreno War FX(WFX_*) 프리팹을 VisualCatalog/ViewCatalog에서 직접 생성하고 필요 시 simulateSeconds만큼 선행 시뮬레이션한다.</summary>
     public GameObject SpawnWarFx(string fxName, Vector3 position, Quaternion rotation, float scaleMultiplier = 1f, float simulateSeconds = 0f) {
-      if (VisualCatalog.TryFilled(VisualCatalog.FxId(fxName), out var slot) == false || slot.Prefab == null) {
+      if (TryResolveWarFx(fxName, out var prefab, out var baseScale, out var baseLife) == false) {
         return null;
       }
-      var item = Instantiate(slot.Prefab, position, rotation);
+      var item = Instantiate(prefab, position, rotation);
       item.transform.SetParent(transform, true);
-      var s = Mathf.Max(0.05f, scaleMultiplier * (slot.Scale > 0f ? slot.Scale : 1f));
+      var s = Mathf.Max(0.05f, scaleMultiplier * baseScale);
       item.transform.localScale *= s;
-      // 모바일 성능 보호 및 즉각 캡처 가시성 확보: War FX 파티클이 생성 즉시 불꽃·연기를 분출하도록 선행 시뮬레이션.
+      // 즉각 가시성 확보: War FX 파티클이 생성 즉시 불꽃·버섯구름·연기를 분출하도록 선행 시뮬레이션.
       var systems = item.GetComponentsInChildren<ParticleSystem>(true);
       foreach (var ps in systems) {
         if (simulateSeconds > 0f) {
@@ -175,15 +197,15 @@ namespace FactoryWars.View {
         }
         ps.Play(false);
       }
-      // 불필요한 포인트 라이트 과다 방지(모바일 성능 보호).
-      var life = Mathf.Max(0.18f, slot.Lifetime);
+      var life = Mathf.Max(0.18f, baseLife);
       Destroy(item, life);
       return item;
     }
 
     public void MuzzleFlash(Vector3 position, Vector3 forward, float size) {
       var rot = forward.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(forward) : Quaternion.identity;
-      if (SpawnWarFx("muzzle", position, rot, Mathf.Clamp(size, 0.45f, 1.5f), 0.02f) != null) {
+      var key = size >= 1.1f ? "muzzle_heavy" : "muzzle";
+      if (SpawnWarFx(key, position, rot, Mathf.Clamp(size * 0.85f, 0.45f, 1.5f), 0.02f) != null) {
         return;
       }
       var count = Scaled(4);
@@ -241,11 +263,22 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>맞은 방향(쏜 쪽 반대)으로 튀는 불꽃과 하얀 번쩍임.</summary>
+    /// <summary>전차·MLRS·포병·보병 피격: 중화기(size>=1.0)는 War FX WFX_ExplosiveSmokeGround/WFX_Explosion, 소총탄은 WFX_BImpact Dirt 재생.</summary>
     public void Impact(Vector3 position, float size, Vector3 incoming) {
       var normal = incoming.sqrMagnitude > 0.001f ? -incoming.normalized : Vector3.up;
+      if (size >= 1.0f) {
+        var key = size >= 1.5f ? "explosion" : "explosion_generic";
+        if (SpawnWarFx(key, position + Vector3.up * 0.12f, Quaternion.identity, Mathf.Clamp(size * 0.58f, 0.55f, 1.6f), 0.12f) != null) {
+          if (size >= 1.35f) Crater(position, size * 0.72f);
+          return;
+        }
+      } else {
+        var rot = Quaternion.LookRotation(normal);
+        if (SpawnWarFx("bullet_impact", position + Vector3.up * 0.25f, rot, Mathf.Clamp(size, 0.45f, 0.95f), 0.04f) != null) {
+          return;
+        }
+      }
       Emit(_glow, position + Vector3.up * 0.3f, Vector3.zero, size * 1.2f, 0.07f, FlashCore);
-      // 가는 불티 몇 개 + 흙먼지 한 번(네모 파편 없음).
       var count = Scaled(3);
       for (var i = 0; i < count; i++) {
         var velocity = (normal + Vector3.up * 0.6f + Random.insideUnitSphere * 0.6f) * Random.Range(3f, 7f);
@@ -255,10 +288,13 @@ namespace FactoryWars.View {
     }
 
     public void Impact(Vector3 position, float size) {
-      if (VisualCatalog.SpawnEffect("impact", position, Vector3.up, size)) {
+      if (size >= 1.0f && SpawnWarFx("explosion_generic", position + Vector3.up * 0.15f, Quaternion.identity, Mathf.Clamp(size * 0.6f, 0.55f, 1.5f), 0.12f) != null) {
         return;
       }
-      // 피격 번쩍임.
+      if (SpawnWarFx("bullet_impact", position + Vector3.up * 0.25f, Quaternion.identity, Mathf.Clamp(size, 0.5f, 1.0f), 0.04f) != null) {
+        return;
+      }
+      // 피격 번쩍임 폴백.
       Emit(_glow, position + Vector3.up * 0.3f, Vector3.zero, size * 1.6f, 0.08f, Color.white);
       var count = Scaled(5);
       for (var i = 0; i < count; i++) {
@@ -479,9 +515,9 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>전략 미사일 발사 시 격납고 문 주변으로 뿜어져 나오는 하얀 배기 증기.</summary>
+    /// <summary>전략 미사일 발사 시 격납고 문 주변으로 뿜어져 나오는 하얀 배기 증기(WFX_SmokeGrenade White).</summary>
     public void SiloSteam(Vector3 position) {
-      if (SpawnWarFx("smoke", position + Vector3.up * 0.5f, Quaternion.identity, 1.8f, 0.2f) != null) {
+      if (SpawnWarFx("smoke_white", position + Vector3.up * 0.5f, Quaternion.identity, 1.85f, 0.25f) != null) {
         Emit(_flash, position + Vector3.up * 1.4f, Vector3.zero, 3.2f, 0.35f, FlashCore);
         return;
       }
@@ -494,7 +530,7 @@ namespace FactoryWars.View {
       Emit(_flash, position + Vector3.up * 1.4f, Vector3.zero, 3.2f, 0.35f, FlashCore);
     }
 
-    /// <summary>전략 미사일 착탄 · 공중항모 추락: 원시 주황 구체·링 전면 제거 -> 실제 War FX WFXMR_Nuke + WFXMR_ExplosiveSmokeGround Big + WFXMR_Fire Natural + 영구 크레이터.</summary>
+    /// <summary>전략 미사일 착탄 · 공중항모 추락: 실제 War FX WFX_Nuke + WFX_ExplosiveSmokeGround Big + WFX_Fire Natural Broad + WFX_SmokeGrenade Black + 영구 크레이터.</summary>
     public void MushroomExplosion(Vector3 position, float size) {
       GameAudio.Play(SoundEvent.Explosion);
       Shake(1.15f);
@@ -505,13 +541,17 @@ namespace FactoryWars.View {
         var ang = c * (Mathf.PI * 2f / 5f) + 0.3f;
         Crater(ground + new Vector3(Mathf.Cos(ang) * size * 1.45f, 0f, Mathf.Sin(ang) * size * 1.45f), size * 1.15f, permanent: true);
       }
-      // 실제 War FX 핵폭발(WFXMR_Nuke) + 다층 충격파 연기(WFXMR_ExplosiveSmokeGround Big) + 잔존 화염·검은 연기 3개소!
-      var nukeScale = Mathf.Clamp(size * 0.24f, 0.72f, 1.45f);
-      var spawnedNuke = SpawnWarFx("nuke", ground + Vector3.up * 0.1f, Quaternion.identity, nukeScale, 0.95f);
-      SpawnWarFx("nuke_extra", ground + Vector3.up * 0.2f, Quaternion.identity, nukeScale * 0.88f, 0.65f);
+      // 실제 War FX 핵폭발(WFX_Nuke) + 다층 충격파 연기(WFX_ExplosiveSmokeGround Big) + 잔존 화염·검은 연기!
+      var nukeScale = Mathf.Clamp(size * 0.26f, 0.8f, 1.55f);
+      var spawnedNuke = SpawnWarFx("nuke", ground + Vector3.up * 0.1f, Quaternion.identity, nukeScale, 1.15f);
+      SpawnWarFx("nuke_extra", ground + Vector3.up * 0.2f, Quaternion.identity, nukeScale * 0.9f, 0.65f);
       for (var f = 0; f < 3; f++) {
         var a = f * (Mathf.PI * 2f / 3f) + 0.4f;
-        SpawnWarFx("fire_black", ground + new Vector3(Mathf.Cos(a) * size * 1.15f, 0.05f, Mathf.Sin(a) * size * 1.15f), Quaternion.identity, 0.9f, 0.55f);
+        var spot = ground + new Vector3(Mathf.Cos(a) * size * 1.2f, 0.05f, Mathf.Sin(a) * size * 1.2f);
+        SpawnWarFx("fire_black", spot, Quaternion.identity, 0.95f, 0.55f);
+        if (f < 2) {
+          SpawnWarFx("smoke_black", spot + Vector3.up * 0.4f, Quaternion.identity, 1.05f, 0.5f);
+        }
       }
       if (spawnedNuke == null) {
         // War FX 미연결 환경 폴백(순수 ParticleSystem 버스트 — 원시 메쉬 없음).
@@ -534,6 +574,37 @@ namespace FactoryWars.View {
       for (var i = 0; i < count; i++) {
         var velocity = new Vector3(Random.Range(-1f, 1f), Random.Range(0.3f, 0.9f), Random.Range(-1f, 1f));
         Emit(_smoke, position + Random.insideUnitSphere * 0.6f, velocity, Random.Range(0.8f, 1.4f), Random.Range(0.9f, 1.5f), DustBrown);
+      }
+    }
+
+    /// <summary>건설 2단계(33~99%) 철골 용접 스파크: War FX WFX_BImpact Metal + 미세 용접 아크 섬광.</summary>
+    public GameObject WeldingSparks(Vector3 position, Vector3 normal) {
+      var dir = normal.sqrMagnitude > 0.001f ? normal.normalized : Vector3.up;
+      var rot = Quaternion.LookRotation(dir);
+      var wfx = SpawnWarFx("welding_sparks", position, rot, 1.35f, 0.06f);
+      // 용접 아크 중심 빛점과 가느다란 불똥 몇 가닥으로 근접 뷰 가독성 보강.
+      var arcColor = new Color(1f, 0.86f, 0.42f, 1f);
+      Emit(_glow, position, Vector3.zero, 0.55f, 0.14f, arcColor);
+      var count = Scaled(5);
+      for (var i = 0; i < count; i++) {
+        var vel = (dir * 1.4f + Vector3.up * 0.9f + Random.insideUnitSphere * 0.8f) * Random.Range(1.8f, 4.2f);
+        Emit(_needle, position, vel, 0.025f, Random.Range(0.14f, 0.28f), Spark);
+      }
+      return wfx;
+    }
+
+    /// <summary>건설 3단계(100% 완공) 비계 철거 먼지 피어오름.</summary>
+    public void ConstructionCompleteDust(Vector3 position, float radius) {
+      if (GraphicsQuality.Current == QualityTier.Low) {
+        return;
+      }
+      var ring = Mathf.Max(6, Scaled(10));
+      var r = Mathf.Clamp(radius * 0.85f, 1.8f, 5.5f);
+      for (var i = 0; i < ring; i++) {
+        var angle = (Mathf.PI * 2f * i) / ring;
+        var outDir = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+        var p = position + outDir * r + Vector3.up * 0.25f;
+        Emit(_smoke, p, outDir * Random.Range(0.7f, 1.5f) + Vector3.up * Random.Range(0.5f, 1.2f), Random.Range(1.1f, 1.7f), Random.Range(1.2f, 2.0f), DustBrown);
       }
     }
 

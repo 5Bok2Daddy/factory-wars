@@ -52,7 +52,7 @@ namespace Quantum {
   public unsafe partial class Frame {
     public unsafe partial struct FrameEvents {
       static partial void GetEventTypeCountCodeGen(ref Int32 eventCount) {
-        eventCount = 52;
+        eventCount = 53;
       }
       static partial void GetParentEventIDCodeGen(Int32 eventID, ref Int32 parentEventID) {
         switch (eventID) {
@@ -110,6 +110,7 @@ namespace Quantum {
           case EventMissileInterceptShot.ID: result = typeof(EventMissileInterceptShot); return;
           case EventDepotExploded.ID: result = typeof(EventDepotExploded); return;
           case EventTransportRamp.ID: result = typeof(EventTransportRamp); return;
+          case EventExtractorStaffChanged.ID: result = typeof(EventExtractorStaffChanged); return;
           case EventAreaImpact.ID: result = typeof(EventAreaImpact); return;
           case EventWrecked.ID: result = typeof(EventWrecked); return;
           default: break;
@@ -525,6 +526,14 @@ namespace Quantum {
         var ev = _f.Context.AcquireEvent<EventTransportRamp>(EventTransportRamp.ID);
         ev.Transport = Transport;
         ev.Unload = Unload;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventExtractorStaffChanged ExtractorStaffChanged(EntityRef Building, Int32 Count) {
+        if (_f.IsPredicted) return null;
+        var ev = _f.Context.AcquireEvent<EventExtractorStaffChanged>(EventExtractorStaffChanged.ID);
+        ev.Building = Building;
+        ev.Count = Count;
         _f.AddEvent(ev);
         return ev;
       }
@@ -1918,14 +1927,14 @@ namespace Quantum {
       }
     }
   }
-  public unsafe partial class EventAreaImpact : EventBase {
+  public unsafe partial class EventExtractorStaffChanged : EventBase {
     public new const Int32 ID = 50;
-    public FPVector3 Position;
-    public FP Radius;
-    protected EventAreaImpact(Int32 id, EventFlags flags) : 
+    public EntityRef Building;
+    public Int32 Count;
+    protected EventExtractorStaffChanged(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventAreaImpact() : 
+    public EventExtractorStaffChanged() : 
         base(50, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
     }
     public new QuantumGame Game {
@@ -1939,21 +1948,20 @@ namespace Quantum {
     public override Int32 GetHashCode() {
       unchecked {
         var hash = 293;
-        hash = hash * 31 + Position.GetHashCode();
-        hash = hash * 31 + Radius.GetHashCode();
+        hash = hash * 31 + Building.GetHashCode();
+        hash = hash * 31 + Count.GetHashCode();
         return hash;
       }
     }
   }
-  public unsafe partial class EventWrecked : EventBase {
+  public unsafe partial class EventAreaImpact : EventBase {
     public new const Int32 ID = 51;
     public FPVector3 Position;
-    public Int32 Size;
-    public FP Footprint;
-    protected EventWrecked(Int32 id, EventFlags flags) : 
+    public FP Radius;
+    protected EventAreaImpact(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventWrecked() : 
+    public EventAreaImpact() : 
         base(51, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
     }
     public new QuantumGame Game {
@@ -1967,6 +1975,34 @@ namespace Quantum {
     public override Int32 GetHashCode() {
       unchecked {
         var hash = 307;
+        hash = hash * 31 + Position.GetHashCode();
+        hash = hash * 31 + Radius.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventWrecked : EventBase {
+    public new const Int32 ID = 52;
+    public FPVector3 Position;
+    public Int32 Size;
+    public FP Footprint;
+    protected EventWrecked(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventWrecked() : 
+        base(52, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 311;
         hash = hash * 31 + Position.GetHashCode();
         hash = hash * 31 + Size.GetHashCode();
         hash = hash * 31 + Footprint.GetHashCode();

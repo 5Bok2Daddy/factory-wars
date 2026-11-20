@@ -701,6 +701,7 @@ namespace FactoryWars.EditorTools {
       faction.Engineer = Ref(engineer);
       // 사령부는 추가 건설이 드물어 패널 맨 끝에 둔다.
       faction.Buildings = buildings.Skip(1).Concat(buildings.Take(1)).Select(Ref).ToArray();
+      ConfigureExtractors(faction, prefix);
       faction.Units = ids.Select(k => Ref(units[k])).ToArray();
       faction.StartingUnits = startingUnits.Select(id => Ref(U(id))).ToArray();
       // 항목 22: 공중 유닛이 없는 진영은 AI가 비행장을 짓지 않는다(항목 31부터 두 진영 모두 공중이 있다). 대륙 연방은 물량형이라 중공업 기지를 차량 공장 바로 다음에 짓는다.
@@ -1059,6 +1060,50 @@ namespace FactoryWars.EditorTools {
       return ai;
     }
 
+    static void ConfigureExtractors(FactionSpec faction, string prefix) {
+      BuildingSpec Extractor(string id, ResourceKind kind, int capacity, ResourceCost cost) {
+        var extractor = BuildBuilding(id, cost, 20, 650, 0, 0);
+        extractor.Role = kind == ResourceKind.Wood ? BuildingRole.LumberMill : BuildingRole.IronExtractor;
+        extractor.RequiredTier = 1;
+        extractor.Prerequisites = new[] { faction.Headquarters };
+        extractor.RequiresResourceNode = true;
+        extractor.RequiredNodeKind = kind;
+        extractor.WorkerSlotCapacity = capacity;
+        extractor.ExtractIntervalSeconds = 2;
+        extractor.ExtractAmountPerCycle = 3;
+        return extractor;
+      }
+      var lumber = Ref(Extractor($"{prefix}_lumber_mill", ResourceKind.Wood, 3, R(100, 120)));
+      var iron = Ref(Extractor($"{prefix}_iron_extractor", ResourceKind.Iron, 4, R(120, 100)));
+      faction.Buildings = faction.Buildings.Where(reference => reference != lumber && reference != iron && reference != faction.Headquarters)
+        .Concat(new[] { lumber, iron, faction.Headquarters }).ToArray();
+      EditorUtility.SetDirty(faction);
+    }
+
+    static void ConfigureExtractorRules(GameRulesSpec rules) {
+      rules.ExtractorNodeSnapRadius = 4;
+      rules.ExtractorYieldMultipliers = new[] { FP._0, FP._1, N(1.6), N(2.1), N(2.5) };
+      EditorUtility.SetDirty(rules);
+    }
+
+    public static void BuildExtractorData() {
+      ConfigureExtractors(Asset<FactionSpec>("faction_free_federation"), "ff");
+      ConfigureExtractors(Asset<FactionSpec>("faction_continental_federation"), "cf");
+      ConfigureExtractorRules(Asset<GameRulesSpec>("game_rules"));
+      var views = Resources.Load<FactoryWars.View.ViewCatalog>(FactoryWars.View.ViewCatalog.ResourcePath);
+      if (views != null) {
+        const string construction = SyntyAssign.PackRoot + "/PolygonConstruction/Prefabs/";
+        const string battleRoyale = SyntyAssign.PackRoot + "/PolygonBattleRoyale/Prefabs/";
+        views.LumberMillSaw = AssetDatabase.LoadAssetAtPath<GameObject>(construction + "Tools/SM_Tool_Circular_Saw_01.prefab") ?? views.LumberMillSaw;
+        views.IronExtractorDrill = AssetDatabase.LoadAssetAtPath<GameObject>(construction + "Tools/SM_Tool_Drill_01.prefab") ?? views.IronExtractorDrill;
+        views.LumberCargo = AssetDatabase.LoadAssetAtPath<GameObject>(battleRoyale + "Props/SM_Prop_WoodPlank_01.prefab") ?? views.LumberCargo;
+        views.IronCargo = AssetDatabase.LoadAssetAtPath<GameObject>(construction + "Props/SM_Prop_Rubble_Concrete_01.prefab") ?? views.IronCargo;
+        EditorUtility.SetDirty(views);
+      }
+      SyntyAssign.BuildLivingBaseVisuals();
+      AssetDatabase.SaveAssets();
+    }
+
     public static void BuildData() {
       QuantumRunner.Init();
       var units = Units.ToDictionary(row => row.Id, BuildUnit);
@@ -1105,6 +1150,7 @@ namespace FactoryWars.EditorTools {
       BuildUltimates(units, free, continental, modules, ffUltimate, cfUltimate, tfUltimate);
 
       var rules = Asset<GameRulesSpec>("game_rules");
+      ConfigureExtractorRules(rules);
       rules.NavMeshName = "NavMesh";
       rules.WaterNavMeshName = "WaterNavMesh";
       rules.WaterGateRegion = WaterGateRegion;
@@ -1303,6 +1349,13 @@ namespace FactoryWars.EditorTools {
       rules.TierDropsWithHeadquarters = true;
       rules.ShipSpawnGap = 3;
       rules.ShipyardWaterReach = 3;
+      rules.ShipLaunchClearance = 3;
+      rules.AirfieldWorkClearance = 2;
+      rules.RunwayBuildSeconds = 14;
+      rules.RunwayHalfLength = 11;
+      rules.RunwayHalfWidth = 4;
+      rules.LandingPadBuildSeconds = 9;
+      rules.LandingPadHalfSize = 5;
       rules.DisconnectBotDifficulty = BotDifficulty.Normal;
       rules.DisconnectForfeitSeconds = 60;
       rules.AirAltitude = 6;
@@ -1501,6 +1554,11 @@ namespace FactoryWars.EditorTools {
       var landTerrain = def.Terrain.SelectMany(feature => Orbit(def, feature.Shape).Select(shape => Feature(feature.Kind, shape)))
         .Where(f => extraRiver.Count == 0 || OverlapsExtraWater(f.Shape.Center, 4.5f) == false);
       spec.Terrain = landTerrain.Concat(blocks).ToArray();
+      if (extraRiver.Count > 0 && spec.ResourceNodes != null) {
+        spec.ResourceNodes = spec.ResourceNodes
+          .Where(n => OverlapsExtraWater(n.Shape.Center, Mathf.Max(6.5f, n.Shape.Radius.AsFloat + 2.5f)) == false)
+          .ToArray();
+      }
       spec.NoBuildZones = def.NoBuildZones.SelectMany(zone => Orbit(def, zone)).ToArray();
       spec.BaseAreas = Orbit(def, def.BaseArea).ToArray();
       FillChannel(def, spec, pieces);

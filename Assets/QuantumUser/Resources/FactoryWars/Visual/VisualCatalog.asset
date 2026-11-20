@@ -16,7 +16,7 @@ MonoBehaviour:
   - Id: unit/ff_engineer
     Category: 0
     Prefabs:
-    - {fileID: 6559390582225366322, guid: 28329563bc451014099c824037ab9c28, type: 3}
+    - {fileID: 7249137116735253584, guid: 28329563bc451014099c824037ab9c28, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -41,7 +41,7 @@ MonoBehaviour:
   - Id: unit/ff_ranger_squad
     Category: 0
     Prefabs:
-    - {fileID: 7879367246136489364, guid: a063c2525494c624187f3d0d7a4971ba, type: 3}
+    - {fileID: 172183290596016451, guid: a063c2525494c624187f3d0d7a4971ba, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -66,7 +66,7 @@ MonoBehaviour:
   - Id: unit/ff_skyguard_squad
     Category: 0
     Prefabs:
-    - {fileID: 4563842614441968141, guid: 2838f10fd95e28c4ca42e71ea1d29e39, type: 3}
+    - {fileID: 2491492793603028414, guid: 2838f10fd95e28c4ca42e71ea1d29e39, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -91,7 +91,7 @@ MonoBehaviour:
   - Id: unit/ff_eagle_tank
     Category: 0
     Prefabs:
-    - {fileID: 1785430285936859731, guid: 0930c06b8ce542648b89d608a4a3c9de, type: 3}
+    - {fileID: 2395762414557430747, guid: 0930c06b8ce542648b89d608a4a3c9de, type: 3}
     Scale: 0.6013269
     AutoFit: 0
     YawOffset: 0
@@ -168,7 +168,7 @@ MonoBehaviour:
   - Id: unit/ff_scout_boat
     Category: 0
     Prefabs:
-    - {fileID: 5671583412760392544, guid: 5667309d8ed277a4c80b69cafd6ad3d9, type: 3}
+    - {fileID: 5231749284263484964, guid: 5667309d8ed277a4c80b69cafd6ad3d9, type: 3}
     Scale: 0.59891593
     AutoFit: 0
     YawOffset: 0
@@ -193,7 +193,7 @@ MonoBehaviour:
   - Id: unit/ff_artillery_ship
     Category: 0
     Prefabs:
-    - {fileID: 2357498126601904134, guid: 948ab28a67fb8184b9325e8168151bda, type: 3}
+    - {fileID: 4326309308742255069, guid: 948ab28a67fb8184b9325e8168151bda, type: 3}
     Scale: 0.48932704
     AutoFit: 0
     YawOffset: 0
@@ -219,7 +219,7 @@ MonoBehaviour:
   - Id: unit/cf_engineer
     Category: 0
     Prefabs:
-    - {fileID: 5287887009235248451, guid: 390b5984c049c5643ad7692d2a395284, type: 3}
+    - {fileID: 3785028246439353157, guid: 390b5984c049c5643ad7692d2a395284, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -244,7 +244,7 @@ MonoBehaviour:
   - Id: unit/cf_militia
     Category: 0
     Prefabs:
-    - {fileID: 3541872417048521409, guid: ea4c97398e4d4994cb72009fbfbec33a, type: 3}
+    - {fileID: 412422674039185796, guid: ea4c97398e4d4994cb72009fbfbec33a, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -269,7 +269,7 @@ MonoBehaviour:
   - Id: unit/cf_flame_squad
     Category: 0
     Prefabs:
-    - {fileID: 7603117987487544948, guid: 20de0af48fee9bb43b267c8e036cb6c7, type: 3}
+    - {fileID: 8704097124888975141, guid: 20de0af48fee9bb43b267c8e036cb6c7, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -294,7 +294,7 @@ MonoBehaviour:
   - Id: unit/cf_dragonscale_tank
     Category: 0
     Prefabs:
-    - {fileID: 2917449276721384324, guid: e9fc862b3c9baf549b152465ef81655d, type: 3}
+    - {fileID: 5921992582218345372, guid: e9fc862b3c9baf549b152465ef81655d, type: 3}
     Scale: 0.9085491
     AutoFit: 0
     YawOffset: 0
@@ -319,7 +319,7 @@ MonoBehaviour:
   - Id: unit/cf_thunder_aa
     Category: 0
     Prefabs:
-    - {fileID: 5288197014740527372, guid: f05378d6dd7b39d4d9e7be279a358349, type: 3}
+    - {fileID: 2355453284850329099, guid: f05378d6dd7b39d4d9e7be279a358349, type: 3}
     Scale: 0.7571242
     AutoFit: 0
     YawOffset: 0
@@ -345,7 +345,7 @@ MonoBehaviour:
   - Id: unit/cf_longwall_mlrs
     Category: 0
     Prefabs:
-    - {fileID: 7776991908430824420, guid: b2f10a7d2d12ce142afd39b9f42461b9, type: 3}
+    - {fileID: 6915658201005893852, guid: b2f10a7d2d12ce142afd39b9f42461b9, type: 3}
     Scale: 0.71029747
     AutoFit: 0
     YawOffset: 0
@@ -370,7 +370,7 @@ MonoBehaviour:
   - Id: unit/cf_scout_boat
     Category: 0
     Prefabs:
-    - {fileID: 7710152983676527248, guid: f6e6680a12409254dbd3748d5511a5fa, type: 3}
+    - {fileID: 6082312926018570870, guid: f6e6680a12409254dbd3748d5511a5fa, type: 3}
     Scale: 0.59891593
     AutoFit: 0
     YawOffset: 0
@@ -395,7 +395,7 @@ MonoBehaviour:
   - Id: unit/cf_artillery_ship
     Category: 0
     Prefabs:
-    - {fileID: 7340862474105489333, guid: 1399938a73f66a142927bd28ed0c71f5, type: 3}
+    - {fileID: 1172539988140984738, guid: 1399938a73f66a142927bd28ed0c71f5, type: 3}
     Scale: 0.48932704
     AutoFit: 0
     YawOffset: 0
@@ -421,7 +421,7 @@ MonoBehaviour:
   - Id: building/ff_headquarters
     Category: 1
     Prefabs:
-    - {fileID: 3867976394758039058, guid: c269941d4078afb4c8c516a62369ceea, type: 3}
+    - {fileID: 8567690062342262596, guid: c269941d4078afb4c8c516a62369ceea, type: 3}
     Scale: 0.5894487
     AutoFit: 0
     YawOffset: 0
@@ -447,7 +447,7 @@ MonoBehaviour:
   - Id: building/cf_headquarters
     Category: 1
     Prefabs:
-    - {fileID: 3256003319162570023, guid: 47a1219831601a244817e5d16bedceea, type: 3}
+    - {fileID: 1944980828293185373, guid: 47a1219831601a244817e5d16bedceea, type: 3}
     Scale: 0.5894487
     AutoFit: 0
     YawOffset: 0
@@ -521,7 +521,7 @@ MonoBehaviour:
   - Id: building/ff_collection_yard
     Category: 1
     Prefabs:
-    - {fileID: 5750938034249174571, guid: 1638318ededf07d47ae3a8f333165996, type: 3}
+    - {fileID: 2957282173825704941, guid: 1638318ededf07d47ae3a8f333165996, type: 3}
     Scale: 0.6649772
     AutoFit: 0
     YawOffset: 0
@@ -546,7 +546,7 @@ MonoBehaviour:
   - Id: building/ff_supply_depot
     Category: 1
     Prefabs:
-    - {fileID: 4445018570488733584, guid: 55ef7e6c76c4f5b45b1d64c84af7fda2, type: 3}
+    - {fileID: 102468666495729966, guid: 55ef7e6c76c4f5b45b1d64c84af7fda2, type: 3}
     Scale: 0.52839357
     AutoFit: 0
     YawOffset: 0
@@ -571,7 +571,7 @@ MonoBehaviour:
   - Id: building/ff_barracks
     Category: 1
     Prefabs:
-    - {fileID: 1644381417633157831, guid: d09662b52af75b5449b43e9ab284cc45, type: 3}
+    - {fileID: 5439146658945717844, guid: d09662b52af75b5449b43e9ab284cc45, type: 3}
     Scale: 0.5244253
     AutoFit: 0
     YawOffset: 0
@@ -596,7 +596,7 @@ MonoBehaviour:
   - Id: building/ff_power_plant
     Category: 1
     Prefabs:
-    - {fileID: 7322606775550409456, guid: 53c8a6af75614784c81ed06c954ee680, type: 3}
+    - {fileID: 7972291099138815040, guid: 53c8a6af75614784c81ed06c954ee680, type: 3}
     Scale: 0.7314003
     AutoFit: 0
     YawOffset: 0
@@ -621,7 +621,7 @@ MonoBehaviour:
   - Id: building/ff_processor
     Category: 1
     Prefabs:
-    - {fileID: 6602056083751286642, guid: aca8299c88fe6d8488fcfa710f195ada, type: 3}
+    - {fileID: 7146026423104443981, guid: aca8299c88fe6d8488fcfa710f195ada, type: 3}
     Scale: 0.32236198
     AutoFit: 0
     YawOffset: 0
@@ -646,7 +646,7 @@ MonoBehaviour:
   - Id: building/ff_research_lab
     Category: 1
     Prefabs:
-    - {fileID: 6332248441480453851, guid: 6cb3c3572f5b290429f309d28961e9af, type: 3}
+    - {fileID: 2505650499459921301, guid: 6cb3c3572f5b290429f309d28961e9af, type: 3}
     Scale: 0.92315286
     AutoFit: 0
     YawOffset: 0
@@ -672,7 +672,7 @@ MonoBehaviour:
   - Id: building/ff_vehicle_factory
     Category: 1
     Prefabs:
-    - {fileID: 5211511531381812528, guid: 36ce85dce850c30468c85d148a9837a7, type: 3}
+    - {fileID: 1404020403457380043, guid: 36ce85dce850c30468c85d148a9837a7, type: 3}
     Scale: 0.3144308
     AutoFit: 0
     YawOffset: 0
@@ -697,7 +697,7 @@ MonoBehaviour:
   - Id: building/ff_ground_tower
     Category: 1
     Prefabs:
-    - {fileID: 8816658220369131621, guid: f00dcb092abdecf45a219ed19c21703d, type: 3}
+    - {fileID: 2365519156383165760, guid: f00dcb092abdecf45a219ed19c21703d, type: 3}
     Scale: 1.2045432
     AutoFit: 0
     YawOffset: 0
@@ -722,7 +722,7 @@ MonoBehaviour:
   - Id: building/ff_air_defense
     Category: 1
     Prefabs:
-    - {fileID: 3382745429613393188, guid: 000ac1bbc784a00409723adc7cb2c4d5, type: 3}
+    - {fileID: 6910997610814496403, guid: 000ac1bbc784a00409723adc7cb2c4d5, type: 3}
     Scale: 1.6040293
     AutoFit: 0
     YawOffset: 0
@@ -747,7 +747,7 @@ MonoBehaviour:
   - Id: building/ff_airfield
     Category: 1
     Prefabs:
-    - {fileID: 688205757934249902, guid: e2a99f8e25d724c42a154447712bd3d6, type: 3}
+    - {fileID: 3035628611483207987, guid: e2a99f8e25d724c42a154447712bd3d6, type: 3}
     Scale: 0.4235503
     AutoFit: 0
     YawOffset: 0
@@ -773,7 +773,7 @@ MonoBehaviour:
   - Id: building/ff_heavy_works
     Category: 1
     Prefabs:
-    - {fileID: 394458811826051627, guid: 60a0c69ee4ac29241a8b8b3909ac690c, type: 3}
+    - {fileID: 1495338008879132309, guid: 60a0c69ee4ac29241a8b8b3909ac690c, type: 3}
     Scale: 0.30891448
     AutoFit: 0
     YawOffset: 0
@@ -822,7 +822,7 @@ MonoBehaviour:
   - Id: building/cf_collection_yard
     Category: 1
     Prefabs:
-    - {fileID: 5945437014139936603, guid: 7a7aae9dc6758654790f5b3c5da0f70e, type: 3}
+    - {fileID: 6671760925906655910, guid: 7a7aae9dc6758654790f5b3c5da0f70e, type: 3}
     Scale: 0.6649772
     AutoFit: 0
     YawOffset: 0
@@ -847,7 +847,7 @@ MonoBehaviour:
   - Id: building/cf_supply_depot
     Category: 1
     Prefabs:
-    - {fileID: 2897761406233248163, guid: 039493ce419d4f647b6224c7a98f24d4, type: 3}
+    - {fileID: 2849874431362720938, guid: 039493ce419d4f647b6224c7a98f24d4, type: 3}
     Scale: 0.52839357
     AutoFit: 0
     YawOffset: 0
@@ -872,7 +872,7 @@ MonoBehaviour:
   - Id: building/cf_barracks
     Category: 1
     Prefabs:
-    - {fileID: 2634702395942768218, guid: 9a91da916bd8ea3488b4bc214bc390a6, type: 3}
+    - {fileID: 2086651461521850610, guid: 9a91da916bd8ea3488b4bc214bc390a6, type: 3}
     Scale: 0.5244253
     AutoFit: 0
     YawOffset: 0
@@ -897,7 +897,7 @@ MonoBehaviour:
   - Id: building/cf_power_plant
     Category: 1
     Prefabs:
-    - {fileID: 1492086588284890260, guid: a947f883a0d10ca4aafe1a8e872f5795, type: 3}
+    - {fileID: 6601281027113810218, guid: a947f883a0d10ca4aafe1a8e872f5795, type: 3}
     Scale: 0.7314003
     AutoFit: 0
     YawOffset: 0
@@ -922,7 +922,7 @@ MonoBehaviour:
   - Id: building/cf_processor
     Category: 1
     Prefabs:
-    - {fileID: 6639999099626887986, guid: a3602d66494f8684cac906877ae1461f, type: 3}
+    - {fileID: 5544911726733949341, guid: a3602d66494f8684cac906877ae1461f, type: 3}
     Scale: 0.32236198
     AutoFit: 0
     YawOffset: 0
@@ -947,7 +947,7 @@ MonoBehaviour:
   - Id: building/cf_research_lab
     Category: 1
     Prefabs:
-    - {fileID: 245795923661553885, guid: 91190952e4d04054391633d3e36c7d4b, type: 3}
+    - {fileID: 2510556739333964186, guid: 91190952e4d04054391633d3e36c7d4b, type: 3}
     Scale: 0.92315286
     AutoFit: 0
     YawOffset: 0
@@ -973,7 +973,7 @@ MonoBehaviour:
   - Id: building/cf_vehicle_factory
     Category: 1
     Prefabs:
-    - {fileID: 6465130086768093090, guid: ca1f68a8c0b4fcd49b11097a48f71a4f, type: 3}
+    - {fileID: 6811688070991867545, guid: ca1f68a8c0b4fcd49b11097a48f71a4f, type: 3}
     Scale: 0.3144308
     AutoFit: 0
     YawOffset: 0
@@ -998,7 +998,7 @@ MonoBehaviour:
   - Id: building/cf_ground_tower
     Category: 1
     Prefabs:
-    - {fileID: 5836508255477183738, guid: b7c879aec39b0394cb882bf9c42b2214, type: 3}
+    - {fileID: 3716742287198932370, guid: b7c879aec39b0394cb882bf9c42b2214, type: 3}
     Scale: 1.2045432
     AutoFit: 0
     YawOffset: 0
@@ -1023,7 +1023,7 @@ MonoBehaviour:
   - Id: building/cf_air_defense
     Category: 1
     Prefabs:
-    - {fileID: 4466169337940747905, guid: 72aebdca33233ba4c92c7f5d4c502641, type: 3}
+    - {fileID: 6428112528171899759, guid: 72aebdca33233ba4c92c7f5d4c502641, type: 3}
     Scale: 1.6040293
     AutoFit: 0
     YawOffset: 0
@@ -1048,7 +1048,7 @@ MonoBehaviour:
   - Id: building/cf_airfield
     Category: 1
     Prefabs:
-    - {fileID: 8110839818429904733, guid: d2bba0fd1987d444bb27e43e3562a454, type: 3}
+    - {fileID: 2195267006755532966, guid: d2bba0fd1987d444bb27e43e3562a454, type: 3}
     Scale: 0.4235503
     AutoFit: 0
     YawOffset: 0
@@ -1074,7 +1074,7 @@ MonoBehaviour:
   - Id: building/cf_heavy_works
     Category: 1
     Prefabs:
-    - {fileID: 5149939602501322898, guid: be66fcf501c68a24ab005e7b71d4152b, type: 3}
+    - {fileID: 5752473710085460381, guid: be66fcf501c68a24ab005e7b71d4152b, type: 3}
     Scale: 0.30891448
     AutoFit: 0
     YawOffset: 0
@@ -1123,7 +1123,7 @@ MonoBehaviour:
   - Id: unit/ff_scout_buggy
     Category: 0
     Prefabs:
-    - {fileID: 2645761476126361400, guid: 6339bf5bb9e4ec048b43d53440b07be9, type: 3}
+    - {fileID: 34090341504060711, guid: 6339bf5bb9e4ec048b43d53440b07be9, type: 3}
     Scale: 0.8768122
     AutoFit: 0
     YawOffset: 0
@@ -1148,7 +1148,7 @@ MonoBehaviour:
   - Id: unit/ff_field_support
     Category: 0
     Prefabs:
-    - {fileID: 4491261353817395079, guid: c7cd5553a405faf4c82c0423c5322405, type: 3}
+    - {fileID: 3279884563779796801, guid: c7cd5553a405faf4c82c0423c5322405, type: 3}
     Scale: 0.95138085
     AutoFit: 0
     YawOffset: 0
@@ -1173,7 +1173,7 @@ MonoBehaviour:
   - Id: unit/ff_bulwark_tank
     Category: 0
     Prefabs:
-    - {fileID: 4122442496119296289, guid: 50e857af9e0da7c4ba1467621ea54384, type: 3}
+    - {fileID: 8768922599370062932, guid: 50e857af9e0da7c4ba1467621ea54384, type: 3}
     Scale: 0.6627937
     AutoFit: 0
     YawOffset: 0
@@ -1198,7 +1198,7 @@ MonoBehaviour:
   - Id: unit/cf_scout_bike
     Category: 0
     Prefabs:
-    - {fileID: 1664528848628220463, guid: b2868c18f7ba0ea48a16b26912ec4ac8, type: 3}
+    - {fileID: 3856886585160204517, guid: b2868c18f7ba0ea48a16b26912ec4ac8, type: 3}
     Scale: 1.4244192
     AutoFit: 0
     YawOffset: 0
@@ -1223,7 +1223,7 @@ MonoBehaviour:
   - Id: unit/cf_gale_gunship
     Category: 0
     Prefabs:
-    - {fileID: 83537101018353828, guid: a75c0547adcad574fb80e5c9d656cd31, type: 3}
+    - {fileID: 2832878158072933574, guid: a75c0547adcad574fb80e5c9d656cd31, type: 3}
     Scale: 0.61700416
     AutoFit: 0
     YawOffset: 0
@@ -1250,7 +1250,7 @@ MonoBehaviour:
   - Id: unit/cf_fortress_tank
     Category: 0
     Prefabs:
-    - {fileID: 5494141401530974287, guid: e0d39f758a29a334d980c85841eda709, type: 3}
+    - {fileID: 7680843839546219100, guid: e0d39f758a29a334d980c85841eda709, type: 3}
     Scale: 0.61919534
     AutoFit: 0
     YawOffset: 0
@@ -1275,7 +1275,7 @@ MonoBehaviour:
   - Id: building/ff_sandbags
     Category: 1
     Prefabs:
-    - {fileID: 907275575552366711, guid: 9b900393220998340a09fa1e92012a4a, type: 3}
+    - {fileID: 6640852273577528606, guid: 9b900393220998340a09fa1e92012a4a, type: 3}
     Scale: 1.1719582
     AutoFit: 0
     YawOffset: 0
@@ -1300,7 +1300,7 @@ MonoBehaviour:
   - Id: building/ff_bunker
     Category: 1
     Prefabs:
-    - {fileID: 1560881235365542773, guid: eb460aaae2a8e7d46b2bd00d2be22b23, type: 3}
+    - {fileID: 165650233142424199, guid: eb460aaae2a8e7d46b2bd00d2be22b23, type: 3}
     Scale: 1.9500558
     AutoFit: 0
     YawOffset: 0
@@ -1325,7 +1325,7 @@ MonoBehaviour:
   - Id: building/ff_medic_tent
     Category: 1
     Prefabs:
-    - {fileID: 2959879530496446483, guid: e3513d1c5b9a2e540b0172aac1879af7, type: 3}
+    - {fileID: 7135277503286445086, guid: e3513d1c5b9a2e540b0172aac1879af7, type: 3}
     Scale: 0.9076373
     AutoFit: 0
     YawOffset: 0
@@ -1350,7 +1350,7 @@ MonoBehaviour:
   - Id: building/ff_repair_bay
     Category: 1
     Prefabs:
-    - {fileID: 1685929963579004571, guid: 3ee3f074c7add7b4984aca1df57e01b7, type: 3}
+    - {fileID: 3798803429840869108, guid: 3ee3f074c7add7b4984aca1df57e01b7, type: 3}
     Scale: 0.8335351
     AutoFit: 0
     YawOffset: 0
@@ -1375,7 +1375,7 @@ MonoBehaviour:
   - Id: building/ff_radar
     Category: 1
     Prefabs:
-    - {fileID: 4005465332056691221, guid: 072ffe8411382a448a80c75e603820a6, type: 3}
+    - {fileID: 6663184738269977831, guid: 072ffe8411382a448a80c75e603820a6, type: 3}
     Scale: 1.624892
     AutoFit: 0
     YawOffset: 0
@@ -1400,7 +1400,7 @@ MonoBehaviour:
   - Id: building/ff_helipad
     Category: 1
     Prefabs:
-    - {fileID: 4090569567745995929, guid: 85899190e04f5a041b490c8a4e2f8cc8, type: 3}
+    - {fileID: 7702331001976107728, guid: 85899190e04f5a041b490c8a4e2f8cc8, type: 3}
     Scale: 0.7278164
     AutoFit: 0
     YawOffset: 0
@@ -1425,7 +1425,7 @@ MonoBehaviour:
   - Id: building/ff_artillery
     Category: 1
     Prefabs:
-    - {fileID: 3422830492040260752, guid: 0021eab0915b1e14bb8a1ce65e893b2c, type: 3}
+    - {fileID: 8084371140714858208, guid: 0021eab0915b1e14bb8a1ce65e893b2c, type: 3}
     Scale: 1.6063895
     AutoFit: 0
     YawOffset: 0
@@ -1450,7 +1450,7 @@ MonoBehaviour:
   - Id: building/cf_sandbags
     Category: 1
     Prefabs:
-    - {fileID: 7225683662690757852, guid: 24a252d3808ebf94eb2339250499a13e, type: 3}
+    - {fileID: 1360007431869144005, guid: 24a252d3808ebf94eb2339250499a13e, type: 3}
     Scale: 1.1719582
     AutoFit: 0
     YawOffset: 0
@@ -1475,7 +1475,7 @@ MonoBehaviour:
   - Id: building/cf_bunker
     Category: 1
     Prefabs:
-    - {fileID: 7047873731410567155, guid: b046caefa656d7845b02c3bd24177c95, type: 3}
+    - {fileID: 1055991201252986769, guid: b046caefa656d7845b02c3bd24177c95, type: 3}
     Scale: 1.9500558
     AutoFit: 0
     YawOffset: 0
@@ -1500,7 +1500,7 @@ MonoBehaviour:
   - Id: building/cf_medic_tent
     Category: 1
     Prefabs:
-    - {fileID: 3326068959409147632, guid: 4db38c9c6251a65428c0690617497f0d, type: 3}
+    - {fileID: 6958391593507423066, guid: 4db38c9c6251a65428c0690617497f0d, type: 3}
     Scale: 0.9076373
     AutoFit: 0
     YawOffset: 0
@@ -1525,7 +1525,7 @@ MonoBehaviour:
   - Id: building/cf_repair_bay
     Category: 1
     Prefabs:
-    - {fileID: 5879041170796101189, guid: d958eccd72304da4586127df9aa044ad, type: 3}
+    - {fileID: 2647365270897768485, guid: d958eccd72304da4586127df9aa044ad, type: 3}
     Scale: 0.8335351
     AutoFit: 0
     YawOffset: 0
@@ -1550,7 +1550,7 @@ MonoBehaviour:
   - Id: building/cf_radar
     Category: 1
     Prefabs:
-    - {fileID: 7215205749560704912, guid: f3ead592f4ad3784c9ab1bc6af8a5fac, type: 3}
+    - {fileID: 2280517056284704868, guid: f3ead592f4ad3784c9ab1bc6af8a5fac, type: 3}
     Scale: 1.624892
     AutoFit: 0
     YawOffset: 0
@@ -1575,7 +1575,7 @@ MonoBehaviour:
   - Id: building/cf_helipad
     Category: 1
     Prefabs:
-    - {fileID: 1283009403702695367, guid: 44353ef4126d67a47be88f8cb23084f6, type: 3}
+    - {fileID: 8656573434068729974, guid: 44353ef4126d67a47be88f8cb23084f6, type: 3}
     Scale: 0.7278164
     AutoFit: 0
     YawOffset: 0
@@ -1600,7 +1600,7 @@ MonoBehaviour:
   - Id: building/cf_artillery
     Category: 1
     Prefabs:
-    - {fileID: 6692332119278614047, guid: 43e386c358a0afd4d8564bf2b8a18b17, type: 3}
+    - {fileID: 5926271993779495412, guid: 43e386c358a0afd4d8564bf2b8a18b17, type: 3}
     Scale: 1.6063895
     AutoFit: 0
     YawOffset: 0
@@ -1769,7 +1769,7 @@ MonoBehaviour:
   - Id: unit/ff_sniper
     Category: 0
     Prefabs:
-    - {fileID: 761136925465853662, guid: 722a7857508cc0f4c88125df061ba31c, type: 3}
+    - {fileID: 7749994563007652261, guid: 722a7857508cc0f4c88125df061ba31c, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -1794,7 +1794,7 @@ MonoBehaviour:
   - Id: unit/cf_sniper
     Category: 0
     Prefabs:
-    - {fileID: 1619286073301800160, guid: 5f45b594ef489224db0da343ac1cdf95, type: 3}
+    - {fileID: 1295843816168946695, guid: 5f45b594ef489224db0da343ac1cdf95, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -1819,7 +1819,7 @@ MonoBehaviour:
   - Id: unit/ff_stormnest_carrier
     Category: 0
     Prefabs:
-    - {fileID: 8049863608964055010, guid: 2f14f13ca499b8342899382cfd862c43, type: 3}
+    - {fileID: 6453858918955362269, guid: 2f14f13ca499b8342899382cfd862c43, type: 3}
     Scale: 0.2699984
     AutoFit: 0
     YawOffset: 0
@@ -1896,7 +1896,7 @@ MonoBehaviour:
   - Id: building/ff_carrier_yard
     Category: 1
     Prefabs:
-    - {fileID: 7309768673437017433, guid: bd1df01208163a44b9f59210c70ef2e6, type: 3}
+    - {fileID: 1072212860594228516, guid: bd1df01208163a44b9f59210c70ef2e6, type: 3}
     Scale: 0.32546347
     AutoFit: 0
     YawOffset: 0
@@ -1922,7 +1922,7 @@ MonoBehaviour:
   - Id: building/cf_missile_silo
     Category: 1
     Prefabs:
-    - {fileID: 1112668345141612094, guid: fd5a4be6144f46a4bbabef3def0a2f39, type: 3}
+    - {fileID: 3407683521482551006, guid: fd5a4be6144f46a4bbabef3def0a2f39, type: 3}
     Scale: 0.36559078
     AutoFit: 0
     YawOffset: 0
@@ -1972,7 +1972,7 @@ MonoBehaviour:
   - Id: unit/ff_at_rocket
     Category: 0
     Prefabs:
-    - {fileID: 7544851271762502188, guid: ca2efde8dde2b074cbcc5766d3e3ee78, type: 3}
+    - {fileID: 1089226766826286458, guid: ca2efde8dde2b074cbcc5766d3e3ee78, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -1997,7 +1997,7 @@ MonoBehaviour:
   - Id: unit/cf_at_rocket
     Category: 0
     Prefabs:
-    - {fileID: 7636117430473419226, guid: 68d204ad46b7d46479159ec44a690a32, type: 3}
+    - {fileID: 7767588758637063801, guid: 68d204ad46b7d46479159ec44a690a32, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -2022,7 +2022,7 @@ MonoBehaviour:
   - Id: unit/ff_breacher
     Category: 0
     Prefabs:
-    - {fileID: 950092244379223079, guid: 74010a974b997bf42ae7109ad560cdd1, type: 3}
+    - {fileID: 1519817900578439775, guid: 74010a974b997bf42ae7109ad560cdd1, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -2047,7 +2047,7 @@ MonoBehaviour:
   - Id: unit/cf_breacher
     Category: 0
     Prefabs:
-    - {fileID: 4259788642953800385, guid: 4f7ebb43d15c4a9479ff4e2636771705, type: 3}
+    - {fileID: 6050200689072553888, guid: 4f7ebb43d15c4a9479ff4e2636771705, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -2072,7 +2072,7 @@ MonoBehaviour:
   - Id: unit/ff_mlrs_artillery
     Category: 0
     Prefabs:
-    - {fileID: 5136418025957492514, guid: 81a1853ffa4fdeb4ea0349180d92b7e9, type: 3}
+    - {fileID: 5398722713027532022, guid: 81a1853ffa4fdeb4ea0349180d92b7e9, type: 3}
     Scale: 0.6242008
     AutoFit: 0
     YawOffset: 0
@@ -2097,7 +2097,7 @@ MonoBehaviour:
   - Id: unit/cf_rocket_artillery
     Category: 0
     Prefabs:
-    - {fileID: 7776991908430824420, guid: b2f10a7d2d12ce142afd39b9f42461b9, type: 3}
+    - {fileID: 6915658201005893852, guid: b2f10a7d2d12ce142afd39b9f42461b9, type: 3}
     Scale: 0.6242008
     AutoFit: 0
     YawOffset: 0
@@ -2122,7 +2122,7 @@ MonoBehaviour:
   - Id: unit/ff_mobile_sam
     Category: 0
     Prefabs:
-    - {fileID: 8446233340674749528, guid: 079eab8f2b1da6341a5ab19b63880013, type: 3}
+    - {fileID: 4675333373043881663, guid: 079eab8f2b1da6341a5ab19b63880013, type: 3}
     Scale: 0.7571242
     AutoFit: 0
     YawOffset: 0
@@ -2148,7 +2148,7 @@ MonoBehaviour:
   - Id: unit/cf_mobile_sam
     Category: 0
     Prefabs:
-    - {fileID: 5288197014740527372, guid: f05378d6dd7b39d4d9e7be279a358349, type: 3}
+    - {fileID: 2355453284850329099, guid: f05378d6dd7b39d4d9e7be279a358349, type: 3}
     Scale: 0.7571242
     AutoFit: 0
     YawOffset: 0
@@ -2174,7 +2174,7 @@ MonoBehaviour:
   - Id: building/ff_patriot_turret
     Category: 1
     Prefabs:
-    - {fileID: 2532153014215841148, guid: fe81e7e348526254ba3a1e78c7443a83, type: 3}
+    - {fileID: 1286353979768883996, guid: fe81e7e348526254ba3a1e78c7443a83, type: 3}
     Scale: 0.9536269
     AutoFit: 0
     YawOffset: 0
@@ -2200,7 +2200,7 @@ MonoBehaviour:
   - Id: building/cf_patriot_turret
     Category: 1
     Prefabs:
-    - {fileID: 2588815074760509560, guid: 115469b3a257e88489ca642f47baf374, type: 3}
+    - {fileID: 4749712972759370434, guid: 115469b3a257e88489ca642f47baf374, type: 3}
     Scale: 0.9536269
     AutoFit: 0
     YawOffset: 0
@@ -2226,7 +2226,7 @@ MonoBehaviour:
   - Id: unit/cf_apc_transport
     Category: 0
     Prefabs:
-    - {fileID: 1418213871323515682, guid: 9066991037499e04aaa5c9585a8434ca, type: 3}
+    - {fileID: 9093273265035364094, guid: 9066991037499e04aaa5c9585a8434ca, type: 3}
     Scale: 0.95138085
     AutoFit: 0
     YawOffset: 0
@@ -2251,7 +2251,7 @@ MonoBehaviour:
   - Id: unit/ff_landing_craft
     Category: 0
     Prefabs:
-    - {fileID: 5703545285913892377, guid: 5acb89454cf15d740991e7b9fe590df5, type: 3}
+    - {fileID: 8758901423509802871, guid: 5acb89454cf15d740991e7b9fe590df5, type: 3}
     Scale: 0.50651175
     AutoFit: 0
     YawOffset: 0
@@ -2276,7 +2276,7 @@ MonoBehaviour:
   - Id: unit/cf_landing_craft
     Category: 0
     Prefabs:
-    - {fileID: 1457737559106428616, guid: 34cdbe01bf700ad4fa9ec4bdf2a3821d, type: 3}
+    - {fileID: 408740324796905666, guid: 34cdbe01bf700ad4fa9ec4bdf2a3821d, type: 3}
     Scale: 0.50651175
     AutoFit: 0
     YawOffset: 0
@@ -2301,7 +2301,7 @@ MonoBehaviour:
   - Id: unit/ff_transport_heli
     Category: 0
     Prefabs:
-    - {fileID: 150080340538408486, guid: 88fe1d82c166de44e81677a05806f5a9, type: 3}
+    - {fileID: 8836416818193554130, guid: 88fe1d82c166de44e81677a05806f5a9, type: 3}
     Scale: 0.33873335
     AutoFit: 0
     YawOffset: 0
@@ -2328,7 +2328,7 @@ MonoBehaviour:
   - Id: unit/cf_transport_heli
     Category: 0
     Prefabs:
-    - {fileID: 4758345090877419594, guid: 976a443eec4cb094caadee807c42a590, type: 3}
+    - {fileID: 8372518006702519500, guid: 976a443eec4cb094caadee807c42a590, type: 3}
     Scale: 0.33873335
     AutoFit: 0
     YawOffset: 0
@@ -4545,7 +4545,7 @@ MonoBehaviour:
   - Id: fx/explosion
     Category: 6
     Prefabs:
-    - {fileID: 100006, guid: 808e73d863fcde3499fd5301563ffd3d, type: 3}
+    - {fileID: 100006, guid: 93485fd5fc2ccf2439cb3239186f6382, type: 3}
     Scale: 1.25
     AutoFit: 0
     YawOffset: 0
@@ -4557,9 +4557,9 @@ MonoBehaviour:
     TeamTextures: []
     Animator: {fileID: 0}
     DeathSeconds: 1.5
-    Lifetime: 3.8
+    Lifetime: 4
     RealWorld: 1
-    Notes: WFXMR_ExplosiveSmokeGround
+    Notes: WFX_ExplosiveSmokeGround
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -4570,7 +4570,7 @@ MonoBehaviour:
   - Id: fx/flame
     Category: 6
     Prefabs:
-    - {fileID: 100002, guid: 9c996ecef5f837e4488f8fa3849e4552, type: 3}
+    - {fileID: 100002, guid: b8f9e29cc9e6dcf4387b96b6dacc819e, type: 3}
     Scale: 1.15
     AutoFit: 0
     YawOffset: 0
@@ -4582,9 +4582,9 @@ MonoBehaviour:
     TeamTextures: []
     Animator: {fileID: 0}
     DeathSeconds: 1.5
-    Lifetime: 1.1
+    Lifetime: 1.2
     RealWorld: 1
-    Notes: WFXMR_FlameThrower
+    Notes: WFX_FlameThrower
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -4607,7 +4607,7 @@ MonoBehaviour:
     TeamTextures: []
     Animator: {fileID: 0}
     DeathSeconds: 1.5
-    Lifetime: 3.2
+    Lifetime: 3.6
     RealWorld: 1
     Notes: WFX_SmokeGrenade AlphaBlend Gray
     TurretPart: 
@@ -5030,7 +5030,7 @@ MonoBehaviour:
   - Id: unit/trader_guard
     Category: 0
     Prefabs:
-    - {fileID: 7576827616339033234, guid: dbd05ea2ade6bd64c96d2de13f937d02, type: 3}
+    - {fileID: 649585125444759380, guid: dbd05ea2ade6bd64c96d2de13f937d02, type: 3}
     Scale: 0.8
     AutoFit: 0
     YawOffset: 0
@@ -5055,7 +5055,7 @@ MonoBehaviour:
   - Id: fx/factory_lv2
     Category: 6
     Prefabs:
-    - {fileID: 7131813258848087495, guid: d5b23b2167ba0024aad58ead62b50086, type: 3}
+    - {fileID: 2840952341984558374, guid: d5b23b2167ba0024aad58ead62b50086, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -5080,7 +5080,7 @@ MonoBehaviour:
   - Id: fx/factory_lv3
     Category: 6
     Prefabs:
-    - {fileID: 8877274791898665739, guid: 6ce6e4ffb316ba14389fe613035eb874, type: 3}
+    - {fileID: 2149694989923340873, guid: 6ce6e4ffb316ba14389fe613035eb874, type: 3}
     Scale: 1
     AutoFit: 0
     YawOffset: 0
@@ -5655,8 +5655,8 @@ MonoBehaviour:
   - Id: fx/nuke
     Category: 6
     Prefabs:
-    - {fileID: 100002, guid: 4bf22a1d8d9e7724b9af67921436851d, type: 3}
-    Scale: 1.35
+    - {fileID: 100002, guid: 6ecf76dc4f268d340b2666896a954bcc, type: 3}
+    Scale: 1.55
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
@@ -5667,9 +5667,9 @@ MonoBehaviour:
     TeamTextures: []
     Animator: {fileID: 0}
     DeathSeconds: 1.5
-    Lifetime: 7.5
+    Lifetime: 8.5
     RealWorld: 0
-    Notes: WFXMR_Nuke
+    Notes: WFX_Nuke
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -5680,57 +5680,7 @@ MonoBehaviour:
   - Id: fx/nuke_extra
     Category: 6
     Prefabs:
-    - {fileID: 100008, guid: fafeb973cad62304ba2abdc5dfafbf8f, type: 3}
-    Scale: 1.15
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 5.5
-    RealWorld: 0
-    Notes: WFXMR_ExplosiveSmokeGround Big
-    TurretPart: 
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: fx/explosion_small
-    Category: 6
-    Prefabs:
-    - {fileID: 100014, guid: a57a6829db3568c4d9bdc37e9e63c017, type: 3}
-    Scale: 0.95
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2.2
-    RealWorld: 0
-    Notes: WFXMR_Explosion Small
-    TurretPart: 
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: fx/fire_black
-    Category: 6
-    Prefabs:
-    - {fileID: 100002, guid: fb98c59db5f557e42917111512376ab7, type: 3}
+    - {fileID: 100008, guid: 06736895ea0a4ff408d25e6684dce797, type: 3}
     Scale: 1.25
     AutoFit: 0
     YawOffset: 0
@@ -5742,9 +5692,59 @@ MonoBehaviour:
     TeamTextures: []
     Animator: {fileID: 0}
     DeathSeconds: 1.5
-    Lifetime: 6.5
+    Lifetime: 6
     RealWorld: 0
-    Notes: WFXMR_Fire Natural Broad (Black Smoke)
+    Notes: WFX_ExplosiveSmokeGround Big
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/explosion_small
+    Category: 6
+    Prefabs:
+    - {fileID: 100014, guid: 5332791ebce075d4a9e56f4581e7fb47, type: 3}
+    Scale: 0.95
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2.4
+    RealWorld: 0
+    Notes: WFX_Explosion Small
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/fire_black
+    Category: 6
+    Prefabs:
+    - {fileID: 100002, guid: 002c8e66c11fe4048a8c3a08b7f0fe74, type: 3}
+    Scale: 1.25
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 7
+    RealWorld: 0
+    Notes: WFX_Fire Natural Broad (Black Smoke)
     TurretPart: 
     BarrelPart: 
     SpinParts: []
@@ -5756,6 +5756,106 @@ MonoBehaviour:
     Category: 6
     Prefabs:
     - {fileID: 100000, guid: 6f8449a4663a4fd44b6140772d4f39f9, type: 3}
+    Scale: 0.88
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 4.2
+    RealWorld: 0
+    Notes: WFX_SmokeGrenade AlphaBlend Black
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/explosion_generic
+    Category: 6
+    Prefabs:
+    - {fileID: 100004, guid: b46890100828db6429ff69c322b45893, type: 3}
+    Scale: 1.15
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 3.6
+    RealWorld: 0
+    Notes: WFX_Explosion
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/bullet_impact
+    Category: 6
+    Prefabs:
+    - {fileID: 100002, guid: 56bfc2f4b4a0c534c8ef3d0fd1124c44, type: 3}
+    Scale: 0.85
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 1.2
+    RealWorld: 0
+    Notes: WFX_BImpact Dirt
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/muzzle_heavy
+    Category: 6
+    Prefabs:
+    - {fileID: 100006, guid: b0a227fc2e558f241b1c747820ccc361, type: 3}
+    Scale: 1.18
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 0.28
+    RealWorld: 0
+    Notes: WFX_MF 4P RIFLE2
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/smoke_white
+    Category: 6
+    Prefabs:
+    - {fileID: 100000, guid: b7a5dd96bb4187348909e660f427221b, type: 3}
     Scale: 0.85
     AutoFit: 0
     YawOffset: 0
@@ -5769,7 +5869,482 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 3.8
     RealWorld: 0
-    Notes: WFX_SmokeGrenade AlphaBlend Black
+    Notes: WFX_SmokeGrenade White
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: building/ff_lumber_mill
+    Category: 1
+    Prefabs:
+    - {fileID: 1852798367841470, guid: 51d513146d10f39428c02c89bccbfdea, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: building/ff_iron_extractor
+    Category: 1
+    Prefabs:
+    - {fileID: 1430865889384394, guid: 723effe061735aa4e89b785c95e7ba15, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: building/cf_lumber_mill
+    Category: 1
+    Prefabs:
+    - {fileID: 1852798367841470, guid: 51d513146d10f39428c02c89bccbfdea, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: building/cf_iron_extractor
+    Category: 1
+    Prefabs:
+    - {fileID: 1430865889384394, guid: 723effe061735aa4e89b785c95e7ba15, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/build_scaffold
+    Category: 6
+    Prefabs:
+    - {fileID: 1587111173638328, guid: 763a9fdc43a797e4eaf803854c430de3, type: 3}
+    Scale: 0.95
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: SM_Prop_Scaffold_Preset_01
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/welding_sparks
+    Category: 6
+    Prefabs:
+    - {fileID: 100002, guid: 00fedc70b62a31e448e8ccc298257b56, type: 3}
+    Scale: 1.35
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 1.2
+    RealWorld: 0
+    Notes: WFX_BImpact Metal
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/const_stage1
+    Category: 6
+    Prefabs:
+    - {fileID: 6751871218365726433, guid: b9d9d29fac5d3d548a17a34dc66e5b6e, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: const_stage1
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/const_stage2
+    Category: 6
+    Prefabs:
+    - {fileID: 6029242133645758261, guid: 57691628e5a2b6740a9e6dc54e6e536d, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: const_stage2
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/const_worker_0
+    Category: 6
+    Prefabs:
+    - {fileID: 4352373206542960635, guid: 1d0ec1ba196230043acb20b45e62fcf8, type: 3}
+    Scale: 0.85
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 2c4a56f323494dc499a4a9b0bafe36fb, type: 2}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: Synty Construction Hardhat Worker
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/const_worker_1
+    Category: 6
+    Prefabs:
+    - {fileID: 8065371301115265071, guid: 7a85dd767d014b04296909240f1e140c, type: 3}
+    Scale: 0.85
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 2c4a56f323494dc499a4a9b0bafe36fb, type: 2}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: Synty Construction Hardhat Worker
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/const_worker_2
+    Category: 6
+    Prefabs:
+    - {fileID: 5126547774722021202, guid: 8adb5ea3eba606d42a360eaaee1ac38b, type: 3}
+    Scale: 0.85
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 2c4a56f323494dc499a4a9b0bafe36fb, type: 2}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: Synty Construction Hardhat Worker
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/const_worker_3
+    Category: 6
+    Prefabs:
+    - {fileID: 1261737733348552109, guid: dd1478d430efdc14b82fb4099a85e4e7, type: 3}
+    Scale: 0.85
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 2c4a56f323494dc499a4a9b0bafe36fb, type: 2}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: Synty Construction Hardhat Worker
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/const_crate_0
+    Category: 6
+    Prefabs:
+    - {fileID: 2445434294453279490, guid: 87b4ffa4651feb34fb827f19c5cfbe41, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: const_crate_0
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/const_crate_1
+    Category: 6
+    Prefabs:
+    - {fileID: 3871324226776002157, guid: 6e33e046b7c9a034e8c890031ff0c37f, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: const_crate_1
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/const_trolley
+    Category: 6
+    Prefabs:
+    - {fileID: 1275692689779148063, guid: 69b5c04ee12839e44a071281eaf95253, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: const_trolley
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/extractor_conveyor
+    Category: 6
+    Prefabs:
+    - {fileID: 919132149155446097, guid: 8e08fa8aa03cd9b4580e01b72f6dc9a1, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: conveyor-long-stripe-sides
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/factory_service_annex
+    Category: 6
+    Prefabs:
+    - {fileID: 1880884265163912, guid: e7678ff8216ad9b4299e317bcc4eb772, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: SM_Bld_Portable_Office_01
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/factory_expansion_stack
+    Category: 6
+    Prefabs:
+    - {fileID: 1656933220695002, guid: 2827cacc3be77004d8f33b8663c08a13, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: SM_Bld_SmokeStack_01
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress/CityCafe
+    Category: 3
+    Prefabs:
+    - {fileID: 1711524390919284, guid: c93718af36002374daebe3ff461be2fd, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Synty POLYGON Coffee Shop
     TurretPart: 
     BarrelPart: 
     SpinParts: []

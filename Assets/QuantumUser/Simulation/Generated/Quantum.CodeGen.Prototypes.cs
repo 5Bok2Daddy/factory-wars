@@ -50,6 +50,21 @@ namespace Quantum.Prototypes {
   #endif //;
   
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.AirfieldWorks))]
+  public unsafe partial class AirfieldWorksPrototype : ComponentPrototype<Quantum.AirfieldWorks> {
+    public Quantum.Prototypes.MapShapePrototype Site;
+    partial void MaterializeUser(Frame frame, ref Quantum.AirfieldWorks result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.AirfieldWorks component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.AirfieldWorks result, in PrototypeMaterializationContext context = default) {
+        this.Site.Materialize(frame, ref result.Site, in context);
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.AllianceProposal))]
   public unsafe partial class AllianceProposalPrototype : StructPrototype {
     public PlayerRef From;
@@ -219,6 +234,8 @@ namespace Quantum.Prototypes {
     public Int32 FactoryLevel;
     public Int32 OverdriveUntilFrame;
     public Int32 OverdriveCooldownFrame;
+    public MapEntityId ExtractNode;
+    public FP ExtractTimer;
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Building component = default;
         Materialize((Frame)f, ref component, in context);
@@ -260,6 +277,8 @@ namespace Quantum.Prototypes {
         result.FactoryLevel = this.FactoryLevel;
         result.OverdriveUntilFrame = this.OverdriveUntilFrame;
         result.OverdriveCooldownFrame = this.OverdriveCooldownFrame;
+        PrototypeValidator.FindMapEntity(this.ExtractNode, in context, out result.ExtractNode);
+        result.ExtractTimer = this.ExtractTimer;
     }
   }
   [System.SerializableAttribute()]

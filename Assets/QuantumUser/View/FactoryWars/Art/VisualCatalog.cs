@@ -245,7 +245,8 @@ namespace FactoryWars.View {
       entry.Prefab = slot.Prefab;
       entry.DisplayScale = scale;
       if (slot.AutoFit == false && entry.Unit) {
-        entry.RingRadius = Mathf.Clamp(footprint * scale * 0.52f, 0.65f, 4.2f);
+        var diagonal = new Vector2(size.x, size.z).magnitude * scale;
+        entry.RingRadius = Mathf.Max(0.65f, diagonal * 0.48f);
       }
       entry.Center = new Vector2(-offset.x, -offset.z);
       // 공중 유닛은 모델이 고도만큼 떠 있으므로 체력바도 그 위에 둔다.

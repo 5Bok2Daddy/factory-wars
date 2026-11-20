@@ -141,7 +141,9 @@ namespace FactoryWars.View {
       return -1;
     }
 
-    List<EntityRef> SelectedEngineers(Frame frame) => Selection.Units.Where(e => frame.Exists(e) && frame.Has<Worker>(e)).ToList();
+    List<EntityRef> SelectedEngineers(Frame frame) => Selection.Units
+      .Where(e => frame.Has<Worker>(e) && frame.TryGet<Unit>(e, out var unit)
+        && unit.Garrison == EntityRef.None && unit.Transport == EntityRef.None).ToList();
 
     List<EntityRef> SelectedUnits(Frame frame) => Selection.Units.Where(e => frame.Exists(e)).Take(MoveUnitsCommand.MaxUnits).ToList();
 
@@ -244,12 +246,17 @@ namespace FactoryWars.View {
           return Attack(frame, player, building);
         }
         var builders = SelectedEngineers(frame);
-        var needsWork = state.ConstructionRemaining > FP._0 || state.Health < frame.FindAsset(state.Spec).MaxHealth;
+        var spec = frame.FindAsset(state.Spec);
+        if (builders.Count > 0 && state.ConstructionRemaining <= FP._0 && spec.RequiresResourceNode
+            && CitySystem.Occupants(frame, building) < spec.WorkerSlotCapacity) {
+          return new EnterGarrisonCommand { Units = builders.ToArray(), Building = building };
+        }
+        var needsWork = state.ConstructionRemaining > FP._0 || state.Health < spec.MaxHealth;
         if (builders.Count > 0 && needsWork) {
           return new RepairCommand { Units = builders.ToArray(), Target = building };
         }
         // 항목 33: 보병을 고른 채 자기 벙커를 누르면 들어간다.
-        if (state.ConstructionRemaining <= FP._0 && frame.FindAsset(state.Spec).GarrisonCapacity > 0) {
+        if (state.ConstructionRemaining <= FP._0 && spec.GarrisonCapacity > 0) {
           var squads = SelectedUnits(frame).Where(e => CitySystem.IsInfantry(frame.FindAsset(frame.Get<Unit>(e).Spec))).ToList();
           if (squads.Count > 0) {
             return new EnterGarrisonCommand { Units = squads.ToArray(), Building = building };

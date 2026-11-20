@@ -47,34 +47,18 @@ namespace FactoryWars.View {
       var pierX = span / 2f - pierHalf;
       Place(PierL, new Vector3(-pierX, 0f, 0f), 0f, Vector3.one * pierScale);
       Place(PierR, new Vector3(pierX, 0f, 0f), 0f, Vector3.one * pierScale);
-      // 문: 기둥 사이 폭에 맞춰 늘리고 높이는 doorHeight, 두께는 높이 배율을 따른다. 우리 감싸개에만 배율을 주므로 팩 파일은 그대로다.
+      // 문: 실제 Synty 팩 수문(SM_Env_Port_Wall_01) 자식을 수로 폭과 높이에 맞춰 빈틈없이 세운다(PrimitiveType.Cube 전면 금지).
       if (Door != null) {
-        // 야전 룩: 팩 문 모델 대신 두꺼운 짙은 강철판(#4A5568)을 수로 바닥(-7m)부터 벽 위(문 높이)까지 세워 빈틈없이 막는다.
         foreach (Transform child in Door) {
-          child.gameObject.SetActive(false);
+          child.gameObject.SetActive(true);
         }
-        var plate = Door.Find("SteelPlate");
-        if (plate == null) {
-          plate = GameObject.CreatePrimitive(PrimitiveType.Cube).transform;
-          plate.name = "SteelPlate";
-          Object.Destroy(plate.GetComponent<Collider>());
-          plate.GetComponent<MeshRenderer>().sharedMaterial = SteelMaterial();
-          plate.SetParent(Door, false);
-        }
-        plate.gameObject.SetActive(true);
-        Door.localScale = Vector3.one;
-        Door.localRotation = Quaternion.identity;
         var full = doorHeight + Mathf.Abs(DoorBaseY);
-        plate.localScale = new Vector3(Mathf.Max(0.5f, span - 0.2f), full, 1.2f);
-        plate.localPosition = new Vector3(0f, full * 0.5f, 0f);
-        _doorHeight = full;
-      }
-      if (false && Door != null) {
-        var sx = Mathf.Max(0.5f, span - pierHalf * 4f) / Mathf.Max(0.1f, DoorSize.x);
-        var sy = doorHeight / Mathf.Max(0.1f, DoorSize.y);
-        // 두께는 1m로 고정(구멍 없는 판 문이 수로를 빈틈없이 막는다).
-        Door.localScale = new Vector3(sx, sy, 1f / Mathf.Max(0.1f, DoorSize.z));
+        var sx = Mathf.Max(0.5f, span - 0.2f) / Mathf.Max(0.1f, DoorSize.x);
+        var sy = full / Mathf.Max(0.1f, DoorSize.y);
+        var sz = 1.2f / Mathf.Max(0.1f, DoorSize.z);
+        Door.localScale = new Vector3(sx, sy, sz);
         Door.localRotation = Quaternion.identity;
+        _doorHeight = full;
       }
       if (Foam != null) {
         Foam.localPosition = new Vector3(0f, 0.2f, 0f);

@@ -54,6 +54,10 @@ namespace FactoryWars.View {
     public Color AmbientEquator = new Color(0.44f, 0.44f, 0.42f);
     public Color AmbientGround = new Color(0.28f, 0.26f, 0.24f);
     public float ShadowStrength = 1f;
+    [Tooltip("바이옴 조명과 기본 조명을 섞는 비율. 1이면 바이옴 원래 조명을 사용한다.")]
+    [Range(0f, 1f)] public float BiomeLightingWeight = 1f;
+    [Tooltip("바닥과 도로 표면의 월드 좌표 미세 굴곡. 줌 아웃하면 서서히 흐려진다.")]
+    [Range(0f, 1f)] public float SurfaceRelief;
 
     [Header("후처리")]
     public ToneMode Tone = ToneMode.Neutral;

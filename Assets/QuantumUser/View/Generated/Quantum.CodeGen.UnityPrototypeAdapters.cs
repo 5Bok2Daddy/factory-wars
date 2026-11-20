@@ -140,6 +140,8 @@ namespace Quantum.Prototypes.Unity {
     public Int32 FactoryLevel;
     public Int32 OverdriveUntilFrame;
     public Int32 OverdriveCooldownFrame;
+    public Quantum.QuantumEntityPrototype ExtractNode;
+    public FP ExtractTimer;
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.BuildingPrototype prototype);
     public override Quantum.Prototypes.BuildingPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.BuildingPrototype();
@@ -172,6 +174,8 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.FactoryLevel, out result.FactoryLevel);
       converter.Convert(this.OverdriveUntilFrame, out result.OverdriveUntilFrame);
       converter.Convert(this.OverdriveCooldownFrame, out result.OverdriveCooldownFrame);
+      converter.Convert(this.ExtractNode, out result.ExtractNode);
+      converter.Convert(this.ExtractTimer, out result.ExtractTimer);
       ConvertUser(converter, ref result);
       return result;
     }

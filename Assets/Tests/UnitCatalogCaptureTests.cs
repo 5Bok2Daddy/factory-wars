@@ -346,6 +346,16 @@ namespace FactoryWars.Tests {
       }
     }
 
+    static void SetBuildingConstructionRemaining(EntityRef bld, Photon.Deterministic.FP remain) {
+      if (Verified.Unsafe.TryGetPointer<Building>(bld, out var bv)) {
+        bv->ConstructionRemaining = remain;
+      }
+      var pred = QuantumRunner.Default?.Game?.Frames?.Predicted;
+      if (pred != null && pred.Unsafe.TryGetPointer<Building>(bld, out var bp)) {
+        bp->ConstructionRemaining = remain;
+      }
+    }
+
     static EntityRef[] AllUnitsOf(int player) {
       var list = new System.Collections.Generic.List<EntityRef>();
       var f = Verified;
@@ -463,11 +473,10 @@ namespace FactoryWars.Tests {
           || item.Id.Contains("at_rocket") || item.Id.Contains("breacher"));
         System.Collections.Generic.List<RiflemanRig> rigs = null;
         if (isInfantry) {
-          var wep = BattleView.Weapon(BattleView.WeaponKindFor(item.Id));
-          rigs = RiflemanRig.AttachAll(view.Model, wep, item.Id.Contains("at_rocket"));
+          rigs = BattleView.AttachInfantryWeapon(view.Model, item.Id);
           foreach (var r in rigs) {
-            r.Aiming = item.Id.Contains("engineer") == false;
-            r.AimPoint = studio.transform.position + new Vector3(4f, 1.15f, 6f);
+            r.Aiming = item.Id.Contains("sniper") || item.Id.Contains("at_rocket");
+            r.AimPoint = view.transform.position + view.Turn.forward * 8f + Vector3.up * 1.1f;
           }
         }
         // 100% 실제 Synty/Kenney 텍스처 프리팹 렌더링(원시 큐브·실린더·구체 오버라이드 전면 금지).
@@ -555,8 +564,7 @@ namespace FactoryWars.Tests {
         v.SetSelected(true);
         if (v.Bar != null) v.Bar.SetActive(false);
         if (entry.Id == "cf_militia" || entry.Id == "cf_at_rocket") {
-          var wep = BattleView.Weapon(BattleView.WeaponKindFor(entry.Id));
-          var rs = RiflemanRig.AttachAll(v.Model, wep, entry.Id == "cf_at_rocket");
+          var rs = BattleView.AttachInfantryWeapon(v.Model, entry.Id);
           foreach (var r in rs) { r.Aiming = true; r.AimPoint = v.transform.position + new Vector3(2f, 1.15f, 8f); }
           lineupRigs.AddRange(rs);
         }
@@ -607,19 +615,19 @@ namespace FactoryWars.Tests {
       TearDown();
       yield return null;
       var factoryBuildings = new[] {
-        (0, "ff_barracks", -16, 26),
-        (0, "ff_vehicle_factory", -5, 26),
-        (0, "ff_heavy_works", 6, 26),
-        (0, "ff_airfield", 17, 26),
-        (0, "ff_processor", -16, 15),      // 11m 인접 -> 발광 주황 강철 시너지 파이프라인
-        (0, "ff_power_plant", -5, 15),     // 11m 인접 -> 발광 시안 전력 시너지 파이프라인
-        (0, "ff_supply_depot", 6, 15),     // 8번째 공장: 군수·연료 보급창
-        (0, "ff_research_lab", 17, 15),    // 군수 연구 공장(회전 레이더)
-        (0, "ff_headquarters", 28, 21),    // 산업 사령부
+        (0, "ff_barracks", -19, 27),
+        (0, "ff_vehicle_factory", -6, 27),
+        (0, "ff_heavy_works", 7, 27),
+        (0, "ff_airfield", 20, 27),
+        (0, "ff_processor", -19, 16),      // 11m 인접 -> 시너지 파이프라인
+        (0, "ff_power_plant", -6, 16),     // 11m 인접 -> 시너지 파이프라인
+        (0, "ff_supply_depot", 7, 16),     // 8번째 공장: 군수·연료 보급창
+        (0, "ff_research_lab", 20, 16),    // 군수 연구 공장(회전 레이더)
+        (0, "ff_headquarters", 33, 21),    // 산업 사령부
       };
       var factoryUnits = new[] {
-        (0, "ff_ranger_squad", -14, 7), (0, "ff_ranger_squad", -12, 7), (0, "ff_at_rocket", -10, 7),
-        (0, "ff_eagle_tank", -2, 7), (0, "ff_bulwark_tank", 8, 7),
+        (0, "ff_ranger_squad", -17, 7), (0, "ff_ranger_squad", -15, 7), (0, "ff_at_rocket", -13, 7),
+        (0, "ff_eagle_tank", -3, 7), (0, "ff_bulwark_tank", 8, 7),
       };
       yield return StartMatch(buildings: factoryBuildings, units: factoryUnits, stock: Stock(30000, 30000, 30000, 1000));
       SetBaseTier(0, 3);
@@ -640,8 +648,8 @@ namespace FactoryWars.Tests {
       yield return WaitFrames(Fps * 2);
       var fCam = Camera.main;
       if (fCam != null) {
-        var fCenter = new Vector3(2f, 0f, 19f);
-        fCam.transform.position = fCenter + new Vector3(0f, 27f, -33f);
+        var fCenter = new Vector3(3f, 0f, 19.5f);
+        fCam.transform.position = fCenter + new Vector3(0f, 30f, -38f);
         fCam.transform.LookAt(fCenter);
         yield return null;
         var complexPath = Path.Combine(StatusImagesDir(), "current_factory_complex.png");
@@ -705,6 +713,160 @@ namespace FactoryWars.Tests {
       yield return Shoot33("current_transport_boarding");
       File.Copy(Path.Combine(UltimateFolder(), "current_transport_boarding.png"), Path.Combine(StatusImagesDir(), "current_transport_boarding.png"), true);
       Assert.IsTrue(File.Exists(Path.Combine(StatusImagesDir(), "current_transport_boarding.png")), "current_transport_boarding.png 생성 확인");
+    }
+
+    /// <summary>살아 숨쉬는 군수 기지 근접 쇼케이스(current_base_alive.png): 건설 중(62%) 공장(비계·크레인·바리케이드·라바콘·War FX 용접 스파크) + 상자/핸드트럭 운반 안전모 상주 작업자.</summary>
+    [UnityTest, Explicit, Category("CaptureCatalog")]
+    public IEnumerator CaptureStaffedIronExtractor() {
+      var previousQuality = GraphicsQuality.Current;
+      var previousFrameRate = Application.targetFrameRate;
+      var previousVSync = QualitySettings.vSyncCount;
+      GraphicsQuality.Apply(QualityTier.High);
+      Application.targetFrameRate = 60;
+      QualitySettings.vSyncCount = 0;
+      try {
+        yield return StartMatch();
+        var center = V(-30, 14);
+        var engineer = Engineers(0)[0];
+        yield return Build(0, "iron_extractor", center, engineer);
+        var site = BuildingAt(center);
+        Assert.AreNotEqual(EntityRef.None, site);
+        var view = Object.FindAnyObjectByType<BattleView>();
+        var camera = Camera.main;
+        var evidence = Path.GetFullPath(Path.Combine(Application.dataPath, "../../Game-logs"));
+        var workFocus = center.ToUnityVector3();
+        camera.transform.position = workFocus + new Vector3(7f, 10f, -10f);
+        camera.transform.LookAt(workFocus);
+        yield return WaitFor(() => view.Actors.TryGetValue(engineer, out var actor) && actor.EngineerWork != null
+          && actor.EngineerWork.Working && actor.EngineerWork.Tool.gameObject.activeInHierarchy, 20f, "현장 공병 도구 작업");
+        Time.timeScale = 1f;
+        for (var i = 0; i < 4; i++) yield return null;
+        var tool = view.Actors[engineer].EngineerWork.Tool;
+        yield return CheckExtractorMotion(tool, "construction", 48);
+        CaptureCameraPng(camera, Path.Combine(evidence, "codex-extractor-construction.png"), 1280, 720);
+        Time.timeScale = TimeScale;
+        yield return WaitFor(() => Finished(site), 60f, "채굴 공장 완공");
+        Time.timeScale = 1f;
+        yield return null;
+        yield return Send(0, new EnterGarrisonCommand { Building = site, Units = new[] { engineer } });
+        yield return WaitFor(() => CitySystem.Occupants(Verified, site) == 1, 30f, "철 채굴 공장 공병 배치");
+        yield return WaitFor(() => view.Actors.TryGetValue(site, out var actor) && actor.ExtractorEquipment != null
+          && actor.ExtractorDelivery?.FirstCargo != null && actor.ExtractorDelivery.FirstCargo.gameObject.activeInHierarchy,
+          10f, "사령부 컨베이어와 이동 화물 표시");
+
+        var focus = center.ToUnityVector3() + new Vector3(0f, 0f, -7f);
+        camera.transform.position = focus + new Vector3(17f, 17f, 7f);
+        camera.transform.LookAt(focus);
+        var delivery = view.Actors[site].ExtractorDelivery;
+        Assert.AreEqual(Headquarters(0), delivery.Headquarters);
+        var beltRenderer = delivery.Root.transform.Find("MovingBelt")?.GetComponent<MeshRenderer>();
+        Assert.IsNotNull(beltRenderer);
+        Assert.IsTrue(beltRenderer.sharedMaterial.shader.isSupported);
+        var phase = delivery.BeltPhase;
+        yield return null;
+        Assert.AreNotEqual(phase, delivery.BeltPhase, "가동 중 벨트 표면도 이동");
+        yield return CheckExtractorMotion(delivery.FirstCargo, "delivery", 30);
+        var path = Path.Combine(evidence, "codex-extractor-delivery.png");
+        CaptureCameraPng(camera, path, 1280, 720);
+        Assert.IsTrue(File.Exists(path));
+
+        Time.timeScale = TimeScale;
+        yield return Send(0, new ExitGarrisonCommand { Building = site });
+        yield return WaitFor(() => delivery.Root.transform.Cast<Transform>()
+          .All(child => child.name != "ExtractedCargo" || child.gameObject.activeSelf == false),
+          10f, "퇴거 후 남은 화물 도착");
+        yield return null;
+        phase = delivery.BeltPhase;
+        yield return null;
+        Assert.AreEqual(phase, delivery.BeltPhase, "마지막 화물이 도착하면 벨트 정지");
+      } finally {
+        Application.targetFrameRate = previousFrameRate;
+        QualitySettings.vSyncCount = previousVSync;
+        GraphicsQuality.Apply(previousQuality);
+      }
+    }
+
+    static IEnumerator CheckExtractorMotion(Transform moving, string label, int samples) {
+      var timings = new float[samples];
+      var previous = moving.position;
+      var moved = 0;
+      var maxStep = 0f;
+      for (var i = 0; i < samples; i++) {
+        yield return null;
+        timings[i] = Time.unscaledDeltaTime * 1000f;
+        var step = Vector3.Distance(moving.position, previous);
+        previous = moving.position;
+        if (step > 0.0005f) moved++;
+        maxStep = Mathf.Max(maxStep, step);
+      }
+      System.Array.Sort(timings);
+      var p95 = timings[Mathf.CeilToInt(samples * 0.95f) - 1];
+      Debug.Log($"[ExtractorMotion] {label}: moved={moved}/{samples}, p95={p95:F1}ms, max={timings[samples - 1]:F1}ms, maxStep={maxStep:F3}m");
+      Assert.GreaterOrEqual(moved, Mathf.CeilToInt(samples * 0.8f), $"{label}: 연속 렌더 프레임에서 움직임 유지");
+      if (label == "delivery") {
+        Assert.LessOrEqual(maxStep, 4.8f * timings[samples - 1] / 1000f + 0.015f, "이송 화물의 프레임 간 이동량은 이송 속도에 맞아야 함");
+      }
+    }
+
+    [UnityTest, Explicit, Category("CaptureCatalog")]
+    public IEnumerator CaptureLivingBase() {
+      var prevTier = GraphicsQuality.Current;
+      GraphicsQuality.Apply(QualityTier.High);
+      try {
+        var baseBuildings = new[] {
+          (0, "ff_headquarters", -14, 23),
+          (0, "ff_processor", -12, 11),
+          (0, "ff_heavy_works", 1, 19),       // Stage 2 (62% 건설 중)
+          (0, "ff_vehicle_factory", 14, 22),
+          (0, "ff_power_plant", 14, 11),
+        };
+        yield return StartMatch(buildings: baseBuildings, stock: Stock(30000, 30000, 30000, 1000));
+        SetBaseTier(0, 3);
+        yield return WaitFrames(4);
+
+        var view = Object.FindAnyObjectByType<BattleView>();
+        Assert.IsNotNull(view, "BattleView 존재");
+        var heavy = OwnBuilding(0, "ff_heavy_works");
+        var heavySpec = Verified.FindAsset(Verified.Get<Building>(heavy).Spec);
+        var remain = heavySpec.BuildTimeSeconds * 38 / 100; // 62% 진행 (Stage 2 골조 상승)
+        SetBuildingConstructionRemaining(heavy, remain);
+
+        // 완공 공장 가동(굴뚝 연기·레이더) + 상주 안전모 작업자들이 경로를 따라 활기차게 걷도록 2.2초 진행.
+        var vehFac = OwnBuilding(0, "ff_vehicle_factory");
+        yield return Send(0, new ProduceCommand { Building = vehFac, Unit = UnitRef(0, "ff_eagle_tank"), Count = 1 });
+        for (var f = 0; f < Fps * 2 + 12; f++) {
+          // 건설 진행도가 62% 부근에 고정 유지되도록 클램프.
+          SetBuildingConstructionRemaining(heavy, remain);
+          yield return null;
+        }
+
+        // 모든 작업자 Animator가 캡처 순간에도 정확히 포즈를 평가하도록 AlwaysAnimate 보장.
+        foreach (var anim in Object.FindObjectsByType<Animator>(FindObjectsSortMode.None)) {
+          anim.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        }
+        // 건설 중 공장 전면 철골 비계에서 생생한 War FX 용접 스파크 2곳 분출.
+        var heavyPos = view.Actors[heavy].View.transform.position;
+        view.Fx.WeldingSparks(heavyPos + new Vector3(-2.6f, 2.3f, -2.5f), new Vector3(-0.6f, 0.5f, -0.8f));
+        view.Fx.WeldingSparks(heavyPos + new Vector3(2.8f, 1.9f, -2.2f), new Vector3(0.7f, 0.5f, -0.7f));
+        yield return null;
+        yield return null;
+
+        var cam = Camera.main;
+        Assert.IsNotNull(cam, "메인 카메라 존재");
+        var prevFov = cam.fieldOfView;
+        cam.fieldOfView = 42f;
+        var focus = new Vector3(-0.8f, 2.0f, 16.5f);
+        cam.transform.position = focus + new Vector3(1.8f, 11.2f, -15.8f);
+        cam.transform.LookAt(focus);
+        yield return null;
+        var outPath = Path.Combine(StatusImagesDir(), "current_base_alive.png");
+        CaptureCameraPng(cam, outPath, 1280, 720);
+        cam.fieldOfView = prevFov;
+        Assert.IsTrue(File.Exists(outPath), "current_base_alive.png 생성 확인");
+        Assert.GreaterOrEqual(view.AmbientWorkers.ActiveWorkerCount, 3, "기지 상주 작업자 3명 이상 활동 중");
+      } finally {
+        GraphicsQuality.Apply(prevTier);
+      }
     }
   }
 }

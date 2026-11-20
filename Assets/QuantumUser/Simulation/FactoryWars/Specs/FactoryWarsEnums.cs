@@ -11,7 +11,10 @@ namespace Quantum {
     // 항목 33: 궁극 전력 전용 건물(항모 조립창·미사일 격납고·강습 도크).
     UltimateSite,
     // 패트리어트 대탄도 요격 포대(T2.5: 전략 미사일 공중 요격 + 대공·항모 저격).
-    PatriotTurret
+    PatriotTurret,
+    // 자원 노드 직결 자동 채굴 공장(공병 0~3명 주둔 배치).
+    LumberMill,
+    IronExtractor
   }
 
   /// <summary>항목 32: 건물이 주변 유닛을 고치는 대상.</summary>

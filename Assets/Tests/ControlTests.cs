@@ -217,24 +217,26 @@ namespace FactoryWars.Tests {
       var hud = Controller().Hud;
       Controller().Input.Selection.SelectUnit(Engineers(0)[0]);
       hud.Refresh(Controller().Frame);
-      // 항목 31: 공병 명령 카드는 단계별 건설 메뉴(기본·2단계)로 나뉜다. 두 메뉴를 합치면 사령부를 포함한 건물 전부.
       var all = new List<ContextEntry>();
-      // 항목 32: 방어 건물 묶음과 3단계(포병 진지)가 더해졌다. 시험 맵은 3단계로 시작한다.
-      foreach (var menu in new[] { "기본 건물", "2단계 건물", "3단계 건물", "방어 건물" }) {
+      foreach (var menu in new[] { "병기 공장", "산업·보급", "방어·지원", "자원 채굴" }) {
         Assert.GreaterOrEqual(hud.Entries.FindIndex(e => e.Label == menu), 0, menu);
         hud.PressContext(hud.Entries.FindIndex(e => e.Label == menu));
         all.AddRange(hud.Entries.Where(e => e.Label.Length > 0 && e.Label != "뒤로"));
-        hud.PressContext(hud.Entries.FindIndex(e => e.Label == "뒤로"));
+        var back = hud.Entries.FindIndex(e => e.Label == "뒤로");
+        Assert.GreaterOrEqual(back, 0, menu + "에서 돌아가기");
+        hud.PressContext(back);
+        Assert.AreEqual("Root", hud.MenuName);
       }
       Assert.AreEqual(Verified.FindAsset(StateOf(0).Faction).Buildings.Length, all.Count, "사령부를 포함한 건물 전부");
-      var depot = all.First(e => e.Label.StartsWith("보급창"));
+      var depotName = Texts.NameOf("ff_supply_depot");
+      var depot = all.First(e => e.Label.StartsWith(depotName));
       Assert.IsTrue(depot.Enabled);
       Assert.IsTrue(depot.Label.Contains("철 100"), depot.Label);
-      var airfield = all.First(e => e.Label.StartsWith("비행장"));
+      var airfield = all.First(e => e.Label.StartsWith(Texts.NameOf("ff_airfield")));
       Assert.IsFalse(airfield.Enabled, "해금 전");
-      Assert.IsTrue(airfield.Label.Contains("필요") && airfield.Reason.Contains("군수공장"), airfield.Reason);
-      hud.PressContext(hud.Entries.FindIndex(e => e.Label == "기본 건물"));
-      depot = hud.Entries.First(e => e.Label.StartsWith("보급창"));
+      StringAssert.Contains(Texts.NameOf("ff_vehicle_factory"), airfield.Reason);
+      hud.PressContext(hud.Entries.FindIndex(e => e.Label == "산업·보급"));
+      depot = hud.Entries.First(e => e.Label.StartsWith(depotName));
 
       hud.PressContext(hud.Entries.IndexOf(depot));
       Assert.IsTrue(Controller().Input.IsPlacing, "건물을 고르면 위치 지정");

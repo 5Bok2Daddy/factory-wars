@@ -26,6 +26,7 @@
 *.aab
 *.unitypackage
 *.zip
+temp-asset/
 temp-assets/
 crashlytics-build.properties
 
@@ -51,6 +52,8 @@ Assets/QuantumUser/Resources/FactoryWars/BuildVersion.txt.meta
 /Assets/ExternalAssets/Synty.meta
 /Assets/ExternalAssets/JMO Assets/
 /Assets/ExternalAssets/JMO Assets.meta
+/Assets/ExternalAssets/FactoryWarsLocalAudio/
+/Assets/ExternalAssets/FactoryWarsLocalAudio.meta
 
 # 우리 쪽 에셋 변형·애니메이션 컨트롤러(팩 모델을 가리키므로 팩과 함께 올리지 않는다. Tools/Factory Wars/Assets/5. Assign Synty Pack으로 다시 만든다).
 /Assets/FactoryWarsArt/Synty/

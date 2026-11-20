@@ -24,6 +24,7 @@ namespace FactoryWars.View {
     const float ShellSpeed = 90f;
     const float BulletSpeed = 120f;
     const float MissileSpeed = 42f;
+    readonly HashSet<EntityRef> _workingSites = new HashSet<EntityRef>();
 
     /// <summary>화면에 놓인 유닛·건물 하나의 연출 상태.</summary>
     public class Actor {
@@ -62,9 +63,24 @@ namespace FactoryWars.View {
       public (AttackType Attack, float Range, Vector3 Target, bool Flame) PendingShot;
       public Transform Muzzle;
       public readonly List<(Transform Part, Vector3 Axis, float Speed, bool NeedsPower)> Spinners = new List<(Transform, Vector3, float, bool)>();
+      public Transform ExtractorEquipment;
+      public ExtractorDeliveryView ExtractorDelivery;
+      public float ExtractorRouteCheckAt;
       public readonly List<(Transform Part, Vector3 Home, Vector3 Reach, float Speed)> Sliders = new List<(Transform, Vector3, Vector3, float)>();
       public readonly List<(Transform Part, Quaternion Home, float Swing, float Speed)> Swingers = new List<(Transform, Quaternion, float, float)>();
       public GameObject Scaffold;
+      public int ConstructionStage;
+      public float ConstructionDisplayProgress = -1f;
+      public FacilityWorkView Runway;
+      public FacilityWorkView ShipWork;
+      public AssetRef<UnitSpec> ShipWorkUnit;
+      public float ShipWeldAt;
+      public float BuildingModelY;
+      public ConstructionWorkView EngineerWork;
+      public readonly List<ConstructionWorkView> ConstructionWork = new List<ConstructionWorkView>();
+      public float WeldFxAt;
+      public float FootprintRadius;
+      public readonly List<GameObject> ConstructionCrew = new List<GameObject>();
       public GameObject Dressing;
       public float Height;
       // 항목 32 움직임: 속도(가감속 기울기), 기울기, 엄폐 표시.
@@ -106,17 +122,10 @@ namespace FactoryWars.View {
     float _rotorSmokeAt;
     float _zoneFxAt;
 
-    class BaseWorker {
-      public GameObject Root;
-      public Vector3 From;
-      public Vector3 To;
-      public float Phase;
-    }
-
     static Mesh _scaffold;
 
     readonly Dictionary<EntityRef, Actor> _actors = new Dictionary<EntityRef, Actor>();
-    readonly List<BaseWorker> _baseWorkers = new List<BaseWorker>();
+    BaseAmbientWorkers _ambientWorkers;
     readonly HashSet<EntityRef> _seen = new HashSet<EntityRef>();
     readonly List<EntityRef> _gone = new List<EntityRef>();
     readonly List<Actor> _marked = new List<Actor>();
@@ -125,6 +134,8 @@ namespace FactoryWars.View {
     FogOverlay _fog;
     /// <summary>시험용: 지금 안개 판.</summary>
     public FogOverlay Fog => _fog;
+    /// <summary>기지 상주 건설·물류 작업자(순수 View 레이어).</summary>
+    public BaseAmbientWorkers AmbientWorkers => _ambientWorkers;
     static bool FactoryWars_FogOn(Frame frame) => Quantum.FactoryWars.FogSystem.Enabled(frame);
 
     public WorldView World { get; private set; }
@@ -180,6 +191,7 @@ namespace FactoryWars.View {
     public int StrikeMarks { get; private set; }
 
     Transform _stage;
+    BattleAudio _audio;
     readonly List<(Vector3 Position, float Until)> _signals = new List<(Vector3, float)>();
     float _signalAt;
 
@@ -187,6 +199,7 @@ namespace FactoryWars.View {
       _stage = new GameObject("Stage").transform;
       _stage.SetParent(transform, false);
       GameAudio.InstallProceduralDefaults();
+      _audio = new BattleAudio(_stage.gameObject);
       _catalog = Resources.Load<ViewCatalog>(ViewCatalog.ResourcePath);
       WorldView.HideBakedScene();
       WorldView.ApplyLighting(Camera.main);
@@ -205,6 +218,7 @@ namespace FactoryWars.View {
       scars.Fx = Fx;
       scars.Init(frame.FindAsset<MapSpec>(frame.Map.UserAsset));
       Field = new BattlefieldView(_stage);
+      QuantumEvent.Subscribe<EventAreaImpact>(this, e => Field?.CollapseRoadsideBarriers(e.Position.ToUnityVector3(), e.Radius.AsFloat));
       QuantumEvent.Subscribe<EventSupplyDropIncoming>(this, e => {
         var spots = e.Game.Frames.Verified != null ? e.Game.Frames.Verified.FindAsset<MapSpec>(e.Game.Frames.Verified.Map.UserAsset).CrateSpots : null;
         var until = Time.time + FactoryWarsUtil.Rules(e.Game.Frames.Verified).DropWarningSeconds.AsFloat + 3f;
@@ -223,6 +237,23 @@ namespace FactoryWars.View {
         Fx.Needle(from + dir * 0.1f, to, 90f);
         Fx.Impact(to, 0.8f, dir);
       });
+      QuantumEvent.Subscribe<EventSniperFired>(this, e => {
+        var frame = e.Game.Frames.Verified;
+        var viewer = _controller != null ? _controller.Player : PlayerRef.None;
+        if (viewer.IsValid == false || viewer == e.Shooter || viewer == e.Victim
+            || (frame != null && FogSystem.IsVisible(frame, viewer, e.From))) {
+          _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.SniperFire, e.From.ToUnityVector3()));
+        }
+      });
+      QuantumEvent.Subscribe<EventSortieLaunched>(this, e => {
+        var frame = e.Game.Frames.Verified;
+        if (frame != null && frame.TryGet<Transform3D>(e.Sortie, out var plane)) {
+          var viewer = _controller != null ? _controller.Player : PlayerRef.None;
+          if (viewer.IsValid == false || e.Player == viewer || FogSystem.IsVisible(frame, viewer, plane.Position)) {
+            GameAudio.PlayAt(SoundEvent.JetFlyby, plane.Position.ToUnityVector3());
+          }
+        }
+      });
       QuantumEvent.Subscribe<EventSortieEnded>(this, e => { if (e.ShotDown) { Fx.Explosion(e.Position.ToUnityVector3() + Vector3.up * 8f, 1.4f); } });
       QuantumEvent.Subscribe<EventCaptureChanged>(this, e => {
         var frame = e.Game.Frames.Verified;
@@ -235,6 +266,11 @@ namespace FactoryWars.View {
         if (e.Stage == UltimateStage.Launched && e.Kind == UltimateKind.StrategicMissile) {
           var siloPos = FindSiloPosition(e.Game.Frames.Verified, e.Player, e.Position.ToUnityVector3());
           Fx.SiloSteam(siloPos);
+          var frame = e.Game.Frames.Verified;
+          var viewer = _controller != null ? _controller.Player : PlayerRef.None;
+          if (viewer.IsValid == false || e.Player == viewer || (frame != null && FogSystem.IsVisible(frame, viewer, siloPos.ToFPVector3()))) {
+            _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.RocketFire, siloPos));
+          }
         } else if (e.Stage == UltimateStage.Impact) {
           if (e.Value < 0) {
             Fx.Explosion(e.Position.ToUnityVector3(), 4.4f);
@@ -283,6 +319,9 @@ namespace FactoryWars.View {
         Fx.Impact(to, 0.9f, dir);
       });
       City = new CityView(_stage, frame.FindAsset<MapSpec>(frame.Map.UserAsset)) { Fx = Fx };
+      _ambientWorkers = new GameObject("AmbientWorkers").AddComponent<BaseAmbientWorkers>();
+      _ambientWorkers.transform.SetParent(_stage, false);
+      _ambientWorkers.Init(World.Map, _catalog);
       _controller = FindAnyObjectByType<MatchController>();
     }
 
@@ -295,72 +334,19 @@ namespace FactoryWars.View {
         _stage = null;
       }
       _actors.Clear();
+      _audio = null;
       _strikeRockets.Clear();
-      _baseWorkers.Clear();
+      _ambientWorkers = null;
       _marked.Clear();
       World = null;
     }
 
-    void UpdateBaseWorkers(Frame frame) {
-      var kind = Dressing.Has(DressKind.AnimatedWorker) ? DressKind.AnimatedWorker : DressKind.Worker;
-      var allow = GraphicsQuality.Current != QualityTier.Low && Dressing.Has(kind);
-      if (allow && _baseWorkers.Count == 0 && World?.Map?.StartPositions != null) {
-        for (var i = 0; i < Mathf.Min(frame.PlayerCount, World.Map.StartPositions.Length) && _baseWorkers.Count < 8; i++) {
-          if (frame.Global->Players.GetPointer(i)->Active == false) {
-            continue;
-          }
-          var home = Quantum.FactoryWars.FactoryWarsUtil.StartPosition(frame, i).ToUnityVector3();
-          for (var w = 0; w < 2 && _baseWorkers.Count < 8; w++) {
-            var from = home + new Vector3(w == 0 ? 4.2f : -4.2f, 0f, 3.2f);
-            var to = home + new Vector3(w == 0 ? 8.5f : -8.5f, 0f, -4.5f);
-            var worker = DressingSpawn.Place(kind, _stage, from, 0f, 9500 + i * 11 + w);
-            if (worker != null) {
-              worker.name = "BaseWorker";
-              var ws = Mathf.Max(0.0001f, worker.transform.localScale.y);
-              var hat = DressingSpawn.Place(DressKind.HardHat, worker.transform, new Vector3(0f, 1.72f / ws, 0f), 0f, 9600 + i * 11 + w);
-              if (hat != null) {
-                hat.name = "HardHat";
-                hat.transform.localScale /= ws;
-              }
-              if (Dressing.Map != null && Dressing.Map.WorkerRun != null) {
-                var targetObj = worker.GetComponentInChildren<Animation>()?.gameObject ?? (worker.transform.childCount > 0 ? worker.transform.GetChild(0).gameObject : worker);
-                var anim = targetObj.GetComponent<Animation>() ?? targetObj.AddComponent<Animation>();
-                Dressing.Map.WorkerRun.legacy = true;
-                Dressing.Map.WorkerRun.wrapMode = WrapMode.Loop;
-                anim.AddClip(Dressing.Map.WorkerRun, "run");
-                if (Dressing.Map.WorkerIdle != null) {
-                  Dressing.Map.WorkerIdle.legacy = true;
-                  Dressing.Map.WorkerIdle.wrapMode = WrapMode.Loop;
-                  anim.AddClip(Dressing.Map.WorkerIdle, "idle");
-                }
-                anim.clip = Dressing.Map.WorkerRun;
-                anim.Play("run");
-              }
-              _baseWorkers.Add(new BaseWorker { Root = worker, From = from, To = to, Phase = i * 1.7f + w * 2.3f });
-            }
-          }
-        }
-      }
-      var time = Time.time;
-      foreach (var worker in _baseWorkers) {
-        if (worker.Root == null) {
-          continue;
-        }
-        if (worker.Root.activeSelf != allow) {
-          worker.Root.SetActive(allow);
-        }
-        if (allow == false) {
-          continue;
-        }
-        var ping = Mathf.PingPong(time * 0.22f + worker.Phase, 1f);
-        var pos = Vector3.Lerp(worker.From, worker.To, ping);
-        pos.y = TerrainKit.SurfaceHeight(World.Map, pos.x, pos.z) + Mathf.Abs(Mathf.Sin((time * 4.5f + worker.Phase) * Mathf.PI)) * 0.08f;
-        var dir = ping < Mathf.PingPong((time + 0.05f) * 0.22f + worker.Phase, 1f) ? (worker.To - worker.From) : (worker.From - worker.To);
-        worker.Root.transform.localPosition = pos;
-        if (dir.sqrMagnitude > 0.01f) {
-          worker.Root.transform.localRotation = Quaternion.Euler(0f, Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg, 0f);
-        }
-      }
+    void UpdateBaseWorkers(Frame frame, float dt) {
+      _ambientWorkers?.Tick(frame, dt, _controller != null ? _controller.Player : PlayerRef.None);
+    }
+
+    void OnDestroy() {
+      GameAudio.StopWorldVoices();
     }
 
     void LateUpdate() {
@@ -372,7 +358,7 @@ namespace FactoryWars.View {
         Init(frame);
       }
       var dt = Time.deltaTime;
-      World.Update(frame, dt);
+      World.Update(frame, dt, _controller != null ? _controller.Player : PlayerRef.None);
       World.UpdateBridges(frame);
       Field.Update(frame, dt, Fx);
       City.Update(frame, _controller != null ? _controller.Player : PlayerRef.None, dt);
@@ -420,7 +406,9 @@ namespace FactoryWars.View {
       }
       UpdateSuperweaponVisuals(dt);
 
+      _audio.Begin(Camera.main);
       _seen.Clear();
+      _workingSites.Clear();
       var units = frame.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform3D, out var unit)) {
         _seen.Add(entity);
@@ -436,6 +424,7 @@ namespace FactoryWars.View {
         _seen.Add(entity);
         UpdateSortie(frame, entity, transform3D, sortie, dt);
       }
+      _audio.Mix(Time.unscaledDeltaTime);
 
       _gone.Clear();
       foreach (var pair in _actors) {
@@ -446,7 +435,7 @@ namespace FactoryWars.View {
       foreach (var entity in _gone) {
         Remove(entity);
       }
-      UpdateBaseWorkers(frame);
+      UpdateBaseWorkers(frame, dt);
       UpdateSelection(frame);
     }
 
@@ -564,6 +553,7 @@ namespace FactoryWars.View {
       if (actor.View.gameObject.activeSelf != visible) {
         actor.View.gameObject.SetActive(visible);
       }
+      if (visible) _audio.Engine(SoundEvent.AirEngine, next, 1f);
     }
 
     Actor Create(EntityRef entity, string id, bool isBuilding, bool isAir) {
@@ -697,7 +687,10 @@ namespace FactoryWars.View {
         if (new UnityEngine.Plane(Vector3.up, Vector3.zero).Raycast(ray, out var hitDist)) {
           var world = ray.GetPoint(hitDist);
           var fp = new FPVector3(FP.FromFloat_UNSAFE(world.x), FP._0, FP.FromFloat_UNSAFE(world.z));
-          var valid = ProductionSystem.CanPlace(frame, spec, fp, player);
+          var valid = ProductionSystem.TryGetBuildPlacement(frame, spec, fp, player, out var alignedPosition);
+          if (spec.RequiresResourceNode) {
+            world = alignedPosition.ToUnityVector3();
+          }
           Fx.Ring(world, valid ? new Color(0.18f, 0.96f, 0.42f, 0.95f) : new Color(0.98f, 0.22f, 0.18f, 0.95f), spec.FootprintRadius.AsFloat + 0.6f, 0.32f);
         }
       }
@@ -942,7 +935,6 @@ namespace FactoryWars.View {
       if (unitId.Contains("sniper")) return DressKind.SniperRifle;
       if (unitId.Contains("at_rocket")) return DressKind.RocketLauncher;
       if (unitId.Contains("breacher") || unitId.Contains("flame")) return DressKind.BreacherWeapon;
-      if (unitId.Contains("engineer")) return DressKind.EngineerCarbine;
       return DressKind.Rifle;
     }
 
@@ -952,13 +944,21 @@ namespace FactoryWars.View {
       if (entry != null && entry.Variants.Count > 0) {
         return entry.Variants[0].Prefab;
       }
-      if (kind != DressKind.Rifle && Dressing.Map != null) {
+      if (kind != DressKind.Rifle && kind != DressKind.RocketLauncher && Dressing.Map != null) {
         var fallback = Dressing.Map.Get(DressKind.Rifle);
         if (fallback != null && fallback.Variants.Count > 0) {
           return fallback.Variants[0].Prefab;
         }
       }
       return null;
+    }
+
+    public static List<RiflemanRig> AttachInfantryWeapon(GameObject model, string unitId) {
+      if (unitId.EndsWith("_engineer")) {
+        return new List<RiflemanRig>();
+      }
+      var weapon = WeaponKindFor(unitId);
+      return RiflemanRig.AttachAll(model, Weapon(weapon), weapon == DressKind.RocketLauncher);
     }
 
     public const float NeedleWidth = 0.035f;
@@ -974,8 +974,12 @@ namespace FactoryWars.View {
     }
 
     void Shoot(Actor actor, AttackType attack, float range, bool hasTarget, Vector3 target, bool flame) {
-      if (actor.View.gameObject.activeSelf) {
-        GameAudio.Play(attack == AttackType.AntiArmor || attack == AttackType.Area ? SoundEvent.TankCannon : SoundEvent.RifleFire);
+      if (actor.View.gameObject.activeSelf && flame == false) {
+        var weapon = WeaponKindFor(actor.View.Entry.Id);
+        var sound = weapon == DressKind.SniperRifle ? SoundEvent.SniperFire
+          : weapon == DressKind.RocketLauncher || attack == AttackType.AntiAir || attack == AttackType.Area ? SoundEvent.RocketFire
+          : attack == AttackType.AntiArmor ? SoundEvent.TankCannon : SoundEvent.RifleFire;
+        _audio.NoteCombat(GameAudio.PlayAt(sound, actor.View.Turn.position));
       }
       actor.View.Animation?.Fire();
       actor.Recoil = RecoilDistance;
@@ -1042,8 +1046,14 @@ namespace FactoryWars.View {
         start.y = 0f;
         actor.Position = start;
         actor.View.transform.position = start;
-        if (spec.IsVehicle == false && spec.IsAir == false && spec.IsNaval == false && (spec.Size == UnitSize.Small || spec.Size == UnitSize.Engineer)) {
-          actor.Rigs.AddRange(RiflemanRig.AttachAll(actor.View.Model, Weapon(WeaponKindFor(spec.name)), spec.name.Contains("at_rocket")));
+        if (spec.IsNaval) {
+          var facing = (transform3D->Rotation * new FPVector3(FP._0, FP._0, FP._1)).ToUnityVector3();
+          actor.HullYaw = Mathf.Atan2(facing.x, facing.z) * Mathf.Rad2Deg;
+        }
+        if (spec.IsVehicle == false && spec.IsAir == false && spec.IsNaval == false && spec.Size == UnitSize.Small) {
+          actor.Rigs.AddRange(AttachInfantryWeapon(actor.View.Model, spec.name));
+        } else if (spec.Size == UnitSize.Engineer) {
+          actor.EngineerWork = ConstructionWorkView.Attach(actor.View.Model, _catalog.IronExtractorDrill);
         }
       }
       var color = frame.Global->Players.GetPointer(unit->Owner)->ColorIndex;
@@ -1094,18 +1104,35 @@ namespace FactoryWars.View {
       var assemblingCarrier = actor.IsCarrier && frame.Unsafe.TryGetPointer<Carrier>(entity, out var cPtr) && cPtr->Assembling;
       var hover = (spec.IsAir && assemblingCarrier == false) ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.14f : 0f;
       actor.View.transform.position = (spec.IsAir && assemblingCarrier == false) ? actor.Position : actor.Position + Vector3.up * TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z);
+      if (spec.IsNaval) actor.View.transform.position = actor.Position + Vector3.up * TerrainKit.WaterLevel;
       var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(actor.View.Entry.Altitude, 10.5f) : actor.View.Entry.Altitude);
       actor.View.Turn.localPosition = Vector3.up * (altitude + hover);
+      if (visible && assemblingCarrier == false) {
+        if (spec.IsAir) {
+          var rotor = spec.name.EndsWith("_gunship") || spec.name.EndsWith("_heli") || actor.IsCarrier;
+          _audio.Engine(rotor ? SoundEvent.RotorEngine : SoundEvent.AirEngine, actor.View.Turn.position, rotor ? 0.72f : 0.86f);
+        } else if (spec.IsNaval == false && dt > 0f && (spec.IsVehicle || spec.Size == UnitSize.Medium || spec.Size == UnitSize.Large)) {
+          var speedRatio = (actor.Position - before).magnitude / (dt * Mathf.Max(1f, spec.MoveSpeed.AsFloat));
+          _audio.Engine(SoundEvent.GroundEngine, actor.View.transform.position, Mathf.InverseLerp(0.06f, 0.8f, speedRatio));
+        }
+      }
       if (actor.IsCarrier && actor.View.Bar != null) {
         actor.View.Bar.transform.localPosition = Vector3.up * (altitude + 3.6f);
       }
 
       var hasTarget = TryTarget(frame, unit->TargetEntity, out var target, out var air);
+      Vector3 workTarget = default;
+      var workingAtSite = frame.Unsafe.TryGetPointer<Worker>(entity, out var engineer)
+        && TryEngineerWorkTarget(frame, transform3D->Position, engineer, out workTarget);
+      if (actor.EngineerWork != null) actor.EngineerWork.Working = workingAtSite;
+      if (workingAtSite && engineer->Task == WorkerTask.Build) _workingSites.Add(engineer->Target);
       foreach (var rig in actor.Rigs) {
         rig.Aiming = hasTarget;
         rig.AimPoint = target;
       }
-      if (moved.sqrMagnitude > 0.002f) {
+      if (workingAtSite) {
+        actor.HullYaw = Mathf.MoveTowardsAngle(actor.HullYaw, YawTo(actor.Position, workTarget), TurnRate * dt);
+      } else if (moved.sqrMagnitude > 0.002f) {
         actor.HullYaw = Mathf.MoveTowardsAngle(actor.HullYaw, Mathf.Atan2(moved.x, moved.z) * Mathf.Rad2Deg, TurnRate * dt);
       } else if (hasTarget && actor.Turret == null) {
         actor.HullYaw = Mathf.MoveTowardsAngle(actor.HullYaw, YawTo(actor.Position, target), TurnRate * dt);
@@ -1315,16 +1342,33 @@ namespace FactoryWars.View {
 
     /// <summary>교체 모델 애니메이션 상태(항목 30). 시뮬레이션 상태를 읽기만 한다.</summary>
     public static UnitAnimState AnimState(float speed, bool hasTarget, WorkerTask task) {
+      if (speed >= 0.3f) {
+        return UnitAnimState.Move;
+      }
       if (task == WorkerTask.Build || task == WorkerTask.Repair) {
         return UnitAnimState.Build;
       }
       if (task != WorkerTask.Idle && task != WorkerTask.Deliver && speed < 0.3f) {
         return UnitAnimState.Gather;
       }
-      if (speed >= 0.3f) {
-        return UnitAnimState.Move;
-      }
       return hasTarget ? UnitAnimState.Attack : UnitAnimState.Idle;
+    }
+
+    static bool TryEngineerWorkTarget(Frame frame, FPVector3 position, Worker* engineer, out Vector3 target) {
+      target = default;
+      if ((engineer->Task != WorkerTask.Build && engineer->Task != WorkerTask.Repair)
+          || frame.TryGet<Building>(engineer->Target, out var site) == false
+          || frame.TryGet<Transform3D>(engineer->Target, out var transform) == false) return false;
+      var spec = frame.FindAsset(site.Spec);
+      var work = transform.Position;
+      var range = spec.FootprintRadius + FactoryWarsUtil.Rules(frame).WorkRange;
+      if (engineer->Task == WorkerTask.Build) {
+        work = AirfieldWorkSystem.WorkTarget(frame, engineer->Target, &site, spec, work, out range);
+      }
+      var delta = work - position;
+      if (FPMath.Max(FPMath.Abs(delta.X), FPMath.Abs(delta.Z)) > range) return false;
+      target = work.ToUnityVector3();
+      return true;
     }
 
     /// <summary>적 중 누구에게도 보이지 않으면 숨은 것이다.</summary>
@@ -1362,25 +1406,147 @@ namespace FactoryWars.View {
       return _scaffold;
     }
 
-    static void ShowConstruction(Actor actor, float progress) {
+    void ClearConstructionCrew(Actor actor) {
+      for (var i = 0; i < actor.ConstructionCrew.Count; i++) {
+        if (actor.ConstructionCrew[i] != null) {
+          Destroy(actor.ConstructionCrew[i]);
+        }
+      }
+      actor.ConstructionCrew.Clear();
+      actor.ConstructionWork.Clear();
+    }
+
+    void ShowConstruction(Actor actor, float progress, float dt) {
       var building = progress < 1f;
-      if (building && actor.Scaffold == null) {
-        var item = new GameObject("Scaffold", typeof(MeshFilter), typeof(MeshRenderer));
-        item.transform.SetParent(actor.View.transform, false);
-        item.GetComponent<MeshFilter>().sharedMesh = ScaffoldMesh();
-        item.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
-        actor.Scaffold = item;
+      actor.ConstructionDisplayProgress = actor.ConstructionDisplayProgress < 0f ? progress
+        : Mathf.MoveTowards(actor.ConstructionDisplayProgress, progress, dt * 2.75f);
+      if (building) {
+        var wantStage = progress < 0.33f ? 1 : 2;
+        var radius = Mathf.Max(2.4f, actor.FootprintRadius);
+        var siteScale = Mathf.Clamp(radius / 4.2f, 0.55f, 1.32f);
+        if (actor.ConstructionStage != wantStage) {
+          if (actor.Scaffold != null) {
+            Destroy(actor.Scaffold);
+            actor.Scaffold = null;
+          }
+
+          var slotKey = wantStage == 1 ? "const_stage1" : "const_stage2";
+          if (VisualCatalog.TryFilled(VisualCatalog.FxId(slotKey), out var sSlot) && sSlot.Prefab != null) {
+            var item = Object.Instantiate(sSlot.Prefab, actor.View.transform);
+            item.name = wantStage == 1 ? "ConstructionStage1" : "ConstructionStage2";
+            item.transform.localPosition = Vector3.zero;
+            item.transform.localRotation = Quaternion.identity;
+            item.transform.localScale = Vector3.one * (siteScale * (sSlot.Scale > 0f ? sSlot.Scale : 1f));
+            foreach (var col in item.GetComponentsInChildren<Collider>(true)) Destroy(col);
+            actor.Scaffold = item;
+          } else if (VisualCatalog.TryFilled(VisualCatalog.FxId("build_scaffold"), out var fbSlot) && fbSlot.Prefab != null) {
+            var item = Object.Instantiate(fbSlot.Prefab, actor.View.transform);
+            item.name = wantStage == 1 ? "ConstructionStage1" : "ConstructionStage2";
+            item.transform.localPosition = Vector3.zero;
+            item.transform.localScale = Vector3.one * (siteScale * (fbSlot.Scale > 0f ? fbSlot.Scale : 0.95f));
+            actor.Scaffold = item;
+          } else {
+            var item = new GameObject(wantStage == 1 ? "ConstructionStage1" : "ConstructionStage2", typeof(MeshFilter), typeof(MeshRenderer));
+            item.transform.SetParent(actor.View.transform, false);
+            item.GetComponent<MeshFilter>().sharedMesh = ScaffoldMesh();
+            item.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+            actor.Scaffold = item;
+          }
+
+          // 작업자를 단계 전환 때 재생성하지 않아 같은 동작이 이어진다.
+          if (actor.ConstructionCrew.Count == 0 && GraphicsQuality.Current != QualityTier.Low) {
+            var crewOffsets = new[] {
+              new Vector3(radius * 0.95f + 0.9f, 0f, 1.35f),
+              new Vector3(-(radius * 0.95f + 0.9f), 0f, -1.15f),
+            };
+            for (var c = 0; c < crewOffsets.Length; c++) {
+              if (VisualCatalog.TryFilled(VisualCatalog.FxId($"const_worker_{c}"), out var wSlot) && wSlot.Prefab != null) {
+                var wGo = Object.Instantiate(wSlot.Prefab, actor.View.transform);
+                wGo.name = $"ConstructionCrew_{c}";
+                wGo.transform.localPosition = crewOffsets[c];
+                var look = -crewOffsets[c];
+                look.y = 0f;
+                wGo.transform.localRotation = look.sqrMagnitude > 0.001f ? Quaternion.LookRotation(look) : Quaternion.identity;
+                wGo.transform.localScale = Vector3.one * (wSlot.Scale > 0f ? wSlot.Scale : 0.85f);
+                foreach (var col in wGo.GetComponentsInChildren<Collider>(true)) Destroy(col);
+                var anim = wGo.GetComponentInChildren<Animator>(true);
+                if (anim != null) {
+                  if (anim.runtimeAnimatorController == null && wSlot.Animator != null) {
+                    anim.runtimeAnimatorController = wSlot.Animator;
+                  }
+                  anim.applyRootMotion = false;
+                  anim.SetFloat("Speed", 0f);
+                }
+                actor.ConstructionCrew.Add(wGo);
+                var work = ConstructionWorkView.Attach(wGo, _catalog.IronExtractorDrill, 0.43f * c);
+                if (work != null) actor.ConstructionWork.Add(work);
+              }
+            }
+          }
+          actor.ConstructionStage = wantStage;
+          actor.WeldFxAt = Time.time + 0.15f;
+        }
+        var activelyBuilding = _workingSites.Contains(actor.Entity);
+        foreach (var worker in actor.ConstructionWork) worker.Working = activelyBuilding;
+
+        if (actor.Scaffold != null && actor.Scaffold.activeSelf == false) {
+          actor.Scaffold.SetActive(true);
+        }
+        if (actor.Dressing != null && actor.Dressing.activeSelf) {
+          actor.Dressing.SetActive(false);
+        }
+
+        if (wantStage == 1) {
+          // Stage 1 (0~33% 부지 정리): 본체 메쉬를 숨기고 콘크리트 기초 패드·안전 콘·바리케이드·자재 팔레트·저층 비계만 표시.
+          if (actor.View.Model.activeSelf) {
+            actor.View.Model.SetActive(false);
+          }
+        } else {
+          // Stage 2 (33~99% 골조 상승): 본체 Synty 공장이 기초 패드 위로 서서히 올라오며 간헐적 War FX 용접 스파크 분출.
+          if (actor.View.Model.activeSelf == false) {
+            actor.View.Model.SetActive(true);
+          }
+          var rise = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((actor.ConstructionDisplayProgress - 0.33f) / 0.67f));
+          var sinkDepth = Mathf.Max(actor.Height, 4.2f) * 0.72f;
+          var pos = actor.View.Model.transform.localPosition;
+          pos.y = actor.BuildingModelY - (1f - rise) * sinkDepth;
+          actor.View.Model.transform.localPosition = pos;
+
+          if (activelyBuilding && Fx != null && Time.time >= actor.WeldFxAt) {
+            actor.WeldFxAt = Time.time + Random.Range(0.45f, 0.88f) / Mathf.Max(0.35f, GraphicsQuality.FxScale);
+            var ang = Random.Range(0f, Mathf.PI * 2f);
+            var radial = new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang));
+            var weldY = Mathf.Lerp(0.95f, Mathf.Max(2.4f, actor.Height * 0.52f), rise);
+            var weldPos = actor.View.transform.position + radial * (radius * 0.68f) + Vector3.up * weldY;
+            Fx.WeldingSparks(weldPos, radial + Vector3.up * 0.45f);
+          }
+        }
+        return;
       }
-      if (actor.Scaffold != null) {
-        actor.Scaffold.SetActive(building);
+
+      // Stage 3 (100% 완공): 비계·안전 바리케이드·건설 작업자 깔끔히 철거 + 미세 완공 먼지 + 본체 가동!
+      if (actor.View.Model.activeSelf == false) {
+        actor.View.Model.SetActive(true);
       }
-      if (actor.Dressing != null) {
-        actor.Dressing.SetActive(building == false);
+      var finalPos = actor.View.Model.transform.localPosition;
+      if (Mathf.Abs(finalPos.y - actor.BuildingModelY) > 0.0001f) {
+        finalPos.y = Mathf.MoveTowards(finalPos.y, actor.BuildingModelY, dt * Mathf.Max(actor.Height, 4.2f) * 3f);
+        actor.View.Model.transform.localPosition = finalPos;
       }
-      // 땅 밑에서 올라온다. 바닥이 불투명해서 아래쪽은 가려진다.
-      var position = actor.View.Model.transform.localPosition;
-      position.y = building ? -(1f - progress) * actor.Height : 0f;
-      actor.View.Model.transform.localPosition = position;
+      if (actor.ConstructionStage == 1 || actor.ConstructionStage == 2) {
+        if (actor.Scaffold != null) {
+          Destroy(actor.Scaffold);
+          actor.Scaffold = null;
+        }
+        ClearConstructionCrew(actor);
+        Fx?.ConstructionCompleteDust(actor.View.transform.position, Mathf.Max(2.5f, actor.FootprintRadius));
+        actor.ConstructionStage = 3;
+      } else if (actor.Scaffold != null) {
+        actor.Scaffold.SetActive(false);
+      }
+      if (actor.Dressing != null && actor.Dressing.activeSelf == false) {
+        actor.Dressing.SetActive(true);
+      }
     }
 
     /// <summary>확장 사령부: 주인의 시작 자리에서 25m 넘게 떨어진 사령부.</summary>
@@ -1451,6 +1617,10 @@ namespace FactoryWars.View {
     }
 
     static void DressBuilding(Actor actor, BuildingSpec spec, Vector3 worldPos) {
+      // 실제 Synty 복합 킷배시 프리팹이 연결된 건물에는 구형 Kenney 소품(SpaceGate 흰 아치 등)을 덧씌우지 않는다.
+      if (actor.View != null && actor.View.Slot != null) {
+        return;
+      }
       if (spec.Role == BuildingRole.GroundTower || spec.Role == BuildingRole.AirDefense || spec.FootprintRadius.AsFloat < 2.2f) {
         return;
       }
@@ -1480,7 +1650,9 @@ namespace FactoryWars.View {
         var position = transform3D->Position.ToUnityVector3();
         position.y = TerrainKit.SurfaceHeight(World.Map, position.x, position.z);
         actor.Position = position;
+        actor.FootprintRadius = spec.FootprintRadius.AsFloat;
         actor.View.transform.position = position;
+        actor.BuildingModelY = actor.View.Model.transform.localPosition.y;
         actor.View.AddPlate(frame.FindAsset(building->Spec).FootprintRadius.AsFloat, frame.Global->Players.GetPointer(building->Owner)->ColorIndex);
         DressBuilding(actor, spec, position);
         var forward = spec.Role == BuildingRole.Headquarters && IsForward(frame, building->Owner, position);
@@ -1488,7 +1660,10 @@ namespace FactoryWars.View {
           DressForward(actor, spec, position);
         }
         // 건물(전진 사령부는 방벽 고리까지) 자리의 길가·흩뿌림 장식을 걷어낸다.
-        DressingRenderer.Active?.ClearAround(position, spec.FootprintRadius.AsFloat + (forward ? ForwardRingExtra + 1.5f : 1.5f), "urban", "scatter");
+        var clearance = spec.FootprintRadius.AsFloat + (forward ? ForwardRingExtra + 1.5f : 1.5f);
+        var footprint = new GroundFootprint(position, new Vector3(clearance, 0f, clearance), Quaternion.identity);
+        DressingRenderer.Active?.ReserveSite(footprint);
+        World.ClearBiomeProps(item => footprint.Overlaps(item));
         actor.HullYaw = 180f;
         actor.View.SetYaw(180f);
       }
@@ -1507,11 +1682,28 @@ namespace FactoryWars.View {
         ArtLook.Apply(actor.View.Model, actor.Color, powered);
       }
 
-      var total = spec.BuildTimeSeconds.AsFloat;
       var remaining = building->ConstructionRemaining.AsFloat;
       var finished = remaining <= 0f;
-      ShowConstruction(actor, finished || total <= 0f ? 1f : 1f - remaining / total);
+      var bodyRemaining = remaining;
+      if (frame.TryGet<AirfieldWorks>(entity, out var airfield)) {
+        var extra = AirfieldWorkSystem.BuildSeconds(FactoryWarsUtil.Rules(frame), spec.Role).AsFloat;
+        bodyRemaining = Mathf.Max(0f, remaining - extra);
+        if (bodyRemaining <= 0f) {
+          if (actor.Runway == null) actor.Runway = FacilityWorkView.CreatePaving(actor.View.transform, airfield.Site, World, spec.Role == BuildingRole.Helipad);
+          if (actor.Runway.gameObject.activeSelf == false) actor.Runway.gameObject.SetActive(true);
+          actor.Runway.UpdatePaving(finished || extra <= 0f ? 1f : Mathf.Clamp01(1f - remaining / extra), dt);
+        } else if (actor.Runway != null && actor.Runway.gameObject.activeSelf) {
+          actor.Runway.gameObject.SetActive(false);
+        }
+      }
+      var total = spec.BuildTimeSeconds.AsFloat;
+      ShowConstruction(actor, bodyRemaining <= 0f || total <= 0f ? 1f : 1f - bodyRemaining / total, dt);
       if (finished == false) {
+        if (actor.ExtractorDelivery != null) {
+          Destroy(actor.ExtractorDelivery.Root);
+          actor.ExtractorDelivery = null;
+          actor.ExtractorRouteCheckAt = 0f;
+        }
         return;
       }
 
@@ -1532,20 +1724,46 @@ namespace FactoryWars.View {
 
       var processing = spec.ProcessSeconds > FP._0 && building->ProcessorOff == false;
       var producing = building->QueueCount > 0;
+      if (spec.Role == BuildingRole.Shipyard) UpdateShipWork(frame, actor, building, transform3D->Position, state, dt);
       var researching = building->Research > 0;
       var ultimateBusy = spec.Role == BuildingRole.UltimateSite && (state->UltimatePhase == UltimatePhase.Preparing || state->UltimatePhase == UltimatePhase.Ready);
       var overdriving = FactorySystem.IsOverdriving(frame, building);
       var yard = spec.IsDropOff && spec.Role == BuildingRole.CollectionYard;
-      var operating = powered && (processing || producing || researching || ultimateBusy || overdriving || spec.Role == BuildingRole.PowerPlant);
+      var extracting = spec.RequiresResourceNode && building->Paused == PauseReason.None
+        && building->EmpUntilFrame <= frame.Number && frame.TryGet<ResourceNode>(building->ExtractNode, out var node)
+        && node.Remaining > FP._0 && CitySystem.Occupants(frame, entity) > 0;
+      if (spec.RequiresResourceNode && actor.ExtractorEquipment == null) {
+        var equipment = spec.RequiredNodeKind == ResourceKind.Wood ? _catalog.LumberMillSaw : _catalog.IronExtractorDrill;
+        if (equipment != null) {
+          var prop = Instantiate(equipment, actor.View.transform);
+          prop.transform.localPosition = new Vector3(actor.FootprintRadius * 0.86f, 0.55f, 0f);
+          foreach (var collider in prop.GetComponentsInChildren<Collider>(true)) {
+            collider.enabled = false;
+          }
+          actor.ExtractorEquipment = prop.transform;
+        }
+      }
+      if (extracting && actor.ExtractorEquipment != null) {
+        actor.ExtractorEquipment.Rotate(Vector3.up, dt * 160f, Space.Self);
+      }
+      if (spec.RequiresResourceNode && buildingSeen && (buildingViewer.IsValid == false || building->Owner == buildingViewer)) {
+        UpdateExtractorDelivery(frame, actor, building->Owner, spec.RequiredNodeKind, extracting, dt);
+      }
+      var operating = powered && (processing || producing || researching || ultimateBusy || overdriving || extracting || spec.Role == BuildingRole.PowerPlant);
       var busy = operating || (powered && (yard || spec.Role == BuildingRole.Headquarters));
       Animate(actor, dt, powered, busy);
 
-      // 공장 Lv.2 / Lv.3 시각적 확장 동기화(추가 굴뚝 · 갠트리 크레인 · 발광 배관).
+      // 현재 공장 단계에 맞는 정비동과 굴뚝을 표시한다.
       var fLevel = FactorySystem.LevelOf(building);
       if (fLevel != actor.FactoryLevel) {
         actor.FactoryLevel = fLevel;
         if (actor.FactoryUpgradeGo != null) Destroy(actor.FactoryUpgradeGo);
-        actor.FactoryUpgradeGo = HeroVisuals.AttachFactoryUpgrade(actor.View.Model.transform, fLevel, actor.Color);
+        actor.FactoryUpgradeGo = HeroVisuals.AttachFactoryUpgrade(actor.View.Model.transform, fLevel, actor.FootprintRadius, actor.Height);
+        if (actor.FactoryUpgradeGo != null) actor.FactoryUpgradeGo.transform.localScale = Vector3.one * 0.84f;
+      }
+      if (actor.FactoryUpgradeGo != null && actor.FactoryUpgradeGo.transform.localScale.x < 1f) {
+        var extension = actor.FactoryUpgradeGo.transform;
+        extension.localScale = Vector3.MoveTowards(extension.localScale, Vector3.one, 1.3f * dt);
       }
       if (actor.FactoryBeacon != null) {
         var freq = overdriving ? 16f : 7.5f;
@@ -1580,7 +1798,70 @@ namespace FactoryWars.View {
       }
     }
 
+    void UpdateShipWork(Frame frame, Actor actor, Building* building, FPVector3 origin, PlayerState* state, float dt) {
+      var queued = building->QueueCount > 0 ? building->Queue[0].Unit : default;
+      if (actor.ShipWork != null && actor.ShipWorkUnit != queued) {
+        actor.ShipWork.gameObject.SetActive(false);
+        Destroy(actor.ShipWork.gameObject);
+        actor.ShipWork = null;
+      }
+      if (queued.IsValid == false) return;
+      var unit = frame.FindAsset(queued);
+      if (unit == null || unit.IsNaval == false) return;
+      if (actor.ShipWork == null) {
+        if (ProductionSystem.TryShipLaunchPoint(frame, origin, building, 0, out var launch) == false) return;
+        actor.ShipWork = FacilityWorkView.CreateVessel(actor.View.transform, _catalog, unit.name, state->ColorIndex,
+          launch.ToUnityVector3(), origin.ToUnityVector3());
+        actor.ShipWorkUnit = queued;
+      }
+      var total = ProductionSystem.UnitProductionSeconds(frame, state, unit).AsFloat;
+      if (total <= 0f || actor.ShipWork == null) return;
+      var progress = Mathf.Clamp01(building->QueueProgress.AsFloat / total);
+      actor.ShipWork.UpdateVessel(progress, dt);
+      if (progress < 1f && building->Paused == PauseReason.None && building->EmpUntilFrame <= frame.Number
+          && actor.View.gameObject.activeInHierarchy && Time.time >= actor.ShipWeldAt) {
+        actor.ShipWeldAt = Time.time + 0.6f / Mathf.Max(0.3f, GraphicsQuality.FxScale);
+        var hull = actor.ShipWork.transform;
+        Fx.WeldingSparks(hull.position + hull.right * 0.85f + Vector3.up * (0.32f + progress * 0.54f), hull.right);
+      }
+    }
+
     /// <summary>12m 이내 인접한 생산 공장과 제련소·발전소 사이를 발광 지상 파이프라인으로 자동 연결한다.</summary>
+    void UpdateExtractorDelivery(Frame frame, Actor actor, PlayerRef owner, ResourceKind kind, bool extracting, float dt) {
+      var route = actor.ExtractorDelivery;
+      if (Time.time >= actor.ExtractorRouteCheckAt || (route != null && frame.Exists(route.Headquarters) == false)) {
+        actor.ExtractorRouteCheckAt = Time.time + 0.6f;
+        var best = EntityRef.None;
+        var bestDistance = float.PositiveInfinity;
+        var destination = Vector3.zero;
+        var radius = 0f;
+        var buildings = frame.Filter<Transform3D, Building>();
+        while (buildings.NextUnsafe(out var entity, out var transform, out var building)) {
+          if (building->Owner != owner || building->Health <= FP._0 || building->ConstructionRemaining > FP._0) continue;
+          var spec = frame.FindAsset(building->Spec);
+          if (spec.Role != BuildingRole.Headquarters) continue;
+          var position = transform->Position.ToUnityVector3();
+          var distance = (position - actor.Position).sqrMagnitude;
+          if (distance >= bestDistance) continue;
+          best = entity;
+          bestDistance = distance;
+          destination = position;
+          radius = spec.FootprintRadius.AsFloat;
+        }
+        if (route != null && route.Headquarters != best) {
+          Destroy(route.Root);
+          route = null;
+        }
+        if (route == null && best != EntityRef.None) {
+          var cargo = kind == ResourceKind.Wood ? _catalog.LumberCargo : _catalog.IronCargo;
+          route = ExtractorDeliveryView.Create(actor.View.transform, World.Map, best, actor.Position, actor.FootprintRadius,
+            destination, radius, cargo);
+        }
+        actor.ExtractorDelivery = route;
+      }
+      route?.Update(extracting, dt);
+    }
+
     void SyncSynergyPipelines(Frame frame) {
       if (_stage == null || Time.time < _synergyPipeAt) {
         return;

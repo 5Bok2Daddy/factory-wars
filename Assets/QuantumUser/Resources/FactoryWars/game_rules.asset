@@ -482,6 +482,14 @@ MonoBehaviour:
     RawValue: 655360
   DepotExplosionDamage:
     RawValue: 31457280
+  ExtractorYieldMultipliers:
+  - RawValue: 0
+  - RawValue: 65536
+  - RawValue: 104857
+  - RawValue: 137625
+  - RawValue: 163840
+  ExtractorNodeSnapRadius:
+    RawValue: 262144
   OutageTowerIntervalMultiplier:
     RawValue: 131072
   PlayerColorCount: 8
@@ -491,6 +499,20 @@ MonoBehaviour:
     RawValue: 196608
   ShipyardWaterReach:
     RawValue: 196608
+  ShipLaunchClearance:
+    RawValue: 196608
+  AirfieldWorkClearance:
+    RawValue: 131072
+  RunwayBuildSeconds:
+    RawValue: 917504
+  RunwayHalfLength:
+    RawValue: 720896
+  RunwayHalfWidth:
+    RawValue: 262144
+  LandingPadBuildSeconds:
+    RawValue: 589824
+  LandingPadHalfSize:
+    RawValue: 327680
   DisconnectBotDifficulty: 1
   DisconnectForfeitSeconds: 60
   AirAltitude:

@@ -24,7 +24,7 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => DoctrineLockedOf(0), 10f, "선택 반영");
       Assert.AreEqual(2, DoctrineOf(0));
       yield return WaitFrames(2);
-      Assert.IsFalse(panel.activeSelf, "고르면 닫힘");
+      Assert.IsFalse(panel.activeInHierarchy, "고르면 닫힘");
     }
 
     [UnityTest]

@@ -97,6 +97,7 @@ namespace FactoryWars.View {
     RocketLauncher,
     BreacherWeapon,
     EngineerCarbine,
+    CityCafe,
   }
 
   /// <summary>

@@ -28,21 +28,59 @@ namespace FactoryWars.View {
   }
 
   /// <summary>소리가 나는 게임 일(항목 30). AudioCatalog의 칸 이름과 같다.</summary>
-  public enum SoundEvent { Click, ProductionDone, UnderAttack, Captured, Explosion, Collapse, Warning, Victory, Defeat, RifleFire, TankCannon }
+  public enum SoundEvent {
+    Click, ProductionDone, UnderAttack, Captured, Explosion, Collapse, Warning, Victory, Defeat, RifleFire, TankCannon,
+    SniperFire, RocketFire, MissileWarning, JetFlyby, GroundEngine, RotorEngine, AirEngine, CombatAmbience
+  }
 
   /// <summary>소리·진동 재생. 칸이 비었으면 소리 없이 진동 설정만 따른다.</summary>
   public static class GameAudio {
     static AudioSource _source;
+    static readonly AudioSource[] WorldVoices = new AudioSource[8];
     static readonly Dictionary<SoundEvent, float> Last = new Dictionary<SoundEvent, float>();
     public static int Played { get; private set; }
     public static int Vibrated { get; private set; }
 
-    public static void Play(SoundEvent e) {
+    public static void Play(SoundEvent e) => Play(e, 1f, 0f, false);
+
+    public static bool PlayAt(SoundEvent e, Vector3 position) {
+      var gain = ScreenGain(Camera.main, position, out var pan);
+      return gain > 0.01f && Play(e, gain, pan, true);
+    }
+
+    internal static void StopWorldVoices() {
+      foreach (var voice in WorldVoices) {
+        if (voice != null) voice.Stop();
+      }
+    }
+
+    public static float ScreenGain(Camera camera, Vector3 position, out float pan) {
+      pan = 0f;
+      if (camera == null) return 0f;
+      var point = camera.WorldToViewportPoint(position);
+      if (point.z <= 0f) return 0f;
+      pan = Mathf.Clamp((point.x - 0.5f) * 1.45f, -0.8f, 0.8f);
+      var edge = Mathf.Max(Mathf.Abs(point.x - 0.5f), Mathf.Abs(point.y - 0.5f));
+      var distance = new Vector2(camera.transform.position.x - position.x, camera.transform.position.z - position.z).magnitude;
+      var falloff = Mathf.Lerp(1f, 0.60f, Mathf.InverseLerp(30f, 155f, distance));
+      return (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.31f, 0.64f, edge))) * falloff;
+    }
+
+    internal static AudioClip ClipFor(AudioCatalog.Slot slot) {
+      if (slot == null) return null;
+      if (slot.Clips != null && slot.Clips.Length > 0) {
+        var clip = slot.Clips[UnityEngine.Random.Range(0, slot.Clips.Length)];
+        if (clip != null) return clip;
+      }
+      return AudioCatalog.LocalClip(slot.Event);
+    }
+
+    static bool Play(SoundEvent e, float gain, float pan, bool world) {
       var slot = AudioCatalog.Current?.Get(e);
       var now = Time.unscaledTime;
       var interval = slot != null ? slot.MinInterval : 0.5f;
       if (Last.TryGetValue(e, out var last) && now - last < interval) {
-        return;
+        return false;
       }
       Last[e] = now;
       var haptic = slot != null ? slot.Haptic : e == SoundEvent.UnderAttack || e == SoundEvent.Collapse;
@@ -52,12 +90,9 @@ namespace FactoryWars.View {
         Handheld.Vibrate();
 #endif
       }
-      if (slot == null || slot.Clips == null || slot.Clips.Length == 0) {
-        return;
-      }
-      var clip = slot.Clips[UnityEngine.Random.Range(0, slot.Clips.Length)];
+      var clip = ClipFor(slot);
       if (clip == null) {
-        return;
+        return false;
       }
       if (_source == null) {
         var item = new GameObject("GameAudio");
@@ -65,8 +100,26 @@ namespace FactoryWars.View {
         _source = item.AddComponent<AudioSource>();
         _source.playOnAwake = false;
       }
-      _source.PlayOneShot(clip, slot.Volume);
+      if (world) {
+        for (var i = 0; i < WorldVoices.Length; i++) {
+          var voice = WorldVoices[i];
+          if (voice == null) {
+            voice = _source.gameObject.AddComponent<AudioSource>();
+            voice.playOnAwake = false;
+            WorldVoices[i] = voice;
+          }
+          if (voice.isPlaying) continue;
+          voice.panStereo = pan;
+          voice.pitch = e == SoundEvent.JetFlyby ? 1f : UnityEngine.Random.Range(0.94f, 1.06f);
+          voice.PlayOneShot(clip, slot.Volume * gain);
+          Played++;
+          return true;
+        }
+        return false;
+      }
+      _source.PlayOneShot(clip, slot.Volume * gain);
       Played++;
+      return true;
     }
 
     static bool _synthInstalled;
@@ -81,16 +134,14 @@ namespace FactoryWars.View {
         return;
       }
       _synthInstalled = true;
-      var needed = new[] { SoundEvent.RifleFire, SoundEvent.TankCannon };
-      foreach (var extra in needed) {
-        if (catalog.Get(extra) == null) {
-          catalog.Slots.Add(new AudioCatalog.Slot { Event = extra, Volume = extra == SoundEvent.TankCannon ? 0.55f : 0.35f, MinInterval = extra == SoundEvent.TankCannon ? 0.25f : 0.12f, Haptic = false });
-        }
+      foreach (var slot in AudioCatalog.DefaultSlots()) {
+        if (catalog.Get(slot.Event) == null) catalog.Slots.Add(slot);
       }
       foreach (var slot in catalog.Slots) {
-        if (slot.Clips != null && slot.Clips.Length > 0) {
+        if ((slot.Clips != null && slot.Clips.Length > 0) || AudioCatalog.LocalClip(slot.Event) != null) {
           continue;
         }
+        if (slot.Event >= SoundEvent.JetFlyby) continue;
         var clip = SynthClip(slot.Event);
         if (clip != null) {
           slot.Clips = new[] { clip };
@@ -104,6 +155,12 @@ namespace FactoryWars.View {
     }
 
     static AudioClip SynthClip(SoundEvent e) {
+      e = e switch {
+        SoundEvent.SniperFire => SoundEvent.RifleFire,
+        SoundEvent.RocketFire => SoundEvent.TankCannon,
+        SoundEvent.MissileWarning => SoundEvent.Warning,
+        _ => e,
+      };
       const int Rate = 22050;
       float duration = e switch {
         SoundEvent.Click => 0.04f,

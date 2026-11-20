@@ -31,6 +31,7 @@ Shader "FactoryWars/UrbanWater"
             #pragma multi_compile_local _ _FW_DEPTH_FOAM
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Shallow;
@@ -76,8 +77,24 @@ Shader "FactoryWars/UrbanWater"
                 float n = WNoise(p) * 0.6 + WNoise(p * 2.3 + float2(t * 0.05, 7.0)) * 0.4;
                 half3 color = lerp(_Deep.rgb, _Shallow.rgb, saturate(n * 1.25));
                 // 잔물결 하이라이트: 좁은 띠가 흐른다.
-                float ripple = smoothstep(0.82, 0.95, WNoise(p * 3.7 - float2(t * 0.12, 0)));
-                color += ripple * 0.10;
+                #if defined(_FW_DEPTH_FOAM)
+                    // Two traveling waves tilt the reflection. Fade them before they become subpixel.
+                    const float2 first = float2(1.15, 0.45);
+                    const float2 second = float2(-0.36, 1.9);
+                    float a = dot(input.positionWS.xz, first) - t * 1.4;
+                    float b = dot(input.positionWS.xz, second) + t * 1.9;
+                    float2 slope = first * (0.045 * cos(a) * saturate(1 - fwidth(a)))
+                                 + second * (0.028 * cos(b) * saturate(1 - fwidth(b)));
+                    half3 normal = normalize(half3(-slope.x, 1, -slope.y));
+                    half3 view = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                    Light sun = GetMainLight();
+                    half3 halfVector = SafeNormalize(view + sun.direction);
+                    half grazing = 1 - saturate(dot(normal, view));
+                    color = lerp(color, lerp(_Shallow.rgb, _Foam.rgb, 0.34), 0.06 + 0.22 * grazing * grazing);
+                    color += sun.color * (0.075 * pow(saturate(dot(normal, halfVector)), 20.0));
+                #else
+                    color += smoothstep(0.82, 0.95, WNoise(p * 3.7 - float2(t * 0.12, 0))) * 0.04;
+                #endif
                 half alpha = 1;
                 // 줄무늬 거품(정점 색 r이 거품 띠 안쪽 1, 바깥쪽 0). 낮음 품질의 가장자리 거품이자, 높은 품질에서는 깊이 거품 위에 얹는 보조 줄무늬다.
                 float stripes = WNoise(float2(input.positionWS.x * 0.35 + input.positionWS.z * 0.35, t * 0.6) * 1.7);

@@ -17,12 +17,15 @@ namespace Quantum.FactoryWars {
     }
 
     protected static bool IsOwnWorker(Frame f, PlayerRef player, EntityRef entity) {
-      return f.Unsafe.TryGetPointer<Unit>(entity, out var unit) && unit->Owner == player && unit->Transport == EntityRef.None && f.Has<Worker>(entity);
+      return f.Unsafe.TryGetPointer<Unit>(entity, out var unit) && unit->Owner == player
+          && unit->Transport == EntityRef.None && unit->Garrison == EntityRef.None && f.Has<Worker>(entity);
     }
 
     /// <summary>내 유닛이고 명령을 받는 유닛이면 true. 항모 드론·상륙정은 스스로 움직인다(항목 33).</summary>
     protected static bool IsOwnCommandable(Frame f, PlayerRef player, EntityRef entity, out Unit* unit) {
-      return f.Unsafe.TryGetPointer<Unit>(entity, out unit) && unit->Owner == player && unit->Transport == EntityRef.None && UltimateSystem.IsAutonomous(f, entity) == false;
+      return f.Unsafe.TryGetPointer<Unit>(entity, out unit) && unit->Owner == player && unit->Transport == EntityRef.None
+          && (unit->Garrison == EntityRef.None || f.Has<Worker>(entity) == false)
+          && UltimateSystem.IsAutonomous(f, entity) == false;
     }
   }
 
@@ -302,9 +305,12 @@ namespace Quantum.FactoryWars {
         return;
       }
       for (var i = 0; i < Units.Length; i++) {
-        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) == false || unit->Owner != player || unit->Garrison != EntityRef.None
-            || CitySystem.IsInfantry(f.FindAsset(unit->Spec)) == false) {
+        if (f.Unsafe.TryGetPointer<Unit>(Units[i], out var unit) == false || unit->Owner != player
+            || CitySystem.CanOccupy(f, Units[i], unit, Building) == false) {
           continue;
+        }
+        if (f.Has<Worker>(Units[i])) {
+          WorkerSystem.Assign(f, Units[i], WorkerTask.Idle, EntityRef.None);
         }
         var from = f.Unsafe.GetPointer<Transform3D>(Units[i])->Position;
         MovementSystem.Order(f, Units[i], unit, UnitOrder.Move, shape.Approach(from, FP._1));
@@ -313,7 +319,7 @@ namespace Quantum.FactoryWars {
     }
   }
 
-  /// <summary>진지 건물에서 자기 분대를 모두 꺼낸다.</summary>
+  /// <summary>진지의 자기 분대를 꺼낸다. 채굴 시설에서는 공병 한 명씩 꺼낸다.</summary>
   public unsafe class ExitGarrisonCommand : FactoryCommand {
     public EntityRef Building;
 
@@ -322,7 +328,8 @@ namespace Quantum.FactoryWars {
     }
 
     public override void Execute(Frame f, PlayerRef player) {
-      CitySystem.ExitAll(f, player, Building, FP._0);
+      var isExtractor = f.Unsafe.TryGetPointer<Building>(Building, out var building) && f.FindAsset(building->Spec).RequiresResourceNode;
+      CitySystem.ExitAll(f, player, Building, FP._0, isExtractor ? 1 : int.MaxValue);
     }
   }
 

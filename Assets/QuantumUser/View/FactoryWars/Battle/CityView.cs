@@ -61,6 +61,7 @@ namespace FactoryWars.View {
 
     readonly Transform _root;
     readonly MapSpec _map;
+    readonly bool _urban;
     readonly List<Block> _blocks = new List<Block>();
     static readonly Dictionary<(int Kind, int Stage), Mesh> Meshes = new Dictionary<(int, int), Mesh>();
     static Mesh _rubble;
@@ -75,6 +76,7 @@ namespace FactoryWars.View {
       _root = new GameObject("City").transform;
       _root.SetParent(parent, false);
       _map = map;
+      _urban = TerrainKit.BiomeOf(map) == TerrainKit.Biome.Urban;
       Dressing.Begin();
       for (var i = 0; map.CityBuildings != null && i < map.CityBuildings.Length; i++) {
         _blocks.Add(Create(i, map.CityBuildings[i]));
@@ -207,7 +209,16 @@ namespace FactoryWars.View {
       var body = Item(pivot, "Body", BlockMesh(placement.Kind, 0), true);
       body.transform.localScale = new Vector3(shape.HalfLength.AsFloat * 2, 1, shape.HalfWidth.AsFloat * 2);
       var block = new Block { Index = index, Root = root.gameObject, Pivot = pivot, Filter = body.GetComponent<MeshFilter>(), Renderer = body.GetComponent<MeshRenderer>() };
-      block.Dressed = DressingSpawn.Fitted(DressOf(placement), pivot, shape.HalfLength.AsFloat * 2, shape.HalfWidth.AsFloat * 2, Height(placement.Kind), 4001 + index * 13);
+      var length = shape.HalfLength.AsFloat * 2;
+      var width = shape.HalfWidth.AsFloat * 2;
+      var seed = 4001 + index * 13;
+      var kind = DressOf(placement);
+      if (_urban && kind == DressKind.CitySmall && index % 2 == 0) {
+        block.Dressed = DressingSpawn.Fitted(DressKind.CityCafe, pivot, length, width, 0f, seed);
+      }
+      if (block.Dressed == null) {
+        block.Dressed = DressingSpawn.Fitted(kind, pivot, length, width, Height(placement.Kind), seed);
+      }
       if (block.Dressed != null) {
         block.BaseScale = block.Dressed.transform.localScale;
       }

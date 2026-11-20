@@ -31,9 +31,15 @@ namespace FactoryWars.View {
 
     class Wall {
       public GameObject Root;
+      public Transform Body;
       public Transform Fill;
       public float Max;
       public float Fall = -1f;
+    }
+
+    class FallingProp {
+      public Transform Pivot;
+      public float Age;
     }
 
     class WreckVisual {
@@ -54,6 +60,8 @@ namespace FactoryWars.View {
     readonly Dictionary<EntityRef, Site> _sites = new Dictionary<EntityRef, Site>();
     readonly Dictionary<EntityRef, GameObject> _crates = new Dictionary<EntityRef, GameObject>();
     readonly Dictionary<EntityRef, Wall> _walls = new Dictionary<EntityRef, Wall>();
+    readonly List<FallingProp> _fallingProps = new List<FallingProp>();
+    readonly List<(GameObject Wall, GroundFootprint Footprint)> _captureBarriers = new List<(GameObject, GroundFootprint)>();
     readonly Dictionary<EntityRef, WreckVisual> _wrecks = new Dictionary<EntityRef, WreckVisual>();
     readonly Dictionary<EntityRef, BlackBoxVisual> _boxes = new Dictionary<EntityRef, BlackBoxVisual>();
     readonly HashSet<EntityRef> _seen = new HashSet<EntityRef>();
@@ -235,24 +243,20 @@ namespace FactoryWars.View {
       // 전장을 깨끗하게: 고정 고리는 점령이 진행 중일 때만 보인다(UpdateSite).
       Item(root, "Ring", ring.ToMesh("capture_ring"), GlowRingMaterial()).SetActive(false);
       var progress = Item(root, "Progress", null, ArtLook.NeutralMaterial);
-      Item(root, "Pole", PoleMesh(), ArtLook.NeutralMaterial);
-      var flag = Item(root, "Flag", FlagMesh(), ArtLook.NeutralMaterial);
-      var station = Item(root, "Station", StationMesh(site->Kind), ArtLook.NeutralMaterial);
-      station.transform.localPosition = new Vector3(0, 0, site->Radius.AsFloat + 2.4f);
-      station.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
-      var seed = KenneyAssetMap.Seed(position, 601);
-      if (site->Kind == CaptureKind.Comms) {
-        DressingSpawn.Place(DressKind.SpaceFloor, station.transform, new Vector3(0f, 0.02f, 0f), 0f, seed + 10);
+      // 도로 침범 엄격 차단: 깃대·중계소·관측 초소·컨테이너·방벽은 모두 2차선 아스팔트 도로·연석 밖 안전 각도에만 배치한다.
+      var edge = Mathf.Max(6.5f, site->Radius.AsFloat - 2.0f);
+      var occupied = new List<GroundFootprint>();
+      bool Reserve(GroundFootprint footprint) {
+        if (occupied.Exists(other => footprint.Overlaps(other, 0.55f))) return false;
+        if (Dressing.RoadMask != null && UrbanDecor.Fits(Dressing.RoadMask, footprint) == false) return false;
+        occupied.Add(footprint);
+        return true;
       }
-      DressingSpawn.Place(DressKind.SpaceProp, station.transform, new Vector3(-1.3f, 0.15f, 0.2f), 90f, seed);
-      DressingSpawn.Place(site->Kind == CaptureKind.Comms ? DressKind.SpaceProp : DressKind.Hopper, station.transform, new Vector3(1.3f, 0.15f, -0.2f), -90f, seed + 1);
-      DressingSpawn.Place(DressKind.Prop, station.transform, new Vector3(0f, 0.15f, 1.1f), 0f, seed + 2);
-      // 도로 침범 엄격 차단: 관측 초소·컨테이너·방벽은 2차선 아스팔트 도로 밖 안전 각도에만 배치한다.
-      var edge = Mathf.Max(6f, site->Radius.AsFloat - 2.5f);
+
       Vector3 Rim(float degrees, float r) => new Vector3(Mathf.Sin(degrees * Mathf.Deg2Rad) * r, 0.1f, Mathf.Cos(degrees * Mathf.Deg2Rad) * r);
       bool TrySafeRim(float preferredDeg, float r, float clearance, out float safeDeg, out Vector3 local) {
-        for (var step = 0; step < 12; step++) {
-          var cand = preferredDeg + (step % 2 == 0 ? step / 2 : -(step + 1) / 2) * 30f;
+        for (var step = 0; step < 24; step++) {
+          var cand = preferredDeg + (step % 2 == 0 ? step / 2 : -(step + 1) / 2) * 15f;
           var loc = Rim(cand, r);
           if (Dressing.IsOnAnyRoad(position + loc, clearance) == false) {
             safeDeg = cand;
@@ -264,21 +268,54 @@ namespace FactoryWars.View {
         local = Vector3.zero;
         return false;
       }
-      if (TrySafeRim(315f, edge + 2.5f, 4.5f, out var towerDeg, out var towerLoc)) {
-        DressingSpawn.Place(DressKind.OutpostTower, root, towerLoc, towerDeg + 180f, seed + 20);
+      var pole = Item(root, "Pole", PoleMesh(), ArtLook.NeutralMaterial);
+      var flag = Item(root, "Flag", FlagMesh(), ArtLook.NeutralMaterial);
+      if (Dressing.IsOnAnyRoad(position, 4.4f) && TrySafeRim(45f, edge + 2.8f, 4.8f, out _, out var poleLoc)) {
+        pole.transform.localPosition = new Vector3(poleLoc.x, 0f, poleLoc.z);
+        flag.transform.localPosition = new Vector3(poleLoc.x, FlagLow, poleLoc.z);
       }
-      if (TrySafeRim(135f, edge + 2.8f, 5.0f, out var contDeg, out var contLoc)) {
-        DressingSpawn.Place(DressKind.Container, root, contLoc, contDeg + 90f, seed + 21);
+      occupied.Add(new GroundFootprint(pole.transform.position, Vector3.one * 0.8f, Quaternion.identity));
+      var stationMesh = StationMesh(site->Kind);
+      var station = Item(root, "Station", stationMesh, ArtLook.NeutralMaterial);
+      if (TrySafeRim(0f, site->Radius.AsFloat + 3.2f, 5.8f, out _, out var stationLoc)) {
+        station.transform.localPosition = new Vector3(stationLoc.x, 0f, stationLoc.z);
+        var stationArea = new GroundFootprint(station.transform.position + stationMesh.bounds.center,
+          stationMesh.bounds.extents + new Vector3(1f, 0f, 1f), Quaternion.identity);
+        occupied.Add(stationArea);
+      } else {
+        station.SetActive(false);
+      }
+      station.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
+      var seed = KenneyAssetMap.Seed(position, 601);
+      if (station.activeSelf) {
+        if (site->Kind == CaptureKind.Comms) {
+          DressingSpawn.Place(DressKind.SpaceFloor, station.transform, new Vector3(0f, 0.02f, 0f), 0f, seed + 10);
+        }
+        DressingSpawn.Place(DressKind.SpaceProp, station.transform, new Vector3(-1.3f, 0.15f, 0.2f), 90f, seed);
+        DressingSpawn.Place(site->Kind == CaptureKind.Comms ? DressKind.SpaceProp : DressKind.Hopper, station.transform, new Vector3(1.3f, 0.15f, -0.2f), -90f, seed + 1);
+        DressingSpawn.Place(DressKind.Prop, station.transform, new Vector3(0f, 0.15f, 1.1f), 0f, seed + 2);
+      }
+      if (TrySafeRim(315f, edge + 3.8f, 6.4f, out var towerDeg, out var towerLoc)) {
+        DressingSpawn.Place(DressKind.OutpostTower, root, towerLoc, towerDeg + 180f, seed + 20, Reserve);
+      }
+      if (TrySafeRim(135f, edge + 4.4f, 7.2f, out var contDeg, out var contLoc)) {
+        DressingSpawn.Place(DressKind.Container, root, contLoc, contDeg + 90f, seed + 21, Reserve);
       }
       foreach (var degrees in new[] { 45f, 225f }) {
         for (var i = -1; i <= 1; i++) {
           var deg = degrees + i * 11f;
-          var loc = Rim(deg, edge + 1.5f);
-          if (Dressing.IsOnAnyRoad(position + loc, 3.6f) == false) {
-            DressingSpawn.Place(DressKind.OutpostWall, root, loc, deg + 90f, seed + 30 + (int)degrees + i);
+          var loc = Rim(deg, edge + 2.8f);
+          if (Dressing.IsOnAnyRoad(position + loc, 5.2f) == false) {
+            var footprint = default(GroundFootprint);
+            var wall = DressingSpawn.Place(DressKind.OutpostWall, root, loc, deg + 90f, seed + 30 + (int)degrees + i, bounds => {
+              footprint = bounds;
+              return Reserve(bounds);
+            });
+            if (wall != null) _captureBarriers.Add((wall, footprint));
           }
         }
       }
+      foreach (var footprint in occupied) DressingRenderer.Active?.ReserveSite(footprint);
       return new Site {
         Root = root.gameObject, Progress = progress.GetComponent<MeshFilter>(), ProgressRenderer = progress.GetComponent<MeshRenderer>(),
         Flag = flag.transform, FlagRenderer = flag.GetComponent<MeshRenderer>(),
@@ -324,7 +361,9 @@ namespace FactoryWars.View {
         view.ProgressRenderer.sharedMaterial = TeamOf(frame, owned ? site->Owner : site->Claimant, false);
         view.FlagRenderer.sharedMaterial = TeamOf(frame, owned ? site->Owner : site->Claimant, owned);
       }
-      view.Flag.localPosition = Vector3.up * Mathf.Lerp(FlagLow, PoleHeight - 0.5f, owned ? 1f : fraction);
+      var flagPos = view.Flag.localPosition;
+      flagPos.y = Mathf.Lerp(FlagLow, PoleHeight - 0.5f, owned ? 1f : fraction);
+      view.Flag.localPosition = flagPos;
       var contested = site->Claimant.IsValid;
       var ringObject = view.Root.transform.Find("Ring");
       if (ringObject != null && ringObject.gameObject.activeSelf != contested) {
@@ -339,24 +378,23 @@ namespace FactoryWars.View {
       var root = new GameObject("Barricade").transform;
       root.SetParent(_root, false);
       root.localPosition = position;
-      var kit = new MeshKit();
       var local = barricade->Shape;
-      local.Center = default;
-      TerrainKit.Boulders(kit, local, 300 + barricade->Index);
-      Item(root, "Rubble", kit.ToMesh("barricade"), ArtLook.NeutralMaterial).GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
-      // 폐차 더미(Kenney car-kit, 불탄 고철 톤)를 잔해 앞뒤에 섞는다. 판정은 바리케이드 영역 그대로이고, 사라지면 같이 사라진다(항목 19C).
       var length = local.IsCircle ? local.Radius.AsFloat : local.HalfLength.AsFloat;
       var width = local.IsCircle ? local.Radius.AsFloat : local.HalfWidth.AsFloat;
-      for (var i = 0; i < 4; i++) {
-        var along = (i - 1.5f) / 1.5f * length * 0.8f;
-        var side = (i % 2 == 0 ? 1f : -1f) * width * 0.9f;
-        var offset = Quaternion.Euler(0, local.Yaw.AsFloat, 0) * new Vector3(along, 0, side);
-        var tilt = MeshKit.Hash(barricade->Index, 20 + i);
-        var wreck = DressingSpawn.Place(i % 2 == 0 ? DressKind.Wreck : DressKind.Debris, root, offset * 0.8f, local.Yaw.AsFloat + tilt * 70f - 35f, barricade->Index * 13 + i);
-        if (wreck != null && i % 2 == 0) {
-          // 옆으로 기울어진 폐차.
-          wreck.transform.localRotation *= Quaternion.Euler(0f, 0f, tilt < 0.5f ? 12f : 88f);
-        }
+      var body = new GameObject("BarrierSegments").transform;
+      body.SetParent(root, false);
+      body.localRotation = Quaternion.Euler(0f, local.Yaw.AsFloat, 0f);
+      var segmentWidth = length * 2f / 3f;
+      for (var i = -1; i <= 1; i++) {
+        var segment = DressingSpawn.Fitted(DressKind.Barrier, body, segmentWidth, width * 2f, 2f, 300 + barricade->Index * 3 + i);
+        if (segment != null) segment.transform.localPosition = Vector3.right * i * segmentWidth;
+      }
+      if (body.childCount == 0) {
+        var kit = new MeshKit();
+        local.Center = default;
+        local.Yaw = default;
+        TerrainKit.Boulders(kit, local, 300 + barricade->Index);
+        Item(body, "Rubble", kit.ToMesh("barricade"), ArtLook.NeutralMaterial).GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
       }
       _bar ??= BarMesh(Swatch.Black, 0f, "barricade_bar");
       _fill ??= BarMesh(Swatch.LeafLight, 0.06f, "barricade_fill");
@@ -366,7 +404,34 @@ namespace FactoryWars.View {
       bar.localScale = new Vector3(BarWidth, 0.42f, 1f);
       var fill = Item(bar, "Fill", _fill, ArtLook.NeutralMaterial).transform;
       fill.localPosition = new Vector3(0, 0, -0.01f);
-      return new Wall { Root = root.gameObject, Fill = fill, Max = barricade->Health.AsFloat };
+      return new Wall { Root = root.gameObject, Body = body, Fill = fill, Max = barricade->Health.AsFloat };
+    }
+
+    public void CollapseRoadsideBarriers(Vector3 point, float radius) {
+      var blastRadius = radius * 0.7f;
+      DressingRenderer.Active?.RemoveBlastBarriers(point, blastRadius, item => {
+        var center = new Vector3(item.Footprint.Center.x, point.y, item.Footprint.Center.y);
+        var pivot = new GameObject("CollapsingRoadBarrier").transform;
+        pivot.SetParent(_root, false);
+        pivot.position = center;
+        var copy = Object.Instantiate(item.Prefab, pivot);
+        copy.transform.SetPositionAndRotation(item.World.GetColumn(3), item.World.rotation);
+        copy.transform.localScale = item.World.lossyScale;
+        foreach (var collider in copy.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+        _fallingProps.Add(new FallingProp { Pivot = pivot });
+      });
+      var centerPoint = new Vector2(point.x, point.z);
+      for (var i = _captureBarriers.Count - 1; i >= 0; i--) {
+        var entry = _captureBarriers[i];
+        if (entry.Footprint.Overlaps(centerPoint, blastRadius) == false) continue;
+        _captureBarriers.RemoveAt(i);
+        if (entry.Wall == null) continue;
+        var pivot = new GameObject("CollapsingOutpostBarrier").transform;
+        pivot.SetParent(_root, false);
+        pivot.position = entry.Wall.transform.position;
+        entry.Wall.transform.SetParent(pivot, true);
+        _fallingProps.Add(new FallingProp { Pivot = pivot });
+      }
     }
 
     public void Update(Frame frame, float deltaTime, BattleFx fx = null) {
@@ -501,6 +566,16 @@ namespace FactoryWars.View {
         }
       }
       Collect(deltaTime);
+      for (var i = _fallingProps.Count - 1; i >= 0; i--) {
+        var prop = _fallingProps[i];
+        prop.Age += deltaTime;
+        var t = Mathf.Clamp01(prop.Age / FallSeconds);
+        prop.Pivot.localRotation = Quaternion.Euler(t * t * 76f, 0f, t * 12f);
+        if (t >= 1f) {
+          Object.Destroy(prop.Pivot.gameObject);
+          _fallingProps.RemoveAt(i);
+        }
+      }
     }
 
     /// <summary>사라진 상자는 지우고, 무너진 바리케이드는 가라앉힌 뒤 지운다. 무너지는 꾸밈은 항목 19에서 한다.</summary>
@@ -527,7 +602,11 @@ namespace FactoryWars.View {
           wall.Root.transform.Find("Bar").gameObject.SetActive(false);
         }
         wall.Fall += deltaTime / FallSeconds;
-        wall.Root.transform.localScale = new Vector3(1f + wall.Fall * 0.4f, Mathf.Max(0.05f, 1f - wall.Fall), 1f + wall.Fall * 0.4f);
+        wall.Body.localScale = new Vector3(1f, Mathf.Max(0.05f, 1f - wall.Fall), 1f);
+        var t = Mathf.Clamp01(wall.Fall);
+        foreach (Transform segment in wall.Body) {
+          segment.localRotation = Quaternion.Euler(t * t * 65f, segment.localEulerAngles.y, t * (segment.GetSiblingIndex() - 1) * 22f);
+        }
         if (wall.Fall >= 1f) {
           _gone.Add(pair.Key);
         }

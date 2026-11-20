@@ -16,6 +16,7 @@ namespace FactoryWars.View {
     public Action Action;
     public string Icon;
     public bool Locked;
+    public bool Highlight;
     public string Reason;
     /// <summary>길게 누를 때 보일 설명(잠기지 않은 칸).</summary>
     public string Detail;
@@ -34,7 +35,9 @@ namespace FactoryWars.View {
     const float FlashSeconds = 2f;
     public const int ContextSlots = 9;
     public const int ContextColumns = 3;
-    const float Cell = 154f;
+    const float Cell = Ui.MinButtonSize;
+    const int ExtraBuildSlots = ContextColumns;
+    const int PassengerSlots = 6;
     const float Gap = 8f;
     const float Pad = 12f;
     const float HeaderHeight = 50f;
@@ -64,7 +67,7 @@ namespace FactoryWars.View {
     public RectTransform Root { get; private set; }
     public string MenuName => _menu.ToString() + (_menu == Menu.Build ? _menuTier.ToString() : _menu == Menu.Research ? _menuSize.ToString() : "");
 
-    enum Menu { Root, Build, Research, Hangar, HqResearch }
+    enum Menu { Root, Build, Research, Hangar, HqResearch, Factory }
 
     static readonly (string Icon, float Width)[] ResourceSlots = {
       ("res_iron", 150), ("res_wood", 150), ("res_steel", 150), ("res_power", 280), ("res_population", 150),
@@ -90,10 +93,12 @@ namespace FactoryWars.View {
     Text _idleBadge;
     Button[] _groupButtons;
     RectTransform _card;
+    RectTransform _passengerStrip;
     Image _cardIcon;
     Text _cardTitle;
     RectTransform _cardBadge;
     Text _cardBadgeText;
+    readonly Image[] _factoryLevelPips = new Image[3];
     RectTransform _cardHealth;
     Image _cardHealthFill;
     Text _cardDetail;
@@ -565,7 +570,9 @@ namespace FactoryWars.View {
         PingAlert(pos);
         _minimap?.Ping(pos, new Color32(240, 36, 36, 255), 5f);
       }
-      if (mine == false || e.Stage == UltimateStage.Lost || e.Stage == UltimateStage.Launched) {
+      if (e.Kind == UltimateKind.StrategicMissile && e.Stage == UltimateStage.Launched && mine == false) {
+        GameAudio.Play(SoundEvent.MissileWarning);
+      } else if (mine == false || e.Stage == UltimateStage.Lost || e.Stage == UltimateStage.Launched) {
         GameAudio.Play(SoundEvent.Warning);
       }
       _nextRefresh = 0f;
@@ -644,7 +651,7 @@ namespace FactoryWars.View {
       return text;
     }
 
-    RectTransform _doctrinePanel;
+    RectTransform _doctrineOverlay;
     Text _doctrineTitle;
 
     static readonly (int Id, string Name, string Body, string Icon)[] Doctrines = {
@@ -653,27 +660,42 @@ namespace FactoryWars.View {
       (3, "기갑 요새화 군단", "전차·포격함 생산비 -15%\n공병 수리 +50%", "doctrine_armor"),
     };
 
-    /// <summary>항목 37: 경기 시작 직후 도크린 3택 1 카드. 이미지는 UiCatalog 칸(doctrine_*)이 있으면 그것, 없으면 도형 카드.</summary>
+    /// <summary>경기 시작 직후 도크린을 선택하는 카드. UiCatalog 그림을 우선 사용한다.</summary>
     void BuildDoctrinePanel(UiTheme theme) {
-      _doctrinePanel = Ui.Panel("DoctrinePanel", Root, theme.Panel);
-      Ui.Place(_doctrinePanel, new Vector2(0.5f, 0.5f), new Vector2(0, 40), new Vector2(1180, 470));
-      _doctrineTitle = Ui.Label("Title", _doctrinePanel, "전술 도크린을 고르세요", theme.FontLarge, TextAnchor.MiddleCenter);
-      _doctrineTitle.color = theme.PanelText;
-      Ui.Place(_doctrineTitle.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -44), new Vector2(1100, 70));
+      _doctrineOverlay = Ui.Rect("DoctrineOverlay", Root);
+      Ui.Stretch(_doctrineOverlay);
+      var dim = _doctrineOverlay.gameObject.AddComponent<Image>();
+      dim.color = new Color(0.04f, 0.06f, 0.10f, 0.5f);
+      dim.raycastTarget = false;
+      var panel = Ui.Panel("DoctrinePanel", _doctrineOverlay, theme.Panel);
+      Ui.Place(panel, new Vector2(0.5f, 0.5f), new Vector2(0, 40), new Vector2(1180, 470));
+      var header = Ui.Capsule("DoctrineHeader", panel, theme.PanelText);
+      Ui.Place(header, new Vector2(0.5f, 1), new Vector2(0f, -26f), new Vector2(1100f, 64f));
+      header.GetComponent<Image>().raycastTarget = false;
+      _doctrineTitle = Ui.Label("Title", header, "전술 도크린을 고르세요", theme.FontLarge, TextAnchor.MiddleCenter);
+      Ui.Stretch(_doctrineTitle.rectTransform, 8f);
       for (var i = 0; i < Doctrines.Length; i++) {
         var card = Doctrines[i];
         var id = card.Id;
-        var button = Ui.Button($"Doctrine{id}", _doctrinePanel, $"{card.Name}\n\n{card.Body}", () => {
+        var button = Ui.Button($"Doctrine{id}", panel, "", () => {
           Controller.Send(new ChooseDoctrineCommand { Doctrine = id });
-          _doctrinePanel.gameObject.SetActive(false);
+          _doctrineOverlay.gameObject.SetActive(false);
         }, theme.FontMedium - 2);
         Ui.Place((RectTransform)button.transform, new Vector2(0.5f, 0.5f), new Vector2((i - 1) * 375, -30), new Vector2(350, 300));
-        var art = UiCatalog.SpriteFor(card.Icon);
-        if (art != null) {
-          Ui.SetIcon(button, art);
-        }
+        button.GetComponentInChildren<Text>().gameObject.SetActive(false);
+        var fallbackIcon = id == 1 ? "building_airfield" : id == 2 ? "ui_attack_move" : "ui_armor";
+        var icon = Ui.Icon("RoleIcon", button.transform, fallbackIcon, new Vector2(0.5f, 1), new Vector2(0f, -24f), new Vector2(84f, 84f));
+        icon.sprite = UiCatalog.SpriteFor(card.Icon) ?? icon.sprite;
+        icon.preserveAspect = true;
+        var title = Ui.Label("DoctrineName", button.transform, card.Name, theme.FontMedium, TextAnchor.MiddleCenter);
+        title.fontStyle = FontStyle.Bold;
+        title.color = theme.PanelText;
+        Ui.Place(title.rectTransform, new Vector2(0.5f, 1), new Vector2(0f, -115f), new Vector2(310f, 46f));
+        var effect = Ui.Label("DoctrineEffect", button.transform, card.Body, theme.FontSmall - 2, TextAnchor.UpperCenter);
+        effect.color = theme.PanelText;
+        Ui.Place(effect.rectTransform, new Vector2(0.5f, 1), new Vector2(0f, -174f), new Vector2(305f, 95f));
       }
-      _doctrinePanel.gameObject.SetActive(false);
+      _doctrineOverlay.gameObject.SetActive(false);
     }
 
     RectTransform _airOpsPanel;
@@ -682,7 +704,9 @@ namespace FactoryWars.View {
     /// <summary>항목 34-E: 비행장을 선택하지 않아도 격납고 작전기를 바로 출격·재정비 확인할 수 있는 항공 작전 패널.</summary>
     void BuildAirOpsPanel(UiTheme theme) {
       _airOpsPanel = Ui.Panel("AirOpsPanel", Root, theme.Panel);
-      Ui.Place(_airOpsPanel, new Vector2(0f, 0f), new Vector2(328, 12), new Vector2(560, 88));
+      var buttonsWidth = SortieSystem.Slots * Cell + (SortieSystem.Slots - 1) * Gap;
+      Ui.Place(_airOpsPanel, Vector2.zero, new Vector2(Pad, 8f + 3f * Cell + 20f + Gap),
+        new Vector2(buttonsWidth + 2f * Pad, Cell + 2f * Pad));
       for (var i = 0; i < SortieSystem.Slots; i++) {
         var idx = i;
         var btn = Ui.Button($"AirOp{idx}", _airOpsPanel, "빈 칸", () => {
@@ -699,7 +723,7 @@ namespace FactoryWars.View {
           input.SortieSlot = entry.Slot;
           input.Mode = picking ? MatchInput.TapMode.None : MatchInput.TapMode.Sortie;
         }, theme.FontSmall);
-        Ui.Place((RectTransform)btn.transform, new Vector2(0f, 0.5f), new Vector2(10 + idx * 136, 0), new Vector2(128, 70));
+        Ui.Place((RectTransform)btn.transform, new Vector2(0f, 0.5f), new Vector2(Pad + idx * (Cell + Gap), 0f), new Vector2(Cell, Cell));
         _airOpsSlots.Add((btn, btn.GetComponentInChildren<Text>(), EntityRef.None, 0));
       }
       _airOpsPanel.gameObject.SetActive(false);
@@ -757,18 +781,21 @@ namespace FactoryWars.View {
     public bool DoctrineOpen { get; private set; }
 
     void RefreshDoctrine(Frame frame) {
-      if (_doctrinePanel == null || Controller.Player.IsValid == false) {
+      if (_doctrineOverlay == null || Controller.Player.IsValid == false) {
         return;
       }
       var state = FactoryWarsUtil.Player(frame, Controller.Player);
       var rules = frame.FindAsset(frame.RuntimeConfig.Rules);
       var left = rules.DoctrineSelectSeconds - frame.Number / Mathf.Max(1, frame.SessionConfig.UpdateFPS);
       var show = state != null && state->DoctrineLocked == false && left > 0;
-      if (_doctrinePanel.gameObject.activeSelf != show) {
-        _doctrinePanel.gameObject.SetActive(show);
+      if (_doctrineOverlay.gameObject.activeSelf != show) {
+        _doctrineOverlay.gameObject.SetActive(show);
       }
       DoctrineOpen = show;
       if (show) {
+        if (_doctrineOverlay.GetSiblingIndex() != Root.childCount - 1) {
+          _doctrineOverlay.SetAsLastSibling();
+        }
         // 큰 창이 겹치지 않게: 도크린 선택 중에는 오른쪽 명령 패널·선택 카드를 숨긴다.
         _contextPanel?.SetActive(false);
         _card?.gameObject.SetActive(false);
@@ -799,6 +826,14 @@ namespace FactoryWars.View {
       _cardBadgeText = Ui.Label("Text", _cardBadge, "", theme.FontSmall, TextAnchor.MiddleCenter);
       _cardBadgeText.color = Color.white;
       Ui.Stretch(_cardBadgeText.rectTransform);
+      for (var i = 0; i < _factoryLevelPips.Length; i++) {
+        var pip = Ui.Capsule($"FactoryLevel{i + 1}", _card);
+        Ui.Place(pip, new Vector2(1, 1), new Vector2(-Pad - (2 - i) * 30f, -54f), new Vector2(26f, 5f));
+        var image = pip.GetComponent<Image>();
+        image.raycastTarget = false;
+        _factoryLevelPips[i] = image;
+        pip.gameObject.SetActive(false);
+      }
       _cardHealth = Ui.Rect("HealthBar", _card);
       var back = _cardHealth.gameObject.AddComponent<Image>();
       back.sprite = UiCatalog.SpriteFor("health_bar");
@@ -822,11 +857,16 @@ namespace FactoryWars.View {
         var icon = Ui.Icon($"Queue{i}", _card, "", new Vector2(0, 0), new Vector2(176 + i * 64, Pad), new Vector2(56, 56));
         _queueIcons.Add(icon);
       }
-      // 수송 유닛 선택 시 하단 카드 승객 초상화 스트립(최대 6칸, 탭 시 해당 승객만 개별 하차).
-      for (var i = 0; i < 6; i++) {
+      // 선택 카드 위의 승객 초상화. 탭하면 해당 승객만 개별 하차한다.
+      _passengerStrip = Ui.Panel("PassengerStrip", _card, theme.Panel);
+      var passengerWidth = PassengerSlots * (Cell + Gap) - Gap + 2 * Pad;
+      Ui.Place(_passengerStrip, new Vector2(0.5f, 0), new Vector2(0f, _card.sizeDelta.y + Gap),
+        new Vector2(passengerWidth, Cell + 2 * Pad));
+      _passengerStrip.gameObject.SetActive(false);
+      for (var i = 0; i < PassengerSlots; i++) {
         var idx = i;
-        var pBtn = Ui.Button($"Passenger{i}", _card, "", () => UnloadPassengerSlot(idx), theme.FontSmall - 4);
-        Ui.Place((RectTransform)pBtn.transform, new Vector2(0, 0), new Vector2(176 + i * 66, Pad), new Vector2(60, 58));
+        var pBtn = Ui.Button($"Passenger{i}", _passengerStrip, "", () => UnloadPassengerSlot(idx), theme.FontSmall);
+        Ui.Place((RectTransform)pBtn.transform, Vector2.zero, new Vector2(Pad + i * (Cell + Gap), Pad), new Vector2(Cell, Cell));
         var bgImg = pBtn.GetComponent<Image>();
         if (bgImg != null) {
           bgImg.color = new Color(0.11f, 0.16f, 0.24f, 0.96f);
@@ -852,19 +892,22 @@ namespace FactoryWars.View {
       var panel = Ui.Panel("ContextPanel", Root, theme.Panel);
       _contextPanel = panel.gameObject;
       Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 8), new Vector2(ContextWidth, ContextHeight));
-      _status = Ui.Label("Status", panel, "", theme.FontSmall + 2);
-      _status.color = theme.PanelText;
+      var header = Ui.Capsule("CommandHeader", panel, theme.PanelText);
+      header.GetComponent<Image>().raycastTarget = false;
+      header.anchorMin = new Vector2(0, 1);
+      header.anchorMax = Vector2.one;
+      header.pivot = new Vector2(0.5f, 1f);
+      header.sizeDelta = new Vector2(-2 * Pad, HeaderHeight - 6f);
+      header.anchoredPosition = new Vector2(0f, -8f);
+      _status = Ui.Label("Status", header, "", theme.FontSmall + 2, TextAnchor.MiddleCenter);
+      _status.color = Color.white;
       _status.horizontalOverflow = HorizontalWrapMode.Wrap;
       _status.resizeTextForBestFit = true;
       _status.resizeTextMinSize = theme.FontSmall - 4;
       _status.resizeTextMaxSize = theme.FontSmall + 2;
-      _status.rectTransform.anchorMin = new Vector2(0, 1);
-      _status.rectTransform.anchorMax = Vector2.one;
-      _status.rectTransform.pivot = new Vector2(0.5f, 1);
-      _status.rectTransform.sizeDelta = new Vector2(-2 * Pad, HeaderHeight - 4);
-      _status.rectTransform.anchoredPosition = new Vector2(0, -6);
-      _context = new Button[ContextSlots];
-      for (var i = 0; i < ContextSlots; i++) {
+      Ui.Stretch(_status.rectTransform, 7f);
+      _context = new Button[ContextSlots + ExtraBuildSlots];
+      for (var i = 0; i < _context.Length; i++) {
         var index = i;
         _context[i] = Ui.Button($"Context{i}", panel, "", () => PressContext(index), theme.FontSmall);
         var row = i / ContextColumns;
@@ -1404,6 +1447,7 @@ namespace FactoryWars.View {
       _cardTitle.gameObject.SetActive(single);
       _cardHealth.gameObject.SetActive(single);
       _cardDetail.gameObject.SetActive(single);
+      foreach (var pip in _factoryLevelPips) pip.gameObject.SetActive(false);
       if (single == false) {
         _cardBadge.gameObject.SetActive(false);
         foreach (var icon in _queueIcons) {
@@ -1495,9 +1539,7 @@ namespace FactoryWars.View {
     void HidePassengers() {
       _passengerEntities.Clear();
       _passengerTransport = EntityRef.None;
-      foreach (var btn in _passengerButtons) {
-        btn.gameObject.SetActive(false);
-      }
+      _passengerStrip.gameObject.SetActive(false);
     }
 
     void UnloadPassengerSlot(int index) {
@@ -1544,6 +1586,9 @@ namespace FactoryWars.View {
         var passengers = TransportSystem.Passengers(frame, entity);
         var used = TransportSystem.UsedSlots(frame, entity);
         lines += $"\n탑승 {used}/{spec.TransportCapacity}  " + (passengers.Count > 0 ? "(초상화 탭: 개별 하차)" : "(아군 선택 후 탭: 탑승)");
+        var shown = Mathf.Min(passengers.Count, PassengerSlots);
+        _passengerStrip.gameObject.SetActive(shown > 0);
+        _passengerStrip.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, shown * (Cell + Gap) - Gap + 2 * Pad);
         _passengerTransport = entity;
         _passengerEntities.Clear();
         for (var i = 0; i < _passengerButtons.Count; i++) {
@@ -1570,15 +1615,29 @@ namespace FactoryWars.View {
       _cardIcon.sprite = Ui.IconSprite(BuildingIcon(spec));
       _cardTitle.text = Texts.NameOf(spec.name);
       var tierBadge = spec.Role == BuildingRole.Headquarters;
-      _cardBadge.gameObject.SetActive(tierBadge);
-      if (tierBadge) {
-        _cardBadgeText.text = $"{Mathf.Max(1, building.Tier)}단계";
+      var factory = FactorySystem.IsUpgradeableFactory(spec.Role) && building.ConstructionRemaining <= FP._0;
+      var factoryLevel = FactorySystem.LevelOf(&building);
+      _cardBadge.gameObject.SetActive(tierBadge || factory);
+      if (tierBadge || factory) {
+        _cardBadgeText.text = factory ? $"Lv. {factoryLevel}" : $"{Mathf.Max(1, building.Tier)}단계";
         _cardBadge.GetComponent<Image>().color = UiTheme.Current.Accent;
+      }
+      if (factory) {
+        for (var i = 0; i < _factoryLevelPips.Length; i++) {
+          var pip = _factoryLevelPips[i];
+          pip.gameObject.SetActive(true);
+          pip.color = i < factoryLevel ? UiTheme.Current.Accent : new Color(0.64f, 0.70f, 0.78f, 1f);
+        }
       }
       SetHealth(building.Health.AsFloat / Mathf.Max(1f, spec.MaxHealth.AsFloat));
       var detail = $"체력 {building.Health.AsInt}/{spec.MaxHealth.AsInt}";
+      if (factory && FactorySystem.IsProductionFactory(spec.Role)) {
+        detail += $"   증축 보너스 +{FactoryUpgradeBonus(frame, factoryLevel)}%";
+      }
       if (building.ConstructionRemaining > FP._0) {
-        detail += $"   건설 {Mathf.CeilToInt(building.ConstructionRemaining.AsFloat)}초 남음";
+        var paving = AirfieldWorkSystem.InPavingPhase(frame, entity, &building, spec, out _);
+        var phase = paving ? AirfieldWorkName(spec.Role) + " 공사" : "건설";
+        detail += $"   {phase} {Mathf.CeilToInt(building.ConstructionRemaining.AsFloat)}초 남음";
       }
       if (building.UpgradeTier > 0) {
         detail += $"\n{Texts.TierName(building.UpgradeTier)}로 업그레이드 {Mathf.CeilToInt(building.UpgradeRemaining.AsFloat)}초";
@@ -1655,9 +1714,13 @@ namespace FactoryWars.View {
         showPanel = true;
       }
       _status.text = status;
-      if (Entries.Count > ContextSlots) {
-        Entries.RemoveRange(ContextSlots, Entries.Count - ContextSlots);
+      var limit = _menu == Menu.Build ? _context.Length : ContextSlots;
+      if (Entries.Count > limit) {
+        Entries.RemoveRange(limit, Entries.Count - limit);
       }
+      var panelHeight = ContextHeight + (Entries.Count > ContextSlots ? Cell + Gap : 0f);
+      ((RectTransform)_contextPanel.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, panelHeight);
+      _tooltip.anchoredPosition = new Vector2(-12, 8 + panelHeight + Gap);
       _contextPanel.SetActive(showPanel && (Entries.Count > 0 || input.IsPlacing));
       for (var i = 0; i < _context.Length; i++) {
         // 빈 칸(자리 맞춤용)은 그리지 않는다.
@@ -1666,7 +1729,7 @@ namespace FactoryWars.View {
         if (used) {
           Ui.SetLabel(_context[i], Entries[i].Label);
           Ui.SetIcon(_context[i], Entries[i].Icon != null ? Ui.IconSprite(Entries[i].Icon) : null);
-          Ui.SetLocked(_context[i], Entries[i].Enabled == false);
+          Ui.SetLocked(_context[i], Entries[i].Enabled == false, Entries[i].Highlight);
         }
       }
     }
@@ -1815,8 +1878,13 @@ namespace FactoryWars.View {
       return faction.Buildings.Select(b => frame.FindAsset(b)).Where(b => b.Defensive == false).Select(b => Mathf.Max(1, b.RequiredTier)).Distinct().OrderBy(t => t).Where(t => t <= tier + 1).ToList();
     }
 
-    /// <summary>건설 하위 메뉴 3분류: 1=생산 공장(보병·기동·중기갑·항공·항모/미사일·조선소), 2=산업·연구(제련소·발전소·연구 공장·보급·사령부), 0=방어·지원.</summary>
-    static bool InBuildMenu(BuildingSpec spec, int menu) {
+    public const int ExtractionBuildMenu = 3;
+
+    /// <summary>건설 하위 메뉴: 방어·지원, 병기 공장, 산업·보급, 자원 채굴.</summary>
+    public static bool InBuildMenu(BuildingSpec spec, int menu) {
+      if (menu == ExtractionBuildMenu || spec.RequiresResourceNode) {
+        return menu == ExtractionBuildMenu && spec.RequiresResourceNode;
+      }
       if (menu == 0) {
         return spec.Defensive || spec.Role == BuildingRole.MedicTent || spec.Role == BuildingRole.RepairBay
           || spec.Role == BuildingRole.Radar || spec.Role == BuildingRole.Artillery;
@@ -1853,7 +1921,13 @@ namespace FactoryWars.View {
         }
         PadTo(ContextSlots - 1);
         Entries.Add(new ContextEntry { Label = "뒤로", Icon = "ui_back", Enabled = true, Action = () => _menu = Menu.Root });
-        return $"건설: {(_menuTier == 1 ? "병기 공장" : _menuTier == 2 ? "산업·보급" : "방어·지원")}";
+        var menuLabel = _menuTier switch {
+          1 => "병기 공장",
+          2 => "산업·보급",
+          ExtractionBuildMenu => "자원 채굴",
+          _ => "방어·지원",
+        };
+        return $"건설: {menuLabel}";
       }
       Entries.Add(new ContextEntry {
         Label = "병기 공장", Icon = "ui_build1", Enabled = true,
@@ -1872,6 +1946,13 @@ namespace FactoryWars.View {
       });
       PadTo(ContextColumns + (Entries.Count > ContextColumns ? ContextColumns : 0));
       Entries.Add(new ContextEntry { Label = "정지", Icon = "ui_stop", Enabled = true, Action = () => Controller.Stop() });
+      if (faction.Buildings.Any(reference => frame.FindAsset(reference).RequiresResourceNode)) {
+        Entries.Add(new ContextEntry {
+          Label = "자원 채굴", Icon = "ui_build2", Enabled = true,
+          Detail = "제재소·철 채굴 공장을 자원 노드 위에 건설합니다.",
+          Action = () => { _menu = Menu.Build; _menuTier = ExtractionBuildMenu; },
+        });
+      }
       return $"공병  {Texts.TierName(tier)}";
     }
 
@@ -1948,6 +2029,58 @@ namespace FactoryWars.View {
       return status;
     }
 
+    static int FactoryUpgradeBonus(Frame frame, int level) {
+      if (level <= 1) return 0;
+      var rules = FactoryWarsUtil.Rules(frame);
+      var bonus = level == 2 ? rules.FactoryLv2SpeedBonus : rules.FactoryLv3SpeedBonus;
+      return bonus > FP._0 ? Mathf.RoundToInt(bonus.AsFloat * 100f) : level == 2 ? 25 : 50;
+    }
+
+    string FactoryEntries(Frame frame, PlayerState* state, EntityRef entity, Building* building, BuildingSpec spec, int level) {
+      var status = $"공장 관리 · Lv. {level}";
+      var production = FactorySystem.IsProductionFactory(spec.Role);
+      if (level < 3) {
+        var next = level + 1;
+        var cost = FactorySystem.UpgradeCost(frame, next);
+        var stock = state->Stock;
+        var affordable = stock.Covers(cost);
+        var addition = next == 2 ? "측면 정비동" : "산업 굴뚝";
+        var effect = production ? $" · 기본 대비 생산 +{FactoryUpgradeBonus(frame, next)}%" : "";
+        Entries.Add(new ContextEntry {
+          Label = $"Lv. {next} 증축\n{Texts.Cost(cost, stock, "\n")}", Icon = "ui_build2",
+          Enabled = affordable, Locked = !affordable, Highlight = true,
+          Reason = affordable ? null : "자원 부족",
+          Detail = $"{addition} 추가{effect}",
+          Action = () => Controller.Send(new UpgradeFactoryCommand { Building = entity }),
+        });
+      } else {
+        status += " · 최대 단계";
+      }
+      if (production) {
+        if (FactorySystem.HasAdjacencySynergy(frame, entity, building)) {
+          var configuredSynergy = FactoryWarsUtil.Rules(frame).FactorySynergyBonus;
+          var synergy = configuredSynergy > FP._0 ? Mathf.RoundToInt(configuredSynergy.AsFloat * 100f) : 15;
+          status += $" · 시너지 +{synergy}%";
+        }
+        var active = FactorySystem.IsOverdriving(frame, building);
+        var fps = (float)frame.SessionConfig.UpdateFPS;
+        var cooldown = Mathf.Max(0, Mathf.CeilToInt((building->OverdriveCooldownFrame - frame.Number) / fps));
+        var remaining = Mathf.Max(0, Mathf.CeilToInt((building->OverdriveUntilFrame - frame.Number) / fps));
+        var configuredBonus = FactoryWarsUtil.Rules(frame).OverdriveSpeedBonus;
+        var bonus = configuredBonus > FP._0 ? Mathf.RoundToInt(configuredBonus.AsFloat * 100f) : 50;
+        Entries.Add(new ContextEntry {
+          Label = active ? $"과부하 중지\n{remaining}초" : cooldown > 0 ? $"과부하 대기\n{cooldown}초" : $"과부하\n생산 +{bonus}%",
+          Icon = "ui_attack", Enabled = active || cooldown == 0, Locked = !active && cooldown > 0,
+          Reason = cooldown > 0 && !active ? $"과부하 재사용까지 {cooldown}초" : null,
+          Detail = $"일시적으로 생산 +{bonus}%. 전력을 더 소비하고 시설이 과열됩니다.",
+          Action = () => Controller.Send(new OverdriveFactoryCommand { Building = entity }),
+        });
+      }
+      PadTo(ContextSlots - 1);
+      Entries.Add(new ContextEntry { Label = "뒤로", Icon = "ui_back", Enabled = true, Action = () => _menu = Menu.Root });
+      return status;
+    }
+
     string BuildingEntries(Frame frame, PlayerState* state, EntityRef entity) {
       var building = frame.Get<Building>(entity);
       var spec = frame.FindAsset(building.Spec);
@@ -1956,9 +2089,24 @@ namespace FactoryWars.View {
         return status;
       }
       if (building.ConstructionRemaining > FP._0) {
+        if (AirfieldWorkSystem.InPavingPhase(frame, entity, &building, spec, out _)) {
+          return $"{AirfieldWorkName(spec.Role)} 공사 중 · 생산 잠김";
+        }
         return status + "  건설 중";
       }
       var tier = TechSystem.Tier(frame, Controller.Player);
+      if (FactorySystem.IsUpgradeableFactory(spec.Role)) {
+        var level = FactorySystem.LevelOf(&building);
+        if (_menu == Menu.Factory) {
+          return FactoryEntries(frame, state, entity, &building, spec, level);
+        }
+        if (_menu == Menu.Root) {
+          Entries.Add(new ContextEntry {
+            Label = $"공장 관리\nLv. {level}", Icon = "ui_build2", Enabled = true, Highlight = true,
+            Detail = "공장 증축과 과부하 상태를 확인합니다.", Action = () => _menu = Menu.Factory,
+          });
+        }
+      }
       if (spec.Role == BuildingRole.ResearchLab) {
         return ResearchEntries(frame, state, entity, building, tier, false);
       }
@@ -1984,17 +2132,20 @@ namespace FactoryWars.View {
         });
       }
       // 항목 33 벙커: 안의 분대를 내보낸다.
-      if (spec.GarrisonCapacity > 0) {
+      var capacity = spec.RequiresResourceNode ? spec.WorkerSlotCapacity : spec.GarrisonCapacity;
+      if (capacity > 0) {
         var inside = 0;
         foreach (var pair in frame.GetComponentIterator<Unit>()) {
           inside += pair.Component.Garrison == entity ? 1 : 0;
         }
         Entries.Add(new ContextEntry {
-          Label = $"내보내기\n{inside}/{spec.GarrisonCapacity}", Icon = "ui_rally_clear", Enabled = inside > 0, Locked = false,
-          Detail = "보병 분대를 고르고 벙커를 누르면 들어갑니다. 안에서는 맞지 않고, 벙커가 부서지면 튕겨 나옵니다",
+          Label = spec.RequiresResourceNode ? $"공병 내보내기\n{inside}/{capacity}" : $"내보내기\n{inside}/{capacity}",
+          Icon = "ui_rally_clear", Enabled = inside > 0, Locked = false,
+          Detail = spec.RequiresResourceNode ? "배치된 공병을 한 명 내보냅니다. 배치된 공병이 없으면 채굴을 멈춥니다."
+            : "보병 분대를 고르고 벙커를 누르면 들어갑니다. 안에서는 맞지 않고, 벙커가 부서지면 튕겨 나옵니다",
           Action = () => Controller.Send(new ExitGarrisonCommand { Building = entity }),
         });
-        status += $"  수용 {inside}/{spec.GarrisonCapacity}";
+        status += spec.RequiresResourceNode ? $"  공병 {inside}/{capacity}" : $"  수용 {inside}/{capacity}";
       }
 
       var stock = state->Stock;
@@ -2020,36 +2171,6 @@ namespace FactoryWars.View {
         Entries.Add(new ContextEntry {
           Label = "생산 취소", Icon = "ui_cancel", Enabled = true, Detail = "대기열 맨 뒤를 취소하고 환불",
           Action = () => Controller.Send(new ProduceCommand { Building = entity, Unit = last, Count = 1, Cancel = true }),
-        });
-      }
-      // 심화 산업 공장 제어: Lv.1 -> Lv.2(+25%) -> Lv.3(+50%) 증축 & 비상 과부하(Overdrive +50%, 20초).
-      var fLevel = FactorySystem.LevelOf(&building);
-      var hasSynergy = FactorySystem.HasAdjacencySynergy(frame, entity, &building);
-      if (FactorySystem.IsUpgradeableFactory(spec.Role)) {
-        status += $"  Lv.{fLevel}";
-        if (hasSynergy) status += " · 시너지 +15%";
-        if (fLevel < 3) {
-          var nextLv = fLevel + 1;
-          var upCost = FactorySystem.UpgradeCost(frame, nextLv);
-          var canAfford = stock.Covers(upCost);
-          Entries.Add(new ContextEntry {
-            Label = $"공장 증축 Lv.{nextLv}\n{Texts.Cost(upCost, stock)}", Icon = "ui_build2", Enabled = canAfford, Locked = canAfford == false,
-            Reason = canAfford ? null : "자원 부족",
-            Detail = $"공장을 Lv.{nextLv}로 확장 (생산 속도 +{(nextLv == 2 ? 25 : 50)}%, 추가 굴뚝/배관)",
-            Action = () => Controller.Send(new UpgradeFactoryCommand { Building = entity }),
-          });
-        }
-      }
-      if (FactorySystem.IsProductionFactory(spec.Role)) {
-        var odActive = FactorySystem.IsOverdriving(frame, &building);
-        var odCd = Mathf.Max(0, Mathf.CeilToInt((building.OverdriveCooldownFrame - frame.Number) / (float)frame.SessionConfig.UpdateFPS));
-        var odLeft = Mathf.Max(0, Mathf.CeilToInt((building.OverdriveUntilFrame - frame.Number) / (float)frame.SessionConfig.UpdateFPS));
-        if (odActive) status += $" · 과부하 {odLeft}초";
-        Entries.Add(new ContextEntry {
-          Label = odActive ? $"과부하 중지\n({odLeft}초)" : odCd > 0 ? $"과부하 대기\n{odCd}초" : "과부하\n속도 +50%",
-          Icon = "ui_attack", Enabled = odActive || odCd == 0, Locked = odActive == false && odCd > 0,
-          Detail = "비상 과부하(20초): 생산 속도 +50%, 전력 소비 2배, 소량 과열 피해",
-          Action = () => Controller.Send(new OverdriveFactoryCommand { Building = entity }),
         });
       }
       if (spec.Role == BuildingRole.Headquarters) {
@@ -2091,6 +2212,8 @@ namespace FactoryWars.View {
       }
       return status;
     }
+
+    static string AirfieldWorkName(BuildingRole role) => role == BuildingRole.Helipad ? "착륙장" : "활주로";
 
     void UpgradeEntry(Frame frame, PlayerState* state, EntityRef entity, Building building, int tier) {
       if (building.UpgradeTier > 0) {

@@ -1,6 +1,7 @@
 namespace FactoryWars.View {
   using System.Collections.Generic;
   using Quantum;
+  using Quantum.FactoryWars;
   using UnityEngine;
   using UnityEngine.Rendering;
 
@@ -20,6 +21,7 @@ namespace FactoryWars.View {
       public int Seed;
       public float Amount;
       public int Step = -1;
+      public float ClearHalfExtent;
       public MeshFilter Filter;
       /// <summary>숲 자리의 전장 손상 단계(0 멀쩡, 1 그을림, 2 부러짐). 바뀌면 나무를 다시 놓는다(항목 27 K-2).</summary>
       public int ScarBand;
@@ -70,6 +72,9 @@ namespace FactoryWars.View {
     readonly ViewCatalog _catalog;
     readonly Dictionary<EntityRef, Forest> _forests = new Dictionary<EntityRef, Forest>();
     readonly Dictionary<EntityRef, GameObject> _crystals = new Dictionary<EntityRef, GameObject>();
+    readonly Dictionary<EntityRef, GameObject> _mineRoots = new Dictionary<EntityRef, GameObject>();
+    readonly Dictionary<EntityRef, float> _mountedNodes = new Dictionary<EntityRef, float>();
+    readonly Dictionary<EntityRef, List<Dressing.Item>> _coveredMineDressing = new Dictionary<EntityRef, List<Dressing.Item>>();
     public BattleFx Fx { get; set; }
     public int BarrierCount => _barriers.Count;
     public float BarrierDrop => Mathf.Max(_barrierDrop, 0f);
@@ -113,6 +118,8 @@ namespace FactoryWars.View {
     public static Material SharedGroundMaterial => GroundMaterial();
 
     static Material _road;
+    public const string AsphaltNormalPath = "FactoryWars/Art/Asphalt02Normal";
+    static Texture2D _asphaltNormal;
 
     /// <summary>
     /// 길 전용 머티리얼: 바닥과 같지만 전장 손상(_ScarStrength)을 약하게 해, 교전이 잦은 교차로에서 아스팔트가 흙색으로 바뀌어
@@ -124,7 +131,10 @@ namespace FactoryWars.View {
         _road.SetFloat("_ScarStrength", VisualProfile.Current.FieldLook ? 0.18f : 1f);
         _road.SetFloat("_GridStrength", 0f);
         _road.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Geometry + 10;
+        _asphaltNormal = Resources.Load<Texture2D>(AsphaltNormalPath);
+        if (_asphaltNormal != null) _road.SetTexture("_AsphaltNormalMap", _asphaltNormal);
       }
+      RefreshSurfaceDetail();
       return _road;
     }
 
@@ -147,7 +157,17 @@ namespace FactoryWars.View {
         _ground.SetFloat("_GridSize", 2f);
         _ground.SetFloat("_ScarStrength", 1f);
       }
+      RefreshSurfaceDetail();
       return _ground;
+    }
+
+    public static void RefreshSurfaceDetail() {
+      var relief = GraphicsQuality.Current == QualityTier.Low ? 0f : VisualProfile.Current.SurfaceRelief;
+      if (_ground != null) _ground.SetFloat("_SurfaceRelief", relief);
+      if (_road != null) {
+        _road.SetFloat("_SurfaceRelief", relief * 0.6f);
+        _road.SetFloat("_AsphaltNormalStrength", _asphaltNormal != null ? Mathf.Min(relief * 1.8f, 0.55f) : 0f);
+      }
     }
 
     static GameObject MeshObject(Transform parent, string name, Mesh mesh, bool casts) {
@@ -211,7 +231,9 @@ namespace FactoryWars.View {
               tint = swatch == Swatch.Concrete || swatch == Swatch.ConcreteDark ? VisualProfile.Current.GroundPlaza
                 : swatch == Swatch.Asphalt && VisualProfile.Current.RoadColor.a > 0f ? VisualProfile.Current.RoadColor : ArtPalette.ColorOf(swatch);
             }
-            roadColors[v] = linear ? tint.linear : tint;
+            var color = linear ? tint.linear : tint;
+            color.a = swatch == Swatch.Asphalt && biome != TerrainKit.Biome.Desert ? 1f : 0f;
+            roadColors[v] = color;
           }
           roadMesh.colors = roadColors;
           roadMesh.RecalculateBounds();
@@ -255,10 +277,10 @@ namespace FactoryWars.View {
       Dressing.Begin();
       UrbanDecor.Build(_map);
       Dressing.End("urban");
-      Dressing.Begin();
-      Scatter.Fill(_map);
-      Dressing.End("scatter");
       BuildBiomeProps(biome);
+      Dressing.Begin();
+      Scatter.Fill(_map, ClearOfBiomeProps);
+      Dressing.End("scatter");
       if (features.TriangleCount > 0) {
         MeshObject(_root, "Features", features.ToMesh("world_features"), true);
       }
@@ -362,19 +384,55 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>바이옴별 실제 Synty 프리팹(사막 모래언덕·선인장·바위·폐허·고사목, 시가전 PolygonCity 고층/아파트 빌딩)을 배치한다.</summary>
+    readonly List<(GameObject Object, GroundFootprint Footprint)> _biomeProps = new List<(GameObject, GroundFootprint)>();
+
+    public IEnumerable<GroundFootprint> BiomePropFootprints {
+      get {
+        foreach (var item in _biomeProps) yield return item.Footprint;
+      }
+    }
+
+    bool ClearOfBiomeProps(GroundFootprint footprint) => _biomeProps.TrueForAll(item => footprint.Overlaps(item.Footprint, 0.4f) == false);
+
+    public void ClearBiomeProps(System.Predicate<GroundFootprint> overlaps) {
+      for (var i = _biomeProps.Count - 1; i >= 0; i--) {
+        var item = _biomeProps[i];
+        if (overlaps(item.Footprint) == false) continue;
+        item.Object.SetActive(false);
+        Object.Destroy(item.Object);
+        _biomeProps.RemoveAt(i);
+      }
+    }
+
+    /// <summary>바이옴별 Synty 소품을 이미 배치된 도로·건물·갓길 소품과 겹치지 않는 곳에 놓는다.</summary>
     void BuildBiomeProps(TerrainKit.Biome biome) {
-      if (biome != TerrainKit.Biome.Desert && biome != TerrainKit.Biome.Urban) {
+      if (biome == TerrainKit.Biome.Standard) {
         return;
       }
       var holder = new GameObject($"BiomeProps_{biome}").transform;
       holder.SetParent(_root, false);
       GameObject LoadFx(string fxName) => VisualCatalog.TryFilled(VisualCatalog.FxId(fxName), out var s) ? s.Prefab : null;
+      var measured = new Dictionary<GameObject, Bounds>();
+      bool Place(GameObject prefab, Vector3 spot, float yaw, float scale) {
+        if (prefab == null) return false;
+        if (measured.TryGetValue(prefab, out var bounds) == false) {
+          bounds = VisualCatalog.LocalBounds(prefab);
+          measured[prefab] = bounds;
+        }
+        var rotation = Quaternion.Euler(0f, yaw, 0f);
+        var footprint = new GroundFootprint(spot + rotation * (bounds.center * scale), bounds.extents * scale, rotation);
+        if (UrbanDecor.Fits(_map, footprint) == false || ClearOfBiomeProps(footprint) == false) return false;
+        var go = Object.Instantiate(prefab, spot, rotation, holder);
+        go.transform.localScale = Vector3.one * scale;
+        _biomeProps.Add((go, footprint));
+        return true;
+      }
 
       if (biome == TerrainKit.Biome.Desert) {
         var dunes = new[] { LoadFx("desert_dune_1"), LoadFx("desert_dune_2"), LoadFx("desert_dune_3") };
         var cacti = new[] { LoadFx("desert_cactus_1"), LoadFx("desert_cactus_2"), LoadFx("desert_cactus_3") };
         var rocks = new[] { LoadFx("desert_rock_1"), LoadFx("desert_rock_2"), LoadFx("desert_rock_3"), LoadFx("desert_rock_arch"), LoadFx("desert_ruin_1") };
+        var outposts = new[] { LoadFx("desert_outpost_1"), LoadFx("desert_outpost_2"), LoadFx("desert_outpost_3") };
         var deadTree = LoadFx("desert_tree");
         var oasis = LoadFx("desert_oasis");
         var idx = 0;
@@ -385,17 +443,19 @@ namespace FactoryWars.View {
             var jx = (MeshKit.Hash(idx, 11) - 0.5f) * 10f;
             var jz = (MeshKit.Hash(idx, 13) - 0.5f) * 10f;
             var spot = new Vector3(x + jx, 0f, z + jz);
-            if (UrbanDecor.Allowed(_map, spot) == false || Dressing.IsOnAnyRoad(spot, 4.5f) || Dressing.InTraderClear(spot)) {
+            if (UrbanDecor.Allowed(_map, spot) == false || Dressing.IsOnAnyRoad(spot, 5.2f) || Dressing.InTraderClear(spot)) {
               continue;
             }
             var roll = MeshKit.Hash(idx, 17);
             GameObject prefab = null;
             var scale = 1f;
-            if (roll < 0.16f && Dressing.IsOnAnyRoad(spot, 15f) == false) {
-              // 대형 모래언덕은 도로와 15m 이상 떨어진 외곽 사막 평원에만 배치해 사막 도로를 가리지 않는다.
+            if (roll < 0.14f && Dressing.IsOnAnyRoad(spot, 15f) == false) {
               prefab = dunes[idx % dunes.Length];
               scale = 0.45f + MeshKit.Hash(idx, 19) * 0.35f;
-            } else if (roll < 0.54f) {
+            } else if (roll < 0.22f && Dressing.IsOnAnyRoad(spot, 9.5f) == false) {
+              prefab = outposts[idx % outposts.Length];
+              scale = 0.85f;
+            } else if (roll < 0.56f) {
               prefab = cacti[idx % cacti.Length];
               scale = 1.45f + MeshKit.Hash(idx, 19) * 0.85f;
             } else if (roll < 0.80f) {
@@ -408,11 +468,47 @@ namespace FactoryWars.View {
               prefab = oasis;
               scale = 0.42f;
             }
-            if (prefab == null) continue;
-            var go = Object.Instantiate(prefab, spot, Quaternion.Euler(0f, MeshKit.Hash(idx, 23) * 360f, 0f), holder);
-            go.transform.localScale = Vector3.one * scale;
+            if (Place(prefab, spot, MeshKit.Hash(idx, 23) * 360f, scale) == false) continue;
             placed++;
             if (placed >= 240) return;
+          }
+        }
+        return;
+      }
+
+      if (biome == TerrainKit.Biome.Archipelago || biome == TerrainKit.Biome.Strait) {
+        var wh = LoadFx("waterfront_warehouse");
+        var crane = LoadFx("waterfront_crane");
+        var cont = LoadFx("waterfront_container");
+        var pipes = LoadFx("waterfront_pipes");
+        var waterfrontProps = new[] {
+          (wh, 0.58f), (crane, 0.32f), (cont, 0.92f), (pipes, 0.95f),
+        };
+        var paths = TerrainKit.RiverPaths(_map);
+        var idx = 0;
+        var placed = 0;
+        for (var x = _map.BoundsMin.X.AsFloat + 16f; x <= _map.BoundsMax.X.AsFloat - 16f; x += 22f) {
+          for (var z = _map.BoundsMin.Y.AsFloat + 16f; z <= _map.BoundsMax.Y.AsFloat - 16f; z += 22f) {
+            idx++;
+            var spot = new Vector3(x, 0f, z);
+            if (biome == TerrainKit.Biome.Strait && Mathf.Abs(spot.x) < 34f) continue;
+            var riverDist = TerrainKit.RiverDistance(paths, new Vector2(spot.x, spot.z));
+            // 해안/해협 연안 육지(물가 8~24m 안쪽)에만 산업 항만·부두 창고·크레인 배치(수상·도로 침범 0건).
+            if (riverDist < 8.5f || riverDist > 26f) continue;
+            if (UrbanDecor.Allowed(_map, spot) == false || Dressing.IsOnAnyRoad(spot, 7.0f) || Dressing.InTraderClear(spot)) continue;
+            var p2 = new Vector2(spot.x, spot.z);
+            var blocked = false;
+            for (var h = 0; _map.HighGrounds != null && h < _map.HighGrounds.Length; h++) {
+              var hc = _map.HighGrounds[h].Center;
+              var hr = _map.HighGrounds[h].Radius.AsFloat + 8f;
+              if ((new Vector2(hc.X.AsFloat, hc.Z.AsFloat) - p2).sqrMagnitude < hr * hr) { blocked = true; break; }
+            }
+            if (blocked) continue;
+            var (prefab, sc) = waterfrontProps[idx % waterfrontProps.Length];
+            var yaw = Mathf.FloorToInt(MeshKit.Hash(idx, 53) * 4f) * 90f;
+            if (Place(prefab, spot, yaw, sc) == false) continue;
+            placed++;
+            if (placed >= 32) return;
           }
         }
         return;
@@ -425,7 +521,6 @@ namespace FactoryWars.View {
         };
         var idx = 0;
         var placed = 0;
-        var placedSpots = new List<Vector2>();
         for (var x = _map.BoundsMin.X.AsFloat + 12f; x <= _map.BoundsMax.X.AsFloat - 12f; x += 13.5f) {
           for (var z = _map.BoundsMin.Y.AsFloat + 12f; z <= _map.BoundsMax.Y.AsFloat - 12f; z += 13.5f) {
             idx++;
@@ -433,8 +528,18 @@ namespace FactoryWars.View {
             if (UrbanDecor.Allowed(_map, spot) == false || Dressing.IsOnAnyRoad(spot, 6.2f) || Dressing.InTraderClear(spot)) {
               continue;
             }
-            var tooClose = false;
+            var onHighGround = false;
             var p2 = new Vector2(spot.x, spot.z);
+            for (var h = 0; _map.HighGrounds != null && h < _map.HighGrounds.Length; h++) {
+              var hc = _map.HighGrounds[h].Center;
+              var hr = _map.HighGrounds[h].Radius.AsFloat + 9.5f;
+              if ((new Vector2(hc.X.AsFloat, hc.Z.AsFloat) - p2).sqrMagnitude < hr * hr) {
+                onHighGround = true;
+                break;
+              }
+            }
+            if (onHighGround) continue;
+            var tooClose = false;
             for (var c = 0; _map.CityBuildings != null && c < _map.CityBuildings.Length; c++) {
               var cc = _map.CityBuildings[c].Shape.Center;
               if ((new Vector2(cc.X.AsFloat, cc.Z.AsFloat) - p2).sqrMagnitude < 10.2f * 10.2f) {
@@ -443,20 +548,10 @@ namespace FactoryWars.View {
               }
             }
             if (tooClose) continue;
-            for (var p = 0; p < placedSpots.Count; p++) {
-              if ((placedSpots[p] - p2).sqrMagnitude < 10.6f * 10.6f) {
-                tooClose = true;
-                break;
-              }
-            }
-            if (tooClose) continue;
             var prefab = blds[idx % blds.Length];
-            if (prefab == null) continue;
             var yaw = Mathf.FloorToInt(MeshKit.Hash(idx, 37) * 4f) * 90f;
-            var go = Object.Instantiate(prefab, spot, Quaternion.Euler(0f, yaw, 0f), holder);
             var sc = 0.78f + MeshKit.Hash(idx, 41) * 0.28f;
-            go.transform.localScale = Vector3.one * sc;
-            placedSpots.Add(p2);
+            if (Place(prefab, spot, yaw, sc) == false) continue;
             placed++;
             if (placed >= 150) return;
           }
@@ -534,6 +629,15 @@ namespace FactoryWars.View {
           }
           break;
       }
+      var profile = VisualProfile.Current;
+      var weight = profile.BiomeLightingWeight;
+      if (sun != null) {
+        sun.color = Color.Lerp(profile.SunColor, sun.color, weight);
+        sun.intensity = Mathf.Lerp(profile.SunIntensity, sun.intensity, weight);
+      }
+      RenderSettings.ambientSkyColor = Color.Lerp(profile.AmbientSky, RenderSettings.ambientSkyColor, weight);
+      RenderSettings.ambientEquatorColor = Color.Lerp(profile.AmbientEquator, RenderSettings.ambientEquatorColor, weight);
+      RenderSettings.ambientGroundColor = Color.Lerp(profile.AmbientGround, RenderSettings.ambientGroundColor, weight);
       DynamicGI.UpdateEnvironment();
     }
 
@@ -593,6 +697,7 @@ namespace FactoryWars.View {
         sun = new GameObject("Sun").AddComponent<Light>();
         sun.type = LightType.Directional;
       }
+      RenderSettings.sun = sun;
       sun.color = profile.SunColor;
       sun.intensity = profile.SunIntensity;
       sun.shadows = GraphicsQuality.Current == QualityTier.Low ? LightShadows.Hard : LightShadows.Soft;
@@ -631,6 +736,7 @@ namespace FactoryWars.View {
         view.Model.transform.localScale = Vector3.one * (node->Shape.Radius.AsFloat / MineModelRadius);
         view.SetYaw(index * 57f);
         _crystals[entity] = view.Model.transform.Find("Crystals").gameObject;
+        _mineRoots[entity] = view.gameObject;
         // 고철·광산 설비 느낌: 둘레에 호퍼·고철 하치장(skip-rocks)·크레인·작업 차량(Kenney, 판정 없음 — 항목 19C·19D).
         // 야전 룩: 중앙 거점 안의 광산은 둘레 설비(컨테이너·호퍼 등)를 두지 않아 보병이 설 자리를 비운다.
         if (VisualProfile.Current.FieldLook && center.magnitude < 14f) {
@@ -640,10 +746,19 @@ namespace FactoryWars.View {
         var radius = node->Shape.Radius.AsFloat;
         // 작업 차량(삼각형 2,700개)은 성능 예산 때문에 컨테이너로 바꿨다(항목 25-1).
         DressKind[] kinds = { DressKind.Hopper, DressKind.ScrapSkip, DressKind.Crane, DressKind.Container };
+        var occupied = new List<GroundFootprint>();
+        var mine = new Vector2(center.x, center.z);
         for (var i = 0; i < kinds.Length; i++) {
           var angle = (index * 1.7f + i * (Mathf.PI * 2f / kinds.Length)) % (Mathf.PI * 2f);
-          var spot = center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (radius * 0.88f + MeshKit.Hash(index, 40 + i) * 0.9f);
-          Dressing.Add(kinds[i], spot, index * 97 + i);
+          var direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+          var yaw = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+          var spot = center + direction * (radius + 2.3f + MeshKit.Hash(index, 40 + i) * 0.9f);
+          Dressing.Add(kinds[i], spot, index * 97 + i, yaw: yaw, fits: footprint => {
+            if (footprint.Overlaps(mine, radius + 0.4f) || UrbanDecor.Fits(_map, footprint) == false
+                || ClearOfBiomeProps(footprint) == false || occupied.Exists(other => footprint.Overlaps(other, 0.4f))) return false;
+            occupied.Add(footprint);
+            return true;
+          });
         }
         Dressing.End($"iron{index}");
         return;
@@ -654,20 +769,21 @@ namespace FactoryWars.View {
       _forests[entity] = new Forest { Shape = node->Shape, Seed = 11 + index * 7, Amount = Mathf.Max(amount, 1f), Filter = item.GetComponent<MeshFilter>() };
     }
 
-    static void UpdateForest(Forest forest, float remaining) {
+    static void UpdateForest(Forest forest, float remaining, float clearHalfExtent) {
       var step = Mathf.CeilToInt(Mathf.Clamp01(remaining / forest.Amount) * ForestSteps);
-      if (step == forest.Step) {
+      if (step == forest.Step && clearHalfExtent == forest.ClearHalfExtent) {
         return;
       }
       forest.Step = step;
+      forest.ClearHalfExtent = clearHalfExtent;
       var kit = new MeshKit { Shading = MeshKit.ShadeMode.Object };
       // Kenney 나무가 있으면 나무는 인스턴싱 그룹으로 가고 kit에는 바닥 판만 남는다. 채집 단계가 바뀌면 그룹을 바꿔 끼운다.
       var toWorld = forest.Filter.transform.localToWorldMatrix;
       Dressing.Begin();
       if (forest.Shape.IsCircle) {
-        ForestKit.Grove(kit, forest.Shape.Radius.AsFloat, forest.Seed, step / (float)ForestSteps, toWorld);
+        ForestKit.Grove(kit, forest.Shape.Radius.AsFloat, forest.Seed, step / (float)ForestSteps, toWorld, clearHalfExtent);
       } else {
-        ForestKit.Forest(kit, forest.Shape.HalfLength.AsFloat, forest.Shape.HalfWidth.AsFloat, forest.Seed, step / (float)ForestSteps, toWorld);
+        ForestKit.Forest(kit, forest.Shape.HalfLength.AsFloat, forest.Shape.HalfWidth.AsFloat, forest.Seed, step / (float)ForestSteps, toWorld, clearHalfExtent);
       }
       Dressing.End($"forest{forest.Seed}");
       if (forest.Filter.sharedMesh != null) {
@@ -848,21 +964,46 @@ namespace FactoryWars.View {
       }
     }
 
-    public void Update(Frame frame, float deltaTime) {
+    public void Update(Frame frame, float deltaTime, PlayerRef viewer = default) {
       if (frame == null) {
         return;
       }
       UpdateBarriers(frame, deltaTime);
       UpdateGates(frame, deltaTime);
       CheckForestScars();
+      _mountedNodes.Clear();
+      var buildings = frame.Filter<Building>();
+      while (buildings.NextUnsafe(out var facility, out var building)) {
+        if (building->ExtractNode != EntityRef.None && building->Health > Photon.Deterministic.FP._0
+            && (viewer.IsValid == false || FactoryWarsUtil.IsVisibleTo(frame, viewer, facility))) {
+          _mountedNodes[building->ExtractNode] = frame.FindAsset(building->Spec).FootprintRadius.AsFloat;
+        }
+      }
       var nodes = frame.Filter<ResourceNode>();
       while (nodes.NextUnsafe(out var entity, out var node)) {
-        if (_forests.TryGetValue(entity, out var forest)) {
-          UpdateForest(forest, node->Remaining.AsFloat);
-        } else if (_crystals.TryGetValue(entity, out var crystals)) {
-          ShowCrystals(crystals, node->Remaining.AsFloat);
-        } else {
+        var mounted = _mountedNodes.TryGetValue(entity, out var clearHalfExtent);
+        if (_forests.ContainsKey(entity) == false && _crystals.ContainsKey(entity) == false) {
           AddNode(entity, node);
+        }
+        if (_forests.TryGetValue(entity, out var forest)) {
+          UpdateForest(forest, node->Remaining.AsFloat, clearHalfExtent);
+        } else if (_crystals.TryGetValue(entity, out var crystals)) {
+          var mineRoot = _mineRoots[entity];
+          if (mineRoot.activeSelf == mounted) {
+            mineRoot.SetActive(mounted == false);
+            var dressing = DressingRenderer.Active;
+            if (dressing != null) {
+              var group = $"iron{NodeIndex(node)}";
+              if (mounted) {
+                _coveredMineDressing[entity] = new List<Dressing.Item>(dressing.Group(group));
+                dressing.Set(group, new List<Dressing.Item>());
+              } else if (_coveredMineDressing.TryGetValue(entity, out var items)) {
+                dressing.Set(group, items);
+                _coveredMineDressing.Remove(entity);
+              }
+            }
+          }
+          ShowCrystals(crystals, node->Remaining.AsFloat);
         }
       }
     }

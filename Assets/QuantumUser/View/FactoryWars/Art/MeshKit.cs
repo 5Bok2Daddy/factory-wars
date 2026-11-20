@@ -692,8 +692,16 @@ namespace FactoryWars.View {
     /// <summary>Kenney 나무를 쓸 때 숲 바닥은 부엽토색이고 나무 간격이 좁다(항목 19C: 잎이 숲 면적의 85% 이상을 덮게).</summary>
     static bool Dense(Matrix4x4? toWorld) => toWorld.HasValue && Dressing.Collecting && Dressing.Has(DressKind.Conifer);
 
-    public static void Forest(MeshKit kit, float halfLength, float halfWidth, int seed, float remaining, Matrix4x4? toWorld = null) {
-      if (UrbanYard(kit, halfLength, halfWidth, seed, remaining, toWorld)) {
+    static bool InsideFacility(Vector3 position, Matrix4x4? toWorld, float clearHalfExtent) {
+      if (clearHalfExtent <= 0f) {
+        return false;
+      }
+      var offset = toWorld.HasValue ? toWorld.Value.MultiplyVector(position) : position;
+      return Mathf.Max(Mathf.Abs(offset.x), Mathf.Abs(offset.z)) <= clearHalfExtent;
+    }
+
+    public static void Forest(MeshKit kit, float halfLength, float halfWidth, int seed, float remaining, Matrix4x4? toWorld = null, float clearHalfExtent = 0f) {
+      if (UrbanYard(kit, halfLength, halfWidth, seed, clearHalfExtent > 0f ? 0f : remaining, toWorld)) {
         return;
       }
       if (Dense(toWorld)) {
@@ -710,7 +718,10 @@ namespace FactoryWars.View {
         for (var z = -halfWidth + spacing / 2; z < halfWidth; z += spacing) {
           var jitter = new Vector3(MeshKit.Hash(seed, id * 2) - 0.5f, 0, MeshKit.Hash(seed, id * 2 + 1) - 0.5f) * spacing * 0.4f;
           var edge = Mathf.Min(halfLength - Mathf.Abs(x), (halfWidth - Mathf.Abs(z)) * 2f);
-          spots.Add((new Vector3(x, 0.16f, z) + jitter, edge, id));
+          var position = new Vector3(x, 0.16f, z) + jitter;
+          if (InsideFacility(position, toWorld, clearHalfExtent) == false) {
+            spots.Add((position, edge, id));
+          }
           id++;
         }
       }
@@ -718,8 +729,8 @@ namespace FactoryWars.View {
     }
 
     /// <summary>원형 군락. 나무 배치만 다르고 바깥부터 벌목되는 규칙은 같다.</summary>
-    public static void Grove(MeshKit kit, float radius, int seed, float remaining, Matrix4x4? toWorld = null) {
-      if (UrbanYard(kit, radius * 0.9f, radius * 0.9f, seed, remaining, toWorld)) {
+    public static void Grove(MeshKit kit, float radius, int seed, float remaining, Matrix4x4? toWorld = null, float clearHalfExtent = 0f) {
+      if (UrbanYard(kit, radius * 0.9f, radius * 0.9f, seed, clearHalfExtent > 0f ? 0f : remaining, toWorld)) {
         return;
       }
       var dense = Dense(toWorld);
@@ -737,8 +748,9 @@ namespace FactoryWars.View {
         for (var z = -radius + spacing / 2; z < radius; z += spacing) {
           var jitter = new Vector3(MeshKit.Hash(seed, id * 2) - 0.5f, 0, MeshKit.Hash(seed, id * 2 + 1) - 0.5f) * spacing * 0.4f;
           var edge = radius - new Vector2(x, z).magnitude;
-          if (edge > 0.4f) {
-            spots.Add((new Vector3(x, 0.16f, z) + jitter, edge, id));
+          var position = new Vector3(x, 0.16f, z) + jitter;
+          if (edge > 0.4f && InsideFacility(position, toWorld, clearHalfExtent) == false) {
+            spots.Add((position, edge, id));
           }
           id++;
         }

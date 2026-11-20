@@ -65,6 +65,64 @@ namespace FactoryWars.Tests {
       canvas.renderMode = RenderMode.ScreenSpaceOverlay;
     }
 
+    [UnityTest, Explicit, Category("UiCapture")]
+    public IEnumerator Ui_CaptureFactoryUpgrades() {
+      yield return StartMatch(buildings: new[] { (0, "ff_barracks", -12, 23) }, stock: Stock(5000, 5000, 5000, 500));
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var controller = Controller();
+      var hud = controller.Hud;
+      var evidence = Path.GetFullPath(Path.Combine(Application.dataPath, "../../Game-logs"));
+      Directory.CreateDirectory(UiFolder());
+      yield return WaitFor(() => hud.DoctrineOpen, 10f, "도크린 선택 화면");
+      hud.Refresh(controller.Frame);
+      var overlay = hud.Root.Find("DoctrineOverlay");
+      Assert.IsNotNull(overlay);
+      Assert.AreEqual(hud.Root.childCount - 1, overlay.GetSiblingIndex());
+      yield return ShootUi("codex", "doctrine");
+      overlay.Find("DoctrinePanel/Doctrine1").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+      yield return WaitFor(() => hud.DoctrineOpen == false, 10f, "전술 선택 완료");
+      var factory = OwnBuilding(0, "ff_barracks");
+      controller.Input.Selection.SelectBuilding(factory);
+      hud.Refresh(controller.Frame);
+      Assert.AreEqual("Lv. 1", hud.SelectionBadge);
+      var menu = hud.Entries.FindIndex(entry => entry.Label.StartsWith("공장 관리"));
+      Assert.GreaterOrEqual(menu, 0);
+      hud.PressContext(menu);
+      hud.Refresh(controller.Frame);
+
+      var view = UnityEngine.Object.FindAnyObjectByType<BattleView>();
+      var actor = view.Actors[factory];
+      var camera = Camera.main;
+      var focus = Verified.Get<Transform3D>(factory).Position.ToUnityVector3() + Vector3.up;
+      for (var level = 1; level <= 3; level++) {
+        if (level > 1) {
+          var targetLevel = level;
+          var upgrade = hud.Entries.FindIndex(entry => entry.Label.StartsWith($"Lv. {targetLevel} 증축"));
+          Assert.GreaterOrEqual(upgrade, 0, $"Lv. {targetLevel} 증축 버튼");
+          Assert.IsTrue(hud.Entries[upgrade].Enabled);
+          Assert.IsTrue(hud.Entries[upgrade].Detail.Contains(targetLevel == 2 ? "정비동" : "굴뚝"));
+          hud.PressContext(upgrade);
+          yield return WaitFor(() => actor.FactoryLevel == targetLevel && actor.FactoryUpgradeGo != null
+            && actor.FactoryUpgradeGo.transform.localScale.x >= 0.999f, 20f, "증축 외형 전환");
+          hud.Refresh(controller.Frame);
+          Assert.AreEqual($"Lv. {level}", hud.SelectionBadge);
+          Assert.IsNotNull(actor.FactoryUpgradeGo.transform.Find("ServiceAnnex"));
+          Assert.AreEqual(level == 3, actor.FactoryUpgradeGo.transform.Find("ExpansionStack") != null);
+        }
+        camera.transform.position = focus + new Vector3(-9f, 12f, -15f);
+        camera.transform.LookAt(focus);
+        CaptureCameraPng(camera, Path.Combine(evidence, $"codex-factory-lv{level}.png"), 1000, 720);
+        if (level == 2) {
+          var context = hud.Root.Find("ContextPanel");
+          Assert.IsNotNull(context);
+          Assert.IsTrue(context.gameObject.activeInHierarchy);
+          yield return ShootUi("codex", "factory");
+        }
+      }
+      Assert.IsFalse(hud.Entries.Exists(entry => entry.Label.Contains("증축")));
+    }
+
     [UnityTest, Explicit, Category("UiCapture"), Timeout(900000)]
     public IEnumerator Ui_CaptureScreens() {
       var prefix = Environment.GetEnvironmentVariable("FW_UI_PREFIX");

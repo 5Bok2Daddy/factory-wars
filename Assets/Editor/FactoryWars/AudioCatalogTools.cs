@@ -26,4 +26,17 @@ namespace FactoryWars.EditorTools {
       Debug.Log($"[FW-Assets] 소리 칸 {catalog.Slots.Count}개");
     }
   }
+
+  sealed class LocalAudioImporter : AssetPostprocessor {
+    void OnPreprocessAudio() {
+      if (assetPath.StartsWith("Assets/ExternalAssets/FactoryWarsLocalAudio/", System.StringComparison.Ordinal) == false) return;
+      var importer = (AudioImporter)assetImporter;
+      var settings = importer.defaultSampleSettings;
+      // The prepared mono clips are small. PCM keeps gain and loop boundaries intact.
+      settings.loadType = AudioClipLoadType.DecompressOnLoad;
+      settings.compressionFormat = AudioCompressionFormat.PCM;
+      settings.sampleRateSetting = AudioSampleRateSetting.PreserveSampleRate;
+      importer.defaultSampleSettings = settings;
+    }
+  }
 }

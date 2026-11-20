@@ -209,9 +209,10 @@ namespace FactoryWars.View {
     }
 
     /// <summary>항목 31: 잠긴 칸. 누를 수는 있고(이유 표시), 회색 바탕·흐린 글자·자물쇠.</summary>
-    public static void SetLocked(Button button, bool locked) {
+    public static void SetLocked(Button button, bool locked, bool highlight = false) {
       button.interactable = true;
-      button.GetComponent<Image>().color = locked ? DisabledColor : ButtonColor;
+      var theme = UiTheme.Current;
+      button.GetComponent<Image>().color = locked ? DisabledColor : highlight ? Color.Lerp(theme.Button, theme.Accent, 0.19f) : ButtonColor;
       var label = button.GetComponentInChildren<Text>();
       if (label != null) {
         label.color = locked ? UiTheme.Current.DisabledText : ButtonTextColor;

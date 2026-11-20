@@ -277,6 +277,9 @@ namespace Quantum {
     public FP DepotSortieCooldownReduction;
     public FP DepotExplosionRadius;
     public FP DepotExplosionDamage;
+    /// <summary>자원 노드 직결 채굴 공장: 배치 공병 수(0/1/2/3)별 생산 배율(0%, 100%, 160%, 210%) 및 노드 자동 스냅 반경.</summary>
+    public FP[] ExtractorYieldMultipliers;
+    public FP ExtractorNodeSnapRadius;
     /// <summary>정전 중 방어탑 공격 간격 배율.</summary>
     public FP OutageTowerIntervalMultiplier;
     /// <summary>고를 수 있는 플레이어 색 수.</summary>
@@ -286,6 +289,13 @@ namespace Quantum {
     public FP ShipSpawnGap;
     /// <summary>조선소 부지 가장자리에서 이 거리 안에 물(강·수로)이 있어야 지을 수 있다.</summary>
     public FP ShipyardWaterReach;
+    public FP ShipLaunchClearance;
+    public FP AirfieldWorkClearance;
+    public FP RunwayBuildSeconds;
+    public FP RunwayHalfLength;
+    public FP RunwayHalfWidth;
+    public FP LandingPadBuildSeconds;
+    public FP LandingPadHalfSize;
     /// <summary>온라인 연결이 끊긴 자리를 대신 조종하는 봇 난이도(항목 30).</summary>
     public BotDifficulty DisconnectBotDifficulty;
     /// <summary>끊긴 뒤 이 시간 안에 돌아오지 않으면 기권 처리한다. 0이면 기권시키지 않는다(봇이 끝까지 조종).</summary>

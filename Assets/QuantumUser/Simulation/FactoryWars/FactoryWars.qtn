@@ -15,7 +15,7 @@ enum Relation : Byte { Enemy, Allied, BreakPending }
 enum UnitOrder : Byte { Stop, Move, AttackMove, AttackTarget, Hold, Patrol }
 enum ActionKind : Byte { Propose, Accept, Reject, Break, Note, Build, Gather, Repair, Processor, Produce, Attack, Garrison, Upgrade, Research, Ultimate }
 enum RejectReason : Byte { InsufficientResources, PopulationLimit, Cooldown, ModeDisabled, Invalid, BlockedLocation, Locked, Truce, TierLocked, SizeLimit, Busy, NoVision, NeedGarrison, NoSetup, Limit, Weather, Doctrine, Hostile, Closed }
-enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair, Salvage, Demolish, Pontoon }
+enum WorkerTask : Byte { Idle, Gather, Deliver, Build, Repair, Salvage, Demolish, Pontoon, Station }
 enum BotDifficulty : Byte { Easy, Normal }
 enum ResourceKind : Byte { Iron, Wood }
 enum CaptureKind : Byte { Comms, Relay, Radar, Fuel }
@@ -372,6 +372,10 @@ struct HangarSlot {
     Int32 ReadyFrame;
 }
 
+component AirfieldWorks {
+    MapShape Site;
+}
+
 component Building {
     player_ref Owner;
     asset_ref<BuildingSpec> Spec;
@@ -411,6 +415,9 @@ component Building {
     // 비상 과부하(Overdrive): 이 프레임까지 생산 속도 +50%, 전력 소비 2배, 초당 소량 과열 피해.
     Int32 OverdriveUntilFrame;
     Int32 OverdriveCooldownFrame;
+    // 자원 노드 직결 채굴 공장(자동 제재소 · 광산 채굴 공장): 연결된 자원 노드와 주기적 자동 채굴 타이머.
+    entity_ref ExtractNode;
+    FP ExtractTimer;
 }
 
 // 항목 37: 기갑 잔해. 30초 동안 임시 엄폐점을 만들고 공병이 분해하면 고철(Scrap)을 준다.
@@ -581,6 +588,7 @@ synced event MissileBackblast { FPVector3 Position; FP Radius; }
 event MissileInterceptShot { FPVector3 From; FPVector3 To; QBoolean Killed; }
 synced event DepotExploded { FPVector3 Position; FP Radius; }
 synced event TransportRamp { entity_ref Transport; QBoolean Unload; }
+synced event ExtractorStaffChanged { entity_ref Building; Int32 Count; }
 // 항목 27: 범위 피해가 난 자리(포격·폭격·폭발). 화면 손상 지도·크레이터용.
 synced event AreaImpact { FPVector3 Position; FP Radius; }
 // 항목 27: 유닛·건물이 부서진 자리. Size는 유닛이면 UnitSize 값, 건물이면 -1이고 Footprint가 반지름이다.

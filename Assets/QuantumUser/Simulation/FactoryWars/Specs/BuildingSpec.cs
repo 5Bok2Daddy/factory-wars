@@ -64,5 +64,11 @@ namespace Quantum {
     public FP InterceptRange;
     public FP InterceptDamage;
     public FP InterceptInterval;
+    /// <summary>자원 노드 위 직결 건설 채굴 공장(자동 제재소·광산 채굴 공장): 필요 노드 종류·배치 가능 공병 슬롯(0~3)·채굴 주기·기본 채굴량.</summary>
+    public bool RequiresResourceNode;
+    public ResourceKind RequiredNodeKind;
+    public int WorkerSlotCapacity;
+    public FP ExtractIntervalSeconds;
+    public FP ExtractAmountPerCycle;
 }
 }

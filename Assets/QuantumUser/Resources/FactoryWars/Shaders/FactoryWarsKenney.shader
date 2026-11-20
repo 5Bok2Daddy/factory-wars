@@ -18,6 +18,9 @@ Shader "FactoryWars/KenneyLit"
         _GradientStrength ("Gradient Strength", Range(0, 1)) = 0.22
         _NoiseScale ("Noise Scale", Float) = 0.035
         _NoiseStrength ("Noise Strength", Range(0, 0.5)) = 0.08
+        _SurfaceRelief ("Surface Relief (ground)", Range(0, 1)) = 0
+        [Normal] _AsphaltNormalMap ("Asphalt Normal", 2D) = "bump" {}
+        _AsphaltNormalStrength ("Asphalt Normal Strength", Range(0, 1)) = 0
         _GridStrength ("Paving Grid Strength", Range(0, 0.5)) = 0
         _GridSize ("Paving Grid Size (m)", Float) = 2
         _AoHeight ("Contact AO Height", Float) = 1.0
@@ -34,6 +37,8 @@ Shader "FactoryWars/KenneyLit"
 
         TEXTURE2D(_BaseMap);
         SAMPLER(sampler_BaseMap);
+        TEXTURE2D(_AsphaltNormalMap);
+        SAMPLER(sampler_AsphaltNormalMap);
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
@@ -49,6 +54,8 @@ Shader "FactoryWars/KenneyLit"
             half _GradientStrength;
             float _NoiseScale;
             half _NoiseStrength;
+            half _SurfaceRelief;
+            half _AsphaltNormalStrength;
             half _GridStrength;
             float _GridSize;
             float _AoHeight;
@@ -127,7 +134,7 @@ Shader "FactoryWars/KenneyLit"
             #pragma vertex Vert
             #pragma fragment Frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
@@ -150,7 +157,7 @@ Shader "FactoryWars/KenneyLit"
                 float3 positionWS : TEXCOORD1;
                 half3 normalWS : TEXCOORD2;
                 half fog : TEXCOORD3;
-                half3 color : TEXCOORD4;
+                half4 color : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -166,21 +173,21 @@ Shader "FactoryWars/KenneyLit"
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.fog = ComputeFogFactor(position.positionCS.z);
                 // 합친 메쉬는 원래 머티리얼 색을 정점 색으로 갖는다. 그 밖에는 흰색으로 둔다.
-                output.color = lerp(half3(1, 1, 1), input.color.rgb, _UseVertexColor);
+                output.color = lerp(half4(1, 1, 1, 0), input.color, _UseVertexColor);
                 return output;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb * input.color;
+                half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb * input.color.rgb;
                 albedo = FwShade(albedo, input.positionWS);
                 // 포장면 줄눈: 채도가 낮고 너무 어둡지 않은 정점 색(콘크리트·보도)에만 2m 격자 선을 옅게 긋는다(아스팔트·잔디 제외).
                 if (_GridStrength > 0.001)
                 {
                     float2 cell = abs(frac(input.positionWS.xz / _GridSize + 0.5) - 0.5) * _GridSize;
                     half gridLine = 1.0 - saturate(min(cell.x, cell.y) / 0.05);
-                    half3 vc = input.color;
+                    half3 vc = input.color.rgb;
                     half sat = max(vc.r, max(vc.g, vc.b)) - min(vc.r, min(vc.g, vc.b));
                     half lum = dot(vc, half3(0.299, 0.587, 0.114));
                     half paved = (1.0 - saturate(sat * 8.0)) * saturate((lum - 0.22) * 6.0);
@@ -188,6 +195,30 @@ Shader "FactoryWars/KenneyLit"
                 }
                 albedo = FwScar(albedo, input.positionWS);
                 half3 normal = normalize(input.normalWS);
+                half asphalt = _AsphaltNormalStrength * input.color.a;
+                if (asphalt > 0.001)
+                {
+                    // Asphalt alpha comes from the road mesh; lane paint and concrete stay smooth.
+                    float2 surfaceUV = input.positionWS.xz * 0.45;
+                    float2 footprint = fwidth(surfaceUV);
+                    half blend = asphalt * (1.0 - smoothstep(0.06, 0.24, max(footprint.x, footprint.y)));
+                    half3 detail = UnpackNormal(SAMPLE_TEXTURE2D(_AsphaltNormalMap, sampler_AsphaltNormalMap, surfaceUV));
+                    normal = normalize(normal + half3(detail.x, 0, detail.y) * blend);
+                }
+                else if (_SurfaceRelief > 0.001)
+                {
+                    float2 grainUV = input.positionWS.xz * 1.8;
+                    float2 footprint = fwidth(grainUV);
+                    half detail = _SurfaceRelief * (1.0 - saturate(max(footprint.x, footprint.y)));
+                    if (detail > 0.001)
+                    {
+                        float grain = FwNoise(grainUV);
+                        float2 slope = float2(FwNoise(grainUV + float2(0.22, 0.0)),
+                            FwNoise(grainUV + float2(0.0, 0.22))) - grain;
+                        normal = normalize(normal - half3(slope.x, 0.0, slope.y) * detail);
+                        albedo *= 1.0 + (grain - 0.5) * detail * 0.25;
+                    }
+                }
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 Light light = GetMainLight(shadowCoord);
                 half ambientOcclusion = 1.0;

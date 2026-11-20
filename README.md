@@ -7,6 +7,59 @@
 
 ---
 
+### 복구 검증 · 2026-11-20 KST
+
+Unity GPU PlayMode 13/13 통과. 자원 시설 건설·배치·생산, 기지 작업자, RTS 카메라와 공장 HUD를 재검증했다. [복구 보고서](Docs/FactoryWars_Status.md) · [기지 작업자](Docs/status_images/recovery/before/headquarters-workers.png) · [가동 철광산](Docs/status_images/recovery/before/staffed-iron-extractor.png)
+
+### 전장 사운드와 에셋 점검 · 2026-11-20 KST
+
+| 상태 | 작업 | 확인 결과 |
+| --- | --- | --- |
+| 로컬 적용 | 전장 효과음 9개 | 기관총·저격·로켓·미사일 경보·제트기와 전차·헬기·항공기·전투 배경을 연결했다. 화면 위치로 방향과 크기를 조정하고, 엔진의 반복음은 움직임과 가시성에 맞춰 서서히 섞는다. |
+| 검증 완료 | Unity GPU PlayMode 13/13 | 음원 읽기, 화면 밖 감쇠, 단발 재생 간격, 전차 이동과 정차의 페이드를 확인했다. 출격, 저격, 전략 미사일과 기존 효과 검사도 통과했다. |
+| 검증 대기 | 배포와 Android | 원본 MP3와 로컬 WAV는 Git 제외 경로에 있다. 음원 일부의 배포 조건과 Android 청취를 확인해야 한다. |
+
+[사막·해안 계획을 반영한 에셋 검토](Docs/ASSET-SHOPPING.md) · [오디오 인계](Docs/ai/HANDOVER.md)
+
+### 조명·표면과 모바일 HUD · 2026-11-20 KST
+
+| 상태 | 작업 | 확인 결과 |
+| --- | --- | --- |
+| 검증 완료 | 조명과 표면 | 접촉 그림자와 명암 대비를 줄였다. 보통·높음에서 바닥 굴곡과 수면 반사를 표시하고, 높음에서는 FXAA로 차선과 물체 가장자리를 정리했다. 기본 맵 5개를 Unity GPU로 확인했다. |
+| 검증 완료 | 화면 표시 결함 | 대형 항공기 선택 링, 건설 용접 효과를 수정했다. 출격과 승객 하차 버튼은 모바일 기준 크기로 키웠고 방어·지원 메뉴의 복귀 버튼을 확인했다. |
+| 검증 완료 | Unity 6000.0.85f2 GPU PlayMode | 집중 검사 **22/22 통과**. 직전 전체 검사에서 실패했던 34개 중 10개 항목의 동작을 다시 확인했다. 현재 건설 단계와 보병 애니메이션도 검증했다. |
+| 검증 대기 | 전체 회귀와 실기기 | 직전 실패 목록 중 24개는 후속 확인 대상이다. 최신 전체 회귀, Android 프레임 시간, 온라인 경기도 남아 있다. |
+
+[시가지 개선 전](Docs/status_images/facilities/map-urban.png) · [시가지 개선 후](Docs/status_images/soft-look/map-urban.png) · [표준 맵](Docs/status_images/soft-look/map-standard.png) · [다도해](Docs/status_images/soft-look/map-archipelago.png) · [환경 에셋 후보](Docs/ASSET-SHOPPING.md)
+
+### 로컬 개발 현황 · 2026-11-20 KST
+
+| 상태 | 작업 | 확인 결과 |
+| --- | --- | --- |
+| 검증 완료 | 맵 배치 겹침 교정 | 길가 소품, 점령지, 광산, 사막·시가지·항만 배경 프리팹을 실제 방향과 폭으로 검사한다. 교량 접속로와 언덕 가장자리의 도로 메시도 정리했다. |
+| 검증 완료 | 함선 건조와 진수 | 조선소 대기열에 맞춰 수상 지지대 위에서 선체가 커지고 용접 효과가 나온다. 완성된 함선은 같은 수면에서 운하 방향으로 진수한다. |
+| 검증 완료 | 비행장과 헬기장 2단계 시공 | 본체 뒤에 같은 공병이 인접 활주로·착륙장을 포장한다. 부속 시설 완공 뒤 생산이 열린다. |
+| 검증 완료 | 바리케이드 붕괴 | 전술 바리케이드는 체력을 다 잃으면 무너지고 길이 열린다. 길가·점령지의 장식 방벽도 주변 범위 폭발 때 쓰러진다. |
+| 검증 완료 | Unity GPU PlayMode | 관련 검사 **21/21 통과**. 기본 5개 맵을 직접 로드해 배치와 화면을 확인했다. |
+| 기존 실패 재현 | 전체 PlayMode 회귀 | 542건 중 387건 통과, 34건 실패, 121건 건너뜀. 기준선 대비 신규 실패 0건. 기존 실패가 남아 GitHub 반영은 보류한다. Android 실기기와 온라인 경기 확인은 남아 있다. |
+
+[조선 중](Docs/status_images/facilities/shipbuilding.png) · [진수 후](Docs/status_images/facilities/ship-launched.png) · [활주로 시공](Docs/status_images/facilities/runway-building.png) · [활주로 완료](Docs/status_images/facilities/runway-finished.png) · [착륙장 완료](Docs/status_images/facilities/landing-pad.png)
+
+[도로변 배치](Docs/status_images/facilities/roadside.png) · [바리케이드 붕괴](Docs/status_images/facilities/barrier-collapse.png) · [표준](Docs/status_images/facilities/map-standard.png) · [사막](Docs/status_images/facilities/map-desert.png) · [시가전](Docs/status_images/facilities/map-urban.png) · [다도해](Docs/status_images/facilities/map-archipelago.png) · [해협](Docs/status_images/facilities/map-strait.png)
+
+### 앞서 적용한 컨베이어와 공장 증축
+
+| 상태 | 작업 | 확인 결과 |
+| --- | --- | --- |
+| 검증 완료 | 채굴 시설과 사령부 컨베이어 | 완공한 제재소·철 채굴 공장이 가장 가까운 같은 소유자의 사령부에 연결된다. 가동 중 벨트가 목재·철광석을 옮기며, 작업자가 빠지면 마지막 화물이 도착한 뒤 벨트가 멈춘다. |
+| 검증 완료 | 공장 증축 외형과 전투 HUD | Lv.2 측면 정비동, Lv.3 산업 굴뚝을 추가했다. 공장 관리에서 단계, 자원별 증축 비용, 생산 효과와 과부하를 확인할 수 있다. 도크린 카드의 아이콘·이름·효과를 나누고 배경 HUD를 어둡게 했다. |
+| 검증 완료 | Unity PlayMode 및 PC 프레임 표본 | 관련 검사 **13/13 통과**. 공병 도구 **47/48**, 철광석 화물 **30/30**, 원거리 작업자 **36/36** 프레임에서 위치 변화. 60fps 제한 표본의 최대 프레임 간격 **16.9ms**. |
+| 검증 대기 | 실기기와 전체 회귀 | Android 실기기와 온라인 경기 검증이 남았다. 기존 전체 회귀 실패 38건이 포함된 작업 트리는 로컬에서 검토 중이다. |
+
+[공병 건설](Docs/status_images/extraction/construction.png) · [사령부 컨베이어](Docs/status_images/extraction/headquarters-delivery.png) · 공장 [Lv.1](Docs/status_images/factory/level-1.png) / [Lv.2](Docs/status_images/factory/level-2.png) / [Lv.3](Docs/status_images/factory/level-3.png) · [공장 관리](Docs/status_images/factory/management-hud.png) · [도크린 선택](Docs/status_images/factory/doctrine.png)
+
+[AI 인계 기록](Docs/ai/HANDOVER.md) · [UI 에셋 후보](Docs/ASSET-SHOPPING.md)
+
 ## 1. 현재 진행 현황 & AI 밸런스 표 (2026-11-19 기준)
 
 ### TASK 진행 현황
@@ -46,7 +99,7 @@
 | **산업·보급** | **군수·연료 보급창** (`supply_depot`) | 인구 한도 확장 + 전역 버프(차량 속도 `+10%`, 포병 재장전 `+12%`, 출격 쿨타임 `-15%`), 파괴 시 연쇄 대폭발 |
 | **산업·보급** | **군수 연구 공장** (`research_lab`) | 병과 공/방 업그레이드, 진영 특화 연구, 궁극 전력 연구 (회전 레이더) |
 
-- **공장 증축 (`Lv.1 → Lv.2 +25% → Lv.3 +50%`):** 증축 시 실제 Synty 굴뚝·발전기·변압기·송신탑이 단계별 부착됩니다.
+- **공장 증축 (`Lv.1 → Lv.2 +25% → Lv.3 +50%`):** 생산 공장의 기본 대비 속도 보너스입니다. Lv.2에서 측면 정비동, Lv.3에서 산업 굴뚝이 추가됩니다.
 - **비상 과부하 (`Overdrive`):** 20초간 생산 속도 **`+50%`**, 전력 소비 2배, 초당 소량 과열 피해(`War FX` 흑연 화염 연출).
 
 ---

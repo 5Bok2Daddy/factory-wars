@@ -87,7 +87,7 @@ namespace FactoryWars.EditorTools {
     public static VisualCategory DressCategory(DressKind kind) {
       switch (kind) {
         case DressKind.CitySmall: case DressKind.CityMedium: case DressKind.CityIndustrial: case DressKind.CityTower: case DressKind.CityGarrison:
-        case DressKind.Ruin: case DressKind.Furniture: case DressKind.SuburbanProp:
+        case DressKind.Ruin: case DressKind.Furniture: case DressKind.SuburbanProp: case DressKind.CityCafe:
           return VisualCategory.City;
         case DressKind.Conifer: case DressKind.Autumn: case DressKind.Broadleaf: case DressKind.TreeSparse: case DressKind.Stump: case DressKind.Bush:
         case DressKind.RockLarge: case DressKind.RockSmall: case DressKind.Cliff: case DressKind.Grass: case DressKind.GroundPatch:

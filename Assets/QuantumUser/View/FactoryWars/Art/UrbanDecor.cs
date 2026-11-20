@@ -16,6 +16,7 @@ namespace FactoryWars.View {
       public Vector3 Position;
       public float Yaw;
       public string Role;
+      public GroundFootprint Footprint;
     }
 
     /// <summary>마지막으로 놓은 장식 자리(시험용). 높음 품질 기준 전체다.</summary>
@@ -132,11 +133,19 @@ namespace FactoryWars.View {
               Side(map, road, furniture, center + turn * new Vector3(x, 0f, side * (edge + (furniture == DressKind.RoadBusStop ? 2.2f : 1f))), 6100 + n * 7, face, "roadside", profile);
               // 엄폐: 32m마다 갓길 2.4m(가구와 엇갈려).
               if (slot % 2 == 1) {
-                Side(map, road, DressKind.RoadCover, center + turn * new Vector3(x + 7f, 0f, side * (edge + 2.4f)), 6200 + n * 7, yaw + (Hash(n, 41) < 0.5f ? 0f : 180f), "cover", profile);
+                ShoulderProp(DressKind.RoadCover, x + 7f, 3.5f, 6200 + n * 7, yaw + (Hash(n, 41) < 0.5f ? 0f : 180f), "cover");
               }
               // 버려진 차량: 갓길 3.6m, 길에서 15도 안팎 비스듬히.
               if (Hash(n, 42) < 0.28f) {
-                Side(map, road, DressKind.RoadWreck, center + turn * new Vector3(x - 5f, 0f, side * (edge + 3.6f)), 6300 + n * 7, yaw + (Hash(n, 43) - 0.5f) * 30f + (Hash(n, 44) < 0.5f ? 0f : 180f), "wreck", profile);
+                ShoulderProp(DressKind.RoadWreck, x - 5f, 3.6f, 6300 + n * 7,
+                  yaw + (Hash(n, 43) - 0.5f) * 30f + (Hash(n, 44) < 0.5f ? 0f : 180f), "wreck");
+              }
+            }
+            void ShoulderProp(DressKind kind, float x, float offset, int seed, float heading, string role) {
+              for (var row = 0; row < 5; row++) {
+                var along = Mathf.Clamp(x + (row % 2 == 0 ? -row : row) * 1.35f, -half + 2f, half - 2f);
+                var spot = center + turn * new Vector3(along, 0f, side * (edge + offset + row * 2.3f));
+                if (Side(map, road, kind, spot, seed, heading, role, profile)) return;
               }
             }
             // 갓길 뒤 자연: 사막·시가전에는 초록 잔디/덤불/나무를 절대 놓지 않는다.
@@ -159,29 +168,57 @@ namespace FactoryWars.View {
       }
     }
 
-    static void Side(MapSpec map, MapShape road, DressKind kind, Vector3 spot, int seed, float yaw, string role, VisualProfile profile) {
+    static bool Side(MapSpec map, MapShape road, DressKind kind, Vector3 spot, int seed, float yaw, string role, VisualProfile profile) {
       if (Dressing.Has(kind) == false || Allowed(map, spot, road) == false) {
-        return;
+        return false;
       }
       foreach (var lot in TerrainKit.Lots) {
         if ((lot.Center - new Vector2(spot.x, spot.z)).magnitude < lot.Radius + 0.5f) {
-          return;
+          return false;
         }
       }
       // 다른 길 아스팔트 위(교차로 근처)는 피한다.
       var fp = Fp(spot);
       foreach (var other in map.Roads) {
         if (other.Center != road.Center && other.Distance(fp).AsFloat <= 1.2f) {
-          return;
+          return false;
         }
       }
-      Put(kind, spot, seed, yaw, role, profile);
+      return Put(map, kind, spot, seed, yaw, role, profile);
     }
 
-    static void Put(DressKind kind, Vector3 position, int seed, float yaw, string role, VisualProfile profile) {
-      if (Dressing.AddKept(kind, position, seed, yaw, profile.UrbanDensityLow, profile.UrbanDensityMedium)) {
-        Spots.Add(new Spot { Kind = kind, Position = position, Yaw = yaw, Role = role });
+    public static bool ClearOfProps(GroundFootprint footprint) => Spots.TrueForAll(spot => footprint.Overlaps(spot.Footprint, 0.3f) == false);
+
+    public static bool Fits(MapSpec map, GroundFootprint footprint) {
+      if (ClearOfProps(footprint) == false) return false;
+      foreach (var road in map.Roads ?? System.Array.Empty<MapShape>())
+        if (footprint.Overlaps(road, 0.35f)) return false;
+      foreach (var bridge in map.Bridges ?? System.Array.Empty<MapShape>())
+        if (footprint.Overlaps(bridge, 0.55f)) return false;
+      foreach (var barricade in map.Barricades ?? System.Array.Empty<BarricadePlacement>())
+        if (footprint.Overlaps(barricade.Shape, 0.75f)) return false;
+      foreach (var city in map.CityBuildings ?? System.Array.Empty<CityBuildingPlacement>())
+        if (footprint.Overlaps(city.Shape, 0.55f)) return false;
+      foreach (var ground in map.HighGrounds ?? System.Array.Empty<MapShape>())
+        if (footprint.Overlaps(ground, 3f)) return false;
+      foreach (var terrain in map.Terrain ?? System.Array.Empty<TerrainFeature>())
+        if (terrain.Kind != TerrainKind.River && footprint.Overlaps(terrain.Shape, 0.55f)) return false;
+      foreach (var other in DressingRenderer.Active?.Group("world") ?? System.Array.Empty<Dressing.Item>())
+        if (footprint.Overlaps(other.Footprint, 0.25f)) return false;
+      return true;
+    }
+
+    static bool Put(MapSpec map, DressKind kind, Vector3 position, int seed, float yaw, string role, VisualProfile profile) {
+      var footprint = default(GroundFootprint);
+      // 기둥과 난간은 같은 안벽의 결합 파츠다.
+      var placed = Dressing.AddKept(kind, position, seed, yaw, profile.UrbanDensityLow, profile.UrbanDensityMedium, bounds => {
+        footprint = bounds;
+        return role == "quay" || Fits(map, bounds);
+      });
+      if (placed) {
+        Spots.Add(new Spot { Kind = kind, Position = position, Yaw = yaw, Role = role, Footprint = footprint });
       }
+      return placed;
     }
 
     /// <summary>맵 가장자리 바깥에 건물 외벽 열(높은 사무 건물과 낮은 아파트를 섞어). 안쪽은 통과 불가이고 건물 뒷면은 단순해도 된다.</summary>
@@ -213,7 +250,7 @@ namespace FactoryWars.View {
           if (TerrainKit.RiverDistance(paths, point) < 9f) {
             continue;
           }
-          Put(tower ? DressKind.CityTower : DressKind.CityMedium, position, 4400 + n * 7, yaw + (Hash(n, 14) < 0.5f ? 0f : 180f), "boundary", profile);
+          Put(map, tower ? DressKind.CityTower : DressKind.CityMedium, position, 4400 + n * 7, yaw + (Hash(n, 14) < 0.5f ? 0f : 180f), "boundary", profile);
         }
       }
     }
@@ -238,7 +275,7 @@ namespace FactoryWars.View {
         if (inner.magnitude > 70f || half < 14f) {
           continue;
         }
-        Gate(inner + outward * (map.HasTrader ? Dressing.TraderClearRadius + 8f : 16f), outward, road.HalfWidth.AsFloat, 7700 + n++ * 13, profile);
+        Gate(map, inner + outward * (map.HasTrader ? Dressing.TraderClearRadius + 8f : 16f), outward, road.HalfWidth.AsFloat, 7700 + n++ * 13, profile);
       }
       foreach (var bridge in map.Bridges ?? new MapShape[0]) {
         var c = new Vector3(bridge.Center.X.AsFloat, 0f, bridge.Center.Z.AsFloat);
@@ -246,22 +283,22 @@ namespace FactoryWars.View {
         var dir = Quaternion.Euler(0f, bridge.Yaw.AsFloat + (alongX ? 0f : 90f), 0f) * Vector3.right;
         var half = Mathf.Max(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
         var width = Mathf.Min(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
-        Gate(c + dir * (half + 5f), dir, width, 7900 + n++ * 13, profile);
-        Gate(c - dir * (half + 5f), -dir, width, 7900 + n++ * 13, profile);
+        Gate(map, c + dir * (half + 5f), dir, width, 7900 + n++ * 13, profile);
+        Gate(map, c - dir * (half + 5f), -dir, width, 7900 + n++ * 13, profile);
       }
     }
 
     /// <summary>길 바깥 갓길 양옆에만 검문 방벽 배치(아스팔트 차선 침범 금지).</summary>
-    static void Gate(Vector3 at, Vector3 along, float halfWidth, int seed, VisualProfile profile) {
+    static void Gate(MapSpec map, Vector3 at, Vector3 along, float halfWidth, int seed, VisualProfile profile) {
       var across = new Vector3(-along.z, 0f, along.x);
       var yaw = Mathf.Atan2(across.x, across.z) * Mathf.Rad2Deg;
       foreach (var side in new[] { -1f, 1f }) {
-        var offset = side * (halfWidth + 3.6f);
+        var offset = side * (halfWidth + 4.8f);
         var spot = at + across * offset;
-        if (Dressing.IsOnAnyRoad(spot, 2.6f)) {
+        if (Dressing.IsOnAnyRoad(spot, 4.2f)) {
           continue;
         }
-        Put(DressKind.OutpostWall, spot, seed + (side > 0 ? 1 : 0), yaw, "checkpoint", profile);
+        Put(map, DressKind.OutpostWall, spot, seed + (side > 0 ? 1 : 0), yaw, "checkpoint", profile);
       }
     }
 
@@ -278,17 +315,19 @@ namespace FactoryWars.View {
             continue;
           }
           var side = Hash(idx, 32) < 0.5f ? 1f : -1f;
-          var spot = center + turn * new Vector3(x + (Hash(idx, 33) - 0.5f) * 3f, 0f, side * (half.y + 4.8f));
-          if (Allowed(map, spot, road) == false || Dressing.IsOnAnyRoad(spot, 3.8f)) {
-            continue;
-          }
+          var along = x + (Hash(idx, 33) - 0.5f) * 3f;
           // 항목 36 시각 교정: 초소형 잔해를 빼고 실제 엄폐가 되는 컨테이너·방벽만 길 방향에 맞춰 놓는다.
           var pick = Hash(idx, 34);
           var kind = pick < 0.5f ? DressKind.Container : DressKind.Barrier;
           if (Dressing.Has(kind) == false) {
             continue;
           }
-          Put(kind, spot, 5200 + idx * 5, yaw + (side > 0f ? 0f : 180f), "street", profile);
+          for (var row = 0; row < 6; row++) {
+            var sideOfRoad = row < 3 ? side : -side;
+            var spot = center + turn * new Vector3(along, 0f, sideOfRoad * (half.y + 6.2f + 2.3f * (row % 3)));
+            if (Allowed(map, spot, road) && Dressing.IsOnAnyRoad(spot, 5.2f) == false
+                && Put(map, kind, spot, 5200 + idx * 5, yaw + (sideOfRoad > 0f ? 0f : 180f), "street", profile)) break;
+          }
         }
       }
     }
@@ -501,13 +540,13 @@ namespace FactoryWars.View {
           if (TerrainKit.RiverDistance(paths, point) < 9f || Near(map.WaterGates, spot, 7f) || Near(map.Bridges, spot, 6f)) {
             continue;
           }
-          Put(DressKind.QuayPillar, spot, 6100 + n * 3, yaw, "quay", profile);
+          Put(map, DressKind.QuayPillar, spot, 6100 + n * 3, yaw, "quay", profile);
           var mid = spot + new Vector3(direction.x, 0f, direction.y) * 5.5f;
           if (VisualProfile.Current.FieldLook == false && s + 11f < length - 4f && Dressing.Has(DressKind.QuayRail)) {
-            Put(DressKind.QuayRail, mid, 6101 + n * 3, yaw + 90f, "quay", profile);
+            Put(map, DressKind.QuayRail, mid, 6101 + n * 3, yaw + 90f, "quay", profile);
           }
           if (Dressing.Has(DressKind.QuayBollard)) {
-            Put(DressKind.QuayBollard, spot + new Vector3(direction.x, 0f, direction.y) * 2.8f, 6102 + n * 3, yaw, "quay", profile);
+            Put(map, DressKind.QuayBollard, spot + new Vector3(direction.x, 0f, direction.y) * 2.8f, 6102 + n * 3, yaw, "quay", profile);
           }
         }
       }
@@ -530,6 +569,7 @@ namespace FactoryWars.View {
         }
       }
       k.Paint(Swatch.Asphalt);
+      var water = TerrainKit.RiverPaths(map);
       foreach (var bridge in map.Bridges) {
         var c = new Vector2(bridge.Center.X.AsFloat, bridge.Center.Z.AsFloat);
         var alongX = bridge.HalfLength.AsFloat >= bridge.HalfWidth.AsFloat;
@@ -554,21 +594,37 @@ namespace FactoryWars.View {
           }
           // 다리 축으로 곧게 나온 뒤(직진 구간) 길까지 잇는다.
           var straight = end + d * sign * Mathf.Min(6f, bestDistance * 0.5f);
-          Strip(k, end, straight, width);
-          Strip(k, straight, best, width);
+          Strip(k, water, end, straight, width);
+          Strip(k, water, straight, best, width);
         }
       }
     }
 
-    static void Strip(MeshKit k, Vector2 a, Vector2 b, float halfWidth) {
+    static void Strip(MeshKit k, List<List<TerrainKit.RiverPoint>> water, Vector2 a, Vector2 b, float halfWidth) {
       var dir = b - a;
       if (dir.sqrMagnitude < 0.01f) {
         return;
       }
       var n = new Vector2(-dir.y, dir.x).normalized * halfWidth;
       Vector3 P(Vector2 p) => new Vector3(p.x, 0.07f, p.y);
-      k.Quad(P(a - n), P(b - n), P(b + n), P(a + n), Vector3.up);
-      k.Disc(new Vector3(b.x, 0.07f, b.y), halfWidth, 12);
+      var along = Mathf.CeilToInt(dir.magnitude / 1.2f);
+      var across = Mathf.Max(1, Mathf.CeilToInt(halfWidth * 2f / 1.2f));
+      var edge = new float[across + 1];
+      Vector2 Point(int x, int z) => a + dir * ((float)x / along) + n * (2f * z / across - 1f);
+      for (var z = 0; z <= across; z++) edge[z] = TerrainKit.RiverDistance(water, Point(0, z));
+      for (var x = 0; x < along; x++) {
+        var next = TerrainKit.RiverDistance(water, Point(x + 1, 0));
+        for (var z = 0; z < across; z++) {
+          var upper = TerrainKit.RiverDistance(water, Point(x + 1, z + 1));
+          if (edge[z] >= 0f && edge[z + 1] >= 0f && next >= 0f && upper >= 0f)
+            k.Quad(P(Point(x, z)), P(Point(x + 1, z)), P(Point(x + 1, z + 1)), P(Point(x, z + 1)), Vector3.up);
+          edge[z] = next;
+          next = upper;
+        }
+        edge[across] = next;
+      }
+      if (TerrainKit.RiverDistance(water, b) > halfWidth)
+        k.Disc(new Vector3(b.x, 0.07f, b.y), halfWidth, 12);
     }
 
     // ---------- 수로 물 표면 ----------

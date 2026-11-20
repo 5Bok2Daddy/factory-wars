@@ -34,7 +34,7 @@ namespace FactoryWars.View {
     public Vector3 Muzzle => _rifle != null ? _rifle.TransformPoint(new Vector3(0f, 0.03f, _muzzleZ)) : transform.position + Vector3.up * 1.3f;
     public Vector3 MuzzleForward => _rifle != null ? _rifle.forward : transform.forward;
 
-    static Transform Find(Transform root, string name) {
+    internal static Transform Find(Transform root, string name) {
       if (root.name == name) {
         return root;
       }
@@ -165,7 +165,7 @@ namespace FactoryWars.View {
 
       if (ShoulderMounted) {
         // 대전차 로켓(RPG): 오른 어깨 위에 정확히 거치하고 오른손이 하부 손잡이를 쥔다.
-        var dir = facing;
+        var dir = (facing - up * (0.24f * (1f - _aim))).normalized;
         if (Aiming) {
           var toAim = AimPoint - _shoulderR.position;
           if (toAim.sqrMagnitude > 0.01f) {
@@ -175,34 +175,43 @@ namespace FactoryWars.View {
         var pitchAxis = Vector3.Cross(up, dir).normalized;
         if (pitchAxis.sqrMagnitude < 0.0001f) pitchAxis = right;
         dir = Quaternion.AngleAxis(-RecoilPitch * _kick, pitchAxis) * dir;
-        var tubePos = _shoulderR.position + (right * 0.16f + up * 0.10f + dir * 0.14f) * scale - dir * (RecoilBack * _kick * scale);
+        var tubePos = _shoulderR.position + (right * 0.075f + up * Mathf.Lerp(0.015f, 0.06f, _aim) + dir * 0.055f) * scale
+          - dir * (RecoilBack * _kick * scale);
         _rifle.position = tubePos;
         _rifle.rotation = Quaternion.LookRotation(dir, up);
-        _rifle.localScale = Vector3.one * 1.05f;
+        _rifle.localScale = Vector3.one * 0.9f;
         Solve(_shoulderR, _elbowR, _handR, _rifle.TransformPoint(new Vector3(0f, -0.09f, 0.16f)), _shoulderR.position - up * 0.45f * scale + right * 0.35f * scale);
         Solve(_shoulderL, _elbowL, _handL, _rifle.TransformPoint(new Vector3(0f, -0.08f, 0.36f)), _shoulderL.position - up * 0.45f * scale - right * 0.3f * scale);
         return;
       }
 
-      // Kubold 실제 손바닥 뼈 기준 보정: 손목(Hand_R/L)에서 손바닥 중심으로 이동해 권총손잡이가 오른손 안에, 총열 덮개가 왼손 위에 밀착된다.
+      // Kubold 실제 손바닥 뼈 기준 보정: 손목(Hand_R/L)에서 손바닥 중심으로 이동해 권총손잡이가 오른손 안에 빈틈없이 밀착되고,
+      // 왼손은 총열 덮개(소형 카빈·SMG 포함 _muzzleZ 비율 적용)를 정확히 받쳐 부유 간격 0을 보장한다.
       var foreR = (_handR.position - _elbowR.position);
       var foreL = (_handL.position - _elbowL.position);
-      var palmR = _handR.position + (foreR.sqrMagnitude > 1e-5f ? foreR.normalized : facing) * (0.055f * scale);
-      var palmL = _handL.position + (foreL.sqrMagnitude > 1e-5f ? foreL.normalized : facing) * (0.045f * scale);
+      var palmR = _handR.position + (foreR.sqrMagnitude > 1e-5f ? foreR.normalized : facing) * (0.048f * scale);
+      var palmL = _handL.position + (foreL.sqrMagnitude > 1e-5f ? foreL.normalized : facing) * (0.042f * scale);
       var handSpan = palmL - palmR;
       var hasTwoHandHold = handSpan.magnitude > 0.14f * scale && Vector3.Dot(handSpan.normalized, facing) > 0.25f;
 
       Vector3 grip;
       Vector3 weaponDir;
-      if (hasTwoHandHold) {
+      if (hasTwoHandHold && _aim > 0.5f) {
         weaponDir = handSpan.normalized;
+        // 총열이 자연스럽게 전방 수평~살짝 상향을 향하도록 과도한 상향 들림을 억제한다.
+        weaponDir.y = Mathf.Clamp(weaponDir.y, -0.18f, 0.14f);
+        weaponDir = weaponDir.sqrMagnitude > 1e-5f ? weaponDir.normalized : facing;
         var pitchAxis = Vector3.Cross(up, weaponDir).normalized;
         if (pitchAxis.sqrMagnitude < 0.0001f) pitchAxis = right;
         weaponDir = Quaternion.AngleAxis(-RecoilPitch * _kick, pitchAxis) * weaponDir;
-        // 총 손잡이를 오른손바닥 중심에 맞추고 총열 덮개가 왼손에 딱 걸치도록 미세 상향(+0.05m)·전진(+0.01m) 보정.
-        grip = palmR + up * (0.05f * scale) + weaponDir * ((0.01f - RecoilBack * _kick) * scale);
+        // 권총 손잡이(원점)를 오른손바닥(palmR) 정중앙에 밀착.
+        grip = palmR + up * (0.025f * scale) - weaponDir * (RecoilBack * _kick * scale);
         _rifle.position = grip;
         _rifle.rotation = Quaternion.LookRotation(weaponDir, up);
+        // 왼손을 무기 총열 덮개/전방 손잡이 위치로 두 마디 IK 밀착(소형 SMG/카빈도 허공 부유 0).
+        var forendZ = Mathf.Clamp(_muzzleZ * 0.52f, 0.14f, 0.28f);
+        var forendPos = _rifle.TransformPoint(new Vector3(0f, 0.01f, forendZ));
+        Solve(_shoulderL, _elbowL, _handL, forendPos, _shoulderL.position - up * 0.45f * scale - right * 0.35f * scale);
       } else {
         // 달리기 등 양손 파지가 풀린 동작에서는 가슴 높이 저자세로 유지(목·헬멧 높이 부양 금지).
         var shoulder = _shoulderR.position;
@@ -211,12 +220,13 @@ namespace FactoryWars.View {
         _rifle.position = grip;
         _rifle.rotation = Quaternion.LookRotation(weaponDir, up);
         Solve(_shoulderR, _elbowR, _handR, grip - up * (0.02f * scale), shoulder - up * 0.5f * scale + right * 0.35f * scale);
-        Solve(_shoulderL, _elbowL, _handL, _rifle.TransformPoint(new Vector3(0f, -0.02f, 0.3f)), _shoulderL.position - up * 0.5f * scale - right * 0.3f * scale);
+        var forendZ = Mathf.Clamp(_muzzleZ * 0.52f, 0.14f, 0.28f);
+        Solve(_shoulderL, _elbowL, _handL, _rifle.TransformPoint(new Vector3(0f, -0.01f, forendZ)), _shoulderL.position - up * 0.5f * scale - right * 0.3f * scale);
       }
     }
 
     /// <summary>두 마디 IK(어깨·팔꿈치를 돌려 손이 target에 닿게, pole 쪽으로 팔꿈치를 굽힌다).</summary>
-    static void Solve(Transform upper, Transform lower, Transform hand, Vector3 target, Vector3 pole) {
+    internal static void Solve(Transform upper, Transform lower, Transform hand, Vector3 target, Vector3 pole) {
       var a = upper.position;
       var b = lower.position;
       var c = hand.position;

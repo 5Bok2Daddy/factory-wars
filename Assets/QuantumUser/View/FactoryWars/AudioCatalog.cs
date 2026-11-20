@@ -4,12 +4,22 @@ namespace FactoryWars.View {
   using UnityEngine;
 
   /// <summary>
-  /// 일마다 소리 칸. 소리 파일은 나중에 넣는다(비어 있으면 무음). Resources/FactoryWars/Audio/AudioCatalog.
+  /// 게임 이벤트별 음량과 재생 간격. 프로젝트 카탈로그와 로컬 음원을 함께 사용한다.
   /// 같은 소리가 너무 자주 겹치지 않게 칸마다 최소 간격을 둔다.
   /// </summary>
   [CreateAssetMenu(menuName = "FactoryWars/Audio Catalog")]
   public class AudioCatalog : ScriptableObject {
     public const string ResourcePath = "FactoryWars/Audio/AudioCatalog";
+    const string LocalPath = "FactoryWars/Audio/Local/";
+    static readonly Dictionary<SoundEvent, AudioClip> LocalClips = new Dictionary<SoundEvent, AudioClip>();
+
+    public static AudioClip LocalClip(SoundEvent sound) {
+      if (LocalClips.TryGetValue(sound, out var clip) == false) {
+        clip = Resources.Load<AudioClip>(LocalPath + sound);
+        LocalClips.Add(sound, clip);
+      }
+      return clip;
+    }
 
     [Serializable]
     public class Slot {
@@ -46,7 +56,21 @@ namespace FactoryWars.View {
     public static List<Slot> DefaultSlots() {
       var slots = new List<Slot>();
       foreach (SoundEvent e in Enum.GetValues(typeof(SoundEvent))) {
-        slots.Add(new Slot { Event = e, Haptic = e == SoundEvent.UnderAttack || e == SoundEvent.Collapse, MinInterval = e == SoundEvent.Click ? 0.05f : 0.5f });
+        var (volume, interval) = e switch {
+          SoundEvent.Click => (1f, 0.05f),
+          SoundEvent.RifleFire => (0.44f, 0.23f),
+          SoundEvent.TankCannon => (0.55f, 0.25f),
+          SoundEvent.SniperFire => (0.58f, 0.55f),
+          SoundEvent.RocketFire => (0.54f, 0.45f),
+          SoundEvent.MissileWarning => (0.48f, 2f),
+          SoundEvent.JetFlyby => (0.30f, 2.2f),
+          SoundEvent.GroundEngine => (0.31f, 0f),
+          SoundEvent.RotorEngine => (0.24f, 0f),
+          SoundEvent.AirEngine => (0.23f, 0f),
+          SoundEvent.CombatAmbience => (0.075f, 0f),
+          _ => (1f, 0.5f),
+        };
+        slots.Add(new Slot { Event = e, Volume = volume, MinInterval = interval, Haptic = e == SoundEvent.UnderAttack || e == SoundEvent.Collapse });
       }
       return slots;
     }

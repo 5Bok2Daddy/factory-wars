@@ -58,3 +58,53 @@ MonoBehaviour:
     Volume: 1
     MinInterval: 0.5
     Haptic: 0
+  - Event: 9
+    Clips: []
+    Volume: 0.44
+    MinInterval: 0.23
+    Haptic: 0
+  - Event: 10
+    Clips: []
+    Volume: 0.55
+    MinInterval: 0.25
+    Haptic: 0
+  - Event: 11
+    Clips: []
+    Volume: 0.58
+    MinInterval: 0.55
+    Haptic: 0
+  - Event: 12
+    Clips: []
+    Volume: 0.54
+    MinInterval: 0.45
+    Haptic: 0
+  - Event: 13
+    Clips: []
+    Volume: 0.48
+    MinInterval: 2
+    Haptic: 0
+  - Event: 14
+    Clips: []
+    Volume: 0.3
+    MinInterval: 2.2
+    Haptic: 0
+  - Event: 15
+    Clips: []
+    Volume: 0.31
+    MinInterval: 0
+    Haptic: 0
+  - Event: 16
+    Clips: []
+    Volume: 0.24
+    MinInterval: 0
+    Haptic: 0
+  - Event: 17
+    Clips: []
+    Volume: 0.23
+    MinInterval: 0
+    Haptic: 0
+  - Event: 18
+    Clips: []
+    Volume: 0.075
+    MinInterval: 0
+    Haptic: 0

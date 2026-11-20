@@ -5,6 +5,46 @@ namespace FactoryWars.View {
   using UnityEngine;
   using UnityEngine.Rendering;
 
+  public readonly struct GroundFootprint {
+    public readonly Vector2 Center;
+    public readonly Vector2 HalfSize;
+    readonly Vector2 _along;
+    readonly Vector2 _across;
+
+    public GroundFootprint(Vector3 position, Vector3 halfSize, Quaternion rotation) {
+      Center = new Vector2(position.x, position.z);
+      HalfSize = new Vector2(halfSize.x, halfSize.z);
+      var axis = rotation * Vector3.right;
+      _along = new Vector2(axis.x, axis.z);
+      _across = new Vector2(-axis.z, axis.x);
+    }
+
+    float Reach(Vector2 axis) =>
+      Mathf.Abs(Vector2.Dot(_along, axis)) * HalfSize.x + Mathf.Abs(Vector2.Dot(_across, axis)) * HalfSize.y;
+
+    bool Separates(Vector2 axis, GroundFootprint other, float gap) =>
+      Mathf.Abs(Vector2.Dot(other.Center - Center, axis)) >= Reach(axis) + other.Reach(axis) + gap;
+
+    public bool Overlaps(GroundFootprint other, float gap = 0f) =>
+      Separates(_along, other, gap) == false && Separates(_across, other, gap) == false
+      && Separates(other._along, other, gap) == false && Separates(other._across, other, gap) == false;
+
+    public bool Overlaps(Vector2 point, float radius) {
+      var delta = point - Center;
+      var u = Mathf.Max(0f, Mathf.Abs(Vector2.Dot(delta, _along)) - HalfSize.x);
+      var v = Mathf.Max(0f, Mathf.Abs(Vector2.Dot(delta, _across)) - HalfSize.y);
+      return u * u + v * v <= radius * radius;
+    }
+
+    public bool Overlaps(MapShape shape, float gap) {
+      var center = shape.Center.ToUnityVector3();
+      return shape.IsCircle
+        ? Overlaps(new Vector2(center.x, center.z), shape.Radius.AsFloat + gap)
+        : Overlaps(new GroundFootprint(center, new Vector3(shape.HalfLength.AsFloat, 0f, shape.HalfWidth.AsFloat),
+          Quaternion.Euler(0f, shape.Yaw.AsFloat, 0f)), gap);
+    }
+  }
+
   /// <summary>
   /// Kenney 모델 배치(항목 19B). 화면 코드가 Begin(그룹) → Add(...) → End()로 모은 개체를 DressingRenderer가 GPU 인스턴싱으로 그린다.
   /// 맵(VisualProfile.Dressing)이 없거나 그 종류가 비어 있으면 Has가 false이고, 호출한 쪽은 절차 메쉬를 그대로 쓴다.
@@ -14,6 +54,7 @@ namespace FactoryWars.View {
       public DressKind Kind;
       public GameObject Prefab;
       public Matrix4x4 World;
+      public GroundFootprint Footprint;
       public bool Shadows;
       /// <summary>0~1 해시. 품질 낮음에서는 이 값이 LowKeep보다 작은 것만 남긴다.</summary>
       public float Keep;
@@ -48,7 +89,8 @@ namespace FactoryWars.View {
     /// 종류 하나를 놓는다. scale은 엔트리 배율에 곱하는 축별 배율이다. yaw가 null이면 엔트리 범위에서 해시로 고른다.
     /// 놓았으면 true. 모으는 중이 아니거나 종류가 비어 있으면 false다.
     /// </summary>
-    public static bool Add(DressKind kind, Vector3 position, int seed, Vector3? scale = null, float? yaw = null) => Add(kind, position, seed, Color.white, scale, yaw);
+    public static bool Add(DressKind kind, Vector3 position, int seed, Vector3? scale = null, float? yaw = null,
+        System.Predicate<GroundFootprint> fits = null) => Add(kind, position, seed, Color.white, scale, yaw, fits);
 
     /// <summary>틴트를 곱해 놓는다(합친 메쉬에서만 보인다).</summary>
     /// <summary>야전 룩 길 비우기: 지금 그리는 맵(WorldView가 넣는다). 길 폭 + RoadClearance 안에는 건물·소품·바위를 놓지 않는다.</summary>
@@ -104,7 +146,8 @@ namespace FactoryWars.View {
       return IsOnAnyRoad(position, RoadClearance + radius);
     }
 
-    public static bool Add(DressKind kind, Vector3 position, int seed, Color tint, Vector3? scale = null, float? yaw = null) {
+    public static bool Add(DressKind kind, Vector3 position, int seed, Color tint, Vector3? scale = null, float? yaw = null,
+        System.Predicate<GroundFootprint> fits = null) {
       if (_collector == null || Map == null || OnRoad(kind, position) || InTraderClear(position)) {
         return false;
       }
@@ -116,10 +159,15 @@ namespace FactoryWars.View {
       if (yaw.HasValue) {
         rotation = Quaternion.Euler(0f, yaw.Value, 0f);
       }
+      var footprint = new GroundFootprint(position, Vector3.Scale(variant.Size, (scale ?? Vector3.one) * size) * 0.5f, rotation);
+      if (fits != null && fits(footprint) == false) {
+        return false;
+      }
       _collector.Add(new Item {
         Kind = kind,
         Prefab = variant.Prefab,
         World = KenneyAssetMap.Matrix(variant, position, rotation, (scale ?? Vector3.one) * size),
+        Footprint = footprint,
         Shadows = entry.Shadows,
         Keep = MeshKit.Hash(seed, 77),
         LowKeep = entry.LowKeep,
@@ -130,8 +178,9 @@ namespace FactoryWars.View {
     }
 
     /// <summary>시가지 장식용: 품질별 남김 비율을 직접 정해 놓는다(낮음·보통에서 해시가 이 값보다 크면 그리지 않는다).</summary>
-    public static bool AddKept(DressKind kind, Vector3 position, int seed, float yaw, float lowKeep, float mediumKeep) {
-      if (OnRoad(kind, position)) {
+    public static bool AddKept(DressKind kind, Vector3 position, int seed, float yaw, float lowKeep, float mediumKeep,
+        System.Predicate<GroundFootprint> fits) {
+      if (InTraderClear(position)) {
         return false;
       }
       if (_collector == null || Map == null) {
@@ -143,10 +192,15 @@ namespace FactoryWars.View {
       }
       var (variant, rotation, size) = KenneyAssetMap.Place(entry, seed);
       rotation = Quaternion.Euler(0f, yaw, 0f);
+      var footprint = new GroundFootprint(position, variant.Size * (size * 0.5f), rotation);
+      if (fits != null && fits(footprint) == false) {
+        return false;
+      }
       _collector.Add(new Item {
         Kind = kind,
         Prefab = variant.Prefab,
         World = KenneyAssetMap.Matrix(variant, position, rotation, Vector3.one * size),
+        Footprint = footprint,
         Shadows = entry.Shadows,
         Keep = MeshKit.Hash(seed, 77),
         LowKeep = lowKeep,
@@ -176,7 +230,8 @@ namespace FactoryWars.View {
         fit = Mathf.Min(fit, 1.15f);
       }
       var rotation = Quaternion.Euler(0f, yaw + (turned ? 90f : 0f), 0f);
-      _collector.Add(new Item { Kind = kind, Prefab = variant.Prefab, World = KenneyAssetMap.Matrix(variant, position, rotation, Vector3.one * fit), Shadows = entry.Shadows, Keep = 0f, LowKeep = 1f, MediumKeep = 1f });
+      _collector.Add(new Item { Kind = kind, Prefab = variant.Prefab, World = KenneyAssetMap.Matrix(variant, position, rotation, Vector3.one * fit),
+        Footprint = new GroundFootprint(position, variant.Size * (fit * 0.5f), rotation), Shadows = entry.Shadows, Keep = 0f, LowKeep = 1f, MediumKeep = 1f });
       return true;
     }
   }
@@ -201,7 +256,7 @@ namespace FactoryWars.View {
       return false;
     }
 
-    public static int Fill(MapSpec map) {
+    public static int Fill(MapSpec map, System.Predicate<GroundFootprint> clearOfBiome = null) {
       if (Dressing.Collecting == false || Dressing.Has(DressKind.Grass) == false) {
         return 0;
       }
@@ -241,7 +296,7 @@ namespace FactoryWars.View {
             // 배틀로얄 데모 씬 구성: 풀 덤불 패치가 대부분, 작은 돌·덤불·바위를 섞는다.
             // 큰 바위는 걸어 다니는 들판에 두지 않는다(판정이 없어 보병이 바위 속을 지나가 보였다). 큰 바위는 막힌 지형(바위 지형) 안에만.
             var field = pick < 0.6f ? DressKind.Grass : pick < 0.78f ? DressKind.RockSmall : DressKind.Bush;
-            count += Dressing.Add(field, spot, 9000 + index) ? 1 : 0;
+            count += Dressing.Add(field, spot, 9000 + index, fits: Fits) ? 1 : 0;
             continue;
           }
           var kind = pick < 0.48f ? DressKind.Grass : pick < 0.6f && Dressing.Has(DressKind.GroundPatch) ? DressKind.GroundPatch : pick < 0.85f ? DressKind.RockSmall : DressKind.Bush;
@@ -250,10 +305,13 @@ namespace FactoryWars.View {
             kind = pick < 0.45f || Dressing.Has(DressKind.Furniture) == false ? DressKind.Debris : DressKind.Furniture;
           }
           spot.y = TerrainKit.SurfaceHeight(map, spot.x, spot.z);
-          count += Dressing.Add(kind, spot, 9000 + index) ? 1 : 0;
+          count += Dressing.Add(kind, spot, 9000 + index, fits: Fits) ? 1 : 0;
         }
       }
       return count;
+
+      bool Fits(GroundFootprint footprint) => UrbanDecor.ClearOfProps(footprint)
+        && (clearOfBiome == null || clearOfBiome(footprint));
     }
   }
 
@@ -315,7 +373,8 @@ namespace FactoryWars.View {
     }
 
     /// <summary>사라지거나 움직이는 것에 붙이는 Kenney 소품 하나(실제 오브젝트). localPosition은 parent 기준이다.</summary>
-    public static GameObject Place(DressKind kind, Transform parent, Vector3 localPosition, float yaw, int seed) {
+    public static GameObject Place(DressKind kind, Transform parent, Vector3 localPosition, float yaw, int seed,
+        System.Predicate<GroundFootprint> fits = null) {
       var map = Dressing.Map;
       var entry = map != null ? map.Get(kind) : null;
       if (entry == null) {
@@ -327,10 +386,13 @@ namespace FactoryWars.View {
         return null;
       }
       var (variant, _, scale) = KenneyAssetMap.Place(entry, seed);
+      var rotation = Quaternion.Euler(0f, yaw, 0f);
+      if (fits != null && fits(new GroundFootprint(parent.TransformPoint(localPosition),
+          Vector3.Scale(variant.Size, parent.lossyScale) * (scale * 0.5f), parent.rotation * rotation)) == false) return null;
       var wrapper = new GameObject("Kenney").transform;
       wrapper.SetParent(parent, false);
       wrapper.localPosition = localPosition;
-      wrapper.localRotation = Quaternion.Euler(0f, yaw, 0f);
+      wrapper.localRotation = rotation;
       wrapper.localScale = Vector3.one * scale;
       var model = Object.Instantiate(variant.Prefab, wrapper);
       model.transform.localPosition += variant.Offset;
@@ -395,6 +457,7 @@ namespace FactoryWars.View {
     readonly Dictionary<string, List<Dressing.Item>> _groups = new Dictionary<string, List<Dressing.Item>>();
     readonly Dictionary<string, List<Merged>> _merged = new Dictionary<string, List<Merged>>();
     readonly HashSet<string> _stale = new HashSet<string>();
+    readonly List<GroundFootprint> _clearSites = new List<GroundFootprint>();
     readonly List<Batch> _batches = new List<Batch>();
     Material _vertexColor;
     bool _instancedDirty;
@@ -422,6 +485,8 @@ namespace FactoryWars.View {
     }
 
     public void Set(string group, List<Dressing.Item> items) {
+      if (group.StartsWith("iron", System.StringComparison.Ordinal) && _clearSites.Count > 0)
+        items.RemoveAll(item => _clearSites.Exists(site => site.Overlaps(item.Footprint)));
       _groups[group] = items;
       _stale.Add(group);
       _instancedDirty = true;
@@ -434,6 +499,20 @@ namespace FactoryWars.View {
     /// 지도 장식은 시작할 때 한 번 깔려 나중에 지어지는 건물을 모르므로, 건물이 생길 때 화면에서 비운다(판정과 무관).
     /// </summary>
     public int ClearAround(Vector3 center, float radius, params string[] groups) {
+      var point = new Vector2(center.x, center.z);
+      return ClearWhere(item => item.Footprint.Overlaps(point, radius), groups);
+    }
+
+    public int ClearSite(GroundFootprint site, params string[] groups) =>
+      ClearWhere(item => item.Footprint.Overlaps(site), groups);
+
+    public void ReserveSite(GroundFootprint site) {
+      _clearSites.Add(site);
+      var groups = _groups.Keys.Where(name => name == "urban" || name == "scatter" || name.StartsWith("iron", System.StringComparison.Ordinal)).ToArray();
+      ClearSite(site, groups);
+    }
+
+    int ClearWhere(System.Predicate<Dressing.Item> overlaps, string[] groups) {
       var removed = 0;
       foreach (var name in groups) {
         if (_groups.TryGetValue(name, out var items) == false) {
@@ -441,10 +520,7 @@ namespace FactoryWars.View {
         }
         var kept = new List<Dressing.Item>(items.Count);
         foreach (var item in items) {
-          var p = item.World.GetColumn(3);
-          var dx = p.x - center.x;
-          var dz = p.z - center.z;
-          if (dx * dx + dz * dz < radius * radius) {
+          if (overlaps(item)) {
             removed++;
             continue;
           }
@@ -458,6 +534,18 @@ namespace FactoryWars.View {
     }
 
     public IReadOnlyList<Dressing.Item> Group(string group) => _groups.TryGetValue(group, out var list) ? list : System.Array.Empty<Dressing.Item>();
+
+    public void RemoveBlastBarriers(Vector3 point, float radius, System.Action<Dressing.Item> animate) {
+      if (_groups.TryGetValue("urban", out var items) == false) return;
+      var center = new Vector2(point.x, point.z);
+      var removed = items.RemoveAll(item => {
+        if (item.Kind != DressKind.Barrier && item.Kind != DressKind.OutpostWall && item.Kind != DressKind.RoadCover) return false;
+        if (item.Footprint.Overlaps(center, radius) == false) return false;
+        if (Skip(item) == false) animate(item);
+        return true;
+      });
+      if (removed > 0) Set("urban", items);
+    }
 
     /// <summary>품질이 바뀌면(낮음은 나무 수를 줄인다) 모두 다시 만든다.</summary>
     public void MarkDirty() {

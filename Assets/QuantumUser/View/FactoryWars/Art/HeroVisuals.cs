@@ -375,24 +375,36 @@ namespace FactoryWars.View {
       return true;
     }
 
-    /// <summary>공장 Lv.2 / Lv.3 시각적 확장: 100% 실제 Synty 산업 굴뚝·발전기·통신탑·변압기 프리팹 부착(원시 큐브/실린더 금지).</summary>
-    public static GameObject AttachFactoryUpgrade(Transform model, int level, int color) {
+    /// <summary>공장 본체 옆에 정비동을 증설하고, 최고 단계에 별도 굴뚝을 세운다.</summary>
+    public static GameObject AttachFactoryUpgrade(Transform model, int level, float footprint, float modelHeight) {
       if (model == null || level <= 1) return null;
       var root = new GameObject($"FactoryUpgrade_Lv{level}");
       root.transform.SetParent(model.parent != null ? model.parent : model, false);
       root.transform.localPosition = Vector3.zero;
       root.transform.localRotation = Quaternion.identity;
-      if (VisualCatalog.TryFilled(VisualCatalog.FxId("factory_lv2"), out var lv2) && lv2.Prefab != null) {
-        var g2 = Object.Instantiate(lv2.Prefab, root.transform);
-        g2.name = "SyntyUpgradeLv2";
-        g2.transform.localPosition = Vector3.zero;
-      }
-      if (level >= 3 && VisualCatalog.TryFilled(VisualCatalog.FxId("factory_lv3"), out var lv3) && lv3.Prefab != null) {
-        var g3 = Object.Instantiate(lv3.Prefab, root.transform);
-        g3.name = "SyntyUpgradeLv3";
-        g3.transform.localPosition = Vector3.zero;
+      AddFactorySection(root.transform, "factory_service_annex", "factory_lv2", "ServiceAnnex",
+        new Vector3(footprint * 0.83f, 0f, footprint * 0.64f), new Vector2(footprint * 0.67f, 2.05f));
+      if (level >= 3) {
+        AddFactorySection(root.transform, "factory_expansion_stack", "factory_lv3", "ExpansionStack",
+          new Vector3(-footprint * 0.79f, 0f, footprint * 0.69f),
+          new Vector2(footprint * 0.43f, Mathf.Clamp(modelHeight + 1.45f, 4.8f, 8.8f)));
       }
       return root;
+    }
+
+    static void AddFactorySection(Transform parent, string id, string fallback, string name, Vector3 position, Vector2 size) {
+      var fitted = VisualCatalog.TryFilled(VisualCatalog.FxId(id), out var slot);
+      if (fitted == false && VisualCatalog.TryFilled(VisualCatalog.FxId(fallback), out slot) == false) return;
+      var part = Object.Instantiate(slot.Prefab, parent).transform;
+      part.name = name;
+      if (fitted) {
+        var bounds = VisualCatalog.LocalBounds(slot.Prefab);
+        var width = size.x / Mathf.Max(0.1f, bounds.size.x, bounds.size.z);
+        var scale = new Vector3(width, size.y / Mathf.Max(0.1f, bounds.size.y), width);
+        part.localScale = scale;
+        part.localPosition = position - Vector3.Scale(new Vector3(bounds.center.x, bounds.min.y, bounds.center.z), scale);
+      }
+      foreach (var collider in part.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
     }
 
     static Material _pipFullMat;
@@ -452,18 +464,15 @@ namespace FactoryWars.View {
       go.GetComponent<MeshRenderer>().sharedMaterial = TeamMat(color);
     }
 
-    /// <summary>수송 유닛 후면 경첩식 장갑 램프(CargoRamp) 부착. 탑승·하차 시 아래로 열리고 완료 후 닫힌다.</summary>
+    /// <summary>수송 유닛 후면 경첩식 장갑 램프(CargoRamp) 부착. APC 전용(수송헬기는 측면 도어 전개, 상륙정은 Synty SM_Veh_Attach_Ramp_01 보유).</summary>
     public static Transform AttachTransportRamp(Transform turn, bool isAir, bool isNaval, int color) {
-      if (turn == null) return null;
+      if (turn == null || isAir || isNaval) return null;
       var pivot = new GameObject("CargoRampPivot").transform;
       pivot.SetParent(turn, false);
-      // APC 후미 바닥 / 상륙정 선미·함수 화물문 / 수송헬기 후방 꼬리 램프 위치.
-      pivot.localPosition = isNaval ? new Vector3(0f, 0.65f, 3.35f)
-        : isAir ? new Vector3(0f, 0.45f, -2.35f)
-        : new Vector3(0f, 0.38f, -2.42f);
+      pivot.localPosition = new Vector3(0f, 0.38f, -2.42f);
       var kit = new MeshKit();
-      var w = isNaval ? 2.25f : 1.55f;
-      var h = isNaval ? 1.45f : 1.15f;
+      var w = 1.55f;
+      var h = 1.15f;
       kit.Paint(Swatch.ArmorDark).Box(new Vector3(0f, h * 0.5f, 0f), new Vector3(w, h, 0.18f));
       kit.Paint(Swatch.StripeYellow).Box(new Vector3(0f, h - 0.14f, 0f), new Vector3(w * 0.92f, 0.18f, 0.22f));
       kit.Paint(Swatch.GlowCyan).Box(new Vector3(0f, h * 0.35f, -0.09f), new Vector3(w * 0.55f, 0.16f, 0.08f));

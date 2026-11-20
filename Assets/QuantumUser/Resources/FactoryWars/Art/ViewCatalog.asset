@@ -504,3 +504,65 @@ MonoBehaviour:
     MuzzlePart: Model
     Muzzle: {x: 0, y: 0.8, z: 2.98}
     Smoke: []
+  LumberMillSaw: {fileID: 1105013166305406, guid: 7a327ed1e26dac745a8ed6890e8d456d, type: 3}
+  IronExtractorDrill: {fileID: 4740824422671669703, guid: 5a5fd050065361048a83a1ecbdcb6822, type: 3}
+  LumberCargo: {fileID: 1118550264440206, guid: 9cbc4baaec1a2af49b7cc0aefc7a9df7, type: 3}
+  IronCargo: {fileID: 1422711539331082, guid: 95c8aa87567729b4fb5db0d23f730ed5, type: 3}
+  EngineerLocomotion: {fileID: 9100000, guid: 2c4a56f323494dc499a4a9b0bafe36fb, type: 2}
+  WarFx:
+  - Key: nuke
+    Prefab: {fileID: 100002, guid: 6ecf76dc4f268d340b2666896a954bcc, type: 3}
+    Scale: 1.55
+    Lifetime: 8.5
+  - Key: nuke_extra
+    Prefab: {fileID: 100008, guid: 06736895ea0a4ff408d25e6684dce797, type: 3}
+    Scale: 1.25
+    Lifetime: 6
+  - Key: explosion
+    Prefab: {fileID: 100006, guid: 93485fd5fc2ccf2439cb3239186f6382, type: 3}
+    Scale: 1.25
+    Lifetime: 4
+  - Key: explosion_generic
+    Prefab: {fileID: 100004, guid: b46890100828db6429ff69c322b45893, type: 3}
+    Scale: 1.15
+    Lifetime: 3.6
+  - Key: explosion_small
+    Prefab: {fileID: 100014, guid: 5332791ebce075d4a9e56f4581e7fb47, type: 3}
+    Scale: 0.95
+    Lifetime: 2.4
+  - Key: bullet_impact
+    Prefab: {fileID: 100002, guid: 56bfc2f4b4a0c534c8ef3d0fd1124c44, type: 3}
+    Scale: 0.85
+    Lifetime: 1.2
+  - Key: muzzle
+    Prefab: {fileID: 100006, guid: c888f0c922d622147bbdbe2ca794142b, type: 3}
+    Scale: 0.72
+    Lifetime: 0.22
+  - Key: muzzle_heavy
+    Prefab: {fileID: 100006, guid: b0a227fc2e558f241b1c747820ccc361, type: 3}
+    Scale: 1.18
+    Lifetime: 0.28
+  - Key: flame
+    Prefab: {fileID: 100002, guid: b8f9e29cc9e6dcf4387b96b6dacc819e, type: 3}
+    Scale: 1.15
+    Lifetime: 1.2
+  - Key: fire_black
+    Prefab: {fileID: 100002, guid: 002c8e66c11fe4048a8c3a08b7f0fe74, type: 3}
+    Scale: 1.25
+    Lifetime: 7
+  - Key: smoke_black
+    Prefab: {fileID: 100000, guid: 6f8449a4663a4fd44b6140772d4f39f9, type: 3}
+    Scale: 0.88
+    Lifetime: 4.2
+  - Key: smoke
+    Prefab: {fileID: 100000, guid: e37de961c0fe47b439a8a7c1c1b6213d, type: 3}
+    Scale: 0.65
+    Lifetime: 3.6
+  - Key: smoke_white
+    Prefab: {fileID: 100000, guid: b7a5dd96bb4187348909e660f427221b, type: 3}
+    Scale: 0.85
+    Lifetime: 3.8
+  - Key: welding_sparks
+    Prefab: {fileID: 100002, guid: 00fedc70b62a31e448e8ccc298257b56, type: 3}
+    Scale: 1.35
+    Lifetime: 1.2

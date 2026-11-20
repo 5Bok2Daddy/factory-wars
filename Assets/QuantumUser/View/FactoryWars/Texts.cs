@@ -18,6 +18,7 @@ namespace FactoryWars.View {
       { "headquarters", "산업 사령부" }, { "power_plant", "터빈 발전소" }, { "processor", "강철 제련소" }, { "supply_depot", "군수·연료 보급창" }, { "barracks", "보병 무장 공장" },
       { "research_lab", "군수 연구 공장" }, { "vehicle_factory", "기동·화력 조립 공장" }, { "airfield", "항공·드론 조립 격납고" }, { "heavy_works", "중기갑 전차 공장" },
       { "ground_tower", "지상 방어탑" }, { "air_defense", "방공포대" }, { "collection_yard", "집하장" },
+      { "lumber_mill", "제재소" }, { "iron_extractor", "철 채굴 공장" },
       { "shipyard", "조선소" },
       { "sandbags", "모래주머니 진지" }, { "bunker", "벙커" }, { "medic_tent", "의무대" }, { "repair_bay", "정비소" },
       { "radar", "레이더 기지" }, { "helipad", "헬기장" }, { "artillery", "포병 진지" }, { "patriot_turret", "패트리어트 요격 포대" }, { "scout_boat", "정찰선" }, { "artillery_ship", "포격함" },
@@ -198,24 +199,24 @@ namespace FactoryWars.View {
       return assetName.Length > 3 && Names.TryGetValue(assetName.Substring(3), out name) ? name : assetName;
     }
 
-    static void Part(StringBuilder text, string label, FP cost, FP stock) {
+    static void Part(StringBuilder text, string label, FP cost, FP stock, string separator) {
       if (cost <= FP._0) {
         return;
       }
       if (text.Length > 0) {
-        text.Append(' ');
+        text.Append(separator);
       }
       var part = $"{label} {cost.AsInt}";
       text.Append(stock < cost ? $"<color={Red}>{part}</color>" : part);
     }
 
     /// <summary>비용 표기. 모자란 항목은 빨간색이다.</summary>
-    public static string Cost(ResourceCost cost, ResourceCost stock) {
+    public static string Cost(ResourceCost cost, ResourceCost stock, string separator = " ") {
       var text = new StringBuilder();
-      Part(text, "철", cost.Iron, stock.Iron);
-      Part(text, "목재", cost.Wood, stock.Wood);
-      Part(text, "강철", cost.Steel, stock.Steel);
-      Part(text, "전기", cost.Power, stock.Power);
+      Part(text, "철", cost.Iron, stock.Iron, separator);
+      Part(text, "목재", cost.Wood, stock.Wood, separator);
+      Part(text, "강철", cost.Steel, stock.Steel, separator);
+      Part(text, "전기", cost.Power, stock.Power, separator);
       return text.ToString();
     }
 

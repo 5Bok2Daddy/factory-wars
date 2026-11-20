@@ -25,6 +25,35 @@ namespace FactoryWars.View {
     }
 
     public Entry[] Entries;
+    public GameObject LumberMillSaw;
+    public GameObject IronExtractorDrill;
+    public GameObject LumberCargo;
+    public GameObject IronCargo;
+    public RuntimeAnimatorController EngineerLocomotion;
+
+    [Serializable]
+    public struct WarFxEntry {
+      public string Key;
+      public GameObject Prefab;
+      public float Scale;
+      public float Lifetime;
+    }
+
+    /// <summary>Jean Moreno War FX(WFX_*) 실전 전투 이펙트 프리팹 직접 바인딩 표.</summary>
+    public WarFxEntry[] WarFx;
+
+    public bool TryGetWarFx(string key, out WarFxEntry found) {
+      if (WarFx != null && string.IsNullOrEmpty(key) == false) {
+        for (var i = 0; i < WarFx.Length; i++) {
+          if (WarFx[i].Key == key && WarFx[i].Prefab != null) {
+            found = WarFx[i];
+            return true;
+          }
+        }
+      }
+      found = default;
+      return false;
+    }
 
     /// <summary>
     /// 항목 31 새 유닛의 임시 모델: 기존 모델을 빌려 크기만 바꾼다. 에셋 팩으로 VisualCatalog 칸(unit/새 id)을 채우면 그 모델이 우선한다.
@@ -74,6 +103,10 @@ namespace FactoryWars.View {
       ("cf_mobile_sam", "cf_thunder_aa", 0.95f),
       ("ff_patriot_turret", "ff_air_defense", 1.15f),
       ("cf_patriot_turret", "cf_air_defense", 1.15f),
+      ("ff_lumber_mill", "ff_collection_yard", 1f),
+      ("cf_lumber_mill", "cf_collection_yard", 1f),
+      ("ff_iron_extractor", "ff_processor", 1f),
+      ("cf_iron_extractor", "cf_processor", 1f),
       // 플레이어 조종 수송 유닛(APC · 수륙양용 상륙정 · 전술 수송헬기).
       ("cf_apc_transport", "ff_field_support", 1.0f),
       ("ff_landing_craft", "ff_scout_boat", 1.35f),

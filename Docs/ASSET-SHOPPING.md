@@ -1,35 +1,43 @@
-# 에셋 구매 후보 (2026-11-15, 블랙프라이데이 대비)
+# 에셋 구매·다운로드 후보
 
-지금 가진 것: Synty POLYGON Military · City · Battle Royale · Generic, Synty ANIMATION Base Locomotion, Kenney 여러 키트(무료).
-아래는 **게임 안에 이미 칸(슬롯)이 있고 지금 비어 있거나 대체품으로 채운 자리**만 모은 것이다. 사서 `temp-assets/`에 넣으면 칸에 연결만 하면 된다(원본 수정 없음).
-상품명은 검색어 예시다. **구매 전에 상점 페이지에서 포함 모델·Unity 6/URP 지원을 꼭 확인**할 것(내가 상점 내용을 직접 확인하지 못했다).
+## 환경 그래픽 후보 (2026-11-20)
 
-## 1순위 — 지금 게임에 아예 없는 것
-| 필요한 것 | 왜 | 들어갈 칸 | 검색어 예시 |
-| --- | --- | --- | --- |
-| **사운드 효과 묶음**(총성·포성·폭발·엔진·헬기·제트·UI 클릭·경고음) | 게임에 소리 파일이 **0개**다. 체감 완성도에 가장 크다 | `AudioCatalog` 전체, `drop_warning`·저격·작전 경고 | "military sound effects", "war SFX bundle", "UI sound pack" |
-| **배경 음악**(메뉴·전투 긴장·승리/패배) | 음악 없음 | `AudioCatalog` 음악 칸 | "military orchestral music pack", "RTS soundtrack" |
-| **UI 팩**(이미 계획하신 Layer Lab GUI Pro 계열) | 도크린 카드·격납고·명령 버튼이 지금 도형 카드 | `UiCatalog`(`doctrine_air/shadow/armor`, 버튼 프레임, 아이콘) | "GUI Pro", "casual game UI", "military UI kit" |
+현재 조명·그림자·수면 개선에는 보유 에셋을 재사용했다. 표면의 사실감을 더 높일 경우 아래 순서로 검토한다.
 
-## 2순위 — 대체품으로 버티는 것
-| 필요한 것 | 지금 대체 | 들어갈 칸 | 검색어 예시 |
-| --- | --- | --- | --- |
-| 모래주머니 더미·헤스코 방벽 | 콘크리트 방벽·컨테이너 | `dress/Barrier`, `dress/OutpostWall` | "sandbag", "hesco barrier" (Synty POLYGON 계열 전쟁 팩 확인) |
-| 항만 크레인·컨테이너 야적장 설비 | 없음(해안 옹벽은 기둥·난간만) | `dress/Crane`, 해안 모듈 | "port crane", "harbor props", "industrial" |
-| 신호등 기둥 일체형 | 가로등만 | `dress/RoadProp` | "traffic light low poly" |
-| 수문(댐 게이트) 일체형 | 옹벽+기둥+철문 조립 | `dress/WaterGate` | "dam gate", "canal lock" |
-| 보병 소총 사격·엎드림 애니메이션 | 걷기·달리기·웅크리기만 | 보병 애니메이터 | "rifle animation set", "shooter animation pack" |
-| 저격수 전용 캐릭터·위장복 | 팩의 `Ghillie` 캐릭터 후보 있음(연결만 남음) | `unit/ff_sniper`, `unit/cf_sniper` | (구매 불필요, 연결 작업만) |
+| 우선순위 | 후보 | 적용 범위 |
+| --- | --- | --- |
+| 1 · 보유 | [Poly Haven Asphalt 02](https://polyhaven.com/a/asphalt_02), [CC0 라이선스](https://polyhaven.com/license) | `temp-assets`에 이미 있다. 도로·활주로의 마모 표현에는 1K 노멀과 색상부터 비교한다. |
+| 2 · 무료 | [Concrete Props Pack HDRP/URP/SRP](https://assetstore.unity.com/packages/3d/environments/concrete-props-pack-hdrp-urp-srp-306471) | 시가지 방벽의 콘크리트 표현을 바꿀 때 재질과 치수를 일부 장면에서 비교한다. |
+| 3 · 유료 | [Industrial Props Pack - PBR](https://assetstore.unity.com/packages/3d/props/industrial/industrial-props-pack-pbr-106769) | 배관·탱크·저장 설비를 보강할 때 첫 유료 후보. 산업 단지 전체를 교체하기 전에 대표 공장 1곳에 적용한다. |
 
-## 3순위 — 있으면 좋은 것
-| 필요한 것 | 메모 |
+상점 페이지는 두 모델 팩의 이전 Unity 버전 URP 호환성을 안내한다. Factory Wars의 Unity 6000.0.85f2와 Android에서 가져오기와 성능은 확인 전이다. 후보 패키지를 내려받거나 프로젝트에 설치하지 않았다.
+
+## 전투 HUD 후보 (2026-11-20)
+
+- 현재 공장 관리와 도크린 화면에는 보유한 [Kenney UI Pack - Sci-Fi](https://kenney.nl/assets/ui-pack-sci-fi)와 기존 `UiCatalog` 아이콘을 재사용한다. 컨베이어와 증축 부품도 각각 보유한 Kenney Factory Kit와 Synty POLYGON Construction으로 구성한다.
+- [Synty INTERFACE – Sci-Fi Menus](https://syntystore.com/products/interface-sci-fi-menus)는 버튼·패널·팝업을 통일할 때 우선 검토할 팩이다. 제작사가 Unity 2022.3 이상과 uGUI 지원을 명시한다.
+- [Layer Lab GUI Pro – Survival Clean](https://layerlab.io/products/gui-pro-survival-clean)은 군용 보급 화면에 어울리는 후보이다. 제작사 페이지 기준 Unity 패키지는 6000.3.9f1 이상을 요구한다. 현재 프로젝트(6000.0.85f2)에서는 PNG 스프라이트를 `UiCatalog`에 연결하는 범위로 검토한다.
+
+## 1순위 · 오디오
+
+제공된 11개 중 9개를 단발 효과음과 엔진·전투 배경 루프로 편집해 로컬에 연결했다. 추가 수급은 출처가 확인된 포탄 착탄·건물 붕괴·공장 가동음, 그리고 메뉴·전투 음악 순으로 검토한다. 음원별 출처와 가공 내역은 [오디오 인계](ai/HANDOVER.md)에 있다.
+
+## 2순위 · 보유 에셋 확인
+
+| 항목 | 실제 보유·연결 상태 | 판단 |
+| --- | --- | --- |
+| 모래주머니·헤스코 방벽 | Synty Military의 방벽 단품과 줄·그룹 모델이 있다. 시가지 방벽과 암시장 방벽 슬롯도 채워져 있다. | 보유 모델 우선. 헤스코 외형이 꼭 필요할 때만 후보 검토. [Military Barriers Props Pack](https://assetstore.unity.com/packages/3d/props/military-barriers-props-pack-425812)은 스토어 기준 Unity 6000.3.22f1/PC 대상이라 현재 버전과 모바일은 확인 전. |
+| 항만 크레인·컨테이너 야적장 | `dress/Crane`은 비어 있고 Synty Construction의 크레인 부품, 컨테이너는 보유했다. | 해안 맵 정리 계획을 반영해 구매 보류. 남는 시가지 산업 구역이 필요할 때 보유 부품을 먼저 시험한다. |
+| 신호등 일체형 | Synty City의 `SM_Prop_TrafficLight_01~03`, Kenney City Kit Roads의 신호등 모델이 있다. | 보유 에셋을 교차로에 연결하면 된다. |
+| 일체형 수문 | `dress/WaterGate`에 실제 작동하는 조립 수문이 연결돼 있다. | 남는 수로에서는 기존 수문 재사용. |
+| 소총 사격·엎드림 | 현재 보병 컨트롤러는 이동·웅크림을 사용하며 조준·사격 표시도 있다. 엎드림 전용 상태는 확인되지 않았다. | 기존 구입 기록이 있는 Kubold 클립부터 확인한다. 엎드림이 필요할 때만 제조사의 클립 목록에서 진입·유지·사격·복귀를 확인한다. [Kubold 애니메이션 목록](https://www.kubold.com/downloads) |
+| 저격수 위장복 | `ff_sniper`, `cf_sniper` 모두 Synty Ghillie 모델이 연결돼 있다. | 보유 모델 사용. |
+
+## 3순위 · 실제로 받을 것
+
+| 항목 | 권장 선택 |
 | --- | --- |
-| 모바일용 가벼운 파티클 팩(포구 섬광·피격·연막) | 지금 팩 FX는 무거워 포구 섬광은 절차 효과를 유지. 모바일 최적화 FX면 교체 |
-| 물 셰이더·물결 텍스처 | 우리 셰이더로 대체 중(깊이 거품 완료). 급하지 않음 |
-| 상륙정·수송선·현대 함정 | 배는 Kenney 모델. 해협·다도해 맵(35 남은 일)에 필요 |
-| 사막·해안 지형 소품(야자수 아님, 모래 둔덕·암반) | 사막 맵이 표준 지형 재사용 중 |
-
-## 사지 않아도 되는 것(이미 있음)
-- 폭발·연기·불·비·안개·모래바람 FX: Synty 팩에 있어 이번에 효과 칸에 연결했다.
-- 레이더탑(`Mobile_Radar`)·유류고(`Fuel_Bladder`)·기갑 잔해(`Veh_*_Destroyed`, 92종)·관측 초소: 팩에 있음(37 남은 기능에 쓸 예정).
-- 작전기(`Veh_Jet`·`TransportPlane`)·낙하산: 팩에 있음(연결 작업만 남음).
+| 모바일 섬광·피격·연막 | 먼저 보유 War FX의 `_Effects (Mobile)`을 비교한다. 추가 다운로드는 무료 CC0 [Kenney Particle Pack](https://kenney.nl/assets/particle-pack)과 [Smoke Particles](https://kenney.nl/assets/smoke-particles). 파티클용 PNG이며 현재 효과에 소량 연결해 쓴다. 바로 비교할 Unity 프리팹이 필요하면 무료 [Cartoon FX Remaster Free](https://assetstore.unity.com/packages/vfx/particles/cartoon-fx-remaster-free-109565)도 후보이다. Android 프레임 시간은 비교 전이다. |
+| 물 셰이더·물결 | 기존 수면 셰이더에 깊이 거품, 낮은 품질 경로, 잔물결 반사가 있다. 추가 구매 우선순위가 낮다. |
+| 상륙정·수송선·현대 함정 | 해전이 남는 맵에 포함될 때만 검토한다. 기존 함정을 모바일 예산에 맞추고 보유 Kenney Watercraft 모델을 먼저 비교한다. |
+| 사막·해안 지형 소품 | 사용자 맵 정리 계획에 따라 수급 대상에서 뺐다. |

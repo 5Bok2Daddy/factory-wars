@@ -39,9 +39,10 @@ namespace FactoryWars.View {
     readonly HashSet<int> _params = new HashSet<int>();
 
     /// <summary>모델에 Animator가 있거나 슬롯에 컨트롤러가 있으면 붙인다. 아니면 null.</summary>
-    public static UnitAnimatorBridge Attach(GameObject model, VisualSlot slot) {
+    public static UnitAnimatorBridge Attach(GameObject model, VisualSlot slot, RuntimeAnimatorController overrideController = null) {
       var animators = new List<Animator>(model.GetComponentsInChildren<Animator>(true));
-      if (animators.Count == 0 && slot != null && slot.Animator != null) {
+      var controller = overrideController != null ? overrideController : slot?.Animator;
+      if (animators.Count == 0 && controller != null) {
         animators.Add(model.AddComponent<Animator>());
       }
       if (animators.Count == 0) {
@@ -50,8 +51,8 @@ namespace FactoryWars.View {
       var bridge = model.AddComponent<UnitAnimatorBridge>();
       var index = 0;
       foreach (var animator in animators) {
-        if (slot != null && slot.Animator != null) {
-          animator.runtimeAnimatorController = slot.Animator;
+        if (controller != null) {
+          animator.runtimeAnimatorController = controller;
         }
         // 이동은 시뮬레이션 위치가 정한다. 루트 모션이 모델을 끌고 가지 않게 끈다.
         animator.applyRootMotion = false;

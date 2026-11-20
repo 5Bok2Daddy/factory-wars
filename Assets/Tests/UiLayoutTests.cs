@@ -35,7 +35,11 @@ namespace FactoryWars.Tests {
       var situations = new (string Name, Action Select)[] {
         ("none", () => selection.Clear()),
         ("engineer", () => selection.SelectUnit(Engineers(0)[0])),
-        ("engineer_build", () => { selection.SelectUnit(Engineers(0)[0]); hud.Refresh(Controller().Frame); hud.PressContext(0); }),
+        ("engineer_build", () => {
+          selection.SelectUnit(Engineers(0)[0]);
+          hud.Refresh(Controller().Frame);
+          hud.PressContext(hud.Entries.FindIndex(entry => entry.Label == "방어·지원"));
+        }),
         ("building", () => selection.SelectBuilding(Headquarters(0))),
         ("multi", () => { selection.Clear(); selection.Units.AddRange(OwnUnits(0, 8)); }),
       };
@@ -167,19 +171,18 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest]
-    public IEnumerator Ui_LockedEntryShowsReasonAndHidesFarTiers() {
+    public IEnumerator Ui_LockedEntryShowsTierAndPrerequisiteReasons() {
       yield return StartMatch(startingTier: 1, buildings: new[] { (0, "ff_barracks", -42, 12) });
       yield return WaitForHud();
       var hud = Controller().Hud;
       Controller().Input.Selection.SelectUnit(Engineers(0)[0]);
       hud.Refresh(Controller().Frame);
       var labels = hud.Entries.Select(e => e.Label).ToList();
-      Assert.Contains("기본 건물", labels);
-      Assert.Contains("2단계 건물", labels);
-      Assert.IsFalse(labels.Contains("3단계 건물"), "1단계에서 3단계는 숨김(지금 데이터에는 3단계 건물도 없다)");
-      hud.PressContext(labels.IndexOf("2단계 건물"));
-      Assert.AreEqual("Build2", hud.MenuName);
-      var factory = hud.Entries.First(e => e.Label.StartsWith("군수공장"));
+      Assert.Contains("산업·보급", labels);
+      Assert.Contains("병기 공장", labels);
+      hud.PressContext(labels.IndexOf("병기 공장"));
+      Assert.AreEqual("Build1", hud.MenuName);
+      var factory = hud.Entries.First(e => e.Label.StartsWith(Texts.NameOf("ff_vehicle_factory")));
       Assert.IsTrue(factory.Locked);
       Assert.IsFalse(factory.Enabled);
       StringAssert.Contains("기지 2단계 필요", factory.Reason);
@@ -188,12 +191,12 @@ namespace FactoryWars.Tests {
       hud.PressContext(hud.Entries.FindIndex(e => e.Label == "뒤로"));
       Assert.AreEqual("Root", hud.MenuName);
 
-      // 병영: 소형은 열려 있고, 사령부: 업그레이드는 연구소가 없어 잠김.
+      // 사령부 업그레이드는 군수 연구 공장이 없어 잠김.
       Controller().Input.Selection.SelectBuilding(Headquarters(0));
       hud.Refresh(Controller().Frame);
       var upgrade = hud.Entries.First(e => e.Label.StartsWith("연대 본부"));
       Assert.IsTrue(upgrade.Locked);
-      StringAssert.Contains("연구소 필요", upgrade.Reason);
+      StringAssert.Contains(Texts.NameOf("ff_research_lab") + " 필요", upgrade.Reason);
       Assert.AreEqual("1단계", hud.SelectionBadge);
       Assert.Greater(hud.IdleEngineers, 0, "유휴 공병 배지");
     }

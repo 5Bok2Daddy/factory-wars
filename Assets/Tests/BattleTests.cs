@@ -83,7 +83,7 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest]
-    public IEnumerator Battle_ConstructionRisesFromTheGround() {
+    public IEnumerator Battle_ConstructionShowsFoundationThenRaisesBuilding() {
       yield return StartMatch();
       yield return WaitForBattle();
       var position = V(-20, 10);
@@ -92,13 +92,18 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => Battle().Actors.ContainsKey(site), 10f, "부지 표시");
       yield return null;
       var actor = ActorOf(site);
-      Assert.Less(actor.View.Model.transform.localPosition.y, -0.01f, "땅 밑에서 시작");
+      Assert.AreEqual(1, actor.ConstructionStage, "기초 공사부터 표시");
+      Assert.IsFalse(actor.View.Model.activeSelf, "기초 공사 중 완성 본체 숨김");
       Assert.IsTrue(actor.Scaffold.activeSelf, "비계");
-      yield return WaitFor(() => Finished(site), 60f, "완공");
-      yield return null;
-      yield return null;
-      Assert.AreEqual(0f, actor.View.Model.transform.localPosition.y, 0.001f);
-      Assert.IsFalse(actor.Scaffold.activeSelf);
+      yield return WaitFor(() => actor.ConstructionStage == 2, 60f, "골조 표시");
+      Assert.IsTrue(actor.View.Model.activeSelf);
+      var startHeight = actor.View.Model.transform.localPosition.y;
+      Assert.Less(startHeight, actor.BuildingModelY - 0.01f, "골조는 완공 높이 아래에서 시작");
+      yield return WaitFor(() => actor.ConstructionStage == 2 && actor.View.Model.transform.localPosition.y > startHeight + 0.05f,
+        30f, "시공 중 골조 상승");
+      yield return WaitFor(() => Finished(site) && actor.ConstructionStage == 3
+        && Mathf.Abs(actor.View.Model.transform.localPosition.y - actor.BuildingModelY) <= 0.001f, 60f, "완공 높이 정착");
+      Assert.IsTrue(actor.Scaffold == null || actor.Scaffold.activeSelf == false, "완공 뒤 비계 제거");
     }
 
     [UnityTest]

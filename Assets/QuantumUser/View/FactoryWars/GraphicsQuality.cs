@@ -39,6 +39,7 @@ namespace FactoryWars.View {
       QualitySettings.SetQualityLevel((int)tier, true);
       Bind(Camera.main);
       ArtView.RefreshAll();
+      WorldView.RefreshSurfaceDetail();
       UrbanDecor.RefreshWater();
       DressingRenderer.Active?.MarkDirty();
     }
@@ -60,7 +61,12 @@ namespace FactoryWars.View {
       RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
       RenderSettings.customReflectionTexture = Resources.Load<Cubemap>(Root + "SkyReflection");
 
-      camera.GetUniversalAdditionalCameraData().renderPostProcessing = PostProcessing;
+      var cameraData = camera.GetUniversalAdditionalCameraData();
+      cameraData.renderPostProcessing = PostProcessing;
+      cameraData.antialiasing = Current == QualityTier.High ? AntialiasingMode.FastApproximateAntialiasing : AntialiasingMode.None;
+      var sun = RenderSettings.sun;
+      if (sun != null) sun.shadows = Current == QualityTier.Low ? LightShadows.Hard : LightShadows.Soft;
+      ApplySsao(Current, VisualProfile.Current);
       var volume = Object.FindAnyObjectByType<Volume>(FindObjectsInactive.Include);
       if (PostProcessing == false) {
         if (volume != null) {
@@ -74,7 +80,6 @@ namespace FactoryWars.View {
       }
       volume.enabled = true;
       volume.sharedProfile = BuildVolume(Current, VisualProfile.Current);
-      ApplySsao(Current, VisualProfile.Current);
     }
 
     /// <summary>

@@ -174,7 +174,7 @@ namespace FactoryWars.View {
       var pBiome = BiomeOf(Dressing.RoadMask);
       var capSwatch = dark ? Swatch.RockFace
         : pBiome == Biome.Desert ? Swatch.Sand
-        : pBiome == Biome.Urban ? Swatch.ConcreteDark
+        : pBiome == Biome.Urban ? Swatch.Asphalt
         : pBiome == Biome.Strait ? Swatch.Boulder
         : ArtPalette.Turf(Swatch.Grass);
       k.Paint(capSwatch);
@@ -204,10 +204,10 @@ namespace FactoryWars.View {
       var rot = Quaternion.Euler(0f, yaw, 0f);
       var axisL = rot * Vector3.right;
       var axisW = rot * Vector3.forward;
-      // 낮은 대지 판(높이 0.03m): 바이옴별 바닥색(사막=모래, 시가전=어두운 콘크리트, 해협=암반, 표준=잔디).
+      // 낮은 대지 판(높이 0.03m): 바이옴별 바닥색(사막=모래, 시가전=짙은 아스팔트 콘크리트(흰 얼룩 제거), 해협=암반, 표준=잔디).
       var biome = BiomeOf(map);
       var lotSwatch = biome == Biome.Desert ? Swatch.Sand
-        : biome == Biome.Urban ? Swatch.ConcreteDark
+        : biome == Biome.Urban ? Swatch.Asphalt
         : biome == Biome.Archipelago ? Swatch.Sand
         : biome == Biome.Strait ? Swatch.Rock
         : ArtPalette.Turf(Swatch.GrassDark);
@@ -619,7 +619,7 @@ namespace FactoryWars.View {
           : hgBiome == Biome.Strait ? Swatch.OliveDark
           : ArtPalette.Turf(Swatch.Grass);
         var slopeSw = hgBiome == Biome.Desert ? Swatch.Dirt
-          : hgBiome == Biome.Urban ? Swatch.ConcreteDark
+          : hgBiome == Biome.Urban ? Swatch.Black
           : hgBiome == Biome.Archipelago ? Swatch.Sand
           : hgBiome == Biome.Strait ? Swatch.RockDark
           : Swatch.OliveDark;
@@ -630,6 +630,28 @@ namespace FactoryWars.View {
           var top = ground.Radius.AsFloat;
           var foot = top + 7f;
           const int Sides = 28;
+          var toe = new Vector3[Sides];
+          for (var i = 0; i < Sides; i++) {
+            var angle = Mathf.PI * 2f * i / Sides;
+            var direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+            var wobble = 1f + (MeshKit.Hash(g * 97 + i, 3) - 0.5f) * 0.12f;
+            var distance = foot * wobble;
+            for (var probe = top * wobble; probe < distance; probe += 0.6f) {
+              var p = c + direction * probe;
+              var spot = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(p.x),
+                default, Photon.Deterministic.FP.FromFloat_UNSAFE(p.z));
+              var roadReached = false;
+              foreach (var road in map.Roads ?? System.Array.Empty<MapShape>()) {
+                if (road.Distance(spot).AsFloat > CurbWidth + 0.3f) continue;
+                roadReached = true;
+                break;
+              }
+              if (roadReached == false) continue;
+              distance = Mathf.Max(top * wobble, probe - 0.6f);
+              break;
+            }
+            toe[i] = c + direction * distance + Vector3.up * 0.02f;
+          }
           for (var i = 0; i < Sides; i++) {
             var a = Mathf.PI * 2f * i / Sides;
             var b = Mathf.PI * 2f * (i + 1) / Sides;
@@ -640,7 +662,8 @@ namespace FactoryWars.View {
             k.Paint(topSw);
             k.Tri(c + Vector3.up * height, c + da * top * wobA + Vector3.up * height, c + db * top * wobB + Vector3.up * height, Vector3.up);
             k.Paint(slopeSw);
-            k.Quad(c + da * top * wobA + Vector3.up * height, c + db * top * wobB + Vector3.up * height, c + db * foot * wobB + Vector3.up * 0.02f, c + da * foot * wobA + Vector3.up * 0.02f, Vector3.up);
+            k.Quad(c + da * top * wobA + Vector3.up * height, c + db * top * wobB + Vector3.up * height,
+              toe[(i + 1) % Sides], toe[i], Vector3.up);
           }
         }
         return;

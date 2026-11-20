@@ -3,7 +3,7 @@ namespace Quantum.FactoryWars {
 
   /// <summary>규칙 기반 AI. 사람과 같은 함수로 행동해 비용과 제한을 그대로 받는다.</summary>
   public unsafe class BotSystem : SystemMainThread, ISignalOnPlayerDisconnected, ISignalOnPlayerConnected {
-    const int RoleCount = 21;
+    const int RoleCount = (int)BuildingRole.IronExtractor + 1;
     const int MaxOrder = MoveUnitsCommand.MaxUnits;
 
     /// <summary>
@@ -747,7 +747,7 @@ namespace Quantum.FactoryWars {
       var best = FP.MaxValue;
       var workers = f.Filter<Transform3D, Unit, Worker>();
       while (workers.NextUnsafe(out var entity, out var transform, out var unit, out var worker)) {
-        if (unit->Owner != player || worker->Task == WorkerTask.Build) {
+        if (unit->Owner != player || unit->Garrison != EntityRef.None || worker->Task == WorkerTask.Build) {
           continue;
         }
         var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, site);

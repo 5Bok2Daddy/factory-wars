@@ -103,6 +103,97 @@ namespace FactoryWars.Tests {
     // 채집
 
     [UnityTest]
+    public IEnumerator Extractor_SnapsToIronNodeAndProducesOnlyWhileStaffed() {
+      yield return StartMatch();
+      var engineer = Engineers(0)[0];
+      var center = V(-30, 14);
+      var node = NodeAt(center);
+      var requested = V(-29, 14);
+      var spec = Verified.FindAsset(BuildingOf(0, "iron_extractor"));
+      var lumber = Verified.FindAsset(BuildingOf(0, "lumber_mill"));
+      Assert.AreEqual(4, spec.WorkerSlotCapacity);
+      Assert.AreEqual(3, lumber.WorkerSlotCapacity);
+      Assert.IsFalse(ProductionSystem.CanPlace(Verified, lumber, center, 0));
+      Assert.IsTrue(ProductionSystem.TryGetBuildPlacement(Verified, spec, requested, 0, out var aligned));
+      Assert.AreEqual(center, aligned);
+      var remaining = NodeRemaining(node);
+
+      yield return Build(0, "iron_extractor", requested, engineer);
+      var site = BuildingAt(center);
+      Assert.AreNotEqual(EntityRef.None, site, string.Join(", ", _rejected.Select(rejection => rejection.Reason)));
+      Assert.AreEqual(node, BuildingState(site).ExtractNode);
+      Assert.IsFalse(ProductionSystem.CanPlace(Verified, spec, requested, 0));
+      yield return WaitFor(() => Finished(site), 60f, "채굴 공장 완공");
+      Assert.AreEqual(remaining, NodeRemaining(node));
+
+      var stock = ExactFunds(0);
+      yield return Send(0, new EnterGarrisonCommand { Building = site, Units = new[] { engineer } });
+      yield return WaitFor(() => Verified.Get<Unit>(engineer).Garrison == site, 20f, "공병 배치");
+      Assert.AreEqual(WorkerTask.Station, WorkerOf(engineer).Task);
+      yield return WaitFor(() => NodeRemaining(node) < remaining, 10f, "철 채굴");
+      Assert.AreEqual(spec.ExtractAmountPerCycle.AsFloat, remaining - NodeRemaining(node), Tolerance);
+      Assert.AreEqual(remaining - NodeRemaining(node), ExactFunds(0) - stock, Tolerance);
+
+      yield return Send(0, new ExitGarrisonCommand { Building = site });
+      Assert.AreEqual(EntityRef.None, Verified.Get<Unit>(engineer).Garrison);
+      Assert.AreEqual(WorkerTask.Idle, WorkerOf(engineer).Task);
+      Assert.IsTrue(Verified.Has<NavMeshPathfinder>(engineer));
+      Assert.IsTrue(OnGroundNavMesh(engineer));
+      var afterEject = NodeRemaining(node);
+      yield return WaitFrames(Fps * 3);
+      Assert.AreEqual(afterEject, NodeRemaining(node));
+    }
+
+    static bool OnGroundNavMesh(EntityRef entity) {
+      var frame = Verified;
+      var ground = frame.Map.GetNavMesh(FactoryWarsUtil.Rules(frame).NavMeshName);
+      return ground.Contains(frame.Get<Transform3D>(entity).Position, *frame.NavMeshRegionMask, true);
+    }
+
+    [UnityTest]
+    public IEnumerator Extractor_LumberConsumesWoodNodeAndCreditsStock() {
+      yield return StartMatch();
+      var center = V(-38, 30);
+      var node = NodeAt(center);
+      var engineer = Engineers(0)[0];
+      yield return BuildAndFinish(0, "lumber_mill", center);
+      var site = BuildingAt(center);
+      Assert.AreEqual(node, BuildingState(site).ExtractNode);
+      var stock = ExactWood(0);
+      var remaining = NodeRemaining(node);
+
+      yield return Send(0, new EnterGarrisonCommand { Building = site, Units = new[] { engineer } });
+      yield return WaitFor(() => NodeRemaining(node) < remaining, 30f, "제재소 목재 생산");
+      Assert.AreEqual(remaining - NodeRemaining(node), ExactWood(0) - stock, Tolerance);
+    }
+
+    [UnityTest]
+    public IEnumerator Extractor_IronRejectsWorkersBeyondCapacityAndEjectsThem() {
+      yield return StartMatch(units: new[] {
+        (0, "ff_engineer", -26, 8),
+        (0, "ff_engineer", -24, 10),
+        (0, "ff_engineer", -24, 14),
+        (0, "ff_engineer", -24, 18),
+      });
+      var engineers = Engineers(0);
+      var center = V(-30, 14);
+      yield return BuildAndFinish(0, "iron_extractor", center);
+      var site = BuildingAt(center);
+      yield return Send(0, new EnterGarrisonCommand { Building = site, Units = engineers.ToArray() });
+      yield return WaitFor(() => CitySystem.Occupants(Verified, site) == 4, 30f, "철 채굴 공장 공병 4명 배치");
+      yield return WaitFrames(Fps * 3);
+      Assert.AreEqual(4, CitySystem.Occupants(Verified, site));
+      Assert.AreEqual(1, engineers.Count(entity => Verified.Get<Unit>(entity).Garrison == EntityRef.None));
+
+      for (var left = 3; left >= 0; left--) {
+        yield return Send(0, new ExitGarrisonCommand { Building = site });
+        Assert.AreEqual(left, CitySystem.Occupants(Verified, site));
+      }
+      Assert.AreEqual(0, CitySystem.Occupants(Verified, site));
+      Assert.IsTrue(engineers.All(entity => Verified.Has<NavMeshPathfinder>(entity)));
+    }
+
+    [UnityTest]
     public IEnumerator Gather_CarriesIronToHeadquarters() {
       yield return StartMatch();
       var engineer = Engineers(0)[0];

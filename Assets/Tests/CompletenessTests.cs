@@ -65,7 +65,7 @@ namespace FactoryWars.Tests {
       // 전투 유닛 선택: 명령 버튼과 상성 한 줄.
       hud.Refresh(Controller().Frame);
       Assert.IsTrue(hud.Entries.Any(e => e.Label.Contains("공격")), "공격 이동 버튼");
-      Assert.IsTrue(hud.Entries.Any(e => e.Label.Contains("고수")), "위치 고수 버튼");
+      Assert.IsTrue(hud.Entries.Any(e => e.Label == "정지" && e.Detail.Contains("위치 고수")), "정지에서 위치 고수 명령");
       Assert.IsTrue(hud.Entries.Any(e => e.Label.Contains("순찰")), "순찰 버튼");
       var tankSpec = Verified.FindAsset(Verified.Get<Unit>(UnitsNamed(0, "ff_eagle_tank")[0]).Spec);
       var tip = Texts.CounterTip(tankSpec, Verified.FindAsset(Verified.RuntimeConfig.Rules));
@@ -90,13 +90,16 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void Build_PanelFitsAllFactionBuildings() {
-      // 항목 31·32: 명령 카드 3x3에서 건설 하위 메뉴(기본·2단계·3단계·방어)마다 8칸 + 뒤로.
+      // 기존 단계별 상한에 더해 자원 채굴 시설은 전용 메뉴에 모두 노출된다.
       var all = Resources.LoadAll<BuildingSpec>("FactoryWars");
       foreach (var faction in Resources.LoadAll<FactionSpec>("FactoryWars")) {
         var specs = faction.Buildings.Select(b => all.First(s => s.Guid == b.Id)).ToList();
-        foreach (var group in specs.GroupBy(s => s.Defensive ? 0 : Mathf.Max(1, s.RequiredTier))) {
+        foreach (var group in specs.Where(s => s.RequiresResourceNode == false).GroupBy(s => s.Defensive ? 0 : Mathf.Max(1, s.RequiredTier))) {
           Assert.LessOrEqual(group.Count(), 8, $"{faction.name} 묶음 {group.Key}");
         }
+        var extraction = specs.Where(spec => MatchHud.InBuildMenu(spec, MatchHud.ExtractionBuildMenu)).ToList();
+        CollectionAssert.AreEquivalent(specs.Where(spec => spec.RequiresResourceNode), extraction);
+        Assert.LessOrEqual(extraction.Count, MatchHud.ContextSlots - 1, $"{faction.name} 자원 채굴");
       }
     }
 
@@ -128,6 +131,52 @@ namespace FactoryWars.Tests {
         AudioCatalog.Current = saved;
       }
       Assert.IsNotNull(Resources.Load<AudioCatalog>(AudioCatalog.ResourcePath), "Resources/FactoryWars/Audio/AudioCatalog");
+    }
+
+    [UnityTest]
+    public IEnumerator Audio_LocalClipsAndMovingEngineInMatch() {
+      var events = new[] { SoundEvent.RifleFire, SoundEvent.SniperFire, SoundEvent.RocketFire, SoundEvent.MissileWarning,
+        SoundEvent.JetFlyby, SoundEvent.GroundEngine, SoundEvent.RotorEngine, SoundEvent.AirEngine, SoundEvent.CombatAmbience };
+      if (events.All(sound => AudioCatalog.LocalClip(sound) == null)) {
+        Assert.Ignore("Optional local audio is not installed");
+      }
+      foreach (var sound in events) {
+        var clip = AudioCatalog.LocalClip(sound);
+        Assert.IsNotNull(clip, sound.ToString());
+        Assert.AreEqual(1, clip.channels, sound.ToString());
+        Assert.That(clip.length, Is.InRange(1f, 6f), sound.ToString());
+        var samples = new float[clip.samples];
+        Assert.IsTrue(clip.GetData(samples, 0), sound.ToString());
+        Assert.Greater(samples.Max(v => Mathf.Abs(v)), 0.03f, sound.ToString());
+        Assert.Less(samples.Max(v => Mathf.Abs(v)), 0.65f, sound.ToString());
+      }
+
+      yield return StartMatch();
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      Time.timeScale = 1f;
+      var camera = Camera.main;
+      var center = camera.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 25f));
+      var right = camera.ViewportToWorldPoint(new Vector3(0.85f, 0.5f, 25f));
+      var outside = camera.ViewportToWorldPoint(new Vector3(1.3f, 0.5f, 25f));
+      Assert.Greater(GameAudio.ScreenGain(camera, center, out _), GameAudio.ScreenGain(camera, right, out var pan));
+      Assert.Greater(pan, 0f);
+      Assert.AreEqual(0f, GameAudio.ScreenGain(camera, outside, out _));
+      var fired = GameAudio.Played;
+      Assert.IsFalse(GameAudio.PlayAt(SoundEvent.RifleFire, outside));
+      Assert.IsTrue(GameAudio.PlayAt(SoundEvent.RifleFire, center));
+      Assert.IsFalse(GameAudio.PlayAt(SoundEvent.RifleFire, center));
+      Assert.AreEqual(fired + 1, GameAudio.Played, "공간 감쇠와 연속 효과음 제한");
+
+      var tank = UnitsNamed(0, "ff_eagle_tank")[0];
+      var start = Verified.Get<Transform3D>(tank).Position;
+      Controller().Camera.MoveTo(new Vector2(start.X.AsFloat, start.Z.AsFloat));
+      var engine = Battle().GetComponentsInChildren<AudioSource>().Single(source => source.clip == AudioCatalog.LocalClip(SoundEvent.GroundEngine));
+      Assert.IsFalse(engine.isPlaying, "정지 중에는 주행 루프가 꺼짐");
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = start + V(14, 0) });
+      yield return WaitFor(() => engine.isPlaying && engine.volume > 0.025f, 10f, "전차 주행 루프 시작");
+      yield return Send(0, new HoldUnitsCommand { Units = new[] { tank } });
+      yield return WaitFor(() => engine.isPlaying == false, 10f, "정차 시 페이드아웃 뒤 루프 정지");
     }
 
     [UnityTest]

@@ -40,6 +40,8 @@ namespace FactoryWars.View {
       p.AmbientEquator = new Color(0.44f, 0.44f, 0.42f);
       p.AmbientGround = new Color(0.25f, 0.2f, 0.16f);
       p.ShadowStrength = 0.9f;
+      p.BiomeLightingWeight = 1f;
+      p.SurfaceRelief = 0f;
 
       p.Tone = ToneMode.Neutral;
       p.BloomIntensity = 0.5f;
@@ -96,23 +98,25 @@ namespace FactoryWars.View {
       p.DefaultHeight = 62f;
       p.MinHeight = 35f;
       p.MaxHeight = 140f;
-      // 장난감 블록 입체감 복원: 태양광 윗면 100% 밝기 + 그늘진 옆면 65~70% 파스텔 블루/퍼플 그늘 (#8E96B2)
+      // 온화한 야외광과 약한 접촉 그림자로 표면 색과 실루엣을 살린다.
       p.SunColor = new Color32(0xFF, 0xFA, 0xEE, 0xFF);
-      p.SunIntensity = 1.05f;
-      p.SunElevation = 48f;
+      p.SunIntensity = 0.86f;
+      p.SunElevation = 54f;
       p.SunAzimuth = -35f;
-      p.AmbientSky = new Color(0.40f, 0.42f, 0.54f);
-      p.AmbientEquator = new Color(0.32f, 0.34f, 0.44f);
-      p.AmbientGround = new Color(0.20f, 0.22f, 0.30f);
-      p.ShadowStrength = 0.88f;
+      p.AmbientSky = new Color(0.55f, 0.58f, 0.66f);
+      p.AmbientEquator = new Color(0.42f, 0.44f, 0.48f);
+      p.AmbientGround = new Color(0.33f, 0.32f, 0.32f);
+      p.ShadowStrength = 0.64f;
+      p.BiomeLightingWeight = 0.48f;
+      p.SurfaceRelief = 0.24f;
       p.Tone = ToneMode.Neutral;
       p.BloomIntensity = 0f;
       p.Saturation = 0.08f;
-      p.Contrast = 10f;
+      p.Contrast = 2f;
       p.Vignette = 0f;
       p.Ssao = true;
-      p.SsaoIntensity = 3.2f;
-      p.SsaoRadius = 0.9f;
+      p.SsaoIntensity = 0.8f;
+      p.SsaoRadius = 0.48f;
       p.Outline = OutlineMode.None;
       p.VertexShade = false;
       p.KenneyMilitary = false;
@@ -175,6 +179,8 @@ namespace FactoryWars.View {
           // C: Kenney 저사양. 그림자 조금 연하게, 장식 숲 줄임. 나머지는 A와 같다.
           p.ShadowStrength = 0.8f;
           p.PlateauTrees = 0.3f;
+          p.BiomeLightingWeight = 1f;
+          p.SurfaceRelief = 0f;
           break;
       }
     }

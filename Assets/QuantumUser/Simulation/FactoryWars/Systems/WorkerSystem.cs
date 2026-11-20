@@ -197,15 +197,22 @@ namespace Quantum.FactoryWars {
         return;
       }
       var spec = f.FindAsset(building->Spec);
-      var target = f.Unsafe.GetPointer<Transform3D>(worker->Target)->Position;
-      if (MoveInto(f, entity, worker, position, target, spec.FootprintRadius + rules.WorkRange, true) == false) {
+      var center = f.Unsafe.GetPointer<Transform3D>(worker->Target)->Position;
+      var target = AirfieldWorkSystem.WorkTarget(f, worker->Target, building, spec, center, out var range);
+      if (MoveInto(f, entity, worker, position, target, range, true) == false) {
         return;
       }
 
-      var progress = FPMath.Min(f.DeltaTime, building->ConstructionRemaining);
+      var extra = f.Has<AirfieldWorks>(worker->Target) ? AirfieldWorkSystem.BuildSeconds(rules, spec.Role) : FP._0;
+      var paving = extra > FP._0 && building->ConstructionRemaining <= extra;
+      var phaseRemaining = paving ? building->ConstructionRemaining : building->ConstructionRemaining - extra;
+      var progress = FPMath.Min(f.DeltaTime, phaseRemaining);
       building->ConstructionRemaining -= progress;
-      var gained = spec.MaxHealth * (FP._1 - rules.FoundationHealthRatio) * progress / spec.BuildTimeSeconds;
-      building->Health = FPMath.Min(spec.MaxHealth, building->Health + gained);
+      if (paving == false) {
+        var gained = spec.MaxHealth * (FP._1 - rules.FoundationHealthRatio) * progress / spec.BuildTimeSeconds;
+        building->Health = FPMath.Min(spec.MaxHealth, building->Health + gained);
+        if (extra > FP._0 && building->ConstructionRemaining == extra) worker->NextPathFrame = 0;
+      }
       if (building->ConstructionRemaining <= FP._0) {
         SetTask(worker, WorkerTask.Idle);
       }
