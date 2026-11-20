@@ -1,5 +1,11 @@
 # 에셋 구매·다운로드 후보
 
+## 제공 무료 에셋 적용
+
+- 시가지 저층 상점에 Synty 카페를 배치했다. 프리팹·모델·재질·텍스처만 원본 GUID로 들여왔다. [POLYGON Coffee Shop](https://syntystore.com/products/polygon-coffee-shop)
+- 도로용 Asphalt 02 노멀맵을 1K로 만들어 보통·높음에 적용한다. 차선, 보도와 사막 도로는 아스팔트 텍스처 범위에서 제외했다. [Asphalt 02](https://polyhaven.com/a/asphalt_02), [CC0](https://polyhaven.com/license)
+- Starter와 Generic은 기존 소품과 겹치는 모델이 많아 보유본을 재사용한다. Stunt Plane, Simple Sky, Holiday, Pride Flags, Water Guns, Sidekick은 각각 민간기, 하늘 연출, 장식, 캐릭터 구성이 별도로 필요할 때 검토한다.
+
 ## 환경 그래픽 후보 (2026-11-20)
 
 현재 조명·그림자·수면 개선에는 보유 에셋을 재사용했다. 표면의 사실감을 더 높일 경우 아래 순서로 검토한다.

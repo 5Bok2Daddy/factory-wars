@@ -17,6 +17,16 @@
 
 Unity GPU PlayMode 13/13 통과. 자원 시설 건설·배치·생산, 기지 작업자, RTS 카메라와 공장 HUD를 재검증했다. [복구 보고서](Docs/FactoryWars_Status.md) · [기지 작업자](Docs/status_images/recovery/before/headquarters-workers.png) · [가동 철광산](Docs/status_images/recovery/before/staffed-iron-extractor.png)
 
+### 무료 시가지 에셋 · 2026-11-20 KST
+
+| 상태 | 작업 | 확인 결과 |
+| --- | --- | --- |
+| 검증 완료 | 시가지 카페와 아스팔트 | 기존 저층 부지 4곳에 카페를 표시한다. 차선과 보도는 기존 색을 유지하고, 아스팔트 굴곡은 보통·높음에서 표시한다. |
+| 검증 완료 | Unity GPU PlayMode | **7/7 통과**. 카페 부지 경계, 도로 재질과 품질 전환, 기본 5개 맵, 바리케이드와 전차 음향을 확인했다. |
+| 검증 대기 | 출시 전 검증 | Android 프레임·음량, 온라인 동기화, 전체 회귀, 최종 맵 목록 확인이 남았다. |
+
+[카페 근접 화면](Docs/status_images/free-assets/urban-cafe.png) · [시가지 도로](Docs/status_images/free-assets/urban-roads.png)
+
 ### 전장 사운드와 에셋 점검 · 2026-11-20 KST
 
 | 상태 | 작업 | 확인 결과 |

@@ -144,6 +144,45 @@ namespace FactoryWars.Tests {
     }
 
     [UnityTest, Explicit, Category("UiCapture")]
+    public IEnumerator Urban_CafeAndAsphaltAreRendered() {
+      yield return StartMatch("Assets/QuantumUser/Scenes/MapUrban.unity");
+      yield return WaitForBattle();
+      var tier = GraphicsQuality.Current;
+      Restores.Add(() => GraphicsQuality.Apply(tier));
+      GraphicsQuality.Apply(QualityTier.High);
+      var map = Battle().World.Map;
+      var cafes = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None)
+        .Where(t => t.name.StartsWith("SM_Bld_Cafe_01") && t.parent != null && t.parent.name == "Kenney")
+        .OrderBy(t => t.parent.parent.parent.name).ToArray();
+      Assert.AreEqual(4, cafes.Length, "시가지 네 구역의 저층 건물");
+      foreach (var cafe in cafes) {
+        var block = cafe.parent.parent.parent;
+        var placement = map.CityBuildings[int.Parse(block.name.Substring("City".Length))];
+        foreach (var renderer in cafe.GetComponentsInChildren<MeshRenderer>()) {
+          Assert.IsTrue(renderer.sharedMaterials.All(mat => mat != null && mat.shader.isSupported));
+          var bounds = renderer.GetComponent<MeshFilter>().sharedMesh.bounds;
+          var meshToBlock = block.worldToLocalMatrix * renderer.localToWorldMatrix;
+          for (var x = -1; x <= 1; x += 2) for (var y = -1; y <= 1; y += 2) for (var z = -1; z <= 1; z += 2) {
+            var p = meshToBlock.MultiplyPoint3x4(bounds.center + Vector3.Scale(bounds.extents, new Vector3(x, y, z)));
+            Assert.LessOrEqual(Mathf.Abs(p.x), placement.Shape.HalfLength.AsFloat + 0.01f);
+            Assert.LessOrEqual(Mathf.Abs(p.z), placement.Shape.HalfWidth.AsFloat + 0.01f);
+          }
+        }
+      }
+      var road = GameObject.Find("Roads");
+      var roadMat = road.GetComponent<MeshRenderer>().sharedMaterial;
+      var normal = roadMat.GetTexture("_AsphaltNormalMap");
+      Assert.AreEqual("Asphalt02Normal", normal.name);
+      Assert.AreEqual(1024, normal.width);
+      Assert.Greater(roadMat.GetFloat("_AsphaltNormalStrength"), 0f);
+      var colors = road.GetComponent<MeshFilter>().sharedMesh.colors;
+      Assert.IsTrue(colors.Any(c => c.a == 0f) && colors.Any(c => c.a == 1f), "차선·보도와 아스팔트 표면 구분");
+      CaptureFacility("urban-cafe-asphalt", cafes[0].position, new Vector3(-13f, 21f, 17f));
+      GraphicsQuality.Apply(QualityTier.Low);
+      Assert.AreEqual(0f, roadMat.GetFloat("_AsphaltNormalStrength"));
+    }
+
+    [UnityTest, Explicit, Category("UiCapture")]
     public IEnumerator Urban_CaptureBuiltInMapDressing() {
       foreach (var name in new[] { "Map4P", "MapDesert", "MapUrban", "MapArchipelago", "MapStrait" }) {
         yield return StartMatch($"Assets/QuantumUser/Scenes/{name}.unity");

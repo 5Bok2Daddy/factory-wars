@@ -1,5 +1,11 @@
 # AI 교대 인계
 
+## 2026-11-20 무료 시가지 에셋
+
+- `Tools/prepare_free_art.py --ffmpeg <FFmpeg 실행 파일>`은 `temp-assets`의 카페 패키지에서 필수 에셋 5개와 원본 메타만 Git 제외 Synty 경로에 복사한다. 기존 Generic 에셋을 참조하고 다른 팩을 덮어쓰지 않는다. Asphalt 02의 원본에서 1K 노멀 PNG를 만든다.
+- `Tools/Factory Wars/Assets/Assign Cafe and Road Normal`을 실행하면 `dress/CityCafe`와 노멀맵 가져오기 설정을 연결한다. `CityView`는 비주둔 저층 건물의 일부에서 카페를 기존 부지 안에 맞춘다. 카페 팩이 없으면 기존 모델로 돌아간다. `WorldView`와 `FactoryWarsKenney.shader`는 도로 메쉬의 아스팔트 마스크를 사용한다. 낮음에서는 새 표면 텍스처 효과를 끈다. Quantum 상태와 맵 배치 데이터는 기존 값을 사용한다.
+- GPU PlayMode `Game-logs/codex-free-assets.xml` **7/7 통과**. 카페 4곳의 모델이 부지 안에 들어가는지, 도로가 1K 텍스처를 쓰는지, 낮음 품질에서는 굴곡 효과가 꺼지는지 확인했다. 카페 지붕의 큰 컵과 일부 교차로의 차선 이음새는 근접 화면에서 두드러진다. [Unity 캡처](../../README.md#무료-시가지-에셋--2026-11-20-kst)
+
 ## 2026-11-20 현장 음향과 에셋 목록
 
 - 사용자가 `temp-assets/Sounds`에 제공한 MP3 11개를 디코딩해 확인했다. `Tools/prepare_local_audio.py`가 9개의 24kHz 모노 WAV를 `Assets/ExternalAssets/FactoryWarsLocalAudio`에 생성한다. 단발은 끝을 페이드하고 반복음은 앞뒤를 교차 처리한다. `AudioCatalogTools.cs`는 이 폴더만 PCM으로 가져온다. 입력과 생성 음원은 로컬에 보존한다.
