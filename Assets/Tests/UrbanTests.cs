@@ -128,9 +128,13 @@ namespace FactoryWars.Tests {
       yield return WaitForHud();
       yield return WaitForBattle();
       var map = Map4P();
-      var bridges = Object.FindObjectsByType<ArtView>(FindObjectsSortMode.None).Count(v => v.name == "bridge");
-      Assert.AreEqual(map.Bridges.Length, bridges, "다리 모델 수 = 맵의 다리 수");
       var world = Battle().World;
+      Assert.AreEqual(map.Bridges.Length, world.BridgeCount, "다리 상태 수 = 맵의 다리 수");
+      var slots = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None).Where(t => t.name == "BridgeSlot").ToArray();
+      Assert.AreEqual(map.Bridges.Length, slots.Length, "다리 모델 수 = 맵의 다리 수");
+      Assert.IsTrue(slots.All(slot => slot.GetComponentsInChildren<MeshRenderer>()
+        .Any(renderer => renderer.enabled && renderer.GetComponent<MeshFilter>()?.sharedMesh != null)),
+        "모든 다리 슬롯에 실제 표시되는 메쉬가 있다");
       Assert.IsTrue(world.BarrierVisible, "휴전 중 울타리가 서 있다");
       Assert.IsFalse(BarrierOpen());
       yield return WaitFor(BarrierOpen, 30f, "휴전 종료");
