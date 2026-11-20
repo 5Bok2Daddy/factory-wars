@@ -1,12 +1,28 @@
 # Factory Wars — Mobile RTS Dashboard
 
-> **기준 일자:** **2026-11-20 21:46 (KST)**
+> **기준 일자:** **2026-11-20 23:57 (KST)**
 > **대상 플랫폼:** Android Mobile RTS (Touch-Only UI, Photon Quantum 3 결정론 `FP` 시뮬레이션 — 금지어 **0건**)
 > **Git 저장소 루트:** `Game/` (`origin/main` → `https://github.com/5Bok2Daddy/factory-wars.git`)
-> **아트 파이프라인:** 원시 플레이스홀더(`Cube`/`Cylinder`/`Sphere`) **전면 금지** → **100% 실제 Synty (`POLYGON Military` · `BattleRoyale` · `City`) + Jean Moreno `War FX` VFX + 5종 고유 바이옴 맵** 적용 (**총 53장**, 깨진 링크 **0건**)
+> **아트 파이프라인:** Synty POLYGON 및 War FX에 Desert World, Roadside Tales와 NatureForge 맵 에셋을 선별 적용.
 
 ---
 
+### 구매 환경 번들 · 2026-11-20 KST
+
+| 적용 에셋 | 프리팹 | 적용 위치 |
+| --- | ---: | --- |
+| Desert World – Stylized Environment | 3 | MapDesert의 모래 표면 노멀, 암석군, 바위 능선 |
+| Roadside Tales Backroad Bridges | 3 | Map4P·MapStrait·MapArchipelago의 상판 하부, 교각, 난간 및 진입부 정렬 |
+| NatureForge Woodland의 Unity판 | 3 | Map4P 목재 노드의 나무와 벌목 그루터기 |
+| NatureForge LITE Meadow & Farm | 2 | Map4P 목재 노드 가장자리의 덤불·바위 |
+
+32개 EGG 볼륨에서 100개 파일을 스테이징에 풀고 위 프리팹 11개 및 의존성 26개를 로컬 프로젝트로 가져왔다. Cartoon City, 던전, 중세·바이킹, 묘지·PolyVania, 늪, 주방·식당, 80/90년대 인테리어, 픽셀 지하철, 주민 캐릭터, Harboria는 스테이징에 보관한다. Synty 군수·산업 건물은 기존 연결을 사용한다.
+
+Unity 6000.0.85f2에서 지상·수상 NavMesh 5맵 재베이크 및 GPU PlayMode 5/5 통과. 사막·숲 프리팹의 회전된 도로 경계와 교량 난간의 실제 메쉬 경계를 검사했다. 자체 시뮬레이션의 결정론 금지 표현 0건. 전체 PlayMode 실행 중.
+
+[사막](Docs/status_images/map_desert.png) · [해협](Docs/status_images/map_strait.png) · [표준](Docs/status_images/map_standard.png) · [제재소와 목재 이송](Docs/status_images/current_resource_extraction.png) · [다도해](Docs/status_images/map_archipelago.png) · [시가지](Docs/status_images/map_urban.png)
+
+다른 로컬 작업 환경에서는 구매 번들을 `temp-asset/new bundle/_extracted`에 풀고 `py Tools/import_new_bundle.py`를 실행한 뒤 Unity의 **Tools → Factory Wars → Assets → Prepare New Bundle**을 실행한다. 번들 원본과 로컬 변형 에셋은 기존 구매 팩과 같이 Git에서 제외된다.
 ### 공병 자동 배치와 작업자 순환 근무 · 2026-11-20 KST
 
 철광산과 제재소 완공 공병이 자동 배치되고, 정원 내 추가 진입과 퇴거를 지원한다. 장식 작업자는 적재·하역과 사령부 주변의 휴식·복귀를 반복한다. Unity GPU·Photon 실서버 집중 검사 16/16 통과. 채굴 시나리오의 확정 프레임 체크섬 590개 일치. 전체 PlayMode는 546건 중 398 통과, 25 실패, 123 건너뜀이다.

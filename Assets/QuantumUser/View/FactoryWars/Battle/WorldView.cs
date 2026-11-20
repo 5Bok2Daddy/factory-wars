@@ -112,6 +112,7 @@ namespace FactoryWars.View {
     }
 
     static Material _ground;
+    static Material _desertGround;
 
     /// <summary>바닥 전용 공유 머티리얼: 공용 셰이더에 정점 색을 켜고 접촉 AO·높이 그라데이션은 끈다.</summary>
     /// <summary>바닥·도로 공용 머티리얼(정점 색 + 전장 손상). 색 맞추기 비교 장면도 쓴다.</summary>
@@ -161,9 +162,26 @@ namespace FactoryWars.View {
       return _ground;
     }
 
+    static Material DesertGroundMaterial() {
+      if (_desertGround == null) {
+        var normal = Resources.Load<Texture2D>("FactoryWarsBundle/SandNormal");
+        if (normal == null) return GroundMaterial();
+        _desertGround = new Material(GroundMaterial()) { name = "DesertSandVertexColor" };
+        // The ground shader and road shader share the same world-space detail normal slot.
+        _desertGround.SetTexture("_AsphaltNormalMap", normal);
+        _desertGround.SetFloat("_GridStrength", 0f);
+      }
+      RefreshSurfaceDetail();
+      return _desertGround;
+    }
+
     public static void RefreshSurfaceDetail() {
       var relief = GraphicsQuality.Current == QualityTier.Low ? 0f : VisualProfile.Current.SurfaceRelief;
       if (_ground != null) _ground.SetFloat("_SurfaceRelief", relief);
+      if (_desertGround != null) {
+        _desertGround.SetFloat("_SurfaceRelief", relief);
+        _desertGround.SetFloat("_AsphaltNormalStrength", Mathf.Min(relief, 0.35f));
+      }
       if (_road != null) {
         _road.SetFloat("_SurfaceRelief", relief * 0.6f);
         _road.SetFloat("_AsphaltNormalStrength", _asphaltNormal != null ? Mathf.Min(relief * 1.8f, 0.55f) : 0f);
@@ -197,7 +215,8 @@ namespace FactoryWars.View {
           colors[v] = linear ? tint.linear : tint;
         }
         groundMesh.colors = colors;
-        groundObject.GetComponent<MeshRenderer>().sharedMaterial = GroundMaterial();
+        groundObject.GetComponent<MeshRenderer>().sharedMaterial =
+          biome == TerrainKit.Biome.Desert ? DesertGroundMaterial() : GroundMaterial();
       }
       // 도로는 따로 그려 바닥과 같은 머티리얼(정점 색 + 전장 손상)을 쓴다(항목 27 K-2: 균열·패임·그을음).
       if (GroundMaterial() != null) {
@@ -307,30 +326,38 @@ namespace FactoryWars.View {
         var span = Mathf.Max(rect.width, rect.height);
         var width = Mathf.Min(rect.width, rect.height);
         var longStrait = span > 20f;
+        var themedBridge = NewBundleArt.UsesBridges(biome);
         var yaw = longStrait ? (rect.width >= rect.height ? 90f : 0f) : (rect.width < rect.height ? 90f : 0f);
+        // Base crossings traverse the short axis of the rectangular gap in the canal.
+        if (themedBridge && longStrait == false) (span, width) = (width, span);
         holder.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
 
         GameObject intactGo;
-        if (longStrait) {
+        if (longStrait || themedBridge) {
           // 해협 54m 장대 전략 교량: 전체 교각·상판·아스팔트 차선·중앙선·양측 콘크리트 난간을 빈틈없이 연결한다.
-          intactGo = new GameObject("StraitBridgeDeck", typeof(MeshFilter), typeof(MeshRenderer));
+          intactGo = new GameObject(themedBridge ? "BundleBridgeDeck" : "StraitBridgeDeck", typeof(MeshFilter), typeof(MeshRenderer));
           intactGo.transform.SetParent(holder.transform, false);
           var sk = new MeshKit();
           sk.Paint(Swatch.ConcreteDark).Box(new Vector3(0f, -0.18f, 0f), new Vector3(width + 0.8f, 0.55f, span + 2.4f));
           sk.Paint(Swatch.Asphalt).Box(new Vector3(0f, 0.14f, 0f), new Vector3(width - 0.8f, 0.10f, span + 2.2f));
-          sk.Paint(Swatch.Concrete).Box(new Vector3(-(width * 0.5f + 0.1f), 0.52f, 0f), new Vector3(0.65f, 0.95f, span + 2.2f));
-          sk.Paint(Swatch.Concrete).Box(new Vector3(width * 0.5f + 0.1f, 0.52f, 0f), new Vector3(0.65f, 0.95f, span + 2.2f));
+          if (themedBridge == false) {
+            sk.Paint(Swatch.Concrete).Box(new Vector3(-(width * 0.5f + 0.1f), 0.52f, 0f), new Vector3(0.65f, 0.95f, span + 2.2f));
+            sk.Paint(Swatch.Concrete).Box(new Vector3(width * 0.5f + 0.1f, 0.52f, 0f), new Vector3(0.65f, 0.95f, span + 2.2f));
+          }
           sk.Paint(Swatch.LaneWhite).Box(new Vector3(-(width * 0.5f - 0.85f), 0.21f, 0f), new Vector3(0.22f, 0.02f, span + 1.8f));
           sk.Paint(Swatch.LaneWhite).Box(new Vector3(width * 0.5f - 0.85f, 0.21f, 0f), new Vector3(0.22f, 0.02f, span + 1.8f));
           sk.Paint(Swatch.LaneYellow);
           for (var z = -span * 0.48f; z < span * 0.48f; z += 5.5f) {
             sk.Box(new Vector3(0f, 0.215f, z + 1.3f), new Vector3(0.24f, 0.02f, 2.8f));
           }
-          // 교량 양측 조명 기둥 + 진입 아치 프레임.
-          sk.Paint(Swatch.MetalDark);
-          for (var z = -span * 0.42f; z <= span * 0.42f + 0.1f; z += span * 0.21f) {
-            sk.Box(new Vector3(-(width * 0.5f + 0.15f), 1.65f, z), new Vector3(0.32f, 2.2f, 0.32f));
-            sk.Box(new Vector3(width * 0.5f + 0.15f, 1.65f, z), new Vector3(0.32f, 2.2f, 0.32f));
+          if (themedBridge) {
+            NewBundleArt.AddBridge(intactGo.transform, span, width, longStrait);
+          } else {
+            sk.Paint(Swatch.MetalDark);
+            for (var z = -span * 0.42f; z <= span * 0.42f + 0.1f; z += span * 0.21f) {
+              sk.Box(new Vector3(-(width * 0.5f + 0.15f), 1.65f, z), new Vector3(0.32f, 2.2f, 0.32f));
+              sk.Box(new Vector3(width * 0.5f + 0.15f, 1.65f, z), new Vector3(0.32f, 2.2f, 0.32f));
+            }
           }
           intactGo.GetComponent<MeshFilter>().sharedMesh = sk.ToMesh("strait_bridge");
           intactGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
@@ -429,9 +456,12 @@ namespace FactoryWars.View {
       }
 
       if (biome == TerrainKit.Biome.Desert) {
-        var dunes = new[] { LoadFx("desert_dune_1"), LoadFx("desert_dune_2"), LoadFx("desert_dune_3") };
+        var ridge = NewBundleArt.Prefab("SandRidge");
+        var canyon = NewBundleArt.Prefab("CanyonRock");
+        var boulder = NewBundleArt.Prefab("DesertBoulder");
+        var dunes = new[] { ridge ?? LoadFx("desert_dune_1"), LoadFx("desert_dune_2"), ridge ?? LoadFx("desert_dune_3") };
         var cacti = new[] { LoadFx("desert_cactus_1"), LoadFx("desert_cactus_2"), LoadFx("desert_cactus_3") };
-        var rocks = new[] { LoadFx("desert_rock_1"), LoadFx("desert_rock_2"), LoadFx("desert_rock_3"), LoadFx("desert_rock_arch"), LoadFx("desert_ruin_1") };
+        var rocks = new[] { boulder ?? LoadFx("desert_rock_1"), canyon ?? LoadFx("desert_rock_2"), LoadFx("desert_rock_3"), canyon ?? LoadFx("desert_rock_arch"), LoadFx("desert_ruin_1") };
         var outposts = new[] { LoadFx("desert_outpost_1"), LoadFx("desert_outpost_2"), LoadFx("desert_outpost_3") };
         var deadTree = LoadFx("desert_tree");
         var oasis = LoadFx("desert_oasis");
@@ -467,6 +497,11 @@ namespace FactoryWars.View {
             } else if (roll < 0.96f && oasis != null && spot.magnitude > 52f && Dressing.IsOnAnyRoad(spot, 12f) == false) {
               prefab = oasis;
               scale = 0.42f;
+            }
+            if (prefab != null && (prefab == ridge || prefab == canyon || prefab == boulder)) {
+              var bounds = NewBundleArt.BoundsOf(prefab);
+              var width = prefab == boulder ? 4.5f : 10f;
+              scale *= width / Mathf.Max(0.01f, bounds.size.x, bounds.size.z);
             }
             if (Place(prefab, spot, MeshKit.Hash(idx, 23) * 360f, scale) == false) continue;
             placed++;
@@ -769,7 +804,7 @@ namespace FactoryWars.View {
       _forests[entity] = new Forest { Shape = node->Shape, Seed = 11 + index * 7, Amount = Mathf.Max(amount, 1f), Filter = item.GetComponent<MeshFilter>() };
     }
 
-    static void UpdateForest(Forest forest, float remaining, float clearHalfExtent) {
+    void UpdateForest(Forest forest, float remaining, float clearHalfExtent) {
       var step = Mathf.CeilToInt(Mathf.Clamp01(remaining / forest.Amount) * ForestSteps);
       if (step == forest.Step && clearHalfExtent == forest.ClearHalfExtent) {
         return;
@@ -780,7 +815,9 @@ namespace FactoryWars.View {
       // Kenney 나무가 있으면 나무는 인스턴싱 그룹으로 가고 kit에는 바닥 판만 남는다. 채집 단계가 바뀌면 그룹을 바꿔 끼운다.
       var toWorld = forest.Filter.transform.localToWorldMatrix;
       Dressing.Begin();
-      if (forest.Shape.IsCircle) {
+      if (NewBundleArt.HasWoodland(_map)) {
+        NewBundleArt.AddWoodland(_map, forest.Shape, forest.Seed, step / (float)ForestSteps, clearHalfExtent, forest.ScarBand >= 2);
+      } else if (forest.Shape.IsCircle) {
         ForestKit.Grove(kit, forest.Shape.Radius.AsFloat, forest.Seed, step / (float)ForestSteps, toWorld, clearHalfExtent);
       } else {
         ForestKit.Forest(kit, forest.Shape.HalfLength.AsFloat, forest.Shape.HalfWidth.AsFloat, forest.Seed, step / (float)ForestSteps, toWorld, clearHalfExtent);

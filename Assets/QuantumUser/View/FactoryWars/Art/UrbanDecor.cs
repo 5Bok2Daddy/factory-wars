@@ -570,13 +570,17 @@ namespace FactoryWars.View {
       }
       k.Paint(Swatch.Asphalt);
       var water = TerrainKit.RiverPaths(map);
+      var themedBridge = NewBundleArt.UsesBridges(TerrainKit.BiomeOf(map));
       foreach (var bridge in map.Bridges) {
         var c = new Vector2(bridge.Center.X.AsFloat, bridge.Center.Z.AsFloat);
-        var alongX = bridge.HalfLength.AsFloat >= bridge.HalfWidth.AsFloat;
+        var halfLong = Mathf.Max(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
+        var halfShort = Mathf.Min(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
+        var shortAxis = themedBridge && halfLong <= 10f;
+        var alongX = (bridge.HalfLength.AsFloat >= bridge.HalfWidth.AsFloat) != shortAxis;
         var d3 = Quaternion.Euler(0, bridge.Yaw.AsFloat + (alongX ? 0f : 90f), 0) * Vector3.right;
         var d = new Vector2(d3.x, d3.z);
-        var half = Mathf.Max(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
-        var width = Mathf.Min(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat) * 0.85f;
+        var half = shortAxis ? halfShort : halfLong;
+        var width = (shortAxis ? halfLong : halfShort) * 0.85f;
         foreach (var sign in new[] { -1f, 1f }) {
           var end = c + d * sign * (half + 0.5f);
           var best = Vector2.zero;

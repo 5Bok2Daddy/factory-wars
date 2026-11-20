@@ -56,6 +56,7 @@ namespace FactoryWars.View {
       public Matrix4x4 World;
       public GroundFootprint Footprint;
       public bool Shadows;
+      public bool PreserveMaterial;
       /// <summary>0~1 해시. 품질 낮음에서는 이 값이 LowKeep보다 작은 것만 남긴다.</summary>
       public float Keep;
       public float LowKeep;
@@ -71,6 +72,22 @@ namespace FactoryWars.View {
     public static bool Has(DressKind kind) => Map != null && Map.Has(kind);
 
     public static bool Collecting => _collector != null;
+
+    public static void AddBundle(GameObject prefab, Vector3 position, float width, int seed,
+        System.Predicate<GroundFootprint> fits) {
+      if (_collector == null || prefab == null) return;
+      var bounds = NewBundleArt.BoundsOf(prefab);
+      var factor = width / Mathf.Max(0.01f, bounds.size.x, bounds.size.z);
+      var rotation = Quaternion.Euler(0f, MeshKit.Hash(seed, 3) * 360f, 0f);
+      var footprint = new GroundFootprint(position, bounds.extents * factor, rotation);
+      if (fits(footprint) == false) return;
+      var pivot = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+      _collector.Add(new Item {
+        Prefab = prefab, Kind = DressKind.Conifer, Footprint = footprint, Shadows = true, PreserveMaterial = true,
+        World = Matrix4x4.TRS(position, rotation, Vector3.one * factor) * Matrix4x4.Translate(-pivot),
+        Keep = MeshKit.Hash(seed, 77), LowKeep = 0.55f, MediumKeep = 0.85f, Tint = Color.white,
+      });
+    }
 
     public static void Begin() {
       _collector = new List<Item>();
@@ -575,7 +592,7 @@ namespace FactoryWars.View {
       return result;
     }
 
-    static Part[] PartsOf(GameObject prefab) {
+    static Part[] PartsOf(GameObject prefab, bool preserveMaterial = false) {
       if (Parts.TryGetValue(prefab, out var parts)) {
         return parts;
       }
@@ -588,7 +605,7 @@ namespace FactoryWars.View {
         }
         var materials = KenneyLook.Resolve(renderer.sharedMaterials);
         // 읽을 수 없는 메쉬(구입한 팩)는 GPU 인스턴싱으로 그린다. 팩 머티리얼은 인스턴싱이 꺼져 있으므로 메모리 안에서 복사본을 만들어 쓴다(팩 파일은 그대로).
-        if (filter.sharedMesh.isReadable == false) {
+        if (preserveMaterial || filter.sharedMesh.isReadable == false) {
           materials = Instanced(materials);
         }
         list.Add(new Part { Mesh = filter.sharedMesh, Materials = materials, Local = filter.transform.localToWorldMatrix });
@@ -625,7 +642,7 @@ namespace FactoryWars.View {
       var cells = new Dictionary<(int, int, bool), (List<Vector3> V, List<Vector3> N, List<Color> C, List<int> T)>();
       var linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
       foreach (var item in _groups[group]) {
-        if (Skip(item)) {
+        if (Skip(item) || item.PreserveMaterial) {
           continue;
         }
         var position = item.World.GetColumn(3);
@@ -696,8 +713,8 @@ namespace FactoryWars.View {
             continue;
           }
           InstanceCount++;
-          foreach (var part in PartsOf(item.Prefab)) {
-            if (part.Mesh.isReadable) {
+          foreach (var part in PartsOf(item.Prefab, item.PreserveMaterial)) {
+            if (part.Mesh.isReadable && item.PreserveMaterial == false) {
               continue;
             }
             var world = item.World * part.Local;

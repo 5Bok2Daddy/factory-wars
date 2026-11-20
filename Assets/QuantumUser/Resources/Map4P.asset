@@ -34,8 +34,8 @@ MonoBehaviour:
     Id:
       Value: 308761472557958381
   SerializeTrianglesMetadata: 0
-  GridSizeX: 97
-  GridSizeY: 97
+  GridSizeX: 98
+  GridSizeY: 98
   GridNodeSize: 4
   NavMeshLinks:
   - Id:

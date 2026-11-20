@@ -805,7 +805,9 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => Verified.Get<Unit>(engineer).Garrison == site, 60f, "제재소 공병 자동 배치");
       Time.timeScale = 1f;
       var view = Object.FindAnyObjectByType<BattleView>();
-      yield return WaitFor(() => view.Actors.TryGetValue(site, out var actor) && actor.ExtractorEquipment != null, 10f, "제재소 톱 표시");
+      yield return WaitFor(() => view.Actors.TryGetValue(site, out var actor) && actor.ExtractorEquipment != null
+        && actor.ExtractorDelivery?.FirstCargo != null && actor.ExtractorDelivery.FirstCargo.gameObject.activeInHierarchy,
+        10f, "가동 제재소의 톱과 목재 이송 표시");
       var saw = view.Actors[site].ExtractorEquipment;
       var before = saw.localRotation;
       yield return new WaitForSeconds(0.18f);

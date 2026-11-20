@@ -121,5 +121,93 @@ namespace FactoryWars.Tests {
         camera.orthographicSize = oldSize;
       }
     }
+
+    [UnityTest, Explicit, Category("CaptureCatalog")]
+    public IEnumerator CaptureNewBundleMapArt() {
+      Assert.IsTrue(NewBundleArt.HasBridge, "Backroad Bridges 준비 완료");
+      foreach (var key in new[] { "CanyonRock", "SandRidge", "DesertBoulder", "WoodlandTree", "MeadowShrub", "MeadowRock" }) {
+        var prefab = NewBundleArt.Prefab(key);
+        Assert.IsNotNull(prefab, key);
+        Assert.IsNotEmpty(prefab.GetComponentsInChildren<MeshRenderer>(), key);
+        foreach (var renderer in prefab.GetComponentsInChildren<MeshRenderer>()) {
+          Assert.IsTrue(renderer.sharedMaterials.All(material => material != null
+            && material.shader.isSupported && material.shader.name.StartsWith("Universal Render Pipeline/")), key);
+        }
+      }
+      var maps = new[] {
+        ("Map4P", "map_standard"), ("MapDesert", "map_desert"), ("MapUrban", "map_urban"),
+        ("MapArchipelago", "map_archipelago"), ("MapStrait", "map_strait"),
+      };
+      foreach (var (scene, shot) in maps) {
+        TearDown();
+        yield return null;
+        GraphicsQuality.Apply(QualityTier.High);
+        yield return StartMatch($"Assets/QuantumUser/Scenes/{scene}.unity", 4, truce: 0);
+        yield return WaitForBattle();
+        yield return WaitFrames(5);
+        var world = Object.FindAnyObjectByType<BattleView>().World;
+        var map = world.Map;
+        Assert.IsNotNull(Verified.Map.GetNavMesh(FactoryWarsUtil.Rules(Verified).NavMeshName), $"지상 NavMesh {scene}");
+        var models = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+        var decks = models.Where(model => model.name == "BundleBridgeDeck").ToArray();
+        if (scene == "Map4P" || scene == "MapArchipelago" || scene == "MapStrait") {
+          Assert.AreEqual(map.Bridges.Length, decks.Length, scene);
+          Assert.IsNotEmpty(decks);
+          foreach (var deck in decks) {
+            var laneHalfWidth = deck.GetComponent<MeshFilter>().sharedMesh.bounds.extents.x - 0.84f;
+            var rails = deck.Cast<Transform>().Where(part => part.name == "BundleBridgeRail").ToArray();
+            Assert.IsNotEmpty(rails);
+            foreach (var rail in rails) {
+              Assert.IsEmpty(rail.GetComponentsInChildren<Collider>(), "교량 장식은 물리 통행에 영향 없음");
+              foreach (var filter in rail.GetComponentsInChildren<MeshFilter>()) {
+                var bounds = filter.sharedMesh.bounds;
+                var toDeck = deck.worldToLocalMatrix * filter.transform.localToWorldMatrix;
+                var side = Mathf.Sign(rail.localPosition.x);
+                for (var x = -1; x <= 1; x += 2)
+                  for (var y = -1; y <= 1; y += 2)
+                    for (var z = -1; z <= 1; z += 2) {
+                      var local = bounds.center + Vector3.Scale(bounds.extents, new Vector3(x, y, z));
+                      Assert.That(toDeck.MultiplyPoint3x4(local).x * side, Is.GreaterThanOrEqualTo(laneHalfWidth - 0.02f),
+                        $"난간 메쉬가 차도를 침범 {scene}");
+                    }
+              }
+            }
+          }
+        }
+        var focus = Vector3.zero;
+        if (scene == "MapDesert") {
+          var sand = models.Single(model => model.name == "Ground" && model.parent != null && model.parent.name == "World")
+            .GetComponent<MeshRenderer>().sharedMaterial;
+          Assert.AreEqual("SandNormal", sand.GetTexture("_AsphaltNormalMap").name);
+          Assert.Greater(sand.GetFloat("_AsphaltNormalStrength"), 0f);
+          var desert = models.Where(model => model.name is "CanyonRock(Clone)" or "SandRidge(Clone)" or "DesertBoulder(Clone)")
+            .OrderBy(model => model.position.sqrMagnitude).ToArray();
+          Assert.IsNotEmpty(desert);
+          foreach (var footprint in world.BiomePropFootprints) {
+            Assert.IsFalse(map.Roads.Any(road => footprint.Overlaps(road, 0f)), "사막 소품이 차도를 침범");
+          }
+          focus = desert[0].position;
+        } else if (decks.Length > 0) {
+          focus = decks.OrderBy(deck => deck.position.sqrMagnitude).First().position;
+        }
+        if (scene == "Map4P") {
+          var woodland = map.ResourceNodes.SelectMany((node, index) =>
+              DressingRenderer.Active.Group($"forest{11 + index * 7}"))
+            .Where(item => item.Prefab.name is "WoodlandTree" or "WoodlandTallTree" or "MeadowShrub" or "MeadowRock").ToArray();
+          Assert.IsTrue(woodland.Any(item => item.Prefab.name.StartsWith("Woodland")), "목재 노드 숲");
+          Assert.IsTrue(woodland.Any(item => item.Prefab.name.StartsWith("Meadow")), "목재 노드 주변 풀·돌");
+          foreach (var item in woodland) {
+            Assert.IsFalse(map.Roads.Any(road => item.Footprint.Overlaps(road, 0f)), "목재 노드 소품이 차도를 침범");
+          }
+        }
+        var camera = Camera.main;
+        var offset = scene == "MapStrait" ? new Vector3(-53f, 95f, -75f) : new Vector3(-20f, 85f, -60f);
+        camera.transform.position = focus + offset;
+        camera.transform.LookAt(focus);
+        camera.fieldOfView = 48f;
+        var target = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, $"../../Game-logs/new-bundle/{shot}.png"));
+        CaptureCameraPng(camera, target, 1600, 900);
+      }
+    }
   }
 }

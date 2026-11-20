@@ -26,6 +26,9 @@
 *.aab
 *.unitypackage
 *.zip
+*.[eE][gG][gG]
+*.[rR][aA][rR]
+*.7[zZ]
 temp-asset/
 temp-assets/
 crashlytics-build.properties
@@ -59,3 +62,6 @@ Assets/QuantumUser/Resources/FactoryWars/BuildVersion.txt.meta
 /Assets/FactoryWarsArt/Synty/
 /Assets/FactoryWarsArt/Synty.meta
 /Assets/FactoryWarsArt.meta
+/Assets/ThirdParty/NewBundle/
+/Assets/ThirdParty/NewBundle.meta
+/Assets/ThirdParty.meta
