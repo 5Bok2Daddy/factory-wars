@@ -44,6 +44,8 @@ namespace FactoryWars.Tests {
       var files = BuildVersion.Files(Application.dataPath);
       Assert.IsTrue(files.Any(f => f.EndsWith("FactoryWars.qtn")), "qtn 포함");
       Assert.IsTrue(files.Any(f => f.EndsWith("game_rules.asset")), "규칙 데이터 포함");
+      Assert.Contains("QuantumUser/Resources/Map4P.asset", files, "베이크된 맵 포함");
+      Assert.Contains("QuantumUser/Resources/Map4P_WaterNavMesh_data.asset", files, "수상 NavMesh 포함");
       Assert.IsFalse(files.Any(f => f.Contains("/Art/") || f.Contains("/Visual/")), "그래픽 에셋은 제외(화면만 바뀌면 같이 놀 수 있음)");
 
       // 임시 복사본에서 규칙 데이터 한 줄을 바꾸면 해시가 달라진다.
@@ -55,6 +57,10 @@ namespace FactoryWars.Tests {
           File.Copy(Path.Combine(Application.dataPath, file), target);
         }
         Assert.AreEqual(current, BuildVersion.Compute(temp), "복사본은 같은 해시");
+        var nav = Path.Combine(temp, "QuantumUser/Resources/Map4P_NavMesh_data.asset");
+        File.AppendAllText(nav, "\n# changed navmesh\n");
+        Assert.AreNotEqual(current, BuildVersion.Compute(temp), "재베이크한 NavMesh는 다른 해시");
+        File.Copy(Path.Combine(Application.dataPath, "QuantumUser/Resources/Map4P_NavMesh_data.asset"), nav, true);
         var rules = Path.Combine(temp, files.First(f => f.EndsWith("game_rules.asset")));
         File.AppendAllText(rules, "\n# changed\n");
         Assert.AreNotEqual(current, BuildVersion.Compute(temp), "데이터가 바뀌면 다른 해시");

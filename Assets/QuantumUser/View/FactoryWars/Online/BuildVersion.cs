@@ -7,7 +7,7 @@ namespace FactoryWars.View {
   using UnityEngine;
 
   /// <summary>
-  /// 온라인 버전 해시(항목 30). 시뮬레이션 코드(.cs·.qtn)와 데이터 에셋(Resources/FactoryWars의 .asset, 그래픽 폴더 제외)의 내용으로 만든다.
+  /// 온라인 버전 해시(항목 30). 시뮬레이션 코드, 게임 데이터와 베이크된 Quantum 맵 데이터의 내용으로 만든다.
   /// 둘 중 하나라도 다르면 같은 입력에 다른 결과가 나와 디싱크가 나므로 방 입장을 막는다.
   /// 빌드에서는 빌드 직전 에디터가 쓴 Resources/FactoryWars/BuildVersion.txt를 읽고, 에디터에서는 파일에서 바로 계산한다.
   /// </summary>
@@ -44,7 +44,9 @@ namespace FactoryWars.View {
       var dataRoot = Path.Combine(assets, DataFolder);
       var data = Directory.GetFiles(dataRoot, "*.asset", SearchOption.AllDirectories)
         .Where(path => ViewOnlyFolders.Any(v => Relative(dataRoot, path).StartsWith(v + "/")) == false);
-      return code.Concat(data).Select(path => Relative(assets, path)).OrderBy(path => path, StringComparer.Ordinal).ToArray();
+      var mapRoot = Path.GetDirectoryName(dataRoot);
+      var bakedMaps = Directory.GetFiles(mapRoot, "Map*.asset", SearchOption.TopDirectoryOnly);
+      return code.Concat(data).Concat(bakedMaps).Select(path => Relative(assets, path)).OrderBy(path => path, StringComparer.Ordinal).ToArray();
     }
 
     static string Relative(string root, string path) => path.Substring(root.Length).Replace('\\', '/').TrimStart('/');

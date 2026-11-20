@@ -18,7 +18,7 @@
 
 32개 EGG 볼륨에서 100개 파일을 스테이징에 풀고 위 프리팹 11개 및 의존성 26개를 로컬 프로젝트로 가져왔다. Cartoon City, 던전, 중세·바이킹, 묘지·PolyVania, 늪, 주방·식당, 80/90년대 인테리어, 픽셀 지하철, 주민 캐릭터, Harboria는 스테이징에 보관한다. Synty 군수·산업 건물은 기존 연결을 사용한다.
 
-Unity 6000.0.85f2에서 지상·수상 NavMesh 5맵 재베이크 및 GPU PlayMode 5/5 통과. 사막·숲 프리팹의 회전된 도로 경계와 교량 난간의 실제 메쉬 경계를 검사했다. 자체 시뮬레이션의 결정론 금지 표현 0건. 전체 PlayMode 실행 중.
+Unity 6000.0.85f2에서 지상·수상 NavMesh 5맵 재베이크 및 GPU PlayMode 5/5 통과. 사막·숲 프리팹의 회전된 도로 경계와 교량 난간의 실제 메쉬 경계를 검사했다. 자체 시뮬레이션의 결정론 금지 표현 0건. 베이크된 맵과 NavMesh는 온라인 버전 해시에 포함된다. 온라인 3/3 통과, 실서버 확정 프레임 체크섬 558개 일치·디싱크 0건. 전체 PlayMode 실행 중.
 
 [사막](Docs/status_images/map_desert.png) · [해협](Docs/status_images/map_strait.png) · [표준](Docs/status_images/map_standard.png) · [제재소와 목재 이송](Docs/status_images/current_resource_extraction.png) · [다도해](Docs/status_images/map_archipelago.png) · [시가지](Docs/status_images/map_urban.png)
 
