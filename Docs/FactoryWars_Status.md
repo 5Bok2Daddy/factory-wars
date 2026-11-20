@@ -35,7 +35,7 @@ Unity 6000.0.85f2에서 C# 컴파일 후 GPU 기반 PlayMode **13/13 통과**. `
 - 화면 이름은 `map_*.png`, `headquarters-workers.png`, `engineer-construction.png`, `staffed-iron-extractor.png`, `factory-hud.png`다. `map_*.png`는 대표 구역의 경기 카메라 화면이다.
 - 공병 건물 진입은 기존 PlayMode에서 상태를 확인했다. 입구 전환의 독립 화면은 개발 단계에서 촬영한다.
 
-## 다음 개발 순서
+## 인수 당시 개발 계획
 
 1. 검증된 로컬 변경을 보존하고 `origin/main`에 동기화한다.
 2. 건설을 끝낸 공병이 배치되도록 기존 Quantum 진입 경로를 재사용한다.
@@ -68,7 +68,10 @@ Unity 6000.0.85f2에서 C# 컴파일 후 GPU 기반 PlayMode **13/13 통과**. `
 
 - Unity 6000.0.85f2 최종 집중 실행에서 C#·셰이더 컴파일 오류 0건, GPU 및 실서버 PlayMode 16/16 통과. 결과는 `Game-logs/recovery-final-focused.xml`, 실행 로그는 `Game-logs/recovery-final-focused-retry.log`다.
 - Photon 서울 서버에서 방 생성과 참가, 없는 방 거부, 준비 상태 전달을 확인했다. 두 클라이언트가 동일한 확정 프레임의 체크섬 590개에서 일치했다. 시공 공병의 자동 배치와 소유자 철 생산을 상대 클라이언트에서도 확인했고 디싱크 콜백은 0건이었다. 관측 핑은 16/16ms였다. 두 클라이언트는 동일 PC에서 실행했다.
-- 자체 Quantum 시뮬레이션과 DSL의 금지 타입·API·시각 참조 정적 검색은 0건이다. 휴전 중 주둔 거절 사유의 기존 회귀 1건을 재현했다. 새 전체 PlayMode는 `Game-logs/recovery-final-full.xml`로 실행 중이다.
+- 자체 Quantum 시뮬레이션과 DSL의 금지 타입·API·시각 참조 정적 검색은 0건이다. 최신 전체 PlayMode는 그래픽 없이 **546건 중 398 통과, 25 실패, 123 건너뜀**이다. 결과는 `Game-logs/recovery-final-full.xml`에 있다. 자동 배치, 자원 생산·퇴거, 장식 작업자 휴식·이동, 공병 선택·이동, 자원바 테스트가 통과했다.
+- 이전 전체 실행(`codex-yard-full.xml`)과 비교하면 실패 24건이 이어졌고 7건은 같은 이름에서 통과했다. 이전 실패 3건은 이름 또는 검사 방식이 바뀌었다. 새로 실패한 `Ultimate_MissileIgnoresCoverAndCollapsesCity`는 착탄 시 엄폐 상태 검사에서 실패한 뒤 같은 실행 옵션의 후속 검사 두 번에서 통과했다.
+- `Cover_DeterministicAcrossRuns`는 전체 검사에서 두 로컬 실행의 체크섬이 일치했고 후속 두 번에서는 달랐다. 임시 계측에서 두 실행의 이동 명령이 각각 틱 83과 69에 적용된 것을 확인했다. 계측 코드는 제거했다. 테스트 재현 시 명령 실행 틱부터 고정한다. 후속 결과는 `Game-logs/recovery-full-followup.xml`, `recovery-full-followup-repeat.xml`, `recovery-cover-diagnostic.log`에 있다.
+- 기존 잔여 실패에는 맵·자원 배치, AI·경제, 에셋 카탈로그, 수송 및 궁극기 문제가 포함된다. 휴전 중 도시 주둔 검사는 현재 표준 맵에 주둔 대상으로 지정된 도시 건물이 없어 유효하지 않은 대상을 보낸다. 포격함 기준선에는 25,457 삼각형과 35 드로우가 보고됐으며 예산은 각각 4,000과 6이다.
 
 ### 개발 재개 변경 파일
 
@@ -81,4 +84,5 @@ Unity 6000.0.85f2에서 C# 컴파일 후 GPU 기반 PlayMode **13/13 통과**. `
 ### Git과 후속 확인
 
 - 인수 상태를 `7900bb6` (`[claude] Preserve recovered Codex work and verify extraction baseline`)로 커밋해 20:57 KST에 `origin/main`으로 푸시했다. Git에서 업스트림과 일치하며 작업 트리가 깨끗하다고 확인했다.
-- 다음 우선순위는 기준선 회귀 분류, Android에서 4인 경기 프레임 시간과 터치 검증, 필요 시 제재소 외부 작업과 시설 입구 연출의 추가 다듬기다.
+- 자동 배치, 순환 근무, 테스트와 최신 캡처는 `ad81652` (`[claude] Staff completed extractors and add ambient worker shifts`)로 21:07 KST에 `origin/main`에 푸시했다. README 이미지 링크 85개를 Git 추적 경로의 대소문자까지 확인했다. 최종 캡처 7개는 로컬 보고서용과 GitHub용의 파일 해시가 일치한다.
+- 다음 우선순위는 엄폐·미사일 검사의 실행별 차이 재현, Android에서 4인 경기 프레임 시간·터치·현장 작업 확인, 남은 맵과 렌더링 예산 회귀다.
