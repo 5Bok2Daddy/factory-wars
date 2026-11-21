@@ -15,7 +15,9 @@
 | 전체 PlayMode | 564건: 411 통과 · 23 실패 · 130 건너뜀 | `Game-logs/claude-full-final2.xml` |
 | Photon 실서버 체크섬 | 561회 일치, 디싱크 0 | `Game-logs/online-final.log` |
 | Android APK·실기기 | 사용자 지시로 보류 | — |
-| 다음 | Strategy UI Kit 통합 | 사용자 지시 대기열 |
+| 앞마당 확장 부지를 다리에서 10m 이동 | 완료 | `cc623a7` |
+| Strategy UI Kit Cyan HUD | 완료(모달 전용 레이아웃은 남음) | `ed2bd54`, `Docs/StrategyUiKit.md`, UI 검사 51/53 |
+| 다음 | 연구·도크트린·외교 모달의 키트 전용 레이아웃, AI 외교 회귀, 상륙 강습 결정 | — |
 
 ### 사용자 결정 대기
 
@@ -31,7 +33,7 @@
 - `Tutorial_StartsFromMenuAndStepsAdvance`: 단독 실행은 통과, 전체 실행에서만 카메라 단계 시간 초과(순서 의존).
 - `Ultimate_AmphibiousLandsCargoOnShore`: 위 결정 대기.
 
-마지막 작업: [claude] 2026-11-21 / 다음 단계: Strategy UI Kit 통합
+마지막 작업: [claude] 2026-11-21 / 다음 단계: 모달 키트 레이아웃·AI 외교 회귀
 
 ## 밤사이 요약 · 다연장 로켓 포대
 

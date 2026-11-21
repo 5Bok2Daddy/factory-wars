@@ -19,6 +19,14 @@
 
 [사막](Docs/status_images/map_desert.png) · [시가지](Docs/status_images/map_urban.png) · [근접 화면 10쌍과 설명](Docs/EnvironmentOverhaul.md) · [맵 규격](Docs/StandardizedMaps.md)
 
+### Strategy UI Kit(Cyan) HUD · 2026-11-21 KST
+
+구매한 Strategy UI Kit을 HUD 스킨 칸 14개와 테마에 연결했다. 짙은 군수 산업 패널, 모서리 깎인 버튼, Cyan 제목줄·강조, 키트 자원 아이콘을 쓴다. 게임 규칙과 명령 처리는 그대로다. UI·입력·제스처 검사 51/53(남은 2건은 기존 실패·고친 미니맵 캡처), 16:9·19.5:9·20:9 캡처. Android 실기기는 보류. [상세](Docs/StrategyUiKit.md)
+
+| 변경 전 | 변경 후 |
+| --- | --- |
+| ![전](Docs/status_images/StrategyUiKit/before_headquarters_16x9.png) | ![후](Docs/status_images/StrategyUiKit/after_headquarters_16x9.png) |
+
 ### 회귀 수정 · 궁극 유닛 점검 · Mixamo · 2026-11-21 KST
 
 휴전 중 운하 끝과 다리 옆 틈으로 이웃 본진에 갈 수 있던 길을 막았다. 붙은 건물 사이에서 유닛이 모서리를 오가며 갇히던 우회 로직, 장애물 위 목표를 멀리 옮기던 목표 보정, 제재소 공병 자동 배치와 봇 상자 줍기를 고쳤다. 남은 새 실패는 AI 외교 1건, 전체 실행에서만 실패하는 튜토리얼 1건, 설계 결정이 필요한 상륙 강습 1건이다. 내려받은 궁극 모델은 50만 삼각형과 실존 상표 표기 때문에 넣지 않았다([판정](Docs/UltimateUnits.md)). 의무대·정비소 작업자와 은신 저격수 사망에 남은 Mixamo 동작을 연결했다.
