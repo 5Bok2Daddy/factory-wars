@@ -133,7 +133,8 @@ namespace FactoryWars.Tests {
       var first = rules.BlackBoxFirstSeconds;
       Restores.Add(() => rules.BlackBoxFirstSeconds = first);
       rules.BlackBoxFirstSeconds = 2;
-      yield return StartMatch(Map4PScene, 2, truce: 0, units: new[] { (0, "ff_ranger_squad", -40, 2) });
+      // 표준 맵 블랙박스 0번은 중앙 섬 안쪽 (-32, 0)이다(중앙 강 안쪽 43m). 분대를 그 옆에 둔다.
+      yield return StartMatch(Map4PScene, 2, truce: 0, units: new[] { (0, "ff_ranger_squad", -32, 2) });
       yield return WaitForHud();
       yield return WaitFor(() => Verified.ComponentCount<BlackBox>() > 0, 30f, "블랙박스 추락");
       var map = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);

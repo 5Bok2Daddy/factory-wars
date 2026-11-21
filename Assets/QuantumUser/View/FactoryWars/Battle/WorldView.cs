@@ -905,8 +905,9 @@ namespace FactoryWars.View {
     /// <summary>다리마다 울타리 하나. 빈 본진 자리의 다리는 시작부터 열려 있으므로 울타리를 세우지 않는다.</summary>
     void BuildBarriers(Frame frame) {
       for (var i = 0; _map.Bridges != null && i < _map.Bridges.Length; i++) {
-        var ownerSeat = NearestBase(_map.Bridges[i].Center.ToUnityVector3());
-        var owner = Quantum.FactoryWars.FactoryWarsUtil.PlayerAtSeat(frame, ownerSeat);
+        // 시뮬레이션과 같은 규칙: 본진 다리가 아니면(중앙 섬 다리) 울타리가 없다.
+        var ownerSeat = Quantum.FactoryWars.DepthSystem.BridgeSeat(_map, i);
+        var owner = ownerSeat < 0 ? -1 : Quantum.FactoryWars.FactoryWarsUtil.PlayerAtSeat(frame, ownerSeat);
         if (owner < 0) {
           continue;
         }

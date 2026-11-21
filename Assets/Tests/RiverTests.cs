@@ -297,7 +297,8 @@ namespace FactoryWars.Tests {
       yield return WaitForHud();
       yield return WaitForBattle();
       var world = Battle().World;
-      Assert.AreEqual(4, world.BarrierCount, "점유 본진 다리마다");
+      // 320m 표준화: 자리마다 운하 다리 3개. 점유 2자리 × 3 = 6. 중앙 섬 다리는 본진 다리가 아니라 울타리가 없다.
+      Assert.AreEqual(6, world.BarrierCount, "점유 본진 다리마다");
       Assert.AreEqual(0f, world.BarrierDrop);
       Assert.IsTrue(world.BarrierVisible);
       yield return WaitFor(BarrierOpen, 30f, "휴전 종료");

@@ -66,14 +66,16 @@ namespace Quantum.FactoryWars {
       }
       var seat = 0;
       var best = FP.MaxValue;
+      var bridge = map.Bridges[index];
       for (var i = 0; i < areas.Length; i++) {
-        var distance = FactoryWarsUtil.FlatDistanceSqr(map.Bridges[index].Center, areas[i].Center);
+        var distance = FactoryWarsUtil.FlatDistanceSqr(bridge.Center, areas[i].Center);
         if (distance < best) {
           best = distance;
           seat = i;
         }
       }
-      return seat;
+      // 본진 사각형에서 다리 길이(Reach)보다 멀면 본진 다리가 아니다(표준 맵 중앙 섬 다리). 휴전 울타리를 세우지 않는다.
+      return areas[seat].Distance(bridge.Center) > bridge.Reach ? -1 : seat;
     }
 
     public static EntityRef BridgeEntity(Frame f, int index) {
@@ -98,7 +100,7 @@ namespace Quantum.FactoryWars {
         return;
       }
       var seat = BridgeSeat(FactoryWarsUtil.MapInfo(f), index);
-      var barrierOpen = f.Global->BarrierOpen || (seat >= 0 && FactoryWarsUtil.PlayerAtSeat(f, seat) < 0);
+      var barrierOpen = seat < 0 || f.Global->BarrierOpen || FactoryWarsUtil.PlayerAtSeat(f, seat) < 0;
       f.NavMeshRegionMask->ToggleRegion(region, barrierOpen && destroyed == false);
     }
 

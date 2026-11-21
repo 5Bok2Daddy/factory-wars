@@ -1120,6 +1120,30 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
+  - Id: building/MLRS_Battery
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/ff_scout_buggy
     Category: 0
     Prefabs:
@@ -2221,6 +2245,154 @@ MonoBehaviour:
     - Radar:Y
     MuzzlePart: 
     MuzzleOffset: {x: 0, y: 3.275686, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: building/ff_lumber_mill
+    Category: 1
+    Prefabs:
+    - {fileID: 1852798367841470, guid: 51d513146d10f39428c02c89bccbfdea, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: building/cf_lumber_mill
+    Category: 1
+    Prefabs:
+    - {fileID: 1852798367841470, guid: 51d513146d10f39428c02c89bccbfdea, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: building/ff_iron_extractor
+    Category: 1
+    Prefabs:
+    - {fileID: 1430865889384394, guid: 723effe061735aa4e89b785c95e7ba15, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: building/cf_iron_extractor
+    Category: 1
+    Prefabs:
+    - {fileID: 1430865889384394, guid: 723effe061735aa4e89b785c95e7ba15, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: building/ff_mlrs_battery
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: building/cf_mlrs_battery
+    Category: 1
+    Prefabs: []
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 1
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 0
+    Notes: 
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
   - Id: unit/cf_apc_transport
@@ -4493,6 +4665,31 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
+  - Id: dress/CityCafe
+    Category: 3
+    Prefabs:
+    - {fileID: 1711524390919284, guid: c93718af36002374daebe3ff461be2fd, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Synty POLYGON Coffee Shop
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: fx/muzzle
     Category: 6
     Prefabs:
@@ -5877,106 +6074,6 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
-  - Id: building/ff_lumber_mill
-    Category: 1
-    Prefabs:
-    - {fileID: 1852798367841470, guid: 51d513146d10f39428c02c89bccbfdea, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 0
-    Notes: 
-    TurretPart: 
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: building/ff_iron_extractor
-    Category: 1
-    Prefabs:
-    - {fileID: 1430865889384394, guid: 723effe061735aa4e89b785c95e7ba15, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 0
-    Notes: 
-    TurretPart: 
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: building/cf_lumber_mill
-    Category: 1
-    Prefabs:
-    - {fileID: 1852798367841470, guid: 51d513146d10f39428c02c89bccbfdea, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 0
-    Notes: 
-    TurretPart: 
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: building/cf_iron_extractor
-    Category: 1
-    Prefabs:
-    - {fileID: 1430865889384394, guid: 723effe061735aa4e89b785c95e7ba15, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 0
-    Notes: 
-    TurretPart: 
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
   - Id: fx/build_scaffold
     Category: 6
     Prefabs:
@@ -6320,31 +6417,6 @@ MonoBehaviour:
     Lifetime: 999
     RealWorld: 0
     Notes: SM_Bld_SmokeStack_01
-    TurretPart: 
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: dress/CityCafe
-    Category: 3
-    Prefabs:
-    - {fileID: 1711524390919284, guid: c93718af36002374daebe3ff461be2fd, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Synty POLYGON Coffee Shop
     TurretPart: 
     BarrelPart: 
     SpinParts: []

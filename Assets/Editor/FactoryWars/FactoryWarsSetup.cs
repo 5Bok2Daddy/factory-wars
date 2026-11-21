@@ -1473,7 +1473,7 @@ namespace FactoryWars.EditorTools {
       return Enumerable.Range(0, def.Players).Select(i => Turn(shape, i * step));
     }
 
-    /// <summary>물길 조각에서 다리 상판(폭 방향 + 0.3m) 밖의 부분. 조각이 다리에 거의 덮이면 null. 물길이 다리에 수직일 때만 자른다.</summary>
+    /// <summary>물길 조각에서 다리 상판(폭 방향, 0.25m 겹침) 밖의 부분. 조각이 다리에 거의 덮이면 null. 물길이 다리에 수직일 때만 자른다.</summary>
     static MapShape? TrimBesideBridge(MapShape piece, MapShape[] bridges) {
       var yaw = piece.Yaw.AsFloat * Mathf.Deg2Rad;
       var along = new Vector2(Mathf.Cos(yaw), -Mathf.Sin(yaw));
@@ -1488,7 +1488,8 @@ namespace FactoryWars.EditorTools {
         var offset = center - bridgeCenter;
         if (Mathf.Abs(Vector2.Dot(offset, bridgeAxis)) > bridge.HalfLength.AsFloat + piece.HalfWidth.AsFloat) continue;
         var s = Vector2.Dot(offset, along);
-        var deck = bridge.HalfWidth.AsFloat + 0.3f;
+        // 상판 안쪽으로 0.25m 겹친다. 띄우면 다리 영역과 차단 사이에 휴전 중에도 열린 얇은 통행 띠가 구워진다.
+        var deck = bridge.HalfWidth.AsFloat - 0.25f;
         if (s >= 0f) low = Mathf.Max(low, deck - s);
         else high = Mathf.Min(high, -deck - s);
       }
@@ -1602,6 +1603,13 @@ namespace FactoryWars.EditorTools {
       var edge = def.HalfSize + 2f;
       var blocks = pieces.Where(p => p.UnderBridge == false && Mathf.Abs(p.Center.x) < edge && Mathf.Abs(p.Center.y) < edge)
         .SelectMany(p => Orbit(def, Shape(p)).Select(shape => Feature(TerrainKind.River, shape))).ToList();
+      // 다리 밑으로 지운 운하 조각이 상판보다 넓으면 다리 양옆 1~2m를 걸어서 건넌다(휴전 중 이웃 본진 진입). 상판 밖 부분은 다시 막는다.
+      foreach (var under in pieces.Where(p => p.UnderBridge && Mathf.Abs(p.Center.x) < edge && Mathf.Abs(p.Center.y) < edge)) {
+        foreach (var shape in Orbit(def, Shape(under))) {
+          var trimmed = TrimBesideBridge(shape, spec.Bridges);
+          if (trimmed.HasValue) blocks.Add(Feature(TerrainKind.River, trimmed.Value));
+        }
+      }
       foreach (var er in extraRiver) {
         if (Mathf.Abs(er.Center.X.AsFloat) >= edge || Mathf.Abs(er.Center.Z.AsFloat) >= edge) continue;
         if (IsCrossing(er) == false) {
@@ -1612,6 +1620,35 @@ namespace FactoryWars.EditorTools {
         if (allFords.Any(ford => ford.Distance(er.Center).AsFloat < 4.5f)) continue;
         var trimmed = TrimBesideBridge(er, spec.Bridges);
         if (trimmed.HasValue) blocks.Add(Feature(TerrainKind.River, trimmed.Value));
+      }
+      // 다리 양옆 교대: 상판 가장자리(0.25m 겹침)부터 바깥 2.75m까지, 다리 길이에서 양 끝 1m를 뺀 띠를 막는다.
+      // 운하 조각 위치가 회전 복사본마다 달라 조각 자르기만으로는 상판 옆 1m 틈이 남았다(휴전 중 이웃 본진 진입).
+      foreach (var bridge in spec.Bridges) {
+        var by = bridge.Yaw.AsFloat * Mathf.Deg2Rad;
+        var axis = new Vector2(Mathf.Cos(by), -Mathf.Sin(by));
+        var side = new Vector2(-axis.y, axis.x);
+        var center = new Vector2(bridge.Center.X.AsFloat, bridge.Center.Z.AsFloat);
+        for (var sign = -1; sign <= 1; sign += 2) {
+          var c = center + side * (sign * (bridge.HalfWidth.AsFloat + 1.25f));
+          blocks.Add(Feature(TerrainKind.River, Rect(c.x, c.y, Mathf.Max(0.5f, bridge.HalfLength.AsFloat - 1f), 1.5f, bridge.Yaw.AsFloat)));
+        }
+      }
+      // 봉쇄 맵의 운하는 가장자리 8.5m 안쪽에서 끝난다(배가 맵 밖으로 못 나가게). 그 틈으로 지상 유닛이 휴전 중 이웃 본진에 가지 못하도록
+      // 운하 입구에서 가장자리 너머까지 바위 무더기를 이어 막는다. 바위 지형은 화면(바위)과 NavMesh(통행 불가)가 같은 데이터다.
+      if (spec.SealedPerimeter && pieces.Count > 1) {
+        foreach (var mouth in new[] { pieces[0], pieces[pieces.Count - 1] }) {
+          var c = mouth.Center;
+          var alongX = Mathf.Abs(c.x) > Mathf.Abs(c.y);
+          var radius = mouth.HalfWidth + 1.8f;
+          // 바위 가장자리가 맵 경계(지상 NavMesh 끝)에 딱 닿게 한다. 경계 밖으로 나가면 지형 메시가 땅 밖에 그려진다.
+          var target = alongX ? new Vector2(Mathf.Sign(c.x) * (def.HalfSize - radius - 0.6f), c.y) : new Vector2(c.x, Mathf.Sign(c.y) * (def.HalfSize - radius - 0.6f));
+          var length = Vector2.Distance(c, target);
+          var steps = Mathf.Max(2, Mathf.CeilToInt(length / (radius * 0.9f)));
+          for (var k = 0; k <= steps; k++) {
+            var p = Vector2.Lerp(c, target, k / (float)steps);
+            blocks.AddRange(Orbit(def, Circle(p.x, p.y, radius)).Select(shape => Feature(TerrainKind.Rock, shape)));
+          }
+        }
       }
       var landTerrain = def.Terrain.SelectMany(feature => Orbit(def, feature.Shape).Select(shape => Feature(feature.Kind, shape)))
         .Where(f => extraRiver.Count == 0 || OverlapsExtraWater(f.Shape.Center, 4.5f) == false);
@@ -1806,6 +1843,8 @@ namespace FactoryWars.EditorTools {
     /// </summary>
     static void AddBridge(Transform root, MapSpec spec, MapShape shape, int index) {
       // 항목 37: 다리마다 영역 하나(Bridge{index}). 휴전 울타리·빈 본진 자리·폭파 상태가 DepthSystem.ApplyBridgeRegion에서 합쳐진다.
+      // 영역은 상판보다 양옆 1m 넓게 굽는다. 상판 크기 그대로면 가장자리 삼각형 띠가 기본 영역으로 남아 휴전 중에도 건너간다.
+      shape.HalfWidth += 1;
       if (spec.BaseAreas != null && spec.BaseAreas.Length > 0) {
         AddRegion(root, "Bridge", shape, BarrierArea, $"{BridgeRegion}{index}");
       } else {

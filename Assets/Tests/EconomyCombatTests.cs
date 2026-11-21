@@ -457,8 +457,9 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(500, Funds(0), "실제 맵 시작 철");
       _rejected.Clear();
 
-      yield return Build(0, "_power_plant", V(-120, -120));
-      Assert.AreEqual(0, _rejected.Count, "빈 땅은 허용");
+      // (-120,-120)은 320m 표준화 뒤 후방 자원 출퇴근로(건설 금지 6m)에 걸린다. 본진 안 빈 땅(CanPlace 격자 조사)으로 옮긴다.
+      yield return Build(0, "_power_plant", V(-108, -108));
+      Assert.AreEqual(0, _rejected.Count, "빈 땅은 허용: " + string.Join(", ", _rejected.Select(e => $"{e.Kind}/{e.Reason}")));
       Assert.AreEqual(350, Funds(0));
     }
 

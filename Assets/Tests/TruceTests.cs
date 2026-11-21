@@ -82,16 +82,18 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Truce_ClosedBridgeStopsGroundUnits() {
-      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_eagle_tank", -140, -108) }, truce: 120);
+      // 320m 표준화: 자리 0 서쪽 운하 다리는 (-135, -81.7), 남북으로 놓인다(남쪽 끝 z = -89).
+      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_eagle_tank", -135, -108) }, truce: 120);
       var tank = UnitsNamed(0, "ff_eagle_tank")[0];
-      yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = V(-140, -84) });
+      var bridge = WestCanalBridge();
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = V(-135, -66) });
       yield return WaitFrames(8 * Fps);
-      Assert.Less(Verified.Get<Transform3D>(tank).Position.Z.AsFloat, -99f, "다리를 건너지 못함");
+      Assert.Less(Verified.Get<Transform3D>(tank).Position.Z.AsFloat, (bridge.Center.Z - bridge.HalfLength).AsFloat + 1f, "다리를 건너지 못함");
     }
 
     [UnityTest]
     public IEnumerator Truce_BarrierOpensOnTimeAndUnitsCross() {
-      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_eagle_tank", -140, -108) }, truce: 10);
+      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_eagle_tank", -135, -108) }, truce: 10);
       var opened = new List<int>();
       QuantumEvent.Subscribe<EventBarrierOpened>(_listener, e => opened.Add(e.Frame));
       Assert.IsFalse(BarrierOpen());
@@ -107,9 +109,14 @@ namespace FactoryWars.Tests {
       Assert.IsTrue(ReachableNow(navMesh, start0).Contains(navMesh.FindTriangle2D(start1, NavMeshRegionMask.Default, true)), "개방 뒤에는 경로가 있음");
 
       var tank = UnitsNamed(0, "ff_eagle_tank")[0];
-      var target = V(-140, -84);
+      var target = V(-135, -66);
       yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = target });
       yield return WaitFor(() => (Verified.Get<Transform3D>(tank).Position - target).Magnitude < 2, 30f, "다리 통과");
+    }
+
+    static MapShape WestCanalBridge() {
+      var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);
+      return spec.Bridges.OrderBy(b => FactoryWarsUtil.FlatDistanceSqr(b.Center, V(-135, -82))).First();
     }
 
     [UnityTest]
@@ -168,7 +175,8 @@ namespace FactoryWars.Tests {
     public IEnumerator Truce_LimitsGatherAndBuildToOwnBase() {
       yield return StartMatch(Map4PScene, 2, truce: 300);
       var engineer = Engineers(0)[0];
-      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = NodeAt(V(-148, -76)) });
+      // 앞마당 철광(320m 표준화 뒤 (-150, -73)): 운하 너머라 휴전 중에는 거절된다.
+      yield return Send(0, new GatherCommand { Units = new[] { engineer }, Node = NodeAt(V(-150, -73)) });
       AssertRejected(0, ActionKind.Gather, RejectReason.Truce);
       Assert.AreEqual(WorkerTask.Idle, WorkerOf(engineer).Task);
       _rejected.Clear();
@@ -177,9 +185,10 @@ namespace FactoryWars.Tests {
       AssertRejected(0, ActionKind.Build, RejectReason.Truce);
       _rejected.Clear();
 
-      yield return Build(0, "_supply_depot", V(-120, -120), engineer);
-      Assert.AreEqual(0, _rejected.Count, "본진 안은 허용");
-      yield return Send(0, new GatherCommand { Units = new[] { Engineers(0)[1] }, Node = NodeAt(V(-145, -118)) });
+      // (-120,-120)은 후방 자원 출퇴근로(건설 금지)에 걸린다. 본진 안 빈 땅.
+      yield return Build(0, "_supply_depot", V(-108, -108), engineer);
+      Assert.AreEqual(0, _rejected.Count, "본진 안은 허용: " + string.Join(", ", _rejected.Select(e => $"{e.Kind}/{e.Reason}")));
+      yield return Send(0, new GatherCommand { Units = new[] { Engineers(0)[1] }, Node = NodeAt(V(-146, -119)) });
       Assert.AreEqual(0, _rejected.Count, "본진 철광산은 허용");
     }
 

@@ -21,7 +21,7 @@ namespace FactoryWars.View {
       { "lumber_mill", "제재소" }, { "iron_extractor", "철 채굴 공장" },
       { "shipyard", "조선소" },
       { "sandbags", "모래주머니 진지" }, { "bunker", "벙커" }, { "medic_tent", "의무대" }, { "repair_bay", "정비소" },
-      { "radar", "레이더 기지" }, { "helipad", "헬기장" }, { "artillery", "포병 진지" }, { "patriot_turret", "패트리어트 요격 포대" }, { "scout_boat", "정찰선" }, { "artillery_ship", "포격함" },
+      { "radar", "레이더 기지" }, { "helipad", "헬기장" }, { "artillery", "포병 진지" }, { "patriot_turret", "광역 요격 포대" }, { "scout_boat", "정찰선" }, { "artillery_ship", "포격함" },
       { "ff_engineer", "공병" }, { "ff_ranger_squad", "레인저" }, { "ff_skyguard_squad", "스카이가드" }, { "ff_eagle_tank", "이글 전차" },
       { "ff_hawk_gunship", "호크 공격헬기" }, { "ff_skyfortress_bomber", "스카이포트리스 폭격기" },
       { "cf_engineer", "공병" }, { "cf_militia", "민병대" }, { "cf_flame_squad", "화염방사병" }, { "cf_dragonscale_tank", "용린 전차" },
