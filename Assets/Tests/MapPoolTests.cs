@@ -150,7 +150,11 @@ namespace FactoryWars.Tests {
         Assert.IsNotNull(Verified.Map.GetNavMesh(FactoryWarsUtil.Rules(Verified).NavMeshName), $"지상 NavMesh {scene}");
         var models = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
         if (MapPolishArt.Prefab("Fence") != null) {
-          var props = DressingRenderer.Active.Group("urban");
+          var props = DressingRenderer.Active.Group("perimeter");
+          foreach (var item in props.Where(item => item.Prefab.name is "Fence" or "Guardrail" or "Dock")) {
+            Assert.AreEqual(1f, item.LowKeep, "울타리·난간·부두는 품질 낮음에도 연결 유지");
+            Assert.AreEqual(1f, item.MediumKeep);
+          }
           if (scene == "Map4P") {
             Assert.Greater(props.Count(item => item.Prefab.name == "Fence"), 15, "운하 경계 철조망");
             Assert.IsFalse(props.Any(item => item.Kind == DressKind.QuayPillar), "독립 호안 기둥 제거");

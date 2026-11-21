@@ -296,6 +296,12 @@ namespace FactoryWars.View {
       Dressing.Begin();
       UrbanDecor.Build(_map);
       Dressing.End("urban");
+      Dressing.Begin();
+      if (VisualProfile.Current.UrbanDecor) {
+        if (biome == TerrainKit.Biome.Standard) MapPolishArt.Perimeter(_map);
+        if (biome == TerrainKit.Biome.Archipelago || biome == TerrainKit.Biome.Strait) MapPolishArt.CoastDecor(_map, biome);
+      }
+      Dressing.End("perimeter");
       BuildBiomeProps(biome);
       Dressing.Begin();
       Scatter.Fill(_map, ClearOfBiomeProps);

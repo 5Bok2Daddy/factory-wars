@@ -13,11 +13,11 @@ namespace FactoryWars.Tests {
   public unsafe partial class LocalMatchTests {
     static BotDifficulty[] Bots(int count, BotDifficulty difficulty = BotDifficulty.Normal) => Enumerable.Repeat(difficulty, count).ToArray();
 
-    static int AlliedPairs(int players) {
+    static int AlliedPairs(Frame frame, int players) {
       var pairs = 0;
       for (var a = 0; a < players; a++) {
         for (var b = a + 1; b < players; b++) {
-          if (DiplomacySystem.GetRelation(Verified, a, b) == Relation.Allied) {
+          if (DiplomacySystem.GetRelation(frame, a, b) == Relation.Allied) {
             pairs++;
           }
         }
@@ -38,7 +38,7 @@ namespace FactoryWars.Tests {
       var target = 420 * Fps;
       yield return WaitFor(() => {
         Assert.IsFalse(EveryoneAllied(4), "AI끼리 전원 동맹 금지");
-        most = Mathf.Max(most, AlliedPairs(4));
+        most = Mathf.Max(most, AlliedPairs(Verified, 4));
         return Verified.Number >= target;
       }, 120f, "휴전 끝까지");
       Debug.Log($"[FW-TEST] 4 bots truce: most allied pairs {most}");
@@ -138,10 +138,16 @@ namespace FactoryWars.Tests {
       var results = new string[2];
       for (var run = 0; run < 2; run++) {
         yield return StartMatch(Map4PScene, 4, bots: Bots(4), seed: 77, truce: -1);
-        Time.timeScale = 30f;
         var target = 200 * Fps;
-        yield return WaitFor(() => Verified.Number >= target, 60f, "200초 진행");
-        results[run] = string.Join(",", Enumerable.Range(0, 16).Select(c => DiplomacySystem.GetOpinion(Verified, c / 4, c % 4))) + "|" + AlliedPairs(4);
+        string snapshot = null;
+        QuantumCallback.Subscribe<CallbackSimulateFinished>(_listener, e => {
+          if (e.Frame.Number != target || snapshot != null) return;
+          snapshot = string.Join(",", Enumerable.Range(0, 16).Select(c => DiplomacySystem.GetOpinion(e.Frame, c / 4, c % 4)))
+            + "|" + AlliedPairs(e.Frame, 4);
+        });
+        Time.timeScale = 30f;
+        yield return WaitFor(() => snapshot != null, 60f, "200초 틱의 외교 상태 기록");
+        results[run] = snapshot;
         TearDown();
         yield return null;
       }

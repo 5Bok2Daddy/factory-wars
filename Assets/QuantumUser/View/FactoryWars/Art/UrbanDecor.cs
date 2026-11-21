@@ -94,8 +94,6 @@ namespace FactoryWars.View {
         Boundary(map, profile);
       }
       Checkpoints(map, profile);
-      if (biome == TerrainKit.Biome.Standard) MapPolishArt.Perimeter(map);
-      if (biome == TerrainKit.Biome.Archipelago || biome == TerrainKit.Biome.Strait) MapPolishArt.CoastDecor(map, biome);
       Street(map, profile);
       Roadside(map, profile);
     }

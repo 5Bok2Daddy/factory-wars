@@ -24,6 +24,8 @@
 
 구매 원본은 로컬에 보관한다. Mixamo는 `python Tools/import_mixamo.py`를 실행한 뒤 Unity의 **Tools → Factory Wars → Assets → Prepare Mixamo Clips**에서 준비한다. 새 해안·공장 소품은 기존 Synty 팩을 가져온 뒤 같은 메뉴의 **Prepare Map Polish**에서 준비한다.
 
+5맵 지상·수상 NavMesh 재베이크 완료. 전체 PlayMode 548건 중 398 통과, 25 실패, 125 건너뜀. 저품질 장식 밀도와 AI 외교 검사를 보완한 최종 집중 검증은 5/5 통과했고 Photon 확정 프레임 체크섬 586개가 일치했다. 기존 회귀 23건과 Android 실기기 검증이 남았다.
+
 ### 구매 환경 번들 · 2026-11-20 KST
 
 | 적용 에셋 | 프리팹 | 적용 위치 |

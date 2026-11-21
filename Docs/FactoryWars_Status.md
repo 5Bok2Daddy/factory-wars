@@ -24,6 +24,24 @@
 
 [공장 야드](status_images/current_factory_complex.png) · [기지 건설](status_images/current_base_alive.png) · [공병 배치와 적재장](status_images/current_resource_extraction.png) · [미사일 착탄](status_images/54_ultimate_missile_silo_strike.png)
 
+### 검증과 남은 작업
+
+- 1차 전체 PlayMode는 548건 중 398 통과, 25 실패, 125 건너뜀이다. 실행과 결과는 `Game-logs/map-polish-full.log`, `Game-logs/map-polish-full.xml`에 있다. 직전 전체 기준과 비교하면 이전 실패 23건이 재현됐다. 수송 파괴와 시가지 교량 표시는 이번 실행에서 통과했다.
+- 전체 실행에서 추가로 발견한 저품질 장식 밀도와 AI 외교 비교 시점을 보완했다. 울타리·난간·부두는 모든 품질 단계에서 연결을 유지하고 소품에 밀도 설정을 적용한다. AI 외교 검사는 두 실행의 정확히 같은 Quantum 틱을 기록한다. 후속 GPU·Photon 검증 5/5가 통과했다. 저품질 밀도, 5맵 재촬영, 교량 표시, 200초 틱 AI 외교와 실서버 체크섬을 확인했다. 최종 실서버 확정 프레임 586개가 일치했고 디싱크는 0건이었다. 후속 결과는 `Game-logs/map-polish-followup-final.xml`에 있다.
+- 산업 시설 8개와 `cf_missile_silo`, `cf_artillery_ship`, `ff_stormnest_carrier`의 조립 프리팹에서 Synty 원본 참조를 확인했다. GPU 검사에서 건설 단계, War FX, 공병 2/3 배치 표시, 짧은 벨트와 인접 적재장, 수송 탑승·하차·파괴를 확인했다. 공장 내부에서 전차가 출고되는 전체 경로와 Android 실기기 성능은 추가 검증이 필요하다.
+- GPU 캡처 9장을 직접 확인했고 자홍색 셰이더 오류를 찾지 못했다. 60 fps 제한 표본에서 시공 도구는 47/48, 화물은 30/30, 원거리 작업자는 36/36 프레임에서 움직였다.
+- Mixamo 미연결 클립은 공병의 뚜껑 열기·닫기와 밀기·당기기, 보병의 엎드린 사망, 의무지원 및 차량 승무원 각 3개다. 수류탄 투척 등은 경기 동작을 연결할 때 재검토한다.
+- 남은 전체 회귀는 해협 자원 위치, AI·경제, 에셋 카탈로그·렌더링 예산, 궁극기 시나리오다. Android에서 프레임 시간과 터치, 공장 주위 전차와 작업자 이동을 재현하는 것이 다음 우선순위다.
+- 맵·에셋·캡처는 `7d66cb0`으로 GitHub `origin/main`에 푸시했다. 구매 원본과 로컬 파생 에셋은 제외 설정을 확인했다. README 이미지 링크 102개를 Git의 실제 추적 경로와 대조했다.
+
+### 변경 파일
+
+- 에디터·가져오기 · `Tools/import_mixamo.py`, `MixamoTools.cs`, `NewBundleTools.cs`, `FactoryWarsSetup.cs` 및 새 스크립트의 Unity 메타.
+- 표시 · `BaseAmbientWorkers.cs`, `BattleView.cs`, `CityView.cs`, `ConstructionWorkView.cs`, `Dressing.cs`, `ExtractorDeliveryView.cs`, `MapPolishArt.cs`, `MatchHud.cs`, `MixamoMotion.cs`, `NewBundleArt.cs`, `RiflemanRig.cs`, `TerrainKit.cs`, `TerrainLook.cs`, `UnitAnimatorBridge.cs`, `UrbanDecor.cs`, `WorldView.cs`.
+- 데이터 · `cf_iron_extractor.asset`, `ff_iron_extractor.asset`.
+- 검사 · `AiDiplomacyTests.cs`, `Capture33Tests.cs`, `EconomyCombatTests.cs`, `MapPoolTests.cs`, `UnitCatalogCaptureTests.cs`, `WorkerAnimationTests.cs`.
+- 보존·보고 · `.gitignore`, README 2개, SETUP-REPORT 3개, 상태 보고서 2개, GPU 캡처 9장.
+
 2026-11-20 KST · 인수 검증 및 보존 기록
 
 ## 인수 상태

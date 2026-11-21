@@ -44,7 +44,14 @@ namespace FactoryWars.View {
           yaw += 90f;
         }
       }
-      Dressing.AddPrefab(prefab, point, Quaternion.Euler(0f, yaw, 0f), scale, fits);
+      var rotation = Quaternion.Euler(0f, yaw, 0f);
+      if (key is "Fence" or "Guardrail" or "Dock") {
+        Dressing.AddPrefab(prefab, point, rotation, scale, fits);
+      } else {
+        var profile = VisualProfile.Current;
+        Dressing.AddPrefab(prefab, point, rotation, scale, fits, MeshKit.Hash(KenneyAssetMap.Seed(point, 417), 5),
+          profile.UrbanDensityLow, profile.UrbanDensityMedium);
+      }
     }
 
     public static Rect PlayableRect(MapSpec map) => Rect.MinMaxRect(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat,
