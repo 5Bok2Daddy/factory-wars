@@ -266,6 +266,14 @@ namespace Quantum.FactoryWars {
           || position.Z - radius < map.BoundsMin.Y || position.Z + radius > map.BoundsMax.Y) {
         return false;
       }
+      // 보급 상자 위에는 짓지 못한다. 건물 점유 사각형 안으로는 유닛이 들어가지 못해 상자를 영영 줍지 못했다.
+      var crateReach = radius + rules.CratePickRadius;
+      var crates = f.Filter<Transform3D, SupplyCrate>();
+      while (crates.NextUnsafe(out _, out var crateAt, out _)) {
+        if (GroundOccupancy.Overlaps(crateAt->Position, position, crateReach)) {
+          return false;
+        }
+      }
 
       var isShipyard = spec.Role == BuildingRole.Shipyard || spec.NeedsWater;
       var navMesh = f.Map.GetNavMesh(rules.NavMeshName);

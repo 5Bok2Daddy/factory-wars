@@ -103,6 +103,18 @@ namespace Quantum.FactoryWars {
       unit->GarrisonTarget = building;
     }
 
+    /// <summary>
+    /// 건물 점유 사각형(GroundOccupancy) 바로 바깥에 닿았는가. 이동 목표가 점유 밖으로 밀려나므로,
+    /// 숲처럼 넓은 작업 모양의 접근점이 점유 안에 떨어지면 모양까지의 거리만으로는 영영 들어가지 못했다.
+    /// </summary>
+    static bool AtFootprint(Frame f, EntityRef host, Unit* unit, FPVector3 position, FP reach) {
+      if (f.Unsafe.TryGetPointer<Building>(host, out var building) == false || f.Unsafe.TryGetPointer<Transform3D>(host, out var transform) == false) {
+        return false;
+      }
+      var edge = f.FindAsset(building->Spec).FootprintRadius + MovementSystem.UnitRadius(f.FindAsset(unit->Spec)) + reach;
+      return GroundOccupancy.Overlaps(position, transform->Position, edge);
+    }
+
     public override void Update(Frame f) {
       if (f.Global->GameEnded) {
         return;
@@ -119,7 +131,7 @@ namespace Quantum.FactoryWars {
           unit->GarrisonTarget = EntityRef.None;
           continue;
         }
-        if (shape.Distance(transform->Position) > reach) {
+        if (shape.Distance(transform->Position) > reach && AtFootprint(f, unit->GarrisonTarget, unit, transform->Position, reach) == false) {
           continue;
         }
         var target = unit->GarrisonTarget;

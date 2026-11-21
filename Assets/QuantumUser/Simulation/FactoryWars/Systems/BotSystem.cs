@@ -1683,7 +1683,8 @@ namespace Quantum.FactoryWars {
         bot->CrateRunner = engineer;
       }
       var runner = f.Unsafe.GetPointer<Unit>(bot->CrateRunner);
-      if (runner->Order != UnitOrder.Move || runner->TargetPosition != target) {
+      // 이동 명령은 목표를 땅 높이(Y=0)와 건물 점유 밖으로 고친다. 정확히 같은지 비교하면 매 틱 명령을 다시 내려 출발하지 못했다.
+      if (runner->Order != UnitOrder.Move || FactoryWarsUtil.FlatDistanceSqr(runner->TargetPosition, target) > FP._4 * FP._4) {
         MovementSystem.Order(f, bot->CrateRunner, runner, UnitOrder.Move, target);
       }
       // 유휴 공병이 근처 기갑 잔해를 발견하면 고철 회수에 투입한다.

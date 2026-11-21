@@ -20,6 +20,27 @@ namespace Quantum.FactoryWars {
         && nav.Contains(point - new FPVector3(FP._0, FP._0, radius), mask, true);
     }
 
+    static bool EdgeOutside(Frame f, FPVector3 point, FP radius, FP clearance, out FPVector3 edge) {
+      edge = point;
+      var buildings = f.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out _, out var transform, out var building)) {
+        if (building->Health <= FP._0) continue;
+        var center = transform->Position;
+        var reach = f.FindAsset(building->Spec).FootprintRadius + radius;
+        if (!Overlaps(point, center, reach)) continue;
+        var dx = point.X - center.X;
+        var dz = point.Z - center.Z;
+        var push = reach + clearance;
+        if (reach - FPMath.Abs(dx) <= reach - FPMath.Abs(dz)) {
+          edge.X = center.X + (dx >= FP._0 ? push : -push);
+        } else {
+          edge.Z = center.Z + (dz >= FP._0 ? push : -push);
+        }
+        return true;
+      }
+      return false;
+    }
+
     static bool InsideBuilding(Frame f, FPVector3 point, FP radius) {
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out _, out var transform, out var building)) {
@@ -56,6 +77,12 @@ namespace Quantum.FactoryWars {
         target = requested;
       }
       var rules = FactoryWarsUtil.Rules(f);
+      // 건물 점유 안의 목표는 가장 가까운 점유 가장자리 바로 바깥으로 옮긴다. 링 탐색은 3m 이상 멀리 보내
+      // 건물 입장·작업 거리(GarrisonEnterDistance 등)를 벗어났다.
+      if (EdgeOutside(f, requested, radius, rules.UnitClearance, out var edge) && CanStand(f, edge, radius)) {
+        target = edge;
+        return true;
+      }
       if (FactoryWarsUtil.FindNavPointNear(f, rules.NavMeshName, requested, rules.SpawnOffset, out var near)
           && CanStand(f, near, radius)) {
         target = near;
