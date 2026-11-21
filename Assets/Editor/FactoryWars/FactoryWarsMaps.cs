@@ -17,6 +17,11 @@ namespace FactoryWars.EditorTools {
       public float HalfWidth;
       public bool Ring;
       public float RingRadius;
+      /// <summary>곧은 수로 폭을 이만큼까지 좁혀 해안선이 굽이치게 한다(0이면 곧은 띠).</summary>
+      public float Wobble;
+      public int Seed;
+      /// <summary>끝점을 빼고 만든다. 다각형 물길을 이을 때 꼭짓점이 겹치지 않게 한다.</summary>
+      public bool OpenEnd;
     }
 
     class MapDef {
@@ -62,6 +67,8 @@ namespace FactoryWars.EditorTools {
       public double WeatherSight = 1;
       /// <summary>항목 37 블랙박스 추락 자리(순환, 회전 대칭 복제 없음: 중앙 부근).</summary>
       public FPVector3[] BlackBoxSpots = new FPVector3[0];
+      /// <summary>0보다 크면 |x|가 이 값보다 작은 공통 도로 조각을 뺀다(해협: 해안 간선도로·교량 접근로로 대신한다).</summary>
+      public float RoadClearHalfX;
       public MapDef Clone() => (MapDef)MemberwiseClone();
     }
 
@@ -239,7 +246,10 @@ namespace FactoryWars.EditorTools {
 
     static ExpansionSite Expansion(ExpansionKind kind, double x, double z) => new ExpansionSite { Kind = kind, Position = Position(x, z) };
 
-    static readonly MapDef FourPlayerMap = BuildFourPlayer();
+    /// <summary>사막·시가지·다도해·해협이 복제하는 공통 지형(중앙 고지 벽).</summary>
+    static readonly MapDef FourPlayerBase = BuildFourPlayer(false);
+    /// <summary>표준 맵: 참고 맵처럼 중앙 섬을 원형 강이 두르고 X자 간선도로가 다리로 건넌다.</summary>
+    static readonly MapDef FourPlayerMap = BuildFourPlayer(true);
 
     /// <summary>
     /// 항목 35 "사막 보급전": 표준 맵 지형을 그대로 쓰고 광산을 40%로 줄이고, 보급 낙하 간격을 절반·보상을 2배로 한다(보급 쟁탈이 핵심).
@@ -251,7 +261,7 @@ namespace FactoryWars.EditorTools {
     static readonly MapDef StraitMap = BuildStrait();
 
     static MapDef BuildDesert() {
-      var def = FourPlayerMap.Clone();
+      var def = FourPlayerBase.Clone();
       def.Id = "MapDesert";
       def.Theme = "사막 보급전";
       def.SupplyInterval = 0.5;
@@ -272,7 +282,7 @@ namespace FactoryWars.EditorTools {
 
     /// <summary>항목 35 시가전: 고밀도 시가지 블록, 붕괴 우회 통로(Rubble Passage Rule), 주둔 저격·보병 엄폐 중심.</summary>
     static MapDef BuildUrban() {
-      var def = FourPlayerMap.Clone();
+      var def = FourPlayerBase.Clone();
       def.Id = "MapUrban";
       def.Theme = "시가전";
       def.SupplyInterval = 0.9;
@@ -283,7 +293,7 @@ namespace FactoryWars.EditorTools {
 
     /// <summary>항목 35 다도해: 65%+ 에메랄드 바다와 5개의 뚜렷한 모래해변 섬(4코너 본진 섬 + 중앙 섬), 얕은 여울·해상/상륙전 중심.</summary>
     static MapDef BuildArchipelago() {
-      var def = FourPlayerMap.Clone();
+      var def = FourPlayerBase.Clone();
       def.Id = "MapArchipelago";
       def.Theme = "다도해";
       def.SupplyInterval = 0.85;
@@ -295,16 +305,17 @@ namespace FactoryWars.EditorTools {
       // 중앙 섬(반경 42m)을 360도 감싸는 환형 라군(r=42~90) + 4방위 100m 광폭 외해 해협 -> 플레이 영역 내 65%+(화면 75%+) 에메랄드 바다!
       def.ExtraWater = new[] {
         new WaterStrip { Ring = true, RingRadius = 66f, HalfWidth = 24f },
-        new WaterStrip { From = P(0f, 74f), To = P(-7f, 161f), HalfWidth = 55f },
-        new WaterStrip { From = P(7f, -161f), To = P(0f, -74f), HalfWidth = 55f },
-        new WaterStrip { From = P(-161f, -7f), To = P(-74f, 0f), HalfWidth = 55f },
-        new WaterStrip { From = P(74f, 0f), To = P(161f, 7f), HalfWidth = 55f },
+        // 해협 폭을 0~22m 굽이치게(중심선도 ±7m 흔든다) 좁혀 사각형 섬 대신 둥근 곶·만이 생기게 한다(참고 맵 2026-11-21).
+        new WaterStrip { From = P(0f, 74f), To = P(-7f, 161f), HalfWidth = 55f, Wobble = 22f, Seed = 1 },
+        new WaterStrip { From = P(7f, -161f), To = P(0f, -74f), HalfWidth = 55f, Wobble = 22f, Seed = 2 },
+        new WaterStrip { From = P(-161f, -7f), To = P(-74f, 0f), HalfWidth = 55f, Wobble = 22f, Seed = 3 },
+        new WaterStrip { From = P(74f, 0f), To = P(161f, 7f), HalfWidth = 55f, Wobble = 22f, Seed = 4 },
       };
       // 섬 육지 위에만 정확히 안착하는 자원·거점·블랙박스 배치(바다에 뜨는 광산/언덕 0).
       def.Nodes = new[] {
         Mine(-146, -119, 4600), Mine(-119, -146, 4600), Grove(-144, -144, 5.5, 6000),
-        Mine(-148, -76, 3200), Mine(-124, -66, 3200), Grove(-150, -64, 5, 2200),
-        Grove(-62, -147, 9, 5000), Grove(-68, -122, 6, 3000), Mine(-82, -118, 2200, 2.5),
+        Mine(-150, -73, 3200), Mine(-124, -66, 3200), Grove(-150, -64, 5, 2200),
+        Grove(-62, -147, 9, 5000), Grove(-68, -122, 6, 3000), Mine(-71, -111, 2200, 2.5),
         Grove(-18, -18, 5, 2400),
       };
       def.CenterNodes = new[] { Mine(-12, -24, 6500, 3.5), Grove(11, 21, 6, 7000) };
@@ -323,7 +334,7 @@ namespace FactoryWars.EditorTools {
 
     /// <summary>항목 35 해협 도하전: 맵 정중앙을 수직으로 양분하는 48m 광폭 짙은 남색 해협 + 북·중·남 3대 전략 교량.</summary>
     static MapDef BuildStrait() {
-      var def = FourPlayerMap.Clone();
+      var def = FourPlayerBase.Clone();
       def.Id = "MapStrait";
       def.Theme = "해협";
       def.SupplyInterval = 0.9;
@@ -351,12 +362,14 @@ namespace FactoryWars.EditorTools {
         road.Yaw = 180 - road.Yaw;
         return road;
       }
+      // 양안 안쪽은 해안 간선도로와 교량 접근로만 둔다. 기지에서 오는 공통 도로는 해안도로(x≈±56~62)에서 끝나 합류한다.
+      def.RoadClearHalfX = 62f;
       def.ExtraRoads = coastalRoad.Concat(approaches).SelectMany(road => new[] { road, OppositeBank(road) }).ToArray();
       def.Fords = new MapShape[0];
       def.Nodes = new[] {
         Mine(-146, -119, 4600), Mine(-119, -146, 4600), Grove(-144, -144, 5.5, 6000),
-        Mine(-148, -76, 3000), Mine(-124, -66, 3000), Grove(-150, -58, 5, 2000),
-        Grove(-62, -147, 10, 5000), Grove(-67, -122, 7, 3000), Mine(-82, -118, 1500, 2.5),
+        Mine(-150, -73, 3000), Mine(-124, -66, 3000), Grove(-150, -58, 5, 2000),
+        Grove(-62, -147, 10, 5000), Grove(-67, -122, 7, 3000), Mine(-71, -111, 1500, 2.5),
         Mine(-118, -38, 5000, 3.5), Grove(-118, -54, 6, 5000),
         Grove(-62, -46, 6, 2500),
       };
@@ -371,7 +384,17 @@ namespace FactoryWars.EditorTools {
       return def;
     }
 
-    static MapDef BuildFourPlayer() {
+    /// <summary>
+    /// 중앙 섬을 두르는 12각 물길(안쪽 반지름 50m, 폭 14m). 변의 가운데가 대각선 다리라 다리 앞뒤 13m가 곧고, 꼭짓점 꺾임은 30도다.
+    /// </summary>
+    static WaterStrip[] CentralRiver() {
+      const float Inner = 50f;
+      var corner = Inner / Mathf.Cos(15f * Mathf.Deg2Rad);
+      Vector2 Vertex(int k) => new Vector2(Mathf.Cos(k * 30f * Mathf.Deg2Rad), Mathf.Sin(k * 30f * Mathf.Deg2Rad)) * corner;
+      return Enumerable.Range(0, 12).Select(k => new WaterStrip { From = Vertex(k), To = Vertex(k + 1), HalfWidth = 7f, OpenEnd = true }).ToArray();
+    }
+
+    static MapDef BuildFourPlayer(bool centralRiver) {
       var terrain = new List<TerrainFeature>();
       terrain.AddRange(Features(TerrainKind.Hill, WithMirror(Ridge(1, 6, P(-106, -59), P(-98, -62)).Concat(Ridge(2, 6, P(-136, -48), P(-98, -48))))));
       // 서쪽 변 공유 확장. 나머지 세 곳은 회전 복사본이다.
@@ -381,9 +404,12 @@ namespace FactoryWars.EditorTools {
       terrain.Add(Feature(TerrainKind.CanyonWall, canyon));
       terrain.Add(Feature(TerrainKind.CanyonWall, ReflectZ(canyon)));
       // 상자에서 중앙 고리까지 이어지는 능선. 축 위에 뒷길 틈이 있다.
-      terrain.AddRange(Features(TerrainKind.Hill, Ridge(5, 6, P(-96, 0), P(-84, 0)).Concat(Ridge(6, 6, P(-60, 0), P(-50, 0)))));
-      // 중앙 고리의 벽. 모서리 네 곳이 입구다.
-      terrain.AddRange(Features(TerrainKind.Hill, Ridge(7, 6, P(-44, -24), P(-44, -12)).Concat(Ridge(12, 6, P(-44, 12), P(-44, 24)))));
+      terrain.AddRange(Features(TerrainKind.Hill, Ridge(5, 6, P(-96, 0), P(-84, 0))));
+      if (!centralRiver) {
+        terrain.AddRange(Features(TerrainKind.Hill, Ridge(6, 6, P(-60, 0), P(-50, 0))));
+        // 중앙 고리의 벽. 모서리 네 곳이 입구다.
+        terrain.AddRange(Features(TerrainKind.Hill, Ridge(7, 6, P(-44, -24), P(-44, -12)).Concat(Ridge(12, 6, P(-44, 12), P(-44, 24)))));
+      }
       terrain.AddRange(Rocks(8, (-74, -46), (-46, -74)));
 
       var grounds = new List<MapShape>();
@@ -395,8 +421,13 @@ namespace FactoryWars.EditorTools {
       var gate = P(-102, -64);
       var relay = P(-134, 0);
       var flank = Road(P(-136, -110), bridge, P(-148, -67), P(-146, -48), P(-143, -25), relay);
-      var main = Road(P(-120, -123), P(-105, -111), P(-90, -103), P(-81.7f, -103), P(-68, -102), P(-55, -82), P(-51, -57), P(-37, -31), P(-8, -8));
-      var crossing = Road(P(-136, -108), bridge, P(-128, -67), iron, gate, P(-68, -49), P(-43, -33));
+      // 중앙 강이 있으면 간선도로는 대각선으로 곧게 강을 건너고, 교차로는 강 앞에서 간선에 합류한다.
+      var main = centralRiver
+        ? Road(P(-120, -123), P(-105, -111), P(-90, -103), P(-81.7f, -103), P(-68, -102), P(-56, -82), P(-53, -63), P(-44, -44), P(-30, -30), P(-8, -8))
+        : Road(P(-120, -123), P(-105, -111), P(-90, -103), P(-81.7f, -103), P(-68, -102), P(-55, -82), P(-51, -57), P(-37, -31), P(-8, -8));
+      var crossing = centralRiver
+        ? Road(P(-136, -108), bridge, P(-128, -67), iron, gate, P(-74, -58), P(-58, -64))
+        : Road(P(-136, -108), bridge, P(-128, -67), iron, gate, P(-68, -49), P(-43, -33));
       var commute = CurvedStrip(3f, P(-136, -151), P(-128, -151), P(-125, -136), P(-119, -124));
 
       return new MapDef {
@@ -407,8 +438,8 @@ namespace FactoryWars.EditorTools {
           // 항목 33 3차에서 본진 철광산을 4000→5500으로 늘려 봤으나(4인전은 10분쯤 본진 철이 바닥나 첫 교전을 진 쪽이 무너진다)
           // 4인 시간 초과가 6 → 14판으로 늘어(ai-33-4p-t3) 4000으로 되돌렸다.
           Mine(-146, -119, 4600), Mine(-119, -146, 4600), Grove(-144, -144, 5.5, 6000),
-          Mine(-148, -76, 3000), Mine(-124, -66, 3000), Grove(-150, -58, 5, 2000),
-          Grove(-62, -147, 10, 5000), Grove(-67, -122, 7, 3000), Mine(-82, -118, 1500, 2.5),
+          Mine(-150, -73, 3000), Mine(-124, -66, 3000), Grove(-150, -58, 5, 2000),
+          Grove(-62, -147, 10, 5000), Grove(-67, -122, 7, 3000), Mine(-71, -111, 1500, 2.5),
           Mine(-118, 10, 5000, 3.5), Grove(-118, -6, 6, 5000),
           Grove(-16, -16, 6, 2000),
         },
@@ -417,7 +448,10 @@ namespace FactoryWars.EditorTools {
         Trader = true,
         TraderPosition = Position(0, 0),
         // 블랙박스: 중앙 암시장 둘레 40m 네 곳을 돌아가며 떨어진다(어느 진영에도 같은 거리).
-        BlackBoxSpots = new[] { Position(-40, 0), Position(0, 40), Position(40, 0), Position(0, -40) },
+        // 중앙 강(안쪽 43m)이 있으면 블랙박스를 섬 안쪽 32m로 당긴다.
+        BlackBoxSpots = centralRiver
+          ? new[] { Position(-32, 0), Position(0, 32), Position(32, 0), Position(0, -32) }
+          : new[] { Position(-40, 0), Position(0, 40), Position(40, 0), Position(0, -40) },
         Terrain = terrain.ToArray(),
         NoBuildZones = WithMirror(new[] {
           Rect(-140, -97, 9, 8), Rect(-102, -64, 8, 12), Rect(-151, -48, 10, 8), Rect(-147, -24, 6, 12),
@@ -437,6 +471,9 @@ namespace FactoryWars.EditorTools {
         SharedExpansions = new[] { Expansion(ExpansionKind.Shared, -134, 0) },
         CenterExpansions = new ExpansionSite[0],
         SharedSeatOffsets = new[] { 0, 3 },
+        // 반지름 43~57m 물길. 다리 끝은 38m·62m라 강 양쪽 도로와 겹친다.
+        ExtraWater = centralRiver ? CentralRiver() : null,
+        ExtraBridges = centralRiver ? Enumerable.Range(0, 4).Select(i => Turn(Rect(-35.36, -35.36, 12, 4.6, -45), i)).ToArray() : null,
       };
     }
   }

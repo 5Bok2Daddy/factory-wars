@@ -1473,6 +1473,30 @@ namespace FactoryWars.EditorTools {
       return Enumerable.Range(0, def.Players).Select(i => Turn(shape, i * step));
     }
 
+    /// <summary>물길 조각에서 다리 상판(폭 방향 + 0.3m) 밖의 부분. 조각이 다리에 거의 덮이면 null. 물길이 다리에 수직일 때만 자른다.</summary>
+    static MapShape? TrimBesideBridge(MapShape piece, MapShape[] bridges) {
+      var yaw = piece.Yaw.AsFloat * Mathf.Deg2Rad;
+      var along = new Vector2(Mathf.Cos(yaw), -Mathf.Sin(yaw));
+      var center = new Vector2(piece.Center.X.AsFloat, piece.Center.Z.AsFloat);
+      var low = -piece.HalfLength.AsFloat;
+      var high = piece.HalfLength.AsFloat;
+      foreach (var bridge in bridges) {
+        var bridgeCenter = new Vector2(bridge.Center.X.AsFloat, bridge.Center.Z.AsFloat);
+        var by = bridge.Yaw.AsFloat * Mathf.Deg2Rad;
+        var bridgeAxis = new Vector2(Mathf.Cos(by), -Mathf.Sin(by));
+        if (Mathf.Abs(Vector2.Dot(bridgeAxis, along)) > 0.2f) continue;
+        var offset = center - bridgeCenter;
+        if (Mathf.Abs(Vector2.Dot(offset, bridgeAxis)) > bridge.HalfLength.AsFloat + piece.HalfWidth.AsFloat) continue;
+        var s = Vector2.Dot(offset, along);
+        var deck = bridge.HalfWidth.AsFloat + 0.3f;
+        if (s >= 0f) low = Mathf.Max(low, deck - s);
+        else high = Mathf.Min(high, -deck - s);
+      }
+      if (high - low < 0.6f) return null;
+      var mid = center + along * ((low + high) / 2f);
+      return Rect(mid.x, mid.y, (high - low) / 2f, piece.HalfWidth.AsFloat, piece.Yaw.AsFloat);
+    }
+
     static void BuildMapSpec(MapDef def) {
       var spec = Asset<MapSpec>($"map_{def.Id}");
       spec.MaxPlayers = def.Players;
@@ -1530,9 +1554,21 @@ namespace FactoryWars.EditorTools {
             var dir = totalLen > 0.001f ? delta / totalLen : Vector2.right;
             var yaw = Mathf.Atan2(-dir.y, dir.x) * Mathf.Rad2Deg;
             var count = Mathf.Max(2, Mathf.CeilToInt(totalLen / 6f));
-            for (var k = 0; k <= count; k++) {
+            for (var k = 0; k <= (strip.OpenEnd ? count - 1 : count); k++) {
               var pt = strip.From + dir * (totalLen * k / count);
-              extraRiver.Add(Rect(pt.x, pt.y, 4.2f, strip.HalfWidth, yaw));
+              var half = strip.HalfWidth;
+              if (strip.Wobble > 0f) {
+                // 두 겹 사인으로 폭만 좁힌다(넓히지 않아 본진·자원 쪽으로 물이 들어가지 않는다). 양 끝은 원래 폭.
+                var t = k / (float)count;
+                var wave = 0.5f + 0.32f * Mathf.Sin(t * 9.1f + strip.Seed * 1.7f) + 0.18f * Mathf.Sin(t * 21.3f + strip.Seed * 4.1f);
+                half -= strip.Wobble * Mathf.Clamp01(wave) * Mathf.Sin(t * Mathf.PI);
+                // 중심선을 옆으로 흔들어 양쪽 해안이 서로 다른 곶·만을 갖게 한다. 흔든 만큼 폭을 더 줄여 바깥으로는 원래 폭을 넘지 않는다.
+                var sway = strip.Wobble * 0.32f * Mathf.Sin(t * 6.3f + strip.Seed * 2.9f) * Mathf.Sin(t * Mathf.PI);
+                pt += new Vector2(-dir.y, dir.x) * sway;
+                half = Mathf.Max(18f, half - Mathf.Abs(sway));
+              }
+              // 다각형 물길은 조각을 길게 해 볼록 꼭짓점 바깥 쐐기까지 막는다.
+              extraRiver.Add(Rect(pt.x, pt.y, strip.OpenEnd ? 5f : 4.2f, half, yaw));
             }
           }
         }
@@ -1567,9 +1603,15 @@ namespace FactoryWars.EditorTools {
       var blocks = pieces.Where(p => p.UnderBridge == false && Mathf.Abs(p.Center.x) < edge && Mathf.Abs(p.Center.y) < edge)
         .SelectMany(p => Orbit(def, Shape(p)).Select(shape => Feature(TerrainKind.River, shape))).ToList();
       foreach (var er in extraRiver) {
-        if (Mathf.Abs(er.Center.X.AsFloat) < edge && Mathf.Abs(er.Center.Z.AsFloat) < edge && IsCrossing(er) == false) {
+        if (Mathf.Abs(er.Center.X.AsFloat) >= edge || Mathf.Abs(er.Center.Z.AsFloat) >= edge) continue;
+        if (IsCrossing(er) == false) {
           blocks.Add(Feature(TerrainKind.River, er));
+          continue;
         }
+        // 다리 옆 조각: 다리 상판 폭 밖으로 삐져나온 부분만 남겨 막는다. 통째로 빼면 다리 옆 물을 걸어서 건넌다.
+        if (allFords.Any(ford => ford.Distance(er.Center).AsFloat < 4.5f)) continue;
+        var trimmed = TrimBesideBridge(er, spec.Bridges);
+        if (trimmed.HasValue) blocks.Add(Feature(TerrainKind.River, trimmed.Value));
       }
       var landTerrain = def.Terrain.SelectMany(feature => Orbit(def, feature.Shape).Select(shape => Feature(feature.Kind, shape)))
         .Where(f => extraRiver.Count == 0 || OverlapsExtraWater(f.Shape.Center, 4.5f) == false);
@@ -1637,7 +1679,8 @@ namespace FactoryWars.EditorTools {
         }
         return false;
       }
-      var roadsList = def.Roads.SelectMany(shape => Orbit(def, shape)).Where(s => RoadTouchesExtraWater(s) == false).ToList();
+      var roadsList = def.Roads.SelectMany(shape => Orbit(def, shape)).Where(s => RoadTouchesExtraWater(s) == false)
+        .Where(s => def.RoadClearHalfX <= 0f || Mathf.Abs(s.Center.X.AsFloat) >= def.RoadClearHalfX).ToList();
       if (def.ExtraRoads != null && def.ExtraRoads.Length > 0) {
         roadsList.AddRange(def.ExtraRoads);
       }

@@ -63,7 +63,7 @@ namespace FactoryWars.Tests {
       yield return StartMatch(Map4PScene, 2, truce: -1);
       yield return WaitForHud();
       var spots = UrbanDecor.Spots;
-      Debug.Log("[ROADSIDE] " + string.Join(", ", spots.GroupBy(s => s.Role + ":" + s.Kind).Select(g => g.Key + "=" + g.Count())));
+            Debug.Log("[ROADSIDE] " + string.Join(", ", spots.GroupBy(s => s.Role + ":" + s.Kind).Select(g => g.Key + "=" + g.Count())));
       foreach (var role in new[] { "roadside", "cover", "wreck", "verge" }) {
         Assert.Greater(spots.Count(s => s.Role == role), 4, $"길가 {role}");
       }

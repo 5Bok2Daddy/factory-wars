@@ -14,6 +14,18 @@ namespace FactoryWars.Tests {
   public partial class LocalMatchTests {
     static readonly string[] RiverMaps = { "Map4P" };
 
+    /// <summary>
+    /// 표준 맵 중앙 섬을 두르는 12각 물길(반지름 43~59m). 사행·폭 3~5m·회전 순서는 기지 운하 규칙이라 이 물길에는 적용하지 않는다.
+    /// 다리 앞뒤 직선, 폭 일정, 빈틈없는 차단, 자원·다리 회피는 중앙 물길에도 그대로 적용한다.
+    /// </summary>
+    const float CentralRiverReach = 70f;
+
+    static IEnumerable<List<TerrainKit.RiverPoint>> CanalPaths(MapSpec map, bool includeChannel = true) =>
+      TerrainKit.RiverPaths(map, includeChannel).Where(path => path.Any(point => point.Position.magnitude >= CentralRiverReach));
+
+    static MapShape[] CanalPieces(MapSpec map) =>
+      (map.River ?? new MapShape[0]).Where(piece => Flat(piece.Center).magnitude >= CentralRiverReach).ToArray();
+
     static FPVector3 Fp(Vector2 point) => new FPVector3(FP.FromFloat_UNSAFE(point.x), default, FP.FromFloat_UNSAFE(point.y));
 
     static Vector2 Flat(FPVector3 point) => new Vector2(point.X.AsFloat, point.Z.AsFloat);
@@ -27,13 +39,16 @@ namespace FactoryWars.Tests {
         var points = TerrainKit.RiverPaths(map).SelectMany(p => p).ToArray();
         foreach (var bridge in map.Bridges) {
           var center = Flat(bridge.Center);
-          var extent = TerrainKit.Extent(bridge);
-          var acrossX = map.SealedPerimeter ? extent.width > extent.height : extent.width < extent.height;
+          // 다리가 건너는 축. 봉쇄 맵의 다리는 HalfLength 방향으로 놓인다(대각선 중앙 강 다리 포함). 강 중심선은 이 축에 수직으로 다리 중심을 지난다.
+          var yaw = bridge.Yaw.AsFloat * Mathf.Deg2Rad;
+          var along = new Vector2(Mathf.Cos(yaw), -Mathf.Sin(yaw));
+          var axis = map.SealedPerimeter ? along : new Vector2(-along.y, along.x);
           var near = points.Where(p => (p.Position - center).magnitude <= 10f).ToArray();
           Assert.Greater(near.Length, 0, id);
           foreach (var point in near) {
-            Assert.AreEqual(acrossX ? center.x : center.y, acrossX ? point.Position.x : point.Position.y, 0.05f, $"{id}: 다리 앞뒤는 직선");
-            Assert.AreEqual(RiverHalfMin, point.Half, 0.01f, $"{id}: 폭 일정");
+            Assert.AreEqual(0f, Vector2.Dot(point.Position - center, axis), 0.05f, $"{id}: 다리 앞뒤는 직선");
+            Assert.AreEqual(near[0].Half, point.Half, 0.01f, $"{id}: 폭 일정");
+            Assert.GreaterOrEqual(point.Half, RiverHalfMin - 0.01f, $"{id}: 최소 폭");
           }
         }
       }
@@ -58,7 +73,7 @@ namespace FactoryWars.Tests {
     [Test]
     public void River_ActuallyMeanders() {
       foreach (var id in RiverMaps) {
-        foreach (var path in TerrainKit.RiverPaths(MapAsset(id), includeChannel: false)) {
+        foreach (var path in CanalPaths(MapAsset(id), includeChannel: false)) {
           var turns = 0;
           var last = 0f;
           for (var i = 1; i + 1 < path.Count; i++) {
@@ -78,7 +93,7 @@ namespace FactoryWars.Tests {
     [Test]
     public void River_WidthStaysBetweenSixAndTenMeters() {
       foreach (var id in RiverMaps) {
-        foreach (var piece in MapAsset(id).River) {
+        foreach (var piece in CanalPieces(MapAsset(id))) {
           var half = piece.HalfWidth.AsFloat;
           Assert.GreaterOrEqual(half, RiverHalfMin - 0.001f, id);
           Assert.LessOrEqual(half, RiverHalfMax + 0.001f, id);
@@ -146,13 +161,14 @@ namespace FactoryWars.Tests {
 
     [Test]
     public void River_KeepsBridgeCount() {
-      Assert.AreEqual(8, MapAsset("Map4P").Bridges.Length);
+      // 자리마다 운하 다리 3개(320m 표준화) × 4 + 중앙 물길 대각선 다리 4개.
+      Assert.AreEqual(16, MapAsset("Map4P").Bridges.Length);
     }
 
     [Test]
     public void River_IsRotationallySymmetric() {
       foreach (var (id, turns) in new[] { ("Map4P", 4) }) {
-        var pieces = MapAsset(id).River;
+        var pieces = CanalPieces(MapAsset(id));
         var count = pieces.Length / turns;
         Assert.AreEqual(count * turns, pieces.Length, id);
         for (var quarter = 1; quarter < turns; quarter++) {
@@ -175,11 +191,11 @@ namespace FactoryWars.Tests {
         var map = MapAsset(id);
         foreach (var block in RiverBlocks(map)) {
           foreach (var node in map.ResourceNodes) {
-            Assert.Greater(node.Shape.Distance(block.Center).AsFloat, block.HalfWidth.AsFloat, $"{id}: 자원을 덮음");
+            Assert.Greater(node.Shape.Distance(block.Center).AsFloat, block.HalfWidth.AsFloat, $"{id}: 자원을 덮음 node={Flat(node.Shape.Center)} block={Flat(block.Center)}");
           }
           foreach (var bridge in map.Bridges) {
-            var gap = TerrainKit.Extent(bridge);
-            Assert.IsFalse(gap.Contains(Flat(block.Center)), $"{id}: 다리 통로를 막음");
+            // 실제(회전된) 다리 모양 기준. 축 정렬 다리에서는 경계 상자 판정과 같다.
+            Assert.Greater(bridge.Distance(block.Center).AsFloat, 0f, $"{id}: 다리 통로를 막음 {Flat(block.Center)}");
           }
         }
       }

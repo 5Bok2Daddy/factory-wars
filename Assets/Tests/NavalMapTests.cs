@@ -184,8 +184,8 @@ namespace FactoryWars.Tests {
     public IEnumerator Naval_BoatCollectsSupplyCrateOnWater() {
       yield return StartMatch(Map4PScene, 2, truce: 0);
 
-      // 외곽 수로 위 보급상자 투하 지점 확인
-      var waterCratePos = WaterPoint(-169, -20);
+      // 봉쇄 맵(320m 표준화)에는 외곽 수로가 없다. 자리 0 본진 운하 위에 상자를 둔다.
+      var waterCratePos = CanalPoint(Verified.FindAsset<MapSpec>(Verified.Map.UserAsset));
 
       // 수로 위에 상자 생성
       var crateEntity = Verified.Create();

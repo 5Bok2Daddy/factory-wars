@@ -110,16 +110,21 @@ namespace FactoryWars.View {
       }
       var n = 0;
       var roadNo = 0;
+      // 곡선 도로는 4.8m 조각이 이어진 띠다(320m 표준화). 이어진 조각의 누적 거리로 16m 간격을 재야 짧은 조각에도 가구가 놓인다.
+      var chains = new List<RoadChain>();
       foreach (var road in map.Roads) {
-        roadNo++;
+        var chain = Follow(chains, road);
+        var run = chain.Run;
+        roadNo = chain.No;
         var yaw = road.Yaw.AsFloat;
         var turn = Quaternion.Euler(0f, yaw, 0f);
         var edge = road.HalfWidth.AsFloat + 0.5f;
         foreach (var (center, half) in TerrainKit.RoadPieces(map, road)) {
           foreach (var side in new[] { 1f, -1f }) {
             var face = yaw + (side > 0f ? 180f : 0f);
-            var slot = 0;
-            for (var x = -half + 3f + (side > 0f ? 0f : FurnitureStep * 0.5f); x <= half - 3f; x += FurnitureStep, slot++, n++) {
+            var phase = 3f + (side > 0f ? 0f : FurnitureStep * 0.5f);
+            for (var slot = Mathf.Max(0, Mathf.CeilToInt((run - phase) / FurnitureStep)); phase + slot * FurnitureStep <= run + half * 2f; slot++, n++) {
+              var x = phase + slot * FurnitureStep - run - half;
               // 길가 가구: 갓길 1m.
               // 길마다 순서를 밀어 짧은 길에도 가로등·전신주·쓰레기통·표지판이 고루 나온다.
               var cycle = (slot + roadNo * 2 + (side > 0f ? 0 : 3)) % 5;
@@ -140,7 +145,8 @@ namespace FactoryWars.View {
             }
             void ShoulderProp(DressKind kind, float x, float offset, int seed, float heading, string role) {
               for (var row = 0; row < 5; row++) {
-                var along = Mathf.Clamp(x + (row % 2 == 0 ? -row : row) * 1.35f, -half + 2f, half - 2f);
+                // 짧은 곡선 조각에서는 조각 안으로 묶지 않는다(묶으면 같은 자리의 가구와 겹쳐 모두 거절된다). 조각 접선 방향으로 연장한다.
+                var along = x + (row % 2 == 0 ? -row : row) * 1.35f;
                 var spot = center + turn * new Vector3(along, 0f, side * (edge + offset + row * 2.3f));
                 if (Side(map, road, kind, spot, seed, heading, role, profile)) return;
               }
@@ -161,8 +167,34 @@ namespace FactoryWars.View {
               }
             }
           }
+          run += half * 2f;
         }
+        chain.Run = run;
       }
+    }
+
+    /// <summary>
+    /// 곡선 도로 띠. 도로 조각은 자리별 회전 복사본과 번갈아 저장되므로, 순서가 아니라 끝점이 이어지는 조각끼리 묶어 누적 거리를 잰다.
+    /// </summary>
+    sealed class RoadChain {
+      public Vector2 End;
+      public float Run;
+      public int No;
+    }
+
+    static RoadChain Follow(List<RoadChain> chains, MapShape road) {
+      var yaw = road.Yaw.AsFloat * Mathf.Deg2Rad;
+      var along = new Vector2(Mathf.Cos(yaw), -Mathf.Sin(yaw));
+      var center = new Vector2(road.Center.X.AsFloat, road.Center.Z.AsFloat);
+      var half = road.HalfLength.AsFloat;
+      var start = center - along * half;
+      var chain = chains.Find(item => (item.End - start).magnitude < 1f);
+      if (chain == null) {
+        chain = new RoadChain { No = chains.Count + 1 };
+        chains.Add(chain);
+      }
+      chain.End = center + along * half;
+      return chain;
     }
 
     static bool Side(MapSpec map, MapShape road, DressKind kind, Vector3 spot, int seed, float yaw, string role, VisualProfile profile) {
@@ -302,12 +334,18 @@ namespace FactoryWars.View {
     /// <summary>길가 장식 소품. 길 바깥 충분한 여유 거리(4.8m)에만 배치해 도로 침범 차단.</summary>
     static void Street(MapSpec map, VisualProfile profile) {
       var idx = 0;
+      // 곡선 도로는 짧은 조각의 띠다. 이어진 조각의 누적 거리로 12m 간격을 잰다(Roadside와 같은 방식).
+      var chains = new List<RoadChain>();
       foreach (var road in map.Roads ?? new MapShape[0]) {
+        var chain = Follow(chains, road);
         var center = new Vector3(road.Center.X.AsFloat, 0f, road.Center.Z.AsFloat);
         var yaw = road.Yaw.AsFloat;
         var turn = Quaternion.Euler(0, yaw, 0);
         var half = new Vector2(road.HalfLength.AsFloat, road.HalfWidth.AsFloat);
-        for (var x = -half.x + 8f; x <= half.x - 8f; x += RoadCoverStep, idx++) {
+        var startRun = chain.Run;
+        chain.Run += half.x * 2f;
+        for (var k = Mathf.Max(0, Mathf.CeilToInt((startRun - 8f) / RoadCoverStep)); 8f + k * RoadCoverStep <= startRun + half.x * 2f; k++, idx++) {
+          var x = 8f + k * RoadCoverStep - startRun - half.x;
           if (Hash(idx, 31) > CoverChance) {
             continue;
           }

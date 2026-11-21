@@ -220,10 +220,16 @@ namespace FactoryWars.View {
         : ArtPalette.Turf(Swatch.GrassDark);
       k.Paint(lotSwatch);
       var ring = Outline(shape, OutlineSpacing);
-      for (var i = 0; i < ring.Count; i++) {
+      // 환경 개편 지면은 정점 색으로 초지·흙이 섞인다. 단색 판은 위장 무늬 얼룩처럼 떠 보이므로 판을 깔지 않고 지면을 그대로 보인다(건물은 유지).
+      for (var i = 0; EnvironmentArt.Uses(map) == false && i < ring.Count; i++) {
         var a = ring[i];
         var b = ring[(i + 1) % ring.Count];
         k.Tri(new Vector3(a.x, 0.03f, a.y), new Vector3(b.x, 0.03f, b.y), new Vector3(center.x, 0.03f, center.y), Vector3.up);
+      }
+      // 참고 맵(2026-11-21): 통과 불가 대지는 건물 대신 빽빽한 숲 군락으로 읽히게 한다. 시가전은 건물을 유지한다.
+      if (biome != Biome.Urban && EnvironmentArt.Uses(map)) {
+        ForestFill(map, shape, seed);
+        return;
       }
       const float Cell = 12f;
       var countL = Mathf.Max(0, Mathf.FloorToInt((halfL * 2f + LotGap) / (Cell + LotGap)));
@@ -266,6 +272,36 @@ namespace FactoryWars.View {
             Lots.Add((spot, radius));
             placed++;
           }
+        }
+      }
+    }
+
+    /// <summary>대지 모양 안쪽을 지터 격자로 나무로 채운다. 가장자리 띠는 덤불을 섞어 숲 경계를 부드럽게 한다. 판정 모양 밖으로 나가지 않는다.</summary>
+    static void ForestFill(MapSpec map, MapShape shape, int seed) {
+      const float Step = 4.4f;
+      var reach = shape.Reach.AsFloat;
+      var c = new Vector3(shape.Center.X.AsFloat, 0f, shape.Center.Z.AsFloat);
+      var woodland = NewBundleArt.HasWoodland(map) && NewBundleArt.Prefab("MeadowShrub") != null;
+      var n = 0;
+      for (var x = -reach; x <= reach; x += Step) {
+        for (var z = -reach; z <= reach; z += Step, n++) {
+          var p = c + new Vector3(x + (MeshKit.Hash(seed, 500 + n) - 0.5f) * Step * 0.7f, 0f, z + (MeshKit.Hash(seed, 900 + n) - 0.5f) * Step * 0.7f);
+          var fp = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(p.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(p.z));
+          var depth = shape.Distance(fp).AsFloat;
+          if (depth > -0.8f || Blocked(map, p, 1.2f)) {
+            continue;
+          }
+          p.y = TerrainKit.SurfaceHeight(map, p.x, p.z);
+          var pick = MeshKit.Hash(seed, 1300 + n);
+          var edgeBand = depth > -2.4f && pick < 0.4f;
+          // 표준 맵은 구매한 NatureForge 숲 나무·덤불을 쓴다(크기 3.2~4.4m 무작위). 없으면 Synty 침엽수·활엽수.
+          if (woodland) {
+            var key = edgeBand ? "MeadowShrub" : pick < 0.62f ? "WoodlandTree" : "WoodlandTallTree";
+            Dressing.AddBundle(NewBundleArt.Prefab(key), p, edgeBand ? 1.6f : 3.2f + 1.2f * MeshKit.Hash(seed, 1700 + n), seed * 17 + n, _ => true);
+            continue;
+          }
+          var kind = edgeBand ? DressKind.Bush : pick < 0.74f ? DressKind.Conifer : DressKind.Broadleaf;
+          Dressing.Add(kind, p, seed * 17 + n);
         }
       }
     }
@@ -493,7 +529,10 @@ namespace FactoryWars.View {
       var roadIndex = 0;
       var continuous = EnvironmentArt.Uses(map);
       if (continuous) EnvironmentRoads.Build(k, map);
-      foreach (var road in continuous ? System.Array.Empty<MapShape>() : map.Roads ?? System.Array.Empty<MapShape>()) {
+      // 연속 도로는 EnvironmentRoads가 그린다. 조각별 루프는 길가 소품(가로등·표지·방벽) 배치를 위해 그대로 돌리고, 메시는 버리는 키트에 그린다.
+      var roadKit = k;
+      if (continuous) k = new MeshKit();
+      foreach (var road in map.Roads ?? System.Array.Empty<MapShape>()) {
         var yaw = road.Yaw.AsFloat;
         if (VisualProfile.Current.FieldLook) {
           foreach (var (pieceCenter, pieceHalf) in RoadPieces(map, road)) {
@@ -543,6 +582,7 @@ namespace FactoryWars.View {
           }
         }
       }
+      k = roadKit;
       if (VisualProfile.Current.FieldLook && map.HasTrader) {
         RingRoad(k, map);
       }

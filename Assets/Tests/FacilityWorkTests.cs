@@ -154,7 +154,9 @@ namespace FactoryWars.Tests {
       var cafes = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None)
         .Where(t => t.name.StartsWith("SM_Bld_Cafe_01") && t.parent != null && t.parent.name == "Kenney")
         .OrderBy(t => t.parent.parent.parent.name).ToArray();
-      Assert.AreEqual(4, cafes.Length, "시가지 네 구역의 저층 건물");
+      // 320m 표준화 뒤 시가지 블록이 늘었다. 자리마다 적어도 한 곳, 한 블록에 하나씩만 그린다(중복 렌더링 없음).
+      Assert.GreaterOrEqual(cafes.Length, 4, "시가지 네 구역의 저층 건물");
+      Assert.AreEqual(cafes.Length, cafes.Select(c => c.parent.parent.parent.name).Distinct().Count(), "블록마다 저층 건물 하나");
       foreach (var cafe in cafes) {
         var block = cafe.parent.parent.parent;
         var placement = map.CityBuildings[int.Parse(block.name.Substring("City".Length))];

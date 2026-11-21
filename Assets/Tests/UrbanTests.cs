@@ -33,7 +33,9 @@ namespace FactoryWars.Tests {
       var street = UrbanDecor.Spots.Where(s => s.Role == "street").ToArray();
       var boundary = UrbanDecor.Spots.Where(s => s.Role == "boundary").ToArray();
       Assert.Greater(street.Length, 10, "길가 장식");
-      Assert.Greater(boundary.Length, 20, "맵 가장자리 건물");
+      // 봉쇄 맵(320m 표준화)은 가장자리를 자연 능선·절벽으로 막는다. 건물 외벽 열은 봉쇄 전 맵에서만 세운다.
+      if (map.SealedPerimeter) Assert.IsEmpty(boundary, "봉쇄 맵에는 가장자리 건물 열이 없다");
+      else Assert.Greater(boundary.Length, 20, "맵 가장자리 건물");
       var paths = TerrainKit.RiverPaths(map);
       var problems = new List<string>();
       foreach (var spot in street) {

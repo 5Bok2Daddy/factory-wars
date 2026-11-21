@@ -358,11 +358,11 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: -9699328
+          RawValue: -9830400
         Y:
           RawValue: 0
         Z:
-          RawValue: -4980736
+          RawValue: -4784128
       Radius:
         RawValue: 196608
       HalfLength:
@@ -378,11 +378,11 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: 4980736
+          RawValue: 4784128
         Y:
           RawValue: 0
         Z:
-          RawValue: -9699328
+          RawValue: -9830400
       Radius:
         RawValue: 196608
       HalfLength:
@@ -398,11 +398,11 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: 9699328
+          RawValue: 9830400
         Y:
           RawValue: 0
         Z:
-          RawValue: 4980736
+          RawValue: 4784128
       Radius:
         RawValue: 196608
       HalfLength:
@@ -418,11 +418,11 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: -4980736
+          RawValue: -4784128
         Y:
           RawValue: 0
         Z:
-          RawValue: 9699328
+          RawValue: 9830400
       Radius:
         RawValue: 196608
       HalfLength:
@@ -758,11 +758,11 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: -5373952
+          RawValue: -4653056
         Y:
           RawValue: 0
         Z:
-          RawValue: -7733248
+          RawValue: -7274496
       Radius:
         RawValue: 163840
       HalfLength:
@@ -778,11 +778,11 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: 7733248
+          RawValue: 7274496
         Y:
           RawValue: 0
         Z:
-          RawValue: -5373952
+          RawValue: -4653056
       Radius:
         RawValue: 163840
       HalfLength:
@@ -798,11 +798,11 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: 5373952
+          RawValue: 4653056
         Y:
           RawValue: 0
         Z:
-          RawValue: 7733248
+          RawValue: 7274496
       Radius:
         RawValue: 163840
       HalfLength:
@@ -818,11 +818,11 @@ MonoBehaviour:
     Shape:
       Center:
         X:
-          RawValue: -7733248
+          RawValue: -7274496
         Y:
           RawValue: 0
         Z:
-          RawValue: 5373952
+          RawValue: 4653056
       Radius:
         RawValue: 163840
       HalfLength:

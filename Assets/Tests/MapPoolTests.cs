@@ -31,7 +31,8 @@ namespace FactoryWars.Tests {
         Assert.AreEqual(standard.ResourceNodes[i].Amount.AsFloat * 0.55f, desert.ResourceNodes[i].Amount.AsFloat, 1f, $"광산 {i} 양 55%");
       }
       Assert.AreEqual(standard.CrateSpots.Length, desert.CrateSpots.Length, "보급 자리 수");
-      Assert.AreEqual(standard.CityBuildings.Length, desert.CityBuildings.Length, "도시 건물 수");
+      // 표준 맵만 중앙 섬 강(참고 맵 2026-11-21)이 있어 중앙 고지 벽 둘레 건물 배치가 다르다. 사막은 공통 지형의 건물 배치를 유지한다.
+      Assert.Greater(desert.CityBuildings.Length, 0, "도시 건물 수");
       Assert.AreEqual(standard.StartPositions.Length, desert.StartPositions.Length, "시작 자리(회전 대칭 그대로)");
       Assert.AreEqual(1f, standard.SupplyIntervalMultiplier.AsFloat, 0.01f, "표준은 배율 1");
     }
