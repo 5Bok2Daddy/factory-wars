@@ -64,6 +64,8 @@ namespace Quantum.FactoryWars {
       if (f.Unsafe.TryGetPointer<Building>(building, out var own) && own->ConstructionRemaining <= FP._0) {
         var spec = f.FindAsset(own->Spec);
         shape = new MapShape { Center = f.Unsafe.GetPointer<Transform3D>(building)->Position, HalfLength = spec.FootprintRadius, HalfWidth = spec.FootprintRadius };
+        if (spec.RequiresResourceNode && f.TryGet<ResourceNode>(own->ExtractNode, out var node)
+            && node.Shape.Reach > spec.FootprintRadius) shape = node.Shape;
         capacity = spec.RequiresResourceNode ? spec.WorkerSlotCapacity : spec.GarrisonCapacity;
         holder = own->Owner;
         return capacity > 0;

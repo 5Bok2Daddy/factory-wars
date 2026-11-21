@@ -90,7 +90,7 @@ namespace FactoryWars.View {
       }
       var biome = TerrainKit.BiomeOf(map);
       // 다도해·사막은 수평선까지 열린 바다/사구를 유지하기 위해 외곽 도심 빌딩 벽과 항만 옹벽을 생략한다.
-      if (biome != TerrainKit.Biome.Archipelago && biome != TerrainKit.Biome.Desert) {
+      if (!map.SealedPerimeter && biome != TerrainKit.Biome.Archipelago && biome != TerrainKit.Biome.Desert) {
         Boundary(map, profile);
       }
       Checkpoints(map, profile);
@@ -536,7 +536,7 @@ namespace FactoryWars.View {
         var c = new Vector2(bridge.Center.X.AsFloat, bridge.Center.Z.AsFloat);
         var halfLong = Mathf.Max(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
         var halfShort = Mathf.Min(bridge.HalfLength.AsFloat, bridge.HalfWidth.AsFloat);
-        var shortAxis = themedBridge && halfLong <= 10f;
+        var shortAxis = !map.SealedPerimeter && themedBridge && halfLong <= 10f;
         var alongX = (bridge.HalfLength.AsFloat >= bridge.HalfWidth.AsFloat) != shortAxis;
         var d3 = Quaternion.Euler(0, bridge.Yaw.AsFloat + (alongX ? 0f : 90f), 0) * Vector3.right;
         var d = new Vector2(d3.x, d3.z);

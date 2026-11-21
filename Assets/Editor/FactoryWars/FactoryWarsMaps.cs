@@ -50,8 +50,6 @@ namespace FactoryWars.EditorTools {
       public ExpansionSite[] CenterExpansions;
       /// <summary>공유 확장 i번에 닿는 자리들. 자리 s의 복사본은 이 자리를 s만큼 돌린 것이다.</summary>
       public int[] SharedSeatOffsets;
-      /// <summary>항목 24: 땅 바깥을 두르는 외곽 수로 너비. 0이면 수로가 없다.</summary>
-      public float ChannelWidth;
       /// <summary>항목 35 맵 프리셋: 테마, 보급 낙하 간격·보상 배율.</summary>
       public string Theme = "표준";
       public double SupplyInterval = 1;
@@ -179,10 +177,28 @@ namespace FactoryWars.EditorTools {
       return list.Concat(list.Select(Mirror)).ToList();
     }
 
-    /// <summary>폴리라인을 도로 조각으로 나눈다.</summary>
-    static IEnumerable<MapShape> Road(params Vector2[] points) {
+    static IEnumerable<MapShape> Road(params Vector2[] points) => CurvedStrip(RoadHalfWidth, points);
+
+    static IEnumerable<MapShape> CurvedStrip(float halfWidth, params Vector2[] points) {
       for (var i = 0; i + 1 < points.Length; i++) {
-        yield return Segment(points[i], points[i + 1], RoadHalfWidth);
+        var previous = points[Mathf.Max(0, i - 1)];
+        var from = points[i];
+        var to = points[i + 1];
+        var next = points[Mathf.Min(points.Length - 1, i + 2)];
+        var count = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(from, to) / 4.8f));
+        var last = from;
+        for (var sample = 1; sample <= count; sample++) {
+          var t = sample / (float)count;
+          var t2 = t * t;
+          var t3 = t2 * t;
+          var point = 0.5f * (2f * from + (to - previous) * t
+            + (2f * previous - 5f * from + 4f * to - next) * t2
+            + (3f * from - previous - 3f * to + next) * t3);
+          var shape = Segment(last, point, halfWidth);
+          shape.HalfLength += N(0.14);
+          yield return shape;
+          last = point;
+        }
       }
     }
 
@@ -259,7 +275,6 @@ namespace FactoryWars.EditorTools {
       var def = FourPlayerMap.Clone();
       def.Id = "MapUrban";
       def.Theme = "시가전";
-      def.ChannelWidth = 10f;
       def.SupplyInterval = 0.9;
       def.SupplyReward = 1.2;
       def.CaptureSites = new[] { Site(CaptureKind.Relay, -134, 0, 8), Site(CaptureKind.Radar, -30, -30, 7), Site(CaptureKind.Fuel, -60, -98, 6) };
@@ -271,7 +286,6 @@ namespace FactoryWars.EditorTools {
       var def = FourPlayerMap.Clone();
       def.Id = "MapArchipelago";
       def.Theme = "다도해";
-      def.ChannelWidth = 56f;
       def.SupplyInterval = 0.85;
       def.SupplyReward = 1.25;
       def.WeatherFirst = 420;
@@ -281,19 +295,21 @@ namespace FactoryWars.EditorTools {
       // 중앙 섬(반경 42m)을 360도 감싸는 환형 라군(r=42~90) + 4방위 100m 광폭 외해 해협 -> 플레이 영역 내 65%+(화면 75%+) 에메랄드 바다!
       def.ExtraWater = new[] {
         new WaterStrip { Ring = true, RingRadius = 66f, HalfWidth = 24f },
-        new WaterStrip { From = P(0f, 74f), To = P(0f, 210f), HalfWidth = 50f },
-        new WaterStrip { From = P(0f, -210f), To = P(0f, -74f), HalfWidth = 50f },
-        new WaterStrip { From = P(-210f, 0f), To = P(-74f, 0f), HalfWidth = 50f },
-        new WaterStrip { From = P(74f, 0f), To = P(210f, 0f), HalfWidth = 50f },
+        new WaterStrip { From = P(0f, 74f), To = P(-7f, 161f), HalfWidth = 55f },
+        new WaterStrip { From = P(7f, -161f), To = P(0f, -74f), HalfWidth = 55f },
+        new WaterStrip { From = P(-161f, -7f), To = P(-74f, 0f), HalfWidth = 55f },
+        new WaterStrip { From = P(74f, 0f), To = P(161f, 7f), HalfWidth = 55f },
       };
       // 섬 육지 위에만 정확히 안착하는 자원·거점·블랙박스 배치(바다에 뜨는 광산/언덕 0).
       def.Nodes = new[] {
-        Mine(-145, -118, 4600), Mine(-118, -145, 4600), Grove(-146, -146, 9, 6000),
+        Mine(-146, -119, 4600), Mine(-119, -146, 4600), Grove(-144, -144, 5.5, 6000),
         Mine(-148, -76, 3200), Mine(-124, -66, 3200), Grove(-150, -64, 5, 2200),
-        Grove(-76, -147, 9, 5000), Grove(-68, -122, 6, 3000), Mine(-82, -118, 2200, 2.5),
+        Grove(-62, -147, 9, 5000), Grove(-68, -122, 6, 3000), Mine(-82, -118, 2200, 2.5),
         Grove(-18, -18, 5, 2400),
       };
-      def.Fords = new[] { Segment(P(-66f, -66f), P(-26f, -26f), 4.8f) };
+      def.CenterNodes = new[] { Mine(-12, -24, 6500, 3.5), Grove(11, 21, 6, 7000) };
+      def.Fords = new[] { Segment(P(-67f, -67f), P(-25f, -25f), 5.6f) };
+      def.ExtraBridges = Enumerable.Range(0, 4).Select(i => Turn(Rect(-48, -48, 30, 4.8, -45), i)).ToArray();
       def.CaptureSites = new[] {
         Site(CaptureKind.Relay, -88, -88, 7),
         Site(CaptureKind.Radar, -22, -22, 6),
@@ -310,7 +326,6 @@ namespace FactoryWars.EditorTools {
       var def = FourPlayerMap.Clone();
       def.Id = "MapStrait";
       def.Theme = "해협";
-      def.ChannelWidth = 28f;
       def.SupplyInterval = 0.9;
       def.SupplyReward = 1.2;
       def.WeatherFirst = 450;
@@ -320,7 +335,7 @@ namespace FactoryWars.EditorTools {
       def.Trader = false;
       // 중앙을 남북으로 완벽히 가르는 48m(HalfWidth=24) 대양 해협.
       def.ExtraWater = new[] {
-        new WaterStrip { From = P(0f, -205f), To = P(0f, 205f), HalfWidth = 24f },
+        new WaterStrip { From = P(0f, -162f), To = P(0f, 162f), HalfWidth = 24f },
       };
       // 해협을 가로지르는 3개의 뚜렷한 전략 교량(북·중앙 대교·남).
       def.ExtraBridges = new[] {
@@ -329,24 +344,23 @@ namespace FactoryWars.EditorTools {
         Rect(0, -84, 27, 5.5),
       };
       // 3개 교량 진입 도로 + 동·서 해안 종단 간선도로.
-      def.ExtraRoads = new[] {
-        Segment(P(-106f, 84f), P(-26f, 84f), RoadHalfWidth),
-        Segment(P(26f, 84f), P(106f, 84f), RoadHalfWidth),
-        Segment(P(-106f, 0f), P(-26f, 0f), RoadHalfWidth),
-        Segment(P(26f, 0f), P(106f, 0f), RoadHalfWidth),
-        Segment(P(-106f, -84f), P(-26f, -84f), RoadHalfWidth),
-        Segment(P(26f, -84f), P(106f, -84f), RoadHalfWidth),
-        Segment(P(-54f, -108f), P(-54f, 108f), RoadHalfWidth),
-        Segment(P(54f, -108f), P(54f, 108f), RoadHalfWidth),
-      };
+      var coastalRoad = Road(P(-56f, -124f), P(-62f, -81f), P(-58f, -40f), P(-52f, 0f), P(-58f, 40f), P(-62f, 81f), P(-56f, 124f));
+      var approaches = new[] { -84f, 0f, 84f }.SelectMany(z => Road(P(-107f, z + 8f), P(-63f, z + 3f), P(-25f, z)));
+      MapShape OppositeBank(MapShape road) {
+        road.Center.X = -road.Center.X;
+        road.Yaw = 180 - road.Yaw;
+        return road;
+      }
+      def.ExtraRoads = coastalRoad.Concat(approaches).SelectMany(road => new[] { road, OppositeBank(road) }).ToArray();
       def.Fords = new MapShape[0];
       def.Nodes = new[] {
-        Mine(-145, -118, 4600), Mine(-118, -145, 4600), Grove(-146, -146, 9, 6000),
+        Mine(-146, -119, 4600), Mine(-119, -146, 4600), Grove(-144, -144, 5.5, 6000),
         Mine(-148, -76, 3000), Mine(-124, -66, 3000), Grove(-150, -58, 5, 2000),
-        Grove(-76, -147, 10, 5000), Grove(-67, -122, 7, 3000), Mine(-82, -118, 1500, 2.5),
+        Grove(-62, -147, 10, 5000), Grove(-67, -122, 7, 3000), Mine(-82, -118, 1500, 2.5),
         Mine(-118, -38, 5000, 3.5), Grove(-118, -54, 6, 5000),
         Grove(-62, -46, 6, 2500),
       };
+      def.CenterNodes = new[] { Mine(-38, -21, 6500, 3.5), Mine(38, 21, 6500, 3.5), Grove(-41, 22, 5, 7000), Grove(41, -22, 5, 7000) };
       def.CaptureSites = new[] {
         Site(CaptureKind.Relay, -134, 0, 8),
         Site(CaptureKind.Radar, -44, -44, 6),
@@ -359,7 +373,7 @@ namespace FactoryWars.EditorTools {
 
     static MapDef BuildFourPlayer() {
       var terrain = new List<TerrainFeature>();
-      terrain.AddRange(Features(TerrainKind.Hill, WithMirror(Ridge(1, 6, P(-102, -90), P(-102, -80)).Concat(Ridge(2, 6, P(-136, -48), P(-98, -48))))));
+      terrain.AddRange(Features(TerrainKind.Hill, WithMirror(Ridge(1, 6, P(-106, -59), P(-98, -62)).Concat(Ridge(2, 6, P(-136, -48), P(-98, -48))))));
       // 서쪽 변 공유 확장. 나머지 세 곳은 회전 복사본이다.
       var box = Ridge(3, 6, P(-136, -24), P(-100, -24));
       terrain.AddRange(Features(TerrainKind.Hill, box.Concat(box.Select(ReflectZ)).Concat(Ridge(4, 6, P(-100, -24), P(-100, 24)))));
@@ -376,28 +390,30 @@ namespace FactoryWars.EditorTools {
       var ramps = new List<MapShape>();
       HighGround(-66, -66, 10, new[] { 45f, 225f }, terrain, grounds, ramps);
 
-      var bridge = P(-140, -90);
+      var bridge = P(-135, -81.7f);
       var iron = P(-124, -74);
       var gate = P(-102, -64);
       var relay = P(-134, 0);
-      var lane = new[] { iron, P(-151, -48), P(-147, -24), relay };
-      var roads = Road(bridge, iron, gate, P(-60, -40), P(-36, -36), P(-8, -8)).Concat(Road(lane)).ToList();
+      var flank = Road(P(-136, -110), bridge, P(-148, -67), P(-146, -48), P(-143, -25), relay);
+      var main = Road(P(-120, -123), P(-105, -111), P(-90, -103), P(-81.7f, -103), P(-68, -102), P(-55, -82), P(-51, -57), P(-37, -31), P(-8, -8));
+      var crossing = Road(P(-136, -108), bridge, P(-128, -67), iron, gate, P(-68, -49), P(-43, -33));
+      var commute = CurvedStrip(3f, P(-136, -151), P(-128, -151), P(-125, -136), P(-119, -124));
 
       return new MapDef {
         Id = "Map4P", Players = 4, HalfSize = 160, Start = Position(-130, -130), RiverAmplitude = 5f, RiverSeed = 23,
-        BaseArea = Rect(-130, -130, 30, 30),
-        Bridges = new[] { Rect(-97, -140, 3.5, 6.5), Rect(-140, -97, 6.5, 3.5) },
+        BaseArea = Rect(-121, -121, 35, 35),
+        Bridges = new[] { Rect(-81.7, -135, 7.3, 4.4), Rect(-135, -81.7, 7.3, 4.4, 90), Rect(-81.7, -103, 8.8, 5.2) },
         Nodes = new[] {
           // 항목 33 3차에서 본진 철광산을 4000→5500으로 늘려 봤으나(4인전은 10분쯤 본진 철이 바닥나 첫 교전을 진 쪽이 무너진다)
           // 4인 시간 초과가 6 → 14판으로 늘어(ai-33-4p-t3) 4000으로 되돌렸다.
-          Mine(-145, -118, 4600), Mine(-118, -145, 4600), Grove(-146, -146, 9, 6000),
+          Mine(-146, -119, 4600), Mine(-119, -146, 4600), Grove(-144, -144, 5.5, 6000),
           Mine(-148, -76, 3000), Mine(-124, -66, 3000), Grove(-150, -58, 5, 2000),
-          Grove(-76, -147, 10, 5000), Grove(-67, -122, 7, 3000), Mine(-82, -118, 1500, 2.5),
+          Grove(-62, -147, 10, 5000), Grove(-67, -122, 7, 3000), Mine(-82, -118, 1500, 2.5),
           Mine(-118, 10, 5000, 3.5), Grove(-118, -6, 6, 5000),
           Grove(-16, -16, 6, 2000),
         },
         // 중앙: 광산·통신 점령지·확장 부지 대신 철조망 암시장(NPC 무기상).
-        CenterNodes = new ResourceNodePlacement[0],
+        CenterNodes = new[] { Mine(-22, -9, 6800, 3.5), Mine(22, 9, 6800, 3.5), Grove(-12, 21, 5.5, 7000), Grove(12, -21, 5.5, 7000) },
         Trader = true,
         TraderPosition = Position(0, 0),
         // 블랙박스: 중앙 암시장 둘레 40m 네 곳을 돌아가며 떨어진다(어느 진영에도 같은 거리).
@@ -405,22 +421,22 @@ namespace FactoryWars.EditorTools {
         Terrain = terrain.ToArray(),
         NoBuildZones = WithMirror(new[] {
           Rect(-140, -97, 9, 8), Rect(-102, -64, 8, 12), Rect(-151, -48, 10, 8), Rect(-147, -24, 6, 12),
-        }).Concat(new[] { Rect(-72, 0, 9, 9), Rect(-36, -36, 12, 8, 45) }).Concat(ramps.Select(ramp => Rect(ramp.Center.X.AsFloat, ramp.Center.Z.AsFloat, 6, 6, ramp.Yaw.AsFloat))).ToArray(),
+        }).Concat(new[] { Rect(-72, 0, 9, 9), Rect(-36, -36, 12, 8, 45) }).Concat(commute)
+          .Concat(ramps.Select(ramp => Rect(ramp.Center.X.AsFloat, ramp.Center.Z.AsFloat, 6, 6, ramp.Yaw.AsFloat))).ToArray(),
         CameraPosition = new Vector3(0, 250, -205),
         CaptureSites = new[] { Site(CaptureKind.Relay, relay.x, relay.y, 8), Site(CaptureKind.Radar, -26, -26, 6), Site(CaptureKind.Fuel, -60, -98, 6) },
         CenterSites = new CaptureSitePlacement[0],
         Barricades = new[] { Rect(-72, 0, 7, 3) },
         BaseCrates = new[] { Position(-110, -128), Position(-128, -110) },
-        DropCrates = new[] { Position(-70, -30), Position(-142, 12), Position(-169, -20) },
+        DropCrates = new[] { Position(-70, -30), Position(-142, 12), Position(-149, -18) },
         HighGrounds = grounds.ToArray(),
         Ramps = ramps.ToArray(),
-        Roads = roads.Concat(roads.Select(Mirror)).ToArray(),
+        Roads = main.Concat(crossing).Concat(crossing.Select(Mirror)).Concat(flank).Concat(flank.Select(Mirror)).Concat(commute).ToArray(),
         Fords = new[] { Segment(P(-74, -30), P(-30, -74), FordHalfWidth) },
         Expansions = new[] { Expansion(ExpansionKind.IronForecourt, -136, -72), Expansion(ExpansionKind.WoodForecourt, -72, -136) },
         SharedExpansions = new[] { Expansion(ExpansionKind.Shared, -134, 0) },
         CenterExpansions = new ExpansionSite[0],
         SharedSeatOffsets = new[] { 0, 3 },
-        ChannelWidth = 18f,
       };
     }
   }

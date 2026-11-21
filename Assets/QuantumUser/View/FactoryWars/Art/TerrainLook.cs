@@ -491,7 +491,9 @@ namespace FactoryWars.View {
     /// <summary>MapSpec.Roads 조각마다 아스팔트, 가장자리 연석, 가운데 노란 점선, 양옆 흰 선.</summary>
     public static void Roads(MeshKit k, MapSpec map) {
       var roadIndex = 0;
-      foreach (var road in map.Roads ?? System.Array.Empty<MapShape>()) {
+      var continuous = EnvironmentArt.Uses(map);
+      if (continuous) EnvironmentRoads.Build(k, map);
+      foreach (var road in continuous ? System.Array.Empty<MapShape>() : map.Roads ?? System.Array.Empty<MapShape>()) {
         var yaw = road.Yaw.AsFloat;
         if (VisualProfile.Current.FieldLook) {
           foreach (var (pieceCenter, pieceHalf) in RoadPieces(map, road)) {
@@ -748,12 +750,25 @@ namespace FactoryWars.View {
           }
         }
       }
-      return 0f;
+      return EnvironmentArt.Elevation(map, x, z);
     }
 
     /// <summary>다리 상판 아래 교각. 수면까지 내려간다. 다리 프리팹은 상판과 난간이다.</summary>
     public static void BridgePiers(MeshKit k, MapSpec map) {
       foreach (var bridge in map.Bridges ?? System.Array.Empty<MapShape>()) {
+        if (map.SealedPerimeter) {
+          var center = bridge.Center.ToUnityVector3();
+          var length = bridge.HalfLength.AsFloat;
+          var depth = -0.25f - WaterLevel;
+          k.Push(center, new Vector3(0f, bridge.Yaw.AsFloat, 0f));
+          k.Paint(Swatch.ConcreteDark);
+          for (var i = -1; i <= 1; i += 2) {
+            k.Chamfer(new Vector3(i * length * 0.58f, WaterLevel + depth / 2f, 0f),
+              new Vector3(1.65f, depth + 0.5f, bridge.HalfWidth.AsFloat * 1.6f), 0.15f);
+          }
+          k.Pop();
+          continue;
+        }
         var rect = Extent(bridge);
         var longStrait = Mathf.Max(rect.width, rect.height) > 20f;
         var acrossX = longStrait ? rect.width >= rect.height : rect.width < rect.height;

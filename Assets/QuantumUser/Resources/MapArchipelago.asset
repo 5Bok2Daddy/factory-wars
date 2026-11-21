@@ -22,7 +22,7 @@ MonoBehaviour:
   Scene: MapArchipelago
   ScenePath: Assets/QuantumUser/Scenes/MapArchipelago.unity
   SceneGuid: d1bbff7ae15a711429be588a29d121d6
-  WorldSize: 464
+  WorldSize: 352
   BucketsCount: 16
   BucketsSubdivisions: 8
   BucketingAxis: 0
@@ -34,8 +34,8 @@ MonoBehaviour:
     Id:
       Value: 357475850232103514
   SerializeTrianglesMetadata: 0
-  GridSizeX: 116
-  GridSizeY: 116
+  GridSizeX: 88
+  GridSizeY: 88
   GridNodeSize: 4
   NavMeshLinks:
   - Id:
@@ -46,28 +46,20 @@ MonoBehaviour:
   - MainArea
   - Bridge0
   - Bridge1
+  - Bridge10
+  - Bridge11
+  - Bridge12
+  - Bridge13
+  - Bridge14
+  - Bridge15
   - Bridge2
   - Bridge3
   - Bridge4
   - Bridge5
   - Bridge6
   - Bridge7
-  - City0
-  - City1
-  - City10
-  - City11
-  - City2
-  - City3
-  - City4
-  - City5
-  - City6
-  - City7
-  - City8
-  - City9
-  - WaterGate0
-  - WaterGate1
-  - WaterGate2
-  - WaterGate3
+  - Bridge8
+  - Bridge9
   StaticColliders2D: []
   StaticColliders3D: []
   MapEntities: []

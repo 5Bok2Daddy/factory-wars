@@ -104,7 +104,7 @@ namespace Quantum.FactoryWars {
 
     /// <summary>다리 양 끝(건너는 방향 = 사각형의 짧은 변) 중 이 공병이 갈 수 있는 가까운 쪽.</summary>
     static FPVector3 BridgeEnd(Frame f, PlayerRef owner, MapShape shape, FPVector3 from, FP gap) {
-      var alongLength = shape.HalfLength <= shape.HalfWidth;
+      var alongLength = FactoryWarsUtil.MapInfo(f).SealedPerimeter || shape.HalfLength <= shape.HalfWidth;
       var yaw = shape.Yaw * FP.Deg2Rad;
       var axis = alongLength ? new FPVector3(FPMath.Cos(yaw), FP._0, -FPMath.Sin(yaw)) : new FPVector3(FPMath.Sin(yaw), FP._0, FPMath.Cos(yaw));
       var reach = (alongLength ? shape.HalfLength : shape.HalfWidth) + gap;

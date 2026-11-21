@@ -54,7 +54,8 @@ namespace FactoryWars.View {
       }
       GraphicsQuality.Bind(main);
       // 외곽 수로(항목 24)까지 카메라가 갈 수 있다.
-      var channel = TerrainKit.Channel(map);
+      var channel = map.SealedPerimeter ? 0f : TerrainKit.Channel(map);
+      Camera.KeepViewportInside = map.SealedPerimeter;
       Camera.BoundsMin = new Vector2(map.BoundsMin.X.AsFloat - channel, map.BoundsMin.Y.AsFloat - channel);
       Camera.BoundsMax = new Vector2(map.BoundsMax.X.AsFloat + channel, map.BoundsMax.Y.AsFloat + channel);
       var start = Quantum.FactoryWars.FactoryWarsUtil.StartPosition(frame, Player);

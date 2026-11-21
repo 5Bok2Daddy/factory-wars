@@ -1533,6 +1533,10 @@ namespace FactoryWars.View {
             actor.Scaffold = item;
           }
 
+          if (EnvironmentArt.Uses(World.Map)) {
+            var pad = FindDeep(actor.Scaffold.transform, "FoundationPad");
+            if (pad != null) pad.gameObject.SetActive(false);
+          }
           // 작업자를 단계 전환 때 재생성하지 않아 같은 동작이 이어진다.
           if (actor.ConstructionCrew.Count == 0 && GraphicsQuality.Current != QualityTier.Low) {
             var crewOffsets = new[] {
@@ -1701,14 +1705,15 @@ namespace FactoryWars.View {
 
     void DressBuilding(Actor actor, BuildingSpec spec, Vector3 worldPos) {
       if (spec.Role == BuildingRole.MlrsBattery) return;
-      if (spec.Role is BuildingRole.Barracks or BuildingRole.VehicleFactory or BuildingRole.Processor or BuildingRole.PowerPlant
+      var warehouse = EnvironmentArt.Uses(World.Map) && spec.Role == BuildingRole.SupplyDepot;
+      if (warehouse || spec.Role is BuildingRole.Barracks or BuildingRole.VehicleFactory or BuildingRole.Processor or BuildingRole.PowerPlant
           or BuildingRole.HeavyWorks or BuildingRole.Airfield) {
         var radius = spec.FootprintRadius.AsFloat;
         var yard = new GameObject("FactoryYard").transform;
         yard.SetParent(actor.View.Turn, false);
         for (var corner = -1; corner <= 1; corner += 2) {
           var side = radius * corner * 0.79f;
-          var key = corner < 0 ? "Crates" : "Beams";
+          var key = corner < 0 || warehouse ? "Crates" : "Beams";
           MapPolishArt.Place(key, yard, new Vector3(side, 0.06f, radius * 0.69f), Quaternion.identity,
             new Vector3(radius * 0.27f, 0.72f, radius * 0.24f));
         }

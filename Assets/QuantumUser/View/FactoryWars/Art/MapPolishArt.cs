@@ -103,7 +103,7 @@ namespace FactoryWars.View {
       var land = PlayableRect(map);
       var paths = TerrainKit.RiverPaths(map, false);
       bool Fits(GroundFootprint footprint) => ClearOfCrossings(map, footprint, 1.5f);
-      if (biome == TerrainKit.Biome.Archipelago) {
+      if (biome == TerrainKit.Biome.Archipelago && !map.SealedPerimeter) {
         var spot = 0;
         foreach (var (from, to, outward) in Edges(land)) {
           var length = Vector2.Distance(from, to);

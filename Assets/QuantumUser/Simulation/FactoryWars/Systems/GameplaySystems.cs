@@ -236,7 +236,8 @@ namespace Quantum.FactoryWars {
       if (spec.RequiresResourceNode == false) {
         return true;
       }
-      var radius = FactoryWarsUtil.Rules(f).ExtractorNodeSnapRadius;
+      var mapRadius = FactoryWarsUtil.MapInfo(f).ExtractorSnapRadius;
+      var radius = mapRadius > FP._0 ? mapRadius : FactoryWarsUtil.Rules(f).ExtractorNodeSnapRadius;
       var bestDistance = radius * radius;
       var nodes = f.Filter<ResourceNode>();
       var alignedPosition = position;
@@ -271,7 +272,8 @@ namespace Quantum.FactoryWars {
       var mask = NavMeshRegionMask.Default;
       if (extractNode != EntityRef.None) {
         // 자원 노드 자체는 NavMesh 장애물이다. 공병이 작업 범위까지 도달할 수 있어야 한다.
-        if (FactoryWarsUtil.FindNavPointNear(f, rules.NavMeshName, position, radius + rules.WorkRange, out _) == false) {
+        var workRadius = FPMath.Max(radius, f.Get<ResourceNode>(extractNode).Shape.Reach);
+        if (FactoryWarsUtil.FindNavPointNear(f, rules.NavMeshName, position, workRadius + rules.WorkRange, out _) == false) {
           return false;
         }
       } else if (isShipyard) {
@@ -1356,6 +1358,7 @@ namespace Quantum.FactoryWars {
   /// <summary>지상은 Quantum NavMesh, 공중은 직선 이동.</summary>
   public unsafe class MovementSystem : SystemMainThread, ISignalOnNavMeshWaypointReached, ISignalOnNavMeshSearchFailed {
     public static void Order(Frame f, EntityRef entity, Unit* unit, UnitOrder order, FPVector3 target) {
+      target = FactoryWarsUtil.MapInfo(f).ClampToPlayable(target);
       // 항목 32: 명령이 엄폐보다 우선한다. 공격 이동을 다시 받는 것(AI 파도)은 엄폐를 유지한다.
       if (order != UnitOrder.AttackMove || unit->Order != UnitOrder.AttackMove) {
         CoverSystem.Release(f, unit);
@@ -1465,6 +1468,7 @@ namespace Quantum.FactoryWars {
       var rules = FactoryWarsUtil.Rules(f);
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
+        transform->Position = map.ClampToPlayable(transform->Position);
         if (unit->Garrison != EntityRef.None || unit->Transport != EntityRef.None || (f.Unsafe.TryGetPointer<Carrier>(entity, out var assemblingCarrier) && assemblingCarrier->Assembling)) {
           continue;
         }
@@ -1501,7 +1505,7 @@ namespace Quantum.FactoryWars {
         }
 
         if (spec.IsAir && hasDestination) {
-          MoveAir(f, entity, transform, unit, spec, destination);
+          MoveAir(f, entity, transform, unit, spec, map.ClampToPlayable(destination));
         } else if (spec.IsAir == false && f.Unsafe.TryGetPointer<NavMeshSteeringAgent>(entity, out var agent)) {
           agent->MaxSpeed = GroundSpeed(f, map, rules, spec, unit, transform->Position);
           if (!spec.IsNaval && unit->Order == UnitOrder.Move && f.Number % repathFrames == 0

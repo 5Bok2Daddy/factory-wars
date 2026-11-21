@@ -169,25 +169,16 @@ namespace FactoryWars.Tests {
 
     /// <summary>수문 조립: 옹벽·다리 기둥·문을 우리 프리팹으로 조립해 수문 영역마다 하나 세우고, 휴전이 끝나면 가운데 문이 내려가며 물보라가 나온다(시뮬레이션 상태를 읽기만 함).</summary>
     [UnityTest]
-    public IEnumerator Urban_WaterGateAssembledAndOpens() {
-      if (PackPresent == false) {
-        Assert.Pass("팩 없음");
-      }
+    public IEnumerator Urban_SealedPerimeterHasNoExteriorGate() {
       yield return StartMatch(Map4PScene, 2, bots: new[] { BotDifficulty.Normal }, seed: 5, truce: 20);
       yield return WaitForHud();
       yield return WaitForBattle();
       var map = Map4P();
       var world = Battle().World;
-      var slot = VisualCatalog.Current.Get(VisualCatalog.DressId(DressKind.WaterGate));
-      Assert.IsTrue(slot != null && slot.IsFilled, "수문 칸이 우리 조립 프리팹으로 채워짐");
-      Assert.AreEqual(map.WaterGates.Length, world.Gates.Count, "수문 영역 수 = 수문 모델 수");
-      Assert.IsTrue(world.Gates.All(g => g.Rig.Left != null && g.Rig.Right != null && g.Rig.Door != null), "양옆 기둥+가운데 문");
-      Assert.IsTrue(world.Gates.Where(g => Quantum.FactoryWars.FactoryWarsUtil.PlayerAtSeat(Verified, g.Seat) >= 0).All(g => g.Rig.DoorVisible && g.Drop == 0f), "휴전 중 사람이 앉은 자리의 문은 올라와 있다");
+      Assert.IsEmpty(map.WaterGates);
+      Assert.IsEmpty(world.Gates);
       yield return WaitFor(BarrierOpen, 30f, "휴전 종료");
-      yield return WaitFor(() => world.Gates.All(g => g.Drop >= 1f), 20f, "문 하강");
-      yield return null;
-      Assert.IsTrue(world.Gates.All(g => g.Rig.DoorVisible == false), "열리면 문이 아래로 내려가 사라진다");
-      Assert.IsTrue(world.Gates.Any(g => g.OpenFor >= 0f && g.Rig.Foam != null), "물보라 틀");
+      Assert.IsEmpty(world.Gates, "휴전 뒤에도 밖으로 열리는 수문이 없다");
     }
 
     /// <summary>품질별 장식 밀도: 낮음 40%·보통 70%·높음 100%(데이터 VisualProfile).</summary>

@@ -15,7 +15,8 @@ namespace Quantum.FactoryWars {
     // ---------- 궤적(순수 함수: 시험이 직접 부른다) ----------
 
     /// <summary>점 6개와 누적 길이를 만든다. heading은 진입 방향(0이면 +X).</summary>
-    public static void BuildPath(FPVector3 airfield, FPVector3 target, FPVector2 heading, UnitSpec spec, FPVector3* points, FP* cumulative) {
+    public static void BuildPath(FPVector3 airfield, FPVector3 target, FPVector2 heading, UnitSpec spec, FPVector3* points, FP* cumulative,
+        MapSpec map = null) {
       var d = heading.SqrMagnitude > FP._0 ? heading.Normalized : new FPVector2(FP._1, FP._0);
       var dir = new FPVector3(d.X, FP._0, d.Y);
       var side = new FPVector3(-d.Y, FP._0, d.X);
@@ -27,6 +28,9 @@ namespace Quantum.FactoryWars {
       points[3] = t + dir * spec.SortieExit;
       points[4] = points[3] + dir * spec.SortieTurn + side * (spec.SortieTurn * 2);
       points[5] = a;
+      if (map != null && map.SealedPerimeter) {
+        for (var i = 0; i < Points; i++) points[i] = map.ClampToPlayable(points[i]);
+      }
       cumulative[0] = FP._0;
       for (var i = 1; i < Points; i++) {
         cumulative[i] = cumulative[i - 1] + (points[i] - points[i - 1]).Magnitude;
@@ -78,6 +82,8 @@ namespace Quantum.FactoryWars {
     // ---------- 출격 ----------
 
     public static void TryLaunch(Frame f, PlayerRef player, EntityRef airfieldEntity, int slot, FPVector3 target, FPVector2 heading) {
+      var map = FactoryWarsUtil.MapInfo(f);
+      target = map.ClampToPlayable(target);
       if (f.Unsafe.TryGetPointer<Building>(airfieldEntity, out var airfield) == false || airfield->Owner != player || airfield->ConstructionRemaining > FP._0
           || slot < 0 || slot >= Slots || airfield->Hangar[slot].State != 1) {
         f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.Invalid, 0);
@@ -111,7 +117,7 @@ namespace Quantum.FactoryWars {
         Owner = player, Spec = hangar->Spec, Airfield = airfieldEntity, Slot = slot, StartFrame = f.Number, Speed = spec.SortieSpeed,
         Health = spec.SortieHealth, Target = target, Heading = heading,
       };
-      BuildPath(origin, target, heading, spec, sortie.Points.GetPointer(0), sortie.Cum.GetPointer(0));
+      BuildPath(origin, target, heading, spec, sortie.Points.GetPointer(0), sortie.Cum.GetPointer(0), map);
       f.Add(entity, Transform3D.Create(new FPVector3(origin.X, FactoryWarsUtil.Rules(f).AirAltitude, origin.Z)));
       f.Add(entity, sortie);
       hangar->State = 2;

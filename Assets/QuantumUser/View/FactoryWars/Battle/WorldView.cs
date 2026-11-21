@@ -231,6 +231,7 @@ namespace FactoryWars.View {
         if (roads.TriangleCount > 0) {
           var roadMesh = roads.ToMesh("world_roads");
           var uvs = roadMesh.uv;
+          var roadVertices = EnvironmentArt.Uses(_map) ? roadMesh.vertices : null;
           var roadColors = new Color[uvs.Length];
           var linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
           for (var v = 0; v < uvs.Length; v++) {
@@ -250,6 +251,7 @@ namespace FactoryWars.View {
               tint = swatch == Swatch.Concrete || swatch == Swatch.ConcreteDark ? VisualProfile.Current.GroundPlaza
                 : swatch == Swatch.Asphalt && VisualProfile.Current.RoadColor.a > 0f ? VisualProfile.Current.RoadColor : ArtPalette.ColorOf(swatch);
             }
+            if (roadVertices != null) tint = EnvironmentArt.RoadColor(biome, swatch, roadVertices[v], tint);
             var color = linear ? tint.linear : tint;
             color.a = swatch == Swatch.Asphalt && biome != TerrainKit.Biome.Desert ? 1f : 0f;
             roadColors[v] = color;
@@ -280,7 +282,7 @@ namespace FactoryWars.View {
       }
       // 다도해·해협: 수면 아래 연속 바다 기저판(WaterBase)을 깔아 만·라군·외해·교차 수로에 구멍/이음새가 전혀 없도록 보장한다.
       if ((biome == TerrainKit.Biome.Archipelago || biome == TerrainKit.Biome.Strait) && UrbanDecor.WaterMaterial() != null) {
-        var extent = biome == TerrainKit.Biome.Archipelago ? 540f : 260f;
+        var extent = _map.SealedPerimeter ? _map.BoundsMax.X.AsFloat + 0.4f : biome == TerrainKit.Biome.Archipelago ? 540f : 260f;
         var wy = TerrainKit.WaterLevel - 0.04f;
         var baseMesh = new Mesh { name = "world_water_base" };
         baseMesh.vertices = new[] {
@@ -297,6 +299,17 @@ namespace FactoryWars.View {
       UrbanDecor.Build(_map);
       Dressing.End("urban");
       Dressing.Begin();
+      if (_map.SealedPerimeter) {
+        if (EnvironmentArt.Uses(_map)) {
+          var ridge = new MeshKit();
+          NaturalPerimeter.Build(ridge, _map, biome);
+          var mesh = ridge.ToMesh("sealed_map_ridges");
+          NaturalPerimeter.Tint(mesh, biome);
+          MeshObject(_root, "NaturalPerimeter", mesh, true).GetComponent<MeshRenderer>().sharedMaterial = GroundMaterial();
+        } else {
+          NaturalPerimeter.Build(features, _map, biome);
+        }
+      }
       if (VisualProfile.Current.UrbanDecor) {
         if (biome == TerrainKit.Biome.Standard) MapPolishArt.Perimeter(_map);
         if (biome == TerrainKit.Biome.Archipelago || biome == TerrainKit.Biome.Strait) MapPolishArt.CoastDecor(_map, biome);
@@ -335,11 +348,18 @@ namespace FactoryWars.View {
         var themedBridge = NewBundleArt.UsesBridges(biome);
         var yaw = longStrait ? (rect.width >= rect.height ? 90f : 0f) : (rect.width < rect.height ? 90f : 0f);
         // Base crossings traverse the short axis of the rectangular gap in the canal.
-        if (themedBridge && longStrait == false) (span, width) = (width, span);
+        if (_map.SealedPerimeter) {
+          span = shape.HalfLength.AsFloat * 2f;
+          width = shape.HalfWidth.AsFloat * 2f;
+          longStrait = span > 20f;
+          yaw = shape.Yaw.AsFloat + 90f;
+        } else if (themedBridge && longStrait == false) {
+          (span, width) = (width, span);
+        }
         holder.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
 
         GameObject intactGo;
-        if (longStrait || themedBridge) {
+        if (longStrait || themedBridge || _map.SealedPerimeter) {
           // 해협 54m 장대 전략 교량: 전체 교각·상판·아스팔트 차선·중앙선·양측 콘크리트 난간을 빈틈없이 연결한다.
           intactGo = new GameObject(themedBridge ? "BundleBridgeDeck" : "StraitBridgeDeck", typeof(MeshFilter), typeof(MeshRenderer));
           intactGo.transform.SetParent(holder.transform, false);
@@ -476,7 +496,8 @@ namespace FactoryWars.View {
           var bounds = NewBundleArt.BoundsOf(canyon);
           var lengthUnit = Mathf.Max(bounds.size.x, bounds.size.z);
           var number = 0;
-          foreach (var (from, to, outward) in MapPolishArt.Edges(rect)) {
+          foreach (var (from, to, outward) in _map.SealedPerimeter
+              ? System.Linq.Enumerable.Empty<(Vector2, Vector2, Vector2)>() : MapPolishArt.Edges(rect)) {
             var length = Vector2.Distance(from, to);
             var direction = (to - from).normalized;
             for (var offset = 9f; offset < length; offset += 17f, number++) {
@@ -631,6 +652,10 @@ namespace FactoryWars.View {
       }
       var biome = TerrainKit.BiomeOf(map);
       if (biome == TerrainKit.Biome.Standard) {
+        if (EnvironmentArt.Uses(map)) {
+          EnvironmentArt.Light(RenderSettings.sun, biome);
+          DynamicGI.UpdateEnvironment();
+        }
         return;
       }
       var sun = RenderSettings.sun;
@@ -703,6 +728,7 @@ namespace FactoryWars.View {
       RenderSettings.ambientSkyColor = Color.Lerp(profile.AmbientSky, RenderSettings.ambientSkyColor, weight);
       RenderSettings.ambientEquatorColor = Color.Lerp(profile.AmbientEquator, RenderSettings.ambientEquatorColor, weight);
       RenderSettings.ambientGroundColor = Color.Lerp(profile.AmbientGround, RenderSettings.ambientGroundColor, weight);
+      if (EnvironmentArt.Uses(map)) EnvironmentArt.Light(sun, biome);
       DynamicGI.UpdateEnvironment();
     }
 

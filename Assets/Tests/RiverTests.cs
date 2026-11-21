@@ -28,7 +28,7 @@ namespace FactoryWars.Tests {
         foreach (var bridge in map.Bridges) {
           var center = Flat(bridge.Center);
           var extent = TerrainKit.Extent(bridge);
-          var acrossX = extent.width < extent.height;
+          var acrossX = map.SealedPerimeter ? extent.width > extent.height : extent.width < extent.height;
           var near = points.Where(p => (p.Position - center).magnitude <= 10f).ToArray();
           Assert.Greater(near.Length, 0, id);
           foreach (var point in near) {

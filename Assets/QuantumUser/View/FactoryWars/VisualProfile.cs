@@ -44,6 +44,8 @@ namespace FactoryWars.View {
     public float BuildingBody = 1f;
     public float PlateScale = 1.05f;
     [Min(0f)] public float FoundationMarginScale = 1f;
+    public bool EnvironmentDetails = true;
+    public int EnvironmentSeed = 1729;
     public float PlateHeight = 0.15f;
 
     [Header("조명")]

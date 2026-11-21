@@ -22,7 +22,7 @@ MonoBehaviour:
   Scene: Map4P
   ScenePath: Assets/QuantumUser/Scenes/Map4P.unity
   SceneGuid: f785351cc2c644d4cb33789c470ac502
-  WorldSize: 388
+  WorldSize: 352
   BucketsCount: 16
   BucketsSubdivisions: 8
   BucketingAxis: 0
@@ -34,8 +34,8 @@ MonoBehaviour:
     Id:
       Value: 308761472557958381
   SerializeTrianglesMetadata: 0
-  GridSizeX: 98
-  GridSizeY: 98
+  GridSizeX: 88
+  GridSizeY: 88
   GridNodeSize: 4
   NavMeshLinks:
   - Id:
@@ -50,12 +50,16 @@ MonoBehaviour:
   - Barricade3
   - Bridge0
   - Bridge1
+  - Bridge10
+  - Bridge11
   - Bridge2
   - Bridge3
   - Bridge4
   - Bridge5
   - Bridge6
   - Bridge7
+  - Bridge8
+  - Bridge9
   - City0
   - City1
   - City10
@@ -77,7 +81,11 @@ MonoBehaviour:
   - City25
   - City26
   - City27
+  - City28
+  - City29
   - City3
+  - City30
+  - City31
   - City4
   - City5
   - City6
@@ -86,24 +94,12 @@ MonoBehaviour:
   - City9
   - Fall1
   - Fall10
-  - Fall11
-  - Fall15
-  - Fall16
   - Fall17
   - Fall18
   - Fall2
-  - Fall22
-  - Fall23
-  - Fall24
   - Fall25
-  - Fall3
-  - Fall4
-  - Fall8
+  - Fall26
   - Fall9
-  - WaterGate0
-  - WaterGate1
-  - WaterGate2
-  - WaterGate3
   StaticColliders2D: []
   StaticColliders3D: []
   MapEntities: []

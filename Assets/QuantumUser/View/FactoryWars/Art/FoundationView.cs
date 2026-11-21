@@ -12,10 +12,13 @@ namespace FactoryWars.View {
       var footprint = spec.FootprintRadius.AsFloat;
       var half = footprint + margin * Mathf.Max(0f, VisualProfile.Current.FoundationMarginScale);
       var rotation = Quaternion.Euler(0f, yaw, 0f);
-      var area = new GroundFootprint(position, new Vector3(half, 0f, half), rotation);
+      var detailed = EnvironmentArt.Uses(map);
+      var apron = detailed ? 0.28f : 0f;
+      var area = new GroundFootprint(position, new Vector3(half + apron, 0f, half + apron), rotation);
       foreach (var road in map.Roads ?? System.Array.Empty<MapShape>()) {
         if (!area.Overlaps(road, 0f)) continue;
         half = footprint;
+        apron = 0f;
         break;
       }
 
@@ -24,6 +27,7 @@ namespace FactoryWars.View {
       root.transform.localRotation = rotation;
       var kit = new MeshKit();
       var outline = Outline(half, round);
+      var outer = apron > 0f ? Outline(half + apron, round) : outline;
       var layer = 0.045f + MeshKit.Hash(KenneyAssetMap.Seed(position, 7001), 23) * 0.025f;
 
       Vector3 Vertex(Vector2 point, float sink = 0f) {
@@ -38,19 +42,55 @@ namespace FactoryWars.View {
         var b = outline[(i + 1) % outline.Length];
         var innerA = a * 0.93f;
         var innerB = b * 0.93f;
-        kit.Paint(i % 3 == 1 ? Swatch.Stone : Swatch.Concrete);
+        kit.Paint(!detailed && i % 3 == 1 ? Swatch.Stone : Swatch.Concrete);
         kit.Tri(center, Vertex(innerA), Vertex(innerB), Vector3.up);
-        kit.Paint(trim);
+        kit.Paint(detailed && trim == Swatch.Hazard && i % 3 != 1 ? Swatch.ConcreteDark : trim);
         kit.Quad(Vertex(innerA), Vertex(a), Vertex(b), Vertex(innerB), Vector3.up);
         kit.Paint(Swatch.ConcreteDark);
         kit.Quad(Vertex(a), Vertex(a, 0.14f), Vertex(b, 0.14f), Vertex(b), new Vector3(a.x + b.x, 0f, a.y + b.y));
+        if (apron > 0f) {
+          kit.Paint(Swatch.Dirt);
+          kit.Quad(Vertex(a, layer - 0.03f), Vertex(b, layer - 0.03f),
+            Vertex(outer[(i + 1) % outer.Length], layer - 0.012f), Vertex(outer[i], layer - 0.012f), Vector3.up);
+        }
+      }
+      if (detailed && spec.Role is BuildingRole.SupplyDepot or BuildingRole.VehicleFactory or BuildingRole.MlrsBattery) {
+        var edge = half * 0.85f;
+        kit.Paint(spec.Role == BuildingRole.MlrsBattery ? Swatch.Hazard : Swatch.LaneWhite);
+        for (var i = -2; i <= 2; i++) {
+          var a = i * 0.42f;
+          kit.Quad(Vertex(new Vector2(a, edge - 0.25f), -0.009f), Vertex(new Vector2(a + 0.26f, edge - 0.25f), -0.009f),
+            Vertex(new Vector2(a + 0.26f, edge), -0.009f), Vertex(new Vector2(a, edge), -0.009f), Vector3.up);
+        }
       }
       var mesh = kit.ToMesh("terrain_fitted_foundation");
       root.GetComponent<FoundationView>()._mesh = mesh;
       root.GetComponent<MeshFilter>().sharedMesh = mesh;
       var renderer = root.GetComponent<MeshRenderer>();
-      renderer.sharedMaterial = ArtLook.NeutralMaterial;
+      renderer.sharedMaterial = detailed ? WorldView.SharedGroundMaterial : ArtLook.NeutralMaterial;
       renderer.shadowCastingMode = ShadowCastingMode.Off;
+      if (detailed) {
+        var uvs = mesh.uv;
+        var points = mesh.vertices;
+        var colors = new Color[points.Length];
+        var linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
+        for (var i = 0; i < colors.Length; i++) {
+          var colorKey = (Swatch)Mathf.Clamp(Mathf.FloorToInt(uvs[i].x * ArtPalette.Size), 0, ArtPalette.CellCount - 1);
+          var at = position + rotation * points[i];
+          var color = ArtPalette.ColorOf(colorKey);
+          if (colorKey == Swatch.Dirt) {
+            var ground = TerrainKit.GroundTint(map, at.x, at.z, 3);
+            var edge = round ? new Vector2(points[i].x, points[i].z).magnitude : Mathf.Max(Mathf.Abs(points[i].x), Mathf.Abs(points[i].z));
+            var between = Mathf.InverseLerp(half - 0.22f, half + apron - 0.18f, edge);
+            color = Color.Lerp(Color.Lerp(ground, color, 0.29f), ground, between);
+          } else if (colorKey == Swatch.Concrete) {
+            color *= 0.98f + 0.06f * Mathf.PerlinNoise(at.x * 0.24f, at.z * 0.26f);
+          }
+          color.a = 0f;
+          colors[i] = linear ? color.linear : color;
+        }
+        mesh.colors = colors;
+      }
     }
 
     static Vector2[] Outline(float half, bool round) {

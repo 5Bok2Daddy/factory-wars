@@ -4,6 +4,7 @@ namespace Quantum {
 
   [Serializable]
   public struct ResourceNodePlacement {
+    public int Tier;
     public ResourceKind Kind;
     public FP Amount;
     public MapShape Shape;
@@ -83,6 +84,8 @@ namespace Quantum {
     /// <summary>카메라 이동 범위·미니맵용 경계(XZ).</summary>
     public FPVector2 BoundsMin;
     public FPVector2 BoundsMax;
+    public bool SealedPerimeter;
+    public FP ExtractorSnapRadius;
     public FPVector3[] StartPositions;
     public ResourceCost StartingResources;
     public int StartingEngineers;
@@ -129,6 +132,13 @@ namespace Quantum {
 
     public const int GroundRoad = 1;
     public const int GroundFord = 2;
+
+    public FPVector3 ClampToPlayable(FPVector3 position) {
+      if (!SealedPerimeter) return position;
+      position.X = FPMath.Clamp(position.X, BoundsMin.X, BoundsMax.X);
+      position.Z = FPMath.Clamp(position.Z, BoundsMin.Y, BoundsMax.Y);
+      return position;
+    }
 
     public int GroundAt(FPVector3 position) {
       if (GroundGrid == null || GroundGrid.Length == 0) {

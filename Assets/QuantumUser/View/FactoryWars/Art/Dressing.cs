@@ -274,7 +274,7 @@ namespace FactoryWars.View {
       }
       var p = new Photon.Deterministic.FPVector3(Photon.Deterministic.FP.FromFloat_UNSAFE(point.x), default, Photon.Deterministic.FP.FromFloat_UNSAFE(point.z));
       foreach (var shape in shapes) {
-        if (shape.Distance(p).AsFloat <= margin) {
+        if (TerrainKit.WithinMargin(shape, p, margin)) {
           return true;
         }
       }
@@ -291,6 +291,7 @@ namespace FactoryWars.View {
         return 0;
       }
       var urban = VisualProfile.Current.UrbanDecor;
+      var clustered = EnvironmentArt.Uses(map);
       var paths = TerrainKit.RiverPaths(map);
       var terrain = map.Terrain?.Select(t => t.Shape).ToArray();
       var nodes = map.ResourceNodes?.Select(n => n.Shape).ToArray();
@@ -303,7 +304,8 @@ namespace FactoryWars.View {
           index++;
           var spot = new Vector3(x + (MeshKit.Hash(index, 1) - 0.5f) * Step * 0.8f, 0f, z + (MeshKit.Hash(index, 2) - 0.5f) * Step * 0.8f);
           // 야전 룩: 넓은 들판도 길가만큼 채운다(남김 비율 0.7 → 0.945, 약 35% 증가). 모두 통과 가능한 작은 장식이다.
-          if (MeshKit.Hash(index, 3) > (VisualProfile.Current.FieldLook ? 0.945f : 0.7f)) {
+          var density = clustered ? EnvironmentArt.ScatterDensity(spot) : VisualProfile.Current.FieldLook ? 0.945f : 0.7f;
+          if (MeshKit.Hash(index, 3) > density) {
             continue;
           }
           if (TerrainKit.RiverDistance(paths, new Vector2(spot.x, spot.z)) < 3f || Near(map.Roads, spot, 1.5f) || Near(map.Bridges, spot, 2f)

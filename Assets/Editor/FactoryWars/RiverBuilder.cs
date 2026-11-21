@@ -50,10 +50,12 @@ namespace FactoryWars.EditorTools {
     /// <param name="corner">본진 사각형에서 맵 중심 쪽 모서리.</param>
     /// <param name="edge">맵 경계 좌표. 음수다.</param>
     /// <param name="bridges">다리 중심. 앞은 x가 모서리 쪽 기둥, 뒤는 z가 모서리 쪽 기둥이다.</param>
-    public static List<Piece> Build(Vector2 corner, float edge, Vector2[] bridges, float amplitude, int seed) {
-      var start = edge - Overrun;
+    public static List<Piece> Build(Vector2 corner, float edge, Vector2[] bridges, float amplitude, int seed, bool sealedPerimeter = false) {
+      var start = sealedPerimeter ? edge + 8.5f : edge - Overrun;
       var lineA = corner.y - start;
-      var arc = CornerRadius * Mathf.PI / 2;
+      var radius = sealedPerimeter ? 12f : CornerRadius;
+      var clear = sealedPerimeter ? 1.3f : 0f;
+      var arc = radius * Mathf.PI / 2;
       var total = lineA + arc + (corner.x - start);
 
       Vector2 Reference(float s, out Vector2 normal) {
@@ -62,7 +64,7 @@ namespace FactoryWars.EditorTools {
           return new Vector2(corner.x, start + s);
         }
         if (s <= lineA + arc) {
-          var angle = (s - lineA) / CornerRadius;
+          var angle = (s - lineA) / radius;
           normal = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
           return corner;
         }
@@ -71,9 +73,13 @@ namespace FactoryWars.EditorTools {
       }
 
       // 다리 위치를 기준선 거리로 바꾼다.
-      var bridgeAt = bridges.Select(b => Mathf.Abs(b.x - corner.x) < Mathf.Abs(b.y - corner.y) + 0.01f && b.x > b.y
-        ? b.y - start
-        : lineA + arc + (corner.x - b.x)).ToArray();
+      var bridgeAt = bridges.Select(b => {
+        var outside = b - corner;
+        if (outside.x > 0f && outside.y > 0f) {
+          return lineA + Mathf.Atan2(outside.y, outside.x) * radius;
+        }
+        return Mathf.Abs(outside.x) < Mathf.Abs(outside.y) + 0.01f && b.x > b.y ? b.y - start : lineA + arc + (corner.x - b.x);
+      }).ToArray();
 
       float Bend(float s) {
         var distance = bridgeAt.Min(b => Mathf.Abs(s - b));
@@ -97,7 +103,7 @@ namespace FactoryWars.EditorTools {
       float Offset(float s) => Bend(s) * (1f - 0.85f * Corner(s)) * amplitude * (0.5f + 0.32f * Mathf.Sin(s * 0.19f + seed * 0.7f) + 0.18f * (Noise(s) * 2f - 1f)) + Corner(s) * CornerBulge;
       Vector2 Center(float s) {
         var point = Reference(s, out var normal);
-        return point + normal * (Half(s) + Offset(s));
+        return point + normal * (Half(s) + Offset(s) + clear);
       }
 
       var stations = new List<float>();
@@ -126,7 +132,7 @@ namespace FactoryWars.EditorTools {
         var previous = (Vector2[])centers.Clone();
         for (var i = 1; i + 1 < centers.Length; i++) {
           var smooth = (previous[i - 1] + previous[i + 1]) / 2;
-          centers[i] = KeepOutOfBase(Vector2.Lerp(previous[i], smooth, 0.5f * Bend(stations[i])), corner, Half(stations[i]));
+          centers[i] = KeepOutOfBase(Vector2.Lerp(previous[i], smooth, 0.5f * Bend(stations[i])), corner, Half(stations[i]) + clear);
         }
       }
 

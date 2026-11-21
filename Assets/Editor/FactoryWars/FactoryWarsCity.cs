@@ -117,6 +117,8 @@ namespace FactoryWars.EditorTools {
         return false;
       }
       foreach (var (shape, margin, name) in obstacles) {
+        var reach = shape.Reach.AsFloat + r + margin;
+        if (Mathf.Abs(shape.Center.X.AsFloat - p.x) >= reach || Mathf.Abs(shape.Center.Z.AsFloat - p.y) >= reach) continue;
         if (Gap(shape, p) < r + margin && ShapeGap(shape, candidate) < margin) {
           Reject(name);
           return false;
@@ -153,6 +155,7 @@ namespace FactoryWars.EditorTools {
         return;
       }
       var obstacles = CityObstacles(spec);
+      var withoutRoads = obstacles.Where(item => item.Name != "Roads").ToList();
       var placed = new List<MapShape>();
       var share = new List<CityBuildingPlacement>();
       void Accept(CityBuildingPlacement placement) {
@@ -194,8 +197,7 @@ namespace FactoryWars.EditorTools {
           var fallCenter = center - normal * side * (half.y + FallGap + height / 2);
           var fallYaw = Mathf.Atan2(-(-normal.y * side), -normal.x * side) * Mathf.Rad2Deg;
           var zone = Rect(fallCenter.x, fallCenter.y, height / 2, half.x, fallYaw);
-          var roadObstacles = obstacles.Where(o => spec.Roads.Contains(o.Shape) == false).ToList();
-          if (Fits(spec, roadObstacles, placed, shape) == false || ZoneIsSafe(spec, zone, placed) == false) {
+          if (Fits(spec, withoutRoads, placed, shape) == false || ZoneIsSafe(spec, zone, placed) == false) {
             continue;
           }
           Accept(new CityBuildingPlacement { Shape = shape, Kind = KindTall, Topples = true, FallZone = zone });

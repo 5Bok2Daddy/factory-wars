@@ -200,6 +200,7 @@ namespace Quantum.FactoryWars {
       var spec = f.FindAsset(building->Spec);
       var center = f.Unsafe.GetPointer<Transform3D>(worker->Target)->Position;
       var target = AirfieldWorkSystem.WorkTarget(f, worker->Target, building, spec, center, out var range);
+      if (f.TryGet<ResourceNode>(building->ExtractNode, out var node)) range = FPMath.Max(range, node.Shape.Reach + rules.WorkRange);
       if (MoveInto(f, entity, worker, position, target, range, true) == false) {
         return;
       }
@@ -238,7 +239,9 @@ namespace Quantum.FactoryWars {
         return;
       }
       var target = f.Unsafe.GetPointer<Transform3D>(worker->Target)->Position;
-      if (MoveInto(f, entity, worker, position, target, spec.FootprintRadius + rules.WorkRange, true) == false) {
+      var workRadius = spec.FootprintRadius;
+      if (f.TryGet<ResourceNode>(building->ExtractNode, out var node)) workRadius = FPMath.Max(workRadius, node.Shape.Reach);
+      if (MoveInto(f, entity, worker, position, target, workRadius + rules.WorkRange, true) == false) {
         return;
       }
 

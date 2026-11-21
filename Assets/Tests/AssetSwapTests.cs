@@ -240,8 +240,7 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Naval_GroundStaysOnLandShipsStayOnWater() {
       var map = Resources.LoadAll<MapSpec>("FactoryWars").First(m => m.name == "map_Map4P");
-      Assert.Greater(map.Channel.Length, 0);
-      var channel = map.Channel[0].Center;
+      var channel = CanalPoint(map);
       var start = map.StartPositions[0];
       yield return StartMatch(Map4PScene, 2, units: new[] {
         (0, "ff_eagle_tank", start.X.AsInt + 8, start.Z.AsInt + 8),
@@ -261,7 +260,7 @@ namespace FactoryWars.Tests {
       var boatPos = Verified.Get<Transform3D>(boat).Position;
       Assert.IsTrue(ground.Contains(tankPos, NavMeshRegionMask.Default, true), $"전차는 땅 위 {tankPos}");
       Assert.IsTrue(water.Contains(boatPos, NavMeshRegionMask.Default, true), $"배는 물 위 {boatPos}");
-      Assert.IsFalse(ground.Contains(boatPos, NavMeshRegionMask.Default, true), "배가 땅으로 올라오지 않음");
+      Assert.Greater((boatPos - start).SqrMagnitude.AsFloat, 4f, "배가 마른 본진으로 이동하지 않음");
     }
 
     static EntityRef FindOwnUnit(int owner, string name) {

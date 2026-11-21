@@ -73,6 +73,18 @@ namespace FactoryWars.EditorTools {
       Debug.Log("FactoryWarsSetup.BuildMapsAndMenu: 완료");
     }
 
+    [MenuItem("Tools/Factory Wars/Bake Standardized Maps")]
+    public static void BakeStandardizedMaps() {
+      QuantumRunner.Init(false);
+      foreach (var definition in new[] { FourPlayerMap, DesertMap, UrbanMap, ArchipelagoMap, StraitMap }) {
+        Debug.Log($"Factory Wars building {definition.Id}");
+        BuildMapSpec(definition);
+        BuildMapScene(definition);
+      }
+      AssetDatabase.SaveAssets();
+      Debug.Log("Factory Wars baked all five land and water maps");
+    }
+
     public static void ConfigurePlayer() {
       PlayerSettings.companyName = "MinGyu";
       PlayerSettings.productName = "Factory Wars";
@@ -1476,17 +1488,24 @@ namespace FactoryWars.EditorTools {
       spec.WeatherSightMultiplier = N(def.WeatherSight);
       spec.BoundsMin = new FPVector2(-def.HalfSize, -def.HalfSize);
       spec.BoundsMax = new FPVector2(def.HalfSize, def.HalfSize);
+      spec.SealedPerimeter = true;
+      spec.ExtractorSnapRadius = 10;
       spec.StartPositions = Orbit(def, new MapShape { Center = def.Start }).Select(s => s.Center).ToArray();
       spec.StartingResources = R(500, 300);
       spec.StartingEngineers = 4;
       spec.ResourceNodes = def.Nodes
-        .SelectMany(node => Orbit(def, node.Shape).Select(shape => new ResourceNodePlacement { Kind = node.Kind, Amount = node.Amount, Shape = shape }))
-        .Concat(def.CenterNodes).ToArray();
+        .SelectMany((node, index) => Orbit(def, node.Shape).Select(shape => new ResourceNodePlacement {
+          Kind = node.Kind, Amount = node.Amount, Shape = shape, Tier = index < 3 ? 1 : 2,
+        }))
+        .Concat(def.CenterNodes.Select(node => {
+          node.Tier = 3;
+          return node;
+        })).ToArray();
       // 강은 한 사분면만 만들고 나머지는 회전 복제한다.
       var area = def.BaseArea;
       var corner = new Vector2(area.Center.X.AsFloat + area.HalfLength.AsFloat, area.Center.Z.AsFloat + area.HalfWidth.AsFloat);
       var bridges = def.Bridges.Select(b => new Vector2(b.Center.X.AsFloat, b.Center.Z.AsFloat)).ToArray();
-      var pieces = RiverBuilder.Build(corner, -def.HalfSize, bridges, def.RiverAmplitude, def.RiverSeed);
+      var pieces = RiverBuilder.Build(corner, -def.HalfSize, bridges, def.RiverAmplitude, def.RiverSeed, spec.SealedPerimeter);
       MapShape Shape(RiverBuilder.Piece piece) => Rect(piece.Center.x, piece.Center.y, piece.HalfLength, piece.HalfWidth, piece.Yaw);
       var step = 4 / def.Players;
       var riverList = Enumerable.Range(0, def.Players).SelectMany(player => pieces.Select(piece => Turn(Shape(piece), player * step))).ToList();
@@ -1562,39 +1581,11 @@ namespace FactoryWars.EditorTools {
       }
       spec.NoBuildZones = def.NoBuildZones.SelectMany(zone => Orbit(def, zone)).ToArray();
       spec.BaseAreas = Orbit(def, def.BaseArea).ToArray();
-      FillChannel(def, spec, pieces);
+      spec.Channel = System.Array.Empty<MapShape>();
+      spec.WaterGates = System.Array.Empty<MapShape>();
+      spec.ChannelWidth = FP._0;
       FillBattlefield(def, spec, extraRiver);
       EditorUtility.SetDirty(spec);
-    }
-
-    /// <summary>
-    /// 항목 24 외곽 수로: 땅 경계(±HalfSize) 바깥에 너비 ChannelWidth의 띠 네 개. 땅 넓이와 지상 판정은 바뀌지 않는다.
-    /// 수문은 본진 운하가 땅 경계를 넘는 두 곳(남쪽 변·서쪽 변)에 두고 자리마다 돌려 복제한다.
-    /// </summary>
-    static void FillChannel(MapDef def, MapSpec spec, List<RiverBuilder.Piece> pieces) {
-      if (def.ChannelWidth <= 0f) {
-        spec.Channel = new MapShape[0];
-        spec.WaterGates = new MapShape[0];
-        spec.ChannelWidth = 0;
-        return;
-      }
-      var h = def.HalfSize;
-      var w = def.ChannelWidth;
-      var outer = h + w;
-      spec.ChannelWidth = N(w);
-      spec.Channel = new[] {
-        Rect(0, -(h + w / 2), outer, w / 2), Rect(0, h + w / 2, outer, w / 2),
-        Rect(-(h + w / 2), 0, w / 2, outer), Rect(h + w / 2, 0, w / 2, outer),
-      };
-      // 자리 0(남서) 운하가 남쪽 변(z = -h)과 서쪽 변(x = -h)을 넘는 곳.
-      var south = pieces.Where(p => p.Center.x > -h + 4f).OrderBy(p => Mathf.Abs(p.Center.y + h)).First();
-      var west = pieces.Where(p => p.Center.y > -h + 4f).OrderBy(p => Mathf.Abs(p.Center.x + h)).First();
-      var gates = new[] {
-        Rect(south.Center.x, -h - 2.5, south.HalfWidth + 3.5, 3),
-        Rect(-h - 2.5, west.Center.y, 3, west.HalfWidth + 3.5),
-      };
-      var step = 4 / def.Players;
-      spec.WaterGates = Enumerable.Range(0, def.Players).SelectMany(seat => gates.Select(g => Turn(g, seat * step))).ToArray();
     }
 
     /// <summary>점령지·바리케이드·상자·고지대·도로·여울·확장 후보. 규칙은 항목 20의 시스템이 읽는다.</summary>
@@ -1677,32 +1668,28 @@ namespace FactoryWars.EditorTools {
       spec.GroundGridSize = size;
       spec.GroundGridCell = Cell;
       spec.GroundGrid = new byte[size * size];
-      for (var z = 0; z < size; z++) {
-        for (var x = 0; x < size; x++) {
-          var point = new FPVector3(spec.BoundsMin.X + x * Cell + 1, 0, spec.BoundsMin.Y + z * Cell + 1);
-          var ground = 0;
-          if ((spec.Roads ?? new MapShape[0]).Any(road => road.Distance(point) <= FP._0)) {
-            ground = MapSpec.GroundRoad;
+      void Paint(MapShape shape, System.Action<int> write) {
+        var reach = shape.Reach;
+        var xx = shape.Center.X - spec.BoundsMin.X;
+        var zz = shape.Center.Z - spec.BoundsMin.Y;
+        var minX = Mathf.Max(0, FPMath.FloorToInt((xx - reach) / Cell));
+        var maxX = Mathf.Min(size - 1, FPMath.FloorToInt((xx + reach) / Cell));
+        var minZ = Mathf.Max(0, FPMath.FloorToInt((zz - reach) / Cell));
+        var maxZ = Mathf.Min(size - 1, FPMath.FloorToInt((zz + reach) / Cell));
+        for (var z = minZ; z <= maxZ; z++) {
+          for (var x = minX; x <= maxX; x++) {
+            var point = new FPVector3(spec.BoundsMin.X + x * Cell + 1, 0, spec.BoundsMin.Y + z * Cell + 1);
+            if (shape.Distance(point) <= FP._0) write(z * size + x);
           }
-          if ((spec.Fords ?? new MapShape[0]).Any(ford => ford.Distance(point) <= FP._0)) {
-            ground = MapSpec.GroundFord;
-          }
-          spec.GroundGrid[z * size + x] = (byte)ground;
         }
       }
+      foreach (var road in spec.Roads ?? System.Array.Empty<MapShape>()) Paint(road, cell => spec.GroundGrid[cell] = MapSpec.GroundRoad);
+      foreach (var ford in spec.Fords ?? System.Array.Empty<MapShape>()) Paint(ford, cell => spec.GroundGrid[cell] = MapSpec.GroundFord);
       var cities = spec.CityBuildings ?? new CityBuildingPlacement[0];
       spec.CityGrid = new short[cities.Length > 0 ? size * size : 0];
       for (var i = 0; i < cities.Length; i++) {
-        var reach = cities[i].Shape.Reach.AsFloat;
-        var center = cities[i].Shape.Center;
-        for (var z = 0; z < size; z++) {
-          for (var x = 0; x < size; x++) {
-            var point = new FPVector3(spec.BoundsMin.X + x * Cell + 1, 0, spec.BoundsMin.Y + z * Cell + 1);
-            if (Mathf.Abs((point.X - center.X).AsFloat) <= reach && Mathf.Abs((point.Z - center.Z).AsFloat) <= reach && cities[i].Shape.Distance(point) <= FP._0) {
-              spec.CityGrid[z * size + x] = (short)(i + 1);
-            }
-          }
-        }
+        var city = (short)(i + 1);
+        Paint(cities[i].Shape, cell => spec.CityGrid[cell] = city);
       }
     }
 
@@ -1732,7 +1719,7 @@ namespace FactoryWars.EditorTools {
       ConfigureRunner(def.Players);
 
       // NavMesh 격자와 맵 크기가 경계를 덮어야 한다. 기본값 256은 4인 맵보다 작다.
-      var size = Mathf.CeilToInt(def.HalfSize + def.ChannelWidth) * 2 + WorldMargin;
+      var size = def.HalfSize * 2 + WorldMargin;
       var asset = map.GetAsset(true);
       asset.WorldSize = size;
       asset.GridSizeX = size / asset.GridNodeSize;
@@ -1882,7 +1869,7 @@ namespace FactoryWars.EditorTools {
       }
       var surfaceObject = GameObject.Find("WaterNavMesh");
       var channel = spec.Channel ?? new MapShape[0];
-      if (channel.Length == 0) {
+      if (channel.Length == 0 && (!spec.SealedPerimeter || spec.River == null || spec.River.Length == 0)) {
         if (surfaceObject != null) {
           Object.DestroyImmediate(surfaceObject);
         }
@@ -1909,6 +1896,7 @@ namespace FactoryWars.EditorTools {
       foreach (var strip in channel) {
         Plate("Channel", strip);
       }
+      if (spec.SealedPerimeter) SealWaterNavMesh(root, spec);
       var gates = spec.WaterGates ?? new MapShape[0];
       var perSeat = Mathf.Max(1, gates.Length / Mathf.Max(1, spec.BaseAreas?.Length ?? 1));
       for (var i = 0; i < gates.Length; i++) {
@@ -1934,6 +1922,27 @@ namespace FactoryWars.EditorTools {
       settings.ImportRegionMode = NavmeshRegionImportMode.Advanced;
       settings.RegionAreaIds = new List<int> { WaterGateArea };
       quantumNavMesh.Settings = settings;
+    }
+
+    static void SealWaterNavMesh(Transform root, MapSpec spec) {
+      var min = new Vector2(spec.BoundsMin.X.AsFloat, spec.BoundsMin.Y.AsFloat);
+      var max = new Vector2(spec.BoundsMax.X.AsFloat, spec.BoundsMax.Y.AsFloat);
+      const float outside = 32f;
+      void Barrier(Vector2 center, Vector2 size) {
+        var edge = new GameObject("Water Boundary");
+        edge.layer = WaterLayer;
+        edge.transform.SetParent(root, false);
+        edge.transform.localPosition = new Vector3(center.x, 0f, center.y);
+        var volume = edge.AddComponent<NavMeshModifierVolume>();
+        volume.area = 1;
+        volume.size = new Vector3(size.x, 8f, size.y);
+      }
+      var middle = (min + max) * 0.5f;
+      var span = max - min + Vector2.one * (2f * outside);
+      Barrier(new Vector2(min.x - outside / 2, middle.y), new Vector2(outside, span.y));
+      Barrier(new Vector2(max.x + outside / 2, middle.y), new Vector2(outside, span.y));
+      Barrier(new Vector2(middle.x, min.y - outside / 2), new Vector2(span.x, outside));
+      Barrier(new Vector2(middle.x, max.y + outside / 2), new Vector2(span.x, outside));
     }
 
     static void EnsureNavMesh(QuantumMapData map) {
