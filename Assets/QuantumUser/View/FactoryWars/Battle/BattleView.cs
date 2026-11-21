@@ -50,6 +50,7 @@ namespace FactoryWars.View {
       public float Radius;
       public Transform Turret;
       public Transform Barrel;
+      public MlrsVisual Mlrs;
       public Vector3 BarrelHome;
       /// <summary>분대원마다 소총 자세(절차 IK). 비어 있으면 보병이 아니거나 사람형 뼈가 없다.</summary>
       public readonly List<RiflemanRig> Rigs = new List<RiflemanRig>();
@@ -126,6 +127,7 @@ namespace FactoryWars.View {
     readonly Dictionary<(EntityRef, EntityRef), GameObject> _synergyPipes = new Dictionary<(EntityRef, EntityRef), GameObject>();
     float _synergyPipeAt;
     float _placementRingAt;
+    LineRenderer _foundationPreview;
     float _rotorSmokeAt;
     float _zoneFxAt;
 
@@ -149,6 +151,7 @@ namespace FactoryWars.View {
     public BattlefieldView Field { get; private set; }
     public CityView City { get; private set; }
     public BattleFx Fx { get; private set; }
+    MlrsRocketView _mlrsRockets;
     public IReadOnlyDictionary<EntityRef, Actor> Actors => _actors;
 
     /// <summary>이름이 같은 자식을, 없으면 이름에 글자가 들어 있는 첫 자식을 찾는다(에셋 팩 모델은 이름이 길어 일부만 적는다).</summary>
@@ -220,6 +223,7 @@ namespace FactoryWars.View {
       World = new WorldView(_stage, frame.FindAsset<MapSpec>(frame.Map.UserAsset), _catalog);
       WorldView.ApplyBiomeAtmosphere(World.Map, Camera.main);
       Fx = new GameObject("Fx").AddComponent<BattleFx>();
+      _mlrsRockets = new MlrsRocketView(_stage, World.Map, Fx);
       Fx.transform.SetParent(_stage, false);
       World.Fx = Fx;
       scars.Fx = Fx;
@@ -236,6 +240,22 @@ namespace FactoryWars.View {
         }
       });
       QuantumEvent.Subscribe<EventCratePicked>(this, e => Fx.Burst(e.Position.ToUnityVector3(), new Color(1f, 0.85f, 0.3f), 1f));
+      QuantumEvent.Subscribe<EventMlrsLaunched>(this, e => {
+        var frame = e.Game.Frames.Verified;
+        var viewer = _controller != null ? _controller.Player : PlayerRef.None;
+        if (!viewer.IsValid || viewer == e.Owner || (frame != null && FogSystem.IsVisible(frame, viewer, e.Origin))) {
+          var position = _mlrsRockets.AtSurface(e.Origin.ToUnityVector3());
+          Fx.MlrsExhaust(position, e.Direction.ToUnityVector3(), false);
+          _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.RocketFire, position));
+        }
+      });
+      QuantumEvent.Subscribe<EventMlrsImpact>(this, e => {
+        var frame = e.Game.Frames.Verified;
+        var viewer = _controller != null ? _controller.Player : PlayerRef.None;
+        if (!viewer.IsValid || (frame != null && FogSystem.IsVisible(frame, viewer, e.Position))) {
+          Fx.MlrsImpact(_mlrsRockets.AtSurface(e.Position.ToUnityVector3()), e.Radius.AsFloat);
+        }
+      });
       QuantumEvent.Subscribe<EventTraderShot>(this, e => {
         var to = e.To.ToUnityVector3() + Vector3.up * 0.8f;
         var from = _trader != null ? _trader.ShotOrigin(e.From.ToUnityVector3(), to) : e.From.ToUnityVector3() + Vector3.up * 3f;
@@ -343,6 +363,7 @@ namespace FactoryWars.View {
       _actors.Clear();
       _audio = null;
       _strikeRockets.Clear();
+      _mlrsRockets = null;
       _ambientWorkers = null;
       _marked.Clear();
       World = null;
@@ -427,6 +448,7 @@ namespace FactoryWars.View {
         _seen.Add(entity);
         UpdateBuilding(frame, entity, transform3D, building, dt);
       }
+      _mlrsRockets.Tick(frame, _controller != null ? _controller.Player : PlayerRef.None, Camera.main);
       var sorties = frame.Filter<Transform3D, Sortie>();
       while (sorties.NextUnsafe(out var entity, out var transform3D, out var sortie)) {
         _seen.Add(entity);
@@ -661,9 +683,11 @@ namespace FactoryWars.View {
     }
 
     void UpdatePlacementRings(Frame frame) {
-      if (_controller == null || _controller.Input == null || _controller.Input.IsPlacing == false || Time.time < _placementRingAt) {
+      if (_controller == null || _controller.Input == null || _controller.Input.IsPlacing == false) {
+        if (_foundationPreview != null) _foundationPreview.enabled = false;
         return;
       }
+      if (Time.time < _placementRingAt) return;
       _placementRingAt = Time.time + 0.28f;
       var spec = frame.FindAsset(_controller.Input.Placing);
       if (spec == null) {
@@ -699,7 +723,8 @@ namespace FactoryWars.View {
           if (spec.RequiresResourceNode) {
             world = alignedPosition.ToUnityVector3();
           }
-          Fx.Ring(world, valid ? new Color(0.18f, 0.96f, 0.42f, 0.95f) : new Color(0.98f, 0.22f, 0.18f, 0.95f), spec.FootprintRadius.AsFloat + 0.6f, 0.32f);
+          if (_foundationPreview == null) _foundationPreview = FoundationView.CreatePreview(_stage);
+          FoundationView.UpdatePreview(_foundationPreview, World.Map, world, spec.FootprintRadius.AsFloat, valid);
         }
       }
     }
@@ -1675,20 +1700,12 @@ namespace FactoryWars.View {
     }
 
     void DressBuilding(Actor actor, BuildingSpec spec, Vector3 worldPos) {
+      if (spec.Role == BuildingRole.MlrsBattery) return;
       if (spec.Role is BuildingRole.Barracks or BuildingRole.VehicleFactory or BuildingRole.Processor or BuildingRole.PowerPlant
           or BuildingRole.HeavyWorks or BuildingRole.Airfield) {
         var radius = spec.FootprintRadius.AsFloat;
         var yard = new GameObject("FactoryYard").transform;
         yard.SetParent(actor.View.Turn, false);
-        var diagonal = radius * 2f + 1.35f;
-        var floorArea = new GroundFootprint(worldPos, new Vector3(diagonal * 0.5f, 0f, diagonal * 0.5f), Quaternion.identity);
-        foreach (var road in World.Map.Roads ?? System.Array.Empty<MapShape>()) {
-          if (!floorArea.Overlaps(road, 0.1f)) continue;
-          diagonal = radius * 2f;
-          break;
-        }
-        MapPolishArt.Place("Foundation", yard, new Vector3(0f, -0.10f, 0f), Quaternion.identity,
-          new Vector3(diagonal, 0.15f, diagonal));
         for (var corner = -1; corner <= 1; corner += 2) {
           var side = radius * corner * 0.79f;
           var key = corner < 0 ? "Crates" : "Beams";
@@ -1736,7 +1753,7 @@ namespace FactoryWars.View {
         actor.FootprintRadius = spec.FootprintRadius.AsFloat;
         actor.View.transform.position = position;
         actor.BuildingModelY = actor.View.Model.transform.localPosition.y;
-        actor.View.AddPlate(frame.FindAsset(building->Spec).FootprintRadius.AsFloat, frame.Global->Players.GetPointer(building->Owner)->ColorIndex);
+        FoundationView.Attach(actor.View.transform, World.Map, spec, position, 180f);
         DressBuilding(actor, spec, position);
         var forward = spec.Role == BuildingRole.Headquarters && IsForward(frame, building->Owner, position);
         if (forward) {
@@ -1793,7 +1810,12 @@ namespace FactoryWars.View {
 
       var hasTarget = TryTarget(frame, building->TargetEntity, out var target, out var air);
       actor.AntiAir = spec.Attack == AttackType.AntiAir;
-      Aim(actor, hasTarget, target, air, dt);
+      if (frame.TryGet<MlrsMagazine>(entity, out var magazine)) {
+        actor.Mlrs ??= new MlrsVisual(actor.View.Model.transform);
+        if (buildingSeen) actor.Mlrs.Tick(magazine, spec, dt);
+      } else {
+        Aim(actor, hasTarget, target, air, dt);
+      }
       var cooldown = building->AttackCooldown.AsFloat;
       // 손상: 체력 50% 이하는 연기, 25% 이하는 불.
       var ratio = building->Health.AsFloat / Mathf.Max(spec.MaxHealth.AsFloat, 1f);

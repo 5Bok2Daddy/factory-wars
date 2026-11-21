@@ -18,6 +18,9 @@ namespace Quantum.FactoryWars {
         ConstructionRemaining = duration,
       });
       if (hasWorks) f.Add(entity, new AirfieldWorks { Site = site });
+      if (spec.Role == BuildingRole.MlrsBattery) {
+        f.Add(entity, new MlrsMagazine { Ammo = spec.RocketCapacity, Status = MlrsStatus.Disabled });
+      }
       return entity;
     }
 
@@ -296,7 +299,7 @@ namespace Quantum.FactoryWars {
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out _, out var transform, out var building)) {
         if ((extractNode != default && building->ExtractNode == extractNode)
-            || Overlaps(position, transform->Position, radius + f.FindAsset(building->Spec).FootprintRadius + rules.BuildingGap)) {
+            || GroundOccupancy.Overlaps(position, transform->Position, radius + f.FindAsset(building->Spec).FootprintRadius + rules.BuildingGap)) {
           return false;
         }
       }
@@ -560,8 +563,15 @@ namespace Quantum.FactoryWars {
           RemoveOrder(building, 0);
           continue;
         }
+        FPVector3[] groundSlots = null;
+        if (!unit.IsAir && !unit.IsNaval) {
+          groundSlots = new FPVector3[unit.SpawnCount];
+          if (!GroundOccupancy.TryProductionSlots(f, unit, building, transform->Position, groundSlots)) continue;
+        }
         for (var i = 0; i < unit.SpawnCount; i++) {
-          var spawned = SpawnUnit(f, building->Owner, building->Queue[0].Unit, transform->Position, i, building);
+          var spawned = groundSlots != null
+            ? SpawnUnitAt(f, building->Owner, building->Queue[0].Unit, groundSlots[i], building)
+            : SpawnUnit(f, building->Owner, building->Queue[0].Unit, transform->Position, i, building);
           state->UnitsProduced++;
           if (building->HasRally && f.Unsafe.TryGetPointer<Unit>(spawned, out var fresh)) {
             MovementSystem.Order(f, spawned, fresh, UnitOrder.Move, building->Rally);
@@ -1015,20 +1025,30 @@ namespace Quantum.FactoryWars {
       }
     }
 
-    static void DamageArea(Frame f, in Weapon weapon, FPVector3 center, FP radius, FP amount) {
+    public static void ApplyMlrsImpact(Frame f, in MlrsRocket rocket) {
+      var weapon = new Weapon {
+        Owner = rocket.Owner, Attack = AttackType.Area, Area = true, GroundOnly = true,
+        IsRanged = true, Origin = rocket.Origin,
+      };
+      DamageArea(f, weapon, rocket.Target, rocket.BlastRadius, rocket.Damage, rocket.EdgeDamage);
+    }
+
+    static void DamageArea(Frame f, in Weapon weapon, FPVector3 center, FP radius, FP amount, FP? edge = null) {
       f.Events.AreaImpact(center, radius);
       DepthSystem.BlastBridges(f, weapon.Owner, center, radius, amount);
       var radiusSqr = radius * radius;
       var units = f.Filter<Transform3D, Unit>();
-      while (units.NextUnsafe(out var entity, out var transform, out _)) {
-        if (FactoryWarsUtil.FlatDistanceSqr(transform->Position, center) <= radiusSqr && IsValidTarget(f, weapon, entity)) {
-          Damage(f, weapon, entity, amount);
+      while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
+        var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, center);
+        if (distance <= radiusSqr && IsValidTarget(f, weapon, entity) && (!edge.HasValue || !f.FindAsset(unit->Spec).IsNaval)) {
+          Damage(f, weapon, entity, edge.HasValue ? amount * Falloff(distance, radius, edge.Value) : amount);
         }
       }
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out var entity, out var transform, out _)) {
-        if (FactoryWarsUtil.FlatDistanceSqr(transform->Position, center) <= radiusSqr && IsValidTarget(f, weapon, entity)) {
-          Damage(f, weapon, entity, amount);
+        var distance = FactoryWarsUtil.FlatDistanceSqr(transform->Position, center);
+        if (distance <= radiusSqr && IsValidTarget(f, weapon, entity)) {
+          Damage(f, weapon, entity, edge.HasValue ? amount * Falloff(distance, radius, edge.Value) : amount);
         }
       }
       var barricades = f.Filter<Barricade>();
@@ -1303,7 +1323,8 @@ namespace Quantum.FactoryWars {
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out var entity, out var transform, out var building)) {
         var spec = f.FindAsset(building->Spec);
-        if (spec.Attack == AttackType.None || building->Health <= FP._0 || building->ConstructionRemaining > FP._0 || building->EmpUntilFrame > f.Number) {
+        if (spec.Attack == AttackType.None || spec.Role == BuildingRole.MlrsBattery || building->Health <= FP._0
+            || building->ConstructionRemaining > FP._0 || building->EmpUntilFrame > f.Number) {
           continue;
         }
         var state = FactoryWarsUtil.Player(f, building->Owner);
@@ -1347,6 +1368,17 @@ namespace Quantum.FactoryWars {
       if (f.Unsafe.TryGetPointer<Worker>(entity, out var worker)) {
         worker->Task = WorkerTask.Idle;
       }
+      var spec = f.FindAsset(unit->Spec);
+      if (order == UnitOrder.Move && !spec.IsAir && !spec.IsNaval) {
+        if (!GroundOccupancy.TryGoal(f, target, UnitRadius(spec), out var goal)) {
+          unit->Order = UnitOrder.Stop;
+          Halt(f, entity);
+          return;
+        }
+        unit->TargetPosition = goal;
+        RouteMove(f, entity, unit);
+        return;
+      }
       SetDestination(f, entity, target);
     }
 
@@ -1371,6 +1403,14 @@ namespace Quantum.FactoryWars {
       }
     }
 
+    static void RouteMove(Frame f, EntityRef entity, Unit* unit) {
+      var target = unit->TargetPosition;
+      var from = f.Get<Transform3D>(entity).Position;
+      var radius = UnitRadius(f.FindAsset(unit->Spec));
+      if (GroundOccupancy.TryDetour(f, from, target, radius, out var corner)) target = corner;
+      SetDestination(f, entity, target);
+    }
+
     public static void Halt(Frame f, EntityRef entity) {
       if (f.Unsafe.TryGetPointer<NavMeshPathfinder>(entity, out var pathfinder) && pathfinder->IsActive) {
         pathfinder->Stop(f, entity, true);
@@ -1379,6 +1419,16 @@ namespace Quantum.FactoryWars {
 
     public void OnNavMeshWaypointReached(Frame f, EntityRef entity, FPVector3 waypoint, Navigation.WaypointFlag waypointFlags, ref bool resetAgent) {
       if ((waypointFlags & Navigation.WaypointFlag.Target) != 0 && f.Unsafe.TryGetPointer<Unit>(entity, out var unit)) {
+        if (unit->Order == UnitOrder.Move) {
+          var spec = f.FindAsset(unit->Spec);
+          if (!spec.IsAir && !spec.IsNaval && FactoryWarsUtil.FlatDistanceSqr(waypoint, unit->TargetPosition) > FP._1
+              && f.Unsafe.TryGetPointer<NavMeshPathfinder>(entity, out var pathfinder)
+              && FactoryWarsUtil.FlatDistanceSqr(pathfinder->Target, unit->TargetPosition) > FP._1) {
+            resetAgent = false;
+            RouteMove(f, entity, unit);
+            return;
+          }
+        }
         if (unit->Order == UnitOrder.Move || unit->Order == UnitOrder.AttackMove) {
           unit->Order = UnitOrder.Stop;
         } else if (unit->Order == UnitOrder.Patrol) {
@@ -1454,6 +1504,12 @@ namespace Quantum.FactoryWars {
           MoveAir(f, entity, transform, unit, spec, destination);
         } else if (spec.IsAir == false && f.Unsafe.TryGetPointer<NavMeshSteeringAgent>(entity, out var agent)) {
           agent->MaxSpeed = GroundSpeed(f, map, rules, spec, unit, transform->Position);
+          if (!spec.IsNaval && unit->Order == UnitOrder.Move && f.Number % repathFrames == 0
+              && f.Unsafe.TryGetPointer<NavMeshPathfinder>(entity, out var moving) && moving->IsActive
+              && FactoryWarsUtil.FlatDistanceSqr(moving->Target, unit->TargetPosition) <= FP._1
+              && GroundOccupancy.TryDetour(f, transform->Position, unit->TargetPosition, UnitRadius(spec), out var corner)) {
+            SetDestination(f, entity, corner);
+          }
         }
       }
 
@@ -1583,9 +1639,12 @@ namespace Quantum.FactoryWars {
       var memory = FactoryWarsUtil.SecondsToFrames(f, rules.SlideMemorySeconds);
       var units = f.Filter<Transform3D, Unit, NavMeshSteeringAgent, NavMeshPathfinder>();
       while (units.NextUnsafe(out _, out var unit, out var owner, out var agent, out var pathfinder)) {
+        var spec = f.FindAsset(owner->Spec);
+        var unitClearance = spec.IsNaval ? clearance : FPMath.Max(clearance, UnitRadius(spec));
         var buildings = f.Filter<Transform3D, Building>();
         while (buildings.NextUnsafe(out _, out var transform, out var building)) {
-          var reach = f.FindAsset(building->Spec).FootprintRadius + clearance;
+          if (building->Health <= FP._0) continue;
+          var reach = f.FindAsset(building->Spec).FootprintRadius + unitClearance;
           var x = unit->Position.X - transform->Position.X;
           var z = unit->Position.Z - transform->Position.Z;
           var overlapX = reach - FPMath.Abs(x);

@@ -1418,6 +1418,7 @@ namespace FactoryWars.View {
     }
 
     public static string BuildingIcon(BuildingSpec spec) {
+      if (spec.Role == BuildingRole.MlrsBattery) return "cf_longwall_mlrs";
       if (Ui.IconSprite("model_" + spec.name) != null) {
         return "model_" + spec.name;
       }
@@ -1638,6 +1639,21 @@ namespace FactoryWars.View {
         var paving = AirfieldWorkSystem.InPavingPhase(frame, entity, &building, spec, out _);
         var phase = paving ? AirfieldWorkName(spec.Role) + " 공사" : "건설";
         detail += $"   {phase} {Mathf.CeilToInt(building.ConstructionRemaining.AsFloat)}초 남음";
+      }
+      if (frame.TryGet<MlrsMagazine>(entity, out var magazine)) {
+        var status = magazine.Status switch {
+          MlrsStatus.Searching => "적 탐색",
+          MlrsStatus.Aiming => "조준 중",
+          MlrsStatus.Firing => "발사 중",
+          MlrsStatus.Reloading => "재장전 중",
+          MlrsStatus.Disabled => "작동 불가",
+          _ => "대기",
+        };
+        detail += $"\n탄약 {magazine.Ammo}/{spec.RocketCapacity}   사거리 {spec.MinRange.AsInt}–{spec.Range.AsInt}   {status}";
+        if (magazine.ReloadRemaining > 0 && magazine.ReloadTotal > 0) {
+          var percent = 100 * (magazine.ReloadTotal - magazine.ReloadRemaining) / magazine.ReloadTotal;
+          detail += $"   재장전 {percent}%";
+        }
       }
       if (building.UpgradeTier > 0) {
         detail += $"\n{Texts.TierName(building.UpgradeTier)}로 업그레이드 {Mathf.CeilToInt(building.UpgradeRemaining.AsFloat)}초";

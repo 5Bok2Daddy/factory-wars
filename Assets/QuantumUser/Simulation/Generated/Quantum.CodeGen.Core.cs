@@ -82,6 +82,14 @@ namespace Quantum {
     Landed,
     Captured,
   }
+  public enum MlrsStatus : byte {
+    Idle,
+    Searching,
+    Aiming,
+    Firing,
+    Reloading,
+    Disabled,
+  }
   public enum PauseReason : byte {
     None,
     Outage,
@@ -2093,6 +2101,102 @@ namespace Quantum {
     }
   }
   [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct MlrsMagazine : Quantum.IComponent {
+    public const Int32 SIZE = 56;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(0)]
+    public MlrsStatus Status;
+    [FieldOffset(8)]
+    public Int32 Ammo;
+    [FieldOffset(24)]
+    public Int32 SearchFrame;
+    [FieldOffset(4)]
+    public Int32 AimFrame;
+    [FieldOffset(12)]
+    public Int32 FireFrame;
+    [FieldOffset(16)]
+    public Int32 ReloadRemaining;
+    [FieldOffset(20)]
+    public Int32 ReloadTotal;
+    [FieldOffset(32)]
+    public FPVector3 AimDirection;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 6211;
+        hash = hash * 31 + (Byte)Status;
+        hash = hash * 31 + Ammo.GetHashCode();
+        hash = hash * 31 + SearchFrame.GetHashCode();
+        hash = hash * 31 + AimFrame.GetHashCode();
+        hash = hash * 31 + FireFrame.GetHashCode();
+        hash = hash * 31 + ReloadRemaining.GetHashCode();
+        hash = hash * 31 + ReloadTotal.GetHashCode();
+        hash = hash * 31 + AimDirection.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (MlrsMagazine*)ptr;
+        serializer.Stream.Serialize((Byte*)&p->Status);
+        serializer.Stream.Serialize(&p->AimFrame);
+        serializer.Stream.Serialize(&p->Ammo);
+        serializer.Stream.Serialize(&p->FireFrame);
+        serializer.Stream.Serialize(&p->ReloadRemaining);
+        serializer.Stream.Serialize(&p->ReloadTotal);
+        serializer.Stream.Serialize(&p->SearchFrame);
+        FPVector3.Serialize(&p->AimDirection, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct MlrsRocket : Quantum.IComponent {
+    public const Int32 SIZE = 96;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(8)]
+    public PlayerRef Owner;
+    [FieldOffset(48)]
+    public FPVector3 Origin;
+    [FieldOffset(72)]
+    public FPVector3 Target;
+    [FieldOffset(16)]
+    public FP Arc;
+    [FieldOffset(24)]
+    public FP BlastRadius;
+    [FieldOffset(32)]
+    public FP Damage;
+    [FieldOffset(40)]
+    public FP EdgeDamage;
+    [FieldOffset(4)]
+    public Int32 LaunchFrame;
+    [FieldOffset(0)]
+    public Int32 ImpactFrame;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 1031;
+        hash = hash * 31 + Owner.GetHashCode();
+        hash = hash * 31 + Origin.GetHashCode();
+        hash = hash * 31 + Target.GetHashCode();
+        hash = hash * 31 + Arc.GetHashCode();
+        hash = hash * 31 + BlastRadius.GetHashCode();
+        hash = hash * 31 + Damage.GetHashCode();
+        hash = hash * 31 + EdgeDamage.GetHashCode();
+        hash = hash * 31 + LaunchFrame.GetHashCode();
+        hash = hash * 31 + ImpactFrame.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (MlrsRocket*)ptr;
+        serializer.Stream.Serialize(&p->ImpactFrame);
+        serializer.Stream.Serialize(&p->LaunchFrame);
+        PlayerRef.Serialize(&p->Owner, serializer);
+        FP.Serialize(&p->Arc, serializer);
+        FP.Serialize(&p->BlastRadius, serializer);
+        FP.Serialize(&p->Damage, serializer);
+        FP.Serialize(&p->EdgeDamage, serializer);
+        FPVector3.Serialize(&p->Origin, serializer);
+        FPVector3.Serialize(&p->Target, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct NpcTrader : Quantum.IComponent {
     public const Int32 SIZE = 48;
     public const Int32 ALIGNMENT = 8;
@@ -2624,6 +2728,10 @@ namespace Quantum {
       BuildSignalsArrayOnComponentRemoved<MapEntityLink>();
       BuildSignalsArrayOnComponentAdded<Quantum.MissileStrike>();
       BuildSignalsArrayOnComponentRemoved<Quantum.MissileStrike>();
+      BuildSignalsArrayOnComponentAdded<Quantum.MlrsMagazine>();
+      BuildSignalsArrayOnComponentRemoved<Quantum.MlrsMagazine>();
+      BuildSignalsArrayOnComponentAdded<Quantum.MlrsRocket>();
+      BuildSignalsArrayOnComponentRemoved<Quantum.MlrsRocket>();
       BuildSignalsArrayOnComponentAdded<NavMeshAvoidanceAgent>();
       BuildSignalsArrayOnComponentRemoved<NavMeshAvoidanceAgent>();
       BuildSignalsArrayOnComponentAdded<NavMeshAvoidanceObstacle>();
@@ -2788,6 +2896,9 @@ namespace Quantum {
       typeRegistry.Register(typeof(MapEntityLink), MapEntityLink.SIZE);
       typeRegistry.Register(typeof(Quantum.MapShape), Quantum.MapShape.SIZE);
       typeRegistry.Register(typeof(Quantum.MissileStrike), Quantum.MissileStrike.SIZE);
+      typeRegistry.Register(typeof(Quantum.MlrsMagazine), Quantum.MlrsMagazine.SIZE);
+      typeRegistry.Register(typeof(Quantum.MlrsRocket), Quantum.MlrsRocket.SIZE);
+      typeRegistry.Register(typeof(Quantum.MlrsStatus), 1);
       typeRegistry.Register(typeof(NavMeshAvoidanceAgent), NavMeshAvoidanceAgent.SIZE);
       typeRegistry.Register(typeof(NavMeshAvoidanceObstacle), NavMeshAvoidanceObstacle.SIZE);
       typeRegistry.Register(typeof(NavMeshPathfinder), NavMeshPathfinder.SIZE);
@@ -2845,7 +2956,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(Quantum._globals_), Quantum._globals_.SIZE);
     }
     static partial void InitComponentTypeIdGen() {
-      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 23)
+      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 25)
         .AddBuiltInComponents()
         .Add<Quantum.AirfieldWorks>(Quantum.AirfieldWorks.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Barricade>(Quantum.Barricade.Serialize, null, null, ComponentFlags.None)
@@ -2862,6 +2973,8 @@ namespace Quantum {
         .Add<Quantum.Jammer>(Quantum.Jammer.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.LandingCraft>(Quantum.LandingCraft.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.MissileStrike>(Quantum.MissileStrike.Serialize, null, null, ComponentFlags.None)
+        .Add<Quantum.MlrsMagazine>(Quantum.MlrsMagazine.Serialize, null, null, ComponentFlags.None)
+        .Add<Quantum.MlrsRocket>(Quantum.MlrsRocket.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.NpcTrader>(Quantum.NpcTrader.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.ResourceNode>(Quantum.ResourceNode.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.ScorchedZone>(Quantum.ScorchedZone.Serialize, null, null, ComponentFlags.None)
@@ -2881,6 +2994,7 @@ namespace Quantum {
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.CaptureKind>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.DropPhase>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.InputButtons>();
+      FramePrinter.EnsurePrimitiveNotStripped<Quantum.MlrsStatus>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.PauseReason>();
       FramePrinter.EnsurePrimitiveNotStripped<QueryOptions>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.RejectReason>();

@@ -1,5 +1,9 @@
 # TASK-01 결과 보고서
 
+
+## 밤사이 요약 · 다연장 로켓 포대
+
+양 진영의 2단계 방어 구조물, 12발 순차 발사와 재장전, 전장의 안개, 탄약 HUD, 탄약고와 정비 작업자를 연결했다. Unity GPU 집중 10/10 통과, Photon 실서버 체크섬 22개 일치, 오류 0건. Android 실기기 측정은 대기 중이다.
 ## 밤사이 요약 · 에이전트 인수인계
 
 - 완료·미완료 작업, 설계 제약과 재현 명령을 [HANDOFF.md](HANDOFF.md)에 정리했다. 전체 회귀 23건의 재현과 Android 검증이 남았다.
@@ -7,7 +11,7 @@
 ## 밤사이 요약 · PlayMode 상세 집계
 
 - 전체 실패 25건의 관측 결과를 기록했다. 이전 실행에서도 실패한 23건과 수정 후 후속 통과한 2건으로 확인했다.
-- 건너뜀 125건은 모두 명시 실행 대상이다. 같은 작업 주기의 별도 GPU·Photon에서 8건 통과를 확인했다. [PlayMode 상세 보고서](Docs/FactoryWars_PlayMode_2026-11-21.md)
+- 건너뜀 125건은 모두 명시 실행 대상이다. 같은 작업 주기의 별도 GPU·Photon에서 8건 통과를 확인했다. [PlayMode 상세 보고서](Game/Docs/FactoryWars_PlayMode_2026-11-21.md)
 
 ## 밤사이 요약 · 맵 시각 개선과 Mixamo
 
@@ -90,7 +94,39 @@
 
 마지막 작업: [codex] 2026-11-20 10:32 KST / 전체 회귀와 Android 실기기 확인
 
-## 최종 완료 요약 (2026-11-18 22:32, `[gemini]` — TASK-32 ~ 37 완료 (100%) + 4인전 <20분 밸런스 완성 + 최신 Android APK 빌드)
+## 최신 동기화 요약 (2026-11-19 18:45, `[gemini]` — 엄격 아트 오버홀: 원시 도형 전면 금지, 100% 실제 Synty + War FX 연동, 5종 고유 바이옴 맵 차별화 완료)
+- **원시 플레이스홀더(`Cube`/`Cylinder`/`Sphere`) 전면 제거 & 100% 실제 Synty 킷배시 (`SyntyAssign.cs`, `BattleView.cs`, `HeroVisuals.cs`):**
+  - 8대 산업 공장(`barracks`·`vehicle_factory`·`heavy_works`·`airfield`·`processor`·`power_plant`·`supply_depot`·`research_lab`) + 군사 사령부(`headquarters`) + 전략 미사일 격납고(`cf_missile_silo`) + 스톰네스트 공중 항모(`ff_stormnest_carrier`) + 현대식 군용 포격함(`artillery_ship`) + 수륙양용 상륙정(`landing_craft`) + 수송헬기(`transport_heli`) + 패트리어트 요격 포대 + `Lv.2/3` 공장 증축 + 직선 시너지 배관을 **100% 실제 Synty 프리팹**으로 조립·연결 완료 (`[FW-Synty] 칸 80개 연결`, 누락 0건).
+  - `BattleView.cs`의 원시 도형 덮어쓰기 코드(`BuildHelicarrierVisual`, `BuildMissileSiloVisual`, `BuildPatriotAccent`) 및 `BattleFx.cs`의 원시 주황 구체/충격파 링(`SpawnShockwaveMesh`) 완전 삭제.
+- **Jean Moreno `War FX` 실전 VFX 직결 (`BattleFx.cs`, `SyntyAssign.cs`):**
+  - `Assets/ExternalAssets/JMO Assets/WarFX/`(gitignore 적용)에서 `WFXMR_Nuke`, `WFXMR_ExplosiveSmokeGround Big`, `WFXMR_ExplosiveSmokeGround`, `WFXMR_Explosion Small`, `WFX_MF 4P RIFLE1`, `WFXMR_FlameThrower`, `WFXMR_Fire Natural Broad (Black Smoke)`, `WFX_SmokeGrenade AlphaBlend Black/Gray` 바인딩 및 URP 호환 변환 완료 (핑크 셰이더 0건).
+  - `54_ultimate_missile_silo_strike.png`, `53_ultimate_flying_carrier.png`, `57_persistent_battlefield_scars.png`에서 실제 War FX 버섯구름·화염·연기 육안 검수 통과.
+- **5종 고유 바이옴 맵 1초 즉시 차별화 (`FactoryWarsMaps.cs`, `FactoryWarsSetup.cs`, `FactoryWarsCity.cs`, `TerrainKit.cs`, `TerrainLook.cs`, `WorldView.cs`, `UrbanDecor.cs`, `Dressing.cs`):**
+  - `Map4P`: 온대 녹지 계곡 + 2차선 도로 + 중앙 암시장.
+  - `MapDesert`: 황금 모래 100%(초록 잔디 0%), 사암 사막 도로, 실제 Synty 사구·선인장·사막 바위·고사목·따뜻한 사막 일광 (`Map_Desert_PresetData` 통과).
+  - `MapUrban`: 95%+ 중후한 무채색 콘크리트·아스팔트 도심 격자 + 고밀도 실제 `PolygonCity` 빌딩·오피스·아파트.
+  - `MapArchipelago`: 70%+ 끊김 없는 에메랄드 청록 바다 + 5개 황금 백사장 열대 섬(중앙 환형 라군 + 4방위 외해 + 4개 대각 여울).
+  - `MapStrait`: 맵 정중앙을 남북으로 양분하는 48m 짙은 군청 대양 해협 + 북·중·남 3대 전략 교량(수상 침범 건물 0건).
+- **검증 및 GitHub 동기화:**
+  - `SyntyAssign.Run`, `UrbanAssign.Run`, `BuildMapsAndMenu` 모두 `EXIT=0`.
+  - GPU PlayMode 캡처 & 맵 프리셋 검증 `5/5 통과` (`Map_Desert_PresetData`, `Map_Catalog_CyclesAndFindsScenes`, `CaptureMaps35_AllFive`, `Capture33_CarrierMissileLanding`, `CaptureAllUnitsAndBattlefieldScars`).
+  - 시뮬레이션 결정론 금지어 **0건**, `Game/Docs/status_images/` 최신 53장(핵심 6 + 맵 5 + 유닛 42) 정리 및 `Game/README.md` 깨진 링크 **0건** 확인.
+
+마지막 작업: `[gemini]` 2026-11-19 18:45 / 원시 도형 전면 금지(실제 Synty 킷배시 + War FX + 5종 고유 바이옴 맵) 육안 검수 완료, README/SETUP-REPORT 갱신 및 `origin main` 푸시
+
+### 이전 동기화 요약 (2026-11-19 17:56, `[gemini]` — GitHub 대시보드 전면 갱신, 구버전 스크린샷 정리 완료, 8대 산업 공장 & 비주얼 교정 반영)
+- **GitHub 대시보드 & 스크린샷 정리 완료 (`origin/main`):**
+  - 구버전(`24_*`–`52_*`) 및 중복 캡처 전면 삭제 — `Docs/status_images/` 내 최신 맵 5장 + 최신 핵심 현황 5장(`current_factory_complex.png`, `current_scale_overview.png`, `53_ultimate_flying_carrier.png`, `54_ultimate_missile_silo_strike.png`, `57_persistent_battlefield_scars.png`) + 유닛 쇼케이스 37장 = **총 47장**만 유지(깨진 링크 **0건**).
+  - 저장소 루트 `Game/README.md`를 2026-11-19 실제 현황·AI 밸런스 표·최신 스크린샷 47장으로 전면 재작성.
+- **8대 산업 공장 체계 · 스케일/비주얼 교정 · 결정론 검증:**
+  - `병기 공장` 4종 + `산업·보급` 4종, 공장 증축(`Lv.1~3`), `12m` 발광 시너지 파이프라인(`+15%`), 비상 과부하(`+50%`), 보급창 전역 버프·연쇄 폭발 적용.
+  - 보병 `0.8x` · 차량/전차 `1.0x~1.1x` · 공장 `1.25x`, 5맵 NavMesh 재베이킹, Kubold 손바닥 소총 밀착, 포격함 PBR 킷배시, 도로 침범 0건, 항모 고도/그림자/오라 링, 미사일 착탄 중앙 화염구·충격파 시각 검증 완료.
+  - 시뮬레이션 결정론 금지어 **0건**, AI v2 배치 **타임아웃 0/10건**(`2P 17.73분`, `4P 15.33분`).
+- **다음 검증 대기 항목:** PlayMode 10건 수정 및 수송 탑승 시스템 Unity 빌드/테스트 재실행 + AI v3 10판 최종 배치 검증.
+
+마지막 작업: `[gemini]` 2026-11-19 17:56 / GitHub 루트 README 대시보드·SETUP-REPORT 갱신, 구버전 스크린샷 정리(47장 유지, 깨진 링크 0건) 및 `origin main` 푸시
+
+### 이전 기준선 요약 (2026-11-18 22:32, `[gemini]` — TASK-32 ~ 37 완료 (100%) + 4인전 <20분 밸런스 완성 + 최신 Android APK 빌드)
 - **승인된 모바일 전술 기능 3종 & 오디오 구현 (터치 전용, PC 단축키/자동보충 미포함):**
   1. **주둔 고지대 전투 보너스 & 창문 예광탄 (`GameplaySystems`, `SniperSystem`, `BattleView`, `CityView`):** 주둔 보병·저격수 사거리 `+15%`, 받는 피해 `-25%`, 건물 상부 창문 총구 섬광·예광탄(`#FFD166`) 발사 연출, 주둔 방패/갈매기형 휘장 표시.
   2. **경량 전술 무전 토스트 배너 (`MatchHud`):** 보급 35초/10초 예고·7분 수문 개방·블랙박스 추락·암시장 적대 시 상단 중앙 `2.5s` 자동 페이드 토스트 배너 및 미니맵 핑 고리 표시.
@@ -3256,6 +3292,7 @@ AI 행동도 함께 넣었습니다.
 
 | 순서 | 항목 | 상태 |
 | --- | --- | --- |
+| **2026-11-21** | 다연장 로켓 포대 | GPU 10/10, Photon 실서버 체크섬 22개 일치 및 오류 0건. Android 실기기 검증 대기. |
 | **2026-11-21** | 에이전트 인수인계 | HANDOFF.md에 완료 기준, 재개 위치, 우선순위, 실행 명령과 검증 근거 정리. |
 | **2026-11-21** | PlayMode 실패·건너뜀 상세 보고 | 전체 398 통과·25 실패·125 명시 실행 대상. 후속 5/5. 기존 실패 23건과 실기기 검증이 남음. |
 | **2026-11-21** | 호안·해안·사막·공장 야드와 Mixamo | 5맵 재베이크 및 최종 집중 5/5. 전체 548건 중 398 통과, 25 실패, 125 건너뜀. 후속 실행에서 추가 실패 2건 재검증 완료. |
@@ -3613,3 +3650,5 @@ OVERNIGHT-QUEUE.md 규칙 1에 따라 묻지 않고 기본값으로 진행했다
 마지막 작업: [codex] 2026-11-21 16:10 KST / PlayMode 150건 상세 분류와 GitHub 대시보드 갱신
 
 마지막 작업: [codex] 2026-11-21 16:17 KST / 에이전트 인수인계 문서 작성
+
+마지막 작업: [codex] 2026-11-21 16:52 KST / 다연장 로켓 포대 검증 · 다음 단계는 맵 외곽과 동선 개편

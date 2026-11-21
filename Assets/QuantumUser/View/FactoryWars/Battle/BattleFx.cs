@@ -49,6 +49,57 @@ namespace FactoryWars.View {
     public float ShakeAmount { get; private set; }
 
     public int Emitted { get; private set; }
+    const int MlrsImpactPoolCapacity = 8;
+    sealed class PooledImpact {
+      public GameObject Root;
+      public ParticleSystem[] Systems;
+      public Vector3 Scale;
+      public float Until;
+    }
+    readonly List<PooledImpact> _mlrsImpacts = new List<PooledImpact>(MlrsImpactPoolCapacity);
+
+    public void MlrsExhaust(Vector3 position, Vector3 direction, bool trail) {
+      Emit(_flash, position, -direction * 2.2f, trail ? 0.50f : 1.65f, trail ? 0.10f : 0.26f, Muzzle);
+      Emit(_glow, position, -direction * 5f, trail ? 0.65f : 1.6f, 0.2f, Missile);
+      var puffs = trail ? 1 : Scaled(5);
+      for (var i = 0; i < puffs; ++i) {
+        Emit(_smoke, position - direction * (i * 0.22f), -direction * (trail ? 0.4f : 2.9f) + Vector3.up,
+          trail ? 0.55f : 1.2f, 1.1f, SmokeGray);
+      }
+    }
+
+    public void MlrsImpact(Vector3 position, float radius) {
+      GameAudio.PlayAt(SoundEvent.Explosion, position);
+      Shake(0.24f);
+      var now = Time.time;
+      PooledImpact item = null;
+      foreach (var entry in _mlrsImpacts) {
+        if (entry.Until > now) continue;
+        item = entry;
+        break;
+      }
+      if (TryResolveWarFx("explosion", out var prefab, out var scale, out var lifetime)
+          && (item != null || _mlrsImpacts.Count < MlrsImpactPoolCapacity)) {
+        if (item == null) {
+          var root = Instantiate(prefab, transform);
+          item = new PooledImpact { Root = root, Systems = root.GetComponentsInChildren<ParticleSystem>(true), Scale = root.transform.localScale };
+          _mlrsImpacts.Add(item);
+        }
+        var rootTransform = item.Root.transform;
+        rootTransform.SetPositionAndRotation(position + Vector3.up * 0.12f, Quaternion.identity);
+        rootTransform.localScale = item.Scale * (scale * Mathf.Clamp(radius * 0.58f, 0.8f, 2.4f));
+        item.Root.SetActive(true);
+        foreach (var particles in item.Systems) {
+          particles.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+          particles.Simulate(0.18f, false, true);
+          particles.Play(false);
+        }
+        item.Until = now + Mathf.Max(0.25f, lifetime);
+      } else {
+        Emit(_flash, position + Vector3.up, Vector3.zero, radius * 1.2f, 0.30f, FlashCore);
+        Emit(_smoke, position + Vector3.up, Vector3.up * 2f, radius, 1.8f, SmokeBillow);
+      }
+    }
 
     // 비행 중인 미사일: 2차 베지어(위로 솟는 조종점 + 옆 흔들림)를 따라 머리 불꽃과 연기를 뿌린다.
     class Flight {
@@ -702,6 +753,9 @@ namespace FactoryWars.View {
     void Update() {
       UpdateFlights(Time.deltaTime);
       var now = Time.time;
+      foreach (var item in _mlrsImpacts) {
+        if (item.Until <= now && item.Root.activeSelf) item.Root.SetActive(false);
+      }
       var maxAge = CraterHoldSeconds + CraterFadeSeconds;
       var hasFading = false;
       for (var i = _craters.Count - 1; i >= 0; i--) {

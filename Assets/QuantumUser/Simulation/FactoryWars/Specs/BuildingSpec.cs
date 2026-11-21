@@ -70,5 +70,15 @@ namespace Quantum {
     public int WorkerSlotCapacity;
     public FP ExtractIntervalSeconds;
     public FP ExtractAmountPerCycle;
+    public int RocketCapacity;
+    public FP RocketReloadSeconds;
+    public FP RocketTierThreeReloadMultiplier;
+    public FP RocketAimSeconds;
+    public FP RocketSearchSeconds;
+    public FP RocketSpeed;
+    public FP RocketArc;
+    public FP RocketEdgeDamage;
+    public FP RocketElevation;
+    public FPVector3[] RocketMuzzles;
 }
 }

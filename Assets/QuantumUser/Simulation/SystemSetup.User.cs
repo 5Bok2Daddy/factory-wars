@@ -21,6 +21,7 @@ namespace Quantum
             systems.Add(new FactoryWars.WorkerSystem());
             systems.Add(new FactoryWars.ModuleSystem());
             systems.Add(new FactoryWars.CombatSystem());
+            systems.Add(new FactoryWars.MlrsSystem());
             systems.Add(new FactoryWars.SniperSystem());
             systems.Add(new FactoryWars.SortieSystem());
             systems.Add(new FactoryWars.NpcTraderSystem());

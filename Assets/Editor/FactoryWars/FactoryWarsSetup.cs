@@ -702,6 +702,7 @@ namespace FactoryWars.EditorTools {
       // 사령부는 추가 건설이 드물어 패널 맨 끝에 둔다.
       faction.Buildings = buildings.Skip(1).Concat(buildings.Take(1)).Select(Ref).ToArray();
       ConfigureExtractors(faction, prefix);
+      ConfigureMlrs(faction, prefix);
       faction.Units = ids.Select(k => Ref(units[k])).ToArray();
       faction.StartingUnits = startingUnits.Select(id => Ref(U(id))).ToArray();
       // 항목 22: 공중 유닛이 없는 진영은 AI가 비행장을 짓지 않는다(항목 31부터 두 진영 모두 공중이 있다). 대륙 연방은 물량형이라 중공업 기지를 차량 공장 바로 다음에 짓는다.

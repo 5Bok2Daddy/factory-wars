@@ -421,6 +421,31 @@ component Building {
 }
 
 // 항목 37: 기갑 잔해. 30초 동안 임시 엄폐점을 만들고 공병이 분해하면 고철(Scrap)을 준다.
+enum MlrsStatus : Byte { Idle, Searching, Aiming, Firing, Reloading, Disabled }
+
+component MlrsMagazine {
+    MlrsStatus Status;
+    Int32 Ammo;
+    Int32 SearchFrame;
+    Int32 AimFrame;
+    Int32 FireFrame;
+    Int32 ReloadRemaining;
+    Int32 ReloadTotal;
+    FPVector3 AimDirection;
+}
+
+component MlrsRocket {
+    player_ref Owner;
+    FPVector3 Origin;
+    FPVector3 Target;
+    FP Arc;
+    FP BlastRadius;
+    FP Damage;
+    FP EdgeDamage;
+    Int32 LaunchFrame;
+    Int32 ImpactFrame;
+}
+
 component Wreck {
     Int32 UntilFrame;
     FP Scrap;
@@ -591,5 +616,7 @@ synced event TransportRamp { entity_ref Transport; QBoolean Unload; }
 synced event ExtractorStaffChanged { entity_ref Building; Int32 Count; }
 // 항목 27: 범위 피해가 난 자리(포격·폭격·폭발). 화면 손상 지도·크레이터용.
 synced event AreaImpact { FPVector3 Position; FP Radius; }
+synced event MlrsLaunched { entity_ref Battery; player_ref Owner; FPVector3 Origin; FPVector3 Direction; }
+synced event MlrsImpact { FPVector3 Position; FP Radius; }
 // 항목 27: 유닛·건물이 부서진 자리. Size는 유닛이면 UnitSize 값, 건물이면 -1이고 Footprint가 반지름이다.
 synced event Wrecked { FPVector3 Position; Int32 Size; FP Footprint; }

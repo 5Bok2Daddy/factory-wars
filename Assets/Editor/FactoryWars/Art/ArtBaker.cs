@@ -274,17 +274,8 @@ namespace FactoryWars.EditorTools {
       IconBaker.BakeAll();
       var entries = new List<ViewCatalog.Entry>();
       foreach (var recipe in ArtRecipes.All()) {
-        var root = new GameObject(recipe.Id);
         var material = recipe.Kind == "유닛" || recipe.Kind == "건물" ? _team : _neutral;
-        AddPart(root.transform, recipe.Id, "Body", Vector3.zero, material, recipe.Body);
-        var parts = new Dictionary<string, Transform>();
-        foreach (var part in recipe.Moving) {
-          var parent = part.Parent != null ? parts[part.Parent] : root.transform;
-          parts[part.Name] = AddPart(parent, recipe.Id, part.Name, part.Pivot, material, part.Build).transform;
-        }
-        var prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{ArtRoot}/Prefabs/{recipe.Id}.prefab");
-        entries.Add(Describe(recipe, root, prefab));
-        Object.DestroyImmediate(root);
+        entries.Add(BakeRecipe(recipe, material));
       }
 
       var catalogPath = $"{ResourceRoot}/ViewCatalog.asset";
@@ -297,6 +288,41 @@ namespace FactoryWars.EditorTools {
       EditorUtility.SetDirty(catalog);
       AssetDatabase.SaveAssets();
       Debug.Log($"ArtBaker: 프리팹 {entries.Count}개");
+    }
+
+    public static void BakeMlrs() {
+      var catalog = AssetDatabase.LoadAssetAtPath<ViewCatalog>($"{ResourceRoot}/ViewCatalog.asset");
+      var entry = BakeRecipe(ArtRecipes.MlrsBattery(), ArtLook.Team(0, true));
+      catalog.Entries = catalog.Entries.Where(item => item.Id != entry.Id).Append(entry).ToArray();
+      EditorUtility.SetDirty(catalog);
+    }
+
+    static ViewCatalog.Entry BakeRecipe(ArtRecipe recipe, Material material) {
+      var root = new GameObject(recipe.Id);
+      AddPart(root.transform, recipe.Id, "Body", Vector3.zero, material, recipe.Body);
+      var parts = new Dictionary<string, Transform>();
+      foreach (var part in recipe.Moving) {
+        var parent = part.Parent != null ? parts[part.Parent] : root.transform;
+        parts[part.Name] = AddPart(parent, recipe.Id, part.Name, part.Pivot, material, part.Build).transform;
+      }
+      if (recipe.Id == "MLRS_Battery") {
+        var activities = root.AddComponent<CivilianActivityPoints>();
+        activities.Entrance = ActivityPoint(root.transform, "MaintenanceEntrance", new Vector3(0f, 0f, -5.3f));
+        activities.Work = ActivityPoint(root.transform, "AmmoInspection", new Vector3(1.6f, 0f, -5.3f));
+        activities.Rest = ActivityPoint(root.transform, "RestArea", new Vector3(-1.8f, 0f, -5.6f));
+        activities.ExtraWorkers = 2;
+      }
+      var prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{ArtRoot}/Prefabs/{recipe.Id}.prefab");
+      var entry = Describe(recipe, root, prefab);
+      Object.DestroyImmediate(root);
+      return entry;
+    }
+
+    static Transform ActivityPoint(Transform parent, string name, Vector3 position) {
+      var point = new GameObject(name).transform;
+      point.SetParent(parent, false);
+      point.localPosition = position;
+      return point;
     }
 
     static ArtView Spawn(ViewCatalog catalog, Transform root, string id, Vector3 position, int color, float yaw = 0f, bool powered = true) {

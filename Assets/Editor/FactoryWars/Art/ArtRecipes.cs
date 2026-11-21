@@ -100,6 +100,7 @@ namespace FactoryWars.EditorTools {
       foreach (var building in Buildings()) {
         yield return building;
       }
+      yield return MlrsBattery();
     }
 
     static ArtRecipe Unit(string id, int maxRenderers, int maxTriangles, Action<MeshKit> body, params MovingPart[] moving) {

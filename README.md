@@ -7,6 +7,12 @@
 
 ---
 
+### 다연장 로켓 포대 · 2026-11-21 KST
+
+양 진영의 2단계 방어 메뉴에서 공병으로 로켓 포대를 건설할 수 있다. Quantum이 12발 순차 사격과 범위 피해를 처리하며, 재장전은 기본 25초, 3단계 20초다. GPU PlayMode **10/10**, Photon 실서버 체크섬 **22개 일치, 오류 0건**. Android 성능과 터치는 미검증이다.
+
+[포대 완공](Docs/status_images/MLRS/completed_battery.png) · [동시 사격](Docs/status_images/MLRS/multiple_batteries_firing.png) · [착탄](Docs/status_images/MLRS/rocket_explosion.png) · [구현·검증](Docs/MLRS.md) · [에셋 카탈로그](Docs/AssetCatalog.md)
+
 ### 현재 진행 상황과 PlayMode 판정 · 2026-11-21 KST
 
 | 영역 | 현재 상태 |

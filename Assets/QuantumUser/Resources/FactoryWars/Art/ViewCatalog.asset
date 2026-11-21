@@ -504,6 +504,17 @@ MonoBehaviour:
     MuzzlePart: Model
     Muzzle: {x: 0, y: 0.8, z: 2.98}
     Smoke: []
+  - Id: MLRS_Battery
+    Prefab: {fileID: 1019528490751160118, guid: 97d545a16a42f6745a4c8bc057e4a9c1, type: 3}
+    Unit: 0
+    DisplayScale: 1
+    Altitude: 0
+    Center: {x: 0, y: 0}
+    RingRadius: 4.32
+    BarHeight: 2.695
+    MuzzlePart: Model
+    Muzzle: {x: 0, y: 0.8, z: 3.85}
+    Smoke: []
   LumberMillSaw: {fileID: 1105013166305406, guid: 7a327ed1e26dac745a8ed6890e8d456d, type: 3}
   IronExtractorDrill: {fileID: 4740824422671669703, guid: 5a5fd050065361048a83a1ecbdcb6822, type: 3}
   LumberCargo: {fileID: 1118550264440206, guid: 9cbc4baaec1a2af49b7cc0aefc7a9df7, type: 3}

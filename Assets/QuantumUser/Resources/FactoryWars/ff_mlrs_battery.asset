@@ -1,0 +1,196 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2878a441c035e894a9b579e4615c4cf1, type: 3}
+  m_Name: ff_mlrs_battery
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ff_mlrs_battery
+    Guid:
+      Value: 468716698403585669
+  Role: 24
+  RequiredTier: 2
+  Cost:
+    Iron:
+      RawValue: 31457280
+    Wood:
+      RawValue: 6553600
+    Steel:
+      RawValue: 10485760
+    Power:
+      RawValue: 10485760
+  BuildTimeSeconds:
+    RawValue: 2293760
+  MaxHealth:
+    RawValue: 91750400
+  PowerOutput:
+    RawValue: 0
+  PowerStorage:
+    RawValue: 0
+  PowerUpkeep:
+    RawValue: 98304
+  Upkeep: 3
+  ProcessSeconds:
+    RawValue: 0
+  ProcessInput:
+    Iron:
+      RawValue: 0
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  ProcessSteel:
+    RawValue: 0
+  PopulationCapBonus:
+    RawValue: 0
+  ModuleSlots: 0
+  FootprintRadius:
+    RawValue: 301465
+  IsDropOff: 0
+  Prerequisites:
+  - Id:
+      Value: 349535828948866217
+  IsCoreBuilding: 0
+  Producible: []
+  Attack: 4
+  GroundOnly: 1
+  Damage:
+    RawValue: 2752512
+  Range:
+    RawValue: 2949120
+  AttackInterval:
+    RawValue: 52428
+  MinRange:
+    RawValue: 524288
+  SplashRadius:
+    RawValue: 229376
+  CoverSpots: 0
+  CoverReduction:
+    RawValue: 0
+  Heals: 0
+  HealRadius:
+    RawValue: 0
+  HealPerSecond:
+    RawValue: 0
+  HealCount: 0
+  RevealRadius:
+    RawValue: 0
+  Defensive: 1
+  NeedsWater: 0
+  GarrisonCapacity: 0
+  SightRange:
+    RawValue: 1048576
+  RequiresNeutralOutpost: 0
+  InterceptRange:
+    RawValue: 0
+  InterceptDamage:
+    RawValue: 0
+  InterceptInterval:
+    RawValue: 0
+  RequiresResourceNode: 0
+  RequiredNodeKind: 0
+  WorkerSlotCapacity: 0
+  ExtractIntervalSeconds:
+    RawValue: 0
+  ExtractAmountPerCycle:
+    RawValue: 0
+  RocketCapacity: 12
+  RocketReloadSeconds:
+    RawValue: 1638400
+  RocketTierThreeReloadMultiplier:
+    RawValue: 52428
+  RocketAimSeconds:
+    RawValue: 65536
+  RocketSearchSeconds:
+    RawValue: 16384
+  RocketSpeed:
+    RawValue: 1703936
+  RocketArc:
+    RawValue: 458752
+  RocketEdgeDamage:
+    RawValue: 22937
+  RocketElevation:
+    RawValue: 1835008
+  RocketMuzzles:
+  - X:
+      RawValue: -82575
+    Y:
+      RawValue: 147568
+    Z:
+      RawValue: 99275
+  - X:
+      RawValue: 39321
+    Y:
+      RawValue: 147568
+    Z:
+      RawValue: 99275
+  - X:
+      RawValue: -60948
+    Y:
+      RawValue: 147568
+    Z:
+      RawValue: 99275
+  - X:
+      RawValue: 60948
+    Y:
+      RawValue: 147568
+    Z:
+      RawValue: 99275
+  - X:
+      RawValue: -39321
+    Y:
+      RawValue: 147568
+    Z:
+      RawValue: 99275
+  - X:
+      RawValue: 82575
+    Y:
+      RawValue: 147568
+    Z:
+      RawValue: 99275
+  - X:
+      RawValue: -82575
+    Y:
+      RawValue: 168398
+    Z:
+      RawValue: 88197
+  - X:
+      RawValue: 39321
+    Y:
+      RawValue: 168398
+    Z:
+      RawValue: 88197
+  - X:
+      RawValue: -60948
+    Y:
+      RawValue: 168398
+    Z:
+      RawValue: 88197
+  - X:
+      RawValue: 60948
+    Y:
+      RawValue: 168398
+    Z:
+      RawValue: 88197
+  - X:
+      RawValue: -39321
+    Y:
+      RawValue: 168398
+    Z:
+      RawValue: 88197
+  - X:
+      RawValue: 82575
+    Y:
+      RawValue: 168398
+    Z:
+      RawValue: 88197

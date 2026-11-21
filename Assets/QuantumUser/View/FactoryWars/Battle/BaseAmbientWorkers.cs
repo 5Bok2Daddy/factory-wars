@@ -19,6 +19,8 @@ namespace FactoryWars.View {
     [SerializeField, Min(1)] int _mediumGlobalBudget = 12;
     [SerializeField, Min(1)] int _highGlobalBudget = 16;
     static readonly int SpeedParam = Animator.StringToHash("Speed");
+    static readonly float[] EntranceAngles = { 0f, 45f, -45f, 90f, -90f, 180f };
+    static readonly string[] MachinePoses = { "Device", "Inspect", "Lever", "Button", "OpenLid", "CloseLid" };
 
     struct BuildingNode {
       public EntityRef Entity;
@@ -27,9 +29,19 @@ namespace FactoryWars.View {
       public float Footprint;
       public BuildingRole Role;
       public bool UnderConstruction;
+      public CivilianActivityPoints Points;
     }
 
     enum WorkerState { Walking, Working, WalkingToRest, Resting, Waiting, Scattering }
+
+    static (float Shift, float Break, int ExtraWorkers) WorkProfile(BuildingRole role) => role switch {
+      BuildingRole.Headquarters or BuildingRole.Barracks => (11f, 3.6f, 1),
+      BuildingRole.VehicleFactory or BuildingRole.HeavyWorks or BuildingRole.Processor => (14f, 3.1f, 2),
+      BuildingRole.SupplyDepot or BuildingRole.CollectionYard => (10f, 2.6f, 1),
+      BuildingRole.LumberMill or BuildingRole.IronExtractor => (12f, 2.9f, 2),
+      BuildingRole.MlrsBattery => (12f, 3.4f, 2),
+      _ => (10f, 3.2f, 0),
+    };
 
     class WorkerAgent {
       public GameObject Root;
@@ -56,6 +68,8 @@ namespace FactoryWars.View {
       public float CurrentSpeed;
       public float RepathAt;
       public Vector3 WalkingTarget;
+      public BuildingRole Role;
+      public (int Variant, BuildingRole Cargo, bool Trolley) PoolKey;
     }
 
     /// <summary>운반 상자·핸드트럭을 손바닥에 자연스럽게 밀착시키는 경량 2-Bone IK(화면 전용).</summary>
@@ -195,6 +209,8 @@ namespace FactoryWars.View {
     readonly Dictionary<int, List<BuildingNode>> _byOwner = new Dictionary<int, List<BuildingNode>>();
     readonly Dictionary<EntityRef, BuildingNode> _activeBuildings = new Dictionary<EntityRef, BuildingNode>();
     readonly List<Bounds> _buildingObstacles = new List<Bounds>();
+    readonly List<Bounds> _terrainObstacles = new List<Bounds>();
+    readonly List<WorkerAgent> _pool = new List<WorkerAgent>();
     MapSpec _map;
     ViewCatalog _catalog;
     BattleView _battle;
@@ -236,6 +252,18 @@ namespace FactoryWars.View {
       _catalog = catalog;
       _battle = battle;
       _nextScanAt = 0f;
+      _terrainObstacles.Clear();
+      foreach (var feature in map.Terrain ?? System.Array.Empty<TerrainFeature>()) {
+        if (feature.Kind != TerrainKind.Rock && feature.Kind != TerrainKind.CanyonWall) continue;
+        var footprint = TerrainKit.Extent(feature.Shape);
+        if (feature.Shape.IsCircle) {
+          var size = Vector2.one * feature.Shape.Radius.AsFloat * 2f;
+          var center = feature.Shape.Center.ToUnityVector3();
+          footprint = new Rect(new Vector2(center.x, center.z) - size * 0.5f, size);
+        }
+        _terrainObstacles.Add(new Bounds(new Vector3(footprint.center.x, 0f, footprint.center.y),
+          new Vector3(footprint.width, 1f, footprint.height)));
+      }
     }
 
     public bool ClearForYard(GroundFootprint footprint) {
@@ -254,6 +282,8 @@ namespace FactoryWars.View {
         if (_workers[i].Root != null) Destroy(_workers[i].Root);
       }
       _workers.Clear();
+      foreach (var worker in _pool) if (worker.Root != null) Destroy(worker.Root);
+      _pool.Clear();
       _byOwner.Clear();
       _activeBuildings.Clear();
     }
@@ -272,6 +302,7 @@ namespace FactoryWars.View {
         case BuildingRole.ResearchLab:
         case BuildingRole.CollectionYard:
         case BuildingRole.UltimateSite:
+        case BuildingRole.MlrsBattery:
           return true;
         default:
           return false;
@@ -315,6 +346,7 @@ namespace FactoryWars.View {
       _byOwner.Clear();
       _activeBuildings.Clear();
       _buildingObstacles.Clear();
+      _buildingObstacles.AddRange(_terrainObstacles);
       if (_battle != null) {
         foreach (var actor in _battle.Actors.Values) {
           if (actor.ExtractorDelivery != null) _buildingObstacles.Add(actor.ExtractorDelivery.WalkObstacle);
@@ -349,6 +381,8 @@ namespace FactoryWars.View {
           Footprint = Mathf.Max(2.2f, spec.FootprintRadius.AsFloat),
           Role = spec.Role,
           UnderConstruction = underConst,
+          Points = _battle != null && _battle.Actors.TryGetValue(e, out var view)
+            ? view.View.Model.GetComponentInChildren<CivilianActivityPoints>() : null,
         };
         _activeBuildings[e] = node;
         if (_byOwner.TryGetValue(owner, out var list) == false) {
@@ -400,13 +434,17 @@ namespace FactoryWars.View {
         if (nodes.Count == 0) continue;
         var hq = FindAnchor(nodes);
         nodes.RemoveAll(node => (node.Position - hq.Position).sqrMagnitude > MaxBaseSpan * MaxBaseSpan);
-        var desired = MaxPerBase(nodes.Count);
+        var desired = 0;
+        foreach (var node in nodes) desired += node.Points != null ? node.Points.ExtraWorkers : WorkProfile(node.Role).ExtraWorkers;
+        desired = Mathf.Clamp(desired + 2, 2, MaxPerBase(nodes.Count));
+        var camera = Camera.main;
+        if (camera != null && (camera.transform.position - hq.Position).sqrMagnitude > 180f * 180f) desired = Mathf.Max(2, desired / 2);
         var existing = 0;
         for (var i = 0; i < _workers.Count; i++) {
           if (_workers[i].Owner == owner && _workers[i].State != WorkerState.Scattering) existing++;
         }
         while (existing < desired && ActiveWorkerCount < globalCap) {
-          var agent = SpawnWorker(owner, nodes, existing);
+          var agent = SpawnWorker(frame, owner, nodes, existing);
           if (agent == null) break;
           _workers.Add(agent);
           existing++;
@@ -433,14 +471,26 @@ namespace FactoryWars.View {
     }
 
     Vector3 SafeEntrance(BuildingNode from, Vector3 toward) {
+      var entrancePoint = from.Points != null ? from.Points.Entrance : null;
+      if (entrancePoint != null && ClearPoint(entrancePoint.position)) return entrancePoint.position;
       var direction = toward - from.Position;
       var first = EntrancePoint(from, toward);
-      foreach (var degrees in new[] { 0f, 45f, -45f, 90f, -90f, 180f }) {
+      foreach (var degrees in EntranceAngles) {
         var entrance = EntrancePoint(from, from.Position + Quaternion.Euler(0f, degrees, 0f) * direction);
-        var flat = new Vector3(entrance.x, 0f, entrance.z);
-        if (!_buildingObstacles.Exists(bounds => bounds.Contains(flat))) return entrance;
+        if (ClearPoint(entrance)) return entrance;
       }
       return first;
+    }
+
+    bool ClearPoint(Vector3 point) {
+      point.y = 0f;
+      return !_buildingObstacles.Exists(bounds => bounds.Contains(point));
+    }
+
+    static bool OnWalkableGround(Frame frame, Vector3 point) {
+      var ground = frame.Map.GetNavMesh(FactoryWarsUtil.Rules(frame).NavMeshName);
+      point.y = 0f;
+      return ground != null && ground.Contains(point.ToFPVector3(), *frame.NavMeshRegionMask, true);
     }
 
     bool FindBlockingBuilding(Vector3 from, Vector3 to, out Bounds obstacle) {
@@ -497,7 +547,7 @@ namespace FactoryWars.View {
         // 본진에 사령부 1채만 있는 경기 초반: 사령부 앞 야적장 ↔ 출입구 순환 경로.
         var ang = (seed % 6) * 60f * Mathf.Deg2Rad;
         var outward = new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang));
-        var aPt = EntrancePoint(anchor, anchor.Position + outward);
+        var aPt = SafeEntrance(anchor, anchor.Position + outward);
         var bPt = aPt + outward * 5.2f + new Vector3(-outward.z, 0f, outward.x) * 3f;
         aPt.y = TerrainKit.SurfaceHeight(_map, aPt.x, aPt.z);
         bPt.y = TerrainKit.SurfaceHeight(_map, bPt.x, bPt.z);
@@ -530,21 +580,23 @@ namespace FactoryWars.View {
         }
       }
       var startPt = SafeEntrance(startNode, endNode.Position);
-      var endPt = SafeEntrance(endNode, startNode.Position);
+      var work = endNode.Points != null ? endNode.Points.Work : null;
+      var endPt = work != null && ClearPoint(work.position) ? work.position : SafeEntrance(endNode, startNode.Position);
       startPt.y = TerrainKit.SurfaceHeight(_map, startPt.x, startPt.z);
       endPt.y = TerrainKit.SurfaceHeight(_map, endPt.x, endPt.z);
       return (startNode, endNode, startPt, endPt);
     }
 
-    WorkerAgent SpawnWorker(int owner, List<BuildingNode> localNodes, int slotIdx) {
+    WorkerAgent SpawnWorker(Frame frame, int owner, List<BuildingNode> localNodes, int slotIdx) {
       var seed = ++_spawnCounter + owner * 37 + slotIdx * 13;
       var (nodeA, nodeB, startPt, endPt) = PickRoute(localNodes, seed, EntityRef.None);
       // 초기 스폰 시 경로 상에 고르게 분산 배치해 스폰 직후부터 활기찬 동선을 보여 준다.
       var frac = Mathf.Clamp(0.15f + (slotIdx % 5) * 0.17f, 0.12f, 0.85f);
       var spawnPos = Vector3.Lerp(startPt, endPt, frac);
-      if (FindBlockingBuilding(startPt, spawnPos, out _)) {
+      if (!ClearPoint(spawnPos) || !OnWalkableGround(frame, spawnPos) || FindBlockingBuilding(startPt, spawnPos, out _)) {
         spawnPos = startPt;
       }
+      if (!ClearPoint(spawnPos) || !OnWalkableGround(frame, spawnPos)) return null;
       spawnPos.y = TerrainKit.SurfaceHeight(_map, spawnPos.x, spawnPos.z);
 
       var dir = endPt - spawnPos;
@@ -556,8 +608,26 @@ namespace FactoryWars.View {
       Animation legacy = null;
       WorkerCarryRig carryRig = null;
       var isTrolley = (seed % 3 == 2);
+      var cargoRole = IsExtractor(nodeA) ? nodeA.Role : nodeB.Role;
+      var key = (seed % 4, cargoRole, isTrolley);
+      MixamoMotion motion = null;
+      var reuse = _pool.FindIndex(worker => worker.Root != null && worker.PoolKey == key);
+      if (reuse >= 0) {
+        var worker = _pool[reuse];
+        _pool.RemoveAt(reuse);
+        go = worker.Root;
+        anim = worker.Animator;
+        legacy = worker.LegacyAnimation;
+        carryRig = worker.CarryRig;
+        motion = worker.Motion;
+        go.transform.SetPositionAndRotation(spawnPos, Quaternion.Euler(0f, yaw, 0f));
+        go.SetActive(true);
+        carryRig?.SetCarrying(true);
+        if (carryRig != null) carryRig.LoadingProgress = 0f;
+        motion?.Set(null);
+      }
 
-      if (HasSyntyWorkers()) {
+      if (go == null && HasSyntyWorkers()) {
         var variantIdx = seed % 4;
         if (VisualCatalog.TryFilled(VisualCatalog.FxId($"const_worker_{variantIdx}"), out var wSlot) == false || wSlot.Prefab == null) {
           VisualCatalog.TryFilled(VisualCatalog.FxId("const_worker_0"), out wSlot);
@@ -580,7 +650,6 @@ namespace FactoryWars.View {
             anim.Play(0, 0, (seed * 0.23f) % 1f);
           }
           // 운반 목재 상자 또는 핸드트럭 장착 + 2-Bone IK 파지.
-          var cargoRole = IsExtractor(nodeA) ? nodeA.Role : nodeB.Role;
           var cargo = cargoRole == BuildingRole.LumberMill ? _catalog?.LumberCargo
             : cargoRole == BuildingRole.IronExtractor ? _catalog?.IronCargo : null;
           if (cargo != null && isTrolley == false) {
@@ -618,7 +687,7 @@ namespace FactoryWars.View {
       return new WorkerAgent {
         Root = go,
         Animator = anim,
-        Motion = MixamoMotion.Attach(anim),
+        Motion = motion ?? MixamoMotion.Attach(anim),
         LegacyAnimation = legacy,
         CarryRig = carryRig,
         Owner = owner,
@@ -626,12 +695,14 @@ namespace FactoryWars.View {
         ToEntity = nodeB.Entity,
         FromPos = nodeA.Position,
         ToPos = nodeB.Position,
+        Role = nodeB.Role,
+        PoolKey = key,
         TargetPoint = endPt,
         WalkSpeed = isTrolley ? 1.75f : (1.85f + (seed % 4) * 0.14f),
         State = WorkerState.Walking,
         IsTrolley = isTrolley,
         Seed = seed,
-        ShiftRemaining = 9f + seed % 7,
+        ShiftRemaining = WorkProfile(nodeB.Role).Shift + seed % 7,
       };
     }
 
@@ -640,7 +711,12 @@ namespace FactoryWars.View {
       if (worker.Motion != null) {
         string pose = null;
         if (worker.State == WorkerState.Working) {
-          pose = worker.IsTrolley ? "HoldingIdle" : (worker.Seed % 3 == 0 ? "Lift" : worker.Seed % 3 == 1 ? "PickUp" : "PutDown");
+          pose = worker.Role switch {
+            BuildingRole.VehicleFactory or BuildingRole.HeavyWorks or BuildingRole.Processor or BuildingRole.IronExtractor => MachinePoses[worker.Seed % MachinePoses.Length],
+            BuildingRole.MlrsBattery => worker.Seed % 2 == 0 ? "Inspect" : "Device",
+            BuildingRole.Headquarters or BuildingRole.Barracks when worker.Seed % 2 == 0 => "Inspect",
+            _ => worker.IsTrolley ? "HoldingIdle" : worker.Seed % 3 == 0 ? "Lift" : worker.Seed % 3 == 1 ? "PickUp" : "PutDown",
+          };
         } else if (worker.CarryRig != null && worker.CarryRig.IsCarrying) {
           pose = speed > 0.15f
             ? worker.IsTrolley ? "WheelbarrowWalk" : worker.Seed % 3 == 0 ? "BoxJog" : "HoldingWalk"
@@ -666,6 +742,7 @@ namespace FactoryWars.View {
         var angle = (worker.Seed % 16 + i * 2) * 22.5f * Mathf.Deg2Rad;
         var direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
         var point = EntrancePoint(home, home.Position + direction) + direction * (3f + worker.Seed % 3);
+        if (i == 0 && home.Points != null && home.Points.Rest != null) point = home.Points.Rest.position;
         var flat = new Vector3(point.x, 0f, point.z);
         if (_buildingObstacles.Exists(bounds => bounds.Contains(flat))
             || ground.Contains(flat.ToFPVector3(), *frame.NavMeshRegionMask, true) == false) continue;
@@ -689,6 +766,7 @@ namespace FactoryWars.View {
       worker.FromPos = worker.ToPos;
       worker.ToEntity = next.Entity;
       worker.ToPos = next.Position;
+      worker.Role = next.Role;
       worker.TargetPoint = end;
       worker.RepathAt = 0f;
       worker.State = WorkerState.Walking;
@@ -708,14 +786,18 @@ namespace FactoryWars.View {
         if (w.State == WorkerState.Scattering) {
           w.ScatterTimer -= dt;
           if (w.ScatterTimer <= 0f) {
-            Destroy(w.Root);
+            if (_pool.Count < _highGlobalBudget) {
+              tr.localScale = Vector3.one * 0.85f;
+              w.Root.SetActive(false);
+              _pool.Add(w);
+            } else Destroy(w.Root);
             _workers.RemoveAt(i);
             continue;
           }
           var step = w.ScatterDir * (4.1f * dt);
           var next = tr.position + step;
           next.y = TerrainKit.SurfaceHeight(_map, next.x, next.z);
-          var blocked = FindBlockingBuilding(tr.position, next, out _);
+          var blocked = !OnWalkableGround(frame, next) || FindBlockingBuilding(tr.position, next, out _);
           if (!blocked) tr.position = next;
           var runYaw = Mathf.Atan2(w.ScatterDir.x, w.ScatterDir.z) * Mathf.Rad2Deg;
           tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.Euler(0f, runYaw, 0f), 480f * dt);
@@ -757,7 +839,7 @@ namespace FactoryWars.View {
             if (w.State == WorkerState.Working && w.ShiftRemaining <= 0f && StartRestTrip(frame, w, nodes)) {
               continue;
             }
-            if (w.State == WorkerState.Resting) w.ShiftRemaining = 12f + w.Seed % 9;
+            if (w.State == WorkerState.Resting) w.ShiftRemaining = WorkProfile(w.Role).Shift + w.Seed % 9;
             ResumeLogistics(w, nodes);
           }
           continue;
@@ -770,11 +852,12 @@ namespace FactoryWars.View {
         if (dist <= 0.35f) {
           if (w.State == WorkerState.WalkingToRest) {
             w.State = WorkerState.Resting;
-            w.PauseTimer = 3.5f + (w.Seed % 5) * 0.45f;
+            w.PauseTimer = WorkProfile(w.Role).Break + (w.Seed % 5) * 0.45f;
           } else {
             w.State = WorkerState.Working;
             w.PauseDuration = w.PauseTimer = 1.15f + (w.Seed % 4) * 0.25f;
-            w.CarryRig?.SetCarrying(true);
+            var equipment = w.Role is BuildingRole.VehicleFactory or BuildingRole.HeavyWorks or BuildingRole.Processor or BuildingRole.IronExtractor;
+            w.CarryRig?.SetCarrying(!equipment);
           }
           SetMotion(w, 0f, dt);
           continue;
@@ -804,8 +887,10 @@ namespace FactoryWars.View {
         var move = Mathf.Min(dist, w.CurrentSpeed * dt);
         var pos = tr.position + dir * move;
         pos.y = TerrainKit.SurfaceHeight(_map, pos.x, pos.z);
-        if (FindBlockingBuilding(tr.position, pos, out _)) {
+        if (!OnWalkableGround(frame, pos) || FindBlockingBuilding(tr.position, pos, out _)) {
           w.RepathAt = 0f;
+          w.State = WorkerState.Waiting;
+          w.PauseTimer = 0.35f;
           SetMotion(w, 0f, dt);
           continue;
         }

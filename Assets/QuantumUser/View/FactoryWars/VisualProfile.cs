@@ -43,6 +43,7 @@ namespace FactoryWars.View {
     /// <summary>건물 본체를 칸 크기의 이 비율로 줄이고 바닥판을 깐다. 1이면 바닥판이 없다.</summary>
     public float BuildingBody = 1f;
     public float PlateScale = 1.05f;
+    [Min(0f)] public float FoundationMarginScale = 1f;
     public float PlateHeight = 0.15f;
 
     [Header("조명")]

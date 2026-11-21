@@ -107,6 +107,8 @@ namespace FactoryWars.View {
       ("cf_lumber_mill", "cf_collection_yard", 1f),
       ("ff_iron_extractor", "ff_processor", 1f),
       ("cf_iron_extractor", "cf_processor", 1f),
+      ("ff_mlrs_battery", "MLRS_Battery", 1f),
+      ("cf_mlrs_battery", "MLRS_Battery", 1f),
       // 플레이어 조종 수송 유닛(APC · 수륙양용 상륙정 · 전술 수송헬기).
       ("cf_apc_transport", "ff_field_support", 1.0f),
       ("ff_landing_craft", "ff_scout_boat", 1.35f),

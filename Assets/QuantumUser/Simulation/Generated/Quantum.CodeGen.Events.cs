@@ -52,7 +52,7 @@ namespace Quantum {
   public unsafe partial class Frame {
     public unsafe partial struct FrameEvents {
       static partial void GetEventTypeCountCodeGen(ref Int32 eventCount) {
-        eventCount = 53;
+        eventCount = 55;
       }
       static partial void GetParentEventIDCodeGen(Int32 eventID, ref Int32 parentEventID) {
         switch (eventID) {
@@ -112,6 +112,8 @@ namespace Quantum {
           case EventTransportRamp.ID: result = typeof(EventTransportRamp); return;
           case EventExtractorStaffChanged.ID: result = typeof(EventExtractorStaffChanged); return;
           case EventAreaImpact.ID: result = typeof(EventAreaImpact); return;
+          case EventMlrsLaunched.ID: result = typeof(EventMlrsLaunched); return;
+          case EventMlrsImpact.ID: result = typeof(EventMlrsImpact); return;
           case EventWrecked.ID: result = typeof(EventWrecked); return;
           default: break;
         }
@@ -540,6 +542,24 @@ namespace Quantum {
       public EventAreaImpact AreaImpact(FPVector3 Position, FP Radius) {
         if (_f.IsPredicted) return null;
         var ev = _f.Context.AcquireEvent<EventAreaImpact>(EventAreaImpact.ID);
+        ev.Position = Position;
+        ev.Radius = Radius;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventMlrsLaunched MlrsLaunched(EntityRef Battery, PlayerRef Owner, FPVector3 Origin, FPVector3 Direction) {
+        if (_f.IsPredicted) return null;
+        var ev = _f.Context.AcquireEvent<EventMlrsLaunched>(EventMlrsLaunched.ID);
+        ev.Battery = Battery;
+        ev.Owner = Owner;
+        ev.Origin = Origin;
+        ev.Direction = Direction;
+        _f.AddEvent(ev);
+        return ev;
+      }
+      public EventMlrsImpact MlrsImpact(FPVector3 Position, FP Radius) {
+        if (_f.IsPredicted) return null;
+        var ev = _f.Context.AcquireEvent<EventMlrsImpact>(EventMlrsImpact.ID);
         ev.Position = Position;
         ev.Radius = Radius;
         _f.AddEvent(ev);
@@ -1981,15 +2001,16 @@ namespace Quantum {
       }
     }
   }
-  public unsafe partial class EventWrecked : EventBase {
+  public unsafe partial class EventMlrsLaunched : EventBase {
     public new const Int32 ID = 52;
-    public FPVector3 Position;
-    public Int32 Size;
-    public FP Footprint;
-    protected EventWrecked(Int32 id, EventFlags flags) : 
+    public EntityRef Battery;
+    public PlayerRef Owner;
+    public FPVector3 Origin;
+    public FPVector3 Direction;
+    protected EventMlrsLaunched(Int32 id, EventFlags flags) : 
         base(id, flags) {
     }
-    public EventWrecked() : 
+    public EventMlrsLaunched() : 
         base(52, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
     }
     public new QuantumGame Game {
@@ -2003,6 +2024,63 @@ namespace Quantum {
     public override Int32 GetHashCode() {
       unchecked {
         var hash = 311;
+        hash = hash * 31 + Battery.GetHashCode();
+        hash = hash * 31 + Owner.GetHashCode();
+        hash = hash * 31 + Origin.GetHashCode();
+        hash = hash * 31 + Direction.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventMlrsImpact : EventBase {
+    public new const Int32 ID = 53;
+    public FPVector3 Position;
+    public FP Radius;
+    protected EventMlrsImpact(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventMlrsImpact() : 
+        base(53, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 313;
+        hash = hash * 31 + Position.GetHashCode();
+        hash = hash * 31 + Radius.GetHashCode();
+        return hash;
+      }
+    }
+  }
+  public unsafe partial class EventWrecked : EventBase {
+    public new const Int32 ID = 54;
+    public FPVector3 Position;
+    public Int32 Size;
+    public FP Footprint;
+    protected EventWrecked(Int32 id, EventFlags flags) : 
+        base(id, flags) {
+    }
+    public EventWrecked() : 
+        base(54, EventFlags.Server|EventFlags.Client|EventFlags.Synced) {
+    }
+    public new QuantumGame Game {
+      get {
+        return (QuantumGame)base.Game;
+      }
+      set {
+        base.Game = value;
+      }
+    }
+    public override Int32 GetHashCode() {
+      unchecked {
+        var hash = 317;
         hash = hash * 31 + Position.GetHashCode();
         hash = hash * 31 + Size.GetHashCode();
         hash = hash * 31 + Footprint.GetHashCode();

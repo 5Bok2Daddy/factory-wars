@@ -635,6 +635,66 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.MlrsMagazine))]
+  public unsafe partial class MlrsMagazinePrototype : ComponentPrototype<Quantum.MlrsMagazine> {
+    public Quantum.QEnum8<MlrsStatus> Status;
+    public Int32 Ammo;
+    public Int32 SearchFrame;
+    public Int32 AimFrame;
+    public Int32 FireFrame;
+    public Int32 ReloadRemaining;
+    public Int32 ReloadTotal;
+    public FPVector3 AimDirection;
+    partial void MaterializeUser(Frame frame, ref Quantum.MlrsMagazine result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.MlrsMagazine component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.MlrsMagazine result, in PrototypeMaterializationContext context = default) {
+        result.Status = this.Status;
+        result.Ammo = this.Ammo;
+        result.SearchFrame = this.SearchFrame;
+        result.AimFrame = this.AimFrame;
+        result.FireFrame = this.FireFrame;
+        result.ReloadRemaining = this.ReloadRemaining;
+        result.ReloadTotal = this.ReloadTotal;
+        result.AimDirection = this.AimDirection;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.MlrsRocket))]
+  public unsafe partial class MlrsRocketPrototype : ComponentPrototype<Quantum.MlrsRocket> {
+    public PlayerRef Owner;
+    public FPVector3 Origin;
+    public FPVector3 Target;
+    public FP Arc;
+    public FP BlastRadius;
+    public FP Damage;
+    public FP EdgeDamage;
+    public Int32 LaunchFrame;
+    public Int32 ImpactFrame;
+    partial void MaterializeUser(Frame frame, ref Quantum.MlrsRocket result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.MlrsRocket component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.MlrsRocket result, in PrototypeMaterializationContext context = default) {
+        result.Owner = this.Owner;
+        result.Origin = this.Origin;
+        result.Target = this.Target;
+        result.Arc = this.Arc;
+        result.BlastRadius = this.BlastRadius;
+        result.Damage = this.Damage;
+        result.EdgeDamage = this.EdgeDamage;
+        result.LaunchFrame = this.LaunchFrame;
+        result.ImpactFrame = this.ImpactFrame;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.NpcTrader))]
   public unsafe class NpcTraderPrototype : ComponentPrototype<Quantum.NpcTrader> {
     public FP Health;

@@ -30,6 +30,7 @@ namespace FactoryWars.View {
       { "ff_at_rocket", "대전차 로켓병" }, { "cf_at_rocket", "대전차 로켓병" },
       { "ff_breacher", "화염 돌격병" }, { "cf_breacher", "중화염 돌격병" },
       { "ff_mlrs_artillery", "다연장 로켓차" }, { "cf_rocket_artillery", "화력지원 로켓차" },
+      { "ff_mlrs_battery", "다연장 로켓 포대" }, { "cf_mlrs_battery", "다연장 로켓 포대" },
       { "ff_mobile_sam", "기동 대공차" }, { "cf_mobile_sam", "기동 대공미사일차" },
       // 항목 31 새 유닛(가칭, 실존 무기명과 무관)
       { "ff_scout_buggy", "정찰 버기" }, { "ff_field_support", "야전 정비차" }, { "ff_bulwark_tank", "방벽 중전차" },
