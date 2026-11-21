@@ -20,6 +20,15 @@ namespace Quantum.FactoryWars {
         && nav.Contains(point - new FPVector3(FP._0, FP._0, radius), mask, true);
     }
 
+    static bool InsideBuilding(Frame f, FPVector3 point, FP radius) {
+      var buildings = f.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out _, out var transform, out var building)) {
+        if (building->Health <= FP._0) continue;
+        if (Overlaps(point, transform->Position, f.FindAsset(building->Spec).FootprintRadius + radius)) return true;
+      }
+      return false;
+    }
+
     public static bool CanStand(Frame f, FPVector3 point, FP radius) {
       point.Y = FP._0;
       if (!OnGround(f, point, radius)) return false;
@@ -35,6 +44,17 @@ namespace Quantum.FactoryWars {
       requested.Y = FP._0;
       target = requested;
       if (CanStand(f, requested, radius)) return true;
+      // 건물 점유가 아닌 지형(광산·숲·바위) 위 목표는 그대로 둔다. NavMesh 길찾기가 가장 가까운 끝점으로 고친다.
+      // 여기서 옮기면 목표가 장애물 반대편 3m 밖으로 밀려 접근·탐지 거리가 어긋났다.
+      if (!InsideBuilding(f, requested, radius)) {
+        // 경계 가까운 목표는 반지름만큼만 안쪽으로 당긴다(먼 대체 지점을 찾지 않는다). 맵 밖 목표는 거절한다.
+        var map = FactoryWarsUtil.MapInfo(f);
+        if (requested.X < map.BoundsMin.X || requested.X > map.BoundsMax.X || requested.Z < map.BoundsMin.Y || requested.Z > map.BoundsMax.Y) return false;
+        target.X = FPMath.Clamp(requested.X, map.BoundsMin.X + radius, map.BoundsMax.X - radius);
+        target.Z = FPMath.Clamp(requested.Z, map.BoundsMin.Y + radius, map.BoundsMax.Y - radius);
+        if (!InsideBuilding(f, target, radius)) return true;
+        target = requested;
+      }
       var rules = FactoryWarsUtil.Rules(f);
       if (FactoryWarsUtil.FindNavPointNear(f, rules.NavMeshName, requested, rules.SpawnOffset, out var near)
           && CanStand(f, near, radius)) {
@@ -100,11 +120,16 @@ namespace Quantum.FactoryWars {
     public static bool TryDetour(Frame f, FPVector3 from, FPVector3 goal, FP radius, out FPVector3 point) {
       point = goal;
       if (!FirstBuilding(f, from, goal, radius, out var center, out var half)) return false;
-      var edge = half + FactoryWarsUtil.Rules(f).UnitClearance;
+      // 점유 사각형이 겹치는 건물 무리는 하나로 합쳐 무리의 모서리로 돈다. 건물마다 따로 고르면
+      // 붙은 두 건물의 앞쪽 모서리 사이를 1초마다 오가며 갇혔다(Units_PassBetweenBuildingsFacingEachOther).
+      Cluster(f, radius, center, half, out var min, out var max);
+      // 출발점이 무리 상자 안(건물이 만든 구석)이면 모서리 우회 대신 벽 따라 미끄러지기(PushOutOfBuildings)에 맡긴다.
+      if (from.X > min.X && from.X < max.X && from.Z > min.Y && from.Z < max.Y) return false;
+      var clearance = FactoryWarsUtil.Rules(f).UnitClearance;
       var best = FP.MaxValue;
       for (var x = -1; x <= 1; x += 2) {
         for (var z = -1; z <= 1; z += 2) {
-          var corner = new FPVector3(center.X + x * edge, FP._0, center.Z + z * edge);
+          var corner = new FPVector3(x < 0 ? min.X - clearance : max.X + clearance, FP._0, z < 0 ? min.Y - clearance : max.Y + clearance);
           var leg = FactoryWarsUtil.FlatDistanceSqr(from, corner);
           if (leg <= FP._0_25 || !CanStand(f, corner, radius)
               || FirstBuilding(f, from, corner, radius, out _, out _)) continue;
@@ -115,6 +140,27 @@ namespace Quantum.FactoryWars {
         }
       }
       return best != FP.MaxValue;
+    }
+
+    /// <summary>첫 건물의 점유 사각형에서 시작해, 겹치거나 맞닿은 살아 있는 건물 사각형을 모두 합친 상자(XZ).</summary>
+    static void Cluster(Frame f, FP radius, FPVector3 center, FP half, out FPVector2 min, out FPVector2 max) {
+      min = new FPVector2(center.X - half, center.Z - half);
+      max = new FPVector2(center.X + half, center.Z + half);
+      var grew = true;
+      for (var pass = 0; grew && pass < 16; pass++) {
+        grew = false;
+        var buildings = f.Filter<Transform3D, Building>();
+        while (buildings.NextUnsafe(out _, out var transform, out var building)) {
+          if (building->Health <= FP._0) continue;
+          var p = transform->Position;
+          var reach = f.FindAsset(building->Spec).FootprintRadius + radius;
+          if (p.X - reach > max.X || p.X + reach < min.X || p.Z - reach > max.Y || p.Z + reach < min.Y) continue;
+          if (p.X - reach < min.X) { min.X = p.X - reach; grew = true; }
+          if (p.X + reach > max.X) { max.X = p.X + reach; grew = true; }
+          if (p.Z - reach < min.Y) { min.Y = p.Z - reach; grew = true; }
+          if (p.Z + reach > max.Y) { max.Y = p.Z + reach; grew = true; }
+        }
+      }
     }
 
     static bool FirstBuilding(Frame f, FPVector3 from, FPVector3 to, FP radius, out FPVector3 center, out FP half) {
