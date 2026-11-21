@@ -467,7 +467,7 @@ namespace FactoryWars.EditorTools {
         Ramps = ramps.ToArray(),
         Roads = main.Concat(crossing).Concat(crossing.Select(Mirror)).Concat(flank).Concat(flank.Select(Mirror)).Concat(commute).ToArray(),
         Fords = new[] { Segment(P(-74, -30), P(-30, -74), FordHalfWidth) },
-        Expansions = new[] { Expansion(ExpansionKind.IronForecourt, -136, -72), Expansion(ExpansionKind.WoodForecourt, -72, -136) },
+        Expansions = new[] { Expansion(ExpansionKind.IronForecourt, -136, -62), Expansion(ExpansionKind.WoodForecourt, -62, -136) },
         SharedExpansions = new[] { Expansion(ExpansionKind.Shared, -134, 0) },
         CenterExpansions = new ExpansionSite[0],
         SharedSeatOffsets = new[] { 0, 3 },

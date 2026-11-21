@@ -27755,12 +27755,12 @@ MonoBehaviour:
       Y:
         RawValue: 0
       Z:
-        RawValue: -4718592
+        RawValue: -4063232
     SeatMask: 1
   - Kind: 1
     Position:
       X:
-        RawValue: -4718592
+        RawValue: -4063232
       Y:
         RawValue: 0
       Z:
@@ -27778,7 +27778,7 @@ MonoBehaviour:
   - Kind: 0
     Position:
       X:
-        RawValue: 4718592
+        RawValue: 4063232
       Y:
         RawValue: 0
       Z:
@@ -27791,7 +27791,7 @@ MonoBehaviour:
       Y:
         RawValue: 0
       Z:
-        RawValue: -4718592
+        RawValue: -4063232
     SeatMask: 2
   - Kind: 2
     Position:
@@ -27809,12 +27809,12 @@ MonoBehaviour:
       Y:
         RawValue: 0
       Z:
-        RawValue: 4718592
+        RawValue: 4063232
     SeatMask: 4
   - Kind: 1
     Position:
       X:
-        RawValue: 4718592
+        RawValue: 4063232
       Y:
         RawValue: 0
       Z:
@@ -27832,7 +27832,7 @@ MonoBehaviour:
   - Kind: 0
     Position:
       X:
-        RawValue: -4718592
+        RawValue: -4063232
       Y:
         RawValue: 0
       Z:
@@ -27845,7 +27845,7 @@ MonoBehaviour:
       Y:
         RawValue: 0
       Z:
-        RawValue: 4718592
+        RawValue: 4063232
     SeatMask: 8
   - Kind: 2
     Position:
@@ -28068,7 +28068,7 @@ MonoBehaviour:
       Yaw:
         RawValue: -566975
     Kind: 0
-    Garrison: 0
+    Garrison: 1
     Shortcut: 0
     Topples: 0
     FallZone:
@@ -28486,7 +28486,7 @@ MonoBehaviour:
       Yaw:
         RawValue: -6465215
     Kind: 0
-    Garrison: 0
+    Garrison: 1
     Shortcut: 0
     Topples: 0
     FallZone:
@@ -28904,7 +28904,7 @@ MonoBehaviour:
       Yaw:
         RawValue: -12363455
     Kind: 0
-    Garrison: 0
+    Garrison: 1
     Shortcut: 0
     Topples: 0
     FallZone:
@@ -29322,7 +29322,7 @@ MonoBehaviour:
       Yaw:
         RawValue: -18261695
     Kind: 0
-    Garrison: 0
+    Garrison: 1
     Shortcut: 0
     Topples: 0
     FallZone:
