@@ -14,55 +14,55 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Slots:
   - Id: panel
-    Sprite: {fileID: 0}
+    Sprite: {fileID: 5715634369318740061, guid: 197ffec4c98a6c74fb65184242798d6d, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: UI/panel_rectangle
-    Note: "\uD328\uB110 \uBC14\uD0D5(9-slice)"
+    Note: Strategy UI Kit Sheet 1/smooth_square_white
   - Id: button
-    Sprite: {fileID: 0}
+    Sprite: {fileID: -8602897447794995212, guid: 197ffec4c98a6c74fb65184242798d6d, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: UI/button_square_depth
-    Note: "\uBC84\uD2BC \uBCF4\uD1B5"
+    Note: Strategy UI Kit Sheet 1/btn_4_white
   - Id: button_pressed
-    Sprite: {fileID: 0}
+    Sprite: {fileID: -8602897447794995212, guid: 197ffec4c98a6c74fb65184242798d6d, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: UI/button_square
-    Note: "\uBC84\uD2BC \uB204\uB984"
+    Note: Strategy UI Kit Sheet 1/btn_4_white
   - Id: button_disabled
-    Sprite: {fileID: 0}
+    Sprite: {fileID: -8602897447794995212, guid: 197ffec4c98a6c74fb65184242798d6d, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: UI/button_square
-    Note: "\uBC84\uD2BC \uBE44\uD65C\uC131(\uC7A0\uAE40)"
+    Note: Strategy UI Kit Sheet 1/btn_4_white
   - Id: icon_frame
-    Sprite: {fileID: 0}
+    Sprite: {fileID: 4078962724306832857, guid: 197ffec4c98a6c74fb65184242798d6d, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: UI/button_square_header_small_square
-    Note: "\uC544\uC774\uCF58 \uD14C\uB450\uB9AC"
+    Note: Strategy UI Kit Sheet 1/frame_smooth_square
   - Id: res_iron
-    Sprite: {fileID: 0}
+    Sprite: {fileID: -6412988442103608833, guid: ff9f9fcf3b814c444b67d5de6aa58e27, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: Icons/res_iron
-    Note: "\uC790\uC6D0 \uC544\uC774\uCF58: \uCCA0"
+    Note: Strategy UI Kit Sheet 4/icon_stone
   - Id: res_wood
-    Sprite: {fileID: 0}
+    Sprite: {fileID: -5836256107916541028, guid: ff9f9fcf3b814c444b67d5de6aa58e27, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: Icons/res_wood
-    Note: "\uC790\uC6D0 \uC544\uC774\uCF58: \uBAA9\uC7AC"
+    Note: Strategy UI Kit Sheet 4/icon_log
   - Id: res_steel
-    Sprite: {fileID: 0}
+    Sprite: {fileID: 4201293500006657558, guid: ff9f9fcf3b814c444b67d5de6aa58e27, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: Icons/res_steel
-    Note: "\uC790\uC6D0 \uC544\uC774\uCF58: \uAC15\uCCA0"
+    Note: Strategy UI Kit Sheet 4/icon_ingot
   - Id: res_power
-    Sprite: {fileID: 0}
+    Sprite: {fileID: 5090062389691472708, guid: ff9f9fcf3b814c444b67d5de6aa58e27, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: Icons/res_power
-    Note: "\uC790\uC6D0 \uC544\uC774\uCF58: \uC804\uAE30"
+    Note: Strategy UI Kit Sheet 4/icon_lightning
   - Id: res_population
-    Sprite: {fileID: 0}
+    Sprite: {fileID: 1526658311566267009, guid: ff9f9fcf3b814c444b67d5de6aa58e27, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: Icons/res_population
-    Note: "\uC790\uC6D0 \uC544\uC774\uCF58: \uC778\uAD6C"
+    Note: Strategy UI Kit Sheet 4/icon_people
   - Id: badge_small
     Sprite: {fileID: 0}
     Border: {x: 0, y: 0, z: 0, w: 0}
@@ -89,23 +89,23 @@ MonoBehaviour:
     Fallback: UI/bar_round_small
     Note: "\uCCB4\uB825 \uB9C9\uB300 \uCC44\uC6C0"
   - Id: minimap_frame
-    Sprite: {fileID: 0}
+    Sprite: {fileID: 2909427586027771961, guid: 197ffec4c98a6c74fb65184242798d6d, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: UI/panel_rectangle
-    Note: "\uBBF8\uB2C8\uB9F5 \uD14C\uB450\uB9AC"
+    Note: Strategy UI Kit Sheet 1/frame_square_thick
   - Id: tab
-    Sprite: {fileID: 0}
+    Sprite: {fileID: 6700055491122819246, guid: 197ffec4c98a6c74fb65184242798d6d, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: UI/bar_round_large
-    Note: "\uD0ED\xB7\uC0C1\uD0DC \uC904"
+    Note: Strategy UI Kit Sheet 1/btn_3_white
   - Id: tooltip
-    Sprite: {fileID: 0}
+    Sprite: {fileID: 5715634369318740061, guid: 197ffec4c98a6c74fb65184242798d6d, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: UI/panel_glass
-    Note: "\uD234\uD301(\uC7A0\uAE40 \uC774\uC720)"
+    Note: Strategy UI Kit Sheet 1/smooth_square_white
   - Id: lock
-    Sprite: {fileID: 0}
+    Sprite: {fileID: 4116933870021874495, guid: ff9f9fcf3b814c444b67d5de6aa58e27, type: 3}
     Border: {x: 0, y: 0, z: 0, w: 0}
     Fallback: Icons/ui_lock
-    Note: "\uC790\uBB3C\uC1E0 \uD45C\uC2DC"
+    Note: Strategy UI Kit Sheet 4/icon_lock
   Font: {fileID: 0}

@@ -184,6 +184,10 @@ namespace FactoryWars.View {
         if (slot != null) {
           slot.gameObject.SetActive(false);
         }
+        var oldPlate = button.transform.Find("IconPlate");
+        if (oldPlate != null) {
+          oldPlate.gameObject.SetActive(false);
+        }
         Stretch(label.rectTransform, 6f);
         return;
       }
@@ -197,6 +201,27 @@ namespace FactoryWars.View {
         slot.gameObject.SetActive(true);
       }
       image.sprite = sprite;
+      var plateColor = UiTheme.Current.IconPlate;
+      var plate = button.transform.Find("IconPlate");
+      if (plateColor.a > 0f) {
+        if (plate == null) {
+          var rect = Rect("IconPlate", button.transform);
+          rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+          rect.pivot = new Vector2(0.5f, 1f);
+          rect.anchoredPosition = new Vector2(0, -2);
+          rect.sizeDelta = new Vector2(76, 72);
+          var back = rect.gameObject.AddComponent<Image>();
+          back.sprite = UiCatalog.SpriteFor("panel");
+          back.type = Image.Type.Sliced;
+          back.raycastTarget = false;
+          back.color = plateColor;
+          rect.SetSiblingIndex(image.transform.GetSiblingIndex());
+          plate = rect;
+        }
+        plate.gameObject.SetActive(true);
+      } else if (plate != null) {
+        plate.gameObject.SetActive(false);
+      }
       label.rectTransform.anchorMin = Vector2.zero;
       label.rectTransform.anchorMax = Vector2.one;
       label.rectTransform.offsetMin = new Vector2(2, 2);

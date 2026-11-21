@@ -12,11 +12,15 @@ namespace FactoryWars.View {
     [Header("색")]
     public Color Panel = new Color(0.96f, 0.98f, 1f, 0.92f);
     public Color PanelText = new Color(0.16f, 0.20f, 0.30f, 1f);
+    [Tooltip("패널 제목줄 바탕(흰 글자). 밝은 테마에서는 PanelText와 같은 짙은 남색.")]
+    public Color Header = new Color(0.16f, 0.20f, 0.30f, 1f);
     public Color Button = Color.white;
     public Color ButtonPressed = new Color(0.82f, 0.90f, 1f, 1f);
     public Color ButtonDisabled = new Color(0.78f, 0.81f, 0.86f, 0.80f);
     public Color ButtonText = new Color(0.16f, 0.20f, 0.30f, 1f);
     public Color DisabledText = new Color(0.40f, 0.44f, 0.50f, 1f);
+    [Tooltip("버튼 아이콘 뒤 받침판 색. 알파 0이면 받침판 없음(밝은 테마). 짙은 버튼에서 남색 아이콘·유닛 그림의 대비를 만든다.")]
+    public Color IconPlate = new Color(1f, 1f, 1f, 0f);
     public Color Accent = new Color(0.18f, 0.49f, 0.84f, 1f);
     public Color Warning = new Color(0.96f, 0.72f, 0.10f, 1f);
     public Color Danger = new Color(0.88f, 0.33f, 0.24f, 1f);

@@ -669,7 +669,7 @@ namespace FactoryWars.View {
       dim.raycastTarget = false;
       var panel = Ui.Panel("DoctrinePanel", _doctrineOverlay, theme.Panel);
       Ui.Place(panel, new Vector2(0.5f, 0.5f), new Vector2(0, 40), new Vector2(1180, 470));
-      var header = Ui.Capsule("DoctrineHeader", panel, theme.PanelText);
+      var header = Ui.Capsule("DoctrineHeader", panel, theme.Header);
       Ui.Place(header, new Vector2(0.5f, 1), new Vector2(0f, -26f), new Vector2(1100f, 64f));
       header.GetComponent<Image>().raycastTarget = false;
       _doctrineTitle = Ui.Label("Title", header, "전술 도크린을 고르세요", theme.FontLarge, TextAnchor.MiddleCenter);
@@ -892,7 +892,7 @@ namespace FactoryWars.View {
       var panel = Ui.Panel("ContextPanel", Root, theme.Panel);
       _contextPanel = panel.gameObject;
       Ui.Place(panel, new Vector2(1, 0), new Vector2(-12, 8), new Vector2(ContextWidth, ContextHeight));
-      var header = Ui.Capsule("CommandHeader", panel, theme.PanelText);
+      var header = Ui.Capsule("CommandHeader", panel, theme.Header);
       header.GetComponent<Image>().raycastTarget = false;
       header.anchorMin = new Vector2(0, 1);
       header.anchorMax = Vector2.one;
