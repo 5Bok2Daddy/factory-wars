@@ -111,7 +111,7 @@ namespace FactoryWars.Tests {
       var requested = V(-29, 14);
       var spec = Verified.FindAsset(BuildingOf(0, "iron_extractor"));
       var lumber = Verified.FindAsset(BuildingOf(0, "lumber_mill"));
-      Assert.AreEqual(4, spec.WorkerSlotCapacity);
+      Assert.AreEqual(3, spec.WorkerSlotCapacity);
       Assert.AreEqual(3, lumber.WorkerSlotCapacity);
       Assert.IsFalse(ProductionSystem.CanPlace(Verified, lumber, center, 0));
       Assert.IsTrue(ProductionSystem.TryGetBuildPlacement(Verified, spec, requested, 0, out var aligned));
@@ -185,12 +185,12 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => CitySystem.Occupants(Verified, site) == 1, 30f, "시공 공병 자동 배치");
       yield return Send(0, new EnterGarrisonCommand { Building = site,
         Units = engineers.Where(entity => Verified.Get<Unit>(entity).Garrison == EntityRef.None).ToArray() });
-      yield return WaitFor(() => CitySystem.Occupants(Verified, site) == 4, 30f, "철 채굴 공장 공병 4명 배치");
+      yield return WaitFor(() => CitySystem.Occupants(Verified, site) == 3, 30f, "철 채굴 공장 공병 3명 배치");
       yield return WaitFrames(Fps * 3);
-      Assert.AreEqual(4, CitySystem.Occupants(Verified, site));
-      Assert.AreEqual(1, engineers.Count(entity => Verified.Get<Unit>(entity).Garrison == EntityRef.None));
+      Assert.AreEqual(3, CitySystem.Occupants(Verified, site));
+      Assert.AreEqual(engineers.Count - 3, engineers.Count(entity => Verified.Get<Unit>(entity).Garrison == EntityRef.None));
 
-      for (var left = 3; left >= 0; left--) {
+      for (var left = 2; left >= 0; left--) {
         yield return Send(0, new ExitGarrisonCommand { Building = site });
         Assert.AreEqual(left, CitySystem.Occupants(Verified, site));
       }

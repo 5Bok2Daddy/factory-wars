@@ -2139,7 +2139,7 @@ namespace FactoryWars.View {
           inside += pair.Component.Garrison == entity ? 1 : 0;
         }
         Entries.Add(new ContextEntry {
-          Label = spec.RequiresResourceNode ? $"공병 내보내기\n{inside}/{capacity}" : $"내보내기\n{inside}/{capacity}",
+          Label = spec.RequiresResourceNode ? $"공병 빼기\n{inside}/{capacity}" : $"내보내기\n{inside}/{capacity}",
           Icon = "ui_rally_clear", Enabled = inside > 0, Locked = false,
           Detail = spec.RequiresResourceNode ? "배치된 공병을 한 명 내보냅니다. 배치된 공병이 없으면 채굴을 멈춥니다."
             : "보병 분대를 고르고 벙커를 누르면 들어갑니다. 안에서는 맞지 않고, 벙커가 부서지면 튕겨 나옵니다",

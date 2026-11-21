@@ -11,6 +11,57 @@ namespace FactoryWars.EditorTools {
   public static class NewBundleTools {
     const string Bundle = "Assets/ThirdParty/NewBundle";
     const string Output = Bundle + "/Generated/Resources/FactoryWarsBundle";
+    const string Polish = SyntyAssign.OutRoot + "/Polish/Resources/FactoryWarsPolish";
+
+    [MenuItem("Tools/Factory Wars/Assets/Prepare Map Polish")]
+    public static void PrepareMapPolish() {
+      Directory.CreateDirectory(Polish);
+      AssetDatabase.Refresh();
+      var sources = new (string Key, string Pack, string File)[] {
+        ("Fence", "Military", "Props/SM_Prop_Fence_01"),
+        ("Guardrail", "Military", "Buildings/SM_Bld_Railing_01"),
+        ("Tower", "Military", "Buildings/SM_Bld_GuardTower_02"),
+        ("Sandbags", "Military", "Props/Military/SM_Prop_Barrier_Base_Row_01"),
+        ("Radar", "Military", "Props/Military/SM_Prop_Mobile_Radar_01"),
+        ("DesertTent", "Military", "Buildings/SM_Bld_Tent_Desert_01"),
+        ("CamoYard", "Military", "Buildings/SM_Bld_CamoNet_Tent_01"),
+        ("Jersey", "Construction", "Props/SM_Prop_Barricade_Concrete_01"),
+        ("Light", "Construction", "Props/SM_Prop_Spotlight_01"),
+        ("Crates", "Construction", "Props/SM_Prop_Crate_Stack_01"),
+        ("Fuel", "Construction", "Props/SM_Prop_Fuel_Tank_01"),
+        ("Barrels", "Construction", "Props/SM_Prop_BarrelStack_01"),
+        ("Beams", "Construction", "Props/SM_Prop_Beam_Stack_01"),
+        ("Foundation", "Construction", "Buildings/SM_Bld_Concrete_Floor_01"),
+        ("Dock", "BattleRoyale", "Environments/SM_Env_Dock_01"),
+        ("CoastalRock", "BattleRoyale", "Environments/SM_Env_Rock_01"),
+        ("CoastalCliff", "BattleRoyale", "Environments/SM_Env_Rock_02"),
+      };
+      foreach (var (key, pack, file) in sources) {
+        var target = $"{Polish}/{key}.prefab";
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(target) != null) continue;
+        var source = $"{SyntyAssign.PackRoot}/Polygon{pack}/Prefabs/{file}.prefab";
+        if (!AssetDatabase.CopyAsset(source, target)) throw new System.InvalidOperationException($"Missing map art: {source}");
+      }
+      PrepareGuardrail();
+      Debug.Log($"[FW-Polish] Prepared {sources.Length} Synty prefabs");
+    }
+
+    static void PrepareGuardrail() {
+      var materialPath = $"{Polish}/SafetyYellow.mat";
+      if (AssetDatabase.LoadAssetAtPath<Material>(materialPath) != null) return;
+      var shader = Shader.Find("Universal Render Pipeline/Simple Lit");
+      if (shader == null) throw new System.InvalidOperationException("URP Simple Lit is unavailable.");
+      var material = new Material(shader) { color = new Color(0.79f, 0.52f, 0.065f), enableInstancing = true };
+      AssetDatabase.CreateAsset(material, materialPath);
+      var path = $"{Polish}/Guardrail.prefab";
+      var model = PrefabUtility.LoadPrefabContents(path);
+      try {
+        foreach (var renderer in model.GetComponentsInChildren<MeshRenderer>()) renderer.sharedMaterial = material;
+        PrefabUtility.SaveAsPrefabAsset(model, path);
+      } finally {
+        PrefabUtility.UnloadPrefabContents(model);
+      }
+    }
 
     [MenuItem("Tools/Factory Wars/Assets/Prepare New Bundle")]
     public static void Prepare() {

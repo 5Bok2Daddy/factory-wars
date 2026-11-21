@@ -74,7 +74,7 @@ namespace FactoryWars.Tests {
       Controller().Camera.Apply();
       yield return null;
       yield return Shoot33("33_carrier_drones");
-      var statusDir = Path.Combine(Application.dataPath, "..", "Docs", "status_images");
+      var statusDir = StatusImagesDir();
       Directory.CreateDirectory(statusDir);
       File.Copy(Path.Combine(UltimateFolder(), "33_carrier_drones.png"), Path.Combine(statusDir, "53_ultimate_flying_carrier.png"), true);
 

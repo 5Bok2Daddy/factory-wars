@@ -14,7 +14,9 @@ namespace FactoryWars.Tests {
   /// <summary>전장 잔존 흔적(영구 크레이터·영구 건물 붕괴 잔해·120 데칼 풀) 검증 및 전 유닛 개별 쇼케이스 PNG 캡처.</summary>
   public unsafe partial class LocalMatchTests {
     static string StatusImagesDir() {
-      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images"));
+      var destination = System.Environment.GetEnvironmentVariable("FW_CAPTURE_DIR");
+      var dir = Path.GetFullPath(string.IsNullOrEmpty(destination)
+        ? Path.Combine(Application.dataPath, "..", "Docs", "status_images") : destination);
       Directory.CreateDirectory(dir);
       return dir;
     }
@@ -294,7 +296,7 @@ namespace FactoryWars.Tests {
     [UnityTest]
     public IEnumerator Transport_DestructionRulesApcEjectsAt40PercentAndHeliLosesPassengers() {
       // 1) 지상 APC 파괴 시 승객은 40% 체력으로 긴급 탈출.
-      yield return StartMatch(units: new[] {
+      yield return StartMatch(truce: 8, units: new[] {
         (0, "ff_field_support", 0, 18),
         (0, "ff_ranger_squad", -1, 16), (0, "ff_ranger_squad", 1, 16),
         (1, "cf_fortress_tank", 6, 18),
@@ -304,6 +306,7 @@ namespace FactoryWars.Tests {
       yield return Send(0, new BoardTransportCommand { Units = rangers, Transport = apc });
       yield return WaitFor(() => TransportSystem.UsedSlots(Verified, apc) == 2, 20f, "APC 보병 2기 탑승");
       SetUnitHealth(apc, 5);
+      yield return WaitFor(() => !FactoryWarsUtil.InTruce(Verified), 20f, "APC 탑승 확인 후 휴전 종료");
       yield return WaitFor(() => Verified.Exists(apc) == false, 20f, "APC 파괴");
       yield return WaitFrames(2);
       foreach (var r in rangers) {
@@ -318,7 +321,7 @@ namespace FactoryWars.Tests {
       // 2) 공중 수송헬기 격추 시 탑승 승객 전원 손실 + 상륙정은 차량(3슬롯) 탑승 가능 검증.
       TearDown();
       yield return null;
-      yield return StartMatch(units: new[] {
+      yield return StartMatch(truce: 8, units: new[] {
         (0, "ff_transport_heli", 0, 18),
         (0, "ff_ranger_squad", -1, 17), (0, "ff_ranger_squad", 1, 17),
         (1, "cf_mobile_sam", 8, 18),
@@ -328,6 +331,7 @@ namespace FactoryWars.Tests {
       yield return Send(0, new BoardTransportCommand { Units = heliCrew, Transport = heli });
       yield return WaitFor(() => TransportSystem.UsedSlots(Verified, heli) == 2, 20f, "수송헬기 보병 2기 탑승");
       SetUnitHealth(heli, 5);
+      yield return WaitFor(() => !FactoryWarsUtil.InTruce(Verified), 20f, "수송헬기 탑승 확인 후 휴전 종료");
       yield return WaitFor(() => Verified.Exists(heli) == false, 20f, "수송헬기 격추");
       yield return WaitFrames(2);
       foreach (var r in heliCrew) {
@@ -796,19 +800,36 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Explicit, Category("CaptureCatalog")]
     public IEnumerator CaptureStaffedLumberMill() {
-      yield return StartMatch();
+      yield return StartMatch(units: new[] { (0, "ff_engineer", -34, 30) },
+        buildings: new[] { (0, "ff_barracks", -27, 34) });
       var center = V(-38, 30);
       var engineer = Engineers(0)[0];
       yield return Build(0, "lumber_mill", center, engineer);
       var site = BuildingAt(center);
       Assert.AreNotEqual(EntityRef.None, site);
       yield return WaitFor(() => Verified.Get<Unit>(engineer).Garrison == site, 60f, "제재소 공병 자동 배치");
+      yield return Send(0, new EnterGarrisonCommand { Building = site, Units = Engineers(0).Where(item => item != engineer).ToArray() });
+      yield return WaitFor(() => CitySystem.Occupants(Verified, site) == 2, 30f, "제재소에 추가 공병 배치");
       Time.timeScale = 1f;
       var view = Object.FindAnyObjectByType<BattleView>();
       yield return WaitFor(() => view.Actors.TryGetValue(site, out var actor) && actor.ExtractorEquipment != null
         && actor.ExtractorDelivery?.FirstCargo != null && actor.ExtractorDelivery.FirstCargo.gameObject.activeInHierarchy,
         10f, "가동 제재소의 톱과 목재 이송 표시");
       var saw = view.Actors[site].ExtractorEquipment;
+      var staffedActor = view.Actors[site];
+      Assert.IsTrue(staffedActor.PipRoot.activeInHierarchy);
+      Assert.AreEqual(3, staffedActor.PipRenderers.Length);
+      Assert.AreSame(HeroVisuals.PipMaterial(true), staffedActor.PipRenderers[0].sharedMaterial);
+      Assert.AreSame(HeroVisuals.PipMaterial(true), staffedActor.PipRenderers[1].sharedMaterial);
+      Assert.AreSame(HeroVisuals.PipMaterial(false), staffedActor.PipRenderers[2].sharedMaterial);
+      if (MixamoMotion.HasWorkerController) {
+        Assert.IsNotNull(staffedActor.ActivityCrew);
+        var worker = staffedActor.ActivityCrew.GetComponentInChildren<Animator>();
+        worker.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        yield return WaitFor(() => worker.GetCurrentAnimatorClipInfo(0).Any(info => info.clip.name == "Chop"),
+          5f, "Mixamo 제재소 도끼질 재생");
+        Assert.IsTrue(staffedActor.ActivityCrew.GetComponentsInChildren<Transform>().Any(item => item.name == "LumberWorkerAxe"));
+      }
       var before = saw.localRotation;
       yield return new WaitForSeconds(0.18f);
       Assert.Greater(Quaternion.Angle(before, saw.localRotation), 5f, "배치 중 제재소 톱 회전");
@@ -816,8 +837,10 @@ namespace FactoryWars.Tests {
       var camera = Camera.main;
       camera.transform.position = focus + new Vector3(10f, 13f, -14f);
       camera.transform.LookAt(focus);
-      var path = Path.GetFullPath(Path.Combine(Application.dataPath, "../../Game-logs/recovery-staffed-lumber-mill.png"));
+      staffedActor.PipRoot.transform.rotation = camera.transform.rotation;
+      var path = Path.Combine(StatusImagesDir(), "current_resource_extraction.png");
       CaptureCameraPng(camera, path, 1280, 720);
+      yield return Send(0, new ExitGarrisonCommand { Building = site });
       yield return Send(0, new ExitGarrisonCommand { Building = site });
       yield return null;
       before = saw.localRotation;

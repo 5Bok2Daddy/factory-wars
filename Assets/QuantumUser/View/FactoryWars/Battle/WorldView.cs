@@ -338,7 +338,7 @@ namespace FactoryWars.View {
           intactGo = new GameObject(themedBridge ? "BundleBridgeDeck" : "StraitBridgeDeck", typeof(MeshFilter), typeof(MeshRenderer));
           intactGo.transform.SetParent(holder.transform, false);
           var sk = new MeshKit();
-          sk.Paint(Swatch.ConcreteDark).Box(new Vector3(0f, -0.18f, 0f), new Vector3(width + 0.8f, 0.55f, span + 2.4f));
+          if (!themedBridge) sk.Paint(Swatch.ConcreteDark).Box(new Vector3(0f, -0.18f, 0f), new Vector3(width + 0.8f, 0.55f, span + 2.4f));
           sk.Paint(Swatch.Asphalt).Box(new Vector3(0f, 0.14f, 0f), new Vector3(width - 0.8f, 0.10f, span + 2.2f));
           if (themedBridge == false) {
             sk.Paint(Swatch.Concrete).Box(new Vector3(-(width * 0.5f + 0.1f), 0.52f, 0f), new Vector3(0.65f, 0.95f, span + 2.2f));
@@ -465,6 +465,30 @@ namespace FactoryWars.View {
         var outposts = new[] { LoadFx("desert_outpost_1"), LoadFx("desert_outpost_2"), LoadFx("desert_outpost_3") };
         var deadTree = LoadFx("desert_tree");
         var oasis = LoadFx("desert_oasis");
+        if (canyon != null) {
+          var rect = MapPolishArt.PlayableRect(_map);
+          var bounds = NewBundleArt.BoundsOf(canyon);
+          var lengthUnit = Mathf.Max(bounds.size.x, bounds.size.z);
+          var number = 0;
+          foreach (var (from, to, outward) in MapPolishArt.Edges(rect)) {
+            var length = Vector2.Distance(from, to);
+            var direction = (to - from).normalized;
+            for (var offset = 9f; offset < length; offset += 17f, number++) {
+              var noise = MeshKit.Hash(number, 57);
+              var center = from + direction * offset + outward * (3f + noise * 5f);
+              Place(canyon, new Vector3(center.x, -0.65f, center.y), number * 67f, (13f + noise * 11f) / lengthUnit);
+            }
+          }
+          foreach (var high in _map.HighGrounds ?? System.Array.Empty<MapShape>()) {
+            var center = high.Center.ToUnityVector3();
+            for (var i = 0; i < 7; i++, number++) {
+              var angle = i * Mathf.PI * 2f / 7f;
+              var radial = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+              var position = center + radial * (high.Radius.AsFloat + 3f);
+              Place(canyon, position, number * 53f, (7f + MeshKit.Hash(number, 58) * 4f) / lengthUnit);
+            }
+          }
+        }
         var idx = 0;
         var placed = 0;
         for (var x = _map.BoundsMin.X.AsFloat + 10f; x <= _map.BoundsMax.X.AsFloat - 10f; x += 15f) {

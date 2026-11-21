@@ -24,6 +24,7 @@ namespace FactoryWars.View {
     float _aim;
 
     public bool Aiming;
+    public bool PreserveGesturePose;
     public Vector3 AimPoint;
     /// <summary>대전차 로켓병(RPG): 어깨 거치형 발사기 오프셋 적용.</summary>
     public bool ShoulderMounted;
@@ -151,6 +152,12 @@ namespace FactoryWars.View {
         }
       }
       var right = Vector3.Cross(up, facing).normalized;
+      if (PreserveGesturePose && !ShoulderMounted) {
+        var palm = (_handR.position - _elbowR.position).normalized;
+        _rifle.SetPositionAndRotation(_handR.position + palm * (0.045f * scale),
+          Quaternion.LookRotation((facing - up * 0.35f).normalized, up));
+        return;
+      }
 
       // 상체: 표적 쪽으로 자연스럽게 회전 및 사격 반동.
       if (_spine != null) {

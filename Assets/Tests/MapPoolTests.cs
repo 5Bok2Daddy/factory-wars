@@ -149,12 +149,26 @@ namespace FactoryWars.Tests {
         var map = world.Map;
         Assert.IsNotNull(Verified.Map.GetNavMesh(FactoryWarsUtil.Rules(Verified).NavMeshName), $"지상 NavMesh {scene}");
         var models = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+        if (MapPolishArt.Prefab("Fence") != null) {
+          var props = DressingRenderer.Active.Group("urban");
+          if (scene == "Map4P") {
+            Assert.Greater(props.Count(item => item.Prefab.name == "Fence"), 15, "운하 경계 철조망");
+            Assert.IsFalse(props.Any(item => item.Kind == DressKind.QuayPillar), "독립 호안 기둥 제거");
+          }
+          if (scene == "MapArchipelago" || scene == "MapStrait") {
+            Assert.IsTrue(props.Any(item => item.Prefab.name == "Dock"), $"{scene} 부두");
+            Assert.IsFalse(models.Any(model => model.name == "Water" && model.parent?.name == "World"), $"{scene} 중복 수면 스트립 제거");
+          }
+          foreach (var item in props.Where(item => item.Prefab.name is "Fence" or "Guardrail" or "Jersey" or "Tower" or "Sandbags" or "Dock" or "CoastalRock" or "CoastalCliff")) {
+            Assert.IsFalse(map.Roads.Any(road => item.Footprint.Overlaps(road, 0f)), $"{scene} 소품이 차도를 침범 {item.Prefab.name}");
+          }
+        }
         var decks = models.Where(model => model.name == "BundleBridgeDeck").ToArray();
         if (scene == "Map4P" || scene == "MapArchipelago" || scene == "MapStrait") {
           Assert.AreEqual(map.Bridges.Length, decks.Length, scene);
           Assert.IsNotEmpty(decks);
           foreach (var deck in decks) {
-            var laneHalfWidth = deck.GetComponent<MeshFilter>().sharedMesh.bounds.extents.x - 0.84f;
+            var laneHalfWidth = deck.GetComponent<MeshFilter>().sharedMesh.bounds.extents.x;
             var rails = deck.Cast<Transform>().Where(part => part.name == "BundleBridgeRail").ToArray();
             Assert.IsNotEmpty(rails);
             foreach (var rail in rails) {
@@ -205,7 +219,7 @@ namespace FactoryWars.Tests {
         camera.transform.position = focus + offset;
         camera.transform.LookAt(focus);
         camera.fieldOfView = 48f;
-        var target = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, $"../../Game-logs/new-bundle/{shot}.png"));
+        var target = System.IO.Path.Combine(StatusImagesDir(), $"{shot}.png");
         CaptureCameraPng(camera, target, 1600, 900);
       }
     }

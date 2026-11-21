@@ -51,7 +51,14 @@ namespace FactoryWars.View {
     /// 점은 안쪽으로만 움직여서 화면이 판정 모양 밖으로 나가지 않는다.
     /// </summary>
     public static void Plateau(MeshKit k, MapShape shape, int seed, float height, int layers, float jag, bool dark) {
-      if (dark == false && VisualProfile.Current.FieldLook && Dressing.Collecting && Dressing.Has(DressKind.CitySmall)) {
+      var pBiome = BiomeOf(Dressing.RoadMask);
+      var desert = pBiome == Biome.Desert;
+      if (desert && Dressing.Collecting && NewBundleArt.CanyonFeature(Dressing.RoadMask, shape, height, seed)) return;
+      if (desert) {
+        height *= 0.48f;
+        jag *= 1.65f;
+      }
+      if (!desert && dark == false && VisualProfile.Current.FieldLook && Dressing.Collecting && Dressing.Has(DressKind.CitySmall)) {
         CityLot(k, shape, seed);
         return;
       }
@@ -74,9 +81,10 @@ namespace FactoryWars.View {
         rings.Add(points);
       }
       // 29 2-1: Kenney 디오라마 깔끔한 단색 슬래브 (옆면 #9AA5B8, 윗면 잔디 #7BE5BA)
-      Swatch[] faces = dark ? new[] { Swatch.ConcreteDark, Swatch.ConcreteDark, Swatch.ConcreteDark } : new[] { Swatch.ConcreteDark, Swatch.ConcreteDark, Swatch.Concrete };
+      Swatch[] faces = desert ? new[] { Swatch.CanyonMid, Swatch.CliffMid, Swatch.CliffLight }
+        : dark ? new[] { Swatch.ConcreteDark, Swatch.ConcreteDark, Swatch.ConcreteDark } : new[] { Swatch.ConcreteDark, Swatch.ConcreteDark, Swatch.Concrete };
       // Kenney 절벽 조각이 있으면 층마다 둘레 조각을 늘인 바위 블록으로 쌓는다(윗면 풀 턱이 층을 만든다). 판정은 그대로다.
-      var dressed = Dressing.Collecting && Dressing.Has(DressKind.Cliff);
+      var dressed = !desert && Dressing.Collecting && Dressing.Has(DressKind.Cliff);
       for (var l = 0; l < layers; l++) {
         var bottom = height * l / layers;
         var top = height * (l + 1) / layers * (0.92f + 0.08f * MeshKit.Hash(seed, 900 + l));
@@ -171,9 +179,8 @@ namespace FactoryWars.View {
       // 윗면: 맨 위 고리를 가운데 점으로 덮는다.
       var last = rings[layers];
       var cap = new Vector3(center.x, height, center.y);
-      var pBiome = BiomeOf(Dressing.RoadMask);
-      var capSwatch = dark ? Swatch.RockFace
-        : pBiome == Biome.Desert ? Swatch.Sand
+      var capSwatch = desert ? Swatch.CliffLight
+        : dark ? Swatch.RockFace
         : pBiome == Biome.Urban ? Swatch.Asphalt
         : pBiome == Biome.Strait ? Swatch.Boulder
         : ArtPalette.Turf(Swatch.Grass);

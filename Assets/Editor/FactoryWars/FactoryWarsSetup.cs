@@ -1074,7 +1074,7 @@ namespace FactoryWars.EditorTools {
         return extractor;
       }
       var lumber = Ref(Extractor($"{prefix}_lumber_mill", ResourceKind.Wood, 3, R(100, 120)));
-      var iron = Ref(Extractor($"{prefix}_iron_extractor", ResourceKind.Iron, 4, R(120, 100)));
+      var iron = Ref(Extractor($"{prefix}_iron_extractor", ResourceKind.Iron, 3, R(120, 100)));
       faction.Buildings = faction.Buildings.Where(reference => reference != lumber && reference != iron && reference != faction.Headquarters)
         .Concat(new[] { lumber, iron, faction.Headquarters }).ToArray();
       EditorUtility.SetDirty(faction);

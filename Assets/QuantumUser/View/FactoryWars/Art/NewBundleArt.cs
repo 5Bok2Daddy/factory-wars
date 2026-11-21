@@ -31,7 +31,7 @@ namespace FactoryWars.View {
       var length = span / sections;
       for (var i = 0; i < sections; ++i) {
         var z = -span * 0.5f + length * (i + 0.5f);
-        Fit("BridgeBase", parent, new Vector3(0f, -0.24f, z), new Vector3(width, 0.85f, length), top: true);
+        Fit("BridgeBase", parent, new Vector3(0f, 0.1f, z), new Vector3(width, 0.85f, length), top: true);
         for (var side = -1; side <= 1; side += 2) {
           Fit("BridgeRail", parent, new Vector3(side * (width * 0.5f - 0.21f), 0.19f, z),
             new Vector3(0.40f, longStrait ? 0.72f : 0.64f, length - 0.12f), top: false);
@@ -61,6 +61,29 @@ namespace FactoryWars.View {
 
     public static bool HasWoodland(MapSpec map) =>
       (map.name == "map_Map4P" || map.name == "map_test") && Prefab("WoodlandTree") != null;
+
+    public static bool CanyonFeature(MapSpec map, MapShape shape, float height, int seed) {
+      var prefab = Prefab("CanyonRock");
+      if (prefab == null || map == null) return false;
+      var length = (shape.IsCircle ? shape.Radius : shape.HalfLength).AsFloat * 2f;
+      var width = (shape.IsCircle ? shape.Radius : shape.HalfWidth).AsFloat * 2f;
+      if (Mathf.Min(length, width) < 2f) return false;
+      var bounds = BoundsOf(prefab);
+      var yaw = shape.IsCircle ? MeshKit.Hash(seed, 151) * 360f : shape.Yaw.AsFloat + (length > width ? 90f : 0f);
+      var rotation = Quaternion.Euler(0f, yaw, 0f);
+      var scale = new Vector3(Mathf.Min(length, width) / bounds.size.x, height / bounds.size.y, Mathf.Max(length, width) / bounds.size.z);
+      var center = shape.Center.ToUnityVector3();
+      bool Fits(GroundFootprint footprint) {
+        foreach (var road in map.Roads ?? System.Array.Empty<MapShape>()) if (footprint.Overlaps(road, 0.8f)) return false;
+        foreach (var bridge in map.Bridges ?? System.Array.Empty<MapShape>()) if (footprint.Overlaps(bridge, 0.8f)) return false;
+        foreach (var city in map.CityBuildings ?? System.Array.Empty<CityBuildingPlacement>()) if (footprint.Overlaps(city.Shape, 0.5f)) return false;
+        foreach (var node in map.ResourceNodes ?? System.Array.Empty<ResourceNodePlacement>()) if (footprint.Overlaps(node.Shape, 0.4f)) return false;
+        return true;
+      }
+      return Dressing.AddPrefab(prefab, center, rotation, scale * 0.92f, Fits)
+        || Dressing.AddPrefab(prefab, center, rotation, scale * 0.68f, Fits)
+        || Dressing.AddPrefab(prefab, center, rotation, scale * 0.47f, Fits);
+    }
 
     public static void AddWoodland(MapSpec map, MapShape shape, int seed, float remaining, float clearHalfExtent, bool scarred) {
       var layout = Matrix4x4.TRS(shape.Center.ToUnityVector3(), Quaternion.Euler(0f, shape.Yaw.AsFloat, 0f), Vector3.one);

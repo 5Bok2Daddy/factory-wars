@@ -34,6 +34,7 @@ namespace FactoryWars.View {
     class WorkerAgent {
       public GameObject Root;
       public Animator Animator;
+      public MixamoMotion Motion;
       public Animation LegacyAnimation;
       public WorkerCarryRig CarryRig;
       public int Owner;
@@ -67,6 +68,7 @@ namespace FactoryWars.View {
       bool _carrying = true;
 
       public GameObject PropObject => _prop != null ? _prop.gameObject : null;
+      public bool IsCarrying => _carrying && _prop != null;
       public bool IsTrolley => _isTrolley;
       public float LoadingProgress { get; set; }
 
@@ -195,6 +197,7 @@ namespace FactoryWars.View {
     readonly List<Bounds> _buildingObstacles = new List<Bounds>();
     MapSpec _map;
     ViewCatalog _catalog;
+    BattleView _battle;
     float _nextScanAt;
     int _spawnCounter;
 
@@ -228,11 +231,23 @@ namespace FactoryWars.View {
       }
     }
 
-    public void Init(MapSpec map, ViewCatalog catalog = null) {
+    public void Init(MapSpec map, ViewCatalog catalog = null, BattleView battle = null) {
       _map = map;
       _catalog = catalog;
+      _battle = battle;
       _nextScanAt = 0f;
     }
+
+    public bool ClearForYard(GroundFootprint footprint) {
+      foreach (var worker in _workers) {
+        if (worker.Root == null) continue;
+        var point = worker.Root.transform.position;
+        if (footprint.Overlaps(new Vector2(point.x, point.z), 0.45f)) return false;
+      }
+      return true;
+    }
+
+    public void AvoidYard(Bounds bounds) => _buildingObstacles.Add(bounds);
 
     public void ClearAll() {
       for (var i = 0; i < _workers.Count; i++) {
@@ -300,6 +315,11 @@ namespace FactoryWars.View {
       _byOwner.Clear();
       _activeBuildings.Clear();
       _buildingObstacles.Clear();
+      if (_battle != null) {
+        foreach (var actor in _battle.Actors.Values) {
+          if (actor.ExtractorDelivery != null) _buildingObstacles.Add(actor.ExtractorDelivery.WalkObstacle);
+        }
+      }
 
       var filter = frame.Filter<Transform3D, Building>();
       while (filter.NextUnsafe(out var e, out var t, out var b)) {
@@ -412,6 +432,17 @@ namespace FactoryWars.View {
       return from.Position + dir * (edge + 0.55f);
     }
 
+    Vector3 SafeEntrance(BuildingNode from, Vector3 toward) {
+      var direction = toward - from.Position;
+      var first = EntrancePoint(from, toward);
+      foreach (var degrees in new[] { 0f, 45f, -45f, 90f, -90f, 180f }) {
+        var entrance = EntrancePoint(from, from.Position + Quaternion.Euler(0f, degrees, 0f) * direction);
+        var flat = new Vector3(entrance.x, 0f, entrance.z);
+        if (!_buildingObstacles.Exists(bounds => bounds.Contains(flat))) return entrance;
+      }
+      return first;
+    }
+
     bool FindBlockingBuilding(Vector3 from, Vector3 to, out Bounds obstacle) {
       from.y = 0f;
       to.y = 0f;
@@ -477,11 +508,13 @@ namespace FactoryWars.View {
       BuildingNode endNode;
       var previous = nodes.Find(node => node.Entity == excludeTarget);
       var extractor = nodes.Find(node => node.Entity != excludeTarget && IsExtractor(node) && node.UnderConstruction == false);
+      var barracks = nodes.Find(node => node.Role == BuildingRole.Barracks && node.UnderConstruction == false);
+      var depot = barracks.Entity != EntityRef.None && seed % 2 == 0 ? barracks : anchor;
       if (IsExtractor(previous) && previous.UnderConstruction == false && previous.Entity != anchor.Entity) {
         startNode = previous;
-        endNode = anchor;
+        endNode = depot;
       } else if (extractor.Entity != EntityRef.None && seed % 3 == 0) {
-        startNode = anchor;
+        startNode = depot;
         endNode = extractor;
       } else if (sites.Count > 0 && seed % 2 == 0) {
         startNode = anchor.Entity != sites[seed % sites.Count].Entity ? anchor : nodes[(seed + 1) % nodes.Count];
@@ -496,8 +529,8 @@ namespace FactoryWars.View {
           endNode = nodes[(idxB + 1) % nodes.Count];
         }
       }
-      var startPt = EntrancePoint(startNode, endNode.Position);
-      var endPt = EntrancePoint(endNode, startNode.Position);
+      var startPt = SafeEntrance(startNode, endNode.Position);
+      var endPt = SafeEntrance(endNode, startNode.Position);
       startPt.y = TerrainKit.SurfaceHeight(_map, startPt.x, startPt.z);
       endPt.y = TerrainKit.SurfaceHeight(_map, endPt.x, endPt.z);
       return (startNode, endNode, startPt, endPt);
@@ -585,6 +618,7 @@ namespace FactoryWars.View {
       return new WorkerAgent {
         Root = go,
         Animator = anim,
+        Motion = MixamoMotion.Attach(anim),
         LegacyAnimation = legacy,
         CarryRig = carryRig,
         Owner = owner,
@@ -603,6 +637,18 @@ namespace FactoryWars.View {
 
     static void SetMotion(WorkerAgent worker, float speed, float dt) {
       if (worker.Animator != null) worker.Animator.SetFloat(SpeedParam, speed, 0.09f, dt);
+      if (worker.Motion != null) {
+        string pose = null;
+        if (worker.State == WorkerState.Working) {
+          pose = worker.IsTrolley ? "HoldingIdle" : (worker.Seed % 3 == 0 ? "Lift" : worker.Seed % 3 == 1 ? "PickUp" : "PutDown");
+        } else if (worker.CarryRig != null && worker.CarryRig.IsCarrying) {
+          pose = speed > 0.15f
+            ? worker.IsTrolley ? "WheelbarrowWalk" : worker.Seed % 3 == 0 ? "BoxJog" : "HoldingWalk"
+            : worker.IsTrolley ? "HoldingIdle" : "BoxIdle";
+        }
+        var clipSpeed = speed > 0.15f ? Mathf.Clamp(speed / (pose == "BoxJog" ? 2.7f : 1.8f), 0.55f, 1.3f) : 1f;
+        worker.Motion.Set(pose, worker.State == WorkerState.Working ? 0f : (worker.Seed * 0.23f) % 1f, clipSpeed);
+      }
       if (worker.LegacyAnimation == null) return;
       var clip = speed > 0f ? "run" : "idle";
       if (worker.LegacyAnimation[clip] == null) {
@@ -669,10 +715,11 @@ namespace FactoryWars.View {
           var step = w.ScatterDir * (4.1f * dt);
           var next = tr.position + step;
           next.y = TerrainKit.SurfaceHeight(_map, next.x, next.z);
-          tr.position = next;
+          var blocked = FindBlockingBuilding(tr.position, next, out _);
+          if (!blocked) tr.position = next;
           var runYaw = Mathf.Atan2(w.ScatterDir.x, w.ScatterDir.z) * Mathf.Rad2Deg;
           tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.Euler(0f, runYaw, 0f), 480f * dt);
-          SetMotion(w, 4.1f, dt);
+          SetMotion(w, blocked ? 0f : 4.1f, dt);
           // 마지막 0.35초에 부드럽게 축소 퇴장.
           if (w.ScatterTimer < 0.35f) {
             var k = Mathf.Clamp01(w.ScatterTimer / 0.35f);
@@ -757,6 +804,11 @@ namespace FactoryWars.View {
         var move = Mathf.Min(dist, w.CurrentSpeed * dt);
         var pos = tr.position + dir * move;
         pos.y = TerrainKit.SurfaceHeight(_map, pos.x, pos.z);
+        if (FindBlockingBuilding(tr.position, pos, out _)) {
+          w.RepathAt = 0f;
+          SetMotion(w, 0f, dt);
+          continue;
+        }
         tr.position = pos;
         var targetYaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
         tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.Euler(0f, targetYaw, 0f), 360f * dt);

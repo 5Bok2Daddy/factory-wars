@@ -1,5 +1,29 @@
 # FactoryWars 복구 및 진행 현황
 
+## 2026-11-21 · Mixamo와 맵 시각 개선
+
+이번 작업은 07:48 KST에 푸시된 `2aca6e4`의 깨끗한 로컬 `main`에서 재개했다. 기존 복구·작업 기록은 이 문서 아래에 보관했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| 구매 환경 번들 | `temp-assets/new bundle/`의 `assets.vol1.egg` 외 31개 볼륨에서 Bandizip으로 압축을 풀었다. `temp-asset/new bundle/_extracted/`에 100개 파일이 있다. Desert World, Backroad Bridges, NatureForge Woodland·Meadow의 로컬 프리팹 11개와 의존성 26개를 재사용했다. |
+| 제외한 환경 에셋 | Cartoon City, 던전·중세·바이킹, 할로윈·묘지·PolyVania, 늪, 주방·식당, CRT 실내, 픽셀 지하철, 주민 캐릭터, Harboria는 스테이징에 보관했다. |
+| Mixamo | `temp-assets/mixamo.zip`과 내부 Axe 팩에서 FBX 162개를 스테이징했다. 물류 8, 공병·채굴 10, 보병 10, 의무지원 3, 차량 승무원 3을 골랐다. Unity에서 총 34개의 유효한 Humanoid Avatar와 클립을 확인했다. 팩스·인사·포효·횃불 등 나머지 128개 FBX는 스테이징에 보관했다. |
+| 표준·다도해·해협 | 표준 맵 호안의 독립 기둥을 군용 철조망·안전 난간·저지벽으로 교체했다. 다도해의 사면과 해안석, 다도해·해협의 부두, Backroad Bridges의 실제 교량 부품, 단일 바다 수면을 적용했다. |
+| 사막 | 도시 외형을 레이더, 위장 시설, 천막 및 연료 장비로 교체하고 Canyon 암석과 모래 재질을 적용했다. 도로와 자원 지점 주변 소품은 발자국 경계를 검사한다. |
+| 기지와 자원 시설 | 콘크리트 야드·공사용 소품, 적재장으로 이어지는 짧은 컨베이어, 작업자 우회, 사령부·막사와 자원 시설의 물류 동선을 연결했다. 공병은 철광·목재 시설에 최대 3명이 배치된다. 월드 표시와 HUD의 `공병 빼기`를 추가했다. |
+| 애니메이션 진행 | 물류 운반·작업·휴식, 공병 시공·채굴, 제재소 도끼질, 보병 엄폐·재장전·피격·사망이 연결됐다. 의무지원·승무원·일부 보병 클립은 Humanoid 가져오기까지 마쳤으며 경기 상태 연결이 남았다. |
+
+- Unity 6000.0.85f2에서 Map4P, MapDesert, MapUrban, MapArchipelago, MapStrait 지상·수상 NavMesh 재베이크를 완료했다. 로그는 `Game-logs/map-polish-navmesh.log`다.
+- Photon 서울 서버 PlayMode에서 확정 프레임 체크섬 588개가 일치했고 디싱크는 0건이었다. 자체 Quantum 시뮬레이션의 `float`, `double`, `Mathf`, 난수·시간 금지 표현은 0건이다. 두 철광 시설의 정원 데이터는 3으로 맞췄다.
+- 작업 파일은 View (맵·지형·작업자·모델·HUD), Mixamo 가져오기 도구, 에디터 소품 준비 도구, 철광 시설 데이터와 PlayMode 검사에 걸쳐 있다. 코드와 화면, 보고서를 Git에 동기화하고 구매 원본과 생성된 로컬 프리팹·컨트롤러는 Git 제외 경로에 보관한다.
+
+### 최신 GPU 캡처
+
+[표준](status_images/map_standard.png) · [사막](status_images/map_desert.png) · [시가지](status_images/map_urban.png) · [다도해](status_images/map_archipelago.png) · [해협](status_images/map_strait.png)
+
+[공장 야드](status_images/current_factory_complex.png) · [기지 건설](status_images/current_base_alive.png) · [공병 배치와 적재장](status_images/current_resource_extraction.png) · [미사일 착탄](status_images/54_ultimate_missile_silo_strike.png)
+
 2026-11-20 KST · 인수 검증 및 보존 기록
 
 ## 인수 상태

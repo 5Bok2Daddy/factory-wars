@@ -37,6 +37,29 @@ namespace FactoryWars.View {
     /// <summary>엄폐 중이면 true. 시뮬레이션의 InCover를 BattleView가 넣는다.</summary>
     public bool Cover;
     readonly HashSet<int> _params = new HashSet<int>();
+    readonly List<MixamoMotion> _mixamo = new List<MixamoMotion>();
+    static readonly string[] DeathPoses = { "DeathFront", "DeathBack", "DeathSide" };
+    bool _wasInCover;
+    float _actionUntil;
+    public bool IsActing => Time.time < _actionUntil;
+
+    public void EnableMixamoInfantry() {
+      foreach (var animator in All) {
+        var motion = MixamoMotion.Attach(animator, infantry: true);
+        if (motion != null) _mixamo.Add(motion);
+      }
+      Refresh();
+    }
+
+    void Action(string pose, float seconds) {
+      if (_mixamo.Count == 0) return;
+      foreach (var motion in _mixamo) motion.Set(pose);
+      _actionUntil = Time.time + seconds;
+    }
+
+    public void Hit() {
+      if (State == UnitAnimState.Idle && !IsActing) Action("Hit", 0.4f);
+    }
 
     /// <summary>모델에 Animator가 있거나 슬롯에 컨트롤러가 있으면 붙인다. 아니면 null.</summary>
     public static UnitAnimatorBridge Attach(GameObject model, VisualSlot slot, RuntimeAnimatorController overrideController = null) {
@@ -91,6 +114,16 @@ namespace FactoryWars.View {
         return;
       }
       State = state;
+      if (_mixamo.Count != 0) {
+        if (state == UnitAnimState.Move) _actionUntil = 0f;
+        if (Cover != _wasInCover && state != UnitAnimState.Move) {
+          Action(Cover ? "EnterCover" : "LeaveCover", 0.36f);
+        }
+        if (!IsActing) {
+          foreach (var motion in _mixamo) motion.Set(null);
+        }
+        _wasInCover = Cover;
+      }
       var hasSpeed = Has(Speed);
       var hasMoving = Has(Moving);
       var hasBuilding = Has(Building);
@@ -125,6 +158,7 @@ namespace FactoryWars.View {
 
     public void Fire() {
       AttackCount++;
+      if (AttackCount % 7 == 0 && State == UnitAnimState.Attack && !Cover && !IsActing) Action("Reload", 0.65f);
       if (Has(AttackTrigger) == false) {
         return;
       }
@@ -138,6 +172,13 @@ namespace FactoryWars.View {
     /// <summary>사망 연출을 시작하고, 보여 줄 시간(초)을 돌려준다. 0이면 바로 지워도 된다.</summary>
     public float Die() {
       State = UnitAnimState.Dead;
+      if (_mixamo.Count > 0 && Usable(Animator)) {
+        for (var i = 0; i < _mixamo.Count; i++) {
+          var pose = Cover ? "DeathCrouch" : DeathPoses[(Mathf.Abs(GetInstanceID() % DeathPoses.Length) + i) % DeathPoses.Length];
+          _mixamo[i].Set(pose);
+        }
+        return Mathf.Max(DeathSeconds, 1.5f);
+      }
       if (Usable(Animator) == false || (Has(DieTrigger) == false && Has(Dead) == false)) {
         return 0f;
       }

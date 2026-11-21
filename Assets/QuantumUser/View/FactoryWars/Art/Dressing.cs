@@ -79,14 +79,22 @@ namespace FactoryWars.View {
       var bounds = NewBundleArt.BoundsOf(prefab);
       var factor = width / Mathf.Max(0.01f, bounds.size.x, bounds.size.z);
       var rotation = Quaternion.Euler(0f, MeshKit.Hash(seed, 3) * 360f, 0f);
-      var footprint = new GroundFootprint(position, bounds.extents * factor, rotation);
-      if (fits(footprint) == false) return;
+      AddPrefab(prefab, position, rotation, Vector3.one * factor, fits, MeshKit.Hash(seed, 77), 0.55f, 0.85f);
+    }
+
+    public static bool AddPrefab(GameObject prefab, Vector3 position, Quaternion rotation, Vector3 scale,
+        System.Predicate<GroundFootprint> fits, float keep = 0f, float lowKeep = 1f, float mediumKeep = 1f) {
+      if (_collector == null || prefab == null) return false;
+      var bounds = NewBundleArt.BoundsOf(prefab);
+      var footprint = new GroundFootprint(position, Vector3.Scale(bounds.extents, scale), rotation);
+      if (fits(footprint) == false) return false;
       var pivot = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
       _collector.Add(new Item {
         Prefab = prefab, Kind = DressKind.Conifer, Footprint = footprint, Shadows = true, PreserveMaterial = true,
-        World = Matrix4x4.TRS(position, rotation, Vector3.one * factor) * Matrix4x4.Translate(-pivot),
-        Keep = MeshKit.Hash(seed, 77), LowKeep = 0.55f, MediumKeep = 0.85f, Tint = Color.white,
+        World = Matrix4x4.TRS(position, rotation, scale) * Matrix4x4.Translate(-pivot),
+        Keep = keep, LowKeep = lowKeep, MediumKeep = mediumKeep, Tint = Color.white,
       });
+      return true;
     }
 
     public static void Begin() {

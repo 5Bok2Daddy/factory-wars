@@ -78,8 +78,12 @@ namespace FactoryWars.View {
       public float ShipWeldAt;
       public float BuildingModelY;
       public ConstructionWorkView EngineerWork;
+      public FP LastUnitHealth;
       public bool EngineerWasVisible;
       public float ExtractorEntryTime;
+      public GameObject ActivityCrew;
+      public MixamoMotion ActivityMotion;
+      public bool ActivityUnavailable;
       public readonly List<ConstructionWorkView> ConstructionWork = new List<ConstructionWorkView>();
       public float WeldFxAt;
       public float FootprintRadius;
@@ -324,7 +328,7 @@ namespace FactoryWars.View {
       City = new CityView(_stage, frame.FindAsset<MapSpec>(frame.Map.UserAsset)) { Fx = Fx };
       _ambientWorkers = new GameObject("AmbientWorkers").AddComponent<BaseAmbientWorkers>();
       _ambientWorkers.transform.SetParent(_stage, false);
-      _ambientWorkers.Init(World.Map, _catalog);
+      _ambientWorkers.Init(World.Map, _catalog, this);
       _controller = FindAnyObjectByType<MatchController>();
     }
 
@@ -1056,11 +1060,14 @@ namespace FactoryWars.View {
         }
         if (spec.IsVehicle == false && spec.IsAir == false && spec.IsNaval == false && spec.Size == UnitSize.Small) {
           actor.Rigs.AddRange(AttachInfantryWeapon(actor.View.Model, spec.name));
+          actor.View.Animation?.EnableMixamoInfantry();
         } else if (spec.Size == UnitSize.Engineer) {
           actor.EngineerWork = ConstructionWorkView.Attach(actor.View.Model, _catalog.IronExtractorDrill);
         }
       }
       var color = frame.Global->Players.GetPointer(unit->Owner)->ColorIndex;
+      if (actor.LastUnitHealth > unit->Health) actor.View.Animation?.Hit();
+      actor.LastUnitHealth = unit->Health;
       if (color != actor.Color) {
         actor.Color = color;
         ArtLook.Apply(actor.View.Model, color);
@@ -1135,10 +1142,15 @@ namespace FactoryWars.View {
       Vector3 workTarget = default;
       var workingAtSite = frame.Unsafe.TryGetPointer<Worker>(entity, out var engineer)
         && TryEngineerWorkTarget(frame, transform3D->Position, engineer, out workTarget);
-      if (actor.EngineerWork != null) actor.EngineerWork.Working = workingAtSite;
+      if (actor.EngineerWork != null) {
+        var gathering = engineer != null && engineer->Task == WorkerTask.Gather && engineer->WorkTimer > FP._0;
+        actor.EngineerWork.Working = workingAtSite || gathering;
+        actor.EngineerWork.WorkPose = gathering ? "Dig" : "Device";
+      }
       if (workingAtSite && engineer->Task == WorkerTask.Build) _workingSites.Add(engineer->Target);
       foreach (var rig in actor.Rigs) {
-        rig.Aiming = hasTarget;
+        rig.Aiming = hasTarget && actor.View.Animation?.IsActing != true;
+        rig.PreserveGesturePose = actor.View.Animation?.IsActing == true;
         rig.AimPoint = target;
       }
       if (workingAtSite) {
@@ -1522,7 +1534,10 @@ namespace FactoryWars.View {
                 }
                 actor.ConstructionCrew.Add(wGo);
                 var work = ConstructionWorkView.Attach(wGo, _catalog.IronExtractorDrill, 0.43f * c);
-                if (work != null) actor.ConstructionWork.Add(work);
+                if (work != null) {
+                  work.WorkPose = c % 2 == 0 ? "Inspect" : "Device";
+                  actor.ConstructionWork.Add(work);
+                }
               }
             }
           }
@@ -1659,7 +1674,32 @@ namespace FactoryWars.View {
       ForwardHeadquarters++;
     }
 
-    static void DressBuilding(Actor actor, BuildingSpec spec, Vector3 worldPos) {
+    void DressBuilding(Actor actor, BuildingSpec spec, Vector3 worldPos) {
+      if (spec.Role is BuildingRole.Barracks or BuildingRole.VehicleFactory or BuildingRole.Processor or BuildingRole.PowerPlant
+          or BuildingRole.HeavyWorks or BuildingRole.Airfield) {
+        var radius = spec.FootprintRadius.AsFloat;
+        var yard = new GameObject("FactoryYard").transform;
+        yard.SetParent(actor.View.Turn, false);
+        var diagonal = radius * 2f + 1.35f;
+        var floorArea = new GroundFootprint(worldPos, new Vector3(diagonal * 0.5f, 0f, diagonal * 0.5f), Quaternion.identity);
+        foreach (var road in World.Map.Roads ?? System.Array.Empty<MapShape>()) {
+          if (!floorArea.Overlaps(road, 0.1f)) continue;
+          diagonal = radius * 2f;
+          break;
+        }
+        MapPolishArt.Place("Foundation", yard, new Vector3(0f, -0.10f, 0f), Quaternion.identity,
+          new Vector3(diagonal, 0.15f, diagonal));
+        for (var corner = -1; corner <= 1; corner += 2) {
+          var side = radius * corner * 0.79f;
+          var key = corner < 0 ? "Crates" : "Beams";
+          MapPolishArt.Place(key, yard, new Vector3(side, 0.06f, radius * 0.69f), Quaternion.identity,
+            new Vector3(radius * 0.27f, 0.72f, radius * 0.24f));
+        }
+        MapPolishArt.Place("Barrels", yard, new Vector3(radius * 0.79f, 0.06f, -radius * 0.70f), Quaternion.identity,
+          new Vector3(radius * 0.23f, 0.8f, radius * 0.24f));
+        actor.Dressing = yard.gameObject;
+        return;
+      }
       // 실제 Synty 복합 킷배시 프리팹이 연결된 건물에는 구형 Kenney 소품(SpaceGate 흰 아치 등)을 덧씌우지 않는다.
       if (actor.View != null && actor.View.Slot != null) {
         return;
@@ -1742,6 +1782,7 @@ namespace FactoryWars.View {
       var total = spec.BuildTimeSeconds.AsFloat;
       ShowConstruction(actor, bodyRemaining <= 0f || total <= 0f ? 1f : 1f - bodyRemaining / total, dt);
       if (finished == false) {
+        UpdateActivityCrew(actor, false, null);
         if (actor.ExtractorDelivery != null) {
           Destroy(actor.ExtractorDelivery.Root);
           actor.ExtractorDelivery = null;
@@ -1772,9 +1813,10 @@ namespace FactoryWars.View {
       var ultimateBusy = spec.Role == BuildingRole.UltimateSite && (state->UltimatePhase == UltimatePhase.Preparing || state->UltimatePhase == UltimatePhase.Ready);
       var overdriving = FactorySystem.IsOverdriving(frame, building);
       var yard = spec.IsDropOff && spec.Role == BuildingRole.CollectionYard;
+      var staff = spec.RequiresResourceNode ? CitySystem.Occupants(frame, entity) : 0;
       var extracting = spec.RequiresResourceNode && building->Paused == PauseReason.None
         && building->EmpUntilFrame <= frame.Number && frame.TryGet<ResourceNode>(building->ExtractNode, out var node)
-        && node.Remaining > FP._0 && CitySystem.Occupants(frame, entity) > 0;
+        && node.Remaining > FP._0 && staff > 0;
       if (spec.RequiresResourceNode && actor.ExtractorEquipment == null) {
         var equipment = spec.RequiredNodeKind == ResourceKind.Wood ? _catalog.LumberMillSaw : _catalog.IronExtractorDrill;
         if (equipment != null) {
@@ -1790,7 +1832,18 @@ namespace FactoryWars.View {
         actor.ExtractorEquipment.Rotate(Vector3.up, dt * 160f, Space.Self);
       }
       if (spec.RequiresResourceNode && buildingSeen && (buildingViewer.IsValid == false || building->Owner == buildingViewer)) {
+        if (actor.PipRoot == null) {
+          actor.PipRoot = HeroVisuals.CreatePassengerPips(actor.View, spec.WorkerSlotCapacity, out actor.PipRenderers);
+          if (actor.PipRoot != null) actor.PipRoot.transform.localScale = Vector3.one * 1.65f;
+        }
+        UpdatePips(actor, staff, staff > 0 || _marked.Contains(actor), 0.65f);
+        var pose = spec.RequiredNodeKind == ResourceKind.Wood ? "Chop"
+          : (frame.Number / 55) % 3 == 0 ? "Device" : (frame.Number / 55) % 3 == 1 ? "Lever" : "Button";
+        UpdateActivityCrew(actor, extracting, pose);
         UpdateExtractorDelivery(frame, actor, building->Owner, spec.RequiredNodeKind, extracting, dt);
+      } else if (spec.RequiresResourceNode) {
+        UpdatePips(actor, 0, false);
+        UpdateActivityCrew(actor, false, null);
       }
       var operating = powered && (processing || producing || researching || ultimateBusy || overdriving || extracting || spec.Role == BuildingRole.PowerPlant);
       var busy = operating || (powered && (yard || spec.Role == BuildingRole.Headquarters));
@@ -1869,7 +1922,47 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>12m 이내 인접한 생산 공장과 제련소·발전소 사이를 발광 지상 파이프라인으로 자동 연결한다.</summary>
+    void UpdateActivityCrew(Actor actor, bool active, string pose) {
+      if (active && actor.ActivityCrew == null) {
+        if (actor.ActivityUnavailable || !MixamoMotion.HasWorkerController) return;
+        if (!VisualCatalog.TryFilled(VisualCatalog.FxId("const_worker_0"), out var slot) || slot.Prefab == null) return;
+        var crew = Instantiate(slot.Prefab, actor.View.transform, false);
+        crew.name = "FacilityActivityWorker";
+        var animator = crew.GetComponentInChildren<Animator>(true);
+        actor.ActivityMotion = MixamoMotion.Attach(animator);
+        if (actor.ActivityMotion == null) {
+          actor.ActivityUnavailable = true;
+          Destroy(crew);
+          return;
+        }
+        if (pose == "Chop") AttachChoppingAxe(animator);
+        foreach (var collider in crew.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+        crew.transform.localPosition = new Vector3(actor.FootprintRadius * 0.68f, 0f, actor.FootprintRadius * 0.72f);
+        crew.transform.localRotation = Quaternion.Euler(0f, 184f, 0f);
+        crew.transform.localScale = Vector3.one * 0.82f;
+        actor.ActivityCrew = crew;
+      }
+      if (actor.ActivityCrew == null) return;
+      if (actor.ActivityCrew.activeSelf != active) {
+        if (!active) actor.ActivityMotion.Set(null);
+        actor.ActivityCrew.SetActive(active);
+      }
+      if (active) actor.ActivityMotion.Set(pose, (actor.Phase * 0.2f) % 1f);
+    }
+
+    static void AttachChoppingAxe(Animator animator) {
+      var prefab = Resources.Load<GameObject>("FactoryWarsMixamo/Axe");
+      var hand = animator.GetBoneTransform(HumanBodyBones.RightHand);
+      if (prefab == null || hand == null) return;
+      var axe = Instantiate(prefab, hand, false);
+      axe.name = "LumberWorkerAxe";
+      foreach (var collider in axe.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+      var fingers = animator.GetBoneTransform(HumanBodyBones.RightMiddleProximal);
+      if (fingers != null) axe.transform.position = Vector3.Lerp(hand.position, fingers.position, 0.65f);
+      axe.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+      axe.transform.localScale = Vector3.one * 0.72f;
+    }
+
     void UpdateExtractorDelivery(Frame frame, Actor actor, PlayerRef owner, ResourceKind kind, bool extracting, float dt) {
       var route = actor.ExtractorDelivery;
       // 첫 배치 때는 공병이 입구를 통과한 뒤 컨베이어를 표시한다.
@@ -1899,8 +1992,20 @@ namespace FactoryWars.View {
         }
         if (route == null && best != EntityRef.None) {
           var cargo = kind == ResourceKind.Wood ? _catalog.LumberCargo : _catalog.IronCargo;
+          bool Clear(GroundFootprint footprint) {
+            if (_ambientWorkers != null && !_ambientWorkers.ClearForYard(footprint)) return false;
+            foreach (var road in World.Map.Roads ?? System.Array.Empty<MapShape>()) {
+              if (footprint.Overlaps(road, 0.35f)) return false;
+            }
+            foreach (var other in _actors.Values) {
+              if (other == actor || other.FootprintRadius <= 0f) continue;
+              if (footprint.Overlaps(new Vector2(other.Position.x, other.Position.z), other.FootprintRadius + 0.2f)) return false;
+            }
+            return true;
+          }
           route = ExtractorDeliveryView.Create(actor.View.transform, World.Map, best, actor.Position, actor.FootprintRadius,
-            destination, radius, cargo);
+            destination, radius, cargo, Clear);
+          if (route != null) _ambientWorkers?.AvoidYard(route.WalkObstacle);
         }
         actor.ExtractorDelivery = route;
       }
@@ -2187,22 +2292,21 @@ namespace FactoryWars.View {
         actor.RampAngle = Mathf.MoveTowards(actor.RampAngle, targetAngle, 260f * dt);
         actor.CargoRamp.localRotation = Quaternion.Euler(actor.RampAngle, 0f, 0f);
       }
-      if (actor.PipRoot != null && actor.PipRenderers != null) {
-        var used = TransportSystem.UsedSlots(frame, entity);
-        var showPips = used > 0 || _marked.Contains(actor);
-        if (actor.PipRoot.activeSelf != showPips) {
-          actor.PipRoot.SetActive(showPips);
-        }
-        if (showPips) {
-          var barY = actor.View.Bar != null ? actor.View.Bar.transform.localPosition.y : actor.View.Entry.BarHeight;
-          actor.PipRoot.transform.localPosition = new Vector3(0f, barY - 0.36f, 0f);
-          for (var i = 0; i < actor.PipRenderers.Length; i++) {
-            var mat = HeroVisuals.PipMaterial(i < used);
-            if (actor.PipRenderers[i].sharedMaterial != mat) {
-              actor.PipRenderers[i].sharedMaterial = mat;
-            }
-          }
-        }
+      var used = TransportSystem.UsedSlots(frame, entity);
+      UpdatePips(actor, used, used > 0 || _marked.Contains(actor));
+    }
+
+    static void UpdatePips(Actor actor, int used, bool visible, float heightOffset = -0.36f) {
+      if (actor.PipRoot == null || actor.PipRenderers == null) return;
+      if (actor.PipRoot.activeSelf != visible) actor.PipRoot.SetActive(visible);
+      if (!visible) return;
+      var barY = actor.View.Bar != null ? actor.View.Bar.transform.localPosition.y : actor.View.Entry.BarHeight;
+      actor.PipRoot.transform.localPosition = new Vector3(0f, barY + heightOffset, 0f);
+      var camera = Camera.main;
+      if (camera != null) actor.PipRoot.transform.rotation = camera.transform.rotation;
+      for (var i = 0; i < actor.PipRenderers.Length; i++) {
+        var mat = HeroVisuals.PipMaterial(i < used);
+        if (actor.PipRenderers[i].sharedMaterial != mat) actor.PipRenderers[i].sharedMaterial = mat;
       }
     }
 

@@ -43,6 +43,16 @@ namespace FactoryWars.Tests {
       if (animator != null) {
         Assert.IsNotNull(animator.runtimeAnimatorController, "Synty 작업자에 Base Locomotion Animator 컨트롤러가 있음");
         animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        if (MixamoMotion.HasWorkerController) {
+          Assert.IsTrue(animator.isHuman);
+          var logistics = workers.Select(worker => worker.GetComponentInChildren<Animator>())
+            .Where(item => item != null && item.runtimeAnimatorController?.name == "Worker").ToArray();
+          Assert.IsNotEmpty(logistics);
+          foreach (var item in logistics) item.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+          yield return WaitFor(() => logistics.Any(item => item.GetCurrentAnimatorClipInfo(0)
+            .Any(info => info.clip.humanMotion && new[] { "WheelbarrowWalk", "HoldingWalk", "BoxJog" }.Contains(info.clip.name))),
+            10f, "Mixamo 물류 운반 클립 재생");
+        }
       } else {
         var animation = workers[0].GetComponentInChildren<Animation>();
         Assert.IsNotNull(animation, "작업자에 애니메이션 컴포넌트가 있음");

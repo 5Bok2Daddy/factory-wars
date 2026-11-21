@@ -1,11 +1,28 @@
 # Factory Wars — Mobile RTS Dashboard
 
-> **기준 일자:** **2026-11-21 07:48 (KST)**
+> **기준 일자:** **2026-11-21 (KST)**
 > **대상 플랫폼:** Android Mobile RTS (Touch-Only UI, Photon Quantum 3 결정론 `FP` 시뮬레이션 — 금지어 **0건**)
 > **Git 저장소 루트:** `Game/` (`origin/main` → `https://github.com/5Bok2Daddy/factory-wars.git`)
 > **아트 파이프라인:** Synty POLYGON 및 War FX에 Desert World, Roadside Tales와 NatureForge 맵 에셋을 선별 적용.
 
 ---
+
+### 해안·사막·공장 야드와 Mixamo · 2026-11-21 KST
+
+| 영역 | 적용 내용 |
+| --- | --- |
+| 표준 맵 | 독립 호안 기둥을 걷어내고 군용 철조망, 안전 난간, 저지벽, 조명과 감시 초소를 배치했다. 교량과 수문 앞 통행로를 비웠다. |
+| 다도해·해협 | 중복 수면 띠를 단일 수면으로 바꿨다. 모래 사면, 해안 암석·덤불, 접안 부두를 배치하고 Backroad Bridges 상판과 난간을 기존 도로에 연결했다. |
+| 사막 | 도심 고층 외형을 레이더·야전 천막·연료 시설과 위장 야적으로 교체했다. 도로와 거점 둘레에는 모래와 Canyon 암석을 적용했다. |
+| 산업 기지 | 공장에 콘크리트 포장과 Synty 적재물을 추가했다. 채굴 컨베이어는 옆 적재장까지 연결되고, 물류 작업자는 건물과 컨베이어를 피해 이동한다. |
+| Mixamo | 162개 FBX에서 34개를 골라 Humanoid로 설정했다. 물류 운반·시공·제재소 도끼질과 보병 엄폐 전환·재장전·피격·사망을 연결했다. |
+| 자원 시설 | 철광·목재 시설의 공병 정원은 3명이다. 시설 위에 배치 인원을 표시하고 모바일 HUD에서 `공병 빼기`를 사용할 수 있다. |
+
+[표준](Docs/status_images/map_standard.png) · [사막](Docs/status_images/map_desert.png) · [다도해](Docs/status_images/map_archipelago.png) · [해협](Docs/status_images/map_strait.png) · [시가지](Docs/status_images/map_urban.png)
+
+[공장 야드](Docs/status_images/current_factory_complex.png) · [기지 시공과 운반](Docs/status_images/current_base_alive.png) · [공병 배치와 목재 이송](Docs/status_images/current_resource_extraction.png) · [미사일 착탄](Docs/status_images/54_ultimate_missile_silo_strike.png) · [검증 보고서](Docs/FactoryWars_Status.md)
+
+구매 원본은 로컬에 보관한다. Mixamo는 `python Tools/import_mixamo.py`를 실행한 뒤 Unity의 **Tools → Factory Wars → Assets → Prepare Mixamo Clips**에서 준비한다. 새 해안·공장 소품은 기존 Synty 팩을 가져온 뒤 같은 메뉴의 **Prepare Map Polish**에서 준비한다.
 
 ### 구매 환경 번들 · 2026-11-20 KST
 

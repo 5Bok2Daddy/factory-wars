@@ -6,8 +6,10 @@ namespace FactoryWars.View {
   public sealed class ConstructionWorkView : MonoBehaviour {
     Transform _hand, _elbow, _shoulder, _tool;
     float _weight, _phase;
+    MixamoMotion _motion;
 
     public bool Working { get; set; }
+    public string WorkPose { get; set; } = "Device";
     public Transform Tool => _tool;
 
     public static ConstructionWorkView Attach(GameObject model, GameObject toolPrefab, float phase = 0f) {
@@ -19,6 +21,7 @@ namespace FactoryWars.View {
       rig._elbow = hand.parent;
       rig._shoulder = hand.parent.parent;
       rig._phase = phase;
+      rig._motion = MixamoMotion.Attach(model.GetComponentInChildren<Animator>(true));
       var tool = Instantiate(toolPrefab, model.transform);
       tool.name = "EngineerWorkTool";
       foreach (var collider in tool.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
@@ -29,6 +32,7 @@ namespace FactoryWars.View {
 
     void LateUpdate() {
       var dt = Time.deltaTime;
+      _motion?.Set(Working ? WorkPose : null, _phase);
       _weight = Mathf.MoveTowards(_weight, Working ? 1f : 0f, dt * 5f);
       var show = _weight > 0.02f;
       if (_tool.gameObject.activeSelf != show) _tool.gameObject.SetActive(show);

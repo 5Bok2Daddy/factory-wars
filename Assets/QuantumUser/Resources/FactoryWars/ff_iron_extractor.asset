@@ -99,7 +99,7 @@ MonoBehaviour:
     RawValue: 0
   RequiresResourceNode: 1
   RequiredNodeKind: 0
-  WorkerSlotCapacity: 4
+  WorkerSlotCapacity: 3
   ExtractIntervalSeconds:
     RawValue: 131072
   ExtractAmountPerCycle:

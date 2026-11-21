@@ -94,9 +94,8 @@ namespace FactoryWars.View {
         Boundary(map, profile);
       }
       Checkpoints(map, profile);
-      if (biome != TerrainKit.Biome.Archipelago && biome != TerrainKit.Biome.Desert) {
-        Seawall(map, profile);
-      }
+      if (biome == TerrainKit.Biome.Standard) MapPolishArt.Perimeter(map);
+      if (biome == TerrainKit.Biome.Archipelago || biome == TerrainKit.Biome.Strait) MapPolishArt.CoastDecor(map, biome);
       Street(map, profile);
       Roadside(map, profile);
     }
@@ -512,42 +511,6 @@ namespace FactoryWars.View {
           k.Quad(P(a, 0f, 0.12f), P(b, 0f, 0.12f), P(b, Width, 0.12f), P(a, Width, 0.12f), Vector3.up);
           k.Paint(Swatch.StripeYellow);
           k.Quad(P(a, 0.8f, 0.13f), P(b, 0.8f, 0.13f), P(b, 1.15f, 0.13f), P(a, 1.15f, 0.13f), Vector3.up);
-        }
-      }
-    }
-
-    /// <summary>
-    /// 항목 36 시각 교정 5: 외곽 수로와 땅이 맞닿는 해안 옹벽을 단색 박스로 두지 않고 11m마다 기둥, 그 사이 난간, 6m 간격 계선주를 놓는다.
-    /// 수문·다리·강 근처는 건너뛴다. 장식이라 판정이 없다. 컨테이너 크레인은 팩에 없어 놓지 않는다.
-    /// </summary>
-    static void Seawall(MapSpec map, VisualProfile profile) {
-      if (TerrainKit.Channel(map) <= 0f || Dressing.Has(DressKind.QuayPillar) == false) {
-        return;
-      }
-      var h = Mathf.Max(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
-      var paths = TerrainKit.RiverPaths(map, false);
-      var n = 0;
-      var edges = new[] {
-        (new Vector2(-h, -h), new Vector2(h, -h), 0f), (new Vector2(-h, h), new Vector2(h, h), 180f),
-        (new Vector2(-h, -h), new Vector2(-h, h), 90f), (new Vector2(h, -h), new Vector2(h, h), 270f),
-      };
-      foreach (var (from, to, yaw) in edges) {
-        var length = (to - from).magnitude;
-        var direction = (to - from) / length;
-        for (var s = 6f; s < length - 4f; s += 11f, n++) {
-          var point = from + direction * s;
-          var spot = new Vector3(point.x, 0f, point.y);
-          if (TerrainKit.RiverDistance(paths, point) < 9f || Near(map.WaterGates, spot, 7f) || Near(map.Bridges, spot, 6f)) {
-            continue;
-          }
-          Put(map, DressKind.QuayPillar, spot, 6100 + n * 3, yaw, "quay", profile);
-          var mid = spot + new Vector3(direction.x, 0f, direction.y) * 5.5f;
-          if (VisualProfile.Current.FieldLook == false && s + 11f < length - 4f && Dressing.Has(DressKind.QuayRail)) {
-            Put(map, DressKind.QuayRail, mid, 6101 + n * 3, yaw + 90f, "quay", profile);
-          }
-          if (Dressing.Has(DressKind.QuayBollard)) {
-            Put(map, DressKind.QuayBollard, spot + new Vector3(direction.x, 0f, direction.y) * 2.8f, 6102 + n * 3, yaw, "quay", profile);
-          }
         }
       }
     }

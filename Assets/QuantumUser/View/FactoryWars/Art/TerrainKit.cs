@@ -128,10 +128,14 @@ namespace FactoryWars.View {
       return best;
     }
 
-    static List<float> Lines(float min, float max) {
+    static List<float> Lines(float min, float max, bool margins = true) {
       var lines = new List<float>();
       for (var x = min; x <= max + 0.01f; x += Step) {
         lines.Add(x);
+      }
+      if (!margins) {
+        if (lines[lines.Count - 1] < max - 0.01f) lines.Add(max);
+        return lines;
       }
       for (var x = min - Margin; x < min; x += OuterStep) {
         lines.Add(x);
@@ -214,6 +218,7 @@ namespace FactoryWars.View {
         var warmSand = new Color(0.86f, 0.75f, 0.52f);  // #DBBF85 황금 모래해변
         var tropGrass = new Color(0.31f, 0.57f, 0.25f); // #4F9140 열대 섬 녹지
         var tropDeep = new Color(0.24f, 0.47f, 0.20f);  // #3D7833
+        if (coast < 0f) return Color.Lerp(wetSand, new Color(0.75f, 0.67f, 0.48f), Mathf.Clamp01(-coast / 10f));
         if (coast < 9.5f) {
           return Color.Lerp(wetSand, warmSand, Mathf.Clamp01(coast / 9.5f));
         }
@@ -351,11 +356,19 @@ namespace FactoryWars.View {
       k.Tri(a, b, c, Vector3.up);
     }
 
-    static void Cell(MeshKit k, MapSpec map, int seed, float x0, float x1, float z0, float z1, bool flip) {
-      var a = new Vector3(x0, 0, z0);
-      var b = new Vector3(x1, 0, z0);
-      var c = new Vector3(x1, 0, z1);
-      var d = new Vector3(x0, 0, z1);
+    static void Cell(MeshKit k, MapSpec map, int seed, float x0, float x1, float z0, float z1, bool flip,
+        List<List<RiverPoint>> beach = null) {
+      float Elevation(float x, float z) {
+        if (beach == null) return 0f;
+        var distance = RiverDistance(beach, new Vector2(x, z));
+        var slopeWidth = 3.2f + 3.3f * Mathf.PerlinNoise(x * 0.078f + 43f, z * 0.078f + 29f);
+        var blend = Mathf.Clamp01((GroundCut - distance) / slopeWidth);
+        return Mathf.Lerp(0f, WaterLevel - 1f, blend);
+      }
+      var a = new Vector3(x0, Elevation(x0, z0), z0);
+      var b = new Vector3(x1, Elevation(x1, z0), z0);
+      var c = new Vector3(x1, Elevation(x1, z1), z1);
+      var d = new Vector3(x0, Elevation(x0, z1), z1);
       if (flip) {
         Triangle(k, map, seed, a, b, c);
         Triangle(k, map, seed, a, c, d);
@@ -366,7 +379,8 @@ namespace FactoryWars.View {
     }
 
     /// <summary>강 근처 칸만 잘게 나눠 강 자리를 파낸다. 잘린 가장자리는 강변 띠가 덮는다.</summary>
-    static void Carve(MeshKit k, MapSpec map, int seed, List<List<RiverPoint>> paths, float x0, float x1, float z0, float z1, bool flip) {
+    static void Carve(MeshKit k, MapSpec map, int seed, List<List<RiverPoint>> paths, float x0, float x1, float z0, float z1, bool flip,
+        List<List<RiverPoint>> coast = null) {
       var center = new Vector2((x0 + x1) / 2, (z0 + z1) / 2);
       var reach = new Vector2(x1 - x0, z1 - z0).magnitude / 2;
       var distance = RiverDistance(paths, center) - GroundCut;
@@ -374,21 +388,22 @@ namespace FactoryWars.View {
         Cell(k, map, seed, x0, x1, z0, z1, flip);
         return;
       }
-      if (distance < -reach) {
+      var beach = coast != null && RiverDistance(coast, center) - GroundCut <= distance + 0.45f ? coast : null;
+      if (distance < -reach - (beach != null ? 6.5f : 0f)) {
         return;
       }
       if (x1 - x0 <= MinCell && z1 - z0 <= MinCell) {
-        if (distance > 0f) {
-          Cell(k, map, seed, x0, x1, z0, z1, flip);
+        if (distance > 0f || beach != null) {
+          Cell(k, map, seed, x0, x1, z0, z1, flip, beach);
         }
         return;
       }
       var mx = (x0 + x1) / 2;
       var mz = (z0 + z1) / 2;
-      Carve(k, map, seed, paths, x0, mx, z0, mz, flip);
-      Carve(k, map, seed, paths, mx, x1, z0, mz, flip == false);
-      Carve(k, map, seed, paths, x0, mx, mz, z1, flip == false);
-      Carve(k, map, seed, paths, mx, x1, mz, z1, flip);
+      Carve(k, map, seed, paths, x0, mx, z0, mz, flip, coast);
+      Carve(k, map, seed, paths, mx, x1, z0, mz, flip == false, coast);
+      Carve(k, map, seed, paths, x0, mx, mz, z1, flip == false, coast);
+      Carve(k, map, seed, paths, mx, x1, mz, z1, flip, coast);
     }
 
     /// <summary>강 자리를 파낸 바닥.</summary>
@@ -397,17 +412,18 @@ namespace FactoryWars.View {
       var biome = BiomeOf(map);
       // 다도해는 외곽 콘크리트 육지 테두리를 만들지 않고 끝없는 에메랄드 바다가 수평선까지 펼쳐지도록 Bounds 안쪽 섬만 생성한다.
       if (biome == Biome.Archipelago) {
+        var rivers = RiverPaths(map, false);
+        var broadWater = rivers.Where(path => path.Count > 1 && path[0].Half >= 18f).ToList();
         var minA = new Vector2(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat);
         var maxA = new Vector2(map.BoundsMax.X.AsFloat, map.BoundsMax.Y.AsFloat);
-        var xsA = new List<float>();
-        var zsA = new List<float>();
-        for (var x = minA.x; x <= maxA.x + 0.01f; x += Step) xsA.Add(x);
-        for (var z = minA.y; z <= maxA.y + 0.01f; z += Step) zsA.Add(z);
+        var xsA = Lines(minA.x, maxA.x, false);
+        var zsA = Lines(minA.y, maxA.y, false);
         for (var i = 0; i + 1 < xsA.Count; i++) {
           for (var j = 0; j + 1 < zsA.Count; j++) {
-            Carve(k, map, seed, paths, xsA[i], xsA[i + 1], zsA[j], zsA[j + 1], (i + j) % 2 == 0);
+            Carve(k, map, seed, paths, xsA[i], xsA[i + 1], zsA[j], zsA[j + 1], (i + j) % 2 == 0, broadWater);
           }
         }
+        IslandBeaches(k, map, rivers);
         return;
       }
       // 외곽 수로가 있으면 바닥을 수로 바깥 둑까지 넓혀 수로를 같은 방식으로 파낸다(항목 24).
@@ -440,6 +456,32 @@ namespace FactoryWars.View {
 
     static Vector3 Clip(Vector3 point, Rect land) => new Vector3(Mathf.Clamp(point.x, land.xMin, land.xMax), point.y, Mathf.Clamp(point.z, land.yMin, land.yMax));
 
+    static void IslandBeaches(MeshKit k, MapSpec map, List<List<RiverPoint>> paths) {
+      var land = MapPolishArt.PlayableRect(map);
+      Vector3 Vertex(Vector2 point, Vector2 normal, float ratio) {
+        if (ratio > 0f) {
+          var edgeX = Mathf.Approximately(point.x, land.xMin) ? -1f : Mathf.Approximately(point.x, land.xMax) ? 1f : 0f;
+          var edgeZ = Mathf.Approximately(point.y, land.yMin) ? -1f : Mathf.Approximately(point.y, land.yMax) ? 1f : 0f;
+          if (edgeX != 0f && edgeZ != 0f) normal = new Vector2(edgeX, edgeZ).normalized;
+        }
+        var spread = 4.8f + 7.0f * Mathf.PerlinNoise(point.x * 0.043f + 81f, point.y * 0.047f + 19f);
+        var position = point + normal * Mathf.Lerp(-3.8f, spread, ratio);
+        return new Vector3(position.x, Mathf.Lerp(-0.035f, WaterLevel - 0.55f, ratio * ratio), position.y);
+      }
+      foreach (var (from, to, outward) in MapPolishArt.Edges(land)) {
+        var count = Mathf.CeilToInt(Vector2.Distance(from, to) / 3f);
+        for (var i = 0; i < count; i++) {
+          var a = Vector2.Lerp(from, to, i / (float)count);
+          var b = Vector2.Lerp(from, to, (i + 1f) / count);
+          if (RiverDistance(paths, (a + b) * 0.5f - outward * 2.8f) < GroundCut + 0.55f) continue;
+          k.Paint(Swatch.Sand);
+          k.Quad(Vertex(a, outward, 0f), Vertex(b, outward, 0f), Vertex(b, outward, 0.52f), Vertex(a, outward, 0.52f), Vector3.up);
+          k.Paint(Swatch.Dirt);
+          k.Quad(Vertex(a, outward, 0.52f), Vertex(b, outward, 0.52f), Vertex(b, outward, 1f), Vertex(a, outward, 1f), Vector3.up);
+        }
+      }
+    }
+
     /// <summary>안쪽 굽이에서 띠 바깥선이 곡률 반경을 넘어 물 쪽으로 접혔는지 본다.</summary>
     static bool Folded(List<RiverPoint> path, RiverPoint point, float side) {
       var outer = Bank(point, side, BandOuter, 0f);
@@ -454,6 +496,7 @@ namespace FactoryWars.View {
       Vector3 BankEdge(RiverPoint point, float side, float offset, float y) => Clip(Bank(point, side, offset, y), bankLand);
       // 항목 36: water를 주면 물 면과 가장자리 거품 띠를 따로 모은다(물 셰이더로 그린다).
       var surface = water ?? k;
+      var seascape = water != null && (biome == Biome.Archipelago || biome == Biome.Strait);
       for (var i = 0; i + 1 < path.Count; i++) {
         var a = path[i];
         var b = path[i + 1];
@@ -464,9 +507,11 @@ namespace FactoryWars.View {
         if (biome == Biome.Archipelago && a.Half >= 18f) {
           continue;
         }
-        surface.Paint(Swatch.WaterDeep);
-        surface.Quad(Edge(a, -1, SlopeInner, WaterLevel), Edge(a, 1, SlopeInner, WaterLevel), Edge(b, 1, SlopeInner, WaterLevel), Edge(b, -1, SlopeInner, WaterLevel), Vector3.up);
-        if (water != null) {
+        if (!seascape) {
+          surface.Paint(Swatch.WaterDeep);
+          surface.Quad(Edge(a, -1, SlopeInner, WaterLevel), Edge(a, 1, SlopeInner, WaterLevel), Edge(b, 1, SlopeInner, WaterLevel), Edge(b, -1, SlopeInner, WaterLevel), Vector3.up);
+        }
+        if (water != null && !seascape) {
           surface.Paint(Swatch.White);
           foreach (var foamSide in new[] { -1f, 1f }) {
             surface.Quad(Edge(a, foamSide, SlopeInner - 1.3f, WaterLevel + 0.03f), Edge(a, foamSide, SlopeInner, WaterLevel + 0.03f), Edge(b, foamSide, SlopeInner, WaterLevel + 0.03f), Edge(b, foamSide, SlopeInner - 1.3f, WaterLevel + 0.03f), Vector3.up);
@@ -845,15 +890,19 @@ namespace FactoryWars.View {
       var features = map.Terrain ?? Array.Empty<TerrainFeature>();
       // 품질 낮음은 절벽 층을 절반으로 합친다(높이는 같다, 절벽 블록·삼각형 절반, 항목 27 성능).
       var layers = GraphicsQuality.Current == QualityTier.Low ? Mathf.Max(1, (profile.CliffLayers + 1) / 2) : profile.CliffLayers;
+      var biome = BiomeOf(map);
       for (var i = 0; i < features.Length; i++) {
         var seed = 100 + i * 17;
         switch (features[i].Kind) {
-          case TerrainKind.Hill: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * (0.85f + 0.3f * MeshKit.Hash(seed, 5)), layers, profile.Jagged, false); break;
+          case TerrainKind.Hill: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * (0.85f + 0.3f * MeshKit.Hash(seed, 5)), layers, profile.Jagged, biome == Biome.Desert); break;
           case TerrainKind.Cliff:
             if (profile.FieldLook) {
               // 야전 룩: 고지대 둘레 절벽 조각은 건물 대신 바위 하나(언덕 비탈 위).
               var at = features[i].Shape.Center;
-              Dressing.Add(DressKind.RockLarge, new Vector3(at.X.AsFloat, 0f, at.Z.AsFloat), seed);
+              var point = new Vector3(at.X.AsFloat, 0f, at.Z.AsFloat);
+              if (biome != Biome.Desert || !NewBundleArt.CanyonFeature(map, features[i].Shape, HighGroundHeight + 1.4f, seed)) {
+                Dressing.Add(DressKind.RockLarge, point, seed);
+              }
               break;
             }
             Plateau(k, features[i].Shape, seed, HighGroundHeight + 0.8f, 1, profile.Jagged * 0.5f, false);
@@ -862,16 +911,19 @@ namespace FactoryWars.View {
           case TerrainKind.Rock: Boulders(k, features[i].Shape, seed); break;
         }
       }
-      var biome = BiomeOf(map);
-      for (var i = 0; i < paths.Count; i++) {
-        River(k, paths[i], 40 + i, Land(map), water, Channel(map) > 0f ? new Rect(map.BoundsMin.X.AsFloat, map.BoundsMin.Y.AsFloat, map.BoundsMax.X.AsFloat - map.BoundsMin.X.AsFloat, map.BoundsMax.Y.AsFloat - map.BoundsMin.Y.AsFloat) : (Rect?)null, biome);
-        RiverRocks(k, paths[i], 70 + i, map);
+      var coast = biome == Biome.Archipelago || biome == Biome.Strait;
+      var playable = MapPolishArt.PlayableRect(map);
+      var banks = coast || Channel(map) > 0f ? playable : (Rect?)null;
+      var riverPaths = coast ? RiverPaths(map, false) : paths;
+      for (var i = 0; i < riverPaths.Count; i++) {
+        River(k, riverPaths[i], 40 + i, coast ? playable : Land(map), water, banks, biome);
+        if (!coast) RiverRocks(k, riverPaths[i], 70 + i, map);
       }
       if (roads) {
         Roads(k, map);
       }
       HighGrounds(k, map);
-      BridgePiers(k, map);
+      if (!NewBundleArt.UsesBridges(biome)) BridgePiers(k, map);
       if (profile.NoBuildAlways) {
         NoBuildMarks(k, map);
       }

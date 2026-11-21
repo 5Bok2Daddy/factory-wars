@@ -62,6 +62,7 @@ namespace FactoryWars.View {
     readonly Transform _root;
     readonly MapSpec _map;
     readonly bool _urban;
+    readonly bool _desert;
     readonly List<Block> _blocks = new List<Block>();
     static readonly Dictionary<(int Kind, int Stage), Mesh> Meshes = new Dictionary<(int, int), Mesh>();
     static Mesh _rubble;
@@ -77,6 +78,7 @@ namespace FactoryWars.View {
       _root.SetParent(parent, false);
       _map = map;
       _urban = TerrainKit.BiomeOf(map) == TerrainKit.Biome.Urban;
+      _desert = TerrainKit.BiomeOf(map) == TerrainKit.Biome.Desert;
       Dressing.Begin();
       for (var i = 0; map.CityBuildings != null && i < map.CityBuildings.Length; i++) {
         _blocks.Add(Create(i, map.CityBuildings[i]));
@@ -213,6 +215,13 @@ namespace FactoryWars.View {
       var width = shape.HalfWidth.AsFloat * 2;
       var seed = 4001 + index * 13;
       var kind = DressOf(placement);
+      if (_desert) {
+        var style = placement.Topples ? "Radar" : placement.Garrison ? "CamoYard" : index % 3 == 0 ? "Fuel" : "DesertTent";
+        var height = placement.Topples ? 4.6f : Mathf.Clamp(width * 0.34f, 1.2f, 3.2f);
+        block.Dressed = MapPolishArt.Place(style, pivot, Vector3.zero, Quaternion.identity,
+          new Vector3(length * 0.84f, height, width * 0.84f));
+        kind = placement.Garrison ? DressKind.TraderNet : DressKind.TraderDish;
+      }
       if (_urban && kind == DressKind.CitySmall && index % 2 == 0) {
         block.Dressed = DressingSpawn.Fitted(DressKind.CityCafe, pivot, length, width, 0f, seed);
       }
@@ -249,10 +258,10 @@ namespace FactoryWars.View {
       block.InteriorFurniture = interior.gameObject;
       var worldRot = Quaternion.Euler(0, shape.Yaw.AsFloat, 0);
       var worldPos = shape.Center.ToUnityVector3();
-      if (placement.Kind == 0 && Dressing.Collecting) {
+      if (!_desert && placement.Kind == 0 && Dressing.Collecting) {
         var spot = worldPos + worldRot * new Vector3(shape.HalfLength.AsFloat * 0.68f, 0.02f, -shape.HalfWidth.AsFloat * 0.68f);
         Dressing.Add(DressKind.SuburbanProp, spot, 7601 + index * 11, null, shape.Yaw.AsFloat + 90f);
-      } else if (placement.Kind == 1 && (index == 2 || index == 11) && Dressing.Collecting) {
+      } else if (!_desert && placement.Kind == 1 && (index == 2 || index == 11) && Dressing.Collecting) {
         var spot = worldPos + worldRot * new Vector3(-shape.HalfLength.AsFloat * 0.7f, 0.04f, -shape.HalfWidth.AsFloat * 0.72f);
         Dressing.Add(DressKind.StreetMachine, spot, 7801 + index, null, shape.Yaw.AsFloat);
       }
@@ -273,7 +282,7 @@ namespace FactoryWars.View {
           }
         }
         block.Marker = Item(root, "Occupants", null, false);
-        block.Marker.transform.localPosition = Vector3.up * (Height(placement.Kind) + MarkerLift);
+        block.Marker.transform.localPosition = Vector3.up * ((_desert ? Mathf.Clamp(width * 0.34f, 1.2f, 3.2f) : Height(placement.Kind)) + MarkerLift);
         block.MarkerFilter = block.Marker.GetComponent<MeshFilter>();
       }
       if (placement.Topples) {
@@ -303,6 +312,7 @@ namespace FactoryWars.View {
 
     /// <summary>맵 경계 밖을 파괴 불가 고층 건물 벽으로 막는다. 경계 안은 그대로다.</summary>
     void BuildBoundary() {
+      if (_desert || TerrainKit.BiomeOf(_map) == TerrainKit.Biome.Archipelago) return;
       // 항목 36: 시가지 모드는 맵 가장자리를 건물 외벽 열(UrbanDecor.Boundary)로 닫는다. 도시 건물 소품 칸이 비어 있으면 예전 경계를 쓴다.
       if (VisualProfile.Current.UrbanDecor && Dressing.Has(DressKind.CityTower)) {
         return;

@@ -2,7 +2,7 @@ namespace FactoryWars.View {
   using Quantum;
   using UnityEngine;
 
-  /// <summary>채굴 시설에서 사령부로 원자재를 보내는 화면 전용 컨베이어와 재사용 화물.</summary>
+  /// <summary>채굴 설비와 옆 적재장을 잇는 화면 전용 컨베이어와 재사용 화물.</summary>
   public sealed class ExtractorDeliveryView {
     const float CargoSpeed = 4.8f;
     const int CargoCount = 2;
@@ -22,20 +22,27 @@ namespace FactoryWars.View {
     public EntityRef Headquarters { get; }
     public Transform FirstCargo => _cargo[0];
     public float BeltPhase => _belt != null ? _belt.Phase : 0f;
+    public Bounds WalkObstacle { get; }
 
     public static ExtractorDeliveryView Create(Transform parent, MapSpec map, EntityRef headquarters, Vector3 from,
-        float sourceRadius, Vector3 to, float destinationRadius, GameObject cargoPrefab) {
+        float sourceRadius, Vector3 to, float destinationRadius, GameObject cargoPrefab,
+        System.Predicate<GroundFootprint> clear) {
       var direction = Vector3.ProjectOnPlane(to - from, Vector3.up);
       var length = direction.magnitude;
       if (length <= sourceRadius + destinationRadius + 0.5f ||
           VisualCatalog.TryFilled(VisualCatalog.FxId("extractor_conveyor"), out var slot) == false) return null;
       direction /= length;
-      var edgeFactor = Mathf.Max(Mathf.Abs(direction.x), Mathf.Abs(direction.z));
-      // 판정 부지보다 작은 모델에도 컨베이어 끝이 닿도록 안으로 넣는다.
-      var start = from + direction * (sourceRadius * 0.76f / edgeFactor);
-      var end = to - direction * (destinationRadius * 0.86f / edgeFactor);
-      if (Vector3.Dot(end - start, direction) < 0.5f) return null;
-      return new ExtractorDeliveryView(parent, map, headquarters, start, end, slot, cargoPrefab);
+      foreach (var turn in new[] { 0f, 45f, -45f, 90f, -90f, 180f }) {
+        var side = Quaternion.Euler(0f, turn, 0f) * direction;
+        var edgeFactor = Mathf.Max(Mathf.Abs(side.x), Mathf.Abs(side.z));
+        var start = from + side * (sourceRadius * 0.73f / edgeFactor);
+        var end = from + side * (sourceRadius / edgeFactor + 2.8f);
+        var angle = Quaternion.LookRotation(side);
+        var area = new GroundFootprint((start + end + side) * 0.5f, new Vector3(1.10f, 0f, (end - start).magnitude * 0.5f + 1.10f), angle);
+        if (!clear(area)) continue;
+        return new ExtractorDeliveryView(parent, map, headquarters, start, end, slot, cargoPrefab);
+      }
+      return null;
     }
 
     ExtractorDeliveryView(Transform parent, MapSpec map, EntityRef headquarters, Vector3 from, Vector3 to,
@@ -51,6 +58,17 @@ namespace FactoryWars.View {
         point.y = TerrainKit.SurfaceHeight(map, point.x, point.z) + 0.035f;
         _points[i] = point;
       }
+      var flatStart = new Vector3(from.x, 0f, from.z);
+      var flatEnd = new Vector3(to.x, 0f, to.z);
+      var clearance = new Bounds(flatStart, Vector3.one * 1.8f);
+      clearance.Encapsulate(new Bounds(flatEnd, Vector3.one * 2.4f));
+      WalkObstacle = clearance;
+      var apron = _points[_points.Length - 1] + (flatEnd - flatStart).normalized * 0.65f;
+      var heading = Quaternion.LookRotation(flatEnd - flatStart);
+      MapPolishArt.Place("Foundation", Root.transform, Root.transform.InverseTransformPoint(apron) - Vector3.up * 0.08f,
+        Quaternion.Inverse(Root.transform.rotation) * heading, new Vector3(2.55f, 0.18f, 2.6f));
+      MapPolishArt.Place("Crates", Root.transform, Root.transform.InverseTransformPoint(apron) + Vector3.up * 0.1f,
+        Quaternion.Inverse(Root.transform.rotation) * heading, new Vector3(1.48f, 0.76f, 0.85f));
 
       var bounds = VisualCatalog.LocalBounds(conveyorSlot.Prefab);
       var alongX = bounds.size.x > bounds.size.z;
