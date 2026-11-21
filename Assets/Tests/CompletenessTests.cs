@@ -190,9 +190,21 @@ namespace FactoryWars.Tests {
       Assert.IsTrue(FactoryWarsUtil.InTruce(Verified), "휴전 중 연습");
       Assert.AreEqual(BotDifficulty.Easy, StateOf(1).Difficulty);
       yield return WaitFor(() => tutorial.CurrentText.StartsWith("1/7"), 5f, "1단계");
+      // HUD가 붙기 전(MatchController.TryStart가 카메라를 시작 위치로 되돌림)이나 튜토리얼이 카메라 기준점을 잡기 전에
+      // 카메라를 옮기면 이동이 지워진다. 둘 다 끝난 뒤에 옮긴다.
+      yield return WaitFor(() => Controller() != null && Controller().IsReady, 10f, "HUD 준비");
+      yield return WaitFrames(3);
       // 1단계: 카메라 이동.
-      Controller().Camera.MoveTo(Controller().Camera.Focus + new Vector2(30, 0));
-      yield return WaitFor(() => tutorial.Index == 1, 5f, "카메라 단계 통과");
+      // 봉쇄 맵은 화면이 경계 밖을 비추지 않게 초점을 묶는다(KeepViewportInside). 시작 위치가 경계 쪽이면 +x 이동이 막히므로
+      // 맵 가운데 쪽으로 끈다(사용자가 실제로 끄는 방향).
+      var before = Controller().Camera.Focus;
+      Controller().Camera.MoveTo(before - before.normalized * 30f);
+      var deadline = Time.realtimeSinceStartup + 5f;
+      while (tutorial.Index != 1 && Time.realtimeSinceStartup < deadline) {
+        yield return null;
+      }
+      var cam = Controller().Camera;
+      Assert.AreEqual(1, tutorial.Index, $"카메라 단계 통과 안 됨: 이동 전 {before} → 지금 {cam.Focus}, 높이 {cam.Height}, 경계 {cam.BoundsMin}~{cam.BoundsMax}, 안쪽 고정 {cam.KeepViewportInside}, timeScale {Time.timeScale}");
       // 2단계: 공병 선택.
       Controller().Input.Selection.SelectUnit(Engineers(0)[0]);
       yield return WaitFor(() => tutorial.Index == 2, 5f, "선택 단계 통과");

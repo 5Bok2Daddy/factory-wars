@@ -118,21 +118,24 @@ namespace FactoryWars.View {
 
     void Build(RectTransform root) {
       _pause = Ui.Panel("PauseMenu", root);
-      Ui.Place(_pause, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620, 760));
+      // 제목줄을 넣고도 위쪽 휴전 띠(화면 위 130px)와 겹치지 않게 높이 780, 버튼을 25px 내린다.
+      Ui.Place(_pause, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620, 780));
       _pause.pivot = new Vector2(0.5f, 0.5f);
+      Ui.Header("PauseHeader", _pause, "일시 정지", 560f);
+      Ui.Modal(_pause);
       void Add(string label, float y, UnityEngine.Events.UnityAction action) {
         var button = Ui.Button(label, _pause, label, action, 34);
         var rect = (RectTransform)button.transform;
         Ui.Place(rect, new Vector2(0.5f, 0.5f), new Vector2(0, y), new Vector2(460, Ui.MinButtonSize));
         rect.pivot = new Vector2(0.5f, 0.5f);
       }
-      Add("계속", 255, TogglePause);
-      Add("설정", 85, () => _settings.gameObject.SetActive(true));
+      Add("계속", 230, TogglePause);
+      Add("설정", 60, () => _settings.gameObject.SetActive(true));
       _surrender = Ui.Button("기권", _pause, "기권", Surrender, 34);
       var surrenderRect = (RectTransform)_surrender.transform;
-      Ui.Place(surrenderRect, new Vector2(0.5f, 0.5f), new Vector2(0, -85), new Vector2(460, Ui.MinButtonSize));
+      Ui.Place(surrenderRect, new Vector2(0.5f, 0.5f), new Vector2(0, -110), new Vector2(460, Ui.MinButtonSize));
       surrenderRect.pivot = new Vector2(0.5f, 0.5f);
-      Add("시작 화면으로", -255, Leave);
+      Add("시작 화면으로", -280, Leave);
       _pause.gameObject.SetActive(false);
 
       _settings = SettingsPanel.Build(root, () => _settings.gameObject.SetActive(false));

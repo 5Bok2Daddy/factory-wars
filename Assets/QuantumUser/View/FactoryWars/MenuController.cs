@@ -11,13 +11,24 @@ namespace FactoryWars.View {
     const string VolumeKey = "fw_volume";
 
     public static RectTransform Build(Transform parent, UnityEngine.Events.UnityAction onClose) {
+      // 3열 격자. 칸 높이는 최소 터치 크기(154)를 지키고 줄 간격 170으로 겹치지 않게 한다.
+      const float Column = 400f, ColumnGap = 30f, Pitch = 170f, Top = -86f;
+      var rows = Debug.isDebugBuild ? 5 : 4;
       var panel = Ui.Panel("Settings", parent);
-      Ui.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900, Debug.isDebugBuild ? 800 : 620));
+      Ui.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero,
+        new Vector2(3 * Column + 2 * ColumnGap + 60f, -Top + 20f + (rows - 1) * Pitch + Ui.MinButtonSize + 24f));
       panel.pivot = new Vector2(0.5f, 0.5f);
-      var title = Ui.Label("Title", panel, "설정", 44, TextAnchor.MiddleCenter);
-      Ui.Place(title.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -20), new Vector2(600, 70));
+      Ui.Header("SettingsHeader", panel, "설정", 3 * Column + 2 * ColumnGap, -16f, 70f);
+      Ui.Modal(panel);
+      void Cell(Component item, float x, int row, float width = Column, float height = 0f) {
+        Ui.Place((RectTransform)item.transform, new Vector2(0.5f, 1f),
+          new Vector2(x, Top - 20f - row * Pitch - (Ui.MinButtonSize - (height > 0f ? height : Ui.MinButtonSize)) / 2f),
+          new Vector2(width, height > 0f ? height : Ui.MinButtonSize));
+      }
+      float Col(int index) => (index - 1) * (Column + ColumnGap);
       var volume = Ui.Label("Volume", panel, "", 34, TextAnchor.MiddleCenter);
-      Ui.Place(volume.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 90), new Vector2(360, Ui.MinButtonSize));
+      volume.color = UiTheme.Current.PanelText;
+      Cell(volume, 0f, 0, 360f);
 
       void Show() {
         volume.text = $"음량 {Mathf.RoundToInt(AudioListener.volume * 100)}%";
@@ -31,37 +42,37 @@ namespace FactoryWars.View {
       Show();
 
       var down = Ui.Button("VolumeDown", panel, "-", () => Change(-0.1f), 44);
-      Ui.Place((RectTransform)down.transform, new Vector2(0.5f, 0.5f), new Vector2(-260, 90), new Vector2(Ui.MinButtonSize, Ui.MinButtonSize));
+      Cell(down, -280f, 0, Ui.MinButtonSize);
       var up = Ui.Button("VolumeUp", panel, "+", () => Change(0.1f), 44);
-      Ui.Place((RectTransform)up.transform, new Vector2(0.5f, 0.5f), new Vector2(260, 90), new Vector2(Ui.MinButtonSize, Ui.MinButtonSize));
+      Cell(up, 280f, 0, Ui.MinButtonSize);
       Button quality = null;
       quality = Ui.Button("Quality", panel, $"그래픽: {GraphicsQuality.Name(GraphicsQuality.Current)}", () => {
         Ui.SetLabel(quality, $"그래픽: {GraphicsQuality.Name(GraphicsQuality.Cycle())}");
       }, 34);
-      Ui.Place((RectTransform)quality.transform, new Vector2(0.5f, 0.5f), new Vector2(-220, -20), new Vector2(400, Ui.MinButtonSize));
+      Cell(quality, Col(0), 1);
       Button cameraSpeed = null;
       cameraSpeed = Ui.Button("CameraSpeed", panel, PlayerOptions.CameraLabel, () => {
         PlayerOptions.NextCameraSpeed();
         Ui.SetLabel(cameraSpeed, PlayerOptions.CameraLabel);
       }, 30);
-      Ui.Place((RectTransform)cameraSpeed.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -20), new Vector2(400, Ui.MinButtonSize));
+      Cell(cameraSpeed, Col(1), 1);
       Button shake = null;
       shake = Ui.Button("Shake", panel, ScreenShake.Label, () => {
         ScreenShake.Enabled = ScreenShake.Enabled == false;
         Ui.SetLabel(shake, ScreenShake.Label);
       }, 30);
-      Ui.Place((RectTransform)shake.transform, new Vector2(0.5f, 0.5f), new Vector2(-220, -110), new Vector2(400, Ui.MinButtonSize));
+      Cell(shake, Col(2), 1);
       Button vibration = null;
       vibration = Ui.Button("Vibration", panel, PlayerOptions.VibrationLabel, () => {
         PlayerOptions.Vibration = PlayerOptions.Vibration == false;
         Ui.SetLabel(vibration, PlayerOptions.VibrationLabel);
       }, 30);
-      Ui.Place((RectTransform)vibration.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -110), new Vector2(400, Ui.MinButtonSize));
+      Cell(vibration, Col(0), 2);
       var language = Ui.Label("Language", panel, "언어: 한국어", 34, TextAnchor.MiddleCenter);
-      Ui.Place(language.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, -200), new Vector2(600, 70));
+      language.color = UiTheme.Current.PanelText;
+      Cell(language, Col(1), 2, Column, 70f);
       if (Debug.isDebugBuild) {
         // 개발 빌드 전용: 룩 후보 바꾸기. 다음 경기부터 적용된다.
-        Ui.Place(language.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-220, -200), new Vector2(400, 70));
         string LookLabel() => "화면: " + VisualPresets.Title(PlayerPrefs.GetString(VisualProfile.ChoiceKey, "A"));
         Button look = null;
         look = Ui.Button("Look", panel, LookLabel(), () => {
@@ -71,7 +82,7 @@ namespace FactoryWars.View {
           VisualProfile.Use(next);
           Ui.SetLabel(look, LookLabel());
         }, 28);
-        Ui.Place((RectTransform)look.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -200), new Vector2(400, Ui.MinButtonSize));
+        Cell(look, Col(2), 2);
       }
       if (Debug.isDebugBuild) {
         // 항목 23: 실기기 시험용. 성능 표시를 켜고 끄고, 경기 기록(CSV)을 클립보드로 복사해 메신저로 보낸다.
@@ -81,16 +92,16 @@ namespace FactoryWars.View {
           PerfMonitor.OverlayEnabled = PerfMonitor.OverlayEnabled == false;
           Ui.SetLabel(perf, PerfLabel());
         }, 28);
-        Ui.Place((RectTransform)perf.transform, new Vector2(0.5f, 0.5f), new Vector2(-220, -300), new Vector2(400, Ui.MinButtonSize));
+        Cell(perf, Col(0), 3);
         Button share = null;
         share = Ui.Button("ShareLog", panel, "기록 공유(복사)", () => {
           var lines = PerfMonitor.CopyLog();
           Ui.SetLabel(share, $"복사됨: 경기 {lines}판");
         }, 28);
-        Ui.Place((RectTransform)share.transform, new Vector2(0.5f, 0.5f), new Vector2(220, -300), new Vector2(400, Ui.MinButtonSize));
+        Cell(share, Col(1), 3);
       }
       var close = Ui.Button("Close", panel, "닫기", onClose, 32);
-      Ui.Place((RectTransform)close.transform, new Vector2(0.5f, 0), new Vector2(0, 30), new Vector2(260, Ui.MinButtonSize));
+      Cell(close, 0f, rows - 1, 260f);
       return panel;
     }
   }

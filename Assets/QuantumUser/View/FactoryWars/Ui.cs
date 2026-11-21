@@ -6,6 +6,40 @@ namespace FactoryWars.View {
   using UnityEngine.UI;
 
   /// <summary>uGUI를 코드로 만드는 도구. 아트가 들어오는 챕터 6 전까지 쓴다.</summary>
+  /// <summary>Ui.Modal이 붙인다. 창과 함께 켜지고 꺼지는 어두운 뒤판.</summary>
+  public class ModalBackdrop : MonoBehaviour {
+    RectTransform _dim;
+
+    void OnEnable() {
+      var parent = transform.parent;
+      if (parent == null) {
+        return;
+      }
+      if (_dim == null) {
+        _dim = Ui.Rect(name + "Backdrop", parent);
+        Ui.Stretch(_dim, -4000f);
+        var image = _dim.gameObject.AddComponent<Image>();
+        image.color = new Color(0.02f, 0.04f, 0.06f, 0.62f);
+        image.raycastTarget = false;
+      }
+      _dim.gameObject.SetActive(true);
+      _dim.SetAsLastSibling();
+      transform.SetAsLastSibling();
+    }
+
+    void OnDisable() {
+      if (_dim != null) {
+        _dim.gameObject.SetActive(false);
+      }
+    }
+
+    void OnDestroy() {
+      if (_dim != null) {
+        Destroy(_dim.gameObject);
+      }
+    }
+  }
+
   public static class Ui {
     /// <summary>29 2-5: 6.1인치 431dpi 기준 9mm 규격(154px) 보장</summary>
     public const float MinButtonSize = 154f;
@@ -111,6 +145,33 @@ namespace FactoryWars.View {
       }
       img.color = color ?? PanelColor;
       return rect;
+    }
+
+    /// <summary>
+    /// 창(모달) 뒤를 어둡게 하고, 창이 켜질 때 같은 부모의 맨 앞(HUD 띠·알림 위)으로 올린다.
+    /// 화면 전용 장식이라 입력은 막지 않는다(raycastTarget 끔: 기존 조작 흐름 유지).
+    /// </summary>
+    public static void Modal(RectTransform panel) {
+      if (panel.GetComponent<ModalBackdrop>() == null) {
+        panel.gameObject.AddComponent<ModalBackdrop>();
+      }
+      // 창 바탕은 불투명하게: 뒤의 HUD 글자가 비쳐 읽기 어려워지지 않게 한다.
+      var image = panel.GetComponent<Image>();
+      if (image != null) {
+        var color = image.color;
+        color.a = 1f;
+        image.color = color;
+      }
+    }
+
+    /// <summary>창 맨 위 제목줄(테마 Header 색 캡슐 + 큰 글자). 도크트린·외교·설정·일시정지 창이 같은 모양을 쓴다.</summary>
+    public static Text Header(string name, Transform parent, string value, float width, float top = -14f, float height = 60f) {
+      var header = Capsule(name, parent, UiTheme.Current.Header);
+      Place(header, new Vector2(0.5f, 1), new Vector2(0f, top), new Vector2(width, height));
+      header.GetComponent<Image>().raycastTarget = false;
+      var title = Label("Title", header, value, UiTheme.Current.FontLarge, TextAnchor.MiddleCenter);
+      Stretch(title.rectTransform, 8f);
+      return title;
     }
 
     public static Text Label(string name, Transform parent, string value, int size, TextAnchor alignment = TextAnchor.MiddleLeft) {

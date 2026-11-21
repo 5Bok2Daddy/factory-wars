@@ -149,6 +149,10 @@ namespace FactoryWars.View {
       var canvas = Ui.CreateCanvas("MatchHud");
       canvas.transform.SetParent(transform, false);
       Root = Ui.SafeArea(canvas);
+      // Photon 개발용 프레임 표시(QuantumStats)는 왼쪽 위 자원 막대(철)를 가린다. 성능 표시를 켠 개발 빌드에서만 보인다.
+      foreach (var stats in FindObjectsByType<QuantumStats>(FindObjectsInactive.Include, FindObjectsSortMode.None)) {
+        stats.gameObject.SetActive(PerfMonitor.OverlayEnabled);
+      }
 
       // 상단 왼쪽: 자원 한 줄.
       var top = Ui.Rect("TopBar", Root);
@@ -669,11 +673,7 @@ namespace FactoryWars.View {
       dim.raycastTarget = false;
       var panel = Ui.Panel("DoctrinePanel", _doctrineOverlay, theme.Panel);
       Ui.Place(panel, new Vector2(0.5f, 0.5f), new Vector2(0, 40), new Vector2(1180, 470));
-      var header = Ui.Capsule("DoctrineHeader", panel, theme.Header);
-      Ui.Place(header, new Vector2(0.5f, 1), new Vector2(0f, -26f), new Vector2(1100f, 64f));
-      header.GetComponent<Image>().raycastTarget = false;
-      _doctrineTitle = Ui.Label("Title", header, "전술 도크린을 고르세요", theme.FontLarge, TextAnchor.MiddleCenter);
-      Ui.Stretch(_doctrineTitle.rectTransform, 8f);
+      _doctrineTitle = Ui.Header("DoctrineHeader", panel, "전술 도크린을 고르세요", 1100f, -26f, 64f);
       for (var i = 0; i < Doctrines.Length; i++) {
         var card = Doctrines[i];
         var id = card.Id;
@@ -810,7 +810,7 @@ namespace FactoryWars.View {
       var frameImage = frame.gameObject.AddComponent<Image>();
       frameImage.sprite = UiCatalog.SpriteFor("icon_frame");
       frameImage.type = Image.Type.Sliced;
-      frameImage.color = new Color(0.14f, 0.17f, 0.23f, 0.96f);
+      frameImage.color = theme.Button;
       frameImage.raycastTarget = false;
       Ui.Place(frame, new Vector2(0, 0.5f), new Vector2(Pad, 0), new Vector2(150, 150));
       _cardIcon = Ui.Icon("Icon", frame, "", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(124, 124));
@@ -869,10 +869,10 @@ namespace FactoryWars.View {
         Ui.Place((RectTransform)pBtn.transform, Vector2.zero, new Vector2(Pad + i * (Cell + Gap), Pad), new Vector2(Cell, Cell));
         var bgImg = pBtn.GetComponent<Image>();
         if (bgImg != null) {
-          bgImg.color = new Color(0.11f, 0.16f, 0.24f, 0.96f);
+          bgImg.color = theme.Button;
         }
         var pOutline = pBtn.gameObject.AddComponent<Outline>();
-        pOutline.effectColor = new Color(0.18f, 0.90f, 1f, 0.85f);
+        pOutline.effectColor = theme.Accent;
         pOutline.effectDistance = new Vector2(1.5f, -1.5f);
         pBtn.gameObject.SetActive(false);
         _passengerButtons.Add(pBtn);
@@ -920,14 +920,14 @@ namespace FactoryWars.View {
       _contextPanel.SetActive(false);
 
       // 툴팁: 명령 카드 바로 위.
-      _tooltip = Ui.Panel("Tooltip", Root, new Color(0.12f, 0.15f, 0.22f, 0.94f));
+      _tooltip = Ui.Panel("Tooltip", Root, theme.Panel);
       var tooltipSprite = UiCatalog.SpriteFor("tooltip");
       if (tooltipSprite != null) {
         _tooltip.GetComponent<Image>().sprite = tooltipSprite;
       }
       Ui.Place(_tooltip, new Vector2(1, 0), new Vector2(-12, 8 + ContextHeight + Gap), new Vector2(ContextWidth, 96));
       _tooltipText = Ui.Label("Text", _tooltip, "", theme.FontSmall + 2, TextAnchor.MiddleLeft);
-      _tooltipText.color = Color.white;
+      _tooltipText.color = theme.PanelText;
       Ui.Stretch(_tooltipText.rectTransform, 14f);
       _tooltip.GetComponent<Image>().raycastTarget = false;
       _tooltip.gameObject.SetActive(false);
@@ -1070,6 +1070,8 @@ namespace FactoryWars.View {
       _diplomacy = Ui.Panel("Diplomacy", Root);
       Ui.Place(_diplomacy, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1500, 900));
       _diplomacy.pivot = new Vector2(0.5f, 0.5f);
+      Ui.Header("DiplomacyHeader", _diplomacy, "외교 · 쪽지", 1420f);
+      Ui.Modal(_diplomacy);
       var rules = frame.FindAsset(frame.RuntimeConfig.Rules);
       var row = 0;
       for (var i = 0; i < frame.PlayerCount; i++) {
@@ -1077,10 +1079,11 @@ namespace FactoryWars.View {
         if (other == Controller.Player || frame.Global->Players.GetPointer(i)->Active == false) {
           continue;
         }
-        var y = -20 - row * 150;
+        var y = -90 - row * 150;
         var line = Ui.Rect($"Row{i}", _diplomacy);
         Ui.Place(line, new Vector2(0, 1), new Vector2(20, y), new Vector2(1460, Ui.MinButtonSize));
         var name = Ui.Label("Name", line, "", 30);
+        name.color = UiTheme.Current.PanelText;
         Ui.Place(name.rectTransform, new Vector2(0, 0.5f), Vector2.zero, new Vector2(330, Ui.MinButtonSize));
         var x = 340f;
         Button Add(string label, DiplomacyAction action) {

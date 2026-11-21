@@ -34,6 +34,23 @@
 
 전체 9장씩은 `DevelopmentReports/Screenshots/StrategyUiKit/{before,after}/`에 있다(공병·사령부·전차 × 16:9·19.5:9·20:9).
 
+## 창(모달) 정리 (2026-11-22)
+
+- 외교·일시정지·설정 창에 도크트린 창과 같은 Cyan 제목줄(`Ui.Header`)을 붙였다.
+- 창이 열리면 뒤를 어둡게 하고 같은 부모의 맨 앞으로 올린다(`Ui.Modal`). 그 전에는 휴전 띠가 일시정지 창 위에 그려지고 창 너머로 전장과 HUD 글자가 비쳤다. 어두운 뒤판은 입력을 막지 않아 기존 조작 흐름은 같다.
+- 설정 창 배치 오류 수정: 줄 간격 90px에 154px 버튼을 놓아 버튼끼리 겹쳐 있었다. 3열 격자, 줄 간격 170px로 다시 배치했다.
+- 선택 카드 아이콘 테두리·탑승 칸·툴팁에 남아 있던 예전 남색 고정값을 테마 색으로 바꿨다.
+- Photon 개발용 프레임 표시(`QuantumStats`)가 상단 자원 막대의 철 수치를 가려서, 설정의 "성능 표시"를 켠 개발 빌드에서만 보이게 했다.
+
+| 창 | 변경 후 |
+| --- | --- |
+| 16:9 사령부 유닛 연구 | ![](status_images/StrategyUiKit/after_research_16x9.png) |
+| 16:9 외교·쪽지 | ![](status_images/StrategyUiKit/after_diplomacy_16x9.png) |
+| 19.5:9 일시정지 | ![](status_images/StrategyUiKit/after_pause_19.5x9.png) |
+| 20:9 설정 | ![](status_images/StrategyUiKit/after_settings_20x9.png) |
+
+창 캡처까지 합친 21장(7개 장면 × 3비율)은 `DevelopmentReports/Screenshots/StrategyUiKit/after/`에 있다.
+
 ## 검증 (Unity 에디터 PlayMode, GPU)
 
 | 항목 | 결과 | 근거 |
@@ -48,11 +65,14 @@
 | 궁극 버튼·준비·목표·취소 | PASS | `Ui_UltimateSlotLocksPreparesAndTargets`, `Ultimate_PlayerCancelRefundsPartAndCooldownAllowsRearm` |
 | 경고·쪽지·일시정지·설정·메뉴 | PASS | `Hud_RejectionBecomesAlert`, `Hud_ReceivedNoteShowsAndStaysInInbox`, `Pause_*`, `Settings_*`, `Menu_*` |
 | 미니맵 | PASS | `Minimap_*`, `CaptureMinimap_TerritoryAndExpansion`(앞마당 부지 이동 후) |
+| 연구 메뉴·외교·일시정지·설정 창 열기·닫기·캡처 | PASS | `UiKit_CaptureHudAtLandscapeAspects`(화면 버튼 경로로 연다) |
+| 튜토리얼 1~2단계 | PASS(시험 수정) | `Tutorial_StartsFromMenuAndStepsAdvance`: 봉쇄 맵 시작 위치가 경계 쪽이라 +x 카메라 이동이 막혔다. 맵 가운데 쪽으로 끌도록 고쳤다 |
+| UI 관련 묶음 69건 | 68 PASS / 1 FAIL | 실패 1건은 기존 `AiDiplomacy_BreaksAfterCommonEnemyFalls` |
 | 인구 한도 대기열 | FAIL(기존 기준선 실패) | `Produce_PopulationLimitCountsQueue` |
 | Android 실기기 | NOT TESTED(사용자 지시로 보류) | — |
 
 ## 남은 일
 
-- 연구·도크트린 카드, 외교 창 등 큰 모달은 테마 색만 바뀌었다. 키트 문양(Sheet 3)·프로필 프레임(Sheet 2)을 쓴 전용 레이아웃은 아직 없다.
+- 창은 제목줄·뒤판까지 맞췄지만 키트 문양(Sheet 3)·프로필 프레임(Sheet 2)을 쓴 전용 장식은 아직 없다.
 - 키트 아이콘(Sheet 4)은 자원·자물쇠에만 썼다. 명령 아이콘은 기존 아이콘을 받침판 위에 둔다.
 - 한국어를 지원하는 OFL 글꼴(Pretendard·Noto Sans KR)을 넣으면 `UiCatalog.Font`에 연결할 수 있다.

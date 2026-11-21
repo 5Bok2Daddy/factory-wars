@@ -24,13 +24,18 @@ namespace FactoryWars.Tests {
     }
 
     IEnumerator ShootHud(string name, int width, int height) {
-      var canvas = Controller().Hud.Root.GetComponentInParent<Canvas>();
+      // HUD뿐 아니라 일시정지·설정처럼 다른 캔버스에 있는 창도 찍도록 켜진 화면 오버레이 캔버스를 모두 카메라에 붙인다.
+      var canvases = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None)
+        .Where(c => c.isRootCanvas && c.renderMode == RenderMode.ScreenSpaceOverlay && c.isActiveAndEnabled)
+        .OrderBy(c => c.sortingOrder).ToArray();
       var camera = Camera.main;
       var surface = new RenderTexture(width, height, 24);
       camera.targetTexture = surface;
-      canvas.renderMode = RenderMode.ScreenSpaceCamera;
-      canvas.worldCamera = camera;
-      canvas.planeDistance = 2f;
+      for (var i = 0; i < canvases.Length; i++) {
+        canvases[i].renderMode = RenderMode.ScreenSpaceCamera;
+        canvases[i].worldCamera = camera;
+        canvases[i].planeDistance = 2f - i * 0.1f;
+      }
       yield return null;
       Controller().Hud.Refresh(Controller().Frame);
       Canvas.ForceUpdateCanvases();
@@ -45,7 +50,9 @@ namespace FactoryWars.Tests {
       Object.Destroy(image);
       camera.targetTexture = null;
       surface.Release();
-      canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+      foreach (var canvas in canvases) {
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+      }
       yield return null;
     }
 
@@ -78,7 +85,40 @@ namespace FactoryWars.Tests {
       input.Selection.SelectUnits(UnitsNamed(0, "ff_eagle_tank"));
       yield return WaitFrames(5);
       foreach (var (aspect, width, height) in UiAspects) yield return ShootHud($"tanks_{aspect}", width, height);
-      Assert.AreEqual(9, Directory.GetFiles(UiShotFolder(), "*.png").Count(f => UiAspects.Any(a => f.Contains(a.Name))));
+      Assert.AreEqual(9, new[] { "engineer", "headquarters", "tanks" }.Sum(s => UiAspects.Count(a => File.Exists(Path.Combine(UiShotFolder(), $"{s}_{a.Name}.png")))));
+
+      // 창(모달): 사령부 유닛 연구 메뉴, 외교, 일시정지, 설정. 화면 버튼과 같은 경로로 연다.
+      input.Selection.SelectBuilding(hq);
+      yield return WaitFrames(5);
+      Controller().Hud.Refresh(Controller().Frame);
+      var research = Controller().Hud.Root.GetComponentsInChildren<UnityEngine.UI.Button>()
+        .FirstOrDefault(b => b.GetComponentInChildren<UnityEngine.UI.Text>()?.text.StartsWith("유닛 연구") == true);
+      Assert.IsNotNull(research, "사령부 명령판에 유닛 연구 버튼 없음: " + string.Join(" | ", Controller().Hud.Entries.Select(e => e.Label?.Replace("\n", " "))));
+      research.onClick.Invoke();
+      yield return WaitFrames(5);
+      foreach (var (aspect, width, height) in UiAspects) yield return ShootHud($"research_{aspect}", width, height);
+      input.Selection.Clear();
+      yield return WaitFrames(3);
+
+      Controller().Hud.ToggleDiplomacy();
+      yield return WaitFrames(3);
+      Assert.IsTrue(Controller().Hud.DiplomacyOpen);
+      foreach (var (aspect, width, height) in UiAspects) yield return ShootHud($"diplomacy_{aspect}", width, height);
+      Controller().Hud.ToggleDiplomacy();
+
+      Controller().TogglePause();
+      yield return null;
+      var pause = GameObject.Find("PauseMenu");
+      Assert.IsNotNull(pause, "일시정지 창이 열리지 않음");
+      foreach (var (aspect, width, height) in UiAspects) yield return ShootHud($"pause_{aspect}", width, height);
+      pause.GetComponentsInChildren<UnityEngine.UI.Button>().First(b => b.name == "설정").onClick.Invoke();
+      yield return null;
+      Assert.IsNotNull(GameObject.Find("Settings"), "설정 창이 열리지 않음");
+      foreach (var (aspect, width, height) in UiAspects) yield return ShootHud($"settings_{aspect}", width, height);
+      GameObject.Find("Settings").SetActive(false);
+      Controller().TogglePause();
+      yield return null;
+      Assert.IsNull(GameObject.Find("PauseMenu"), "일시정지 창이 닫히지 않음");
     }
   }
 }
