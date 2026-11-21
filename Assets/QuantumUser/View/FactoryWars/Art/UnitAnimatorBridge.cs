@@ -36,6 +36,8 @@ namespace FactoryWars.View {
     public float DeathSeconds = 1.5f;
     /// <summary>엄폐 중이면 true. 시뮬레이션의 InCover를 BattleView가 넣는다.</summary>
     public bool Cover;
+    /// <summary>은신(엎드려 숨은 저격수) 중이면 true. 사망 연출이 엎드린 자세(DeathProne)가 된다.</summary>
+    public bool Prone;
     readonly HashSet<int> _params = new HashSet<int>();
     readonly List<MixamoMotion> _mixamo = new List<MixamoMotion>();
     static readonly string[] DeathPoses = { "DeathFront", "DeathBack", "DeathSide" };
@@ -174,7 +176,7 @@ namespace FactoryWars.View {
       State = UnitAnimState.Dead;
       if (_mixamo.Count > 0 && Usable(Animator)) {
         for (var i = 0; i < _mixamo.Count; i++) {
-          var pose = Cover ? "DeathCrouch" : DeathPoses[(Mathf.Abs(GetInstanceID() % DeathPoses.Length) + i) % DeathPoses.Length];
+          var pose = Prone ? "DeathProne" : Cover ? "DeathCrouch" : DeathPoses[(Mathf.Abs(GetInstanceID() % DeathPoses.Length) + i) % DeathPoses.Length];
           _mixamo[i].Set(pose);
         }
         return Mathf.Max(DeathSeconds, 1.5f);

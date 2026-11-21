@@ -1217,6 +1217,7 @@ namespace FactoryWars.View {
         var workingAnim = frame.Unsafe.TryGetPointer<Worker>(entity, out var wAnim) && wAnim->Task != WorkerTask.Idle && wAnim->Task != WorkerTask.Deliver;
         var speed = dt > 0f ? (actor.Position - before).magnitude / dt : 0f;
         actor.View.Animation.Cover = unit->InCover;
+        actor.View.Animation.Prone = unit->StealthUntilFrame > frame.Number;
         actor.View.Animation.Set(AnimState(speed, hasTarget, workingAnim ? wAnim->Task : WorkerTask.Idle), speed);
       }
     }

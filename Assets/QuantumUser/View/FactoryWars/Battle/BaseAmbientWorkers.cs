@@ -40,6 +40,7 @@ namespace FactoryWars.View {
       BuildingRole.SupplyDepot or BuildingRole.CollectionYard => (10f, 2.6f, 1),
       BuildingRole.LumberMill or BuildingRole.IronExtractor => (12f, 2.9f, 2),
       BuildingRole.MlrsBattery => (12f, 3.4f, 2),
+      BuildingRole.MedicTent or BuildingRole.RepairBay => (11f, 3.4f, 1),
       _ => (10f, 3.2f, 0),
     };
 
@@ -47,6 +48,8 @@ namespace FactoryWars.View {
       public GameObject Root;
       public Animator Animator;
       public MixamoMotion Motion;
+      /// <summary>지금 재생 중인 Mixamo 동작 이름(없으면 null). 시험·디버그용 읽기 값.</summary>
+      public string Pose;
       public Animation LegacyAnimation;
       public WorkerCarryRig CarryRig;
       public int Owner;
@@ -237,6 +240,13 @@ namespace FactoryWars.View {
       }
     }
 
+    /// <summary>해당 Mixamo 동작을 재생 중인 작업자 수.</summary>
+    public int PoseCount(string pose) {
+      var count = 0;
+      for (var i = 0; i < _workers.Count; i++) if (_workers[i].Root != null && _workers[i].Pose == pose) count++;
+      return count;
+    }
+
     public int RestingCount {
       get {
         var count = 0;
@@ -303,6 +313,8 @@ namespace FactoryWars.View {
         case BuildingRole.CollectionYard:
         case BuildingRole.UltimateSite:
         case BuildingRole.MlrsBattery:
+        case BuildingRole.MedicTent:
+        case BuildingRole.RepairBay:
           return true;
         default:
           return false;
@@ -714,6 +726,9 @@ namespace FactoryWars.View {
           pose = worker.Role switch {
             BuildingRole.VehicleFactory or BuildingRole.HeavyWorks or BuildingRole.Processor or BuildingRole.IronExtractor => MachinePoses[worker.Seed % MachinePoses.Length],
             BuildingRole.MlrsBattery => worker.Seed % 2 == 0 ? "Inspect" : "Device",
+            // 의무대: 위생병의 처치(Aid)와 부상자 대기(InjuredIdle). 정비소: 부품 카트를 밀고 당긴다.
+            BuildingRole.MedicTent => worker.Seed % 2 == 0 ? "Aid" : "InjuredIdle",
+            BuildingRole.RepairBay => worker.Seed % 2 == 0 ? "Push" : "Pull",
             BuildingRole.Headquarters or BuildingRole.Barracks when worker.Seed % 2 == 0 => "Inspect",
             _ => worker.IsTrolley ? "HoldingIdle" : worker.Seed % 3 == 0 ? "Lift" : worker.Seed % 3 == 1 ? "PickUp" : "PutDown",
           };
@@ -723,7 +738,7 @@ namespace FactoryWars.View {
             : worker.IsTrolley ? "HoldingIdle" : "BoxIdle";
         }
         var clipSpeed = speed > 0.15f ? Mathf.Clamp(speed / (pose == "BoxJog" ? 2.7f : 1.8f), 0.55f, 1.3f) : 1f;
-        worker.Motion.Set(pose, worker.State == WorkerState.Working ? 0f : (worker.Seed * 0.23f) % 1f, clipSpeed);
+        worker.Pose = worker.Motion.Set(pose, worker.State == WorkerState.Working ? 0f : (worker.Seed * 0.23f) % 1f, clipSpeed) ? pose : null;
       }
       if (worker.LegacyAnimation == null) return;
       var clip = speed > 0f ? "run" : "idle";
