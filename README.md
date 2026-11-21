@@ -17,7 +17,7 @@
 | 건너뜀 | 125건 전부 `Explicit`. AI 배치 70건, 전투 탐색 6건, 시간별 룩 검증 2건, 개별 검사 47건이다. 이 중 GPU 캡처 6건과 Photon 실서버 2건은 별도 실행에서 통과했다. |
 | 남은 검증 | 기존 회귀 23건, Android 성능·터치, 전차 출고 경로, 일부 Mixamo 클립의 경기 상태 연결. |
 
-[실패 25건과 건너뜀 125건 상세](Docs/FactoryWars_PlayMode_2026-11-21.md) · [프로젝트 상태 보고서](Docs/FactoryWars_Status.md)
+[실패 25건과 건너뜀 125건 상세](Docs/FactoryWars_PlayMode_2026-11-21.md) · [프로젝트 상태 보고서](Docs/FactoryWars_Status.md) · [에이전트 인수인계](HANDOFF.md)
 
 ### 해안·사막·공장 야드와 Mixamo · 2026-11-21 KST
 
