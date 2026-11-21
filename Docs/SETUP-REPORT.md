@@ -1,6 +1,38 @@
 # TASK-01 결과 보고서
 
 
+## 현재 단계 · 2026-11-21 (Claude)
+
+| 항목 | 상태 | 근거 |
+| --- | --- | --- |
+| Codex 미커밋 작업 보존(320m 봉쇄 맵·환경 개편) | 완료 | `1470cf5` |
+| 참고 맵 반영(표준 중앙 섬 강·다도해 해안·해협 도로) | 완료 | `a5543be`, 맵 검사 43/43 |
+| 휴전 누수 차단·중앙 다리 소속·낡은 검사 좌표 | 완료 | `c76328a`, 자리 간 경로 0 |
+| 건물 우회 핑퐁·목표 보정 | 완료 | `c2bd359` |
+| 제재소 자동 배치·봇 상자·상자 위 건설 금지 | 완료 | `7725e9d` |
+| 남은 Mixamo(Aid·InjuredIdle·Push·Pull·DeathProne) | 완료 | `a9b56b5` |
+| 궁극 유닛 4방향·전장 캡처, 다운로드 모델 판정 | 완료(모델 통합은 제외) | `Docs/UltimateUnits.md` |
+| 전체 PlayMode | 564건: 411 통과 · 23 실패 · 130 건너뜀 | `Game-logs/claude-full-final2.xml` |
+| Photon 실서버 체크섬 | 561회 일치, 디싱크 0 | `Game-logs/online-final.log` |
+| Android APK·실기기 | 사용자 지시로 보류 | — |
+| 다음 | Strategy UI Kit 통합 | 사용자 지시 대기열 |
+
+### 사용자 결정 대기
+
+| 항목 | 내용 |
+| --- | --- |
+| 상륙 강습(시험 진영 전용) | 봉쇄 맵에서는 기지 운하끼리 물길이 이어지지 않아 `Ultimate_AmphibiousLandsCargoOnShore`가 실패한다. 운하를 중앙 강·내해와 잇거나, 이 궁극을 다도해·해협 전용으로 제한할지 결정이 필요하다. |
+| 다운로드한 궁극 모델 | CC BY 4.0이지만 50만 삼각형·실존 상표 표기. Blender를 설치해 주면 감면·표기 제거·가상 이름으로 통합할 수 있다. |
+| 실존 무기 식별자 | 화면 문구는 고쳤지만 `ff/cf_patriot_turret`, `BuildingRole.PatriotTurret` 내부 이름이 남아 있다. 일괄 이름 변경 여부. |
+
+### 남은 실패(기준선에 없던 것)
+
+- `AiDiplomacy_BreaksAfterCommonEnemyFalls`: 생산 배치 슬롯 도입 뒤 사람 시작 유닛이 AI 부대와 시작 직후 교전해 호감도가 떨어진다. 부대 위치만 옮겨서는 해결되지 않아 원인 분석을 이어야 한다.
+- `Tutorial_StartsFromMenuAndStepsAdvance`: 단독 실행은 통과, 전체 실행에서만 카메라 단계 시간 초과(순서 의존).
+- `Ultimate_AmphibiousLandsCargoOnShore`: 위 결정 대기.
+
+마지막 작업: [claude] 2026-11-21 / 다음 단계: Strategy UI Kit 통합
+
 ## 밤사이 요약 · 다연장 로켓 포대
 
 양 진영의 2단계 방어 구조물, 12발 순차 발사와 재장전, 전장의 안개, 탄약 HUD, 탄약고와 정비 작업자를 연결했다. Unity GPU 집중 10/10 통과, Photon 실서버 체크섬 22개 일치, 오류 0건. Android 실기기 측정은 대기 중이다.

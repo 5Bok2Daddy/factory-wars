@@ -1,5 +1,7 @@
 # Factory Wars 인수인계
 
+> **2026-11-21 저녁 갱신(Claude):** 최신 상태와 남은 일은 `SETUP-REPORT.md`의 "현재 단계 · 2026-11-21 (Claude)"가 기준이다. 아래 본문은 오전 Codex 인수 시점 기록이다. 전체 PlayMode는 564건 중 411 통과·23 실패·130 건너뜀, 실서버 체크섬 561회 일치·디싱크 0. 다음 작업은 Strategy UI Kit 통합이다.
+
 2026-11-21 KST · 인수인계 전 기준 커밋 `42c25ab` · 브랜치 `main`
 
 작업 루트는 `C:\Users\MinGyu\FactoryWars`이고 Unity 프로젝트 및 Git 저장소 루트는 그 아래 `Game\`이다. 아래 `Assets/`, `Docs/`, `Tools/` 경로는 `Game\` 기준이다. `CLAUDE.md`, `AGENTS.md`, `OVERNIGHT-QUEUE.md`, `Game-logs\`, `DevelopmentReports\`, `temp-asset\`과 `temp-assets\`는 상위 작업 루트에 있다. 다른 에이전트는 먼저 `CLAUDE.md` 전체, 대기열, `SETUP-REPORT.md`의 **현재 단계**를 읽고 `git status`, `git log --oneline -20`, `git diff --stat`을 확인한다.

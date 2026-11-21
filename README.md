@@ -7,6 +7,26 @@
 
 ---
 
+### 참고 맵 반영 · 320m 봉쇄 맵 · 환경 개편 · 2026-11-21 KST
+
+다섯 맵을 ±160m(320m) 봉쇄 맵으로 통일했다. 육지 맵의 외곽 수로를 걷고 능선·협곡·연안 암벽으로 네 변을 막았으며, Quantum 이동·공중 경로와 카메라를 같은 경계로 제한한다. 표준 맵은 참고안처럼 중앙 섬을 12각 강이 두르고 X자 간선도로가 다리 4개로 건넌다. 통과 불가 대지는 NatureForge 숲 군락이다. 다도해 해로는 굽이쳐 곶과 만이 생겼고, 해협은 겹치던 도로를 해안 간선도로로 정리했다. 전체 PlayMode **564건 중 411 통과 · 23 실패 · 130 `Explicit` 건너뜀**(오전 기준선 548건 중 398 · 25 · 125). Photon 실서버 체크섬 561회 일치, 디싱크 0. Android 실기기 측정은 다음 단계로 미뤘다.
+
+| 변경 전 (`1470cf5`) | 변경 후 |
+| --- | --- |
+| ![표준 전](Docs/status_images/EnvironmentOverhaul/Before/map_standard.png) | ![표준 후](Docs/status_images/EnvironmentOverhaul/After/map_standard.png) |
+| ![다도해 전](Docs/status_images/EnvironmentOverhaul/Before/map_archipelago.png) | ![다도해 후](Docs/status_images/EnvironmentOverhaul/After/map_archipelago.png) |
+| ![해협 전](Docs/status_images/EnvironmentOverhaul/Before/map_strait.png) | ![해협 후](Docs/status_images/EnvironmentOverhaul/After/map_strait.png) |
+
+[사막](Docs/status_images/map_desert.png) · [시가지](Docs/status_images/map_urban.png) · [근접 화면 10쌍과 설명](Docs/EnvironmentOverhaul.md) · [맵 규격](Docs/StandardizedMaps.md)
+
+### 회귀 수정 · 궁극 유닛 점검 · Mixamo · 2026-11-21 KST
+
+휴전 중 운하 끝과 다리 옆 틈으로 이웃 본진에 갈 수 있던 길을 막았다. 붙은 건물 사이에서 유닛이 모서리를 오가며 갇히던 우회 로직, 장애물 위 목표를 멀리 옮기던 목표 보정, 제재소 공병 자동 배치와 봇 상자 줍기를 고쳤다. 남은 새 실패는 AI 외교 1건, 전체 실행에서만 실패하는 튜토리얼 1건, 설계 결정이 필요한 상륙 강습 1건이다. 내려받은 궁극 모델은 50만 삼각형과 실존 상표 표기 때문에 넣지 않았다([판정](Docs/UltimateUnits.md)). 의무대·정비소 작업자와 은신 저격수 사망에 남은 Mixamo 동작을 연결했다.
+
+| 궁극·최상위 유닛(Synty) | 의무대·정비소 작업자 |
+| --- | --- |
+| ![궁극 유닛 전장](Docs/status_images/UltimateUnits/battlefield_ultimate_units.png) | ![작업자](Docs/status_images/Mixamo/medic_and_repair_workers.png) |
+
 ### 다연장 로켓 포대 · 2026-11-21 KST
 
 양 진영의 2단계 방어 메뉴에서 공병으로 로켓 포대를 건설할 수 있다. Quantum이 12발 순차 사격과 범위 피해를 처리하며, 재장전은 기본 25초, 3단계 20초다. GPU PlayMode **10/10**, Photon 실서버 체크섬 **22개 일치, 오류 0건**. Android 성능과 터치는 미검증이다.
