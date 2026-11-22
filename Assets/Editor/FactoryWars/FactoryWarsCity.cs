@@ -29,7 +29,10 @@ namespace FactoryWars.EditorTools {
     }
 
     static readonly Dictionary<string, CityPlan> CityPlans = new Dictionary<string, CityPlan> {
-      { "Map4P", new CityPlan { BuildingsPerSeat = 30, ToppleCandidates = 4, GarrisonsPerSeat = 4, Shortcuts = new[] { Rect(-44, 0, 7, 7) } } },
+      // 표준 맵(2026-11-22 재구성): 공장·창고 줄은 길 사이 빈 땅에만, 지름길 건물은 없다(중앙 고리 운하 자리).
+      { "Map4P", new CityPlan { BuildingsPerSeat = 16, ToppleCandidates = 3, GarrisonsPerSeat = 3, Shortcuts = new MapShape[0] } },
+      // 사막 보급전은 예전 표준 맵 도시 계획을 그대로 쓴다.
+      { "MapDesert", new CityPlan { BuildingsPerSeat = 30, ToppleCandidates = 4, GarrisonsPerSeat = 4, Shortcuts = new[] { Rect(-44, 0, 7, 7) } } },
       { "MapUrban", new CityPlan { BuildingsPerSeat = 62, ToppleCandidates = 6, GarrisonsPerSeat = 6, Shortcuts = new[] { Rect(-44, 0, 7, 7) } } },
       { "MapArchipelago", new CityPlan { BuildingsPerSeat = 12, ToppleCandidates = 2, GarrisonsPerSeat = 3, Shortcuts = new MapShape[0] } },
       { "MapStrait", new CityPlan { BuildingsPerSeat = 14, ToppleCandidates = 2, GarrisonsPerSeat = 3, Shortcuts = new MapShape[0] } },
@@ -65,6 +68,20 @@ namespace FactoryWars.EditorTools {
       list.AddRange(spec.Bridges.Select(b => (b, 6f, "Bridges")));
       if (spec.Theme == "다도해" || spec.Theme == "해협") {
         list.AddRange((spec.River ?? new MapShape[0]).Select(r => (r, 4f, "River")));
+      }
+      // 3단 표준 맵: 운하는 90도 대칭이 아니므로 네 회전 원상을 모두 피한다(어느 자리 복사본도 물에 빠지지 않는다). 테라스·관문·참호도 피한다.
+      if (spec.Tiered) {
+        foreach (var river in spec.River ?? new MapShape[0]) {
+          for (var turn = 0; turn < 4; turn++) {
+            list.Add((Turn(river, turn), 5f, "River"));
+          }
+        }
+        list.AddRange((spec.MidGrounds ?? new MapShape[0]).Select(m => (m, 4f, "Terrace")));
+        list.AddRange((spec.TruceGates ?? new MapShape[0]).Select(g => (g, 6f, "Gate")));
+        list.AddRange((spec.Trenches ?? new MapShape[0]).Select(t => (t, 3f, "Trench")));
+        // 채집 길: 자원 둘레 10m는 비운다(공병이 건물을 돌아가지 않게).
+        list.AddRange(spec.ResourceNodes.Select(n => (n.Shape, 10f, "Harvest")));
+        list.Add((new MapShape { Center = FPVector3.Zero, Radius = FP.FromFloat_UNSAFE(62f) }, 4f, "Island"));
       }
       return list;
     }
@@ -148,8 +165,8 @@ namespace FactoryWars.EditorTools {
     }
 
     static void CityLayout(MapDef def, MapSpec spec) {
-      // 사막 보급전은 Map_Desert_PresetData 호환을 위해 Map4P 도시 계획을 공유한다. 시가전·다도해·해협은 자체 도시 계획 사용.
-      var planId = def.Id == "MapDesert" ? "Map4P" : def.Id;
+      // 맵마다 자체 도시 계획(사막 보급전은 예전 표준 맵 계획과 같은 값을 따로 가진다).
+      var planId = def.Id;
       if (CityPlans.TryGetValue(planId, out var plan) == false) {
         spec.CityBuildings = new CityBuildingPlacement[0];
         return;
@@ -298,7 +315,7 @@ namespace FactoryWars.EditorTools {
           if (def.Id == "MapStrait" && Mathf.Abs(copy.Shape.Center.X.AsFloat) < 36f) {
             continue;
           }
-          if ((def.Id == "MapStrait" || def.Id == "MapArchipelago") && (spec.River ?? new MapShape[0]).Any(r => r.Distance(copy.Shape.Center).AsFloat < 5f)) {
+          if ((def.Id == "MapStrait" || def.Id == "MapArchipelago" || spec.Tiered) && (spec.River ?? new MapShape[0]).Any(r => r.Distance(copy.Shape.Center).AsFloat < 5f)) {
             continue;
           }
           all.Add(copy);

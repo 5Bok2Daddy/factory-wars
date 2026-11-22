@@ -9,6 +9,8 @@ namespace FactoryWars.View {
 
   public enum ToneMode { Neutral, Aces, None }
 
+  public enum MapDecorTheme { Urban, Forest }
+
   /// <summary>
   /// 화면 설정 한 묶음. 카메라·조명·후처리·지형 높이·팔레트·외곽선·표시 크기를 모은다.
   /// 기본 프로필은 Resources/FactoryWars/Visual/VisualProfile이고, 후보마다 에셋 하나를 두어 바꿔 끼운다.
@@ -155,6 +157,8 @@ namespace FactoryWars.View {
     public Color WaterShallowTint = new Color(0f, 0f, 0f, 0f);
     /// <summary>야전 룩(PUBG식): 건물 밑판·횡단보도·부두 패드 없음, 흙길, 올리브·흙 바닥, 데모 씬식 풀·바위.</summary>
     public bool FieldLook;
+    /// <summary>3단 표준 맵(2026-11-22) 지면·장식 테마. Urban = 시가지·산업(지금), Forest = 숲 칸(비어 있음: 숲 팩이 들어오면 채운다).</summary>
+    public MapDecorTheme DecorTheme = MapDecorTheme.Urban;
     public Color WaterDeepTint = new Color(0f, 0f, 0f, 0f);
     public Color WaterFoamTint = new Color(0.97f, 1f, 1f, 1f);
     /// <summary>깊이 거품 폭(m). 둑·수문 기둥·배와 물이 맞닿는 곳에서 이 거리 안이 흰색이다.</summary>

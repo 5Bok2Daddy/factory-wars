@@ -119,6 +119,8 @@ namespace Quantum {
     public MapShape[] MidGrounds;
     /// <summary>앞마당 출구의 휴전 관문. 자리 순서대로 자리마다 같은 수다. NavMesh 영역 "{BarrierRegion}{자리}"로 구워 휴전 동안 닫힌다.</summary>
     public MapShape[] TruceGates;
+    /// <summary>참호(골짜기, 2026-11-22 표준 맵): 통과할 수 있고, 안에 든 지상 유닛은 고지대와 같은 은폐 규칙을 받는다(사거리 보너스는 없다).</summary>
+    public MapShape[] Trenches;
     /// <summary>도로의 짧은 조각들. 모양의 합집합이 도로다.</summary>
     public MapShape[] Roads;
     /// <summary>얕은 개울. 통과할 수 있다.</summary>
@@ -166,6 +168,20 @@ namespace Quantum {
       var x = FPMath.FloorToInt((position.X - BoundsMin.X) / GroundGridCell);
       var z = FPMath.FloorToInt((position.Z - BoundsMin.Y) / GroundGridCell);
       return x < 0 || z < 0 || x >= GroundGridSize || z >= GroundGridSize ? -1 : CityGrid[z * GroundGridSize + x] - 1;
+    }
+
+    /// <summary>은폐 구역 번호: 고지대 i는 i, 참호 j는 고지대 수 + j. 없으면 -1. 같은 번호 안의 적끼리는 서로 보인다.</summary>
+    public int ConcealAt(FPVector3 position) {
+      var high = HighGroundAt(position);
+      if (high >= 0) {
+        return high;
+      }
+      for (var i = 0; Trenches != null && i < Trenches.Length; i++) {
+        if (Trenches[i].Distance(position) <= FP._0) {
+          return (HighGrounds != null ? HighGrounds.Length : 0) + i;
+        }
+      }
+      return -1;
     }
 
     /// <summary>위치가 들어 있는 고지대 번호. 없으면 -1이다.</summary>

@@ -110,7 +110,7 @@ namespace Quantum.FactoryWars {
       }
       var map = MapInfo(f);
       var position = f.Unsafe.GetPointer<Transform3D>(entity)->Position;
-      var ground = map.HighGroundAt(position);
+      var ground = map.ConcealAt(position);
       if (ground < 0 || f.FindAsset(unit->Spec).IsAir || DiplomacySystem.GetRelation(f, player, unit->Owner) == Relation.Allied) {
         return true;
       }
@@ -132,7 +132,7 @@ namespace Quantum.FactoryWars {
         var distance = FlatDistanceSqr(transform->Position, position);
         var otherSpec = f.FindAsset(other->Spec);
         var isScout = otherSpec.IsAir || (otherSpec.IsNaval && otherSpec.Size == UnitSize.Small);
-        if (distance <= near || (isScout && distance <= air) || map.HighGroundAt(transform->Position) == ground) {
+        if (distance <= near || (isScout && distance <= air) || map.ConcealAt(transform->Position) == ground) {
           return true;
         }
       }

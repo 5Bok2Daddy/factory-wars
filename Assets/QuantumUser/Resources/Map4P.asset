@@ -40,41 +40,25 @@ MonoBehaviour:
   NavMeshLinks:
   - Id:
       Value: 424762254758045162
+  - Id:
+      Value: 357311599212438770
   Regions:
   - MainArea
   - Barrier0
   - Barrier1
   - Barrier2
   - Barrier3
+  - Bridge0
+  - Bridge1
+  - Bridge2
+  - Bridge3
+  - Bridge4
+  - Bridge5
   - City0
   - City1
   - City10
-  - City100
-  - City101
-  - City102
-  - City103
-  - City104
-  - City105
-  - City106
-  - City107
-  - City108
-  - City109
   - City11
-  - City110
-  - City111
-  - City112
-  - City113
-  - City114
-  - City115
-  - City116
-  - City117
-  - City118
-  - City119
   - City12
-  - City120
-  - City121
-  - City122
-  - City123
   - City13
   - City14
   - City15
@@ -135,41 +119,21 @@ MonoBehaviour:
   - City65
   - City66
   - City67
-  - City68
-  - City69
   - City7
-  - City70
-  - City71
-  - City72
-  - City73
-  - City74
-  - City75
-  - City76
-  - City77
-  - City78
-  - City79
   - City8
-  - City80
-  - City81
-  - City82
-  - City83
-  - City84
-  - City85
-  - City86
-  - City87
-  - City88
-  - City89
   - City9
-  - City90
-  - City91
-  - City92
-  - City93
-  - City94
-  - City95
-  - City96
-  - City97
-  - City98
-  - City99
+  - Fall0
+  - Fall1
+  - Fall17
+  - Fall18
+  - Fall19
+  - Fall2
+  - Fall34
+  - Fall35
+  - Fall36
+  - Fall51
+  - Fall52
+  - Fall53
   StaticColliders2D: []
   StaticColliders3D: []
   MapEntities: []

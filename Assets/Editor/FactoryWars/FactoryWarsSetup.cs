@@ -92,7 +92,7 @@ namespace FactoryWars.EditorTools {
       BuildMapSpec(FourPlayerMap);
       BuildMapScene(FourPlayerMap);
       AssetDatabase.SaveAssets();
-      Debug.Log("Factory Wars baked Map4P (tiered layout)");
+      Debug.Log("Factory Wars baked Map4P (reference layout)");
     }
 
     public static void ConfigurePlayer() {
@@ -1675,6 +1675,7 @@ namespace FactoryWars.EditorTools {
       spec.MidGrounds = (def.MidGrounds ?? new MapShape[0]).SelectMany(shape => Orbit(def, shape)).ToArray();
       // 관문은 자리 순서대로(자리 0의 관문들, 자리 1의 관문들 …). 굽기에서 "{BarrierRegion}{자리}" 영역이 된다.
       spec.TruceGates = Enumerable.Range(0, def.Players).SelectMany(seat => (def.TruceGates ?? new MapShape[0]).Select(gate => Turn(gate, seat * (4 / def.Players)))).ToArray();
+      spec.Trenches = (def.Trenches ?? new MapShape[0]).SelectMany(shape => Orbit(def, shape)).ToArray();
       spec.Channel = System.Array.Empty<MapShape>();
       spec.WaterGates = System.Array.Empty<MapShape>();
       spec.ChannelWidth = FP._0;

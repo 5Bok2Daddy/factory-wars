@@ -30,7 +30,7 @@ namespace Quantum {
 
   public enum ExpansionKind { IronForecourt, WoodForecourt, Shared, Center }
 
-  public enum TerrainKind { Rock, Hill, CanyonWall, Cliff, River }
+  public enum TerrainKind { Rock, Hill, CanyonWall, Cliff, River, Wall }
 
   public enum AttackType { None, AntiInfantry, AntiArmor, AntiAir, Area }
 

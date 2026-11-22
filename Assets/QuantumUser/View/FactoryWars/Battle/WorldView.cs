@@ -295,13 +295,22 @@ namespace FactoryWars.View {
         baseMesh.RecalculateBounds();
         MeshObject(_root, "WaterBase", baseMesh, false).GetComponent<MeshRenderer>().sharedMaterial = UrbanDecor.WaterMaterial();
       }
-      // 3단 지형 표준 맵: 대지·비탈·암벽·둘레 띠만 그리고, 도로변 장식·바위 액자·나무 줄·흩뿌린 풀과 나무는 두지 않는다.
+      // 3단 표준 맵(2026-11-22 참고 그림): 테라스·능선·비탈·참호(바닥 머티리얼), 콘크리트 옹벽·담장·둘레 띠, 시가지·산업 장식(TieredTerrain.Decor).
+      // 기존 도로변 장식·바위 액자·나무 줄·흩뿌린 풀과 나무는 두지 않는다.
       if (TieredTerrain.Uses(_map)) {
         var tiers = new MeshKit();
-        TieredTerrain.Build(tiers, _map);
+        var walls = new MeshKit();
+        TieredTerrain.Build(tiers, walls, _map);
         var tierMesh = tiers.ToMesh("tiered_terrain");
         TieredTerrain.Tint(tierMesh, _map);
         MeshObject(_root, "TieredTerrain", tierMesh, true).GetComponent<MeshRenderer>().sharedMaterial = GroundMaterial();
+        var wallMesh = walls.ToMesh("tiered_walls");
+        TieredTerrain.TintWalls(wallMesh, _map);
+        MeshObject(_root, "TieredWalls", wallMesh, true).GetComponent<MeshRenderer>().sharedMaterial = GroundMaterial();
+        Dressing.Begin();
+        Dressing.RoadMask = _map;
+        TieredTerrain.Decor(_map);
+        Dressing.End("tiered");
         if (features.TriangleCount > 0) {
           MeshObject(_root, "Features", features.ToMesh("world_features"), true);
         }

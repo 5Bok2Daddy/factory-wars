@@ -938,11 +938,11 @@ namespace FactoryWars.View {
       // 품질 낮음은 절벽 층을 절반으로 합친다(높이는 같다, 절벽 블록·삼각형 절반, 항목 27 성능).
       var layers = GraphicsQuality.Current == QualityTier.Low ? Mathf.Max(1, (profile.CliffLayers + 1) / 2) : profile.CliffLayers;
       var biome = BiomeOf(map);
-      // 3단 지형 맵: 대지·암벽은 TieredTerrain이 그린다(숲 대지·바위 액자·원형 고지대 없음).
+      // 3단 지형 맵: 대지·옹벽·담장·절벽은 TieredTerrain이 그린다(물·바위만 여기서). 숲 대지·바위 액자·원형 고지대 없음.
       var tiered = TieredTerrain.Uses(map);
       for (var i = 0; i < features.Length; i++) {
         var seed = 100 + i * 17;
-        if (tiered && features[i].Kind != TerrainKind.Rock) {
+        if (tiered && features[i].Kind != TerrainKind.Rock && features[i].Kind != TerrainKind.River) {
           continue;
         }
         switch (features[i].Kind) {

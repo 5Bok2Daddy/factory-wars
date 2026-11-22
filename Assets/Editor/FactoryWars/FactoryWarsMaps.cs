@@ -76,6 +76,8 @@ namespace FactoryWars.EditorTools {
       public MapShape[] MidGrounds = new MapShape[0];
       /// <summary>자리 0의 휴전 관문. 나머지 자리는 회전 복사본이다.</summary>
       public MapShape[] TruceGates = new MapShape[0];
+      /// <summary>자리 0의 참호(은폐 구역). 회전 복사된다.</summary>
+      public MapShape[] Trenches = new MapShape[0];
       public MapDef Clone() => (MapDef)MemberwiseClone();
     }
 
@@ -256,10 +258,10 @@ namespace FactoryWars.EditorTools {
     /// <summary>사막·시가지·다도해·해협이 복제하는 공통 지형(중앙 고지 벽).</summary>
     static readonly MapDef FourPlayerBase = BuildFourPlayer(false);
     /// <summary>
-    /// 표준 맵(2026-11-22 재구성): 도로·중앙 해자·모서리 운하 없이 지형 높이와 지면 색으로 길을 읽는 3단 지형.
+    /// 표준 맵(2026-11-22 참고 그림 재구성): 모서리 테라스 본진, S자 운하와 다리 6개, 대각 간선·외곽 순환로, 중앙 팔각 단지.
     /// 사막·시가지·다도해·해협은 그대로 FourPlayerBase를 복제한다(이 정의는 Map4P 전용).
     /// </summary>
-    static readonly MapDef FourPlayerMap = BuildTieredFourPlayer();
+    static readonly MapDef FourPlayerMap = BuildReferenceFourPlayer();
 
     /// <summary>a→b 선을 따라 길이 최대 8m 조각으로 벽을 세운다. gaps는 a에서 잰 거리 구간(통로)이다.</summary>
     static IEnumerable<TerrainFeature> Wall(TerrainKind kind, Vector2 a, Vector2 b, float halfWidth, params (float From, float To)[] gaps) {
@@ -291,72 +293,93 @@ namespace FactoryWars.EditorTools {
     }
 
     /// <summary>
-    /// 3단 지형 표준 맵(사용자 지시 2026-11-22, 독자 설계). 자리 0(왼쪽 아래)만 정의하고 90도씩 돌려 4자리를 만든다.
-    /// 1단 본진 고지대 76x76(서·남은 맵 끝, 북·동은 절벽, 동쪽에 폭 14m 비탈 하나) → 2단 앞마당 중간 대지(본진 동쪽, 출구 2개:
-    /// 북쪽은 중앙, 동쪽은 이웃 본진 쪽 측면 통로) → 3단 중앙 저지대(가운데 암시장만, 4방위 자원 주머니는 U자 절벽으로 감싼다).
-    /// 도로·물길·다리는 없다. 휴전 동안은 앞마당 출구 관문 두 곳이 닫혀 본진+앞마당 안에서만 움직인다.
+    /// 표준 맵 Map4P (2026-11-22 참고 그림 재구성, 시가지·산업 톤). 자리 0(남서)만 적고 90도씩 돌린다. 운하·다리만 180도 대칭으로 따로 적는다.
+    /// - 본진: 모서리 콘크리트 테라스(화면 +2m, 72x72, BaseArea와 같다). 안쪽 두 변은 옹벽, 비탈 3곳(북·동 외곽 순환로, 대각 간선) = 휴전 관문.
+    /// - 중앙: 팔각 담장 단지(지름 60m, 대각 4문) 안에 암시장. 단지 둘레 섬을 고리 운하(중심 반지름 54m, 폭 14m)가 감싼다.
+    /// - 운하: 북쪽 끝 x=-56에서 내려와 고리 115도로, 고리 -65도에서 나와 남쪽 끝 x=56으로(S자). 다리 6개(대각 4 + 북·남 순환로 2).
+    /// - 길: 본진 모서리 → 중앙 대각 간선 4개(다리 하나씩), 네 본진을 잇는 외곽 순환로, 변 가운데 자원지 진입로.
+    /// - 자원지: 네 변 가운데(이웃 두 본진이 다툰다). 능선(고지대 +3.5m, 은폐)은 자리마다 하나, 참호(은폐)는 자리마다 셋.
+    /// 운하 N/S 갈래의 회전 원상(자리 0 좌표에서 (-100,-56)→(-49,-23) 띠)에는 자리 물건을 두지 않아 네 자리가 같다.
     /// </summary>
-    static MapDef BuildTieredFourPlayer() {
+    static MapDef BuildReferenceFourPlayer() {
       var terrain = new List<TerrainFeature>();
-      // 본진 고지대 절벽: 북쪽 변 전체, 동쪽 변(비탈 z -130~-116 제외).
-      terrain.AddRange(Wall(TerrainKind.Cliff, P(-160, -84), P(-84, -84), 1.5f));
-      terrain.AddRange(Wall(TerrainKind.Cliff, P(-84, -160), P(-84, -84), 1.5f, (30f, 44f)));
-      // 앞마당 둘레 능선: 북쪽(출구 x -60~-46), 동쪽(출구 z -131~-117).
-      terrain.AddRange(Wall(TerrainKind.Hill, P(-84, -94), P(-22, -94), 2.2f, (24f, 38f)));
-      terrain.AddRange(Wall(TerrainKind.Hill, P(-24, -160), P(-24, -92), 2.2f, (29f, 43f)));
-      // 9시 방향 자원 주머니: 서쪽(측면 통로 쪽)을 막는 U자 절벽, 중앙 쪽으로 열린다.
-      terrain.AddRange(Wall(TerrainKind.Hill, P(-80, -20), P(-80, 18), 2.4f));
-      terrain.AddRange(Wall(TerrainKind.Hill, P(-80, 18), P(-62, 22), 2.4f));
-      terrain.AddRange(Wall(TerrainKind.Hill, P(-80, -20), P(-62, -24), 2.4f));
+      // 본진 테라스 옹벽: 북쪽 변(x -160~-93, 비탈 x -138~-126), 동쪽 변(z -160~-93, 비탈 z -138~-126). 모서리는 대각 비탈.
+      terrain.AddRange(Wall(TerrainKind.Wall, P(-160, -88), P(-93, -88), 1.5f, (22f, 34f)));
+      terrain.AddRange(Wall(TerrainKind.Wall, P(-88, -160), P(-88, -93), 1.5f, (22f, 34f)));
+      // 능선 대지(고지대) 절벽: 남쪽 변에만 비탈.
+      terrain.AddRange(Wall(TerrainKind.Cliff, P(-107, -18), P(-93, -18), 1.2f));
+      terrain.AddRange(Wall(TerrainKind.Cliff, P(-107, -30), P(-107, -18), 1.2f));
+      terrain.AddRange(Wall(TerrainKind.Cliff, P(-93, -30), P(-93, -18), 1.2f));
+      terrain.AddRange(Wall(TerrainKind.Cliff, P(-107, -30), P(-93, -30), 1.2f, (3f, 11f)));
+      // 중앙 팔각 단지 담장(외접 반지름 30m, 꼭짓점 22.5+45k도): 서쪽 변 전체, 남서 변(가운데 10m 문).
+      Vector2 V(float degrees) => new Vector2(Mathf.Cos(degrees * Mathf.Deg2Rad), Mathf.Sin(degrees * Mathf.Deg2Rad)) * 30f;
+      terrain.AddRange(Wall(TerrainKind.Wall, V(157.5f), V(202.5f), 1f));
+      terrain.AddRange(Wall(TerrainKind.Wall, V(202.5f), V(247.5f), 1f, (6.48f, 16.48f)));
 
-      var mainRamp = Rect(-84, -123, 7, 3, 90);
-      var gates = new[] { Rect(-53, -94, 8, 3.2), Rect(-24, -124, 8, 3.2, 90) };
-      // 4방위 자원 주머니(3단, 회전 복제하지 않는 중앙 자원이라 네 방향을 직접 적는다).
-      var pockets = new List<ResourceNodePlacement>();
+      var rampNorth = Rect(-132, -84, 6, 4);
+      var rampEast = Rect(-84, -132, 6, 4, 90);
+      var rampCorner = Rect(-84, -84, 10, 10, 45);
+      // 변 가운데 자원지(3단, 이웃 두 자리가 다툰다): 풍부한 철 + 목재 야적장. 네 방향을 직접 적는다(중앙 자원).
+      var sites = new List<ResourceNodePlacement>();
       for (var turn = 0; turn < 4; turn++) {
-        var mine = Mine(-66, 8, 6500, 3.5);
-        var grove = Grove(-66, -10, 5.5, 6500);
+        var mine = Mine(-142, -9, 6500, 3.5);
+        var grove = Grove(-142, 9, 5.5, 6500);
         mine.Shape = TurnShape(mine.Shape, turn);
         grove.Shape = TurnShape(grove.Shape, turn);
-        pockets.Add(mine);
-        pockets.Add(grove);
+        sites.Add(mine);
+        sites.Add(grove);
       }
+      // 외곽 순환로 서쪽 토막(자리 0 북쪽 비탈 → 자리 3 동쪽 비탈). 회전하면 네 토막이 고리가 된다. x≈-121(z ±48)이 북·남 다리 자리다.
+      var ring = Road(P(-132, -80), P(-125, -64), P(-122, -48), P(-119, -24), P(-117, 0), P(-119, 24), P(-122, 48), P(-125, 64), P(-132, 80));
+      var main = Road(P(-77, -77), P(-62, -62), P(-47, -47), P(-30, -30), P(-17, -17));
+      var spur = Road(P(-117, 0), P(-129, 0));
       return new MapDef {
-        Id = "Map4P", Players = 4, HalfSize = 160, Start = Position(-114, -114), RiverAmplitude = 0f, RiverSeed = 23,
+        Id = "Map4P", Players = 4, HalfSize = 160, Start = Position(-124, -124), RiverAmplitude = 0f, RiverSeed = 23,
         Tiered = true, NoBaseCanal = true,
-        // 휴전 중 채집·건설 구역: 본진 + 앞마당(관문이 닫혀 그 밖으로는 못 나간다).
-        BaseArea = Rect(-92, -122, 68, 38),
+        BaseArea = Rect(-124, -124, 36, 36),
         Bridges = new MapShape[0],
         Nodes = new[] {
-          // 1단(본진 뒤쪽 구석): 철 2, 숲 1.
-          Mine(-138, -122, 4600), Mine(-122, -138, 4600), Grove(-142, -142, 5.5, 6000),
-          // 2단(앞마당 남쪽 가장자리): 풍부한 철, 숲.
-          Mine(-36, -141, 5200, 3.5), Grove(-68, -141, 6, 5000),
+          // 1단(테라스 뒤 모서리): 철 2, 목재 1.
+          Mine(-150, -120, 4600), Mine(-120, -150, 4600), Grove(-150, -150, 5.5, 6000),
+          // 2단(앞마당 확장 자리, 테라스 동쪽 아래).
+          Mine(-58, -104, 3000), Grove(-74, -104, 5, 3000),
         },
-        CenterNodes = pockets.ToArray(),
+        CenterNodes = sites.ToArray(),
         Trader = true,
         TraderPosition = Position(0, 0),
-        BlackBoxSpots = new[] { Position(-40, 0), Position(0, 40), Position(40, 0), Position(0, -40) },
+        BlackBoxSpots = new[] { Position(-38, 0), Position(0, 38), Position(38, 0), Position(0, -38) },
         Terrain = terrain.ToArray(),
-        NoBuildZones = new[] { Rect(-84, -123, 9, 9, 90) }.Concat(gates.Select(g => { g.HalfWidth += N(4); return g; })).ToArray(),
+        NoBuildZones = new[] {
+          Rect(-132, -84, 8, 8), Rect(-84, -132, 8, 8, 90), Rect(-84, -84, 13, 13, 45),
+          Circle(-100, -152, 6.5), Circle(0, 0, 32),
+        },
         CameraPosition = new Vector3(0, 250, -205),
-        CaptureSites = new[] { Site(CaptureKind.Relay, -118, -20, 8), Site(CaptureKind.Radar, -38, -38, 6), Site(CaptureKind.Fuel, -100, -62, 6) },
+        CaptureSites = new[] { Site(CaptureKind.Relay, -100, 0, 8), Site(CaptureKind.Radar, -37, -13, 5.5), Site(CaptureKind.Fuel, -108, -74, 6) },
         CenterSites = new CaptureSitePlacement[0],
         Barricades = new MapShape[0],
-        BaseCrates = new[] { Position(-100, -140), Position(-140, -100) },
-        DropCrates = new[] { Position(-60, -60), Position(-104, -36), Position(-20, -70) },
-        HighGrounds = new[] { Rect(-122, -122, 38, 38) },
-        MidGrounds = new[] { Rect(-53.25, -127, 29.25, 33) },
-        Ramps = new[] { mainRamp },
-        TruceGates = gates,
-        Roads = new MapShape[0],
+        BaseCrates = new[] { Position(-140, -104), Position(-104, -140) },
+        DropCrates = new[] { Position(-60, -76), Position(-40, -104), Position(-104, -8) },
+        HighGrounds = new[] { Rect(-100, -24, 7, 6) },
+        MidGrounds = new[] { Rect(-124, -124, 36, 36) },
+        Ramps = new[] { Rect(-100, -33, 4, 3) },
+        TruceGates = new[] { rampNorth, rampEast, rampCorner },
+        Trenches = new[] { Segment(P(-84, -12), P(-70, -2), 2.6f), Segment(P(-84, 12), P(-70, 2), 2.6f), Segment(P(-52, -92), P(-32, -62), 2.8f) },
+        Roads = main.Concat(ring).Concat(spur).ToArray(),
         Fords = new MapShape[0],
-        Expansions = new[] { Expansion(ExpansionKind.IronForecourt, -46, -110) },
-        SharedExpansions = new[] { Expansion(ExpansionKind.Shared, -128, -52) },
+        Expansions = new[] { Expansion(ExpansionKind.IronForecourt, -66, -114) },
+        SharedExpansions = new[] { Expansion(ExpansionKind.Shared, -131, 0) },
         CenterExpansions = new ExpansionSite[0],
         SharedSeatOffsets = new[] { 0, 3 },
-        ExtraWater = null,
-        ExtraBridges = null,
+        ExtraWater = new[] {
+          new WaterStrip { Ring = true, RingRadius = 54f, HalfWidth = 7f },
+          new WaterStrip { From = P(-56, 168), To = P(-56, 100), HalfWidth = 7f },
+          new WaterStrip { From = P(-56, 100), To = P(-22.8f, 48.9f), HalfWidth = 7f },
+          new WaterStrip { From = P(56, -168), To = P(56, -100), HalfWidth = 7f },
+          new WaterStrip { From = P(56, -100), To = P(22.8f, -48.9f), HalfWidth = 7f },
+        },
+        // 대각 다리 4개(고리 운하를 직각으로), 북·남 순환로 다리(곧은 갈래를 직각으로). 위치는 데이터다.
+        ExtraBridges = Enumerable.Range(0, 4).Select(i => Turn(Rect(-38.18, -38.18, 11, 4.6, -45), i))
+          .Concat(new[] { Rect(-56, 123.5, 11, 4.4), Rect(56, -123.5, 11, 4.4) }).ToArray(),
       };
     }
 
