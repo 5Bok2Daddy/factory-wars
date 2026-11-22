@@ -71,6 +71,10 @@ namespace FactoryWars.EditorTools {
       new Decor { Name = "stores-barrels", Prefab = PM + "Props/Military/SM_Prop_Barrel_Stack_01.prefab", U = 21, W = 119, Yaw = 10, Scale = 1f, Half = new Vector2(1f, 1f) },
       new Decor { Name = "stores-crates-b", Prefab = PM + "Props/Military/SM_Prop_Crate_Stack_02.prefab", U = 25, W = 123, Yaw = -20, Scale = 1f, Half = new Vector2(1.2f, 1.2f) },
       new Decor { Name = "stores-cart", Prefab = PM + "Props/SM_Prop_Cart_Wood_01.prefab", U = 16, W = 124, Yaw = 75, Scale = 1f, Half = new Vector2(2f, 1.3f) },
+      new Decor { Name = "yard-fuel", Prefab = PM + "Props/SM_Prop_Gastank_01.prefab", U = 140, W = 7, Yaw = 0, Scale = 1f, Half = new Vector2(3.4f, 1.3f) },
+      new Decor { Name = "yard-barrels", Prefab = PM + "Props/Military/SM_Prop_Barrel_Stack_01.prefab", U = 146.5f, W = 11, Yaw = 30, Scale = 1f, Half = new Vector2(1f, 1f) },
+      new Decor { Name = "stores-cover", Prefab = PM + "Props/Military/SM_Prop_Crate_Stack_Cover_01.prefab", U = 27, W = 104, Yaw = 15, Scale = 1f, Half = new Vector2(1f, 1f) },
+      new Decor { Name = "hq-cover", Prefab = PM + "Props/Military/SM_Prop_Crate_Stack_Cover_02.prefab", U = 47, W = 107, Yaw = -10, Scale = 1f, Half = new Vector2(1.1f, 1.1f) },
       new Decor { Name = "comms-crates", Prefab = PM + "Props/Military/SM_Prop_Crate_Stack_03.prefab", U = 17, W = 131, Yaw = 25, Scale = 1f, Half = new Vector2(1f, 1f) },
     };
 

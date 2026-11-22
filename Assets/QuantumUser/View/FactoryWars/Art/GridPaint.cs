@@ -277,10 +277,12 @@ namespace FactoryWars.View {
               break;
             }
             case 'C': {
-              kit.Poly(outline, .06f, Compound * (.97f + h % 5 * .01f));
-              kit.Strip(new Vector2(x0, z0 + .04f), new Vector2(x1, z0 + .04f), .07f, .065f, Joint);
-              kit.Strip(new Vector2(x0 + .04f, z0), new Vector2(x0 + .04f, z1), .07f, .065f, Joint);
-              if (h % 5 == 0) Blob(kit, new Vector2(cx + .6f, cz - .8f), 1.1f, .064f, Stain, h);
+              // 요새 바닥은 칸 타일(0.03m) 위, 십자 도로(요새 장식 0.048m~)보다 아래에 칠한다.
+              kit.Poly(outline, .036f, Compound * (.97f + h % 5 * .01f));
+              kit.Strip(new Vector2(x0, z0 + .04f), new Vector2(x0 + size, z0 + .04f), .07f, .039f, Joint);
+              kit.Strip(new Vector2(x0 + .04f, z0), new Vector2(x0 + .04f, z1), .07f, .039f, Joint);
+              if (h % 5 == 0) Blob(kit, new Vector2(cx + .6f, cz - .8f), 1.1f, .040f, Stain, h);
+              if (h % 9 == 4) for (var k = 0; k < 4; k++) kit.Strip(new Vector2(x0 + 1.4f + k * 1.5f, z1 - 1.2f), new Vector2(x0 + 2.0f + k * 1.5f, z1 - .6f), .3f, .041f, Hazard);
               break;
             }
           }

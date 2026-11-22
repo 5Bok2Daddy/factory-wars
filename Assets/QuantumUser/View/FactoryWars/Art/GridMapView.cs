@@ -40,9 +40,9 @@ namespace FactoryWars.View {
         case 'B': return new Color(0.66f, 0.66f, 0.63f);
         case 'p': return new Color(0.61f, 0.59f, 0.53f);
         case 'v': return new Color(0.55f, 0.55f, 0.54f);
-        case 'P': return new Color(0.43f, 0.44f, 0.43f);
+        case 'P': return new Color(0.31f, 0.32f, 0.33f);
         case 'R': return new Color(0.25f, 0.26f, 0.28f);
-        case 's': return new Color(0.31f, 0.31f, 0.33f);
+        case 's': return new Color(0.285f, 0.29f, 0.305f);
         case 'G': return new Color(0.50f, 0.50f, 0.50f);
         case 'w': return new Color(0.70f, 0.64f, 0.53f);
         case 'W': return new Color(0.28f, 0.33f, 0.34f);

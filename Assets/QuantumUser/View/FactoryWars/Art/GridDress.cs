@@ -31,6 +31,11 @@ namespace FactoryWars.View {
       foreach (var list in Kinds.Values) list.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
     }
 
+    /// <summary>낮음 품질 LOD 문턱 배율: 작은 블록 4배, 큰 도시 건물 2.5배, 나머지 1배.</summary>
+    public static float LowCullFactor(string kind) =>
+      kind == "K" || kind == "L" || kind == "X" || kind == "Y" || kind == "Q" || kind == "M" || kind == "CC" || kind == "EI" || kind == "GR" || kind == "H1" ? 4f
+      : kind == "HW" || kind == "HD" || kind == "H4" ? 2.5f : 1f;
+
     public static bool Ready() {
       if (Kinds.Count == 0) LoadKinds();
       return Kinds.ContainsKey("H1");
@@ -75,7 +80,15 @@ namespace FactoryWars.View {
       item.transform.localPosition = position;
       item.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
       item.isStatic = true;
-      if (GraphicsQuality.Current == QualityTier.Low) item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      if (GraphicsQuality.Current == QualityTier.Low) {
+        item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        // 낮음: 작은 블록(공원·주차·잔해·컨테이너·부두·설비·엄폐·경계 안쪽)은 멀면 일찍 감춘다(삼각형 예산).
+        if (LowCullFactor(kind) > 1f && item.TryGetComponent<LODGroup>(out var lod)) {
+          var lods = lod.GetLODs();
+          lods[0].screenRelativeTransitionHeight *= LowCullFactor(kind);
+          lod.SetLODs(lods);
+        }
+      }
       Placed.Add(item);
       return item;
     }
@@ -272,7 +285,7 @@ namespace FactoryWars.View {
           if (Mathf.Abs(Mathf.Abs(at.x) - 32f) < 8f && Mathf.Abs(Mathf.Abs(at.z) - 32f) < 8f) continue;
           var nearWall = false;
           foreach (var (dr, dc, _) in dirs) if (!InCompound(r + dr, c + dc)) nearWall = true;
-          if (nearWall || Hash(r, c, 17) % 4 != 0) continue;
+          if (Hash(r, c, 17) % (nearWall ? 5 : at.magnitude < 50f ? 2 : 3) != 0) continue;
           Put(parent, "CC", Hash(r, c, 18), at, 90f * (Hash(r, c, 19) % 4), $"{r},{c}");
         }
       }

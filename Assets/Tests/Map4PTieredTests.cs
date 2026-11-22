@@ -363,7 +363,7 @@ namespace FactoryWars.Tests {
         ("rubble", new Vector2(-176f, 4f), 55f),
         ("outpost", new Vector2(-282f, -6f), 70f),
       };
-      report.Add("view | height | renderers | draw calls (renderer x submesh + shadow casters) | triangles | low estimate (lodBias 0.5, no skyline) draws / tris");
+      report.Add("view | height | renderers | draw calls (renderer x submesh + shadow casters) | triangles | low estimate (lodBias 0.3, no shadows, no skyline) draws / tris");
       foreach (var (name, focus, height) in shots) {
         rts.MoveTo(focus);
         rts.Height = height;
@@ -377,13 +377,15 @@ namespace FactoryWars.Tests {
           if (group == null) return true;
           var distance = Vector3.Distance(camera.transform.position, r.bounds.center);
           var relative = group.size / (2f * distance * tan) * bias;
-          return relative >= group.GetLODs()[0].screenRelativeTransitionHeight;
+          var at = r.name.IndexOf('_');
+          var factor = bias < 0.35f && at > 0 ? GridDress.LowCullFactor(r.name.Substring(0, at)) : 1f;
+          return relative >= group.GetLODs()[0].screenRelativeTransitionHeight * factor;
         }
         var inView = all.Where(r => GeometryUtility.TestPlanesAABB(planes, r.bounds)).ToList();
         var medium = inView.Where(r => LodVisible(r, QualitySettings.lodBias)).ToList();
-        var lowSet = inView.Where(r => LodVisible(r, 0.5f) && !r.name.StartsWith("SK_")).ToList();
-        int Draws(System.Collections.Generic.List<MeshRenderer> rs) => rs.Sum(r => r.sharedMaterials.Length) + rs.Count(r => r.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off);
-        report.Add($"{name} | {rts.Height:0}m | {medium.Count} | {Draws(medium)} | {PilotTriangles(medium)} | {Draws(lowSet)} / {PilotTriangles(lowSet)}");
+        var lowSet = inView.Where(r => LodVisible(r, 0.3f) && !r.name.StartsWith("SK_")).ToList();
+        int Draws(System.Collections.Generic.List<MeshRenderer> rs, bool shadows) => rs.Sum(r => r.sharedMaterials.Length) + (shadows ? rs.Count(r => r.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off) : 0);
+        report.Add($"{name} | {rts.Height:0}m | {medium.Count} | {Draws(medium, true)} | {PilotTriangles(medium)} | {Draws(lowSet, false)} / {PilotTriangles(lowSet)}");
       }
 
       // ---- 금지 검사(블록 단위). 경계·담장·난간·스카이라인 조각은 맞대어 잇는 구조물이라 겹침·줄지음에서 뺀다.
@@ -435,8 +437,8 @@ namespace FactoryWars.Tests {
       compoundItems.Add(new Bounds(Vector3.zero, new Vector3(30f, 4f, 30f)));
       foreach (var (u, w) in new[] { (32f, 32f), (32f, -32f), (-32f, -32f), (-32f, 32f) }) compoundItems.Add(new Bounds(new Vector3(u, 1f, w), new Vector3(9f, 2f, 9f)));
       var compoundEmpty = SceneAudit.LargestEmptySquare(new Rect(-80f, -80f, 160f, 160f), compoundItems, (x, z) =>
-        GridMapView.Cell(map, Mathf.FloorToInt((320f - z) / 8f), Mathf.FloorToInt((x + 320f) / 8f)) == 'C', out var compoundClear);
-      report.Add($"compound empty square: {compoundEmpty:0}m at ({compoundClear.center.x:0},{compoundClear.center.y:0}) (limit {SceneAudit.EmptyLimit:0.0}m)");
+        GridMapView.Cell(map, Mathf.FloorToInt((320f - z) / 8f), Mathf.FloorToInt((x + 320f) / 8f)) == 'C' && Mathf.Abs(x) > 9f && Mathf.Abs(z) > 9f, out var compoundClear);
+      report.Add($"compound empty square (outside cross/gate roads |x|,|z| < 9): {compoundEmpty:0}m at ({compoundClear.center.x:0},{compoundClear.center.y:0}) (limit {SceneAudit.EmptyLimit:0.0}m)");
       if (compoundEmpty >= SceneAudit.EmptyLimit) empty.Add($"compound empty {compoundEmpty:0}m");
       // 본진(자리 0): 시설·자원·시작 위치 기준, 건설 부지·확장 부지 밖 빈 사각형.
       var baseBlock = blocks.First(b => b.name == "Base0");
