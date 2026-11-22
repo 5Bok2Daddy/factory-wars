@@ -295,6 +295,17 @@ namespace FactoryWars.View {
         baseMesh.RecalculateBounds();
         MeshObject(_root, "WaterBase", baseMesh, false).GetComponent<MeshRenderer>().sharedMaterial = UrbanDecor.WaterMaterial();
       }
+      // 3단 지형 표준 맵: 대지·비탈·암벽·둘레 띠만 그리고, 도로변 장식·바위 액자·나무 줄·흩뿌린 풀과 나무는 두지 않는다.
+      if (TieredTerrain.Uses(_map)) {
+        var tiers = new MeshKit();
+        TieredTerrain.Build(tiers, _map);
+        var tierMesh = tiers.ToMesh("tiered_terrain");
+        TieredTerrain.Tint(tierMesh, _map);
+        MeshObject(_root, "TieredTerrain", tierMesh, true).GetComponent<MeshRenderer>().sharedMaterial = GroundMaterial();
+        if (features.TriangleCount > 0) {
+          MeshObject(_root, "Features", features.ToMesh("world_features"), true);
+        }
+      } else {
       Dressing.Begin();
       UrbanDecor.Build(_map);
       Dressing.End("urban");
@@ -321,6 +332,7 @@ namespace FactoryWars.View {
       Dressing.End("scatter");
       if (features.TriangleCount > 0) {
         MeshObject(_root, "Features", features.ToMesh("world_features"), true);
+      }
       }
       if (VisualProfile.Current.NoBuildAlways == false) {
         var marks = new MeshKit();
@@ -821,6 +833,8 @@ namespace FactoryWars.View {
     void AddNode(EntityRef entity, ResourceNode* node) {
       var index = NodeIndex(node);
       var center = new Vector3(node->Shape.Center.X.AsFloat, 0, node->Shape.Center.Z.AsFloat);
+      // 3단 지형: 본진·앞마당 자원은 대지 윗면에 놓는다(다른 맵은 지금까지와 같이 0).
+      center.y = TieredTerrain.Uses(_map) ? TerrainKit.SurfaceHeight(_map, center.x, center.z) : 0f;
       if (node->Kind == ResourceKind.Iron) {
         var view = ArtView.Create(_catalog, "iron_mine", _root, 0);
         view.transform.position = center;
@@ -935,6 +949,31 @@ namespace FactoryWars.View {
           }
           item.GetComponent<MeshRenderer>().enabled = false;
         }
+        _barriers.Add(new Barrier { Root = item, Lamps = light.GetComponent<MeshRenderer>(), Dust = dust });
+      }
+      // 3단 지형: 앞마당 출구 관문(MapSpec.TruceGates)마다 같은 울타리. 시뮬레이션은 같은 자리 울타리 영역을 닫는다.
+      var seats = _map.BaseAreas != null ? _map.BaseAreas.Length : 0;
+      for (var seat = 0; TieredTerrain.Uses(_map) && seat < seats; seat++) {
+        var owner = Quantum.FactoryWars.FactoryWarsUtil.PlayerAtSeat(frame, seat);
+        if (owner < 0) {
+          continue;
+        }
+        var body = new MeshKit();
+        var lamps = new MeshKit();
+        var dust = new List<Vector3>();
+        foreach (var piece in TieredTerrain.GatePieces(_map, seat)) {
+          TerrainKit.Fence(body, lamps, piece);
+          dust.Add((piece.From + piece.To) / 2);
+        }
+        if (dust.Count == 0) {
+          continue;
+        }
+        var item = MeshObject(_root, "Barrier", body.ToMesh("gate_barrier"), true);
+        var state = owner < frame.PlayerCount ? frame.Global->Players.GetPointer(owner) : null;
+        if (state != null && state->Active) {
+          item.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.Team(state->ColorIndex, true);
+        }
+        var light = MeshObject(item.transform, "Lamps", lamps.ToMesh("gate_barrier_lamps"), false);
         _barriers.Add(new Barrier { Root = item, Lamps = light.GetComponent<MeshRenderer>(), Dust = dust });
       }
     }

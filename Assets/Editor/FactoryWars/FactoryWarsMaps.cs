@@ -69,6 +69,13 @@ namespace FactoryWars.EditorTools {
       public FPVector3[] BlackBoxSpots = new FPVector3[0];
       /// <summary>0보다 크면 |x|가 이 값보다 작은 공통 도로 조각을 뺀다(해협: 해안 간선도로·교량 접근로로 대신한다).</summary>
       public float RoadClearHalfX;
+      /// <summary>3단 지형(본진 고지대·앞마당 중간 대지·중앙 저지대). 본진 운하·다리 없이 앞마당 출구 관문으로 휴전을 나눈다.</summary>
+      public bool Tiered;
+      /// <summary>true면 본진 운하(RiverBuilder)를 만들지 않는다.</summary>
+      public bool NoBaseCanal;
+      public MapShape[] MidGrounds = new MapShape[0];
+      /// <summary>자리 0의 휴전 관문. 나머지 자리는 회전 복사본이다.</summary>
+      public MapShape[] TruceGates = new MapShape[0];
       public MapDef Clone() => (MapDef)MemberwiseClone();
     }
 
@@ -248,8 +255,119 @@ namespace FactoryWars.EditorTools {
 
     /// <summary>사막·시가지·다도해·해협이 복제하는 공통 지형(중앙 고지 벽).</summary>
     static readonly MapDef FourPlayerBase = BuildFourPlayer(false);
-    /// <summary>표준 맵: 참고 맵처럼 중앙 섬을 원형 강이 두르고 X자 간선도로가 다리로 건넌다.</summary>
-    static readonly MapDef FourPlayerMap = BuildFourPlayer(true);
+    /// <summary>
+    /// 표준 맵(2026-11-22 재구성): 도로·중앙 해자·모서리 운하 없이 지형 높이와 지면 색으로 길을 읽는 3단 지형.
+    /// 사막·시가지·다도해·해협은 그대로 FourPlayerBase를 복제한다(이 정의는 Map4P 전용).
+    /// </summary>
+    static readonly MapDef FourPlayerMap = BuildTieredFourPlayer();
+
+    /// <summary>a→b 선을 따라 길이 최대 8m 조각으로 벽을 세운다. gaps는 a에서 잰 거리 구간(통로)이다.</summary>
+    static IEnumerable<TerrainFeature> Wall(TerrainKind kind, Vector2 a, Vector2 b, float halfWidth, params (float From, float To)[] gaps) {
+      var length = Vector2.Distance(a, b);
+      var direction = (b - a) / length;
+      var cuts = new List<float> { 0f, length };
+      foreach (var (from, to) in gaps) {
+        cuts.Add(from);
+        cuts.Add(to);
+      }
+      cuts.Sort();
+      for (var i = 0; i + 1 < cuts.Count; i++) {
+        var s0 = cuts[i];
+        var s1 = cuts[i + 1];
+        var middle = (s0 + s1) / 2f;
+        if (s1 - s0 < 0.5f || gaps.Any(g => middle > g.From && middle < g.To)) {
+          continue;
+        }
+        var pieces = Mathf.Max(1, Mathf.CeilToInt((s1 - s0) / 8f));
+        for (var p = 0; p < pieces; p++) {
+          var from = a + direction * Mathf.Lerp(s0, s1, p / (float)pieces);
+          var to = a + direction * Mathf.Lerp(s0, s1, (p + 1) / (float)pieces);
+          var piece = Segment(from, to, halfWidth);
+          // 조각끼리 0.3m 겹쳐 이음매 틈으로 걸어 나가지 못하게 한다.
+          piece.HalfLength += N(0.3);
+          yield return Feature(kind, piece);
+        }
+      }
+    }
+
+    /// <summary>
+    /// 3단 지형 표준 맵(사용자 지시 2026-11-22, 독자 설계). 자리 0(왼쪽 아래)만 정의하고 90도씩 돌려 4자리를 만든다.
+    /// 1단 본진 고지대 76x76(서·남은 맵 끝, 북·동은 절벽, 동쪽에 폭 14m 비탈 하나) → 2단 앞마당 중간 대지(본진 동쪽, 출구 2개:
+    /// 북쪽은 중앙, 동쪽은 이웃 본진 쪽 측면 통로) → 3단 중앙 저지대(가운데 암시장만, 4방위 자원 주머니는 U자 절벽으로 감싼다).
+    /// 도로·물길·다리는 없다. 휴전 동안은 앞마당 출구 관문 두 곳이 닫혀 본진+앞마당 안에서만 움직인다.
+    /// </summary>
+    static MapDef BuildTieredFourPlayer() {
+      var terrain = new List<TerrainFeature>();
+      // 본진 고지대 절벽: 북쪽 변 전체, 동쪽 변(비탈 z -130~-116 제외).
+      terrain.AddRange(Wall(TerrainKind.Cliff, P(-160, -84), P(-84, -84), 1.5f));
+      terrain.AddRange(Wall(TerrainKind.Cliff, P(-84, -160), P(-84, -84), 1.5f, (30f, 44f)));
+      // 앞마당 둘레 능선: 북쪽(출구 x -60~-46), 동쪽(출구 z -131~-117).
+      terrain.AddRange(Wall(TerrainKind.Hill, P(-84, -94), P(-22, -94), 2.2f, (24f, 38f)));
+      terrain.AddRange(Wall(TerrainKind.Hill, P(-24, -160), P(-24, -92), 2.2f, (29f, 43f)));
+      // 9시 방향 자원 주머니: 서쪽(측면 통로 쪽)을 막는 U자 절벽, 중앙 쪽으로 열린다.
+      terrain.AddRange(Wall(TerrainKind.Hill, P(-80, -20), P(-80, 18), 2.4f));
+      terrain.AddRange(Wall(TerrainKind.Hill, P(-80, 18), P(-62, 22), 2.4f));
+      terrain.AddRange(Wall(TerrainKind.Hill, P(-80, -20), P(-62, -24), 2.4f));
+
+      var mainRamp = Rect(-84, -123, 7, 3, 90);
+      var gates = new[] { Rect(-53, -94, 8, 3.2), Rect(-24, -124, 8, 3.2, 90) };
+      // 4방위 자원 주머니(3단, 회전 복제하지 않는 중앙 자원이라 네 방향을 직접 적는다).
+      var pockets = new List<ResourceNodePlacement>();
+      for (var turn = 0; turn < 4; turn++) {
+        var mine = Mine(-66, 8, 6500, 3.5);
+        var grove = Grove(-66, -10, 5.5, 6500);
+        mine.Shape = TurnShape(mine.Shape, turn);
+        grove.Shape = TurnShape(grove.Shape, turn);
+        pockets.Add(mine);
+        pockets.Add(grove);
+      }
+      return new MapDef {
+        Id = "Map4P", Players = 4, HalfSize = 160, Start = Position(-114, -114), RiverAmplitude = 0f, RiverSeed = 23,
+        Tiered = true, NoBaseCanal = true,
+        // 휴전 중 채집·건설 구역: 본진 + 앞마당(관문이 닫혀 그 밖으로는 못 나간다).
+        BaseArea = Rect(-92, -122, 68, 38),
+        Bridges = new MapShape[0],
+        Nodes = new[] {
+          // 1단(본진 뒤쪽 구석): 철 2, 숲 1.
+          Mine(-138, -122, 4600), Mine(-122, -138, 4600), Grove(-142, -142, 5.5, 6000),
+          // 2단(앞마당 남쪽 가장자리): 풍부한 철, 숲.
+          Mine(-36, -141, 5200, 3.5), Grove(-68, -141, 6, 5000),
+        },
+        CenterNodes = pockets.ToArray(),
+        Trader = true,
+        TraderPosition = Position(0, 0),
+        BlackBoxSpots = new[] { Position(-40, 0), Position(0, 40), Position(40, 0), Position(0, -40) },
+        Terrain = terrain.ToArray(),
+        NoBuildZones = new[] { Rect(-84, -123, 9, 9, 90) }.Concat(gates.Select(g => { g.HalfWidth += N(4); return g; })).ToArray(),
+        CameraPosition = new Vector3(0, 250, -205),
+        CaptureSites = new[] { Site(CaptureKind.Relay, -118, -20, 8), Site(CaptureKind.Radar, -38, -38, 6), Site(CaptureKind.Fuel, -100, -62, 6) },
+        CenterSites = new CaptureSitePlacement[0],
+        Barricades = new MapShape[0],
+        BaseCrates = new[] { Position(-100, -140), Position(-140, -100) },
+        DropCrates = new[] { Position(-60, -60), Position(-104, -36), Position(-20, -70) },
+        HighGrounds = new[] { Rect(-122, -122, 38, 38) },
+        MidGrounds = new[] { Rect(-53.25, -127, 29.25, 33) },
+        Ramps = new[] { mainRamp },
+        TruceGates = gates,
+        Roads = new MapShape[0],
+        Fords = new MapShape[0],
+        Expansions = new[] { Expansion(ExpansionKind.IronForecourt, -46, -110) },
+        SharedExpansions = new[] { Expansion(ExpansionKind.Shared, -128, -52) },
+        CenterExpansions = new ExpansionSite[0],
+        SharedSeatOffsets = new[] { 0, 3 },
+        ExtraWater = null,
+        ExtraBridges = null,
+      };
+    }
+
+    /// <summary>원점 기준 90도(반시계) quarterTurns번 회전. Setup.Turn과 같은 규칙이다.</summary>
+    static MapShape TurnShape(MapShape shape, int quarterTurns) {
+      for (var i = 0; i < quarterTurns; i++) {
+        shape.Center = new FPVector3(-shape.Center.Z, 0, shape.Center.X);
+        shape.Yaw -= 90;
+      }
+      return shape;
+    }
 
     /// <summary>
     /// 항목 35 "사막 보급전": 표준 맵 지형을 그대로 쓰고 광산을 40%로 줄이고, 보급 낙하 간격을 절반·보상을 2배로 한다(보급 쟁탈이 핵심).

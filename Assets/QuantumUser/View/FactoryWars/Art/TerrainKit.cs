@@ -173,6 +173,9 @@ namespace FactoryWars.View {
     /// 사막(모래 100%, 초록 0%), 시가전(콘크리트·아스팔트 도심), 다도해(황금 해변 + 열대 섬), 해협(암반 해안 + 북부 고지대), 표준(온대 계곡).
     /// </summary>
     public static Color GroundTint(MapSpec map, float x, float z, int seed) {
+      if (TieredTerrain.Uses(map)) {
+        return TieredTerrain.GroundColor(map, x, z);
+      }
       var color = BaseGroundTint(map, x, z, seed);
       return EnvironmentArt.Uses(map) ? EnvironmentArt.GroundColor(map, x, z, color) : color;
     }
@@ -935,8 +938,13 @@ namespace FactoryWars.View {
       // 품질 낮음은 절벽 층을 절반으로 합친다(높이는 같다, 절벽 블록·삼각형 절반, 항목 27 성능).
       var layers = GraphicsQuality.Current == QualityTier.Low ? Mathf.Max(1, (profile.CliffLayers + 1) / 2) : profile.CliffLayers;
       var biome = BiomeOf(map);
+      // 3단 지형 맵: 대지·암벽은 TieredTerrain이 그린다(숲 대지·바위 액자·원형 고지대 없음).
+      var tiered = TieredTerrain.Uses(map);
       for (var i = 0; i < features.Length; i++) {
         var seed = 100 + i * 17;
+        if (tiered && features[i].Kind != TerrainKind.Rock) {
+          continue;
+        }
         switch (features[i].Kind) {
           case TerrainKind.Hill: Plateau(k, features[i].Shape, seed, profile.PlateauHeight * (0.85f + 0.3f * MeshKit.Hash(seed, 5)), layers, profile.Jagged, biome == Biome.Desert); break;
           case TerrainKind.Cliff:
@@ -967,7 +975,9 @@ namespace FactoryWars.View {
       if (roads) {
         Roads(k, map);
       }
-      HighGrounds(k, map);
+      if (tiered == false) {
+        HighGrounds(k, map);
+      }
       if (!NewBundleArt.UsesBridges(biome)) BridgePiers(k, map);
       if (profile.NoBuildAlways) {
         NoBuildMarks(k, map);

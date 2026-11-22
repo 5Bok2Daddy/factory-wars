@@ -110,6 +110,15 @@ namespace Quantum {
     public MapShape[] HighGrounds;
     /// <summary>고지대로 오르는 비탈. 통과할 수 있다.</summary>
     public MapShape[] Ramps;
+    /// <summary>
+    /// 3단 지형 맵(2026-11-22 표준 맵 재구성): 본진 고지대(HighGrounds) · 앞마당 중간 대지(MidGrounds) · 중앙 저지대.
+    /// 화면 높이·색과 휴전 관문 그리기에만 쓴다. 판정(사거리·시야)은 HighGrounds 그대로다.
+    /// </summary>
+    public bool Tiered;
+    /// <summary>앞마당 중간 대지(화면 전용 높이). 판정에는 쓰지 않는다.</summary>
+    public MapShape[] MidGrounds;
+    /// <summary>앞마당 출구의 휴전 관문. 자리 순서대로 자리마다 같은 수다. NavMesh 영역 "{BarrierRegion}{자리}"로 구워 휴전 동안 닫힌다.</summary>
+    public MapShape[] TruceGates;
     /// <summary>도로의 짧은 조각들. 모양의 합집합이 도로다.</summary>
     public MapShape[] Roads;
     /// <summary>얕은 개울. 통과할 수 있다.</summary>

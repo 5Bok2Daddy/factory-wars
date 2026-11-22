@@ -85,6 +85,16 @@ namespace FactoryWars.EditorTools {
       Debug.Log("Factory Wars baked all five land and water maps");
     }
 
+    /// <summary>표준 맵(Map4P)만 다시 만든다: MapSpec, 씬, 지상 NavMesh. 다른 네 맵은 건드리지 않는다.</summary>
+    [MenuItem("Tools/Factory Wars/Bake Map4P Only")]
+    public static void BakeMap4P() {
+      QuantumRunner.Init(false);
+      BuildMapSpec(FourPlayerMap);
+      BuildMapScene(FourPlayerMap);
+      AssetDatabase.SaveAssets();
+      Debug.Log("Factory Wars baked Map4P (tiered layout)");
+    }
+
     public static void ConfigurePlayer() {
       PlayerSettings.companyName = "MinGyu";
       PlayerSettings.productName = "Factory Wars";
@@ -1530,7 +1540,8 @@ namespace FactoryWars.EditorTools {
       var area = def.BaseArea;
       var corner = new Vector2(area.Center.X.AsFloat + area.HalfLength.AsFloat, area.Center.Z.AsFloat + area.HalfWidth.AsFloat);
       var bridges = def.Bridges.Select(b => new Vector2(b.Center.X.AsFloat, b.Center.Z.AsFloat)).ToArray();
-      var pieces = RiverBuilder.Build(corner, -def.HalfSize, bridges, def.RiverAmplitude, def.RiverSeed, spec.SealedPerimeter);
+      // 3단 지형 표준 맵(Tiered)은 본진 운하가 없다. 휴전은 앞마당 출구 관문으로 나눈다.
+      var pieces = def.NoBaseCanal ? new List<RiverBuilder.Piece>() : RiverBuilder.Build(corner, -def.HalfSize, bridges, def.RiverAmplitude, def.RiverSeed, spec.SealedPerimeter);
       MapShape Shape(RiverBuilder.Piece piece) => Rect(piece.Center.x, piece.Center.y, piece.HalfLength, piece.HalfWidth, piece.Yaw);
       var step = 4 / def.Players;
       var riverList = Enumerable.Range(0, def.Players).SelectMany(player => pieces.Select(piece => Turn(Shape(piece), player * step))).ToList();
@@ -1660,6 +1671,10 @@ namespace FactoryWars.EditorTools {
       }
       spec.NoBuildZones = def.NoBuildZones.SelectMany(zone => Orbit(def, zone)).ToArray();
       spec.BaseAreas = Orbit(def, def.BaseArea).ToArray();
+      spec.Tiered = def.Tiered;
+      spec.MidGrounds = (def.MidGrounds ?? new MapShape[0]).SelectMany(shape => Orbit(def, shape)).ToArray();
+      // 관문은 자리 순서대로(자리 0의 관문들, 자리 1의 관문들 …). 굽기에서 "{BarrierRegion}{자리}" 영역이 된다.
+      spec.TruceGates = Enumerable.Range(0, def.Players).SelectMany(seat => (def.TruceGates ?? new MapShape[0]).Select(gate => Turn(gate, seat * (4 / def.Players)))).ToArray();
       spec.Channel = System.Array.Empty<MapShape>();
       spec.WaterGates = System.Array.Empty<MapShape>();
       spec.ChannelWidth = FP._0;
@@ -1825,6 +1840,14 @@ namespace FactoryWars.EditorTools {
       var bridgeList = spec.Bridges ?? new MapShape[0];
       for (var i = 0; i < bridgeList.Length; i++) {
         AddBridge(root, spec, bridgeList[i], i);
+      }
+      // 3단 지형 휴전 관문: 자리마다 같은 영역 이름이라 TruceSystem.SetBarrier가 자리 단위로 열고 닫는다.
+      var truceGates = spec.TruceGates ?? new MapShape[0];
+      var gatesPerSeat = Mathf.Max(1, truceGates.Length / Mathf.Max(1, spec.BaseAreas?.Length ?? 1));
+      for (var i = 0; i < truceGates.Length; i++) {
+        var gate = truceGates[i];
+        gate.HalfLength += 1;
+        AddRegion(root, "TruceGate", gate, BarrierArea, $"{BarrierRegion}{i / gatesPerSeat}");
       }
       foreach (var barricade in spec.Barricades ?? new BarricadePlacement[0]) {
         AddRegion(root, "Barricade", barricade.Shape, BarricadeArea, barricade.Region);

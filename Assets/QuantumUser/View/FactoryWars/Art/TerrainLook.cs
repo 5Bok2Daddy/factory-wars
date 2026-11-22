@@ -774,6 +774,9 @@ namespace FactoryWars.View {
 
     /// <summary>화면에서 지상 유닛·건물을 올릴 높이. 고지대 위는 윗면 높이, 비탈은 바깥으로 갈수록 낮아진다.</summary>
     public static float SurfaceHeight(MapSpec map, float x, float z) {
+      if (TieredTerrain.Uses(map)) {
+        return TieredTerrain.SurfaceHeight(map, x, z);
+      }
       for (var i = 0; map.HighGrounds != null && i < map.HighGrounds.Length; i++) {
         var ground = map.HighGrounds[i];
         var distance = new Vector2(x - ground.Center.X.AsFloat, z - ground.Center.Z.AsFloat).magnitude;
