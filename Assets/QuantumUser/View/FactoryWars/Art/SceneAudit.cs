@@ -43,13 +43,14 @@ namespace FactoryWars.View {
       return bounds;
     }
 
-    /// <summary>블록의 물건: 블록 바로 아래 자식(묶음이면 그 자식들)을 하나씩. 묶음 = 이름이 Buildings/Street/Parking/PerimeterWall인 자식.</summary>
+    /// <summary>블록의 물건: 블록 바로 아래 자식(건물·가로 시설·외벽 목록이면 그 자식들)을 하나씩 기록한다.</summary>
     public static List<Item> ItemsOf(GameObject block) {
       var list = new List<Item>();
       void Add(Transform t) {
         if (t.GetComponentsInChildren<Renderer>().Length == 0) return;
         var source = t.GetComponentsInChildren<Transform>().Select(x => x.name).FirstOrDefault(x => x.StartsWith("SM_")) ?? t.name;
-        list.Add(new Item { Name = $"{block.name}/{t.name}", Kind = KindOf(source), Bounds = BoundsOf(t.gameObject) });
+        var parent = t.parent == block.transform ? block.name : $"{block.name}/{t.parent.name}";
+        list.Add(new Item { Name = $"{parent}/{t.name}", Kind = KindOf(source), Bounds = BoundsOf(t.gameObject) });
       }
       foreach (Transform child in block.transform) {
         if (child.name == "Buildings" || child.name == "Street" || child.name == "PerimeterWall") {
@@ -112,7 +113,7 @@ namespace FactoryWars.View {
       }
     }
 
-    public static List<string> RegularRows(IList<Item> items, int minCount = 4, float spacingTolerance = 0.08f) {
+    public static List<string> RegularRows(IList<Item> items, int minCount = 4, float spacingTolerance = 0.08f, float maxSpacing = float.PositiveInfinity) {
       var hits = new List<string>();
       // 맞대 이은 조각(다른 물건과 0.5m 안으로 붙은 것)은 연속 구조물이라 뺀다.
       var loose = items.Where(item => items.All(other => ReferenceEquals(other.Name, item.Name) || other.Name == item.Name || Gap(item.Bounds, other.Bounds) > 0.5f)).ToList();
@@ -125,7 +126,7 @@ namespace FactoryWars.View {
             var pa = new Vector2(list[a].Bounds.center.x, list[a].Bounds.center.z);
             var pb = new Vector2(list[b].Bounds.center.x, list[b].Bounds.center.z);
             var step = pb - pa;
-            if (step.magnitude < 0.5f) continue;
+            if (step.magnitude < 0.5f || step.magnitude > maxSpacing) continue;
             var run = 2;
             var next = pb + step;
             while (list.Any(x => Vector2.Distance(new Vector2(x.Bounds.center.x, x.Bounds.center.z), next) < step.magnitude * spacingTolerance)) {
@@ -176,10 +177,14 @@ namespace FactoryWars.View {
     }
 
     /// <summary>영역(월드 XZ 사각형)을 cell m 칸으로 나눠, 물건·막힌 칸이 없는 가장 큰 정사각형 한 변(m).</summary>
-    public static float LargestEmptySquare(Rect area, IList<Bounds> occupied, System.Func<float, float, bool> inside, float cell = 2f) {
+    public static float LargestEmptySquare(Rect area, IList<Bounds> occupied, System.Func<float, float, bool> inside, float cell = 2f) =>
+      LargestEmptySquare(area, occupied, inside, out _, cell);
+
+    public static float LargestEmptySquare(Rect area, IList<Bounds> occupied, System.Func<float, float, bool> inside, out Rect largest, float cell = 2f) {
       var nx = Mathf.CeilToInt(area.width / cell);
       var nz = Mathf.CeilToInt(area.height / cell);
       var best = 0;
+      largest = default;
       var dp = new int[nx + 1, nz + 1];
       for (var ix = 1; ix <= nx; ix++) {
         for (var iz = 1; iz <= nz; iz++) {
@@ -187,7 +192,10 @@ namespace FactoryWars.View {
           var z = area.yMin + (iz - 0.5f) * cell;
           var free = inside(x, z) && occupied.All(b => x < b.min.x || x > b.max.x || z < b.min.z || z > b.max.z);
           dp[ix, iz] = free ? 1 + Mathf.Min(dp[ix - 1, iz], Mathf.Min(dp[ix, iz - 1], dp[ix - 1, iz - 1])) : 0;
-          best = Mathf.Max(best, dp[ix, iz]);
+          if (dp[ix, iz] > best) {
+            best = dp[ix, iz];
+            largest = new Rect(area.xMin + (ix - best) * cell, area.yMin + (iz - best) * cell, best * cell, best * cell);
+          }
         }
       }
       return best * cell;

@@ -933,6 +933,10 @@ namespace FactoryWars.View {
     public static void Features(MeshKit k, MapSpec map, bool roads = true, MeshKit water = null) {
       _sites = map.CaptureSites;
       var profile = VisualProfile.Current;
+      if (GridMapView.Uses(map)) {
+        if (profile.NoBuildAlways) NoBuildMarks(k, map);
+        return;
+      }
       var paths = RiverPaths(map);
       var features = map.Terrain ?? Array.Empty<TerrainFeature>();
       // 품질 낮음은 절벽 층을 절반으로 합친다(높이는 같다, 절벽 블록·삼각형 절반, 항목 27 성능).

@@ -1,6 +1,18 @@
 # Factory Wars 인수인계
 
-## 현재 인수인계 — [claude] 2026-11-22 (사용량 한도로 중단)
+## 현재 인수인계 — [codex] 2026-11-22 20:41 KST
+
+- 기준 커밋은 `1568ce9`이며, 시범 변경과 이 인수인계는 `main`의 같은 작업 단위에 있다.
+- Unity 6000.0.85f2에서 POLYGON City·Military 시범 프리팹을 재생성하고 Map4P와 지상·수상 NavMesh를 베이크했다. 드론·전투함, 칸 지도·통행·휴전, 카메라·전차 진입을 포함한 GPU 집중 PlayMode 10건이 통과했다.
+- 최종 v5 다섯 장과 개요가 갤러리에 있다. 겹침·뜸/박힘·도로/채집로/건설 침범은 0건이다. 본진은 정상 건설 부지 외 24m 빈 구역과 시각 경사로 연결이 남았다. 토큰 한도를 고려한 사용자 요청에 따라 전체 PlayMode 결과가 나오기 전에 이관한다. [검증 보고서](SETUP-REPORT.md#map4p-v4-시범)
+- 잘된 점은 본진 콘크리트 줄눈과 차량 동선, 도시 높이 차와 지붕이다. 아쉬운 점은 빈 차량장과 회색 경사로 앞 턱, 도시 외벽 반복이다. 첫 수정 대상은 P 칸 전체의 경사 면과 차량장 구성이다. [최종 본진 광각](Docs/status_images/Map4PV4/base_wide.png) · [최종 도시 도로변](Docs/status_images/Map4PV4/city_road.png)
+- 다음 작업자는 교차 검수 요청의 채점표를 사용한다. 당장 재현하려면 PC 작업 루트에서 `Game-logs/map4p-codex-v5.xml`과 `screenshots/map4p-v4/audit_v5.txt`를 연다. 사용자 승인 전에 남은 11종 블록 제작을 시작하지 않는다. [교차 검수 요청](design/reviews/map4p-v4-pilot-REQUEST.md)
+- 생성기는 본진과 면이 닿는 P 칸만 현재 `Ramps`에 넣는다. 판정상 16개 P 칸의 지상은 모두 통행 가능하나 시각 경사 면에 들어간 칸은 네 개다. PC의 `Game-logs/map4p-codex-ramp-occupancy.json`에서 위치를 확인할 수 있다.
+- 첫 명령은 작업 루트에서 `Get-Process Unity -ErrorAction SilentlyContinue`다. D3D11 전체 PlayMode가 끝날 때까지 새 Unity를 열지 않는다. 종료 후 `Game-logs/map4p-codex-full-graphics.xml`을 `Game-logs/claude-full-final2.xml`과 비교해 보고서를 갱신한다. 그래픽 없는 시도 두 번은 Unity 네이티브 렌더링에서 종료됐다. 원본은 `Game-logs/map4p-codex-full.log`와 `Game-logs/map4p-codex-full-retry.log`에 있다.
+
+## 이전 인수인계
+
+### [claude] 2026-11-22 (사용량 한도로 중단)
 - 마지막 커밋: 아래 map4p-v4-2 커밋 / main / push함
 - 끝난 것: ① 드론·전투함(c349685, Game/Tools/glb 변환기, 항공모함 GLB는 temp-asset에 없음) ② 자동 금지 검사 SceneAudit.cs ③ 칸 지도→맵 데이터 생성기 FactoryWarsGridMap.cs(Map4P=640m v4, Explicit 모드, NavMesh 굽기 완료) ④ 시범 블록 BlockKit.cs(blk_base_pad, blk_city_mixed_2x2_a/b/c, 출력 Assets/FactoryWarsArt/Blocks는 gitignore → 메뉴 Map4P v4/Build Pilot Blocks로 재생성) ⑤ GridMapView.cs(칸 타일 + 블록 배치)
 - 진행 중(미완): v1 캡처(screenshots/map4p-v4/*_v1.png, audit_v1.txt) 뒤 수정함(옆면 방향, 기본 지면 끔, 도시 블록 사분면 배치·인도 소품 안쪽으로, 가로등·상자 건설금지 구역). 수정 뒤 재캡처(v2) 안 함.

@@ -1,11 +1,29 @@
 # Factory Wars — Mobile RTS Dashboard
 
-> **기준 일자:** **2026-11-21 (KST)**
+> **기준 일자:** **2026-11-22 (KST)**
 > **대상 플랫폼:** Android Mobile RTS (Touch-Only UI, Photon Quantum 3 결정론 `FP` 시뮬레이션 — 금지어 **0건**)
 > **Git 저장소 루트:** `Game/` (`origin/main` → `https://github.com/5Bok2Daddy/factory-wars.git`)
 > **아트 파이프라인:** Synty POLYGON 및 War FX에 Desert World, Roadside Tales와 NatureForge 맵 에셋을 선별 적용.
 
 ---
+
+### Map4P v4 시범 · 사용자 검수 대기
+
+확정된 640×640m 칸 지도 위에 Synty 모서리 본진과 16×16m 시가지 블록 3종을 조립했다. 실제 게임 카메라에서 콘크리트·차량 동선·옹벽과 건물 높이 차를 확인했다. 휴전 뒤 네 자리의 같은 전차가 요새로 진입하는 데 54.15~56.25초가 걸렸다. GPU 집중 검사 10건 통과, 배치 검사에서 겹침·뜸/박힘·통행 침범 0건이다. 본진의 24m 빈 구역 검사는 미통과다. 나머지 11종은 사용자 승인 대기 중이다.
+
+| 본진 근접 | 본진 광각 |
+| --- | --- |
+| ![헬기장·격납고·차량 대기선](Docs/status_images/Map4PV4/base_close.png) | ![북동 본진의 옹벽과 경사로](Docs/status_images/Map4PV4/base_wide.png) |
+
+| 도시 근접 | 간선 도로변 |
+| --- | --- |
+| ![저층 상가와 아파트·주차 코너](Docs/status_images/Map4PV4/city_close.png) | ![도시 블록 사이 도로와 보행 가장자리](Docs/status_images/Map4PV4/city_road.png) |
+
+| 중앙 요새 부지 | 전체 개요 |
+| --- | --- |
+| ![팔각 부지와 기존 중앙 거래소](Docs/status_images/Map4PV4/compound.png) | ![640m 전체 지도와 S자 운하](Docs/status_images/Map4PV4/map_top.png) |
+
+[확정 시안 A 비교](Docs/status_images/Map4PV4/map_top_vs_concept_A.png) · [시범 검증 보고서](SETUP-REPORT.md#map4p-v4-시범) · [교차 검수 요청과 채점표](design/reviews/map4p-v4-pilot-REQUEST.md)
 
 ### 참고 맵 반영 · 320m 봉쇄 맵 · 환경 개편 · 2026-11-21 KST
 

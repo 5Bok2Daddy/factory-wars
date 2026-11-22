@@ -34,26 +34,28 @@ namespace FactoryWars.EditorTools {
     public static readonly Decor[] BaseDecor = {
       new Decor { Name = "helipad", Prefab = PM + "Environment/SM_Env_Helipad_01.prefab", U = 36, W = 32, Yaw = 45, Scale = 0.9f, Half = new Vector2(13.7f, 13f) },
       new Decor { Name = "helicopter", Prefab = PM + "Vehicles/SM_Veh_Helicopter_Transport_01.prefab", U = 36, W = 33, Yaw = 45, Scale = 1f, Half = new Vector2(0, 0) },
-      new Decor { Name = "hangar", Prefab = PM + "Buildings/SM_Bld_Hangar_Open_01.prefab", U = 72, W = 20, Yaw = 0, Scale = 0.85f, Half = new Vector2(13f, 15.5f) },
+      new Decor { Name = "hangar", Prefab = PM + "Buildings/SM_Bld_Hangar_Open_01.prefab", U = 67, W = 17, Yaw = 0, Scale = 0.8f, Half = new Vector2(12.5f, 14.7f) },
       new Decor { Name = "control-tower", Prefab = PM + "Buildings/SM_Bld_ControlTower_01.prefab", U = 9, W = 9, Yaw = 45, Scale = 0.8f, Half = new Vector2(4f, 4f) },
-      new Decor { Name = "barracks-a", Prefab = PM + "Buildings/SM_Bld_Barracks_01.prefab", U = 9, W = 82, Yaw = 90, Scale = 1f, Half = new Vector2(3.7f, 6.7f) },
+      new Decor { Name = "barracks-a", Prefab = PM + "Buildings/SM_Bld_Barracks_01.prefab", U = 11, W = 81, Yaw = 90, Scale = 1f, Half = new Vector2(3.7f, 6.7f) },
       new Decor { Name = "barracks-b", Prefab = PM + "Buildings/SM_Bld_Barracks_01.prefab", U = 9, W = 104, Yaw = 90, Scale = 1f, Half = new Vector2(3.7f, 6.7f) },
-      new Decor { Name = "tent", Prefab = PM + "Buildings/SM_Bld_Tent_01.prefab", U = 26, W = 112, Yaw = 0, Scale = 1f, Half = new Vector2(3.9f, 6f) },
+      new Decor { Name = "tent", Prefab = PM + "Buildings/SM_Bld_Tent_01.prefab", U = 36, W = 118, Yaw = 0, Scale = 1f, Half = new Vector2(3.9f, 6f) },
+      new Decor { Name = "supply-pallet", Prefab = PM + "Props/SM_Prop_Pallet_01.prefab", U = 38, W = 107, Yaw = 12, Scale = 1f, Half = new Vector2(1.3f, 1.3f) },
+      new Decor { Name = "supply-crate", Prefab = PM + "Props/SM_Prop_Crate_Wood_02.prefab", U = 41, W = 110, Yaw = 35, Scale = 1f, Half = new Vector2(1f, 1f) },
       new Decor { Name = "fuel-a", Prefab = PM + "Props/SM_Prop_Gastank_01.prefab", U = 28, W = 5, Yaw = 0, Scale = 1f, Half = new Vector2(3.4f, 1.2f) },
       new Decor { Name = "fuel-b", Prefab = PM + "Props/SM_Prop_Gastank_01.prefab", U = 29, W = 9, Yaw = 0, Scale = 1f, Half = new Vector2(3.4f, 1.2f) },
       new Decor { Name = "fuel-bladder", Prefab = PM + "Props/Military/SM_Prop_Fuel_Bladder_01.prefab", U = 44, W = 9, Yaw = 90, Scale = 0.8f, Half = new Vector2(5.3f, 3.6f) },
-      new Decor { Name = "truck", Prefab = PM + "Vehicles/SM_Veh_Truck_01.prefab", U = 60, W = 44, Yaw = 30, Scale = 1f, Half = new Vector2(1.6f, 3.4f) },
-      new Decor { Name = "apc", Prefab = PM + "Vehicles/SM_Veh_APC_01.prefab", U = 66, W = 46, Yaw = 20, Scale = 1f, Half = new Vector2(1.7f, 2.7f) },
-      new Decor { Name = "light-tank", Prefab = PM + "Vehicles/SM_Veh_Light_Tank_01.prefab", U = 73, W = 45, Yaw = 10, Scale = 1f, Half = new Vector2(1.7f, 3.3f) },
-      new Decor { Name = "pickup", Prefab = PM + "Vehicles/SM_Veh_Pickup_Small_01.prefab", U = 80, W = 46, Yaw = 35, Scale = 1f, Half = new Vector2(1.2f, 2.3f) },
+      new Decor { Name = "truck", Prefab = PM + "Vehicles/SM_Veh_Truck_01.prefab", U = 55, W = 39, Yaw = 12, Scale = 1f, Half = new Vector2(1.6f, 3.4f) },
+      new Decor { Name = "apc", Prefab = PM + "Vehicles/SM_Veh_APC_01.prefab", U = 61, W = 40, Yaw = 7, Scale = 1f, Half = new Vector2(1.7f, 2.7f) },
+      new Decor { Name = "light-tank", Prefab = PM + "Vehicles/SM_Veh_Light_Tank_01.prefab", U = 67, W = 39, Yaw = -5, Scale = 1f, Half = new Vector2(1.7f, 3.3f) },
+      new Decor { Name = "pickup", Prefab = PM + "Vehicles/SM_Veh_Pickup_Small_01.prefab", U = 73, W = 38, Yaw = 8, Scale = 1f, Half = new Vector2(1.2f, 2.3f) },
       new Decor { Name = "tower-west", Prefab = PM + "Buildings/SM_Bld_GuardTower_01.prefab", U = 4, W = 148, Yaw = 0, Scale = 1f, Half = new Vector2(1.5f, 2f) },
       new Decor { Name = "tower-south", Prefab = PM + "Buildings/SM_Bld_GuardTower_01.prefab", U = 148, W = 4, Yaw = 90, Scale = 1f, Half = new Vector2(1.5f, 2f) },
-      new Decor { Name = "tower-ramp-a", Prefab = PM + "Buildings/SM_Bld_GuardTower_02.prefab", U = 60, W = 100, Yaw = 45, Scale = 1f, Half = new Vector2(2f, 3.3f) },
-      new Decor { Name = "tower-ramp-b", Prefab = PM + "Buildings/SM_Bld_GuardTower_02.prefab", U = 100, W = 60, Yaw = 45, Scale = 1f, Half = new Vector2(2f, 3.3f) },
+      new Decor { Name = "tower-ramp-a", Prefab = PM + "Buildings/SM_Bld_GuardTower_02.prefab", U = 59, W = 93, Yaw = 45, Scale = 1f, Half = new Vector2(2f, 3.3f) },
+      new Decor { Name = "tower-yard", Prefab = PM + "Buildings/SM_Bld_GuardTower_02.prefab", U = 112, W = 8, Yaw = 45, Scale = 1f, Half = new Vector2(2f, 3.3f) },
       new Decor { Name = "lamp-a", Prefab = PM + "Props/SM_Prop_LightPole_01.prefab", U = 18, W = 20, Yaw = 0, Scale = 1f, Half = new Vector2(1, 1) },
       new Decor { Name = "lamp-b", Prefab = PM + "Props/SM_Prop_LightPole_01.prefab", U = 54, W = 48, Yaw = 0, Scale = 1f, Half = new Vector2(1, 1) },
       new Decor { Name = "lamp-c", Prefab = PM + "Props/SM_Prop_LightPole_01.prefab", U = 30, W = 96, Yaw = 0, Scale = 1f, Half = new Vector2(1, 1) },
-      new Decor { Name = "crates", Prefab = PM + "Props/SM_Prop_Crate_Wood_01.prefab", U = 20, W = 70, Yaw = 15, Scale = 2.2f, Half = new Vector2(1.5f, 1.5f) },
+      new Decor { Name = "crates", Prefab = PM + "Props/SM_Prop_Crate_Wood_01.prefab", U = 23, W = 75, Yaw = 15, Scale = 1.3f, Half = new Vector2(1f, 1f) },
     };
 
     /// <summary>프리팹을 바닥 가운데가 (x, z), 바닥이 y에 오도록 놓는다(팩 프리팹마다 기준점이 모서리·가운데로 다르다).</summary>
@@ -81,6 +83,94 @@ namespace FactoryWars.EditorTools {
       return bounds;
     }
 
+    sealed class Paving {
+      readonly List<Vector3> _vertices = new List<Vector3>();
+      readonly List<Color> _colors = new List<Color>();
+      readonly List<int> _indices = new List<int>();
+
+      public void Strip(Vector2 a, Vector2 b, float width, float y, Color color) {
+        var along = (b - a).normalized;
+        var side = new Vector2(-along.y, along.x) * (width * 0.5f);
+        var offset = _vertices.Count;
+        foreach (var p in new[] { a - side, a + side, b + side, b - side }) {
+          _vertices.Add(new Vector3(p.x, y, p.y));
+          _colors.Add(QualitySettings.activeColorSpace == ColorSpace.Linear ? color.linear : color);
+        }
+        _indices.AddRange(new[] { offset, offset + 1, offset + 2, offset, offset + 2, offset + 3 });
+      }
+
+      public void Save(GameObject root) {
+        var path = $"{OutFolder}/{root.name}_paving.asset";
+        var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+        if (mesh == null) {
+          mesh = new Mesh { name = root.name + "_paving" };
+          AssetDatabase.CreateAsset(mesh, path);
+        }
+        mesh.Clear();
+        mesh.SetVertices(_vertices);
+        mesh.SetColors(_colors);
+        mesh.SetTriangles(_indices, 0);
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        EditorUtility.SetDirty(mesh);
+        var materialPath = $"{OutFolder}/PilotPaving.mat";
+        var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+        if (material == null) {
+          material = new Material(WorldView.SharedGroundMaterial) { name = "PilotPaving" };
+          material.SetFloat("_GridStrength", 0f);
+          AssetDatabase.CreateAsset(material, materialPath);
+        }
+        var child = new GameObject("Paving", typeof(MeshRenderer), typeof(MeshFilter));
+        child.transform.SetParent(root.transform, false);
+        child.GetComponent<MeshFilter>().sharedMesh = mesh;
+        child.GetComponent<MeshRenderer>().sharedMaterial = material;
+      }
+    }
+
+    static void BasePaving(GameObject root, HashSet<(int, int)> cells, int minC, int maxR) {
+      var paving = new Paving();
+      var concrete = new Color(0.59f, 0.59f, 0.56f);
+      var joint = new Color(0.43f, 0.43f, 0.41f);
+      var apron = new Color(0.38f, 0.41f, 0.41f);
+      var marking = new Color(0.83f, 0.69f, 0.40f);
+      const float tile = FactoryWarsSetup.GridCell / 2f;
+      foreach (var (r, c) in cells) {
+        for (var i = 0; i < 4; i++) {
+          var x = (c - minC) * FactoryWarsSetup.GridCell + i % 2 * tile;
+          var z = (maxR - r) * FactoryWarsSetup.GridCell + i / 2 * tile + tile / 2f;
+          var shade = 0.96f + ((r * 31 + c * 17 + i * 23) % 11) * 0.007f;
+          paving.Strip(new Vector2(x, z), new Vector2(x + tile, z), tile, 0.037f, joint);
+          paving.Strip(new Vector2(x + 0.035f, z), new Vector2(x + tile - 0.035f, z), tile - 0.07f, 0.044f, concrete * shade);
+        }
+      }
+      paving.Strip(new Vector2(49, 38), new Vector2(77, 38), 9.5f, 0.052f, apron);
+      for (var x = 52; x <= 76; x += 6) {
+        paving.Strip(new Vector2(x, 34), new Vector2(x, 42), 0.19f, 0.063f, marking);
+      }
+      var entry = new Vector2(76.3f, 83f);
+      var bend = new Vector2(72, 69);
+      var yard = new Vector2(48, 69);
+      paving.Strip(bend, entry, 7.3f, 0.054f, apron);
+      paving.Strip(yard, bend, 7.3f, 0.052f, apron);
+      for (var i = 0; i < 5; i++) {
+        paving.Strip(yard + Vector2.right * (i * 5), yard + Vector2.right * (i * 5 + 2), 0.23f, 0.064f, marking);
+      }
+      for (var i = 0; i < 4; i++) {
+        var point = Vector2.Lerp(bend, entry, i / 4f) + new Vector2(1.2f, 1.2f);
+        paving.Strip(point, point + new Vector2(1.45f, 1.45f), 0.23f, 0.064f, marking);
+      }
+      // Mark the apron and fuel depot without putting collision or scenery inside construction lanes.
+      paving.Strip(new Vector2(20, 8), new Vector2(50, 8), 13f, 0.051f, new Color(0.49f, 0.46f, 0.39f));
+      for (var x = 20; x < 49; x += 3) {
+        paving.Strip(new Vector2(x, 14), new Vector2(x + 1.1f, 12.9f), 0.22f, 0.062f, marking);
+      }
+      paving.Strip(new Vector2(58, 29), new Vector2(75, 29), 0.25f, 0.062f, marking);
+      paving.Strip(new Vector2(58, 31), new Vector2(75, 31), 0.25f, 0.062f, marking);
+      paving.Strip(new Vector2(36, 106), new Vector2(36, 122), 10f, 0.053f, apron);
+      paving.Strip(new Vector2(32, 106), new Vector2(40, 106), 0.24f, 0.063f, marking);
+      paving.Save(root);
+    }
+
     // ---------------------------------------------------------------- base pad
 
     static GameObject BuildBasePad(char[,] grid) {
@@ -88,7 +178,7 @@ namespace FactoryWars.EditorTools {
       foreach (var d in BaseDecor) {
         Place(root.transform, d.Prefab, new Vector3(d.U, 0f, d.W), d.Yaw, d.Scale, d.Name);
       }
-      // 옹벽 위 방벽 띠: 자리 0 본진 칸의 바깥 변(경사로·경계 쪽 제외). 높은 방벽 묶음 4종을 해시로 섞고 끝을 맞대 잇는다.
+      // Seat 0 retaining-wall cap. Fit the measured barriers inside their edge cells.
       var cells = BaseCells(grid);
       var minC = cells.Min(c => c.Item2);
       var maxR = cells.Max(c => c.Item1);
@@ -96,7 +186,7 @@ namespace FactoryWars.EditorTools {
       var cornerZ = FactoryWarsSetup.CellZ(maxR) - FactoryWarsSetup.GridCell / 2f;
       var walls = new GameObject("PerimeterWall").transform;
       walls.SetParent(root.transform, false);
-      var variants = new[] { "SM_Prop_Barrier_Tall_Group_01", "SM_Prop_Barrier_Tall_Group_02", "SM_Prop_Barrier_Tall_Group_03" };
+      var occupied = root.transform.Cast<Transform>().Where(t => t != walls).Select(t => WorldBounds(t.gameObject)).ToList();
       var dirs = new[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
       var index = 0;
       foreach (var (r, c) in cells.OrderBy(c => c.Item1).ThenBy(c => c.Item2)) {
@@ -107,19 +197,34 @@ namespace FactoryWars.EditorTools {
           if (cells.Contains((nr, nc))) continue;
           var neighbour = nr >= 0 && nc >= 0 && nr < FactoryWarsSetup.GridCells && nc < FactoryWarsSetup.GridCells ? grid[nr, nc] : 'E';
           if (neighbour == 'P' || neighbour == 'E') continue;
-          // 변 가운데(칸 가운데에서 바깥으로 4m, 안쪽으로 0.8m 들인다).
-          var x = FactoryWarsSetup.CellX(c) + dc * (FactoryWarsSetup.GridCell / 2f - 0.8f) - cornerX;
-          var z = FactoryWarsSetup.CellZ(r) - dr * (FactoryWarsSetup.GridCell / 2f - 0.8f) - cornerZ;
-          var yaw = d < 2 ? 90f : 0f; // 묶음은 Z로 길다: 가로 변은 90도 돌린다.
-          var hash = (r * 73856093) ^ (c * 19349663) ^ d;
-          var variant = variants[Mathf.Abs(hash) % variants.Length];
-          // 한 변(8m)에 5.2m 묶음 1개 + 남는 2.8m는 낮은 방벽 1개(키 섞기).
+          var x = FactoryWarsSetup.CellX(c) - cornerX;
+          var z = FactoryWarsSetup.CellZ(r) - cornerZ;
+          var hash = (uint)((r * 73856093) ^ (c * 19349663) ^ d);
           var along = d < 2 ? Vector3.right : Vector3.forward;
-          var center = new Vector3(x, 0f, z);
-          Place(walls, $"{PM}Props/{variant}.prefab", center - along * 1.3f, yaw, 1f, $"Wall{index++}");
-          Place(walls, $"{PM}Props/SM_Prop_Barrier_0{1 + Mathf.Abs(hash / 7) % 3}.prefab", center + along * 2.6f, yaw, 1.2f, $"Wall{index++}");
+          var inward = new Vector3(-dc, 0, dr);
+          var model = hash % 7 < 3 ? $"SM_Prop_Barrier_Tall_Group_0{1 + hash % 3}"
+            : hash % 7 < 6 ? $"SM_Prop_Barrier_Tall_0{1 + hash % 6}" : $"SM_Prop_Barrier_0{1 + hash % 3}";
+          var wall = Place(walls, $"{PM}Props/{model}.prefab", new Vector3(x, 0, z), d < 2 ? 0f : 90f, 1f, $"Wall{index++}");
+          if (wall == null) continue;
+          var dimensions = WorldBounds(wall).extents;
+          var depth = Vector3.Dot(dimensions, new Vector3(Mathf.Abs(inward.x), 0, Mathf.Abs(inward.z)));
+          var length = Vector3.Dot(dimensions, along);
+          if (length < depth) {
+            wall.transform.Rotate(0f, 90f, 0f);
+            (length, depth) = (depth, length);
+            var rotated = WorldBounds(wall).center;
+            wall.transform.position += new Vector3(x - rotated.x, 0, z - rotated.z);
+          }
+          wall.transform.position -= inward * (3.85f - depth);
+          wall.transform.position += along * Mathf.Clamp(3.85f - length, 0f, 1.8f) * ((hash / 13 % 17 - 8f) / 8f);
+          var bounds = WorldBounds(wall);
+          var margin = bounds;
+          margin.Expand(0.14f);
+          if (length > 3.85f || depth > 2f || occupied.Any(b => b.Intersects(margin))) Object.DestroyImmediate(wall);
+          else occupied.Add(bounds);
         }
       }
+      BasePaving(root, cells, minC, maxR);
       return root;
     }
 
@@ -160,27 +265,39 @@ namespace FactoryWars.EditorTools {
     }
 
     static void Sidewalk(Transform parent, int variant) {
-      // 둘레 인도(블록 가장자리 1.25m 띠): 가로등 2(팔은 변을 따라), 화분 2, 벤치 1, 소화전·우체통. 모두 블록 안(|x|,|z| ≤ 7.3)에 둔다.
-      // 나무(지름 2.5m)는 띠보다 넓어 길로 삐져나오므로 두지 않는다(공원 칸 K 블록에서 쓴다).
       var props = new GameObject("Street").transform;
       props.SetParent(parent, false);
       var flip = variant % 2 == 0 ? 1f : -1f;
-      Place(props, PC + "Props/SM_Prop_LightPole_Base_01.prefab", new Vector3(-6.9f * flip, 0f, -7.0f), 90f, 1f, "Lamp0");
-      Place(props, PC + "Props/SM_Prop_LightPole_Base_01.prefab", new Vector3(6.9f * flip, 0f, 7.0f), 270f, 1f, "Lamp1");
-      Place(props, PC + "Props/SM_Prop_Planter_01.prefab", new Vector3(0.2f, 0f, -7.05f), 0f, 1f, "Planter0");
-      Place(props, PC + "Props/SM_Prop_Planter_01.prefab", new Vector3(7.05f * flip, 0f, 0.3f), 90f, 1f, "Planter1");
-      Place(props, PC + "Props/SM_Prop_ParkBench_01.prefab", new Vector3(-7.05f * flip, 0f, 0.6f), 90f, 1f, "Bench0");
-      Place(props, PC + "Props/SM_Prop_Hydrant_01.prefab", new Vector3(3.2f * flip, 0f, 7.1f), 0f, 1f, "Hydrant");
-      Place(props, PC + "Props/SM_Prop_Mailbox_01.prefab", new Vector3(-2.6f * flip, 0f, 7.1f), 0f, 1f, "Mailbox");
+      Place(props, PC + "Props/SM_Prop_LightPole_Base_01.prefab", new Vector3((-3.9f + variant * 1.4f) * flip, 0.10f, -6.75f), 90f, 1f, "Lamp0");
+      Place(props, PC + "Props/SM_Prop_Planter_01.prefab", new Vector3(1.8f * flip, 0.10f, -6.8f), 0f, 1f, "Planter0");
+      Place(props, PC + "Props/SM_Prop_ParkBench_01.prefab", new Vector3(-7f * flip, 0.10f, 0.6f), 90f, 1f, "Bench0");
+      if (variant != 1) Place(props, PC + "Props/SM_Prop_Hydrant_01.prefab", new Vector3(3.2f * flip, 0.10f, 7f), 0f, 1f, "Hydrant");
+      if (variant != 0) Place(props, PC + "Props/SM_Prop_Mailbox_01.prefab", new Vector3(-2.6f * flip, 0.10f, 7f), 0f, 1f, "Mailbox");
     }
 
     /// <summary>주차 칸(사분면 6.5m): 주차선 + 승용차 2대(Z로 길게 나란히).</summary>
     static void ParkingCorner(Transform parent, Vector2 center) {
       var lot = new GameObject("Parking").transform;
       lot.SetParent(parent, false);
-      Place(lot, PC + "Environments/SM_Env_Road_ParkingLines_01.prefab", new Vector3(center.x, 0.02f, center.y), 0f, 0.6f, "Lines");
-      Place(lot, PC + "Vehicles/SM_Veh_Car_Sedan_01.prefab", new Vector3(center.x - 1.35f, 0f, center.y), 2f, 0.9f, "Car0");
-      Place(lot, PC + "Vehicles/SM_Veh_Car_Van_01.prefab", new Vector3(center.x + 1.45f, 0f, center.y + 0.1f), -3f, 0.85f, "Car1");
+      Place(lot, PC + "Environments/SM_Env_Road_ParkingLines_01.prefab", new Vector3(center.x, 0.092f, center.y), 0f, 0.6f, "Lines");
+      Place(lot, PC + "Vehicles/SM_Veh_Car_Sedan_01.prefab", new Vector3(center.x - 1.35f, 0.087f, center.y), 2f, 0.9f, "Car0");
+      Place(lot, PC + "Vehicles/SM_Veh_Car_Van_01.prefab", new Vector3(center.x + 1.45f, 0.087f, center.y + 0.1f), -3f, 0.85f, "Car1");
+    }
+
+    static void CityPaving(GameObject root, float parkingX) {
+      var paving = new Paving();
+      var sidewalk = new Color(0.62f, 0.60f, 0.55f);
+      var curb = new Color(0.78f, 0.74f, 0.66f);
+      var lot = new Color(0.31f, 0.33f, 0.34f);
+      const float edge = 7.98f;
+      for (var i = 0; i < 8; i++) {
+        var z = -7f + i * 2f;
+        paving.Strip(new Vector2(-edge, z), new Vector2(edge, z), 1.96f, 0.071f, sidewalk * (i % 2 == 0 ? 0.98f : 1f));
+      }
+      paving.Strip(new Vector2(parkingX - 3f, 3.5f), new Vector2(parkingX + 3f, 3.5f), 5.75f, 0.086f, lot);
+      var corners = new[] { new Vector2(-7.84f, -7.84f), new Vector2(7.84f, -7.84f), new Vector2(7.84f, 7.84f), new Vector2(-7.84f, 7.84f) };
+      for (var i = 0; i < corners.Length; i++) paving.Strip(corners[i], corners[(i + 1) % corners.Length], 0.22f, 0.10f, curb);
+      paving.Save(root);
     }
 
     /// <summary>16×16m 블록을 2×2 사분면(가운데 ±3.5, 한 변 6.5m)으로 나눠 건물·주차를 하나씩 넣는다. 사분면 사이 0.5m는 틈.</summary>
@@ -192,27 +309,28 @@ namespace FactoryWars.EditorTools {
       switch (id) {
         case "blk_city_mixed_2x2_a":
           // 남서 4층 아파트(모서리) · 남동 2층 상가 · 북동 3층 상가주택 · 북서 주차.
-          Stack(b, "Apartment4", new Vector2(-Q, -Q), 180f, "SM_Bld_Shop_Corner_01", "SM_Bld_Apartment_Corner_01", 3, null);
-          Stack(b, "Shop2", new Vector2(Q, -Q), 180f, "SM_Bld_Shop_02", "SM_Bld_Apartment_02", 1, null);
-          Stack(b, "Mixed3", new Vector2(Q, Q), 0f, "SM_Bld_Shop_05", "SM_Bld_Apartment_03", 2, null);
+          Stack(b, "Apartment4", new Vector2(-Q, -Q), 180f, "SM_Bld_Shop_Corner_01", "SM_Bld_Apartment_Corner_01", 3, "SM_Bld_Apartment_Roof_Corner_01");
+          Stack(b, "Shop2", new Vector2(Q, -Q), 180f, "SM_Bld_Shop_02", "SM_Bld_Apartment_02", 1, "SM_Bld_Apartment_Roof_02");
+          Stack(b, "Mixed3", new Vector2(Q, Q), 0f, "SM_Bld_Shop_05", "SM_Bld_Apartment_03", 2, "SM_Bld_Apartment_Roof_03");
           ParkingCorner(root.transform, new Vector2(-Q, Q));
           Sidewalk(root.transform, 0);
           break;
         case "blk_city_mixed_2x2_b":
-          // 남쪽 반 긴 1층 상가 · 북서 5층 아파트 · 북동 주차.
-          Stack(b, "LongShop", new Vector2(0f, -Q), 180f, "SM_Bld_Shop_03", "SM_Bld_Apartment_01", 0, null);
-          Stack(b, "Apartment5", new Vector2(-Q, Q), 0f, "SM_Bld_Shop_Corner_02", "SM_Bld_Apartment_Corner_02", 4, null);
+          Stack(b, "Shop1", new Vector2(-Q, -Q), 180f, "SM_Bld_Shop_06", "SM_Bld_Apartment_01", 0, "SM_Bld_Apartment_Roof_01");
+          Stack(b, "Mixed2", new Vector2(Q, -Q), 180f, "SM_Bld_Shop_05", "SM_Bld_Apartment_03", 1, "SM_Bld_Apartment_Roof_03");
+          Stack(b, "Apartment5", new Vector2(-Q, Q), 0f, "SM_Bld_Shop_Corner_02", "SM_Bld_Apartment_Corner_02", 4, "SM_Bld_Apartment_Roof_Corner_02");
           ParkingCorner(root.transform, new Vector2(Q, Q));
           Sidewalk(root.transform, 1);
           break;
         default:
-          // 서쪽 반 큰 2층 상가건물(군용 팩 완성 건물) · 남동 3층 아파트 · 북동 주차.
-          Place(b, PM + "Buildings/SM_Bld_Shop_09.prefab", new Vector3(-Q, 0f, 0f), 0f, 0.92f, "Townhouse");
-          Stack(b, "Apartment3", new Vector2(Q, -Q), 90f, "SM_Bld_Shop_06", "SM_Bld_Apartment_03", 2, null);
+          Stack(b, "Shop2", new Vector2(-Q, -Q), 180f, "SM_Bld_Shop_02", "SM_Bld_Apartment_02", 1, "SM_Bld_Apartment_Roof_02");
+          Stack(b, "Corner3", new Vector2(-Q, Q), 270f, "SM_Bld_Shop_Corner_01", "SM_Bld_Apartment_Corner_02", 2, "SM_Bld_Apartment_Roof_Corner_02");
+          Stack(b, "Apartment3", new Vector2(Q, -Q), 90f, "SM_Bld_Shop_06", "SM_Bld_Apartment_03", 2, "SM_Bld_Apartment_Roof_03");
           ParkingCorner(root.transform, new Vector2(Q, Q));
           Sidewalk(root.transform, 2);
           break;
       }
+      CityPaving(root, id == CityIds[0] ? -Q : Q);
       return root;
     }
 

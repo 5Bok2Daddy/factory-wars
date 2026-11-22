@@ -44,12 +44,16 @@ namespace FactoryWars.Tests {
       Assert.IsTrue(Verified.Map.RegionMap.ContainsKey("Bridge0"), "다리 영역이 구워짐(항목 37: 다리마다 하나)");
       // 항목 24: 외곽 수로가 있으면 자리마다 수문 영역이 하나 더 있다(수문 2개가 같은 영역).
       var gates = (spec.WaterGates?.Length ?? 0) > 0 ? spec.BaseAreas.Length : 0;
-      Assert.AreEqual(1 + spec.Bridges.Length + spec.Barricades.Length + spec.CityBuildings.Length + spec.CityBuildings.Count(c => c.Topples) + gates, Verified.Map.RegionMap.Count, "기본 영역 + 자리별 다리 영역 + 바리케이드 + 도시 건물 + 낙하 구역 + 자리별 수문");
+      var ramps = (spec.TruceGates?.Length ?? 0) > 0 ? spec.BaseAreas.Length : 0;
+      Assert.AreEqual(1 + spec.Bridges.Length + spec.Barricades.Length + spec.CityBuildings.Length + spec.CityBuildings.Count(c => c.Topples) + gates + ramps, Verified.Map.RegionMap.Count, "기본 영역 + 다리 + 바리케이드 + 도시 건물 + 낙하 구역 + 수문 + 휴전 관문");
       var mask = NavMeshRegionMask.Default;
       var rules = Verified.FindAsset(Verified.RuntimeConfig.Rules);
       for (var p = 0; p < players; p++) {
         var seat = FactoryWarsUtil.SeatOf(Verified, p);
         var reachable = ReachableNow(navMesh, spec.StartPositions[seat]);
+        if (GridMapView.Uses(spec)) {
+          Assert.IsFalse(reachable.Contains(navMesh.FindTriangle2D(spec.TraderPosition, mask, true)), $"{seat}번 본진에서 중앙 요새로 못 감");
+        }
         for (var other = 0; other < players; other++) {
           if (other != p) {
             var otherSeat = FactoryWarsUtil.SeatOf(Verified, other);
@@ -57,9 +61,14 @@ namespace FactoryWars.Tests {
           }
         }
         foreach (var node in spec.ResourceNodes) {
-          var inside = spec.BaseAreas[seat].Distance(node.Shape.Center) <= FP._0;
-          var spot = navMesh.FindTriangle2D(node.Shape.Spot(0, rules), mask, true);
-          Assert.AreEqual(inside, reachable.Contains(spot), $"{seat}번 본진에서 {node.Shape.Center}");
+          var inside = GridMapView.Uses(spec)
+            ? node.Tier <= 2 && Enumerable.Range(0, spec.StartPositions.Length)
+              .OrderBy(s => FactoryWarsUtil.FlatDistanceSqr(spec.StartPositions[s], node.Shape.Center)).First() == seat
+            : spec.BaseAreas[seat].Distance(node.Shape.Center) <= FP._0;
+          var spotCount = GridMapView.Uses(spec) ? node.Shape.SpotCount(rules) : 1;
+          var canHarvest = Enumerable.Range(0, spotCount)
+            .Any(i => reachable.Contains(navMesh.FindTriangle2D(node.Shape.Spot(i, rules), mask, true)));
+          Assert.AreEqual(inside, canHarvest, $"{seat}번 본진에서 {node.Shape.Center}");
         }
       }
       for (var seat = 0; seat < spec.BaseAreas.Length; seat++) {
@@ -82,18 +91,19 @@ namespace FactoryWars.Tests {
 
     [UnityTest]
     public IEnumerator Truce_ClosedBridgeStopsGroundUnits() {
-      // 320m 표준화: 자리 0 서쪽 운하 다리는 (-135, -81.7), 남북으로 놓인다(남쪽 끝 z = -89).
-      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_eagle_tank", -135, -108) }, truce: 120);
-      var tank = UnitsNamed(0, "ff_eagle_tank")[0];
-      var bridge = WestCanalBridge();
-      yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = V(-135, -66) });
-      yield return WaitFrames(8 * Fps);
-      Assert.Less(Verified.Get<Transform3D>(tank).Position.Z.AsFloat, (bridge.Center.Z - bridge.HalfLength).AsFloat + 1f, "다리를 건너지 못함");
+      // Map4P v4 seals the corner base at the ramp rather than at the old canal bridge.
+      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_eagle_tank", -236, -196) }, truce: 120, seed: 42);
+      var tank = PilotTruceTank();
+      var spec = FactoryWarsUtil.MapInfo(Verified);
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = CompoundEntries()[3] });
+      yield return WaitFrames(20 * Fps);
+      Assert.IsFalse(BarrierOpen());
+      Assert.GreaterOrEqual(spec.HighGroundAt(Verified.Get<Transform3D>(tank).Position), 0, "휴전 중 경사로 밖으로 나가지 못함");
     }
 
     [UnityTest]
     public IEnumerator Truce_BarrierOpensOnTimeAndUnitsCross() {
-      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_eagle_tank", -135, -108) }, truce: 10);
+      yield return StartMatch(Map4PScene, 2, units: new[] { (0, "ff_eagle_tank", -236, -196) }, truce: 10, seed: 42);
       var opened = new List<int>();
       QuantumEvent.Subscribe<EventBarrierOpened>(_listener, e => opened.Add(e.Frame));
       Assert.IsFalse(BarrierOpen());
@@ -108,11 +118,14 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(10 * Fps, TruceEnd(), "이벤트 프레임이 TruceEndFrame");
       Assert.IsTrue(ReachableNow(navMesh, start0).Contains(navMesh.FindTriangle2D(start1, NavMeshRegionMask.Default, true)), "개방 뒤에는 경로가 있음");
 
-      var tank = UnitsNamed(0, "ff_eagle_tank")[0];
-      var target = V(-135, -66);
+      var tank = PilotTruceTank();
+      var target = CompoundEntries()[3];
       yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = target });
-      yield return WaitFor(() => (Verified.Get<Transform3D>(tank).Position - target).Magnitude < 2, 30f, "다리 통과");
+      yield return WaitFor(() => FactoryWarsUtil.FlatDistanceSqr(Verified.Get<Transform3D>(tank).Position, target) < 9, 60f, "관문을 지나 요새 진입");
     }
+
+    static EntityRef PilotTruceTank() => UnitsNamed(0, "ff_eagle_tank")
+      .OrderBy(unit => FactoryWarsUtil.FlatDistanceSqr(Verified.Get<Transform3D>(unit).Position, V(-236, -196))).First();
 
     static MapShape WestCanalBridge() {
       var spec = Verified.FindAsset<MapSpec>(Verified.Map.UserAsset);

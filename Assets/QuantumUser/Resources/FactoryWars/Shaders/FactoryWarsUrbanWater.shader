@@ -101,8 +101,9 @@ Shader "FactoryWars/UrbanWater"
                 half foam = saturate(input.color.r * (0.55 + 0.8 * stripes));
                 #if defined(_FW_DEPTH_FOAM)
                     float2 uv = input.positionCS.xy / _ScaledScreenParams.xy;
-                    float sceneEye = LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams);
-                    float gap = max(sceneEye - input.positionCS.w, 0);
+                    float rawDepth = SampleSceneDepth(uv);
+                    float sceneEye = IsPerspectiveProjection() ? LinearEyeDepth(rawDepth, _ZBufferParams) : LinearDepthToEyeDepth(rawDepth);
+                    float gap = max(sceneEye + TransformWorldToView(input.positionWS).z, 0);
                     // 물 면 바로 뒤에 둑·기둥·선체가 있으면(깊이 차가 작으면) 흰 거품. 거품 폭 안쪽은 꽉 차고 바깥으로 갈수록 줄무늬로 흩어진다.
                     float edge = 1 - saturate(gap / max(_FoamWidth, 0.01));
                     float ring = edge * (0.55 + 0.6 * stripes);

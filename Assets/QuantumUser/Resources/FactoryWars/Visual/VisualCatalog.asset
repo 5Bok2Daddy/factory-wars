@@ -6461,7 +6461,7 @@ MonoBehaviour:
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 162.72507, y: 23.751007, z: 161.53633}
+    Size: {x: 160, y: 23.751007, z: 160}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -6486,7 +6486,7 @@ MonoBehaviour:
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 16.27873, y: 11.999998, z: 14.793401}
+    Size: {x: 15.96, y: 12.499865, z: 15.96}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -6511,7 +6511,7 @@ MonoBehaviour:
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 16.27873, y: 15, z: 14.793401}
+    Size: {x: 15.96, y: 15.74354, z: 15.96}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -6536,7 +6536,7 @@ MonoBehaviour:
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 16.27873, y: 9, z: 14.793401}
+    Size: {x: 15.96, y: 9.74354, z: 15.96}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 

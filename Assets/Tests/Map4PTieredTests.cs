@@ -39,9 +39,11 @@ namespace FactoryWars.Tests {
 
     static bool OnGroundNavMesh(Frame frame, FPVector3 point) {
       var ground = frame.Map.GetNavMesh(FactoryWarsUtil.Rules(frame).NavMeshName);
-      var mask = *frame.NavMeshRegionMask;
+      var mask = NavigationMask(frame);
       return ground.Contains(point, mask, true);
     }
+
+    static NavMeshRegionMask NavigationMask(Frame frame) => *frame.NavMeshRegionMask;
 
     static FPVector3 Pos(float x, float z) => new FPVector3(FP.FromFloat_UNSAFE(x), 0, FP.FromFloat_UNSAFE(z));
 
@@ -51,8 +53,6 @@ namespace FactoryWars.Tests {
       }
       return p;
     }
-
-    static bool HasMirror(MapShape[] shapes, MapShape shape) => shapes.Any(o => (o.Center + shape.Center).Magnitude.AsFloat < 0.6f);
 
     // 2026-11-22: 예전 참고 그림 배치(320m, 테라스·능선·참호·고리 운하)를 검사하던 Map4P_LayoutSymmetryCanalBridgesTiersAndTruce는
     // 사용자가 칸 지도 v4(640m)로 바꾸면서 기준이 사라져 아래 Map4P_v4_* 시험으로 대체했다(SETUP-REPORT "Map4P v4 시범").
@@ -75,7 +75,8 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Timeout(900000)]
     public IEnumerator Map4P_v4_GridMatchesCsv() {
-      yield return StartMatch(Map4PScene, 4, truce: 25);
+      yield return StartMatch(Map4PScene, 4, truce: 5);
+      yield return WaitFor(BarrierOpen, 90f, "truce end for baseline traversability");
       var frame = Verified;
       var map = FactoryWarsUtil.MapInfo(frame);
       var grid = DesignGrid();
@@ -85,15 +86,36 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(320f, map.BoundsMax.Y.AsFloat, 0.01f);
       Assert.AreEqual(320, map.GroundGridSize, "2 m ground grid over 640 m");
       Assert.AreEqual(2f, map.GroundGridCell.AsFloat, 0.001f);
+      var ground = frame.Map.GetNavMesh(FactoryWarsUtil.Rules(frame).NavMeshName);
+      var active = NavigationMask(frame);
+      var connected = ReachableNow(ground, map.StartPositions[0]);
+      var offsets = new[] { -3.5f, -2f, 0f, 2f, 3.5f };
+      var resourceCentres = 0;
       var wrongNav = new System.Collections.Generic.List<string>();
       for (var r = 0; r < 80; r++) {
         for (var c = 0; c < 80; c++) {
           Assert.AreEqual(grid[r, c], (char)map.CellGrid[r * 80 + c], $"cell ({r},{c}) matches CSV");
           var blocked = grid[r, c] == 'E' || grid[r, c] == 'H' || grid[r, c] == 'W';
-          if (OnGroundNavMesh(frame, CellCenter(r, c)) == blocked) wrongNav.Add($"({r},{c}){grid[r, c]}");
+          var point = CellCenter(r, c);
+          if (OnGroundNavMesh(frame, point) == blocked) {
+            var nearestResource = map.ResourceNodes.Min(n => n.Shape.Distance(point).AsFloat);
+            var nearestWall = map.Terrain.Where(t => t.Kind == TerrainKind.Wall).Min(t => t.Shape.Distance(point).AsFloat);
+            // A mine/grove and the bake's agent clearance can occupy the centre of a B or M cell.
+            // In that case require connected ground in the same cell, never a neighbouring tile.
+            if (!blocked && (grid[r, c] == 'B' || grid[r, c] == 'M') && nearestResource <= 0.6f &&
+                offsets.Any(x => offsets.Any(z => {
+                  var sample = point + Pos(x, z);
+                  return ground.Contains(sample, active, true) && connected.Contains(ground.FindTriangle2D(sample, active, true));
+                }))) {
+              resourceCentres++;
+              continue;
+            }
+            wrongNav.Add($"({r},{c}){grid[r, c]} resource={nearestResource:F1} wall={nearestWall:F1}");
+          }
         }
       }
-      Assert.IsEmpty(wrongNav, $"blocked cells (E/H/W) are off the ground NavMesh and every other cell centre is on it: {string.Join(" ", wrongNav.Take(40))}");
+      Assert.IsEmpty(wrongNav, $"E/H/W centres must be blocked; other centres must be walkable except for resource footprints: {string.Join(" ", wrongNav.Take(40))}");
+      Debug.Log($"Map4P v4 traversability: {resourceCentres} centres occupied by resources have connected ground inside their cells");
       var bridges = 0;
       for (var r = 0; r < 80; r++) {
         for (var c = 0; c < 80; c++) {
@@ -102,6 +124,11 @@ namespace FactoryWars.Tests {
       }
       Assert.AreEqual(bridges, map.Bridges.Length, "one bridge per G run");
       Assert.AreEqual(6, map.Bridges.Length, "six canal bridges");
+      var waterNav = frame.Map.GetNavMesh(FactoryWarsUtil.Rules(frame).WaterNavMeshName);
+      Assert.IsNotNull(waterNav, "water NavMesh");
+      foreach (var bridge in map.Bridges) {
+        Assert.IsTrue(waterNav.Contains(bridge.Center, active, true), $"water NavMesh under bridge at {bridge.Center}");
+      }
       // 고지대: 모서리 본진(B·p·v) 칸 중심은 고지대, 맵 가장자리 B 띠는 아니다.
       var start = map.StartPositions[0];
       Assert.AreEqual(TieredTerrain.MainHeight, TerrainKit.SurfaceHeight(map, start.X.AsFloat, start.Z.AsFloat), 0.01f, "base plateau");
@@ -127,26 +154,21 @@ namespace FactoryWars.Tests {
       for (var seat = 0; seat < 4; seat++) {
         Assert.Less((map.StartPositions[seat] - Rot(map.StartPositions[0], seat)).Magnitude.AsFloat, 0.01f, $"seat {seat} start is the turned seat 0 start");
       }
-      foreach (var piece in map.River) {
-        Assert.IsTrue(HasMirror(map.River, piece), $"canal piece {piece.Center} has a 180 degree mirror");
-      }
-      // 수로: W 칸은 지상 불가, 다리 칸은 가능, 수로 양쪽은 다리로 이어진다.
+      yield return WaitFor(BarrierOpen, 90f, "truce end");
+      frame = Verified;
+      // The baked river also includes the water below bridges. Compare occupancy instead of merge rectangles.
       for (var r = 0; r < 80; r++) {
         for (var c = 0; c < 80; c++) {
-          if (grid[r, c] == 'W') Assert.IsFalse(OnGroundNavMesh(frame, CellCenter(r, c)), $"canal ({r},{c}) blocks ground");
-          if (grid[r, c] == 'G') Assert.IsTrue(OnGroundNavMesh(frame, CellCenter(r, c)), $"bridge ({r},{c}) walkable");
+          var point = CellCenter(r, c);
+          var cell = grid[r, c];
+          Assert.AreEqual(cell == 'W' || cell == 'G', map.River.Any(s => s.Distance(point) <= FP._0), $"canal occupancy ({r},{c})");
+          Assert.AreEqual(cell == 'G', map.Bridges.Any(s => s.Distance(point) <= FP._0), $"bridge occupancy ({r},{c})");
+          if (cell == 'W') Assert.IsFalse(OnGroundNavMesh(frame, point), $"canal ({r},{c}) blocks ground");
+          if (cell == 'G') Assert.IsTrue(OnGroundNavMesh(frame, point), $"bridge ({r},{c}) walkable");
         }
       }
-      // 휴전 중: 자기 본진 밖으로 나가지 못한다.
-      Assert.IsFalse(BarrierOpen());
-      var start = map.StartPositions[0];
-      for (var seat = 1; seat < 4; seat++) {
-        Assert.AreNotEqual(Navigation.FindPathResult.Code.Success, GroundPath(frame, start, map.StartPositions[seat]), $"truce blocks seat {seat}");
-      }
-      yield return WaitFor(() => BarrierOpen(), 90f, "truce end");
-      frame = Verified;
       // 네 본진 모두 중앙 요새(가장 가까운 출입구)와 모든 외곽 거점에 닿는다. 공정성: 경로 길이 ±5%.
-      var gates = new[] { Pos(0f, 80f), Pos(80f, 0f), Pos(0f, -80f), Pos(-80f, 0f) }; // 요새 출입구 바로 밖 순환로
+      var gates = CompoundEntries();
       var outposts = map.ResourceNodes.Where(n => n.Tier == 3).ToArray();
       Assert.AreEqual(8, outposts.Length);
       var compound = new float[4];
@@ -155,13 +177,89 @@ namespace FactoryWars.Tests {
         var from = map.StartPositions[seat];
         compound[seat] = gates.Min(g => RouteLength(frame, from, g));
         foreach (var node in outposts) {
-          Assert.AreEqual(Navigation.FindPathResult.Code.Success, GroundPath(frame, from, node.Shape.Center * FP._0_75 + node.Shape.Center.Normalized * 8), $"seat {seat} reaches outpost {node.Shape.Center}");
+          Assert.AreEqual(Navigation.FindPathResult.Code.Success, GroundPath(frame, from, node.Shape.Approach(FPVector3.Zero, 3)), $"seat {seat} reaches outpost {node.Shape.Center}");
         }
-        nearOutpost[seat] = outposts.Min(n => RouteLength(frame, from, n.Shape.Center * FP._0_75 + n.Shape.Center.Normalized * 8));
+        nearOutpost[seat] = outposts.Min(n => RouteLength(frame, from, n.Shape.Approach(FPVector3.Zero, 3)));
       }
       Debug.Log($"Map4P v4 base->compound gate: {string.Join(", ", compound.Select(l => l.ToString("F1")))}; base->nearest outpost: {string.Join(", ", nearOutpost.Select(l => l.ToString("F1")))}");
       foreach (var lengths in new[] { compound, nearOutpost }) {
         Assert.LessOrEqual(lengths.Max() / lengths.Min(), 1.05f, $"route fairness {string.Join(", ", lengths.Select(l => l.ToString("F1")))}");
+      }
+    }
+
+    static FPVector3[] CompoundEntries() => new[] { Pos(0f, 56f), Pos(56f, 0f), Pos(0f, -56f), Pos(-56f, 0f) };
+
+    [UnityTest, Timeout(900000)]
+    public IEnumerator Map4P_v4_CameraBoundsAndVehicleTravel() {
+      const string tankId = "ff_eagle_tank";
+      var spawns = Enumerable.Range(0, 4).Select(seat => {
+        var spawn = Rot(Pos(-236f, -196f), seat);
+        return (seat, tankId, (int)spawn.X, (int)spawn.Z);
+      }).ToArray();
+      yield return StartMatch(Map4PScene, 4, truce: 5, mirrorFaction: 0, units: spawns, seed: 42);
+      yield return WaitForHud();
+      yield return WaitFor(BarrierOpen, 90f, "truce end before travel");
+
+      var rts = Controller().Camera;
+      var camera = rts.GetComponent<Camera>();
+      camera.aspect = 16f / 9f;
+      Assert.AreEqual(new Vector2(-320f, -320f), rts.BoundsMin);
+      Assert.AreEqual(new Vector2(320f, 320f), rts.BoundsMax);
+      Assert.IsTrue(rts.KeepViewportInside);
+      rts.Zoom(10000f);
+      Assert.AreEqual(RtsCamera.MinHeight, rts.Height, 0.01f);
+      rts.Zoom(0.0001f);
+      var maximum = Mathf.Min(RtsCamera.MaxHeight, rts.FitHeight());
+      Assert.AreEqual(maximum, rts.Height, 0.01f);
+      Assert.Greater(maximum, VisualProfile.Current.MaxHeight);
+      foreach (var offset in new[] { new Vector2(-1000f, -1000f), new Vector2(1000f, 1000f) }) {
+        rts.MoveTo(offset);
+        foreach (var x in new[] { 0f, 1f }) {
+          foreach (var y in new[] { 0f, 1f }) {
+            var ray = camera.ViewportPointToRay(new Vector3(x, y));
+            Assert.IsTrue(new UnityEngine.Plane(Vector3.up, Vector3.zero).Raycast(ray, out var distance));
+            var ground = ray.GetPoint(distance);
+            Assert.That(ground.x, Is.InRange(-320.05f, 320.05f));
+            Assert.That(ground.z, Is.InRange(-320.05f, 320.05f));
+          }
+        }
+      }
+      Debug.Log($"Map4P v4 camera: 640m, 16:9, zoom {RtsCamera.MinHeight:F1}–{maximum:F1}m");
+
+      var tanks = Enumerable.Range(0, 4).Select(player => UnitsNamed(player, tankId)
+        .OrderBy(t => FactoryWarsUtil.FlatDistanceSqr(Verified.Get<Transform3D>(t).Position, V(spawns[player].Item3, spawns[player].Item4))).First()).ToArray();
+      var gates = CompoundEntries();
+      var goals = new FPVector3[4];
+      var planned = new float[4];
+      var actual = new float[4];
+      var finished = new int[4];
+      var previous = new FPVector3[4];
+      for (var player = 0; player < 4; player++) {
+        previous[player] = Verified.Get<Transform3D>(tanks[player]).Position;
+        Assert.Less(FactoryWarsUtil.FlatDistanceSqr(previous[player], V(spawns[player].Item3, spawns[player].Item4)).AsFloat, 4f, $"player {player} test tank spawn");
+        goals[player] = gates.OrderBy(gate => RouteLength(Verified, previous[player], gate)).First();
+        planned[player] = RouteLength(Verified, previous[player], goals[player]);
+      }
+      var start = Verified.Number;
+      for (var player = 0; player < 4; player++) {
+        Game.SendCommand(player, new MoveUnitsCommand { Units = new[] { tanks[player] }, Target = goals[player] });
+      }
+      yield return WaitFor(() => {
+        for (var player = 0; player < 4; player++) {
+          if (finished[player] != 0) continue;
+          Assert.IsTrue(Verified.Exists(tanks[player]), $"player {player} tank destroyed");
+          var position = Verified.Get<Transform3D>(tanks[player]).Position;
+          actual[player] += (position - previous[player]).Magnitude.AsFloat;
+          previous[player] = position;
+          if (FactoryWarsUtil.FlatDistanceSqr(position, goals[player]) > 9) continue;
+          finished[player] = Verified.Number;
+          var seat = FactoryWarsUtil.SeatOf(Verified, player);
+          Debug.Log($"Map4P v4 travel seat {seat}: {planned[player]:F1}m planned; {actual[player]:F1}m sampled; {(finished[player] - start) / (float)Fps:F2}s; goal {goals[player]}");
+        }
+        return finished.All(tick => tick != 0) || Verified.Number - start >= 200 * Fps;
+      }, 180f, "four vehicles enter the compound");
+      for (var player = 0; player < 4; player++) {
+        Assert.Greater(finished[player], 0, $"player {player} stopped at {previous[player]} entering {goals[player]}");
       }
     }
 
@@ -177,13 +275,14 @@ namespace FactoryWars.Tests {
       iteration = string.IsNullOrEmpty(iteration) ? "v1" : iteration;
       var dir = ScreenshotRoot();
       Directory.CreateDirectory(dir);
-      yield return StartMatch(Map4PScene, 4, truce: 300);
+      yield return StartMatch(Map4PScene, 4, truce: 8);
       yield return WaitForHud();
       yield return WaitForBattle();
       var doctrine = GameObject.Find("DoctrinePanel");
       if (doctrine != null) {
         doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
       }
+      yield return WaitFor(BarrierOpen, 90f, "open truce ramps for gameplay capture");
       Time.timeScale = 1f;
       yield return WaitFrames(Fps);
       var map = FactoryWarsUtil.MapInfo(Verified);
@@ -206,9 +305,11 @@ namespace FactoryWars.Tests {
       var corner = GridMapView.BaseCorner;
       var start = map.StartPositions[0].ToUnityVector3();
       var blocks = GridMapView.PlacedBlocks.Where(b => b != null).ToList();
+      var renderers = blocks.SelectMany(b => b.GetComponentsInChildren<MeshRenderer>()).ToList();
+      var report = new System.Collections.Generic.List<string> { $"Map4P v4 pilot audit {iteration}" };
       var cities = blocks.Where(b => b.name.StartsWith("City_")).OrderBy(b => (b.transform.position - start).sqrMagnitude).ToList();
+      report.Add($"blocks: {blocks.Count} (cities {cities.Count})");
       Assert.Greater(cities.Count, 0, "city pilot blocks placed");
-      var cityClose = cities[0];
       // 도로 옆 블록: 가운데에서 12m 안에 간선 도로 칸(R)이 있는 가장 가까운 블록.
       bool NextToRoad(GameObject b) {
         var p = b.transform.position;
@@ -219,24 +320,30 @@ namespace FactoryWars.Tests {
         }
         return false;
       }
-      var cityRoad = cities.Skip(1).FirstOrDefault(NextToRoad) ?? cities.Last();
+      var cityClose = cities.FirstOrDefault(b => b.transform.Find("Buildings/Apartment4") != null && NextToRoad(b)) ?? cities[0];
+      var cityRoad = cities.Where(NextToRoad)
+        .OrderByDescending(b => cities.Count(other => (other.transform.position - b.transform.position).sqrMagnitude < 36f * 36f))
+        .FirstOrDefault() ?? cityClose;
       var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
       foreach (var (name, focus, height) in new[] {
-          ("base_close", new Vector2(corner.x + 48f, corner.z + 40f), 46f),
-          ("base_wide", new Vector2(corner.x + 64f, corner.z + 60f), 120f),
-          ("city_close", new Vector2(cityClose.transform.position.x, cityClose.transform.position.z), 36f),
-          ("city_road", new Vector2(cityRoad.transform.position.x, cityRoad.transform.position.z - 6f), 52f),
-          ("compound", new Vector2(0f, -10f), 90f) }) {
+          ("base_close", new Vector2(corner.x + 49f, corner.z + 39f), 62f),
+          ("base_wide", new Vector2(-corner.x - 75f, -corner.z - 71f), 108f),
+          ("city_close", new Vector2(cityClose.transform.position.x, cityClose.transform.position.z), 35f),
+          ("city_road", new Vector2(cityRoad.transform.position.x, cityRoad.transform.position.z - 6f), 62f),
+          ("compound", new Vector2(0f, -5f), 155f) }) {
         rts.MoveTo(focus);
         rts.Height = height;
         rts.Apply();
         yield return WaitFrames(Fps / 2);
         CaptureCameraPng(camera, Path.Combine(dir, $"{name}_{iteration}.png"), 1920, 1080);
+        var planes = GeometryUtility.CalculateFrustumPlanes(camera);
+        var inView = renderers.Where(renderer => GeometryUtility.TestPlanesAABB(planes, renderer.bounds)).ToList();
+        report.Add($"frustum {name}: height {rts.Height:0}m, {inView.Count} renderers, {PilotTriangles(inView)} triangles");
       }
 
       // ---- 금지 검사(시범 구역: 본진 블록 4 + 도시 블록) ----
-      var report = new System.Collections.Generic.List<string> { $"Map4P v4 pilot audit {iteration}", $"blocks: {blocks.Count} (cities {cities.Count})" };
-      var items = blocks.SelectMany(SceneAudit.ItemsOf).ToList();
+      var items = blocks.SelectMany(SolidItems).ToList();
       bool Flat(SceneAudit.Item i) => i.Bounds.size.y < 1.0f && i.Bounds.size.x * i.Bounds.size.z > 20f;
       var overlaps = SceneAudit.Overlaps(items, 0.15f, (a, b) => Flat(a));
       var floating = SceneAudit.FloatingOrSunk(items, (x, z) => TerrainKit.SurfaceHeight(map, x, z) + 0.03f);
@@ -266,9 +373,10 @@ namespace FactoryWars.Tests {
         if (map.Terrain.Any(t => t.Shape.Distance(c).AsFloat < 2.5f)) continue;
         plots.Add($"{item} on build plot");
       }
-      var rows = SceneAudit.RegularRows(items);
+      // Boundary caps follow the retaining edge by design. Only freestanding props are tested for decorative rows.
+      var rows = SceneAudit.RegularRows(items.Where(i => i.Name.Contains("/PerimeterWall/") == false).ToList(), maxSpacing: 24f);
       var flat = new System.Collections.Generic.List<string>();
-      foreach (var name in new[] { "base_close", "base_wide", "city_close", "city_road" }) {
+      foreach (var name in new[] { "base_close", "base_wide", "city_close", "city_road", "compound" }) {
         var tex = new Texture2D(2, 2);
         tex.LoadImage(File.ReadAllBytes(Path.Combine(dir, $"{name}_{iteration}.png")));
         var ratio = SceneAudit.FlatColorRatio(tex);
@@ -280,12 +388,12 @@ namespace FactoryWars.Tests {
       var empty = new System.Collections.Generic.List<string>();
       foreach (var city in cities) {
         var p = city.transform.position;
-        var own = SceneAudit.ItemsOf(city).Select(i => i.Bounds).ToList();
+        var own = SolidItems(city).Select(i => i.Bounds).ToList();
         var side = SceneAudit.LargestEmptySquare(new Rect(p.x - 8f, p.z - 8f, 16f, 16f), own, (x, z) => true, 1f);
         if (side >= SceneAudit.EmptyLimit) empty.Add($"{city.name} empty {side:0}m");
       }
       var baseBlock = blocks.First(b => b.name == "Base0");
-      var baseItems = SceneAudit.ItemsOf(baseBlock).Select(i => i.Bounds).ToList();
+      var baseItems = SolidItems(baseBlock).Select(i => i.Bounds).ToList();
       foreach (var node in map.ResourceNodes.Where(n => n.Tier <= 2)) {
         baseItems.Add(new Bounds(node.Shape.Center.ToUnityVector3(), new Vector3(8f, 4f, 8f)));
       }
@@ -297,8 +405,8 @@ namespace FactoryWars.Tests {
       }
       var area = new Rect(corner.x, corner.z, 175f, 175f);
       var rawEmpty = SceneAudit.LargestEmptySquare(area, baseItems, InBase);
-      var plotEmpty = SceneAudit.LargestEmptySquare(area, baseItems, (x, z) => InBase(x, z) && BuildPlot(x, z) == false);
-      report.Add($"base empty square: raw {rawEmpty:0}m, outside build plot {plotEmpty:0}m (limit {SceneAudit.EmptyLimit:0.0}m)");
+      var plotEmpty = SceneAudit.LargestEmptySquare(area, baseItems, (x, z) => InBase(x, z) && BuildPlot(x, z) == false, out var clear);
+      report.Add($"base empty square: raw {rawEmpty:0}m, outside build plot {plotEmpty:0}m at local ({clear.center.x - corner.x:0},{clear.center.y - corner.z:0}) (limit {SceneAudit.EmptyLimit:0.0}m)");
       if (plotEmpty >= SceneAudit.EmptyLimit) empty.Add($"base (outside build plot) empty {plotEmpty:0}m");
       var storeys = cities.SelectMany(c => c.GetComponentsInChildren<Transform>().Where(t => t.name == "Ground"))
         .Select(t => (t.parent.name, SceneAudit.BoundsOf(t.gameObject).size.y)).Distinct().ToList();
@@ -318,16 +426,25 @@ namespace FactoryWars.Tests {
       Section("empty > 8 units", empty);
       Section("scale", scale);
       Section("magenta/missing material", magenta);
-      long Tris(System.Collections.Generic.IEnumerable<MeshRenderer> rs) => rs.Select(r => r.GetComponent<MeshFilter>()).Where(f => f != null && f.sharedMesh != null)
-        .Sum(f => { long n = 0; for (var i = 0; i < f.sharedMesh.subMeshCount; i++) n += f.sharedMesh.GetIndexCount(i); return n / 3; });
-      var renderers = blocks.SelectMany(b => b.GetComponentsInChildren<MeshRenderer>()).ToList();
-      report.Add($"pilot renderers {renderers.Count}, triangles {Tris(renderers)}, distinct materials {renderers.SelectMany(r => r.sharedMaterials).Distinct().Count()}");
+      report.Add($"pilot renderers {renderers.Count}, triangles {PilotTriangles(renderers)}, distinct materials {renderers.SelectMany(r => r.sharedMaterials).Distinct().Count()}");
       foreach (var b in blocks.Where(b => b.name == "Base0" || b == cityClose)) {
         var rs = b.GetComponentsInChildren<MeshRenderer>();
-        report.Add($"  {b.name}: renderers {rs.Length}, triangles {Tris(rs)}");
+        report.Add($"  {b.name}: renderers {rs.Length}, triangles {PilotTriangles(rs)}");
       }
       File.WriteAllLines(Path.Combine(dir, $"audit_{iteration}.txt"), report);
       Debug.Log(string.Join("\n", report));
+    }
+
+    static System.Collections.Generic.IEnumerable<SceneAudit.Item> SolidItems(GameObject block) =>
+      SceneAudit.ItemsOf(block).Where(item => item.Name.EndsWith("/Paving") == false);
+
+    static long PilotTriangles(System.Collections.Generic.IEnumerable<MeshRenderer> renderers) {
+      return renderers.Select(r => r.GetComponent<MeshFilter>()).Where(f => f != null && f.sharedMesh != null)
+        .Sum(filter => {
+          long indices = 0;
+          for (var i = 0; i < filter.sharedMesh.subMeshCount; i++) indices += filter.sharedMesh.GetIndexCount(i);
+          return indices / 3;
+        });
     }
   }
 }

@@ -7,7 +7,7 @@ namespace FactoryWars.View {
   /// <summary>
   /// 칸 지도 맵(MapSpec.CellGrid, Map4P v4) 화면. 구도는 칸 글자 그대로이고 높이는 판정 모양(고지대·비탈)에서 읽는다.
   /// 시범 단계(2026-11-22): 본진 블록(block/blk_base_pad, 자리마다 90도 회전)과 도시 2×2 블록(block/blk_city_mixed_2x2_*)만
-  /// 실제 모델이고, 나머지 칸은 칸 종류 색의 임시 바닥 타일 + 회색 임시 덩어리(경계·도시 건물 칸)다. 블록 승인 뒤 블록으로 바꾼다.
+  /// 실제 모델이고, 나머지 칸은 칸 종류 색의 임시 바닥 타일이다.
   /// 화면 전용이며 시뮬레이션 상태를 읽기만 한다.
   /// </summary>
   public static class GridMapView {
@@ -34,19 +34,19 @@ namespace FactoryWars.View {
     static Color Tile(char cell) {
       switch (cell) {
         case 'B': return new Color(0.66f, 0.66f, 0.63f);
-        case 'p': return new Color(0.74f, 0.70f, 0.48f);
+        case 'p': return new Color(0.61f, 0.59f, 0.53f);
         case 'v': return new Color(0.55f, 0.55f, 0.54f);
-        case 'P': return new Color(0.60f, 0.47f, 0.36f);
+        case 'P': return new Color(0.43f, 0.44f, 0.43f);
         case 'R': return new Color(0.24f, 0.25f, 0.27f);
         case 's': return new Color(0.36f, 0.36f, 0.37f);
         case 'G': return new Color(0.50f, 0.50f, 0.50f);
         case 'w': return new Color(0.70f, 0.64f, 0.53f);
         case 'W': return new Color(0.28f, 0.33f, 0.34f);
-        case 'C': return new Color(0.66f, 0.58f, 0.38f);
-        case 'M': return new Color(0.48f, 0.42f, 0.52f);
+        case 'C': return new Color(0.53f, 0.49f, 0.43f);
+        case 'M': return new Color(0.49f, 0.46f, 0.40f);
         case 'K': return new Color(0.42f, 0.55f, 0.38f);
         case 'L': return new Color(0.46f, 0.49f, 0.54f);
-        case 'Y': return new Color(0.56f, 0.40f, 0.34f);
+        case 'Y': return new Color(0.52f, 0.47f, 0.41f);
         case 'X': return new Color(0.52f, 0.45f, 0.36f);
         case 'H': return new Color(0.56f, 0.56f, 0.55f);
         case 'E': return new Color(0.34f, 0.34f, 0.36f);
@@ -74,6 +74,7 @@ namespace FactoryWars.View {
       var vertices = new List<Vector3>();
       var colors = new List<Color>();
       var triangles = new List<int>();
+      var water = new MeshKit();
       var linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
       void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color) {
         var start = vertices.Count;
@@ -106,6 +107,10 @@ namespace FactoryWars.View {
           color.a = 1f;
           Quad(new Vector3(x0, heights[r, c, 0] + lift, z0), new Vector3(x0, heights[r, c, 1] + lift, z1),
             new Vector3(x1, heights[r, c, 2] + lift, z1), new Vector3(x1, heights[r, c, 3] + lift, z0), color);
+          if (cell == 'W' || cell == 'G') {
+            var y = TerrainKit.WaterLevel;
+            water.Quad(new Vector3(x0, y, z0), new Vector3(x0, y, z1), new Vector3(x1, y, z1), new Vector3(x1, y, z0), Vector3.up);
+          }
         }
       }
       for (var r = 0; r < n; r++) {
@@ -115,7 +120,7 @@ namespace FactoryWars.View {
           var x1 = x0 + size;
           var z1 = CellZ(map, r) + size / 2f;
           var z0 = z1 - size;
-          var face = Tile(cell) * 0.78f;
+          var face = Tile(cell) * (cell == 'B' || cell == 'p' || cell == 'v' ? 0.64f : 0.78f);
           face.a = 1f;
           // 북(r-1): 이 칸 1·2 모서리 vs 이웃 0·3.
           Side(r - 1, c, heights[r, c, 1], heights[r, c, 2], 0, 3, new Vector3(x0, 0, z1), new Vector3(x1, 0, z1));
@@ -136,27 +141,6 @@ namespace FactoryWars.View {
           }
         }
       }
-      // 임시 덩어리: 경계 칸(높이 7m 짙은 회색)과 블록이 아직 없는 도시 건물 칸(6m 밝은 회색). 승인 뒤 블록으로 바꾼다.
-      for (var r = 0; r < n; r++) {
-        for (var c = 0; c < n; c++) {
-          var cell = Cell(map, r, c);
-          if (cell != 'E' && (cell != 'H' || covered[r, c])) continue;
-          var x0 = CellX(map, c) - size / 2f + (cell == 'H' ? 0.6f : 0f);
-          var x1 = CellX(map, c) + size / 2f - (cell == 'H' ? 0.6f : 0f);
-          var z0 = CellZ(map, r) - size / 2f + (cell == 'H' ? 0.6f : 0f);
-          var z1 = CellZ(map, r) + size / 2f - (cell == 'H' ? 0.6f : 0f);
-          var top = (cell == 'E' ? 7f : 5f) + 2f * Hash(r, c);
-          var tone = cell == 'E' ? new Color(0.40f, 0.40f, 0.42f) : new Color(0.70f, 0.69f, 0.66f);
-          var side = tone * 0.8f;
-          side.a = 1f;
-          Quad(new Vector3(x0, top, z0), new Vector3(x0, top, z1), new Vector3(x1, top, z1), new Vector3(x1, top, z0), tone);
-          // 옆면 4개(바깥에서 보아 시계 방향).
-          Quad(new Vector3(x1, 0, z1), new Vector3(x1, top, z1), new Vector3(x0, top, z1), new Vector3(x0, 0, z1), side);
-          Quad(new Vector3(x0, 0, z0), new Vector3(x0, top, z0), new Vector3(x1, top, z0), new Vector3(x1, 0, z0), side);
-          Quad(new Vector3(x0, 0, z1), new Vector3(x0, top, z1), new Vector3(x0, top, z0), new Vector3(x0, 0, z0), side);
-          Quad(new Vector3(x1, 0, z0), new Vector3(x1, top, z0), new Vector3(x1, top, z1), new Vector3(x1, 0, z1), side);
-        }
-      }
       var mesh = new Mesh { name = "grid_map_tiles", indexFormat = IndexFormat.UInt32 };
       mesh.SetVertices(vertices);
       mesh.SetColors(colors);
@@ -169,6 +153,16 @@ namespace FactoryWars.View {
       var renderer = tiles.GetComponent<MeshRenderer>();
       renderer.sharedMaterial = material != null ? material : ArtLook.NeutralMaterial;
       renderer.shadowCastingMode = ShadowCastingMode.On;
+      var waterMaterial = UrbanDecor.WaterMaterial();
+      if (water.TriangleCount > 0 && waterMaterial != null) {
+        var canal = new GameObject("GridCanal", typeof(MeshFilter), typeof(MeshRenderer));
+        canal.transform.SetParent(root, false);
+        var waterMesh = water.ToMesh("grid_canal");
+        waterMesh.colors = new Color[waterMesh.vertexCount];
+        canal.GetComponent<MeshFilter>().sharedMesh = waterMesh;
+        canal.GetComponent<MeshRenderer>().sharedMaterial = waterMaterial;
+        canal.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
+      }
     }
 
     /// <summary>자리 0(남서) 본진 칸의 안쪽 모서리. 편집기 BlockKit·생성기와 같은 규칙(헬기장에서 B·p·v로 이어진 칸).</summary>
