@@ -10,10 +10,15 @@ namespace FactoryWars.View {
   public static class SettingsPanel {
     const string VolumeKey = "fw_volume";
 
+    /// <summary>외부 모델 출처(Assets/ThirdParty/CREDITS.md와 같은 내용). CC BY 4.0은 작가·라이선스·출처 표기가 의무다.</summary>
+    public const string Credits =
+      "모델 출처: 정찰 드론 — Viktor_ (sketchfab.com/Viktor.Zhuravlev), 대형 포함 — SIpriv (sketchfab.com/S1Priv), CC BY 4.0, 감량·재색칠·이름 변경\n" +
+      "Synty POLYGON 팩(구입), Kenney (CC0), Strategy GUI Kit(구입)";
+
     public static RectTransform Build(Transform parent, UnityEngine.Events.UnityAction onClose) {
       // 3열 격자. 칸 높이는 최소 터치 크기(Ui.MinButtonSize)를 지키고 줄 간격 150으로 겹치지 않게 한다.
       const float Column = 400f, ColumnGap = 30f, Pitch = 150f, Top = -86f;
-      var rows = Debug.isDebugBuild ? 5 : 4;
+      var rows = Debug.isDebugBuild ? 6 : 5; // 끝에서 둘째 줄 = 모델 출처(CC BY 4.0 표기 의무)
       var panel = Ui.Panel("Settings", parent);
       Ui.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero,
         new Vector2(3 * Column + 2 * ColumnGap + 60f, -Top + 20f + (rows - 1) * Pitch + Ui.MinButtonSize + 24f));
@@ -107,6 +112,9 @@ namespace FactoryWars.View {
         }, 28);
         Cell(share, Col(1), 3);
       }
+      var credits = Ui.Label("Credits", panel, Credits, 20, TextAnchor.MiddleCenter);
+      credits.color = UiTheme.Current.PanelText;
+      Cell(credits, 0f, rows - 2, 3 * Column + 2 * ColumnGap, 110f);
       var close = Ui.Button("Close", panel, "닫기", onClose, 32);
       Cell(close, 0f, rows - 1, 260f);
       return panel;

@@ -1,0 +1,4 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+Author, source and modifications: see ../CREDITS.md
+This is a modified version of the original work (decimated, recoloured, renamed).

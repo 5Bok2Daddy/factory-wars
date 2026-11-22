@@ -380,6 +380,7 @@ namespace FactoryWars.View {
     }
 
     const string GuardSlot = "unit/trader_guard";
+    const string DroneSlot = "unit/shared_scout_drone";
     public bool PackGuards => VisualCatalog.TryFilled(GuardSlot, out _);
 
     /// <summary>순찰 경로: 안쪽 정사각형 둘레의 거리 → 위치·진행 방향.</summary>
@@ -490,10 +491,24 @@ namespace FactoryWars.View {
       for (var i = 0; i < DroneCount; i++) {
         var root = new GameObject("PatrolDrone").transform;
         root.SetParent(_alive.transform, false);
-        var body = MeshObject("Body", root, _droneBody, ArtLook.NeutralMaterial).transform;
-        body.localScale = Vector3.one * 1.6f;
         // 120도 간격, 반경 10·13·16m, 같은 방향·같은 각속도라 간격이 그대로 유지된다(높이만 조금씩 다름).
         var drone = new Drone { Body = root, Angle = i * 120f, Radius = DroneRadii[i % DroneRadii.Length], Height = 5.2f + i * 0.8f, Speed = DroneSpeed, Phase = i * 1.7f };
+        if (VisualCatalog.TryFilled(DroneSlot, out var slot)) {
+          // 공용 고정익 드론 모델(사용자 CC BY 모델). 회전익이 없으므로 로터를 만들지 않는다.
+          var model = Object.Instantiate(slot.Prefab, root);
+          var (offset, _) = VisualCatalog.Measure(slot.Prefab, slot);
+          var scale = slot.Scale > 0f ? slot.Scale : 1f;
+          model.transform.localScale = Vector3.one * scale;
+          model.transform.localPosition = offset * scale;
+          if (GraphicsQuality.Current != QualityTier.Low) {
+            MeshObject("Searchlight", root, _cone, BeamMaterial());
+          }
+          _drones.Add(drone);
+          UpdateDrone(drone, 0f);
+          continue;
+        }
+        var body = MeshObject("Body", root, _droneBody, ArtLook.NeutralMaterial).transform;
+        body.localScale = Vector3.one * 1.6f;
         foreach (var (x, z) in new[] { (1f, 1f), (-1f, 1f), (1f, -1f), (-1f, -1f) }) {
           var rotor = MeshObject("Rotor", body, _rotor, ArtLook.NeutralMaterial).transform;
           rotor.localPosition = new Vector3(x * 0.55f, 0.06f, z * 0.55f);

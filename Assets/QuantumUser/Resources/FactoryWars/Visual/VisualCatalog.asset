@@ -396,12 +396,13 @@ MonoBehaviour:
   - Id: unit/cf_artillery_ship
     Category: 0
     Prefabs:
+    - {fileID: 4722902123866138676, guid: 19ab67d09cf39b14ea592947cde9a70d, type: 3}
     - {fileID: 1172539988140984738, guid: 1399938a73f66a142927bd28ed0c71f5, type: 3}
-    Scale: 1.0209041
+    Scale: 0.2640989
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 5.092363, y: 4.713543, z: 13.713335}
+    Size: {x: 7.7998066, y: 8.3878, z: 75.7292}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -409,15 +410,14 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 1.5
     Lifetime: 2
-    RealWorld: 1
-    Notes: Kenney Watercraft cargo hull (CC0) + Synty Military launchers, bridge,
-      radar mast
+    RealWorld: 2
+    Notes: CC BY 4.0 gun warship (see Assets/ThirdParty/CREDITS.md), decimated +
+      flat palette, markings removed
     TurretPart: 
     BarrelPart: 
-    SpinParts:
-    - Radar:Y
+    SpinParts: []
     MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MuzzleOffset: {x: 0, y: 5.87146, z: 34.07814}
     MembersByQuality: 
     OwnerRing: 1
   - Id: building/ff_headquarters
@@ -1872,12 +1872,13 @@ MonoBehaviour:
   - Id: unit/ff_nest_drone
     Category: 0
     Prefabs:
+    - {fileID: 3979188308498204579, guid: ab232347a0d7e5e4494f78a90ea75014, type: 3}
     - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
-    Scale: 0.09273361
+    Scale: 0.9335725
     AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
-    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 2.7850006, y: 0.2417, z: 1.7200006}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -1885,14 +1886,14 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    RealWorld: 2
+    Notes: CC BY 4.0 fixed-wing drone (see Assets/ThirdParty/CREDITS.md), decimated
+      + flat palette
     TurretPart: 
     BarrelPart: 
-    SpinParts:
-    - Drone_Prop
+    SpinParts: []
     MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 2.6789272, z: 5.330518}
+    MuzzleOffset: {x: 0, y: 0.16918999, z: 0.7740003}
     MembersByQuality: 
     OwnerRing: 1
   - Id: unit/tf_wavecrest_lander
@@ -6426,4 +6427,30 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
+  - Id: unit/shared_scout_drone
+    Category: 0
+    Prefabs:
+    - {fileID: 3979188308498204579, guid: ab232347a0d7e5e4494f78a90ea75014, type: 3}
+    Scale: 0.9335725
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 2.7850006, y: 0.2417, z: 1.7200006}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 2
+    Notes: CC BY 4.0 fixed-wing drone (see Assets/ThirdParty/CREDITS.md), decimated
+      + flat palette
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0.16918999, z: 0.7740003}
+    MembersByQuality: 
+    OwnerRing: 1
   Enabled: 1

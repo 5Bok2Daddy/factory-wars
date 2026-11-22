@@ -1,0 +1,3 @@
+newmtl shared_scout_drone
+Kd 1 1 1
+map_Kd shared_scout_drone_palette.png

@@ -1,0 +1,3 @@
+newmtl cf_ironwall_battleship
+Kd 1 1 1
+map_Kd cf_ironwall_battleship_palette.png

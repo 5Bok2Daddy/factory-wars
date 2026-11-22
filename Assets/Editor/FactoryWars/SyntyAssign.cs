@@ -546,6 +546,13 @@ namespace FactoryWars.EditorTools {
       foreach (var faction in new[] { "ff", "cf" }) {
         BuildArtilleryShip(catalog, faction);
       }
+      // 7b) 사용자 CC BY 모델(ThirdPartyKit.cs): 대륙 연방 포격함 = 대형 포함, 공용 드론. 자유 연방 포격함은 위 선체를 그대로 쓴다.
+      foreach (var model in ThirdPartyKit.Models) {
+        var prefab = ThirdPartyKit.BuildPrefab(model);
+        if (prefab != null) {
+          ThirdPartyKit.Wire(catalog, model, prefab);
+        }
+      }
       foreach (var faction in new[] { "ff", "cf" }) {
         var bSwapNaval = faction == "ff" ? LightFree : LightContinental;
         // 8) 현대식 수륙양용 상륙정(ff/cf_landing_craft): 실제 Synty 군용 보트 광폭 선체 + 함수 장갑 상륙 램프 + 양현 방호벽 + 탄약·화물 스택
