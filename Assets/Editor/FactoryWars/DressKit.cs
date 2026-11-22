@@ -192,6 +192,25 @@ namespace FactoryWars.EditorTools {
           Street(b, v, 4f, -4f);
         });
       }
+      // H1S/H1T: 정면이 동·서인 1칸 건물. 카메라(남)에 보이는 옆면(H1S = 로컬 -X, H1T = 로컬 +X)에 비상계단·실외기·배관을 붙여 민벽을 없앤다.
+      for (var i = 0; i < 6; i++) {
+        var s = h1[i];
+        var v = i;
+        foreach (var (kind, side) in new[] { ("H1S", -1f), ("H1T", 1f) }) {
+          Add($"{kind}_{v:00}", 8, 8, b => {
+            var x = -side * 0.6f;
+            b.Stack(x, 0.45f, s.G, s.F, s.N, s.R, s.Top);
+            var wall = x + side * 2.55f;
+            var turn = side < 0 ? 90f : -90f;
+            var esc = PC + "Buildings/SM_Bld_FireEscape_0" + (2 + v % 2) + ".prefab";
+            b.Prop(esc, wall + side * 0.8f, 0.5f, Front(esc) + turn, 3.0f);
+            if (s.N >= 2 || s.F.Contains("Stack")) b.Prop(esc, wall + side * 0.8f, 0.5f, Front(esc) + turn, 6.7f);
+            b.Prop(P("Aircon_01"), wall + side * 0.3f, -1.3f, Front(P("Aircon_01")) + turn, 2.2f);
+            b.Prop(P("Pipe_Small_01"), wall + side * 0.15f, 2.6f, turn);
+            Street(b, v + 1, 4f, -4f);
+          });
+        }
+      }
       Add("H1_08", 8, 8, b => {
         b.Bld(MB("Village_House_05"), 0f, 0.9f);
         b.Prop(P("Planter_02"), -2.3f, -3.2f); b.Prop(MM("Barrel_01"), 2.9f, -2.6f); b.Prop(MM("Barrel_02"), 3.1f, -1.8f);
@@ -363,6 +382,26 @@ namespace FactoryWars.EditorTools {
       return list;
     }
 
+    /// <summary>도시 건물 뒷벽(로컬 +Z): 얇은 배관·환기구·실외기로 민벽을 깬다(칸 밖으로 나가지 않게 0.5m 이내).</summary>
+    static void BackDress(B b, Spec spec) {
+      // 건물 조각(SM_Bld_*, 높이 2.5m 이상)만으로 뒷벽을 정한다. 칸 밖으로 나가면 생략(떠 있는 소품 금지).
+      var parts = b.Root.Cast<Transform>().Where(t => t.name.StartsWith("SM_Bld") || t.GetComponentsInChildren<Transform>().Any(c => c.name.StartsWith("SM_Bld"))).ToList();
+      if (parts.Count == 0) return;
+      var all = BlockKit.WorldBounds(parts[0].gameObject);
+      foreach (var t in parts) all.Encapsulate(BlockKit.WorldBounds(t.gameObject));
+      if (all.size.y < 6f) return;
+      var o = b.Root.position;
+      var back = all.max.z - o.z;
+      if (back + 0.5f > spec.SizeZ / 2f - 0.1f) return;
+      var h = spec.Id.GetHashCode() & 0xff;
+      var span = all.size.x * 0.35f;
+      var x0 = all.center.x - o.x;
+      b.Prop(P("Pipe_Small_01"), x0 - span + (h % 3) * 0.4f, back + 0.2f, 180f);
+      b.Prop(P("Pipe_Small_02"), x0 + span * 0.6f, back + 0.2f, 180f);
+      b.Prop(P("Aircon_01"), x0 + (h % 5 - 2) * 0.5f, back + 0.25f, Front(P("Aircon_01")) + 180f, 3.4f);
+      if (all.size.y > 9f) b.Prop(P("Vents_Straight_01"), x0 - span * 0.3f, back + 0.2f, 180f, 6.5f);
+    }
+
     // ------------------------------------------------------------ bake
 
     /// <summary>블록 안 모든 메시(LOD0)를 재질별 서브메시 하나로 합쳐 프리팹으로 저장한다. 큰 그림자는 건물만(높이 2.5m 이상).</summary>
@@ -443,6 +482,7 @@ namespace FactoryWars.EditorTools {
         var b = new B { Root = root.transform, Id = spec.Id, HalfX = spec.SizeX / 2f, HalfZ = spec.SizeZ / 2f };
         try {
           spec.Build(b);
+          if (spec.Id.StartsWith("H")) BackDress(b, spec);
           var prefab = Bake(root, spec);
           BlockKit.Register(catalog, spec.Id, prefab, new Vector3(spec.SizeX, 0f, spec.SizeZ));
           var slot = catalog.Slots.First(s => s != null && s.Id == "block/" + spec.Id);

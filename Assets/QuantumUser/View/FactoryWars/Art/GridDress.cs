@@ -33,7 +33,7 @@ namespace FactoryWars.View {
 
     /// <summary>낮음 품질 LOD 문턱 배율: 작은 블록 4배, 큰 도시 건물 2.5배, 나머지 1배.</summary>
     public static float LowCullFactor(string kind) =>
-      kind == "K" || kind == "L" || kind == "X" || kind == "Y" || kind == "Q" || kind == "M" || kind == "CC" || kind == "EI" || kind == "GR" || kind == "H1" ? 4f
+      kind == "K" || kind == "L" || kind == "X" || kind == "Y" || kind == "Q" || kind == "M" || kind == "CC" || kind == "EI" || kind == "GR" || kind.StartsWith("H1") ? 4f
       : kind == "HW" || kind == "HD" || kind == "H4" ? 2.5f : 1f;
 
     public static bool Ready() {
@@ -154,6 +154,8 @@ namespace FactoryWars.View {
             var frontOnLongSide = (dir == 0 || dir == 2) == wide;
             kind = frontOnLongSide ? "HW" : "HD";
           }
+          // 동·서향 1칸 건물은 카메라 쪽 옆면을 꾸민 변형으로(민벽 금지).
+          if (kind == "H1" && (dir == 1 || dir == 3) && Kinds.ContainsKey(dir == 1 ? "H1S" : "H1T")) kind = dir == 1 ? "H1S" : "H1T";
           Put(parent, kind, Pick(kind, r, c, rows, cols, 2), Center(r, c, rows, cols), yaw, $"{r},{c}");
         }
       }
@@ -277,6 +279,17 @@ namespace FactoryWars.View {
       }
 
       // ---- 요새 엄폐물 군집: 십자 길·정문 길(|x|,|z| < 11)·상인 기지(22m)·시뮬레이션 엄폐물(±32,±32)·건물 무리 밖 C 칸, 해시로 4칸에 1개꼴.
+      // 정문 4곳 안쪽 양옆 엄폐 군집(진입로는 비운다).
+      for (var side = 0; side < 4; side++) {
+        foreach (var s in new[] { -1, 1 }) {
+          var p = side switch { 0 => new Vector3(s * 17f, 0f, -66f), 1 => new Vector3(66f, 0f, s * 17f), 2 => new Vector3(s * 17f, 0f, 66f), _ => new Vector3(-66f, 0f, s * 17f) };
+          var col = Mathf.FloorToInt((p.x + n * size / 2f) / size);
+          var row = Mathf.FloorToInt((n * size / 2f - p.z) / size);
+          if (GridMapView.Cell(map, row, col) != 'C' || covered[row, col]) continue;
+          covered[row, col] = true;
+          Put(parent, "CC", Hash(row, col, 20), Center(row, col, 1, 1), Yaw(side), $"gatein{side}{s}");
+        }
+      }
       for (var r = 0; r < n; r++) {
         for (var c = 0; c < n; c++) {
           if (GridMapView.Cell(map, r, c) != 'C' || covered[r, c] || !InCompound(r, c)) continue;
@@ -286,6 +299,7 @@ namespace FactoryWars.View {
           var nearWall = false;
           foreach (var (dr, dc, _) in dirs) if (!InCompound(r + dr, c + dc)) nearWall = true;
           if (Hash(r, c, 17) % (nearWall ? 5 : at.magnitude < 50f ? 2 : 3) != 0) continue;
+          covered[r, c] = true;
           Put(parent, "CC", Hash(r, c, 18), at, 90f * (Hash(r, c, 19) % 4), $"{r},{c}");
         }
       }

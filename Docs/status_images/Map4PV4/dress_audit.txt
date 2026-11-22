@@ -1,41 +1,40 @@
-Map4P v4 dress audit v11
-dress blocks: 2215 - CB 4 (3 variants), CC 36 (4 variants), CP 24 (1 variants), CW 64 (3 variants), E 162 (7 variants), EI 272 (4 variants), EL 126 (4 variants), GR 72 (1 variants), H1 182 (10 variants), H4 56 (6 variants), HD 155 (4 variants), HW 96 (6 variants), K 141 (4 variants), L 156 (4 variants), M 68 (3 variants), Q 84 (3 variants), SK 124 (8 variants), X 210 (4 variants), Y 183 (4 variants)
+Map4P v4 dress audit v14
+dress blocks: 2216 - CB 4 (3 variants), CC 37 (4 variants), CP 24 (1 variants), CW 64 (3 variants), E 162 (7 variants), EI 272 (4 variants), EL 126 (4 variants), GR 72 (1 variants), H1 124 (10 variants), H1S 30 (6 variants), H1T 28 (6 variants), H4 56 (6 variants), HD 155 (4 variants), HW 96 (6 variants), K 141 (4 variants), L 156 (4 variants), M 68 (3 variants), Q 84 (3 variants), SK 124 (8 variants), X 210 (4 variants), Y 183 (4 variants)
 view | height | renderers | draw calls (renderer x submesh + shadow casters) | triangles | low estimate (lodBias 0.3, no shadows, no skyline) draws / tris
-base_wide | 108m | 172 | 355 | 204501 | 172 / 173975
+base_wide | 108m | 180 | 371 | 241848 | 182 / 214067
 base_close | 62m | 91 | 180 | 106590 | 90 / 86367
-base_ramp | 50m | 23 | 49 | 57334 | 30 / 57334
-diagonal_road | 62m | 36 | 87 | 164802 | 25 / 76904
-city | 62m | 35 | 94 | 182410 | 51 / 141692
-city_close | 38m | 15 | 35 | 82985 | 23 / 71295
-canal_bridge | 62m | 62 | 126 | 365275 | 50 / 324024
-compound | 132m | 250 | 539 | 774246 | 137 / 286994
-compound_close | 70m | 85 | 165 | 236060 | 41 / 90787
-outer_edge | 76m | 89 | 228 | 221054 | 97 / 137087
-outer_west | 76m | 70 | 160 | 142179 | 75 / 118551
+base_ramp | 50m | 23 | 49 | 61502 | 30 / 61502
+diagonal_road | 62m | 36 | 84 | 181032 | 28 / 103164
+city | 62m | 35 | 95 | 212311 | 52 / 170345
+city_close | 38m | 15 | 35 | 88401 | 23 / 76711
+canal_bridge | 62m | 62 | 126 | 369655 | 50 / 328404
+compound | 132m | 250 | 539 | 802138 | 136 / 306580
+compound_close | 70m | 85 | 165 | 237520 | 41 / 92247
+outer_edge | 76m | 89 | 229 | 235342 | 98 / 151375
+outer_west | 76m | 78 | 176 | 172220 | 83 / 148592
 rubble | 55m | 62 | 177 | 287707 | 86 / 191948
-outpost | 70m | 73 | 195 | 338638 | 55 / 155267
+outpost | 70m | 73 | 196 | 357583 | 54 / 168744
 flat-colour base_wide: 9.6 %
 flat-colour base_close: 15.3 %
 flat-colour base_ramp: 14.7 %
-flat-colour diagonal_road: 20.0 %
-flat-colour city: 12.2 %
+flat-colour diagonal_road: 19.6 %
+flat-colour city: 11.7 %
 flat-colour city_close: 17.4 %
 flat-colour canal_bridge: 8.9 %
 flat-colour compound: 8.6 %
 flat-colour compound_close: 18.3 %
-flat-colour outer_edge: 7.6 %
+flat-colour outer_edge: 7.8 %
 flat-colour outer_west: 12.3 %
 flat-colour rubble: 27.2 %
 flat-colour outpost: 17.1 %
-compound empty square (outside cross/gate roads |x|,|z| < 9): 14m at (23,-65) (limit 12.0m)
-base unassigned empty square: 12m at local (118,18)
+compound empty square (outside cross/gate roads |x|,|z| < 9): 10m at (-27,-61) (limit 12.0m)
+base unassigned empty square: 12m at local (126,24)
 overlap (block footprints): PASS
 floating/sunk: PASS
 road intrusion (block footprints): PASS
 regular rows (same variant): PASS
 flat colour > 30%: PASS
-empty > 8 units: FAIL 2
-  compound empty 14m
+empty > 8 units: FAIL 1
   base (outside build and marked expansion plots) empty 12m
 magenta/missing material: PASS
-map renderers 3214, triangles 10031430, distinct materials 26
+map renderers 3247, triangles 10616306, distinct materials 26
