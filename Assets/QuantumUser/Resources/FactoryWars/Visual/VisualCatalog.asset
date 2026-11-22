@@ -194,11 +194,11 @@ MonoBehaviour:
     Category: 0
     Prefabs:
     - {fileID: 4326309308742255069, guid: 948ab28a67fb8184b9325e8168151bda, type: 3}
-    Scale: 0.48932704
+    Scale: 1.0209041
     AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: -0, y: 1.0435234, z: -0.6069851}
-    Size: {x: 7.408281, y: 4.7353005, z: 19.618782}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 5.092363, y: 4.713543, z: 13.713335}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -207,7 +207,8 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: Real Synty military gunboat + VLS missile turrets + naval radar kitbash
+    Notes: Kenney Watercraft cargo hull (CC0) + Synty Military launchers, bridge,
+      radar mast
     TurretPart: 
     BarrelPart: 
     SpinParts:
@@ -396,11 +397,11 @@ MonoBehaviour:
     Category: 0
     Prefabs:
     - {fileID: 1172539988140984738, guid: 1399938a73f66a142927bd28ed0c71f5, type: 3}
-    Scale: 0.48932704
+    Scale: 1.0209041
     AutoFit: 0
     YawOffset: 0
-    PivotOffset: {x: -0, y: 1.0435234, z: -0.6069851}
-    Size: {x: 7.408281, y: 4.7353005, z: 19.618782}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 5.092363, y: 4.713543, z: 13.713335}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -409,7 +410,8 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 1
-    Notes: Real Synty military gunboat + VLS missile turrets + naval radar kitbash
+    Notes: Kenney Watercraft cargo hull (CC0) + Synty Military launchers, bridge,
+      radar mast
     TurretPart: 
     BarrelPart: 
     SpinParts:

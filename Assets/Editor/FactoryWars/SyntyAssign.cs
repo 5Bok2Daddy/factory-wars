@@ -19,7 +19,7 @@ namespace FactoryWars.EditorTools {
   /// 메뉴 Tools/Factory Wars/Assets/5. Assign Synty Pack, 배치: -executeMethod FactoryWars.EditorTools.SyntyAssign.Run
   /// 팩 파일 이름에는 실존 국가명이 들어 있는 것이 있어 코드에는 별칭과 GUID만 쓴다. 별칭 → 실제 파일 표는 Game-logs/assets/synty/slot-table.csv.
   /// </summary>
-  public static class SyntyAssign {
+  public static partial class SyntyAssign {
     public const string PackRoot = "Assets/ExternalAssets/Synty";
     public const string OutRoot = "Assets/FactoryWarsArt/Synty";
     public const string ControllerPath = OutRoot + "/Animation/PackInfantry.controller";
@@ -542,19 +542,12 @@ namespace FactoryWars.EditorTools {
           new KitPart(PM + "Vehicles/SM_Veh_Helicopter_Transport_01.prefab", Vector3.zero, Vector3.zero, 1f)),
         6.8f, 0f, new[] { "Blades_Main:Y", "Blades_Back:X" }, "Synty Transport Helicopter");
 
-      // 7) 현대식 포격함(ff/cf_artillery_ship): 실제 Synty 군용 위장 보트(SM_Veh_Boat_01) 확장 선체 + 전·후방 미사일 발사대 2기 + 장갑 함교 통제실 + 회전 레이더 마스트
+      // 7) 포격함(ff/cf_artillery_ship): NavalKit.cs(Kenney 화물선 선체 + Synty 다연장 발사대·함교·레이더 마스트). 다른 팩 조립과 같은 칸 규칙.
       foreach (var faction in new[] { "ff", "cf" }) {
-        var pSwap = faction == "ff" ? PropsFree : PropsContinental;
+        BuildArtilleryShip(catalog, faction);
+      }
+      foreach (var faction in new[] { "ff", "cf" }) {
         var bSwapNaval = faction == "ff" ? LightFree : LightContinental;
-        RegisterComposite($"unit/{faction}_artillery_ship", VisualCategory.Unit,
-          Assemble($"{faction}_artillery_ship_kit", pSwap,
-            new KitPart(BR + "Vehicles/SM_Veh_Boat_01.prefab", Vector3.zero, Vector3.zero, new Vector3(2.15f, 1.35f, 2.35f)),
-            new KitPart(PM + "Props/Military/SM_Prop_Missile_Launcher_02.prefab", new Vector3(0f, 1.05f, 3.3f), Vector3.zero, 0.58f),
-            new KitPart(PM + "Props/Military/SM_Prop_Missile_Launcher_02.prefab", new Vector3(0f, 1.05f, -3.1f), new Vector3(0f, 180f, 0f), 0.58f),
-            new KitPart(PM + "Props/Military/SM_Prop_Drone_Control_Room_01.prefab", new Vector3(0f, 0.72f, -0.35f), Vector3.zero, 0.42f),
-            new KitPart(PM + "Props/Military/SM_Prop_Mobile_Radar_01.prefab", new Vector3(0f, 2.25f, -0.35f), Vector3.zero, 0.38f)),
-          9.6f, 0f, new[] { "Radar:Y" }, "Synty military artillery gunboat kitbash");
-
         // 8) 현대식 수륙양용 상륙정(ff/cf_landing_craft): 실제 Synty 군용 보트 광폭 선체 + 함수 장갑 상륙 램프 + 양현 방호벽 + 탄약·화물 스택
         RegisterComposite($"unit/{faction}_landing_craft", VisualCategory.Unit,
           Assemble($"{faction}_landing_craft_kit", bSwapNaval,
