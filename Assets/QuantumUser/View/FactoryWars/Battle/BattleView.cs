@@ -682,7 +682,42 @@ namespace FactoryWars.View {
       sRenderer.receiveShadows = false;
     }
 
+    float _aimRingAt;
+
+    /// <summary>시험용: 궁극 목표 지정 중 화면 가운데 조준 고리의 자리·반경(조준하지 않으면 반경 0).</summary>
+    public (Vector3 Position, float Radius) UltimateAim { get; private set; }
+
+    /// <summary>
+    /// 궁극 목표 지정(미사일) 중: 화면 가운데 땅에 실제 폭발 반경(UltimateSpec.BlastRadius) 고리를 그린다.
+    /// 화면을 끌어 고리를 목표에 맞추고 그 자리를 누르면 발사된다. 시뮬레이션 값은 읽기만 한다.
+    /// </summary>
+    void UpdateUltimateAim(Frame frame) {
+      var input = _controller != null ? _controller.Input : null;
+      if (input == null || input.Mode != MatchInput.TapMode.Ultimate) {
+        UltimateAim = default;
+        return;
+      }
+      var spec = UltimateSystem.SpecOf(frame, _controller.Player);
+      var cam = Camera.main;
+      if (spec == null || spec.Kind != UltimateKind.StrategicMissile || cam == null) {
+        return;
+      }
+      var ray = cam.ScreenPointToRay(new Vector3(cam.pixelWidth * 0.5f, cam.pixelHeight * 0.5f, 0f));
+      if (new UnityEngine.Plane(Vector3.up, Vector3.zero).Raycast(ray, out var distance) == false) {
+        return;
+      }
+      var point = ray.GetPoint(distance);
+      UltimateAim = (point, spec.BlastRadius.AsFloat);
+      if (Time.time < _aimRingAt) {
+        return;
+      }
+      _aimRingAt = Time.time + 0.3f;
+      Fx.Ring(point + Vector3.up * 0.2f, new Color(1f, 0.18f, 0.14f, 0.9f), spec.BlastRadius.AsFloat, 0.4f);
+      Fx.Ring(point + Vector3.up * 0.2f, new Color(1f, 0.85f, 0.2f, 0.95f), 1.5f, 0.4f);
+    }
+
     void UpdatePlacementRings(Frame frame) {
+      UpdateUltimateAim(frame);
       if (_controller == null || _controller.Input == null || _controller.Input.IsPlacing == false) {
         if (_foundationPreview != null) _foundationPreview.enabled = false;
         return;
@@ -712,10 +747,23 @@ namespace FactoryWars.View {
           }
         }
       }
+      // 채취 시설: 지을 수 있는 자원 지점을 녹색 고리로, 이미 쓰였거나 막힌 지점을 회색 고리로 보인다(화면 안 지점만).
+      if (spec.RequiresResourceNode) {
+        foreach (var pair in frame.GetComponentIterator<ResourceNode>()) {
+          var center = pair.Component.Shape.Center;
+          var onScreen = Camera.main != null ? Camera.main.WorldToViewportPoint(center.ToUnityVector3()) : Vector3.zero;
+          if (onScreen.z <= 0f || onScreen.x < -0.1f || onScreen.x > 1.1f || onScreen.y < -0.1f || onScreen.y > 1.1f) {
+            continue;
+          }
+          var free = ProductionSystem.TryGetBuildPlacement(frame, spec, center, player, out _);
+          Fx.Ring(center.ToUnityVector3() + Vector3.up * 0.2f, free ? new Color(0.25f, 0.95f, 0.45f, 0.9f) : new Color(0.55f, 0.58f, 0.62f, 0.55f),
+            Mathf.Max(2.5f, pair.Component.Shape.Radius.AsFloat), 0.35f);
+        }
+      }
       // 카메라 중앙/포인터 지점의 건설 가능 여부를 녹색/적색 링으로 실시간 표시.
       var cam = Camera.main;
       if (cam != null) {
-        var ray = cam.ScreenPointToRay(new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f));
+        var ray = cam.ScreenPointToRay(new Vector3(cam.pixelWidth * 0.5f, cam.pixelHeight * 0.5f, 0f));
         if (new UnityEngine.Plane(Vector3.up, Vector3.zero).Raycast(ray, out var hitDist)) {
           var world = ray.GetPoint(hitDist);
           var fp = new FPVector3(FP.FromFloat_UNSAFE(world.x), FP._0, FP.FromFloat_UNSAFE(world.z));

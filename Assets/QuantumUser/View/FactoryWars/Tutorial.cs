@@ -29,18 +29,66 @@ namespace FactoryWars.View {
     Vector2 _cameraStart;
     int _buildingsStart = -1;
     int _producedStart = -1;
+    int _extractorsStart;
+    float _earnedStart;
     float _stepStarted;
 
+    /// <summary>
+    /// 2026-11-22 개편: 준비 단계 경제 흐름 순서(공병 → 채굴 시설 → 공병 배치 → 자원 생산 → 생산 건물 → 집결 지점 → 전투 준비).
+    /// 단계 판정은 시뮬레이션 상태를 읽기만 한다. 명령을 대신 보내지 않는다.
+    /// </summary>
     public static readonly Step[] Steps = {
-      new Step { Text = "1/7 화면을 손가락으로 끌어 카메라를 움직여 보세요", Done = (t, f) => (t.Controller.Camera.Focus - t._cameraStart).magnitude > 12f },
-      new Step { Text = "2/7 공병(노란 안전모)을 눌러 고르세요", Done = (t, f) => t.Controller.Input.Selection.Units.Any(e => f.Exists(e) && f.Has<Worker>(e)) },
-      new Step { Text = "3/7 공병을 고른 채 철광산(주황 바위)을 눌러 채집시키세요", Done = (t, f) => Any<Worker>(f, t.Controller.Player, w => w.Task == WorkerTask.Gather || w.Task == WorkerTask.Deliver) },
-      new Step { Text = "4/7 공병을 고르고 오른쪽 아래 '기본 건물'에서 보급창을 고른 뒤 땅을 눌러 지으세요", Target = "ContextPanel", Done = (t, f) => t.Buildings(f) > t._buildingsStart },
-      new Step { Text = "5/7 병영을 눌러 고르고 패널에서 보병을 생산하세요", Target = "ContextPanel", Done = (t, f) => f.Global->Players.GetPointer(t.Controller.Player)->UnitsProduced > t._producedStart },
-      new Step { Text = "6/7 전투 유닛을 고르고 \"부대 지정\" → \"1부대\"를 누르세요. 그다음 \"공격 이동\"을 누르고 땅을 누르세요", Target = "SaveButton",
-        Done = (t, f) => t.Controller.Input.Selection.GroupSize(0) > 0 && AnyUnit(f, t.Controller.Player, u => u.Order == UnitOrder.AttackMove || u.Order == UnitOrder.Patrol) },
-      new Step { Text = "7/7 지도 가운데 점령지(원)로 유닛을 보내세요. 오래 머물면 점령해 자원이 들어옵니다", Done = (t, f) => NearCapture(f, t.Controller.Player) },
+      new Step { Text = "1/8 빈 땅을 끌어 카메라를 움직이세요 (두 손가락으로 확대·축소)", Done = (t, f) => (t.Controller.Camera.Focus - t._cameraStart).magnitude > 12f },
+      new Step { Text = "2/8 공병(노란 안전모)을 눌러 고르세요. 왼쪽 아래 '유휴 공병'으로도 고를 수 있습니다", Target = "IdleEngineerButton",
+        Done = (t, f) => t.Controller.Input.Selection.Units.Any(e => f.Exists(e) && f.Has<Worker>(e)) },
+      new Step { Text = "3/8 오른쪽 아래 '자원 채굴'에서 채굴 시설을 고르고, 녹색 고리가 뜬 자원 지점을 눌러 지으세요", Target = "ContextPanel",
+        Done = (t, f) => Extractors(f, t.Controller.Player, false) > t._extractorsStart },
+      new Step { Text = "4/8 다 지으면 근처 공병이 저절로 들어가 일합니다. 시설을 눌러 인원을 확인하고 공병을 더 보내세요", Target = "ContextPanel",
+        Done = (t, f) => Extractors(f, t.Controller.Player, true) > 0 },
+      new Step { Text = "5/8 채굴 시설이 자원을 캐면 위쪽 자원 수치가 오릅니다", Done = (t, f) => Earned(f, t.Controller.Player) > t._earnedStart },
+      new Step { Text = "6/8 사령부나 병영을 눌러 고르고 전투 유닛을 생산하세요", Target = "ContextPanel",
+        Done = (t, f) => f.Global->Players.GetPointer(t.Controller.Player)->UnitsProduced > t._producedStart },
+      new Step { Text = "7/8 생산 건물을 고른 채 '집결 지점'을 누르고 땅을 누르세요. 새 유닛이 그곳으로 모입니다", Target = "ContextPanel",
+        Done = (t, f) => AnyRally(f, t.Controller.Player) },
+      new Step { Text = "8/8 전투 유닛을 고르고 '공격 이동'을 누른 뒤 땅을 눌러 전선을 준비하세요", Target = "ContextPanel",
+        Done = (t, f) => AnyUnit(f, t.Controller.Player, u => u.Order == UnitOrder.AttackMove || u.Order == UnitOrder.Patrol) },
     };
+
+    /// <summary>내 채굴 시설 수(완공). staffed면 공병이 한 명 이상 들어간 시설만 센다.</summary>
+    static int Extractors(Frame frame, PlayerRef player, bool staffed) {
+      var count = 0;
+      foreach (var pair in frame.GetComponentIterator<Building>()) {
+        var b = pair.Component;
+        if (b.Owner != player || b.ConstructionRemaining > Photon.Deterministic.FP._0 || frame.FindAsset(b.Spec).RequiresResourceNode == false) {
+          continue;
+        }
+        if (staffed == false) {
+          count++;
+          continue;
+        }
+        foreach (var unit in frame.GetComponentIterator<Unit>()) {
+          if (unit.Component.Owner == player && unit.Component.Garrison == pair.Entity) {
+            count++;
+            break;
+          }
+        }
+      }
+      return count;
+    }
+
+    static float Earned(Frame frame, PlayerRef player) {
+      var state = frame.Global->Players.GetPointer(player);
+      return state->Earned.Iron.AsFloat + state->Earned.Wood.AsFloat;
+    }
+
+    static bool AnyRally(Frame frame, PlayerRef player) {
+      foreach (var pair in frame.GetComponentIterator<Building>()) {
+        if (pair.Component.Owner == player && pair.Component.HasRally) {
+          return true;
+        }
+      }
+      return false;
+    }
 
     public static void Attach(MatchController controller) {
       var tutorial = controller.gameObject.AddComponent<Tutorial>();
@@ -60,6 +108,8 @@ namespace FactoryWars.View {
         _cameraStart = Controller.Camera.Focus;
         _buildingsStart = Buildings(frame);
         _producedStart = frame.Global->Players.GetPointer(Controller.Player)->UnitsProduced;
+        _extractorsStart = Extractors(frame, Controller.Player, false);
+        _earnedStart = Earned(frame, Controller.Player);
         _stepStarted = Time.unscaledTime;
       }
       if (Finished) {
@@ -76,6 +126,8 @@ namespace FactoryWars.View {
       _stepStarted = Time.unscaledTime;
       _buildingsStart = Buildings(frame);
       _producedStart = frame.Global->Players.GetPointer(Controller.Player)->UnitsProduced;
+      _extractorsStart = Extractors(frame, Controller.Player, false);
+      _earnedStart = Earned(frame, Controller.Player);
       GameAudio.Play(SoundEvent.Captured);
       if (Finished) {
         _text.text = "튜토리얼 끝! 적 사령부와 핵심 건물을 모두 부수면 승리합니다. 이대로 계속 싸워 보세요";
@@ -146,14 +198,19 @@ namespace FactoryWars.View {
 
     void Build() {
       var root = Controller.Hud.Root;
-      _panel = Ui.Panel("TutorialPanel", root, new Color(0.98f, 0.95f, 0.78f, 0.96f));
-      Ui.Place(_panel, new Vector2(0.5f, 1), new Vector2(0, -270), new Vector2(1100, 120));
+      // 2026-11-22: 전장 가운데를 가리지 않게 위쪽 알림 두 줄 아래의 짧은 띠(테마 패널, 호박색 글자). 건너뛰기로 언제든 끈다.
+      var theme = UiTheme.Current;
+      _panel = Ui.Panel("TutorialPanel", root, theme.Panel);
+      Ui.Place(_panel, new Vector2(0.5f, 1), new Vector2(0, -184), new Vector2(940, Ui.MinButtonSize));
       _panel.pivot = new Vector2(0.5f, 1);
-      _text = Ui.Label("TutorialText", _panel, "", 32, TextAnchor.MiddleLeft);
-      _text.color = Ui.ButtonTextColor;
-      Ui.Place(_text.rectTransform, new Vector2(0, 0.5f), new Vector2(20, 0), new Vector2(820, 110));
-      var skip = Ui.Button("TutorialSkip", _panel, "건너뛰기", SkipAll, 26);
-      Ui.Place((RectTransform)skip.transform, new Vector2(1, 0.5f), new Vector2(-10, 0), new Vector2(230, 100));
+      _text = Ui.Label("TutorialText", _panel, "", theme.FontSmall, TextAnchor.MiddleLeft);
+      _text.color = theme.Warning;
+      _text.resizeTextForBestFit = true;
+      _text.resizeTextMinSize = theme.FontSmall - 8;
+      _text.resizeTextMaxSize = theme.FontSmall;
+      Ui.Place(_text.rectTransform, new Vector2(0, 0.5f), new Vector2(18, 0), new Vector2(940 - 18 - 200 - 18, Ui.MinButtonSize - 12));
+      var skip = Ui.Button("TutorialSkip", _panel, "건너뛰기", SkipAll, theme.FontSmall);
+      Ui.Place((RectTransform)skip.transform, new Vector2(1, 0.5f), new Vector2(-8, 0), new Vector2(200, Ui.MinButtonSize));
       ((RectTransform)skip.transform).pivot = new Vector2(1, 0.5f);
       _arrow = Ui.Label("TutorialArrow", root, "▼", 90, TextAnchor.MiddleCenter).rectTransform;
       _arrow.GetComponent<Text>().color = new Color(1f, 0.55f, 0.1f, 1f);

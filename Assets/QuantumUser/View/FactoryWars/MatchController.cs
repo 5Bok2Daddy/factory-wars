@@ -132,7 +132,9 @@ namespace FactoryWars.View {
       switch (gesture.Kind) {
         case GestureKind.Tap:
           if (Camera.ToGround(gesture.Position, out var tapped)) {
-            Send(Input.Tap(frame, Player, tapped));
+            var command = Input.Tap(frame, Player, tapped);
+            Send(command);
+            OrderMarker(frame, command, tapped);
           }
           break;
         case GestureKind.DoubleTap:
@@ -180,6 +182,48 @@ namespace FactoryWars.View {
           Camera.Drag(gesture.Position - gesture.Delta, gesture.Position);
           break;
       }
+    }
+
+    BattleView _battle;
+
+    /// <summary>시험용: 마지막으로 그린 명령 표지(종류, 자리).</summary>
+    public (string Kind, Vector3 Position) LastMarker { get; private set; }
+
+    /// <summary>
+    /// 명령 표지(화면 전용): 이동은 청록 고리, 공격 이동은 주황, 대상 공격은 빨강(대상 자리), 건설·채집·수리 등은 호박색.
+    /// 명령을 보내지 않은 탭(선택만 바꾼 경우)에는 그리지 않는다.
+    /// </summary>
+    void OrderMarker(Frame frame, Photon.Deterministic.DeterministicCommand command, Vector3 tapped) {
+      if (command == null) {
+        return;
+      }
+      string kind;
+      Color color;
+      var position = tapped;
+      var radius = 1.6f;
+      switch (command) {
+        case Quantum.FactoryWars.MoveUnitsCommand move:
+          kind = move.AttackMove ? "attack_move" : "move";
+          color = move.AttackMove ? new Color(1f, 0.55f, 0.15f, 0.95f) : new Color(0.05f, 0.85f, 0.80f, 0.95f);
+          break;
+        case Quantum.FactoryWars.AttackTargetCommand attack:
+          kind = "attack";
+          color = new Color(0.95f, 0.22f, 0.18f, 0.95f);
+          if (frame.Exists(attack.Target) && frame.Has<Transform3D>(attack.Target)) {
+            position = frame.Get<Transform3D>(attack.Target).Position.ToUnityVector3();
+          }
+          radius = 2.4f;
+          break;
+        default:
+          kind = command.GetType().Name;
+          color = new Color(0.95f, 0.72f, 0.15f, 0.95f);
+          break;
+      }
+      LastMarker = (kind, position);
+      if (_battle == null) {
+        _battle = FindAnyObjectByType<BattleView>();
+      }
+      _battle?.Fx?.Ring(position + Vector3.up * 0.15f, color, radius, 0.55f);
     }
 
     static bool IsOnScreen(Vector3 world) {

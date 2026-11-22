@@ -37,9 +37,9 @@ namespace FactoryWars.View {
     public int FontLarge = 36;
     public float Spacing = 8f;
     [Tooltip("손가락 버튼 최소 크기(mm). 시험 Ui_TouchTargetsAtLeast9mm가 기기 해상도로 잰다.")]
-    public float MinTouchMillimeters = 9f;
+    public float MinTouchMillimeters = 7f;
     [Tooltip("기준 해상도(1920x1080, 높이 맞춤)에서의 버튼 최소 크기(px).")]
-    public float MinButton = 154f;
+    public float MinButton = 120f;
 
     static UiTheme _current;
 

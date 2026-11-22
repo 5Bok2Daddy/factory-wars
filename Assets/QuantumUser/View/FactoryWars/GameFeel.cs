@@ -23,6 +23,24 @@ namespace FactoryWars.View {
       return CameraSpeeds[next];
     }
 
+    /// <summary>
+    /// UI 크기(선택): 기본 100%는 최소 터치 7mm 기준. 더 크게만 고를 수 있다(작게 하면 터치 크기 기준 아래로 내려간다).
+    /// 캔버스 기준 높이를 1080/배율로 바꿔 모든 HUD가 같은 비율로 커진다.
+    /// </summary>
+    public const string UiScaleKey = "fw_ui_scale";
+    public static readonly float[] UiScales = { 1f, 1.15f, 1.3f };
+
+    public static float UiScale => UiScales[Mathf.Clamp(PlayerPrefs.GetInt(UiScaleKey, 0), 0, UiScales.Length - 1)];
+
+    public static float NextUiScale() {
+      var next = (PlayerPrefs.GetInt(UiScaleKey, 0) + 1) % UiScales.Length;
+      PlayerPrefs.SetInt(UiScaleKey, next);
+      Ui.ApplyScale();
+      return UiScales[next];
+    }
+
+    public static string UiScaleLabel => $"UI 크기: {Mathf.RoundToInt(UiScale * 100)}%";
+
     public static string VibrationLabel => Vibration ? "진동: 켬" : "진동: 끔";
     public static string CameraLabel => $"카메라 속도: {CameraSpeed:0.##}배";
   }

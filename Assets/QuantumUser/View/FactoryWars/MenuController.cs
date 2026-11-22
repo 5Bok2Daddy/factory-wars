@@ -11,8 +11,8 @@ namespace FactoryWars.View {
     const string VolumeKey = "fw_volume";
 
     public static RectTransform Build(Transform parent, UnityEngine.Events.UnityAction onClose) {
-      // 3열 격자. 칸 높이는 최소 터치 크기(154)를 지키고 줄 간격 170으로 겹치지 않게 한다.
-      const float Column = 400f, ColumnGap = 30f, Pitch = 170f, Top = -86f;
+      // 3열 격자. 칸 높이는 최소 터치 크기(Ui.MinButtonSize)를 지키고 줄 간격 150으로 겹치지 않게 한다.
+      const float Column = 400f, ColumnGap = 30f, Pitch = 150f, Top = -86f;
       var rows = Debug.isDebugBuild ? 5 : 4;
       var panel = Ui.Panel("Settings", parent);
       Ui.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero,
@@ -71,6 +71,13 @@ namespace FactoryWars.View {
       var language = Ui.Label("Language", panel, "언어: 한국어", 34, TextAnchor.MiddleCenter);
       language.color = UiTheme.Current.PanelText;
       Cell(language, Col(1), 2, Column, 70f);
+      // UI 크기(100·115·130%). 개발 빌드는 3열째 칸이 룩 후보라 한 줄 아래에 둔다.
+      Button uiScale = null;
+      uiScale = Ui.Button("UiScale", panel, PlayerOptions.UiScaleLabel, () => {
+        PlayerOptions.NextUiScale();
+        Ui.SetLabel(uiScale, PlayerOptions.UiScaleLabel);
+      }, 30);
+      Cell(uiScale, Col(2), Debug.isDebugBuild ? 3 : 2);
       if (Debug.isDebugBuild) {
         // 개발 빌드 전용: 룩 후보 바꾸기. 다음 경기부터 적용된다.
         string LookLabel() => "화면: " + VisualPresets.Title(PlayerPrefs.GetString(VisualProfile.ChoiceKey, "A"));

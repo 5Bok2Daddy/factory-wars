@@ -40,7 +40,18 @@ namespace FactoryWars.View {
     const int PassengerSlots = 6;
     const float Gap = 8f;
     const float Pad = 12f;
-    const float HeaderHeight = 50f;
+    const float HeaderHeight = 42f;
+    /// <summary>상단 자원·카운트다운 줄 높이.</summary>
+    const float TopBarHeight = 48f;
+    /// <summary>자주 누르지 않는 메뉴·외교 버튼.</summary>
+    const float SmallButton = 120f;
+    const float MinimapSize = 260f;
+    /// <summary>하단 가운데 선택 카드(한 장만): 아이콘 132 + 이름·체력·상태 두세 줄.</summary>
+    const float CardMaxWidth = 600f;
+    const float CardHeight = 168f;
+    const float CardIcon = 132f;
+    const float CardText = Pad + CardIcon + 12f;
+    const float TooltipHeight = 80f;
     const int MaxTypeButtons = 4;
     const int QueueIcons = 5;
 
@@ -70,7 +81,7 @@ namespace FactoryWars.View {
     enum Menu { Root, Build, Research, Hangar, HqResearch, Factory }
 
     static readonly (string Icon, float Width)[] ResourceSlots = {
-      ("res_iron", 150), ("res_wood", 150), ("res_steel", 150), ("res_power", 280), ("res_population", 150),
+      ("res_iron", 136), ("res_wood", 136), ("res_steel", 136), ("res_power", 236), ("res_population", 140),
     };
     static readonly MissingResource[] ResourceBits = { MissingResource.Iron, MissingResource.Wood, MissingResource.Steel, MissingResource.Power, MissingResource.Population };
 
@@ -89,6 +100,8 @@ namespace FactoryWars.View {
     GameObject _contextPanel;
     Button[] _context;
     Button _boxButton;
+    Button _groupsToggle;
+    RectTransform _groupsFlyout;
     Button _idleButton;
     Text _idleBadge;
     Button[] _groupButtons;
@@ -141,8 +154,8 @@ namespace FactoryWars.View {
 
     static float ContextWidth => ContextColumns * Cell + (ContextColumns - 1) * Gap + 2 * Pad;
     static float ContextHeight => ContextColumns * Cell + (ContextColumns - 1) * Gap + 2 * Pad + HeaderHeight;
-    /// <summary>미니맵(300) + 빠른 버튼 2열의 오른쪽 끝.</summary>
-    const float LeftClusterWidth = 8 + 300 + 16 + 2 * 154 + 10 + 16;
+    /// <summary>왼쪽 묶음(미니맵, 그 위 부대·유휴 공병 줄)의 오른쪽 끝.</summary>
+    const float LeftClusterWidth = 8 + MinimapSize + 8 + 16;
 
     public void Build(Frame frame) {
       var theme = UiTheme.Current;
@@ -160,41 +173,45 @@ namespace FactoryWars.View {
       top.anchorMax = new Vector2(0, 1);
       top.pivot = new Vector2(0, 1);
       top.anchoredPosition = new Vector2(12, -8);
-      top.sizeDelta = new Vector2(ResourceSlots.Sum(r => r.Width) + (ResourceSlots.Length - 1) * Gap, 60);
+      top.sizeDelta = new Vector2(ResourceSlots.Sum(r => r.Width) + (ResourceSlots.Length - 1) * Gap, TopBarHeight);
       _resources.Clear();
       var x = 0f;
       foreach (var (icon, width) in ResourceSlots) {
         var capsule = Ui.Capsule($"{icon}_capsule", top, theme.Panel);
-        Ui.Place(capsule, new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(width, 56));
-        var image = Ui.Icon(icon, capsule, icon, new Vector2(0, 0.5f), new Vector2(6, 0), new Vector2(42, 42));
+        Ui.Place(capsule, new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(width, TopBarHeight));
+        var image = Ui.Icon(icon, capsule, icon, new Vector2(0, 0.5f), new Vector2(6, 0), new Vector2(34, 34));
         var slot = UiCatalog.SpriteFor(icon);
         if (slot != null) {
           image.sprite = slot;
         }
-        var value = Ui.Label($"{icon}_value", capsule, "", theme.FontMedium - 2);
+        var value = Ui.Label($"{icon}_value", capsule, "", theme.FontSmall);
         value.color = theme.PanelText;
         value.horizontalOverflow = HorizontalWrapMode.Overflow;
-        Ui.Place(value.rectTransform, new Vector2(0, 0.5f), new Vector2(52, 0), new Vector2(width - 56, 48));
+        Ui.Place(value.rectTransform, new Vector2(0, 0.5f), new Vector2(44, 0), new Vector2(width - 48, 40));
         _resources.Add((image, value, capsule.GetComponent<Image>()));
         x += width + Gap;
       }
 
-      // 상단 오른쪽: 외교·메뉴 아이콘 버튼.
+      // 상단 오른쪽: 메뉴·외교는 작은 아이콘 버튼(자주 누르지 않는다). 궁극 슬롯만 정규 크기.
       var menuButton = IconButton("MenuButton", Root, "ui_menu", "메뉴", () => Controller.TogglePause());
-      Ui.Place((RectTransform)menuButton.transform, Vector2.one, new Vector2(-12, -8), new Vector2(Cell, Cell));
+      Ui.Place((RectTransform)menuButton.transform, Vector2.one, new Vector2(-12, -8), new Vector2(SmallButton, SmallButton));
       var diplomacyButton = IconButton("DiplomacyButton", Root, "ui_diplomacy", "외교", ToggleDiplomacy);
-      Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-12 - Cell - Gap, -8), new Vector2(Cell, Cell));
+      Ui.Place((RectTransform)diplomacyButton.transform, Vector2.one, new Vector2(-12 - SmallButton - Gap, -8), new Vector2(SmallButton, SmallButton));
 
-      // 상단 가운데(자원 줄 아래): 휴전·연결 대기. 글자가 없으면 통째로 숨긴다(빈 막대 B5).
+      // 상단 줄(자원 바로 오른쪽): 휴전·연결 대기 카운트다운. 글자가 없으면 통째로 숨긴다(빈 막대 B5).
       _truceBadge = Ui.Capsule("TruceBadge", Root, theme.Panel);
-      Ui.Place(_truceBadge, new Vector2(0.5f, 1), new Vector2(0, -76), new Vector2(560, 56));
-      _truce = Ui.Label("Truce", _truceBadge, "", theme.FontMedium, TextAnchor.MiddleCenter);
-      Ui.Stretch(_truce.rectTransform);
-      _truce.color = theme.PanelText;
+      Ui.Place(_truceBadge, new Vector2(0, 1), new Vector2(12 + top.sizeDelta.x + 2 * Gap, -8), new Vector2(300, TopBarHeight));
+      _truce = Ui.Label("Truce", _truceBadge, "", theme.FontSmall, TextAnchor.MiddleCenter);
+      _truce.resizeTextForBestFit = true;
+      _truce.resizeTextMinSize = theme.FontSmall - 8;
+      _truce.resizeTextMaxSize = theme.FontSmall;
+      Ui.Stretch(_truce.rectTransform, 4f);
+      _truce.color = theme.Warning;
       _truceBadge.gameObject.SetActive(false);
 
+      // 알림·쪽지: 상단 줄 바로 아래 가운데, 잠깐만 보인다.
       _alertBubble = Ui.Capsule("AlertBubble", Root, theme.Panel);
-      Ui.Place(_alertBubble, new Vector2(0.5f, 1), new Vector2(0, -140), new Vector2(800, 56));
+      Ui.Place(_alertBubble, new Vector2(0.5f, 1), new Vector2(0, -8 - TopBarHeight - Gap), new Vector2(720, TopBarHeight));
       _alert = Ui.Label("Alert", _alertBubble, "", theme.FontMedium + 2, TextAnchor.MiddleCenter);
       _alert.resizeTextForBestFit = true;
       _alert.resizeTextMinSize = theme.FontSmall - 4;
@@ -206,7 +223,7 @@ namespace FactoryWars.View {
       _alertBubble.gameObject.AddComponent<ClickRelay>().OnClick = JumpToAlert;
 
       _noteBubble = Ui.Capsule("NoteBubble", Root, theme.Panel);
-      Ui.Place(_noteBubble, new Vector2(0.5f, 1), new Vector2(0, -204), new Vector2(800, 56));
+      Ui.Place(_noteBubble, new Vector2(0.5f, 1), new Vector2(0, -8 - 2 * (TopBarHeight + Gap)), new Vector2(720, TopBarHeight));
       _note = Ui.Label("Note", _noteBubble, "", theme.FontMedium, TextAnchor.MiddleCenter);
       _note.resizeTextForBestFit = true;
       _note.resizeTextMinSize = theme.FontSmall - 4;
@@ -224,9 +241,9 @@ namespace FactoryWars.View {
       if (frameSprite != null) {
         mapFrame.GetComponent<Image>().sprite = frameSprite;
       }
-      Ui.Place(mapFrame, Vector2.zero, new Vector2(8, 8), new Vector2(308, 308));
+      Ui.Place(mapFrame, Vector2.zero, new Vector2(8, 8), new Vector2(MinimapSize + 8, MinimapSize + 8));
       var map = Ui.Rect("Minimap", mapFrame);
-      Ui.Place(map, Vector2.zero, new Vector2(4, 4), new Vector2(300, 300));
+      Ui.Place(map, Vector2.zero, new Vector2(4, 4), new Vector2(MinimapSize, MinimapSize));
       map.gameObject.AddComponent<RawImage>();
       _minimap = map.gameObject.AddComponent<Minimap>();
       _minimap.Init(frame.FindAsset<MapSpec>(frame.Map.UserAsset));
@@ -239,16 +256,22 @@ namespace FactoryWars.View {
         }
       };
 
-      // 화면 왼쪽 가장자리(미니맵 위): 범위 선택 토글.
-      _boxButton = IconButton("BoxButton", Root, "ui_box", "범위", ToggleBoxMode);
-      Ui.Place((RectTransform)_boxButton.transform, Vector2.zero, new Vector2(8, 8 + 308 + Gap), new Vector2(Cell, Cell));
-
-      // 미니맵 옆: 유휴 공병(숫자 배지)·전체 군대·부대 1~3(누르면 선택, 두 번 누르면 카메라, 길게 누르면 지정).
+      // 미니맵 바로 위 한 줄: 부대 펼치기 + 유휴 공병(숫자 배지). 부대 버튼 묶음은 평소에 접어 두어 왼쪽 전장을 비운다.
       var actions = Ui.Rect("Actions", Root);
-      Ui.Place(actions, Vector2.zero, new Vector2(324, 8), new Vector2(2 * Cell + 10, 3 * Cell + 20));
-      var grid = actions.gameObject.AddComponent<GridLayoutGroup>();
+      Ui.Place(actions, Vector2.zero, new Vector2(8, 8 + MinimapSize + 8 + Gap), new Vector2(2 * Cell + Gap, Cell));
+      _groupsToggle = IconButton("GroupsToggle", actions, "ui_group", "부대", ToggleGroups);
+      Ui.Place((RectTransform)_groupsToggle.transform, Vector2.zero, Vector2.zero, new Vector2(Cell, Cell));
+      _idleButton = IconButton("IdleEngineerButton", actions, "ui_idle", "유휴 공병", SelectIdleEngineer);
+      Ui.Place((RectTransform)_idleButton.transform, Vector2.zero, new Vector2(Cell + Gap, 0), new Vector2(Cell, Cell));
+      _idleBadge = Badge(_idleButton.transform, theme.Danger);
+
+      // 부대 펼침 판(누르면 선택, 두 번 누르면 카메라, 길게 누르면 지정). 고르면 저절로 접힌다.
+      _groupsFlyout = Ui.Panel("GroupFlyout", Root, theme.Panel);
+      Ui.Place(_groupsFlyout, Vector2.zero, new Vector2(8, 8 + MinimapSize + 8 + Gap + Cell + Gap), new Vector2(2 * Cell + Gap + 2 * Gap, 3 * Cell + 2 * Gap + 2 * Gap));
+      var grid = _groupsFlyout.gameObject.AddComponent<GridLayoutGroup>();
+      grid.padding = new RectOffset((int)Gap, (int)Gap, (int)Gap, (int)Gap);
       grid.cellSize = new Vector2(Cell, Cell);
-      grid.spacing = new Vector2(10, 10);
+      grid.spacing = new Vector2(Gap, Gap);
       grid.startCorner = GridLayoutGroup.Corner.LowerLeft;
       grid.childAlignment = TextAnchor.LowerLeft;
       grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
@@ -256,13 +279,12 @@ namespace FactoryWars.View {
       _groupButtons = new Button[SelectionModel.GroupCount];
       for (var i = 0; i < SelectionModel.GroupCount; i++) {
         var index = i;
-        _groupButtons[i] = IconButton($"Group{i + 1}", actions, "ui_group", $"{i + 1}부대", () => PressGroup(index));
+        _groupButtons[i] = IconButton($"Group{i + 1}", _groupsFlyout, "ui_group", $"{i + 1}부대", () => { PressGroup(index); CloseGroups(); });
         LongPress.Attach(_groupButtons[i], () => AssignGroup(index));
       }
-      _idleButton = IconButton("IdleEngineerButton", actions, "ui_idle", "유휴 공병", SelectIdleEngineer);
-      _idleBadge = Badge(_idleButton.transform, theme.Danger);
-      IconButton("ArmyButton", actions, "ui_army", "전체 군대", SelectArmy);
-      // 그리드는 아래 왼쪽부터 채운다: 1층 1·2부대, 2층 3부대·유휴 공병, 3층 전체 군대.
+      IconButton("ArmyButton", _groupsFlyout, "ui_army", "전체 군대", () => { SelectArmy(); CloseGroups(); });
+      _boxButton = IconButton("BoxButton", _groupsFlyout, "ui_box", "범위", () => { ToggleBoxMode(); CloseGroups(); });
+      _groupsFlyout.gameObject.SetActive(false);
 
       BuildCard(theme);
       BuildContext(theme);
@@ -345,7 +367,7 @@ namespace FactoryWars.View {
       // 우측 전용 궁극기 터치 슬롯(골드/레드 발광 프레임 + 건조 진행/재충전 게이지 + 원탭 목표 지정).
       _ultimateQuickButton = IconButton("UltimateQuickSlot", Root, "ui_attack", "궁극 전력", PressUltimateQuickSlot);
       var qRect = (RectTransform)_ultimateQuickButton.transform;
-      Ui.Place(qRect, Vector2.one, new Vector2(-12 - 2 * (Cell + Gap), -8), new Vector2(Cell, Cell));
+      Ui.Place(qRect, Vector2.one, new Vector2(-12 - 2 * (SmallButton + Gap), -8), new Vector2(Cell, Cell));
       _ultimateQuickFrame = qRect.GetComponent<Image>();
       _ultimateQuickFill = Ui.Rect("QuickFill", qRect);
       _ultimateQuickFill.anchorMin = Vector2.zero;
@@ -363,7 +385,7 @@ namespace FactoryWars.View {
 
       for (var i = 0; i < MaxUltimateBars; i++) {
         var bar = Ui.Capsule($"UltimateBar{i}", Root, theme.Panel);
-        Ui.Place(bar, Vector2.one, new Vector2(-12, -8 - Cell - Gap - i * 52), new Vector2(width, 46));
+        Ui.Place(bar, Vector2.one, new Vector2(-12, -8 - Cell - Gap - i * 46), new Vector2(width, 40));
         var fill = Ui.Capsule("Fill", bar, theme.Warning);
         fill.anchorMin = Vector2.zero;
         fill.anchorMax = new Vector2(0, 1);
@@ -705,7 +727,8 @@ namespace FactoryWars.View {
     void BuildAirOpsPanel(UiTheme theme) {
       _airOpsPanel = Ui.Panel("AirOpsPanel", Root, theme.Panel);
       var buttonsWidth = SortieSystem.Slots * Cell + (SortieSystem.Slots - 1) * Gap;
-      Ui.Place(_airOpsPanel, Vector2.zero, new Vector2(Pad, 8f + 3f * Cell + 20f + Gap),
+      // 왼쪽 묶음(미니맵 + 부대 줄) 바로 위.
+      Ui.Place(_airOpsPanel, Vector2.zero, new Vector2(8f, 8f + MinimapSize + 8f + Gap + Cell + Gap),
         new Vector2(buttonsWidth + 2f * Pad, Cell + 2f * Pad));
       for (var i = 0; i < SortieSystem.Slots; i++) {
         var idx = i;
@@ -805,30 +828,30 @@ namespace FactoryWars.View {
 
     void BuildCard(UiTheme theme) {
       _card = Ui.Panel("SelectionCard", Root, theme.Panel);
-      Ui.Place(_card, new Vector2(0.5f, 0), new Vector2(0, 8), new Vector2(660, Cell + 2 * Pad + 36));
+      Ui.Place(_card, new Vector2(0.5f, 0), new Vector2(0, 8), new Vector2(CardMaxWidth, CardHeight));
       var frame = Ui.Rect("IconFrame", _card);
       var frameImage = frame.gameObject.AddComponent<Image>();
       frameImage.sprite = UiCatalog.SpriteFor("icon_frame");
       frameImage.type = Image.Type.Sliced;
       frameImage.color = theme.Button;
       frameImage.raycastTarget = false;
-      Ui.Place(frame, new Vector2(0, 0.5f), new Vector2(Pad, 0), new Vector2(150, 150));
-      _cardIcon = Ui.Icon("Icon", frame, "", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(124, 124));
-      _cardTitle = Ui.Label("Title", _card, "", theme.FontLarge - 2);
+      Ui.Place(frame, new Vector2(0, 0.5f), new Vector2(Pad, 0), new Vector2(CardIcon, CardIcon));
+      _cardIcon = Ui.Icon("Icon", frame, "", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(CardIcon - 20, CardIcon - 20));
+      _cardTitle = Ui.Label("Title", _card, "", theme.FontLarge - 6);
       _cardTitle.color = theme.PanelText;
-      Ui.Place(_cardTitle.rectTransform, new Vector2(0, 1), new Vector2(176, -10), new Vector2(380, 44));
+      Ui.Place(_cardTitle.rectTransform, new Vector2(0, 1), new Vector2(CardText, -8), new Vector2(340, 38));
       _cardBadge = Ui.Capsule("SizeBadge", _card, theme.Accent);
       var badgeSprite = UiCatalog.SpriteFor("badge_small");
       if (badgeSprite != null) {
         _cardBadge.GetComponent<Image>().sprite = badgeSprite;
       }
-      Ui.Place(_cardBadge, new Vector2(1, 1), new Vector2(-Pad, -12), new Vector2(92, 40));
+      Ui.Place(_cardBadge, new Vector2(1, 1), new Vector2(-Pad, -10), new Vector2(84, 34));
       _cardBadgeText = Ui.Label("Text", _cardBadge, "", theme.FontSmall, TextAnchor.MiddleCenter);
       _cardBadgeText.color = Color.white;
       Ui.Stretch(_cardBadgeText.rectTransform);
       for (var i = 0; i < _factoryLevelPips.Length; i++) {
         var pip = Ui.Capsule($"FactoryLevel{i + 1}", _card);
-        Ui.Place(pip, new Vector2(1, 1), new Vector2(-Pad - (2 - i) * 30f, -54f), new Vector2(26f, 5f));
+        Ui.Place(pip, new Vector2(1, 1), new Vector2(-Pad - (2 - i) * 30f, -50f), new Vector2(26f, 5f));
         var image = pip.GetComponent<Image>();
         image.raycastTarget = false;
         _factoryLevelPips[i] = image;
@@ -840,7 +863,7 @@ namespace FactoryWars.View {
       back.type = Image.Type.Sliced;
       back.color = new Color(0.2f, 0.22f, 0.26f, 0.6f);
       back.raycastTarget = false;
-      Ui.Place(_cardHealth, new Vector2(0, 1), new Vector2(176, -60), new Vector2(460, 20));
+      Ui.Place(_cardHealth, new Vector2(0, 1), new Vector2(CardText, -50), new Vector2(420, 14));
       var fill = Ui.Rect("Fill", _cardHealth);
       _cardHealthFill = fill.gameObject.AddComponent<Image>();
       _cardHealthFill.sprite = UiCatalog.SpriteFor("health_fill");
@@ -850,11 +873,14 @@ namespace FactoryWars.View {
       fill.anchorMax = new Vector2(1, 1);
       fill.offsetMin = Vector2.zero;
       fill.offsetMax = Vector2.zero;
-      _cardDetail = Ui.Label("Detail", _card, "", theme.FontSmall, TextAnchor.UpperLeft);
+      _cardDetail = Ui.Label("Detail", _card, "", theme.FontSmall - 4, TextAnchor.UpperLeft);
+      _cardDetail.resizeTextForBestFit = true;
+      _cardDetail.resizeTextMinSize = theme.FontSmall - 10;
+      _cardDetail.resizeTextMaxSize = theme.FontSmall - 4;
       _cardDetail.color = theme.PanelText;
-      Ui.Place(_cardDetail.rectTransform, new Vector2(0, 1), new Vector2(176, -88), new Vector2(470, 100));
+      Ui.Place(_cardDetail.rectTransform, new Vector2(0, 1), new Vector2(CardText, -70), new Vector2(430, 88));
       for (var i = 0; i < QueueIcons; i++) {
-        var icon = Ui.Icon($"Queue{i}", _card, "", new Vector2(0, 0), new Vector2(176 + i * 64, Pad), new Vector2(56, 56));
+        var icon = Ui.Icon($"Queue{i}", _card, "", new Vector2(0, 0), new Vector2(CardText + i * 48, 10), new Vector2(42, 42));
         _queueIcons.Add(icon);
       }
       // 선택 카드 위의 승객 초상화. 탭하면 해당 승객만 개별 하차한다.
@@ -903,9 +929,9 @@ namespace FactoryWars.View {
       _status.color = Color.white;
       _status.horizontalOverflow = HorizontalWrapMode.Wrap;
       _status.resizeTextForBestFit = true;
-      _status.resizeTextMinSize = theme.FontSmall - 4;
-      _status.resizeTextMaxSize = theme.FontSmall + 2;
-      Ui.Stretch(_status.rectTransform, 7f);
+      _status.resizeTextMinSize = theme.FontSmall - 12;
+      _status.resizeTextMaxSize = theme.FontSmall;
+      Ui.Stretch(_status.rectTransform, 2f);
       _context = new Button[ContextSlots + ExtraBuildSlots];
       for (var i = 0; i < _context.Length; i++) {
         var index = i;
@@ -925,10 +951,13 @@ namespace FactoryWars.View {
       if (tooltipSprite != null) {
         _tooltip.GetComponent<Image>().sprite = tooltipSprite;
       }
-      Ui.Place(_tooltip, new Vector2(1, 0), new Vector2(-12, 8 + ContextHeight + Gap), new Vector2(ContextWidth, 96));
-      _tooltipText = Ui.Label("Text", _tooltip, "", theme.FontSmall + 2, TextAnchor.MiddleLeft);
+      Ui.Place(_tooltip, new Vector2(1, 0), new Vector2(-12, 8 + ContextHeight + Gap), new Vector2(ContextWidth, TooltipHeight));
+      _tooltipText = Ui.Label("Text", _tooltip, "", theme.FontSmall - 2, TextAnchor.MiddleLeft);
+      _tooltipText.resizeTextForBestFit = true;
+      _tooltipText.resizeTextMinSize = theme.FontSmall - 8;
+      _tooltipText.resizeTextMaxSize = theme.FontSmall - 2;
       _tooltipText.color = theme.PanelText;
-      Ui.Stretch(_tooltipText.rectTransform, 14f);
+      Ui.Stretch(_tooltipText.rectTransform, 10f);
       _tooltip.GetComponent<Image>().raycastTarget = false;
       _tooltip.gameObject.SetActive(false);
     }
@@ -1124,10 +1153,35 @@ namespace FactoryWars.View {
       _diplomacy.gameObject.SetActive(DiplomacyOpen == false);
     }
 
+    public bool GroupsOpen => _groupsFlyout != null && _groupsFlyout.gameObject.activeSelf;
+
+    /// <summary>부대 버튼: 범위 선택 중이면 범위 선택을 끄고, 아니면 부대 펼침 판을 열고 닫는다.</summary>
+    public void ToggleGroups() {
+      if (BoxMode) {
+        ToggleBoxMode();
+        return;
+      }
+      _groupsFlyout.gameObject.SetActive(GroupsOpen == false);
+      if (GroupsOpen) {
+        _groupsFlyout.SetAsLastSibling();
+      }
+      _groupsToggle.GetComponent<Image>().color = GroupsOpen ? UiTheme.Current.ButtonPressed : Ui.ButtonColor;
+    }
+
+    void CloseGroups() {
+      _groupsFlyout.gameObject.SetActive(false);
+      if (BoxMode == false) {
+        _groupsToggle.GetComponent<Image>().color = Ui.ButtonColor;
+      }
+    }
+
     public void ToggleBoxMode() {
       BoxMode = BoxMode == false;
       Ui.SetLabel(_boxButton, BoxMode ? "범위 중" : "범위");
       _boxButton.GetComponent<Image>().color = BoxMode ? UiTheme.Current.ButtonPressed : Ui.ButtonColor;
+      // 펼침 판은 접혀 있으므로 범위 선택 상태는 부대 버튼에 보인다(다시 누르면 끈다).
+      Ui.SetLabel(_groupsToggle, BoxMode ? "범위 중" : "부대");
+      _groupsToggle.GetComponent<Image>().color = BoxMode ? UiTheme.Current.ButtonPressed : Ui.ButtonColor;
     }
 
     int _lastGroup = -1;
@@ -1387,20 +1441,22 @@ namespace FactoryWars.View {
       var left = LeftClusterWidth;
       var right = width - ContextWidth - 12 - 16;
       var room = right - left;
-      var cardWidth = Mathf.Min(660f, room);
-      if (room >= 520f) {
+      var cardWidth = Mathf.Min(CardMaxWidth, room);
+      if (room >= 480f) {
         _card.anchorMin = _card.anchorMax = _card.pivot = new Vector2(0, 0);
         _card.anchoredPosition = new Vector2(left + (room - cardWidth) / 2f, 8);
-        _card.sizeDelta = new Vector2(cardWidth, _card.sizeDelta.y);
+        _card.sizeDelta = new Vector2(cardWidth, CardHeight);
       } else {
         _card.anchorMin = _card.anchorMax = _card.pivot = new Vector2(1, 0);
-        _card.anchoredPosition = new Vector2(-12, 8 + ContextHeight + Gap + (_tooltip.gameObject.activeSelf ? 96 + Gap : 0));
-        _card.sizeDelta = new Vector2(Mathf.Max(ContextWidth, 600f), _card.sizeDelta.y);
+        _card.anchoredPosition = new Vector2(-12, 8 + ContextHeight + Gap + (_tooltip.gameObject.activeSelf ? TooltipHeight + Gap : 0));
+        _card.sizeDelta = new Vector2(Mathf.Max(ContextWidth, 520f), CardHeight);
       }
-      var innerWidth = _card.sizeDelta.x - 176 - Pad;
-      _cardTitle.rectTransform.sizeDelta = new Vector2(Mathf.Max(120f, innerWidth - 100), 44);
-      _cardHealth.sizeDelta = new Vector2(innerWidth, 20);
-      _cardDetail.rectTransform.sizeDelta = new Vector2(innerWidth, 100);
+      var innerWidth = _card.sizeDelta.x - CardText - Pad;
+      _cardTitle.rectTransform.sizeDelta = new Vector2(Mathf.Max(120f, innerWidth - 92), 38);
+      _cardHealth.sizeDelta = new Vector2(innerWidth, 14);
+      // 생산 대기열 아이콘이 보이면 상태 글은 두 줄, 아니면 세 줄까지.
+      var queue = _queueIcons.Any(i => i.gameObject.activeSelf);
+      _cardDetail.rectTransform.sizeDelta = new Vector2(innerWidth, queue ? 46 : 88);
     }
 
     // ───────────── 선택 카드 ─────────────
@@ -1732,12 +1788,15 @@ namespace FactoryWars.View {
           : "건설할 곳을 누르세요";
         showPanel = true;
       }
-      _status.text = status;
+      // 제목줄이 비면 지금 메뉴 이름(빈 청록 막대 방지).
+      _status.text = status.Length > 0 ? status : MenuTitle();
       var limit = _menu == Menu.Build ? _context.Length : ContextSlots;
       if (Entries.Count > limit) {
         Entries.RemoveRange(limit, Entries.Count - limit);
       }
-      var panelHeight = ContextHeight + (Entries.Count > ContextSlots ? Cell + Gap : 0f);
+      // 쓰는 줄 수만큼만 높인다(명령이 적으면 전장을 덜 가린다).
+      var rows = Mathf.Max(1, Mathf.CeilToInt(Entries.Count / (float)ContextColumns));
+      var panelHeight = HeaderHeight + 2 * Pad + rows * Cell + (rows - 1) * Gap;
       ((RectTransform)_contextPanel.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, panelHeight);
       _tooltip.anchoredPosition = new Vector2(-12, 8 + panelHeight + Gap);
       _contextPanel.SetActive(showPanel && (Entries.Count > 0 || input.IsPlacing));
@@ -1750,6 +1809,17 @@ namespace FactoryWars.View {
           Ui.SetIcon(_context[i], Entries[i].Icon != null ? Ui.IconSprite(Entries[i].Icon) : null);
           Ui.SetLocked(_context[i], Entries[i].Enabled == false, Entries[i].Highlight);
         }
+      }
+    }
+
+    string MenuTitle() {
+      switch (_menu) {
+        case Menu.Build: return "건설";
+        case Menu.Research: return "연구";
+        case Menu.HqResearch: return "사령부 연구";
+        case Menu.Hangar: return "격납고";
+        case Menu.Factory: return "공장";
+        default: return "명령";
       }
     }
 
@@ -1960,7 +2030,7 @@ namespace FactoryWars.View {
       });
       Entries.Add(new ContextEntry {
         Label = "방어·지원", Icon = "ui_hold", Enabled = true,
-        Detail = "방어탑 · 방공포대 · 패트리어트 · 벙커 · 레이더 · 의무/정비",
+        Detail = "방어탑 · 방공포대 · 광역 요격 포대 · 벙커 · 레이더 · 의무/정비",
         Action = () => { _menu = Menu.Build; _menuTier = 0; },
       });
       PadTo(ContextColumns + (Entries.Count > ContextColumns ? ContextColumns : 0));

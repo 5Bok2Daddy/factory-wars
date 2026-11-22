@@ -189,7 +189,7 @@ namespace FactoryWars.Tests {
       var tutorial = Object.FindAnyObjectByType<Tutorial>();
       Assert.IsTrue(FactoryWarsUtil.InTruce(Verified), "휴전 중 연습");
       Assert.AreEqual(BotDifficulty.Easy, StateOf(1).Difficulty);
-      yield return WaitFor(() => tutorial.CurrentText.StartsWith("1/7"), 5f, "1단계");
+      yield return WaitFor(() => tutorial.CurrentText.StartsWith("1/8"), 5f, "1단계");
       // HUD가 붙기 전(MatchController.TryStart가 카메라를 시작 위치로 되돌림)이나 튜토리얼이 카메라 기준점을 잡기 전에
       // 카메라를 옮기면 이동이 지워진다. 둘 다 끝난 뒤에 옮긴다.
       yield return WaitFor(() => Controller() != null && Controller().IsReady, 10f, "HUD 준비");

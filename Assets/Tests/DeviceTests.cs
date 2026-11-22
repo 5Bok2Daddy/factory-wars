@@ -24,7 +24,8 @@ namespace FactoryWars.Tests {
       ("tablet_11in_2560x1600", 2560, 1600, 11f),
     };
 
-    const float MinButtonMillimeters = 9f;
+    // 2026-11-22 HUD 개편: 사용자 지시(44~48 논리 단위)에 맞춰 9mm → 7mm(iOS 44pt 상당).
+    const float MinButtonMillimeters = 7f;
 
     [UnityTest, Explicit, Category("Device"), Timeout(300000)]
     public IEnumerator Device_TouchTargets() {
@@ -92,7 +93,7 @@ namespace FactoryWars.Tests {
       canvas.renderMode = RenderMode.ScreenSpaceOverlay;
       File.WriteAllText(Path.Combine(logs, "touch.csv"), csv);
       Debug.Log("[FW-DEVICE]\n" + csv);
-      Assert.GreaterOrEqual(worst, MinButtonMillimeters, "가장 작은 HUD 버튼이 9mm 이상\n" + csv);
+      Assert.GreaterOrEqual(worst, MinButtonMillimeters, "가장 작은 HUD 버튼이 7mm 이상\n" + csv);
     }
 
     [UnityTest, Timeout(120000)]

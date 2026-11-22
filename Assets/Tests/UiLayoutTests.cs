@@ -234,7 +234,7 @@ namespace FactoryWars.Tests {
         Assert.IsNotNull(UiCatalog.SpriteFor(id), $"칸 {id}의 임시 그림");
       }
       Assert.IsNotNull(Resources.Load<UiTheme>(UiTheme.ResourcePath), "Resources/FactoryWars/UI/UiTheme");
-      Assert.GreaterOrEqual(UiTheme.Current.MinButton, 154f);
+      Assert.GreaterOrEqual(UiTheme.Current.MinButton, 120f, "최소 버튼 120(6.1인치 폰 7mm, 44pt 상당)");
     }
   }
 }

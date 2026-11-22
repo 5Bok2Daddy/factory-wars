@@ -35,5 +35,5 @@ MonoBehaviour:
   FontMedium: 30
   FontLarge: 36
   Spacing: 8
-  MinTouchMillimeters: 9
-  MinButton: 154
+  MinTouchMillimeters: 7
+  MinButton: 120

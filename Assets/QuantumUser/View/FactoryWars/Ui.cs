@@ -42,7 +42,11 @@ namespace FactoryWars.View {
 
   public static class Ui {
     /// <summary>29 2-5: 6.1인치 431dpi 기준 9mm 규격(154px) 보장</summary>
-    public const float MinButtonSize = 154f;
+    /// <remarks>
+    /// 2026-11-22 HUD 개편: 154(9mm) → 128. 6.1인치 2400x1080(431dpi)에서 7.5mm, 약 48dp(Material)·44pt(iOS) 이상.
+    /// 사용자 지시("44~48 논리 단위 또는 같은 물리 크기")에 따라 낮췄다. 더 크게 쓰려면 설정의 UI 크기를 올린다.
+    /// </remarks>
+    public const float MinButtonSize = 128f;
     public static readonly Vector2 ReferenceResolution = new Vector2(1920, 1080);
 
     // 항목 31: 색은 UiTheme 에셋에서 읽는다.
@@ -64,7 +68,7 @@ namespace FactoryWars.View {
       canvas.sortingOrder = sortOrder;
       var scaler = root.GetComponent<CanvasScaler>();
       scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-      scaler.referenceResolution = ReferenceResolution;
+      scaler.referenceResolution = ReferenceResolution / PlayerOptions.UiScale;
       // 16:9~21:9에서 높이를 맞추면 버튼 크기가 일정하고 넓은 화면은 좌우만 늘어난다.
       scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
       scaler.matchWidthOrHeight = 1f;
@@ -152,6 +156,19 @@ namespace FactoryWars.View {
     /// 화면 전용 장식이라 입력은 막지 않는다(raycastTarget 끔: 기존 조작 흐름 유지).
     /// </summary>
     public static void Modal(RectTransform panel) {
+      ModalCore(panel);
+    }
+
+    /// <summary>설정의 UI 크기를 지금 켜진 캔버스(Ui.CreateCanvas로 만든 것)에 바로 적용한다.</summary>
+    public static void ApplyScale() {
+      foreach (var scaler in Object.FindObjectsByType<CanvasScaler>(FindObjectsSortMode.None)) {
+        if (scaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize) {
+          scaler.referenceResolution = ReferenceResolution / PlayerOptions.UiScale;
+        }
+      }
+    }
+
+    static void ModalCore(RectTransform panel) {
       if (panel.GetComponent<ModalBackdrop>() == null) {
         panel.gameObject.AddComponent<ModalBackdrop>();
       }
@@ -254,7 +271,7 @@ namespace FactoryWars.View {
       }
       Image image;
       if (slot == null) {
-        image = Icon("Icon", button.transform, "", new Vector2(0.5f, 1), new Vector2(0, -4), new Vector2(68, 68));
+        image = Icon("Icon", button.transform, "", new Vector2(0.5f, 1), new Vector2(0, -4), new Vector2(56, 56));
         ((RectTransform)image.transform).pivot = new Vector2(0.5f, 1);
         ((RectTransform)image.transform).anchoredPosition = new Vector2(0, -4);
       } else {
@@ -270,7 +287,7 @@ namespace FactoryWars.View {
           rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
           rect.pivot = new Vector2(0.5f, 1f);
           rect.anchoredPosition = new Vector2(0, -2);
-          rect.sizeDelta = new Vector2(76, 72);
+          rect.sizeDelta = new Vector2(64, 60);
           var back = rect.gameObject.AddComponent<Image>();
           back.sprite = UiCatalog.SpriteFor("panel");
           back.type = Image.Type.Sliced;
@@ -286,7 +303,7 @@ namespace FactoryWars.View {
       label.rectTransform.anchorMin = Vector2.zero;
       label.rectTransform.anchorMax = Vector2.one;
       label.rectTransform.offsetMin = new Vector2(2, 2);
-      label.rectTransform.offsetMax = new Vector2(-2, -70);
+      label.rectTransform.offsetMax = new Vector2(-2, -60);
     }
 
     public static void SetEnabled(Button button, bool enabled) {
