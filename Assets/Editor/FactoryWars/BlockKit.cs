@@ -64,6 +64,14 @@ namespace FactoryWars.EditorTools {
       new Decor { Name = "stores-divider", Prefab = PM + "Props/SM_Prop_Barrier_01.prefab", U = 16, W = 114, Yaw = -4, Scale = 1f, Half = new Vector2(1.6f, 1f) },
       new Decor { Name = "stores-pallet", Prefab = PM + "Props/SM_Prop_Pallet_03.prefab", U = 10, W = 117, Yaw = 24, Scale = 1f, Half = new Vector2(1f, 1f) },
       new Decor { Name = "stores-crate", Prefab = PM + "Props/SM_Prop_Crate_Wood_02.prefab", U = 20, W = 109, Yaw = -9, Scale = 1f, Half = new Vector2(1f, 1f) },
+      // 2026-11-22 [claude] 꾸미기: 서쪽 감시탑 앞 빈 구역(지역 (9,139), 14m)에 통신 설비 군집.
+      new Decor { Name = "comms-mast", Prefab = PM + "Props/Military/SM_Prop_Radio_Control_Box_01.prefab", U = 11, W = 135, Yaw = 0, Scale = 1f, Half = new Vector2(2.2f, 4.6f) },
+      new Decor { Name = "comms-dish", Prefab = PM + "Props/SM_Prop_Satellite_Dish_02.prefab", U = 16.5f, W = 141, Yaw = 200, Scale = 1f, Half = new Vector2(1f, 1f) },
+      new Decor { Name = "comms-generator", Prefab = PM + "Props/SM_Prop_Generator_Large_01.prefab", U = 5.5f, W = 133, Yaw = 0, Scale = 1f, Half = new Vector2(1.2f, 2.3f) },
+      new Decor { Name = "stores-barrels", Prefab = PM + "Props/Military/SM_Prop_Barrel_Stack_01.prefab", U = 21, W = 119, Yaw = 10, Scale = 1f, Half = new Vector2(1f, 1f) },
+      new Decor { Name = "stores-crates-b", Prefab = PM + "Props/Military/SM_Prop_Crate_Stack_02.prefab", U = 25, W = 123, Yaw = -20, Scale = 1f, Half = new Vector2(1.2f, 1.2f) },
+      new Decor { Name = "stores-cart", Prefab = PM + "Props/SM_Prop_Cart_Wood_01.prefab", U = 16, W = 124, Yaw = 75, Scale = 1f, Half = new Vector2(2f, 1.3f) },
+      new Decor { Name = "comms-crates", Prefab = PM + "Props/Military/SM_Prop_Crate_Stack_03.prefab", U = 17, W = 131, Yaw = 25, Scale = 1f, Half = new Vector2(1f, 1f) },
     };
 
     public static readonly Decor[] CompoundCover = {
@@ -73,7 +81,7 @@ namespace FactoryWars.EditorTools {
     };
 
     /// <summary>프리팹을 바닥 가운데가 (x, z), 바닥이 y에 오도록 놓는다(팩 프리팹마다 기준점이 모서리·가운데로 다르다).</summary>
-    static GameObject Place(Transform parent, string path, Vector3 center, float yaw, float scale, string name = null) {
+    internal static GameObject Place(Transform parent, string path, Vector3 center, float yaw, float scale, string name = null) {
       var source = AssetDatabase.LoadAssetAtPath<GameObject>(path);
       if (source == null) {
         Debug.LogWarning($"[FW-Block] missing {path}");
@@ -97,7 +105,7 @@ namespace FactoryWars.EditorTools {
       return bounds;
     }
 
-    sealed class Paving {
+    internal sealed class Paving {
       readonly List<Vector3> _vertices = new List<Vector3>();
       readonly List<Color> _colors = new List<Color>();
       readonly List<int> _indices = new List<int>();
@@ -407,7 +415,7 @@ namespace FactoryWars.EditorTools {
 
     public static readonly string[] CityIds = { "blk_city_mixed_2x2_a", "blk_city_mixed_2x2_b", "blk_city_mixed_2x2_c" };
 
-    static void Register(VisualCatalog catalog, string id, GameObject prefab, Vector3 size) {
+    internal static void Register(VisualCatalog catalog, string id, GameObject prefab, Vector3 size) {
       var slotId = "block/" + id;
       var slot = catalog.Slots.FirstOrDefault(s => s != null && s.Id == slotId);
       if (slot == null) {

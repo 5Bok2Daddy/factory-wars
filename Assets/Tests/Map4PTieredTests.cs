@@ -337,79 +337,79 @@ namespace FactoryWars.Tests {
       var corner = GridMapView.BaseCorner;
       var start = map.StartPositions[0].ToUnityVector3();
       var blocks = GridMapView.PlacedBlocks.Where(b => b != null).ToList();
-      var renderers = blocks.SelectMany(b => b.GetComponentsInChildren<MeshRenderer>()).ToList();
-      var report = new System.Collections.Generic.List<string> { $"Map4P v4 pilot audit {iteration}" };
-      var cities = blocks.Where(b => b.name.StartsWith("City_")).OrderBy(b => (b.transform.position - start).sqrMagnitude).ToList();
-      report.Add($"blocks: {blocks.Count} (cities {cities.Count})");
-      Assert.Greater(cities.Count, 0, "city pilot blocks placed");
-      // 도로 옆 블록: 가운데에서 12m 안에 간선 도로 칸(R)이 있는 가장 가까운 블록.
-      bool NextToRoad(GameObject b) {
-        var p = b.transform.position;
-        foreach (var (dx, dz) in new[] { (12f, 0f), (-12f, 0f), (0f, 12f), (0f, -12f) }) {
-          var c = Mathf.FloorToInt((p.x + dx + 320f) / 8f);
-          var r = Mathf.FloorToInt((320f - (p.z + dz)) / 8f);
-          if (GridMapView.Cell(map, r, c) == 'R') return true;
-        }
-        return false;
-      }
-      var cityClose = cities.FirstOrDefault(b => b.transform.Find("Buildings/Apartment4") != null && NextToRoad(b)) ?? cities[0];
-      var cityRoad = cities.Where(NextToRoad)
-        .OrderByDescending(b => cities.Count(other => (other.transform.position - b.transform.position).sqrMagnitude < 36f * 36f))
-        .FirstOrDefault() ?? cityClose;
+      var dress = GridDress.Placed.Where(b => b != null).ToList();
+      var report = new System.Collections.Generic.List<string> { $"Map4P v4 dress audit {iteration}" };
+      Assert.Greater(dress.Count, 500, "dress blocks placed");
+      string KindName(GameObject b) => b.name.Substring(0, b.name.IndexOf('_'));
+      string Variant(GameObject b) => b.name.Substring(0, b.name.IndexOf('@'));
+      report.Add($"dress blocks: {dress.Count} - " + string.Join(", ", dress.GroupBy(KindName).OrderBy(g => g.Key).Select(g => $"{g.Key} {g.Count()} ({g.Select(Variant).Distinct().Count()} variants)")));
       var rts = Controller().Camera;
       camera.aspect = 16f / 9f;
-      foreach (var (name, focus, height) in new[] {
-          ("base_close", new Vector2(corner.x + 49f, corner.z + 39f), 62f),
-          ("base_wide", new Vector2(-corner.x - 75f, -corner.z - 71f), 108f),
-          ("city_close", new Vector2(cityClose.transform.position.x, cityClose.transform.position.z), 35f),
-          ("city_road", new Vector2(cityRoad.transform.position.x, cityRoad.transform.position.z - 6f), 62f),
-          ("compound", new Vector2(0f, -5f), 132f),
-          ("perimeter", new Vector2(108f, 319f), 76f) }) {
+      var ramp = map.Ramps[0].Center.ToUnityVector3();
+      var mapRoot = dress[0].transform.parent.parent;
+      var all = mapRoot.GetComponentsInChildren<MeshRenderer>().Where(r => r.enabled).ToList();
+      var shots = new (string Name, Vector2 Focus, float Height)[] {
+        ("base_wide", new Vector2(-corner.x - 75f, -corner.z - 71f), 108f),
+        ("base_close", new Vector2(corner.x + 49f, corner.z + 39f), 62f),
+        ("base_ramp", new Vector2(ramp.x, ramp.z - 4f), 50f),
+        ("diagonal_road", new Vector2(-100f, -104f), 62f),
+        ("city", new Vector2(-168f, 92f), 62f),
+        ("city_close", new Vector2(-150f, 178f), 38f),
+        ("canal_bridge", new Vector2(-14f, 116f), 62f),
+        ("compound", new Vector2(0f, -5f), 132f),
+        ("compound_close", new Vector2(0f, 36f), 70f),
+        ("outer_edge", new Vector2(108f, 310f), 76f),
+        ("outer_west", new Vector2(-298f, 150f), 76f),
+        ("rubble", new Vector2(-176f, 4f), 55f),
+        ("outpost", new Vector2(-282f, -6f), 70f),
+      };
+      report.Add("view | height | renderers | draw calls (renderer x submesh + shadow casters) | triangles | low estimate (lodBias 0.5, no skyline) draws / tris");
+      foreach (var (name, focus, height) in shots) {
         rts.MoveTo(focus);
         rts.Height = height;
         rts.Apply();
         yield return WaitFrames(Fps / 2);
         CaptureCameraPng(camera, Path.Combine(dir, $"{name}_{iteration}.png"), 1920, 1080);
         var planes = GeometryUtility.CalculateFrustumPlanes(camera);
-        var inView = renderers.Where(renderer => GeometryUtility.TestPlanesAABB(planes, renderer.bounds)).ToList();
-        report.Add($"frustum {name}: height {rts.Height:0}m, {inView.Count} renderers, {PilotTriangles(inView)} triangles");
+        var tan = Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+        bool LodVisible(MeshRenderer r, float bias) {
+          var group = r.GetComponent<LODGroup>();
+          if (group == null) return true;
+          var distance = Vector3.Distance(camera.transform.position, r.bounds.center);
+          var relative = group.size / (2f * distance * tan) * bias;
+          return relative >= group.GetLODs()[0].screenRelativeTransitionHeight;
+        }
+        var inView = all.Where(r => GeometryUtility.TestPlanesAABB(planes, r.bounds)).ToList();
+        var medium = inView.Where(r => LodVisible(r, QualitySettings.lodBias)).ToList();
+        var lowSet = inView.Where(r => LodVisible(r, 0.5f) && !r.name.StartsWith("SK_")).ToList();
+        int Draws(System.Collections.Generic.List<MeshRenderer> rs) => rs.Sum(r => r.sharedMaterials.Length) + rs.Count(r => r.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off);
+        report.Add($"{name} | {rts.Height:0}m | {medium.Count} | {Draws(medium)} | {PilotTriangles(medium)} | {Draws(lowSet)} / {PilotTriangles(lowSet)}");
       }
 
-      // ---- 금지 검사(시범 구역: 본진 블록 4 + 도시 블록) ----
-      var items = blocks.SelectMany(SolidItems).ToList();
-      bool Flat(SceneAudit.Item i) => i.Bounds.size.y < 1.0f && i.Bounds.size.x * i.Bounds.size.z > 20f;
-      var overlaps = SceneAudit.Overlaps(items, 0.15f, (a, b) => Flat(a));
-      var floating = SceneAudit.FloatingOrSunk(items, (x, z) => TerrainKit.SurfaceHeight(map, x, z) + 0.03f);
+      // ---- 금지 검사(블록 단위). 경계·담장·난간·스카이라인 조각은 맞대어 잇는 구조물이라 겹침·줄지음에서 뺀다.
+      var boundary = new System.Collections.Generic.HashSet<string> { "E", "EL", "EI", "SK", "CW", "CP", "CT", "GR" };
+      var cells = dress.Where(b => !boundary.Contains(KindName(b))).ToList();
+      var items = cells.Select(b => new SceneAudit.Item { Name = b.name, Kind = Variant(b), Bounds = SceneAudit.BoundsOf(b) }).ToList();
+      Bounds Footprint(GameObject b) {
+        var slot = VisualCatalog.Current.Slots.First(s => s != null && s.Id == GridDress.Prefix + Variant(b));
+        var size = b.transform.rotation * slot.Size;
+        return new Bounds(b.transform.position + Vector3.up, new Vector3(Mathf.Abs(size.x), 2f, Mathf.Abs(size.z)));
+      }
+      // 블록 바닥 사각형(칸) 겹침·침범: 블록 칸 크기로 본다(처마·가로등 팔은 길 위로 나갈 수 있다).
+      var footprints = cells.Select(b => new SceneAudit.Item { Name = b.name, Kind = Variant(b), Bounds = Footprint(b) }).ToList();
+      var overlaps = SceneAudit.Overlaps(footprints, 0.15f);
+      var floating = SceneAudit.FloatingOrSunk(items.Where(i => !i.Name.StartsWith("Q_") && !i.Name.StartsWith("M_")).ToList(), (x, z) => TerrainKit.SurfaceHeight(map, x, z) + 0.03f, 0.4f);
       var keepOut = new System.Collections.Generic.List<(string, Rect)>();
       for (var r = 0; r < 80; r++) {
         for (var c = 0; c < 80; c++) {
           var cell = GridMapView.Cell(map, r, c);
-          if (cell == 'R' || cell == 's' || cell == 'G' || cell == 'P') {
-            keepOut.Add(($"road({r},{c})", new Rect(-320f + 8f * c + 0.3f, 320f - 8f * (r + 1) + 0.3f, 7.4f, 7.4f)));
-          }
+          if (cell == 'R' || cell == 's' || cell == 'G' || cell == 'P') keepOut.Add(($"road({r},{c})", new Rect(-320f + 8f * c + 0.3f, 320f - 8f * (r + 1) + 0.3f, 7.4f, 7.4f)));
         }
       }
-      // 채집 길: 본진 자원(1·2단) → 가장 가까운 시작 위치, 폭 4m(자원 둘레 6m·사령부 둘레 8m는 뺀다).
-      foreach (var node in map.ResourceNodes.Where(n => n.Tier <= 2)) {
-        var p = node.Shape.Center.ToUnityVector3();
-        var home = map.StartPositions.OrderBy(sp => (sp.ToUnityVector3() - p).sqrMagnitude).First().ToUnityVector3();
-        var way = (new Vector2(home.x, home.z) - new Vector2(p.x, p.z)).normalized;
-        keepOut.AddRange(SceneAudit.Corridor($"harvest{p.x:0},{p.z:0}", new Vector2(p.x, p.z) + way * 6f, new Vector2(home.x, home.z) - way * 8f, 4f));
-      }
-      var intrusions = SceneAudit.Intrusions(items, keepOut);
-      // 건설 부지: 휴전 건설 구역 안인데 건설 금지 구역(장식 자리)·지형 벽 밖에 놓인 장식.
-      var plots = new System.Collections.Generic.List<string>();
-      foreach (var item in items) {
-        var c = new FPVector3(FP.FromFloat_UNSAFE(item.Bounds.center.x), 0, FP.FromFloat_UNSAFE(item.Bounds.center.z));
-        if (map.BaseAreas.Any(a => a.Distance(c) <= FP._0) == false) continue;
-        if (map.NoBuildZones.Any(z => z.Distance(c) <= FP._0)) continue;
-        if (map.Terrain.Any(t => t.Shape.Distance(c).AsFloat < 2.5f)) continue;
-        plots.Add($"{item} on build plot");
-      }
-      // Boundary caps follow the retaining edge by design. Only freestanding props are tested for decorative rows.
-      var rows = SceneAudit.RegularRows(items.Where(i => i.Name.Contains("/PerimeterWall/") == false).ToList(), maxSpacing: 24f);
+      var intrusions = SceneAudit.Intrusions(footprints, keepOut);
+      var rows = SceneAudit.RegularRows(items, maxSpacing: 24f);
       var flat = new System.Collections.Generic.List<string>();
-      foreach (var name in new[] { "base_close", "base_wide", "city_close", "city_road", "compound", "perimeter" }) {
+      foreach (var (name, _, _) in shots) {
         var tex = new Texture2D(2, 2);
         tex.LoadImage(File.ReadAllBytes(Path.Combine(dir, $"{name}_{iteration}.png")));
         var ratio = SceneAudit.FlatColorRatio(tex);
@@ -417,19 +417,31 @@ namespace FactoryWars.Tests {
         if (ratio > SceneAudit.FlatColorLimit) flat.Add($"{name} {ratio:P1}");
         Object.Destroy(tex);
       }
-      // 빈 구역: 도시 블록마다(블록 안 전체), 본진은 (a) 그대로, (b) 건설 부지를 목적 있는 칸으로 보고.
+      // 빈 칸: 도시형 칸(H K L X Y)은 모두 블록이 있어야 한다.
       var empty = new System.Collections.Generic.List<string>();
-      foreach (var city in cities) {
-        var p = city.transform.position;
-        var own = SolidItems(city).Select(i => i.Bounds).ToList();
-        var side = SceneAudit.LargestEmptySquare(new Rect(p.x - 8f, p.z - 8f, 16f, 16f), own, (x, z) => true, 1f);
-        if (side >= SceneAudit.EmptyLimit) empty.Add($"{city.name} empty {side:0}m");
+      var dressed = new System.Collections.Generic.HashSet<(int, int)>();
+      foreach (var b in dress) {
+        var f = Footprint(b);
+        for (var x = f.min.x + 4f; x < f.max.x; x += 8f)
+          for (var z = f.min.z + 4f; z < f.max.z; z += 8f)
+            dressed.Add((Mathf.FloorToInt((320f - z) / 8f), Mathf.FloorToInt((x + 320f) / 8f)));
       }
+      for (var r = 0; r < 80; r++) for (var c = 0; c < 80; c++) {
+        var cell = GridMapView.Cell(map, r, c);
+        if ("HKLXY".IndexOf(cell) >= 0 && !dressed.Contains((r, c))) empty.Add($"undressed {cell} ({r},{c})");
+      }
+      // 중앙 요새 안 빈 사각형(엄폐물·건물·컨테이너·상인 기지 기준).
+      var compoundItems = dress.Where(b => Mathf.Abs(b.transform.position.x) < 80f && Mathf.Abs(b.transform.position.z) < 80f).Select(SceneAudit.BoundsOf).ToList();
+      compoundItems.Add(new Bounds(Vector3.zero, new Vector3(30f, 4f, 30f)));
+      foreach (var (u, w) in new[] { (32f, 32f), (32f, -32f), (-32f, -32f), (-32f, 32f) }) compoundItems.Add(new Bounds(new Vector3(u, 1f, w), new Vector3(9f, 2f, 9f)));
+      var compoundEmpty = SceneAudit.LargestEmptySquare(new Rect(-80f, -80f, 160f, 160f), compoundItems, (x, z) =>
+        GridMapView.Cell(map, Mathf.FloorToInt((320f - z) / 8f), Mathf.FloorToInt((x + 320f) / 8f)) == 'C', out var compoundClear);
+      report.Add($"compound empty square: {compoundEmpty:0}m at ({compoundClear.center.x:0},{compoundClear.center.y:0}) (limit {SceneAudit.EmptyLimit:0.0}m)");
+      if (compoundEmpty >= SceneAudit.EmptyLimit) empty.Add($"compound empty {compoundEmpty:0}m");
+      // 본진(자리 0): 시설·자원·시작 위치 기준, 건설 부지·확장 부지 밖 빈 사각형.
       var baseBlock = blocks.First(b => b.name == "Base0");
       var baseItems = SolidItems(baseBlock).Select(i => i.Bounds).ToList();
-      foreach (var node in map.ResourceNodes.Where(n => n.Tier <= 2)) {
-        baseItems.Add(new Bounds(node.Shape.Center.ToUnityVector3(), new Vector3(8f, 4f, 8f)));
-      }
+      foreach (var node in map.ResourceNodes.Where(n => n.Tier <= 2)) baseItems.Add(new Bounds(node.Shape.Center.ToUnityVector3(), new Vector3(8f, 4f, 8f)));
       baseItems.Add(new Bounds(start, new Vector3(14f, 4f, 14f)));
       bool InBase(float x, float z) => map.HighGroundAt(new FPVector3(FP.FromFloat_UNSAFE(x), 0, FP.FromFloat_UNSAFE(z))) >= 0 && x < corner.x + 175f && z < corner.z + 175f;
       bool BuildPlot(float x, float z) {
@@ -437,40 +449,25 @@ namespace FactoryWars.Tests {
         return map.BaseAreas.Any(a => a.Distance(c) <= FP._0) && map.NoBuildZones.Any(zn => zn.Distance(c) <= FP._0) == false;
       }
       var area = new Rect(corner.x, corner.z, 175f, 175f);
-      var rawEmpty = SceneAudit.LargestEmptySquare(area, baseItems, InBase);
-      var plotEmpty = SceneAudit.LargestEmptySquare(area, baseItems, (x, z) => InBase(x, z) && BuildPlot(x, z) == false, out var clear);
-      report.Add($"base empty square: raw {rawEmpty:0}m, outside build plot {plotEmpty:0}m at local ({clear.center.x - corner.x:0},{clear.center.y - corner.z:0}) (limit {SceneAudit.EmptyLimit:0.0}m)");
       var reserved = map.Expansions.Single(site => site.Kind == ExpansionKind.IronForecourt && site.SeatMask == 1).Position.ToUnityVector3();
       var expansion = new Rect(reserved.x - 8f, reserved.z - 7f, 16f, 14f);
-      var expansionIntrusions = SceneAudit.Intrusions(SolidItems(baseBlock).ToList(), new[] { ("iron forecourt", expansion) });
-      var unassigned = SceneAudit.LargestEmptySquare(area, baseItems,
-        (x, z) => InBase(x, z) && !BuildPlot(x, z) && !expansion.Contains(new Vector2(x, z)), out var unassignedArea);
+      var unassigned = SceneAudit.LargestEmptySquare(area, baseItems, (x, z) => InBase(x, z) && !BuildPlot(x, z) && !expansion.Contains(new Vector2(x, z)), out var unassignedArea);
       report.Add($"base unassigned empty square: {unassigned:0}m at local ({unassignedArea.center.x - corner.x:0},{unassignedArea.center.y - corner.z:0})");
       if (unassigned >= SceneAudit.EmptyLimit) empty.Add($"base (outside build and marked expansion plots) empty {unassigned:0}m");
-      var storeys = cities.SelectMany(c => c.GetComponentsInChildren<Transform>().Where(t => t.name == "Ground"))
-        .Select(t => (t.parent.name, SceneAudit.BoundsOf(t.gameObject).size.y)).Distinct().ToList();
-      var scale = SceneAudit.ScaleSanity(storeys, new[] { ("alley s", 8f), ("main road R", 16f) });
-      var magenta = blocks.SelectMany(b => b.GetComponentsInChildren<Renderer>())
-        .Where(r => r.sharedMaterials.Any(m => m == null || m.shader == null || m.shader.name.Contains("InternalError"))).Select(r => r.name).ToList();
+      var magenta = dress.Concat(blocks).SelectMany(b => b.GetComponentsInChildren<Renderer>())
+        .Where(r => r.sharedMaterials.Any(m => m == null || m.shader == null || m.shader.name.Contains("InternalError"))).Select(r => r.name).Distinct().ToList();
       void Section(string title, System.Collections.Generic.List<string> hits) {
         report.Add($"{title}: {(hits.Count == 0 ? "PASS" : $"FAIL {hits.Count}")}");
         report.AddRange(hits.Take(30).Select(h => "  " + h));
       }
-      Section("overlap", overlaps);
+      Section("overlap (block footprints)", overlaps);
       Section("floating/sunk", floating);
-      Section("road/harvest intrusion", intrusions);
-      Section("build-plot intrusion", plots);
-      Section("expansion-plot intrusion", expansionIntrusions);
-      Section("regular rows", rows);
+      Section("road intrusion (block footprints)", intrusions);
+      Section("regular rows (same variant)", rows);
       Section("flat colour > 30%", flat);
       Section("empty > 8 units", empty);
-      Section("scale", scale);
       Section("magenta/missing material", magenta);
-      report.Add($"pilot renderers {renderers.Count}, triangles {PilotTriangles(renderers)}, distinct materials {renderers.SelectMany(r => r.sharedMaterials).Distinct().Count()}");
-      foreach (var b in blocks.Where(b => b.name == "Base0" || b == cityClose)) {
-        var rs = b.GetComponentsInChildren<MeshRenderer>();
-        report.Add($"  {b.name}: renderers {rs.Length}, triangles {PilotTriangles(rs)}");
-      }
+      report.Add($"map renderers {all.Count}, triangles {PilotTriangles(all)}, distinct materials {all.SelectMany(r => r.sharedMaterials).Distinct().Count()}");
       File.WriteAllLines(Path.Combine(dir, $"audit_{iteration}.txt"), report);
       Debug.Log(string.Join("\n", report));
     }

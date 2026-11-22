@@ -6578,4 +6578,2104 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
+  - Id: dress4p/H1_00
+    Category: 5
+    Prefabs:
+    - {fileID: 6906816141183663999, guid: d301fda9b735c9d4eb2b29b5c686c874, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H1_01
+    Category: 5
+    Prefabs:
+    - {fileID: 4089534264528082290, guid: 17d4a004724a032489a5586b8df43914, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H1_02
+    Category: 5
+    Prefabs:
+    - {fileID: 5632296001919116241, guid: a4e5220a3fba4094eb5ce174d31bb6b5, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H1_03
+    Category: 5
+    Prefabs:
+    - {fileID: 3134476161735080718, guid: 38202effd180b004eb77f3c33404c548, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H1_04
+    Category: 5
+    Prefabs:
+    - {fileID: 5723257436196361659, guid: b4d5e0e59c522504bad6eb96ef505c12, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H1_05
+    Category: 5
+    Prefabs:
+    - {fileID: 8871714442526382803, guid: 5b5aab922cde0b24caeb6aa3aadcb204, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H1_06
+    Category: 5
+    Prefabs:
+    - {fileID: 8279123693967120584, guid: 244725a309d62ea4f934c82c90a73f6e, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H1_07
+    Category: 5
+    Prefabs:
+    - {fileID: 4001666602755849602, guid: 184884ce4b3211c4baf43b947a05a26b, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H1_08
+    Category: 5
+    Prefabs:
+    - {fileID: 4858206760398652995, guid: a7184842c5820fd4b8f4a1389d143406, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H1_09
+    Category: 5
+    Prefabs:
+    - {fileID: 200875430537953284, guid: df59581355ded134c88a11abfc6fdb7a, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HW_00
+    Category: 5
+    Prefabs:
+    - {fileID: 3140671439341663093, guid: cf46743d2d977f9448e28cfb8a96c48d, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HW_01
+    Category: 5
+    Prefabs:
+    - {fileID: 1020165031989329493, guid: 9889566102365c04e8ca275ebf1b6aac, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HW_02
+    Category: 5
+    Prefabs:
+    - {fileID: 4596011398123107327, guid: dddbd278d1a571c4ba11b1dc92a829ca, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HW_03
+    Category: 5
+    Prefabs:
+    - {fileID: 3191805760474514841, guid: 2a5b9f50a269c044f9858158384ce52c, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HW_04
+    Category: 5
+    Prefabs:
+    - {fileID: 6819561691197275110, guid: af1c3e0eb65bddb458e854df158bf7ea, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HW_05
+    Category: 5
+    Prefabs:
+    - {fileID: 5890326117383697415, guid: a68e7f50ecd36d748ae5a5dc835f5990, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HD_00
+    Category: 5
+    Prefabs:
+    - {fileID: 8066189779986088298, guid: afd39d42bb659b74693e54397dc84a60, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HD_01
+    Category: 5
+    Prefabs:
+    - {fileID: 7366214395043041350, guid: b609d59769d3c614db6d851079523149, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HD_02
+    Category: 5
+    Prefabs:
+    - {fileID: 2647483952542353758, guid: f2eb9208e88e2e2428c598ccae5c59cd, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HD_03
+    Category: 5
+    Prefabs:
+    - {fileID: 1242637526910477708, guid: 560965875598f4f41a7ecd31efb05dce, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H4_00
+    Category: 5
+    Prefabs:
+    - {fileID: 8032976137497622244, guid: 293a4d0d7ad8fe74eb1e8333aed8c900, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H4_01
+    Category: 5
+    Prefabs:
+    - {fileID: 5391804823125984146, guid: 52b941add220f904183a1f8e0fa90c19, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H4_02
+    Category: 5
+    Prefabs:
+    - {fileID: 8739722778448673299, guid: 21a8aa68524f8fa4a8fc5369af383d7d, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H4_03
+    Category: 5
+    Prefabs:
+    - {fileID: 6007385746825774738, guid: 7cd12135373536744abd113df11fbd45, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H4_04
+    Category: 5
+    Prefabs:
+    - {fileID: 6365382401189750017, guid: 104eb950431fcdf4486f5c307a29c3c9, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/H4_05
+    Category: 5
+    Prefabs:
+    - {fileID: 7071646083008956010, guid: 58002987e231c3840b9c4bc9c89b4ac3, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/K_00
+    Category: 5
+    Prefabs:
+    - {fileID: 8071608305187778439, guid: 9b26c3af3979e094d9f59760e1e48df2, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/K_01
+    Category: 5
+    Prefabs:
+    - {fileID: 8299062688885014180, guid: 73a3cbb257c5b3143bb9e50b54e18311, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/K_02
+    Category: 5
+    Prefabs:
+    - {fileID: 9010732305914606909, guid: 5b64ee6f00557814a9792cda85c16f3b, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/K_03
+    Category: 5
+    Prefabs:
+    - {fileID: 8218743114694353337, guid: dd431f5d6a8b8de40a5b10a6f6d880ca, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/L_00
+    Category: 5
+    Prefabs:
+    - {fileID: 3086371731188561804, guid: d29fcc94cdeb82e4190d7b4e33af7947, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/L_01
+    Category: 5
+    Prefabs:
+    - {fileID: 3130497167950215196, guid: 00ddeb757fde5eb46925b18632eb01da, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/L_02
+    Category: 5
+    Prefabs:
+    - {fileID: 7480385477174825657, guid: 98739696ba60c9b46a0a81e1c67f5669, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/L_03
+    Category: 5
+    Prefabs:
+    - {fileID: 3450217549377463396, guid: c381b9307d6c4da4a8149bb8a38b3780, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/X_00
+    Category: 5
+    Prefabs:
+    - {fileID: 7238541229224740612, guid: 7926d58abd33bac4ea1904830a1f3719, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/X_01
+    Category: 5
+    Prefabs:
+    - {fileID: 1420429758512527859, guid: 61748cd986cfab143bd105bd36563e9c, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/X_02
+    Category: 5
+    Prefabs:
+    - {fileID: 7120194363310236869, guid: 99729812ff47d584d9149f2af5fcf048, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/X_03
+    Category: 5
+    Prefabs:
+    - {fileID: 8282608240277319622, guid: 530b651564bda8c428bec8757f49afe4, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/Y_00
+    Category: 5
+    Prefabs:
+    - {fileID: 6401727980033878169, guid: 5c9aa6c10360c1349907f283247e9c43, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/Y_01
+    Category: 5
+    Prefabs:
+    - {fileID: 1159063238908089787, guid: cc8eb4b9d6aedc746a0080155f47656d, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/Y_02
+    Category: 5
+    Prefabs:
+    - {fileID: 332677913463261892, guid: bccc13dc353387447bf983fb4a149010, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/Y_03
+    Category: 5
+    Prefabs:
+    - {fileID: 7574216980263033906, guid: 0ca43ff5721e61746a9d62d11cda74c0, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/Q_00
+    Category: 5
+    Prefabs:
+    - {fileID: 7117334421871021202, guid: 8f633aeceb53d7d409b5e633874bd9c7, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/Q_01
+    Category: 5
+    Prefabs:
+    - {fileID: 5131375929304016575, guid: 657665d9d0319d642a84fd0a88932a0e, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/Q_02
+    Category: 5
+    Prefabs:
+    - {fileID: 7431185990525547421, guid: ca90c496cf833764dbaad26f71a78d06, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/M_00
+    Category: 5
+    Prefabs:
+    - {fileID: 6631979174694326628, guid: 8f3c6632890cd1f48a7ff3324c69c66d, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/M_01
+    Category: 5
+    Prefabs:
+    - {fileID: 2534372900044653339, guid: f258db9bc27363c45aa798f9dd41d687, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/M_02
+    Category: 5
+    Prefabs:
+    - {fileID: 73184671743327951, guid: 101fc7fc9e960624d9d5269b82f2f544, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/E_00
+    Category: 5
+    Prefabs:
+    - {fileID: 8457577930332521846, guid: 70aec0b8134718944832cc0a19d65bd9, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/E_01
+    Category: 5
+    Prefabs:
+    - {fileID: 7098170155450192601, guid: 4aae44c5f5c847f45a9dd00f2b30bc4e, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/E_02
+    Category: 5
+    Prefabs:
+    - {fileID: 6526181416973693497, guid: 7d8e877ab67a4c041b1a26cadff04040, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/E_03
+    Category: 5
+    Prefabs:
+    - {fileID: 3820133650588769033, guid: 9f4bc8f2f6602154fa04d6237ecdc64c, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/E_04
+    Category: 5
+    Prefabs:
+    - {fileID: 419142990082384860, guid: 6f4c26f109b5a5a40bc074b5d12bfa47, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/E_05
+    Category: 5
+    Prefabs:
+    - {fileID: 8826259508593609974, guid: 4ae5e512315d4954799cf3ff9257ce4e, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/E_06
+    Category: 5
+    Prefabs:
+    - {fileID: 5773270603574747313, guid: 62c669259216d6a458d99ef93327deee, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/EL_00
+    Category: 5
+    Prefabs:
+    - {fileID: 5627288178977428975, guid: ca619b360c9eb6642b077f867ff9cf56, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/EL_01
+    Category: 5
+    Prefabs:
+    - {fileID: 4892463533438623100, guid: e730228119191d8429940050ad0a4056, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/EL_02
+    Category: 5
+    Prefabs:
+    - {fileID: 6366220874898009096, guid: b980030dd87526145b226c9e983f147e, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/EL_03
+    Category: 5
+    Prefabs:
+    - {fileID: 3999491547943267654, guid: 564c09a8403198a459e7b5b9cfa5c0eb, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/EI_00
+    Category: 5
+    Prefabs:
+    - {fileID: 1237831965611635516, guid: bcc252976292a76468b12e1f8027eadc, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/EI_01
+    Category: 5
+    Prefabs:
+    - {fileID: 2860435387166055732, guid: d0239f056f084fc4c868cf7eab5218ad, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/EI_02
+    Category: 5
+    Prefabs:
+    - {fileID: 6848185464662716568, guid: 7067e0013e7884a41bee4b129bf84c8e, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/EI_03
+    Category: 5
+    Prefabs:
+    - {fileID: 3800889310166270965, guid: a495f1410f6487a4aab3f50a0cfd7441, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/SK_00
+    Category: 5
+    Prefabs:
+    - {fileID: 207535383779808199, guid: 8a5c102a53924524893d797036d77df8, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 10, y: 0, z: 10}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/SK_01
+    Category: 5
+    Prefabs:
+    - {fileID: 3345500043598641511, guid: 875f99638de085e49a2d79160f8d2146, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 10, y: 0, z: 10}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/SK_02
+    Category: 5
+    Prefabs:
+    - {fileID: 586169274408149385, guid: a1298c1b6ed414c4fbeb023aa3aa6338, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 10, y: 0, z: 10}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/SK_03
+    Category: 5
+    Prefabs:
+    - {fileID: 5309257269837142156, guid: 547cc6afdd313564aa707cb2870ba887, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 10, y: 0, z: 10}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/SK_04
+    Category: 5
+    Prefabs:
+    - {fileID: 1407446027462636681, guid: 902efe2918f341c46b567c2bd3d4c2c8, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 10, y: 0, z: 10}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/SK_05
+    Category: 5
+    Prefabs:
+    - {fileID: 8592234053830674482, guid: b43879e8efa90914db2e7be371f4f994, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 10, y: 0, z: 10}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/SK_06
+    Category: 5
+    Prefabs:
+    - {fileID: 3350520526277391398, guid: efd40613f71033d4fbd9712b585236c1, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 10, y: 0, z: 10}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/SK_07
+    Category: 5
+    Prefabs:
+    - {fileID: 1927985633325190371, guid: c12876f2dbb361a4499d2f7efc9d2eb9, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 10, y: 0, z: 10}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CW_00
+    Category: 5
+    Prefabs:
+    - {fileID: 6909839033757919892, guid: ba993e1ecc65214419bbb7b90892eae3, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 2}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CW_01
+    Category: 5
+    Prefabs:
+    - {fileID: 3155392402509911150, guid: 45d98087a6f7cfb489e1615832b7dea7, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 2}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CW_02
+    Category: 5
+    Prefabs:
+    - {fileID: 3273718825273256150, guid: 748c4225e4e67934798950229581ac96, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 2}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CP_00
+    Category: 5
+    Prefabs:
+    - {fileID: 7166263664159228686, guid: a7da632338d00734d8e7729197749137, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2, y: 0, z: 2}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CT_00
+    Category: 5
+    Prefabs:
+    - {fileID: 372009781382574653, guid: 570617233ae625747b46885969307a7b, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CB_00
+    Category: 5
+    Prefabs:
+    - {fileID: 2786483593627396340, guid: 14ba602c75b05c044b5bfb35e9d4bb86, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CB_01
+    Category: 5
+    Prefabs:
+    - {fileID: 1662303252073884472, guid: d1b39eb7107d0484295ceefb9ab9b707, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CB_02
+    Category: 5
+    Prefabs:
+    - {fileID: 3792058672445209509, guid: e4183f0b4805f6d4fb8d99ea78ca0b8c, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16, y: 0, z: 16}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CC_00
+    Category: 5
+    Prefabs:
+    - {fileID: 8982411312479838380, guid: 189f2b23323ab7d419937495ad69d5e9, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CC_01
+    Category: 5
+    Prefabs:
+    - {fileID: 6471872620070055374, guid: bc5d0611da06ae54da7f48f38cd42614, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CC_02
+    Category: 5
+    Prefabs:
+    - {fileID: 3910796874009471270, guid: e2ac90613ba13be48919d37b6c49d351, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/CC_03
+    Category: 5
+    Prefabs:
+    - {fileID: 168665810802840640, guid: 4bfdaaa3b7fea28479944ca0b392ce80, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/GR_00
+    Category: 5
+    Prefabs:
+    - {fileID: 7163269566270291047, guid: 7a1d18464546c4b4cbd194e461c1ca3e, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 1}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   Enabled: 1

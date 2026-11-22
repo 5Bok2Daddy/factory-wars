@@ -41,8 +41,8 @@ namespace FactoryWars.View {
         case 'p': return new Color(0.61f, 0.59f, 0.53f);
         case 'v': return new Color(0.55f, 0.55f, 0.54f);
         case 'P': return new Color(0.43f, 0.44f, 0.43f);
-        case 'R': return new Color(0.24f, 0.25f, 0.27f);
-        case 's': return new Color(0.36f, 0.36f, 0.37f);
+        case 'R': return new Color(0.25f, 0.26f, 0.28f);
+        case 's': return new Color(0.31f, 0.31f, 0.33f);
         case 'G': return new Color(0.50f, 0.50f, 0.50f);
         case 'w': return new Color(0.70f, 0.64f, 0.53f);
         case 'W': return new Color(0.28f, 0.33f, 0.34f);
@@ -97,7 +97,14 @@ namespace FactoryWars.View {
       var n = map.CellGridSize;
       var size = Size(map);
       var covered = new bool[n, n];
-      PlaceCityBlocks(root, map, covered);
+      // 꾸미기 블록(DressKit)이 있으면 도시·공원·주차·잔해·경계·요새 전부를 칸 지도 규칙으로 놓는다(시범 도시 블록 대신).
+      var dressed = GridDress.Ready();
+      if (dressed) {
+        GridDress.Build(root, map);
+        GridPaint.Build(root, map, material != null ? material : ArtLook.NeutralMaterial);
+      } else {
+        PlaceCityBlocks(root, map, covered);
+      }
       PlaceBases(root, map);
       if (VisualCatalog.TryFilled(CompoundTrimSlot, out var trim)) {
         var compound = Object.Instantiate(trim.Prefab, root);
@@ -156,7 +163,7 @@ namespace FactoryWars.View {
           heights[r, c, 3] = Height(map, cell, x1 - In, z0 + In);
           var lift = cell == 'W' ? 0f : 0.03f;
           // 칸마다 아주 약한 명암 차(본진·도로는 더 약하게: 8m 바둑판이 보이지 않게).
-          var calm = cell == 'B' || cell == 'R' || cell == 'v';
+          var calm = cell == 'B' || cell == 'R' || cell == 'v' || cell == 's' || cell == 'G' || cell == 'C';
           var shade = (calm ? 0.985f : 0.96f) + (calm ? 0.03f : 0.08f) * Hash(r, c);
           var color = Tile(cell) * shade;
           color.a = 1f;
