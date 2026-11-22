@@ -10668,6 +10668,74 @@ MonoBehaviour:
         RawValue: 262144
       Yaw:
         RawValue: 0
+  - Kind: 5
+    Shape:
+      Center:
+        X:
+          RawValue: 2097152
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 2097152
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 144179
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: 2949120
+  - Kind: 5
+    Shape:
+      Center:
+        X:
+          RawValue: -2097152
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: 2097152
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 144179
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: -2949120
+  - Kind: 5
+    Shape:
+      Center:
+        X:
+          RawValue: -2097152
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -2097152
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 144179
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: -8847360
+  - Kind: 5
+    Shape:
+      Center:
+        X:
+          RawValue: 2097152
+        Y:
+          RawValue: 0
+        Z:
+          RawValue: -2097152
+      Radius:
+        RawValue: 0
+      HalfLength:
+        RawValue: 144179
+      HalfWidth:
+        RawValue: 65536
+      Yaw:
+        RawValue: -14745600
   - Kind: 4
     Shape:
       Center:
@@ -11436,62 +11504,62 @@ MonoBehaviour:
   NoBuildZones:
   - Center:
       X:
-        RawValue: -13369344
+        RawValue: -13107200
       Y:
         RawValue: 0
       Z:
-        RawValue: -13369344
+        RawValue: -13107200
     Radius:
       RawValue: 0
     HalfLength:
-      RawValue: 524288
+      RawValue: 786432
     HalfWidth:
-      RawValue: 524288
+      RawValue: 786432
     Yaw:
       RawValue: 0
   - Center:
       X:
-        RawValue: 13369344
+        RawValue: 13107200
       Y:
         RawValue: 0
       Z:
-        RawValue: -13369344
+        RawValue: -13107200
     Radius:
       RawValue: 0
     HalfLength:
-      RawValue: 524288
+      RawValue: 786432
     HalfWidth:
-      RawValue: 524288
+      RawValue: 786432
     Yaw:
       RawValue: 0
   - Center:
       X:
-        RawValue: 13369344
+        RawValue: 13107200
       Y:
         RawValue: 0
       Z:
-        RawValue: 13369344
+        RawValue: 13107200
     Radius:
       RawValue: 0
     HalfLength:
-      RawValue: 524288
+      RawValue: 786432
     HalfWidth:
-      RawValue: 524288
+      RawValue: 786432
     Yaw:
       RawValue: 0
   - Center:
       X:
-        RawValue: -13369344
+        RawValue: -13107200
       Y:
         RawValue: 0
       Z:
-        RawValue: 13369344
+        RawValue: 13107200
     Radius:
       RawValue: 0
     HalfLength:
-      RawValue: 524288
+      RawValue: 786432
     HalfWidth:
-      RawValue: 524288
+      RawValue: 786432
     Yaw:
       RawValue: 0
   - Center:
@@ -12889,6 +12957,426 @@ MonoBehaviour:
       RawValue: 196608
     Yaw:
       RawValue: -16711680
+  - Center:
+      X:
+        RawValue: -11862016
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -17235968
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 262144
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: 196608
+  - Center:
+      X:
+        RawValue: 17235968
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -11862016
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 262144
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -5701632
+  - Center:
+      X:
+        RawValue: 11862016
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 17235968
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 262144
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -11599872
+  - Center:
+      X:
+        RawValue: -17235968
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 11862016
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 262144
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -17498112
+  - Center:
+      X:
+        RawValue: -11665408
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -17563648
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -1048576
+  - Center:
+      X:
+        RawValue: 17563648
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -11665408
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -6946816
+  - Center:
+      X:
+        RawValue: 11665408
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 17563648
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -12845056
+  - Center:
+      X:
+        RawValue: -17563648
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 11665408
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -18743296
+  - Center:
+      X:
+        RawValue: -11337728
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -17694720
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: 1769472
+  - Center:
+      X:
+        RawValue: 17694720
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -11337728
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -4128768
+  - Center:
+      X:
+        RawValue: 11337728
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 17694720
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -10027008
+  - Center:
+      X:
+        RawValue: -17694720
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 11337728
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -15925248
+  - Center:
+      X:
+        RawValue: -12451840
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -16777216
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 229376
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: 786432
+  - Center:
+      X:
+        RawValue: 16777216
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -12451840
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 229376
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -5111808
+  - Center:
+      X:
+        RawValue: 12451840
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 16777216
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 229376
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -11010048
+  - Center:
+      X:
+        RawValue: -16777216
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 12451840
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 229376
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -16908288
+  - Center:
+      X:
+        RawValue: -17825792
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -11403264
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 235929
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -262144
+  - Center:
+      X:
+        RawValue: 11403264
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -17825792
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 235929
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -6160384
+  - Center:
+      X:
+        RawValue: 17825792
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 11403264
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 235929
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -12058624
+  - Center:
+      X:
+        RawValue: -11403264
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 17825792
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 235929
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -17956864
+  - Center:
+      X:
+        RawValue: -18219008
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -11206656
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: 1572864
+  - Center:
+      X:
+        RawValue: 11206656
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -18219008
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -4325376
+  - Center:
+      X:
+        RawValue: 18219008
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 11206656
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -10223616
+  - Center:
+      X:
+        RawValue: -11206656
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 18219008
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -16121856
+  - Center:
+      X:
+        RawValue: -17563648
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -11730944
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -589824
+  - Center:
+      X:
+        RawValue: 11730944
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -17563648
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -6488064
+  - Center:
+      X:
+        RawValue: 17563648
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 11730944
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -12386304
+  - Center:
+      X:
+        RawValue: -11730944
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 17563648
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 196608
+    HalfWidth:
+      RawValue: 196608
+    Yaw:
+      RawValue: -18284544
   Bridges:
   - Center:
       X:
@@ -15114,62 +15602,62 @@ MonoBehaviour:
   Ramps:
   - Center:
       X:
-        RawValue: -13369344
+        RawValue: -13107200
       Y:
         RawValue: 0
       Z:
-        RawValue: -13369344
+        RawValue: -13107200
     Radius:
       RawValue: 0
     HalfLength:
-      RawValue: 262144
+      RawValue: 524288
     HalfWidth:
-      RawValue: 262144
+      RawValue: 524288
     Yaw:
       RawValue: 0
   - Center:
       X:
-        RawValue: 13369344
+        RawValue: 13107200
       Y:
         RawValue: 0
       Z:
-        RawValue: -13369344
+        RawValue: -13107200
     Radius:
       RawValue: 0
     HalfLength:
-      RawValue: 262144
+      RawValue: 524288
     HalfWidth:
-      RawValue: 262144
+      RawValue: 524288
     Yaw:
       RawValue: 0
   - Center:
       X:
-        RawValue: 13369344
+        RawValue: 13107200
       Y:
         RawValue: 0
       Z:
-        RawValue: 13369344
+        RawValue: 13107200
     Radius:
       RawValue: 0
     HalfLength:
-      RawValue: 262144
+      RawValue: 524288
     HalfWidth:
-      RawValue: 262144
+      RawValue: 524288
     Yaw:
       RawValue: 0
   - Center:
       X:
-        RawValue: -13369344
+        RawValue: -13107200
       Y:
         RawValue: 0
       Z:
-        RawValue: 13369344
+        RawValue: 13107200
     Radius:
       RawValue: 0
     HalfLength:
-      RawValue: 262144
+      RawValue: 524288
     HalfWidth:
-      RawValue: 262144
+      RawValue: 524288
     Yaw:
       RawValue: 0
   Tiered: 1

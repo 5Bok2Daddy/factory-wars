@@ -18,6 +18,7 @@ namespace FactoryWars.EditorTools {
     public const string OutFolder = "Assets/FactoryWarsArt/Blocks";
     const string PC = "Assets/ExternalAssets/Synty/PolygonCity/Prefabs/";
     const string PM = "Assets/ExternalAssets/Synty/PolygonMilitary/Prefabs/";
+    public static readonly Vector2 Forecourt = new Vector2(112, 34);
 
     /// <summary>본진 장식 한 덩어리(자리 0 본진 좌표). Half = 바닥 반 크기(건설 금지 구역 = 이 사각형 + 2m).</summary>
     public struct Decor {
@@ -56,6 +57,19 @@ namespace FactoryWars.EditorTools {
       new Decor { Name = "lamp-b", Prefab = PM + "Props/SM_Prop_LightPole_01.prefab", U = 54, W = 48, Yaw = 0, Scale = 1f, Half = new Vector2(1, 1) },
       new Decor { Name = "lamp-c", Prefab = PM + "Props/SM_Prop_LightPole_01.prefab", U = 30, W = 96, Yaw = 0, Scale = 1f, Half = new Vector2(1, 1) },
       new Decor { Name = "crates", Prefab = PM + "Props/SM_Prop_Crate_Wood_01.prefab", U = 23, W = 75, Yaw = 15, Scale = 1.3f, Half = new Vector2(1f, 1f) },
+      new Decor { Name = "yard-divider", Prefab = PM + "Props/SM_Prop_Barrier_02.prefab", U = 107, W = 25, Yaw = 3, Scale = 1f, Half = new Vector2(2f, 1f) },
+      new Decor { Name = "yard-pallet", Prefab = PM + "Props/SM_Prop_Pallet_02.prefab", U = 110, W = 20, Yaw = -16, Scale = 1f, Half = new Vector2(1f, 1f) },
+      new Decor { Name = "yard-crate", Prefab = PM + "Props/SM_Prop_Crate_Wood_03.prefab", U = 115, W = 18, Yaw = 27, Scale = 1f, Half = new Vector2(1f, 1f) },
+      new Decor { Name = "yard-planter", Prefab = PC + "Props/SM_Prop_Planter_02.prefab", U = 98, W = 32, Yaw = 12, Scale = 1f, Half = new Vector2(1.5f, 1f) },
+      new Decor { Name = "stores-divider", Prefab = PM + "Props/SM_Prop_Barrier_01.prefab", U = 16, W = 114, Yaw = -4, Scale = 1f, Half = new Vector2(1.6f, 1f) },
+      new Decor { Name = "stores-pallet", Prefab = PM + "Props/SM_Prop_Pallet_03.prefab", U = 10, W = 117, Yaw = 24, Scale = 1f, Half = new Vector2(1f, 1f) },
+      new Decor { Name = "stores-crate", Prefab = PM + "Props/SM_Prop_Crate_Wood_02.prefab", U = 20, W = 109, Yaw = -9, Scale = 1f, Half = new Vector2(1f, 1f) },
+    };
+
+    public static readonly Decor[] CompoundCover = {
+      new Decor { Name = "cover", Prefab = PM + "Props/SM_Prop_Barrier_02.prefab", U = 32, W = 32, Yaw = 45, Scale = 1f, Half = new Vector2(2.2f, 1f) },
+      new Decor { Name = "pallet", Prefab = PM + "Props/SM_Prop_Pallet_02.prefab", U = 38, W = 31, Yaw = 14, Scale = 1f },
+      new Decor { Name = "crate", Prefab = PM + "Props/SM_Prop_Crate_Wood_03.prefab", U = 35, W = 36, Yaw = 35, Scale = 1f },
     };
 
     /// <summary>프리팹을 바닥 가운데가 (x, z), 바닥이 y에 오도록 놓는다(팩 프리팹마다 기준점이 모서리·가운데로 다르다).</summary>
@@ -91,12 +105,16 @@ namespace FactoryWars.EditorTools {
       public void Strip(Vector2 a, Vector2 b, float width, float y, Color color) {
         var along = (b - a).normalized;
         var side = new Vector2(-along.y, along.x) * (width * 0.5f);
+        Polygon(new[] { a - side, a + side, b + side, b - side }, y, color);
+      }
+
+      public void Polygon(IList<Vector2> points, float y, Color color) {
         var offset = _vertices.Count;
-        foreach (var p in new[] { a - side, a + side, b + side, b - side }) {
+        foreach (var p in points) {
           _vertices.Add(new Vector3(p.x, y, p.y));
           _colors.Add(QualitySettings.activeColorSpace == ColorSpace.Linear ? color.linear : color);
         }
-        _indices.AddRange(new[] { offset, offset + 1, offset + 2, offset, offset + 2, offset + 3 });
+        for (var i = 1; i + 1 < points.Count; i++) _indices.AddRange(new[] { offset, offset + i, offset + i + 1 });
       }
 
       public void Save(GameObject root) {
@@ -127,27 +145,32 @@ namespace FactoryWars.EditorTools {
       }
     }
 
-    static void BasePaving(GameObject root, HashSet<(int, int)> cells, int minC, int maxR) {
+    static void BasePaving(GameObject root, char[,] grid, HashSet<(int, int)> cells, int minC, int maxR) {
       var paving = new Paving();
       var concrete = new Color(0.59f, 0.59f, 0.56f);
       var joint = new Color(0.43f, 0.43f, 0.41f);
       var apron = new Color(0.38f, 0.41f, 0.41f);
       var marking = new Color(0.83f, 0.69f, 0.40f);
       const float tile = FactoryWarsSetup.GridCell / 2f;
-      foreach (var (r, c) in cells) {
+      bool KeepCorner(int r, int c) => cells.Contains((r, c)) ||
+        r < 0 || r >= FactoryWarsSetup.GridCells || c < 0 || c >= FactoryWarsSetup.GridCells || grid[r, c] == 'P' || grid[r, c] == 'E';
+      var panelCorners = new[] { 0, 3, 1, 2 };
+      foreach (var (r, c) in cells.OrderBy(cell => cell.Item1).ThenBy(cell => cell.Item2)) {
+        var chamfers = GridMapView.ConvexCorners(r, c, KeepCorner);
         for (var i = 0; i < 4; i++) {
           var x = (c - minC) * FactoryWarsSetup.GridCell + i % 2 * tile;
-          var z = (maxR - r) * FactoryWarsSetup.GridCell + i / 2 * tile + tile / 2f;
+          var z = (maxR - r) * FactoryWarsSetup.GridCell + i / 2 * tile;
           var shade = 0.96f + ((r * 31 + c * 17 + i * 23) % 11) * 0.007f;
-          paving.Strip(new Vector2(x, z), new Vector2(x + tile, z), tile, 0.037f, joint);
-          paving.Strip(new Vector2(x + 0.035f, z), new Vector2(x + tile - 0.035f, z), tile - 0.07f, 0.044f, concrete * shade);
+          var mask = chamfers & (1 << panelCorners[i]);
+          paving.Polygon(GridMapView.TileOutline(x, z, x + tile, z + tile, mask), 0.037f, joint);
+          paving.Polygon(GridMapView.TileOutline(x + 0.035f, z + 0.035f, x + tile - 0.035f, z + tile - 0.035f, mask), 0.044f, concrete * shade);
         }
       }
       paving.Strip(new Vector2(49, 38), new Vector2(77, 38), 9.5f, 0.052f, apron);
       for (var x = 52; x <= 76; x += 6) {
         paving.Strip(new Vector2(x, 34), new Vector2(x, 42), 0.19f, 0.063f, marking);
       }
-      var entry = new Vector2(76.3f, 83f);
+      var entry = new Vector2(78f, 78f);
       var bend = new Vector2(72, 69);
       var yard = new Vector2(48, 69);
       paving.Strip(bend, entry, 7.3f, 0.054f, apron);
@@ -168,6 +191,23 @@ namespace FactoryWars.EditorTools {
       paving.Strip(new Vector2(58, 31), new Vector2(75, 31), 0.25f, 0.062f, marking);
       paving.Strip(new Vector2(36, 106), new Vector2(36, 122), 10f, 0.053f, apron);
       paving.Strip(new Vector2(32, 106), new Vector2(40, 106), 0.24f, 0.063f, marking);
+      // Dark drainage strips and a striped loading pocket alongside the existing vehicle apron.
+      paving.Strip(new Vector2(91, 23), new Vector2(114, 23), 15f, 0.054f, apron);
+      paving.Strip(new Vector2(91, 30), new Vector2(114, 30), 0.24f, 0.065f, joint);
+      paving.Strip(new Vector2(49, 32.5f), new Vector2(77, 32.5f), 0.23f, 0.064f, joint);
+      paving.Strip(new Vector2(21, 2), new Vector2(49, 2), 0.23f, 0.064f, joint);
+      for (var x = 92; x < 113; x += 3) {
+        paving.Strip(new Vector2(x, 28.9f), new Vector2(x + 1.1f, 27.8f), 0.21f, 0.063f, marking);
+      }
+      paving.Strip(Forecourt - Vector2.right * 8f, Forecourt + Vector2.right * 8f, 14f, .056f, new Color(.50f, .51f, .46f));
+      for (var sx = -1; sx <= 1; sx += 2) {
+        for (var sz = -1; sz <= 1; sz += 2) {
+          var point = Forecourt + new Vector2(sx * 7.7f, sz * 6.7f);
+          paving.Strip(point, point - Vector2.right * (sx * 2.4f), .24f, .065f, marking);
+          paving.Strip(point, point - Vector2.up * (sz * 2.4f), .24f, .066f, marking);
+        }
+      }
+      paving.Strip(new Vector2(6, 114), new Vector2(19, 114), 10f, .053f, apron);
       paving.Save(root);
     }
 
@@ -220,11 +260,42 @@ namespace FactoryWars.EditorTools {
           var bounds = WorldBounds(wall);
           var margin = bounds;
           margin.Expand(0.14f);
-          if (length > 3.85f || depth > 2f || occupied.Any(b => b.Intersects(margin))) Object.DestroyImmediate(wall);
+          if (length > 3.4f || depth > 2f || occupied.Any(b => b.Intersects(margin))) Object.DestroyImmediate(wall);
           else occupied.Add(bounds);
         }
       }
-      BasePaving(root, cells, minC, maxR);
+      BasePaving(root, grid, cells, minC, maxR);
+      return root;
+    }
+
+    static GameObject BuildCompoundTrim() {
+      var root = new GameObject("blk_compound_pilot_trim");
+      var street = new GameObject("Street").transform;
+      street.SetParent(root.transform, false);
+      var paving = new Paving();
+      var asphalt = new Color(0.36f, 0.37f, 0.36f);
+      var marking = new Color(0.78f, 0.68f, 0.43f);
+      for (var side = 0; side < 4; side++) {
+        var turn = Quaternion.Euler(0, side * -90f, 0);
+        Vector2 Rotate(float x, float z) {
+          var p = turn * new Vector3(x, 0, z);
+          return new Vector2(p.x, p.z);
+        }
+        foreach (var prop in CompoundCover) {
+          var p = Rotate(prop.U, prop.W);
+          Place(street, prop.Prefab, new Vector3(p.x, 0, p.y), prop.Yaw - side * 90f, prop.Scale, $"{prop.Name}-{side}");
+        }
+        paving.Strip(Rotate(28, 33), Rotate(41, 33), 10f, 0.019f, asphalt);
+        paving.Strip(Rotate(28, 38.2f), Rotate(41, 38.2f), 0.26f, 0.027f, marking);
+        paving.Strip(Rotate(0, 16), Rotate(0, 57), 10f, 0.018f, asphalt);
+        for (var z = 17; z < 56; z += 6) {
+          paving.Strip(Rotate(0, z), Rotate(0, z + 2.6f), 0.24f, 0.026f, marking);
+        }
+        paving.Strip(Rotate(11, 61), Rotate(32, 61), 0.46f, 0.024f, asphalt);
+        paving.Strip(Rotate(32, 61), Rotate(61, 32), 0.46f, 0.024f, asphalt);
+        paving.Strip(Rotate(61, 32), Rotate(61, 11), 0.46f, 0.024f, asphalt);
+      }
+      paving.Save(root);
       return root;
     }
 
@@ -370,12 +441,19 @@ namespace FactoryWars.EditorTools {
         Debug.Log($"[FW-Block] {id} size={size} renderers={renderers}");
       }
       Save("blk_base_pad", BuildBasePad(grid));
+      Save("blk_compound_pilot_trim", BuildCompoundTrim());
       foreach (var id in CityIds) {
         Save(id, BuildCity(id));
       }
       catalog.Invalidate();
       EditorUtility.SetDirty(catalog);
       AssetDatabase.SaveAssets();
+    }
+
+    [MenuItem("Tools/Factory Wars/Map4P v4/Build and Bake Pilot")]
+    public static void BuildAndBakePilot() {
+      BuildPilotBlocks();
+      FactoryWarsSetup.BakeMap4P();
     }
   }
 }

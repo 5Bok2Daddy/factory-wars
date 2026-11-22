@@ -6553,4 +6553,29 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
+  - Id: block/blk_compound_pilot_trim
+    Category: 5
+    Prefabs:
+    - {fileID: 3695185821506276148, guid: aafb9f3a2623b0049a4990a003825ac4, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 122.46, y: 0.9543916, z: 122.46001}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 pilot block (BlockKit.cs), Synty POLYGON City + Military pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   Enabled: 1

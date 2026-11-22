@@ -97,6 +97,7 @@ namespace FactoryWars.Tests {
           Assert.AreEqual(grid[r, c], (char)map.CellGrid[r * 80 + c], $"cell ({r},{c}) matches CSV");
           var blocked = grid[r, c] == 'E' || grid[r, c] == 'H' || grid[r, c] == 'W';
           var point = CellCenter(r, c);
+          Assert.AreEqual(grid[r, c] == 'P', map.Ramps.Any(shape => shape.Distance(point) <= FP._0), $"ramp occupancy ({r},{c})");
           if (OnGroundNavMesh(frame, point) == blocked) {
             var nearestResource = map.ResourceNodes.Min(n => n.Shape.Distance(point).AsFloat);
             var nearestWall = map.Terrain.Where(t => t.Kind == TerrainKind.Wall).Min(t => t.Shape.Distance(point).AsFloat);
@@ -135,6 +136,19 @@ namespace FactoryWars.Tests {
       Assert.Less(map.HighGroundAt(CellCenter(40, 2)), 0, "edge sidewalk strip is not high ground");
       Assert.AreEqual(4, map.Ramps.Length, "one ramp block per base");
       Assert.AreEqual(4, map.TruceGates.Length, "truce gate on each ramp");
+      foreach (var ramp in map.Ramps) {
+        var center = ramp.Center.ToUnityVector3();
+        var slope = -new Vector2(center.x, center.z).normalized;
+        var before = TieredTerrain.MainHeight;
+        for (var t = -13f; t <= 16f; t += .5f) {
+          var point = new Vector2(center.x, center.z) + slope * t;
+          var current = TieredTerrain.SurfaceHeight(map, point.x, point.y);
+          Assert.LessOrEqual(current, before + 0.02f, $"ramp {center} monotonically descends");
+          Assert.LessOrEqual(before - current, 0.30f, $"ramp {center} has no lip at {point}");
+          before = current;
+        }
+        Assert.AreEqual(0, before, 0.03f, $"ramp {center} joins the road");
+      }
       Assert.IsTrue(map.HasTrader && map.TraderPosition == FPVector3.Zero, "trader at the compound centre");
       Assert.AreEqual(4 * 5 + 8, map.ResourceNodes.Length, "per base 3 tier-1 + 2 tier-2, 4 outposts x 2");
     }
@@ -234,6 +248,11 @@ namespace FactoryWars.Tests {
       var actual = new float[4];
       var finished = new int[4];
       var previous = new FPVector3[4];
+      var ramps = FactoryWarsUtil.MapInfo(Verified).Ramps;
+      var crossedRamps = new bool[4];
+      var stalledTicks = new int[4];
+      var slowestRamp = new int[4];
+      var lastTick = new int[4];
       for (var player = 0; player < 4; player++) {
         previous[player] = Verified.Get<Transform3D>(tanks[player]).Position;
         Assert.Less(FactoryWarsUtil.FlatDistanceSqr(previous[player], V(spawns[player].Item3, spawns[player].Item4)).AsFloat, 4f, $"player {player} test tank spawn");
@@ -241,6 +260,7 @@ namespace FactoryWars.Tests {
         planned[player] = RouteLength(Verified, previous[player], goals[player]);
       }
       var start = Verified.Number;
+      System.Array.Fill(lastTick, start);
       for (var player = 0; player < 4; player++) {
         Game.SendCommand(player, new MoveUnitsCommand { Units = new[] { tanks[player] }, Target = goals[player] });
       }
@@ -249,7 +269,16 @@ namespace FactoryWars.Tests {
           if (finished[player] != 0) continue;
           Assert.IsTrue(Verified.Exists(tanks[player]), $"player {player} tank destroyed");
           var position = Verified.Get<Transform3D>(tanks[player]).Position;
-          actual[player] += (position - previous[player]).Magnitude.AsFloat;
+          var step = (position - previous[player]).Magnitude.AsFloat;
+          actual[player] += step;
+          var ramp = ramps[FactoryWarsUtil.SeatOf(Verified, player)];
+          if (ramp.Distance(position) <= FP._0) {
+            crossedRamps[player] = true;
+            if (step < .04f) stalledTicks[player] += Verified.Number - lastTick[player];
+            else stalledTicks[player] = 0;
+            slowestRamp[player] = Mathf.Max(slowestRamp[player], stalledTicks[player]);
+          }
+          lastTick[player] = Verified.Number;
           previous[player] = position;
           if (FactoryWarsUtil.FlatDistanceSqr(position, goals[player]) > 9) continue;
           finished[player] = Verified.Number;
@@ -260,7 +289,10 @@ namespace FactoryWars.Tests {
       }, 180f, "four vehicles enter the compound");
       for (var player = 0; player < 4; player++) {
         Assert.Greater(finished[player], 0, $"player {player} stopped at {previous[player]} entering {goals[player]}");
+        Assert.IsTrue(crossedRamps[player], $"player {player} drove across its ramp");
+        Assert.Less(slowestRamp[player], Fps, $"player {player} paused for a second on its ramp");
       }
+      Debug.Log($"Map4P v4 stationary ticks at ramp by player: {string.Join(", ", slowestRamp)}");
     }
 
     static string ScreenshotRoot() => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "screenshots", "map4p-v4"));
@@ -293,7 +325,7 @@ namespace FactoryWars.Tests {
       var clip = camera.farClipPlane;
       try {
         camera.orthographic = true;
-        camera.orthographicSize = (map.BoundsMax.X - map.BoundsMin.X).AsFloat * 0.5f;
+        camera.orthographicSize = (map.BoundsMax.X - map.BoundsMin.X).AsFloat * 0.5f + 42f;
         camera.farClipPlane = 1500f;
         camera.transform.SetPositionAndRotation(new Vector3(0f, 600f, 0f), Quaternion.Euler(90f, 0f, 0f));
         CaptureCameraPng(camera, Path.Combine(dir, $"map_top_{iteration}.png"), 1600, 1600);
@@ -331,7 +363,8 @@ namespace FactoryWars.Tests {
           ("base_wide", new Vector2(-corner.x - 75f, -corner.z - 71f), 108f),
           ("city_close", new Vector2(cityClose.transform.position.x, cityClose.transform.position.z), 35f),
           ("city_road", new Vector2(cityRoad.transform.position.x, cityRoad.transform.position.z - 6f), 62f),
-          ("compound", new Vector2(0f, -5f), 155f) }) {
+          ("compound", new Vector2(0f, -5f), 132f),
+          ("perimeter", new Vector2(108f, 319f), 76f) }) {
         rts.MoveTo(focus);
         rts.Height = height;
         rts.Apply();
@@ -376,7 +409,7 @@ namespace FactoryWars.Tests {
       // Boundary caps follow the retaining edge by design. Only freestanding props are tested for decorative rows.
       var rows = SceneAudit.RegularRows(items.Where(i => i.Name.Contains("/PerimeterWall/") == false).ToList(), maxSpacing: 24f);
       var flat = new System.Collections.Generic.List<string>();
-      foreach (var name in new[] { "base_close", "base_wide", "city_close", "city_road", "compound" }) {
+      foreach (var name in new[] { "base_close", "base_wide", "city_close", "city_road", "compound", "perimeter" }) {
         var tex = new Texture2D(2, 2);
         tex.LoadImage(File.ReadAllBytes(Path.Combine(dir, $"{name}_{iteration}.png")));
         var ratio = SceneAudit.FlatColorRatio(tex);
@@ -407,7 +440,13 @@ namespace FactoryWars.Tests {
       var rawEmpty = SceneAudit.LargestEmptySquare(area, baseItems, InBase);
       var plotEmpty = SceneAudit.LargestEmptySquare(area, baseItems, (x, z) => InBase(x, z) && BuildPlot(x, z) == false, out var clear);
       report.Add($"base empty square: raw {rawEmpty:0}m, outside build plot {plotEmpty:0}m at local ({clear.center.x - corner.x:0},{clear.center.y - corner.z:0}) (limit {SceneAudit.EmptyLimit:0.0}m)");
-      if (plotEmpty >= SceneAudit.EmptyLimit) empty.Add($"base (outside build plot) empty {plotEmpty:0}m");
+      var reserved = map.Expansions.Single(site => site.Kind == ExpansionKind.IronForecourt && site.SeatMask == 1).Position.ToUnityVector3();
+      var expansion = new Rect(reserved.x - 8f, reserved.z - 7f, 16f, 14f);
+      var expansionIntrusions = SceneAudit.Intrusions(SolidItems(baseBlock).ToList(), new[] { ("iron forecourt", expansion) });
+      var unassigned = SceneAudit.LargestEmptySquare(area, baseItems,
+        (x, z) => InBase(x, z) && !BuildPlot(x, z) && !expansion.Contains(new Vector2(x, z)), out var unassignedArea);
+      report.Add($"base unassigned empty square: {unassigned:0}m at local ({unassignedArea.center.x - corner.x:0},{unassignedArea.center.y - corner.z:0})");
+      if (unassigned >= SceneAudit.EmptyLimit) empty.Add($"base (outside build and marked expansion plots) empty {unassigned:0}m");
       var storeys = cities.SelectMany(c => c.GetComponentsInChildren<Transform>().Where(t => t.name == "Ground"))
         .Select(t => (t.parent.name, SceneAudit.BoundsOf(t.gameObject).size.y)).Distinct().ToList();
       var scale = SceneAudit.ScaleSanity(storeys, new[] { ("alley s", 8f), ("main road R", 16f) });
@@ -421,6 +460,7 @@ namespace FactoryWars.Tests {
       Section("floating/sunk", floating);
       Section("road/harvest intrusion", intrusions);
       Section("build-plot intrusion", plots);
+      Section("expansion-plot intrusion", expansionIntrusions);
       Section("regular rows", rows);
       Section("flat colour > 30%", flat);
       Section("empty > 8 units", empty);

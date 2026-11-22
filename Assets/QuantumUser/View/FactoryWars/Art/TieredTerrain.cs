@@ -47,6 +47,20 @@ namespace FactoryWars.View {
       if (Inside(map.HighGrounds, p)) {
         return MainHeight;
       }
+      if (GridMapView.Uses(map)) {
+        // The apron feathers into the adjoining road. Use the same surface for terrain and unit views.
+        var cell = map.CellGridCell.AsFloat;
+        foreach (var ramp in map.Ramps) {
+          if (FPMath.Abs(ramp.Center.X - p.X) > ramp.HalfLength + map.CellGridCell ||
+              FPMath.Abs(ramp.Center.Z - p.Z) > ramp.HalfWidth + map.CellGridCell) continue;
+          var shoulder = ramp.Distance(p).AsFloat;
+          if (shoulder >= cell * 0.5f) continue;
+          var run = DistanceToNearest(map.HighGrounds, p);
+          return Mathf.SmoothStep(MainHeight, 0f, run / (cell * 1.75f)) *
+            Mathf.SmoothStep(1f, 0f, shoulder / (cell * 0.5f));
+        }
+        return 0f;
+      }
       foreach (var ramp in map.Ramps ?? System.Array.Empty<MapShape>()) {
         if (ramp.Distance(p) <= FP._0) {
           return SlopeHeight(ramp, map.HighGrounds, MainHeight, x, z);

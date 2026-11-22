@@ -191,6 +191,10 @@ namespace FactoryWars.EditorTools {
       // 중앙 요새: 가운데에서 C·p·Y로 이어진 칸. 둘레 담장, 동서남북 가운데 16m 출입구.
       var compound = Flood(g, (GridCells / 2, GridCells / 2), ch => ch == 'C' || ch == 'p' || ch == 'Y');
       terrain.AddRange(EdgeWalls(compound, (r, c) => true, 1.2f, (x, z) => (Mathf.Abs(x) < 8.5f && Mathf.Abs(z) > 40f) || (Mathf.Abs(z) < 8.5f && Mathf.Abs(x) > 40f)));
+      foreach (var prop in BlockKit.CompoundCover.Where(prop => prop.Half.x > 0)) {
+        var cover = Rect(prop.U, prop.W, prop.Half.x, prop.Half.y, prop.Yaw);
+        for (var seat = 0; seat < 4; seat++) terrain.Add(Feature(TerrainKind.Wall, TurnShape(cover, seat)));
+      }
 
       // 수로(W)는 지상 통행 불가, 다리(G)는 길. 화면 물은 W + G(다리 밑).
       var water = MergeCells((r, c) => g[r, c] == 'W').Select(cells => CellRect(cells)).ToList();
@@ -200,13 +204,17 @@ namespace FactoryWars.EditorTools {
       var ramps = new List<MapShape>();
       var gates = new List<MapShape>();
       for (var seat = 0; seat < 4; seat++) {
-        var ramp = MergeCells((r, c) => g[r, c] == 'P' && bases[seat].Any(b => Mathf.Abs(b.Item1 - r) + Mathf.Abs(b.Item2 - c) == 1))
-          .Select(cells => CellRect(cells)).ToList();
-        if (ramp.Count != 1) {
-          throw new System.InvalidOperationException($"grid seat {seat}: expected one ramp block, found {ramp.Count}");
+        var entry = MergeCells((r, c) => g[r, c] == 'P' && bases[seat].Any(b => Mathf.Abs(b.Item1 - r) + Mathf.Abs(b.Item2 - c) == 1));
+        if (entry.Count != 1) {
+          throw new System.InvalidOperationException($"grid seat {seat}: expected one ramp entrance, found {entry.Count}");
         }
-        ramps.Add(ramp[0]);
-        gates.Add(ramp[0]);
+        var cells = Flood(g, (entry[0].R0, entry[0].C0), ch => ch == 'P');
+        var footprint = MergeCells((r, c) => cells.Contains((r, c)));
+        if (footprint.Count != 1) {
+          throw new System.InvalidOperationException($"grid seat {seat}: ramp cells must make a rectangle");
+        }
+        ramps.Add(CellRect(footprint[0]));
+        gates.Add(CellRect(entry[0]));
       }
 
       var roads = MergeCells((r, c) => g[r, c] == 'R' || g[r, c] == 's' || g[r, c] == 'G').Select(cells => CellRect(cells)).ToList();
@@ -232,7 +240,7 @@ namespace FactoryWars.EditorTools {
       // 본진 배치(자리 0 기준 m): 시작(사령부) · 1단 자원 3 · 앞마당 확장 + 2단 자원 2. 헬기장(p)·차량장(v) 대각선은 피한다.
       var layout = new (string Name, float U, float W)[] {
         ("start", 44, 92), ("iron-a", 14, 128), ("iron-b", 128, 14), ("wood", 14, 60),
-        ("forecourt", 112, 34), ("iron-2", 136, 18), ("wood-2", 96, 14), ("crate-a", 20, 100), ("crate-b", 100, 20),
+        ("forecourt", BlockKit.Forecourt.x, BlockKit.Forecourt.y), ("iron-2", 136, 18), ("wood-2", 96, 14), ("crate-a", 20, 100), ("crate-b", 100, 20),
       };
       foreach (var item in layout) Check(item.Name, item.U, item.W);
       foreach (var decor in BlockKit.BaseDecor) Check(decor.Name, decor.U, decor.W);
