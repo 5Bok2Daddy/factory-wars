@@ -1,5 +1,40 @@
 # Factory Wars 인수인계
 
+## 현재 인수인계 — [claude] 2026-11-22 (사용량 한도로 중단)
+- 마지막 커밋: 아래 map4p-v4-2 커밋 / main / push함
+- 끝난 것: ① 드론·전투함(c349685, Game/Tools/glb 변환기, 항공모함 GLB는 temp-asset에 없음) ② 자동 금지 검사 SceneAudit.cs ③ 칸 지도→맵 데이터 생성기 FactoryWarsGridMap.cs(Map4P=640m v4, Explicit 모드, NavMesh 굽기 완료) ④ 시범 블록 BlockKit.cs(blk_base_pad, blk_city_mixed_2x2_a/b/c, 출력 Assets/FactoryWarsArt/Blocks는 gitignore → 메뉴 Map4P v4/Build Pilot Blocks로 재생성) ⑤ GridMapView.cs(칸 타일 + 블록 배치)
+- 진행 중(미완): v1 캡처(screenshots/map4p-v4/*_v1.png, audit_v1.txt) 뒤 수정함(옆면 방향, 기본 지면 끔, 도시 블록 사분면 배치·인도 소품 안쪽으로, 가로등·상자 건설금지 구역). 수정 뒤 재캡처(v2) 안 함.
+- 다음에 할 일:
+  1. 맵 다시 굽기: Unity -executeMethod FactoryWars.EditorTools.FactoryWarsSetup.BakeMap4P → FW_MAP_ITER=v2 로 -testFilter "FactoryWars.Tests.LocalMatchTests.Map4P_CaptureTopAndGameplayViews;...Map4P_v4_GridMatchesCsv;...Map4P_v4_SymmetryFairnessAndReach"
+  2. 실패 수정: GridMatchesCsv = 일부 B·P·M 칸 중심이 NavMesh 밖(본진 옹벽 1.6m·경사로 경계·M 가장자리, 목록은 v4.xml) → 검사 허용치 또는 벽 두께 조정. Symmetry = 운하 조각 (-8,0,252) 180도 짝 없음(W 칸 묶음 방향이 대칭이 아님 → 칸 단위 조각으로 만들거나 검사를 칸 기준으로).
+  3. BaseArea를 본진 삼각형 전체 경계 사각형으로 넓히기(빈 구역 24m 실패), 본진 바닥 표시 추가, pilot_vs_conceptD.png(시안 D 없음 → 시안 A 자르기), design/reviews/map4p-v4-pilot-REQUEST.md, SETUP-REPORT "Map4P v4 시범", 전체 PlayMode 기준 대비, 성능(시범 렌더러 4500/삼각형 268만 — 본진 블록 255 렌더러, 정적 배칭 필요).
+- 주의: 사용자 지시 = 시범 블록 2종까지 만든 뒤 멈춤(나머지 11종 금지). Map4P가 640m라 시간 기반 시험이 다수 바뀔 수 있음(전체 시험 미실행). X/Y 칸은 동서 비대칭이라 판정에서 둘 다 통행 가능으로 둠(사용자 질문 대상).
+- 최신 캡처: screenshots/map4p-v4/map_top_v1.png, base_wide_v1.png, city_road_v1.png. 비평: 구도는 칸 지도와 일치 / 임시 덩어리 옆면 빠짐·바닥 얼룩·도시 블록 겹침(수정함, 재확인 필요) / 본진 바닥이 넓은 빈 콘크리트.
+- 사용량 상태: 한도 도달.
+
+## 이전 인수인계
+## 현재 인수인계 — [claude-chat] 2026-11-22 15:40 KST
+- 마지막 커밋: `f5c0dad` (main). 이 블록 작성 시점에 새 코드 변경 없음(문서·프롬프트만 추가).
+- 끝난 것: 36·34·35·37 순환 완료/부분 완료, Strategy UI Kit HUD·HUD 개편(SETUP-REPORT 맨 위 참고).
+- 사용자 평가: **맵 결과에 크게 실망**(회색 단색 바닥·빈 모래 부지·블록 벽·격자 상자). 맵부터 전부 재구성 요청.
+- 다음에 할 일: ① `PROMPT-MAP4P-REBUILD-EN.md` 전체 수행(Map4P 재구성 → 나머지 맵 점검) ② 끝나면 `NEXT-TASK-38-MAP-MERCENARY-TRADE.md`를 **기존 NpcTraderSystem/TradeCommand 확장**으로 수행. 시가지·산업 톤, 새 구매 가정 금지.
+- 주의/함정: 참고 그림 `concept-art/2026-11-22/map_reference.png`. Unity Hub 로그인/라이선스 상태(EXIT:198) 먼저 확인. 한 번에 한 Unity만. `Game-measure`는 측정용 워크트리.
+- 추가 대기 작업(16:30): `PROMPT-ASSETS-DRONE-SHIPS-EN.md` (Map4P 다음, 38 이전).
+- **[claude-chat] Map4P v3 교차 검수 (16:35, `screenshots/map4p/*_v3.png`)** — 구조는 좋아졌으나 참고 그림과 아직 멀다. 다음 반복(v4~v5)에서 반드시 고칠 것:
+  1. 수로가 **직선 + 원형 해자**다. 참고 그림처럼 **북→남 S자 한 줄기**로 바꾸고 중앙 요새를 감싸는 원형 고리는 없앤다.
+  2. 본진 부지가 **밝은 회색 빈 사각형**이다(디자인 게이트 위반: 큰 빈 부지). 콘크리트 패드는 작게, 그 안에 격납고·막사·차량 군집·헬기장·도로 표시를 넣고, 패드 밖은 단차 + 경사로 + 건물 열로 채운다.
+  3. 바닥이 거의 **평평한 단색 회색**이다. 차선 사이 구역에 건물 열(상가·아파트·오피스), 컨테이너 야적장, 잔해 구역, 도랑을 군집 배치하고 재질 변화(아스팔트·콘크리트·흙)를 준다.
+  4. 경계가 **작은 소품 한 줄**뿐이다. 건물 외벽 + 방벽 + 잔해 띠로 여러 겹, 모서리는 높게.
+  5. 중앙 요새는 사각 철조망 안이 비어 보이고 주변이 원형 광장이다. **팔각형 담장**, 내부 헬기장·컨테이너 야적장·건물 2~3동, 바깥은 도로가 감싸게.
+  6. 높이 3단이 화면에서 거의 안 읽힌다. 고지(능선)·저지(수로·도랑)·중간(도로·부지) 높이 차를 키우고 경사로를 분명히.
+- **16:40 방향 전환:** `STUDIO-PIPELINE.md` 참고. Map4P 좌표 배치 반복 중단, 칸 지도·블록 방식으로 전환. 디자인은 교차 리뷰 + 사용자 승인 필수.
+- **16:50:** 시안 A 확정. `design/maps/Map4P-BRIEF.md` 읽을 것. 칸 지도 사용자 확인 대기 중.
+- **17:10:** 640m·칸 지도 v4 확정. 다음은 `PROMPT-MAP4P-V4-EN.md` 그대로. 시범 블록 2종 후 멈춤.
+- 필수: 디자인 품질 게이트(AGENTS/CLAUDE/GEMINI.md)와 교대 규칙 준수. 모든 답변·보고서 한글.
+- 최신 캡처 비평(교차 검수 첫 항목): 잘된 점 — HUD 정리됨 / 못생긴 점 — 맵 바닥·부지·경계·소품 배치 전반 / 먼저 고칠 것 — 맵 구도 전체.
+
+## 이전 인수인계
+
 > **2026-11-21 저녁 갱신(Claude):** 최신 상태와 남은 일은 `SETUP-REPORT.md`의 "현재 단계 · 2026-11-21 (Claude)"가 기준이다. 아래 본문은 오전 Codex 인수 시점 기록이다. 전체 PlayMode는 564건 중 411 통과·23 실패·130 건너뜀, 실서버 체크섬 561회 일치·디싱크 0. 다음 작업은 Strategy UI Kit 통합이다.
 
 2026-11-21 KST · 인수인계 전 기준 커밋 `42c25ab` · 브랜치 `main`

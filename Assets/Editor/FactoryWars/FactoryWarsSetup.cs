@@ -92,7 +92,7 @@ namespace FactoryWars.EditorTools {
       BuildMapSpec(FourPlayerMap);
       BuildMapScene(FourPlayerMap);
       AssetDatabase.SaveAssets();
-      Debug.Log("Factory Wars baked Map4P (reference layout)");
+      Debug.Log("Factory Wars baked Map4P (grid v4)");
     }
 
     public static void ConfigurePlayer() {
@@ -1479,6 +1479,9 @@ namespace FactoryWars.EditorTools {
 
     /// <summary>플레이어 수만큼 회전 대칭 복사본을 돌려준다. 2인은 180도, 4인은 90도 간격.</summary>
     static IEnumerable<MapShape> Orbit(MapDef def, MapShape shape) {
+      if (def.Explicit) {
+        return new[] { shape };
+      }
       var step = 4 / def.Players;
       return Enumerable.Range(0, def.Players).Select(i => Turn(shape, i * step));
     }
@@ -1525,12 +1528,12 @@ namespace FactoryWars.EditorTools {
       spec.BoundsMax = new FPVector2(def.HalfSize, def.HalfSize);
       spec.SealedPerimeter = true;
       spec.ExtractorSnapRadius = 10;
-      spec.StartPositions = Orbit(def, new MapShape { Center = def.Start }).Select(s => s.Center).ToArray();
+      spec.StartPositions = def.Explicit ? def.Starts : Orbit(def, new MapShape { Center = def.Start }).Select(s => s.Center).ToArray();
       spec.StartingResources = R(500, 300);
       spec.StartingEngineers = 4;
       spec.ResourceNodes = def.Nodes
         .SelectMany((node, index) => Orbit(def, node.Shape).Select(shape => new ResourceNodePlacement {
-          Kind = node.Kind, Amount = node.Amount, Shape = shape, Tier = index < 3 ? 1 : 2,
+          Kind = node.Kind, Amount = node.Amount, Shape = shape, Tier = def.Explicit ? node.Tier : index < 3 ? 1 : 2,
         }))
         .Concat(def.CenterNodes.Select(node => {
           node.Tier = 3;
@@ -1584,6 +1587,11 @@ namespace FactoryWars.EditorTools {
             }
           }
         }
+      }
+      if (def.Explicit) {
+        // 칸 지도 물: 판정 칸(W)은 extraRiver(막음), 다리 밑 칸은 화면 물만.
+        extraRiver.AddRange(def.WaterRects ?? new MapShape[0]);
+        riverList.AddRange(def.WaterVisual ?? new MapShape[0]);
       }
       riverList.AddRange(extraRiver);
       spec.River = riverList.ToArray();
@@ -1670,15 +1678,18 @@ namespace FactoryWars.EditorTools {
           .ToArray();
       }
       spec.NoBuildZones = def.NoBuildZones.SelectMany(zone => Orbit(def, zone)).ToArray();
-      spec.BaseAreas = Orbit(def, def.BaseArea).ToArray();
+      spec.BaseAreas = def.Explicit ? def.SeatBaseAreas : Orbit(def, def.BaseArea).ToArray();
       spec.Tiered = def.Tiered;
       spec.MidGrounds = (def.MidGrounds ?? new MapShape[0]).SelectMany(shape => Orbit(def, shape)).ToArray();
       // 관문은 자리 순서대로(자리 0의 관문들, 자리 1의 관문들 …). 굽기에서 "{BarrierRegion}{자리}" 영역이 된다.
-      spec.TruceGates = Enumerable.Range(0, def.Players).SelectMany(seat => (def.TruceGates ?? new MapShape[0]).Select(gate => Turn(gate, seat * (4 / def.Players)))).ToArray();
+      spec.TruceGates = def.Explicit ? def.TruceGates : Enumerable.Range(0, def.Players).SelectMany(seat => (def.TruceGates ?? new MapShape[0]).Select(gate => Turn(gate, seat * (4 / def.Players)))).ToArray();
       spec.Trenches = (def.Trenches ?? new MapShape[0]).SelectMany(shape => Orbit(def, shape)).ToArray();
       spec.Channel = System.Array.Empty<MapShape>();
       spec.WaterGates = System.Array.Empty<MapShape>();
       spec.ChannelWidth = FP._0;
+      spec.CellGrid = def.CellGrid ?? new byte[0];
+      spec.CellGridSize = def.CellGrid != null ? GridCells : 0;
+      spec.CellGridCell = def.CellGrid != null ? N(GridCell) : FP._0;
       FillBattlefield(def, spec, extraRiver);
       EditorUtility.SetDirty(spec);
     }
@@ -1698,6 +1709,7 @@ namespace FactoryWars.EditorTools {
       spec.CaptureSites = def.CaptureSites
         .SelectMany(site => Enumerable.Range(0, def.Players).Select(seat => new CaptureSitePlacement { Kind = site.Kind, Center = Turned(site.Center, seat), Radius = site.Radius }))
         .Concat(def.CenterSites)
+        .Concat(def.AllCaptureSites ?? new CaptureSitePlacement[0])
         .Where(s => InExtraWater(s.Center, 3f) == false).ToArray();
       spec.Barricades = def.Barricades.SelectMany(shape => Orbit(def, shape))
         .Where(shape => InExtraWater(shape.Center, 3.5f) == false)
@@ -1715,6 +1727,7 @@ namespace FactoryWars.EditorTools {
           }
         }
       }
+      crates.AddRange(def.Crates ?? new CrateSpot[0]);
       spec.CrateSpots = crates.ToArray();
 
       spec.HighGrounds = def.HighGrounds.SelectMany(shape => Orbit(def, shape)).Where(s => InExtraWater(s.Center, 6f) == false).ToArray();
@@ -1752,6 +1765,7 @@ namespace FactoryWars.EditorTools {
       }
       var everyone = (1 << def.Players) - 1;
       sites.AddRange(def.CenterExpansions.Select(site => new ExpansionSite { Kind = site.Kind, Position = site.Position, SeatMask = everyone }));
+      sites.AddRange(def.AllExpansions ?? new ExpansionSite[0]);
       spec.Expansions = sites.ToArray();
       CityLayout(def, spec);
       BakeGroundGrid(spec);

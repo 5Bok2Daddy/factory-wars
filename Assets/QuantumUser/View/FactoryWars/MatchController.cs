@@ -58,6 +58,7 @@ namespace FactoryWars.View {
       Camera.KeepViewportInside = map.SealedPerimeter;
       Camera.BoundsMin = new Vector2(map.BoundsMin.X.AsFloat - channel, map.BoundsMin.Y.AsFloat - channel);
       Camera.BoundsMax = new Vector2(map.BoundsMax.X.AsFloat + channel, map.BoundsMax.Y.AsFloat + channel);
+      RtsCamera.MapZoomScale = Mathf.Clamp((map.BoundsMax.X - map.BoundsMin.X).AsFloat / 320f, 1f, 1.5f);
       var start = Quantum.FactoryWars.FactoryWarsUtil.StartPosition(frame, Player);
       Camera.MoveTo(new Vector2(start.X.AsFloat, start.Z.AsFloat));
 

@@ -78,6 +78,21 @@ namespace FactoryWars.EditorTools {
       public MapShape[] TruceGates = new MapShape[0];
       /// <summary>자리 0의 참호(은폐 구역). 회전 복사된다.</summary>
       public MapShape[] Trenches = new MapShape[0];
+      /// <summary>
+      /// 칸 지도 맵(FactoryWarsGridMap.cs): 모든 모양이 이미 맵 전체 좌표다. 회전 복제(Orbit)를 하지 않고,
+      /// 자리별 물건은 아래 명시 배열(Starts·SeatBaseAreas·Crates·AllExpansions·AllCaptureSites)과 자리 순서 TruceGates를 그대로 쓴다.
+      /// </summary>
+      public bool Explicit;
+      public FPVector3[] Starts;
+      public MapShape[] SeatBaseAreas;
+      public CrateSpot[] Crates;
+      public ExpansionSite[] AllExpansions;
+      public CaptureSitePlacement[] AllCaptureSites;
+      /// <summary>지상 통행을 막는 물 칸(판정 + 화면).</summary>
+      public MapShape[] WaterRects;
+      /// <summary>화면에만 물로 그리는 칸(다리 밑).</summary>
+      public MapShape[] WaterVisual;
+      public byte[] CellGrid;
       public MapDef Clone() => (MapDef)MemberwiseClone();
     }
 
@@ -261,7 +276,9 @@ namespace FactoryWars.EditorTools {
     /// 표준 맵(2026-11-22 참고 그림 재구성): 모서리 테라스 본진, S자 운하와 다리 6개, 대각 간선·외곽 순환로, 중앙 팔각 단지.
     /// 사막·시가지·다도해·해협은 그대로 FourPlayerBase를 복제한다(이 정의는 Map4P 전용).
     /// </summary>
-    static readonly MapDef FourPlayerMap = BuildReferenceFourPlayer();
+    // 2026-11-22 Map4P v4: 칸 지도(design/maps/Map4P_grid_v4.csv, 640m)에서 만든다. 예전 참고 그림 배치(BuildReferenceFourPlayer)는 기록으로 남긴다.
+    static MapDef _fourPlayerMap;
+    static MapDef FourPlayerMap => _fourPlayerMap ??= BuildGridFourPlayer();
 
     /// <summary>a→b 선을 따라 길이 최대 8m 조각으로 벽을 세운다. gaps는 a에서 잰 거리 구간(통로)이다.</summary>
     static IEnumerable<TerrainFeature> Wall(TerrainKind kind, Vector2 a, Vector2 b, float halfWidth, params (float From, float To)[] gaps) {

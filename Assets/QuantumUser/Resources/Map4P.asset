@@ -22,7 +22,7 @@ MonoBehaviour:
   Scene: Map4P
   ScenePath: Assets/QuantumUser/Scenes/Map4P.unity
   SceneGuid: f785351cc2c644d4cb33789c470ac502
-  WorldSize: 352
+  WorldSize: 672
   BucketsCount: 16
   BucketsSubdivisions: 8
   BucketingAxis: 0
@@ -34,8 +34,8 @@ MonoBehaviour:
     Id:
       Value: 308761472557958381
   SerializeTrianglesMetadata: 0
-  GridSizeX: 88
-  GridSizeY: 88
+  GridSizeX: 168
+  GridSizeY: 168
   GridNodeSize: 4
   NavMeshLinks:
   - Id:
@@ -54,86 +54,6 @@ MonoBehaviour:
   - Bridge3
   - Bridge4
   - Bridge5
-  - City0
-  - City1
-  - City10
-  - City11
-  - City12
-  - City13
-  - City14
-  - City15
-  - City16
-  - City17
-  - City18
-  - City19
-  - City2
-  - City20
-  - City21
-  - City22
-  - City23
-  - City24
-  - City25
-  - City26
-  - City27
-  - City28
-  - City29
-  - City3
-  - City30
-  - City31
-  - City32
-  - City33
-  - City34
-  - City35
-  - City36
-  - City37
-  - City38
-  - City39
-  - City4
-  - City40
-  - City41
-  - City42
-  - City43
-  - City44
-  - City45
-  - City46
-  - City47
-  - City48
-  - City49
-  - City5
-  - City50
-  - City51
-  - City52
-  - City53
-  - City54
-  - City55
-  - City56
-  - City57
-  - City58
-  - City59
-  - City6
-  - City60
-  - City61
-  - City62
-  - City63
-  - City64
-  - City65
-  - City66
-  - City67
-  - City7
-  - City8
-  - City9
-  - Fall0
-  - Fall1
-  - Fall17
-  - Fall18
-  - Fall19
-  - Fall2
-  - Fall34
-  - Fall35
-  - Fall36
-  - Fall51
-  - Fall52
-  - Fall53
   StaticColliders2D: []
   StaticColliders3D: []
   MapEntities: []

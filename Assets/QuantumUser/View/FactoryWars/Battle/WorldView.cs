@@ -205,6 +205,8 @@ namespace FactoryWars.View {
       TerrainKit.Ground(ground, _map, 3);
       var groundMesh = ground.ToMesh("world_ground");
       var groundObject = MeshObject(_root, "Ground", groundMesh, false);
+      // 칸 지도 맵: 바닥은 GridMapView 칸 타일이 그린다. 기본 지면의 완만한 높낮이가 얇은 타일을 뚫고 얼룩처럼 보이므로 끈다.
+      if (GridMapView.Uses(_map)) groundObject.GetComponent<MeshRenderer>().enabled = false;
       if (VisualProfile.Current.GroundVertexColors && GroundMaterial() != null) {
         // 정점 색 바닥(항목 25-1): 정점 위치마다 색을 골라 부드럽게 섞는다. 머티리얼은 하나를 같이 쓴다.
         var vertices = groundMesh.vertices;
@@ -219,7 +221,8 @@ namespace FactoryWars.View {
           biome == TerrainKit.Biome.Desert ? DesertGroundMaterial() : GroundMaterial();
       }
       // 도로는 따로 그려 바닥과 같은 머티리얼(정점 색 + 전장 손상)을 쓴다(항목 27 K-2: 균열·패임·그을음).
-      if (GroundMaterial() != null) {
+      // 칸 지도 맵(Map4P v4)은 길·인도까지 칸 타일로 그린다(GridMapView).
+      if (GroundMaterial() != null && GridMapView.Uses(_map) == false) {
         var roads = new MeshKit();
         Dressing.RoadMask = _map;
         TerrainKit.Roads(roads, _map);
@@ -297,7 +300,13 @@ namespace FactoryWars.View {
       }
       // 3단 표준 맵(2026-11-22 참고 그림): 테라스·능선·비탈·참호(바닥 머티리얼), 콘크리트 옹벽·담장·둘레 띠, 시가지·산업 장식(TieredTerrain.Decor).
       // 기존 도로변 장식·바위 액자·나무 줄·흩뿌린 풀과 나무는 두지 않는다.
-      if (TieredTerrain.Uses(_map)) {
+      if (GridMapView.Uses(_map)) {
+        // 칸 지도 맵(2026-11-22 Map4P v4 시범): 칸 타일 + 시범 블록. 다른 장식은 블록 승인 뒤에 블록으로 붙인다.
+        GridMapView.Build(_root, _map, GroundMaterial());
+        if (features.TriangleCount > 0) {
+          MeshObject(_root, "Features", features.ToMesh("world_features"), true);
+        }
+      } else if (TieredTerrain.Uses(_map)) {
         var tiers = new MeshKit();
         var walls = new MeshKit();
         TieredTerrain.Build(tiers, walls, _map);

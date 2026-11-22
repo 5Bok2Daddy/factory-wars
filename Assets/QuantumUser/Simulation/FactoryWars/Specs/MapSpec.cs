@@ -141,6 +141,14 @@ namespace Quantum {
     /// <summary>GroundGrid와 같은 칸의 도시 건물 번호 + 1. 0이면 건물이 없다. 붕괴한 칸은 잔해라 느리다.</summary>
     public short[] CityGrid;
 
+    /// <summary>
+    /// 칸 지도 맵(2026-11-22 Map4P v4): 설계 CSV의 칸 글자(ASCII)를 북쪽 줄부터 그대로 담는다. 화면(블록 배치)과 검증 시험만 읽는다.
+    /// 판정은 위의 모양 배열(지형·도로·고지·물)이 하고, 이 배열은 규칙에 쓰지 않는다. 비어 있으면 칸 지도 맵이 아니다.
+    /// </summary>
+    public byte[] CellGrid;
+    public int CellGridSize;
+    public FP CellGridCell;
+
     public const int GroundRoad = 1;
     public const int GroundFord = 2;
 

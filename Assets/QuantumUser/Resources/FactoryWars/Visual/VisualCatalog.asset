@@ -6453,4 +6453,104 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0.16918999, z: 0.7740003}
     MembersByQuality: 
     OwnerRing: 1
+  - Id: block/blk_base_pad
+    Category: 5
+    Prefabs:
+    - {fileID: 6593665339787401767, guid: 5d45830deda949c47af78a60a75e8cca, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 162.72507, y: 23.751007, z: 161.53633}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 pilot block (BlockKit.cs), Synty POLYGON City + Military pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: block/blk_city_mixed_2x2_a
+    Category: 5
+    Prefabs:
+    - {fileID: 2197686980379065241, guid: 12ea5943e9669b5479f4c371996aa0cb, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16.27873, y: 11.999998, z: 14.793401}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 pilot block (BlockKit.cs), Synty POLYGON City + Military pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: block/blk_city_mixed_2x2_b
+    Category: 5
+    Prefabs:
+    - {fileID: 3091223307403198355, guid: d8af8ca73644fb04490aa1ceaee619df, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16.27873, y: 15, z: 14.793401}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 pilot block (BlockKit.cs), Synty POLYGON City + Military pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: block/blk_city_mixed_2x2_c
+    Category: 5
+    Prefabs:
+    - {fileID: 4950859021309186665, guid: 5089258cbb3601743a5802602e18dac0, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 16.27873, y: 9, z: 14.793401}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 pilot block (BlockKit.cs), Synty POLYGON City + Military pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   Enabled: 1

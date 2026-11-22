@@ -167,7 +167,8 @@ namespace FactoryWars.EditorTools {
     static void CityLayout(MapDef def, MapSpec spec) {
       // 맵마다 자체 도시 계획(사막 보급전은 예전 표준 맵 계획과 같은 값을 따로 가진다).
       var planId = def.Id;
-      if (CityPlans.TryGetValue(planId, out var plan) == false) {
+      // 칸 지도 맵은 도시 건물이 칸(H)으로 정해져 있다(통행 불가 지형). 파괴 가능한 도시 건물 배치를 따로 만들지 않는다.
+      if (def.Explicit || CityPlans.TryGetValue(planId, out var plan) == false) {
         spec.CityBuildings = new CityBuildingPlacement[0];
         return;
       }

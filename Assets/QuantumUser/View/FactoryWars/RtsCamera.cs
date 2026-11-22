@@ -4,7 +4,9 @@ namespace FactoryWars.View {
   /// <summary>고정 각도로 땅의 한 점을 내려다보는 카메라. 초점은 맵 경계 안에 묶는다.</summary>
   public class RtsCamera : MonoBehaviour {
     public static float MinHeight => VisualProfile.Current.MinHeight;
-    public static float MaxHeight => VisualProfile.Current.MaxHeight;
+    /// <summary>큰 맵(640m Map4P v4)에서 최대 줌을 늘리는 배율. 경기 시작 때 MatchController가 맵 크기로 정한다(320m 맵 = 1).</summary>
+    public static float MapZoomScale = 1f;
+    public static float MaxHeight => VisualProfile.Current.MaxHeight * MapZoomScale;
     public static float DefaultHeight => VisualProfile.Current.DefaultHeight;
     static float Pitch => VisualProfile.Current.Pitch;
 
