@@ -13919,6 +13919,66 @@ MonoBehaviour:
       RawValue: -16711680
   - Center:
       X:
+        RawValue: -15794176
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -11862016
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 203161
+    HalfWidth:
+      RawValue: 203161
+    Yaw:
+      RawValue: -655360
+  - Center:
+      X:
+        RawValue: 11862016
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: -15794176
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 203161
+    HalfWidth:
+      RawValue: 203161
+    Yaw:
+      RawValue: -6553600
+  - Center:
+      X:
+        RawValue: 15794176
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 11862016
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 203161
+    HalfWidth:
+      RawValue: 203161
+    Yaw:
+      RawValue: -12451840
+  - Center:
+      X:
+        RawValue: -11862016
+      Y:
+        RawValue: 0
+      Z:
+        RawValue: 15794176
+    Radius:
+      RawValue: 0
+    HalfLength:
+      RawValue: 203161
+    HalfWidth:
+      RawValue: 203161
+    Yaw:
+      RawValue: -18350080
+  - Center:
+      X:
         RawValue: -17760256
       Y:
         RawValue: 0

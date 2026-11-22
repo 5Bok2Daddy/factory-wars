@@ -7,6 +7,20 @@
 
 ---
 
+### Map4P v4 꾸미기 · 교차 리뷰 대기 (2026-11-22)
+
+칸 지도 글자마다 Synty 조각으로 만든 블록 84종(블록당 메시 1개)을 자동 배치해 **640m 맵 전체(블록 2,215개)**를 꾸몄다. 인도·차선·횡단보도·연석·대각 모서리 깎기·수로 벽은 바닥 칠하기로 넣었다. 집중 PlayMode 9/9 통과, 자동 검사는 빈 구역 2건만 남았다. [결과 보고서](../SETUP-REPORT.md#map4p-v4-꾸미기-결과) · [교차 리뷰 요청](design/reviews/map4p-v4-dress-REQUEST.md)
+
+| 도시 | 중앙 요새 |
+| --- | --- |
+| ![도시 블록·공원·주차](Docs/status_images/Map4PV4/dress_city.png) | ![T벽·컨테이너 고리·엄폐](Docs/status_images/Map4PV4/dress_compound.png) |
+
+| 외곽 경계 | 수로·다리 |
+| --- | --- |
+| ![고층 배경·방벽·잔해 여러 겹](Docs/status_images/Map4PV4/dress_outer_edge.png) | ![부두 난간·물때 띠](Docs/status_images/Map4PV4/dress_canal_bridge.png) |
+
+[전체 개요 vs 시안 A](Docs/status_images/Map4PV4/dress_vs_conceptA.png)
+
 ### Map4P v4 시범 · 사용자 검수 대기
 
 확정된 640×640m 칸 지도 위에 Synty 모서리 본진과 16×16m 시가지 블록 3종을 조립했다. 실제 게임 카메라에서 콘크리트·차량 동선·옹벽과 건물 높이 차를 확인했다. 휴전 뒤 네 자리의 같은 전차가 요새로 진입하는 데 54.15~56.25초가 걸렸다. GPU 집중 검사 10건 통과, 배치 검사에서 겹침·뜸/박힘·통행 침범 0건이다. 본진의 24m 빈 구역 검사는 미통과다. 나머지 11종은 사용자 승인 대기 중이다.
