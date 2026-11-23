@@ -1877,6 +1877,11 @@ namespace FactoryWars.View {
       if (trader.Destroyed) {
         return "암시장: 파괴되어 영구히 닫힘";
       }
+      // Task 39: the PMC camp panel (diplomacy stage, message, cargo dispatch, shop with shared stock) on camp maps.
+      var camp = MercenaryCamp.Spec(frame);
+      if (camp != null) {
+        return CampEntries(frame, state, trader, camp, index);
+      }
       if (hostile) {
         Entries.Add(new ContextEntry { Label = "거래 불가\n(적대)", Icon = "ui_cancel", Enabled = false, Locked = true, Reason = "이 무기상을 공격해 영구히 거래가 막혔습니다" });
         return "암시장: 적대 — 경비가 반격 중. 파괴하면 현상금";
@@ -1896,6 +1901,45 @@ namespace FactoryWars.View {
         () => input.Mode = input.Mode == MatchInput.TapMode.Drone ? MatchInput.TapMode.None : MatchInput.TapMode.Drone);
       Offer(NpcTraderSystem.OfferRefuel, "긴급 재정비", rules.TraderRefuelCost, "비행장 격납 작전기 즉시 재정비 + 긴급 출격권 1", () => Controller.Send(new TradeCommand { Offer = NpcTraderSystem.OfferRefuel }));
       return input.Mode == MatchInput.TapMode.Drone ? "자폭 드론: 목표 지점을 누르세요" : "암시장 무기상 — 공격하면 영구 적대";
+    }
+
+    /// <summary>Task 39: PMC camp panel. Stage (적대 → 접촉 → 합의), message, cargo truck, then the shop lines from MercenarySpec.</summary>
+    string CampEntries(Frame frame, PlayerState* state, NpcTrader trader, MercenarySpec camp, int index) {
+      var bit = index >= 0 && index < 4 ? 1 << index : 0;
+      var stock = state->Stock;
+      var contacted = (trader.ContactMask & bit) != 0;
+      var agreed = (trader.AgreementMask & bit) != 0;
+      var waiting = bit != 0 && trader.ReplyFrames[index] > 0;
+      var truck = bit != 0 && frame.Exists(trader.Trucks[index]);
+      if (agreed == false) {
+        Entries.Add(new ContextEntry {
+          Label = waiting ? "외교 메시지\n답신 대기" : contacted ? "외교 메시지\n답신 받음" : "외교 메시지\n보내기", Icon = "ui_rally",
+          Enabled = contacted == false && waiting == false, Locked = contacted || waiting, Reason = "이미 보냈습니다",
+          Detail = "용병단에 통행·거래를 요청합니다(무료)", Action = () => Controller.Send(new TradeCommand { Offer = MercenaryCamp.OfferMessage }),
+        });
+        var canSend = contacted && truck == false && stock.Covers(camp.Cargo);
+        Entries.Add(new ContextEntry {
+          Label = truck ? "교역 물자\n수송 중" : $"교역 물자 발송\n{Texts.Cost(camp.Cargo, stock)}", Icon = "ui_upgrade",
+          Enabled = canSend, Locked = canSend == false, Reason = contacted == false ? "먼저 메시지를 보내세요" : truck ? "트럭이 가는 중입니다" : "자원이 부족합니다",
+          Detail = "트럭이 정문까지 스스로 갑니다. 파괴되면 교역 실패(물자 일부가 상자로 떨어짐)",
+          Action = () => Controller.Send(new TradeCommand { Offer = MercenaryCamp.OfferDispatch }),
+        });
+        return truck ? "용병단: 트럭 호송 중 — 도착하면 합의" : contacted ? "용병단: 교역 물자를 보내면 통행을 허가한다" : "용병단 기지 — 합의 없이 들어오면 경비대가 공격";
+      }
+      for (var i = 0; camp.Offers != null && i < camp.Offers.Length && i < MercenaryCamp.MaxOffers; i++) {
+        var line = camp.Offers[i];
+        var left = trader.Stock[i];
+        var ready = trader.ReadyFrames[index * MercenaryCamp.MaxOffers + i];
+        var wait = Mathf.Max(0, ready - frame.Number) / Mathf.Max(1, frame.SessionConfig.UpdateFPS);
+        var ok = left > 0 && wait == 0 && stock.Covers(line.Cost);
+        var offer = MercenaryCamp.OfferShop + i;
+        Entries.Add(new ContextEntry {
+          Label = wait > 0 ? $"{line.Name}\n대기 {wait}초" : $"{line.Name} ({left})\n{Texts.Cost(line.Cost, stock)}", Icon = line.Unit.IsValid ? "ui_rally" : "ui_upgrade",
+          Enabled = ok, Locked = ok == false, Reason = left <= 0 ? "재고가 없습니다(공유 재고, 시간이 지나면 채워짐)" : wait > 0 ? "다음 구매까지 기다리세요" : "자원이 부족합니다",
+          Detail = line.Unit.IsValid ? "정문에서 인도(내 부대)" : "자원 교환", Action = () => Controller.Send(new TradeCommand { Offer = offer }),
+        });
+      }
+      return "용병 거래소 — 합의됨(공격하면 합의 취소)";
     }
 
     /// <summary>항목 34-C: 저격수를 고르면 은신·교란 장치 버튼. 주둔은 진지 건물(도시 진지·벙커)을 누르면 된다.</summary>

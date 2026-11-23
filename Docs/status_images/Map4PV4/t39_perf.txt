@@ -1,0 +1,58 @@
+Task 39 camp captures r3
+view | height | renderers in view | draw calls (renderer x material + shadow casters) | triangles
+camp_wide | 132m | 140 | 313 | 888594
+  GridDress/L: 78
+  GridDress/K: 51
+  BattleView/Stage: 34
+  GridDress/H1: 27
+  MercCamp/camp/display: 24
+  GridDress/HD: 22
+  GridDress/Y: 19
+  GridDress/H4: 16
+  GridDress/MK: 10
+  GridDress/X: 9
+camp_gate | 42m | 418 | 438 | 465486
+  MercCamp/PmcAmbient1: 126
+  MercCamp/PmcAmbient2: 84
+  MercCamp/PmcAmbient4: 63
+  MercCamp/PmcAmbient3: 42
+  MercCamp/PmcAmbient0: 42
+  MercCamp/PmcGarrison5: 21
+  MercCamp/PmcGarrison6: 21
+  MercCamp/camp/display: 16
+  BattleView/Stage: 11
+  GridDress/MK: 10
+camp_display | 58m | 252 | 279 | 396131
+  MercCamp/PmcAmbient4: 43
+  MercCamp/PmcAmbient3: 42
+  MercCamp/PmcAmbient0: 42
+  MercCamp/PmcGarrison3: 21
+  MercCamp/PmcGarrison2: 21
+  MercCamp/PmcGarrison4: 21
+  MercCamp/PmcGarrison1: 21
+  BattleView/Stage: 20
+  MercCamp/camp/display: 16
+  MercCamp/PmcGarrison5: 12
+camp_training | 58m | 575 | 596 | 504509
+  MercCamp/PmcAmbient5: 189
+  MercCamp/PmcAmbient0: 84
+  MercCamp/PmcAmbient2: 84
+  MercCamp/PmcAmbient3: 42
+  BattleView/Stage: 25
+  MercCamp/PmcAmbient4: 22
+  MercCamp/PmcGarrison5: 21
+  MercCamp/PmcGarrison2: 21
+  MercCamp/PmcGarrison6: 21
+  MercCamp/PmcGarrison7: 21
+camp_sortie | 48m | 272 | 311 | 337758
+  MercCamp/PmcAmbient5: 85
+  BattleView/Stage: 65
+  MercCamp/PmcGarrison3: 21
+  MercCamp/PmcGarrison2: 21
+  MercCamp/PmcGarrison4: 21
+  MercCamp/PmcGarrison7: 21
+  MercCamp/PmcAmbient0: 21
+  MercCamp/PmcGarrison1: 21
+  MercCamp/PmcGarrison0: 21
+  GridDress/MK: 10
+camp view: garrison 8 ambient 31 display 12

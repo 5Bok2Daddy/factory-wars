@@ -110,7 +110,9 @@ namespace FactoryWars.Tests {
       Assert.Less((At(UnitsNamed(0, unitName).Last()) - MercenaryCamp.GateToward(MercSpec, FPVector3.Zero, FactoryWarsUtil.StartPosition(Verified, 0))).Magnitude.AsFloat, 12f, "at the camp gate");
       Assert.AreEqual(stock - 1, CampStock(2), "stock taken");
       GrantAgreement(1);
+      // Shared stock: player 1 buys the rest (its per-player cooldown is reset between purchases for the test).
       for (var i = 1; i < stock; i++) {
+        ResetReady(1, 2);
         yield return Send(1, new TradeCommand { Offer = MercenaryCamp.OfferShop + 2 });
       }
       Assert.AreEqual(0, CampStock(2), "player 1 bought the rest of the shared stock");

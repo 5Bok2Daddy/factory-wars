@@ -114,5 +114,28 @@ namespace FactoryWars.Tests {
       File.WriteAllLines(Path.Combine(dir, $"perf_{iteration}.txt"), report);
       Debug.Log(string.Join("\n", report));
     }
+
+    [UnityTest, Explicit, Timeout(600000)]
+    public IEnumerator Drawbridge_CaptureRaised() {
+      var dir = T39Root();
+      Directory.CreateDirectory(dir);
+      yield return StartMatch(Map4PScene, 2, truce: 0, units: new[] { (0, "ff_artillery_ship", -16, 146) });
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var index = Map4PSpec.Drawbridges[0];
+      yield return WaitFor(() => BridgeState(index).Lift == BridgeTraffic.Up, 60f, "raised for the artillery ship");
+      var ship = UnitsNamed(0, "ff_artillery_ship").First();
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { ship }, Target = Pos(-16f, 104f) });
+      Time.timeScale = 1f;
+      yield return WaitFrames(3 * Fps);
+      var rts = Controller().Camera;
+      Camera.main.aspect = 16f / 9f;
+      rts.MoveTo(new Vector2(-16f, 118f));
+      rts.Height = 46f;
+      rts.Apply();
+      yield return WaitFrames(Fps / 2);
+      Assert.Greater(Object.FindAnyObjectByType<BattleView>().Drawbridges.LeafAngle(0), 40f, "leaves are up on screen");
+      CaptureCameraPng(Camera.main, Path.Combine(dir, "drawbridge_raised.png"), 1920, 1080);
+    }
   }
 }

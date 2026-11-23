@@ -80,6 +80,8 @@ namespace FactoryWars.View {
       item.transform.localPosition = position;
       item.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
       item.isStatic = true;
+      // Task 39 C1: parks and parking lots (many, small) do not cast shadows.
+      if (kind == "K" || kind == "L") item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
       if (GraphicsQuality.Current == QualityTier.Low) {
         item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         // 낮음: 작은 블록(공원·주차·잔해·컨테이너·부두·설비·엄폐·경계 안쪽)은 멀면 일찍 감춘다(삼각형 예산).

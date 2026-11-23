@@ -59,7 +59,15 @@ namespace FactoryWars.View {
       var scale = slot.Scale > 0f ? slot.Scale : 1f;
       model.transform.localScale = Vector3.one * scale;
       model.transform.localPosition = offset * scale;
-      foreach (var r in model.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      // Performance (Task 39 C1): a pack character is many part renderers. Keep only the largest skinned body mesh, no shadows.
+      SkinnedMeshRenderer body = null;
+      foreach (var r in model.GetComponentsInChildren<SkinnedMeshRenderer>()) {
+        if (r.sharedMesh != null && (body == null || r.sharedMesh.vertexCount > body.sharedMesh.vertexCount)) body = r;
+      }
+      foreach (var r in model.GetComponentsInChildren<Renderer>()) {
+        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        if (body != null && r is SkinnedMeshRenderer && r != body) r.enabled = false;
+      }
       return new Soldier { View = view, Anim = UnitAnimatorBridge.Attach(model, slot), Rigs = RiflemanRig.AttachAll(model, BattleView.Weapon(DressKind.Rifle)) };
     }
 
@@ -69,7 +77,7 @@ namespace FactoryWars.View {
       _camp.transform.SetParent(_root, false);
       // Ambient troops: kind 0 patrol, 1 jogger, 2 range shooter, 3 sentry, 4 mechanic.
       for (var i = 0; i < 4; i++) Add(0, i);
-      for (var i = 0; i < 8; i++) Add(1, i);
+      for (var i = 0; i < 6; i++) Add(1, i);
       for (var i = 0; i < 9; i++) Add(5, i);
       for (var i = 0; i < CampLayout.FiringLine.Length; i++) Add(2, i);
       for (var i = 0; i < CampLayout.Sentries.Length; i++) Add(3, i);
@@ -92,6 +100,14 @@ namespace FactoryWars.View {
       }
     }
 
+    const float CullDistance = 110f;
+
+    /// <summary>Hide soldiers far from the camera (they are a few pixels tall there).</summary>
+    static void Cull(Soldier s, Vector3 camera) {
+      var show = (s.View.position - camera).sqrMagnitude < CullDistance * CullDistance;
+      if (s.View.gameObject.activeSelf != show) s.View.gameObject.SetActive(show);
+    }
+
     public void Update(Frame frame, float dt) {
       var map = FactoryWarsUtil.MapInfo(frame);
       if (map == null || map.MercenaryCamp == false) return;
@@ -105,6 +121,9 @@ namespace FactoryWars.View {
       Garrison(frame, dt);
       Ambience(t, dt);
       DisplayLine(frame, trader, dt);
+      var cam = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
+      foreach (var s in _garrison.Values) Cull(s, cam);
+      foreach (var (s, _, _) in _ambient) Cull(s, cam);
     }
 
     void Garrison(Frame frame, float dt) {

@@ -129,7 +129,7 @@ namespace FactoryWars.EditorTools {
           r.sharedMaterials = mats;
           r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         }
-        var prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/camp_display_{id}.prefab");
+        var prefab = SaveCombined(root, folder, $"camp_display_{id}");
         Object.DestroyImmediate(root);
         Slot(catalog, "camp/display_" + id, prefab, b.size);
       }
@@ -168,6 +168,43 @@ namespace FactoryWars.EditorTools {
         catalog.Slots.Find(s => s.Id == "unit/merc_cargo_truck").AutoFit = true;
       }
       Object.DestroyImmediate(truckRoot);
+    }
+
+    /// <summary>One mesh per display vehicle (a submesh per material), no shadows: pack vehicles are many part renderers.</summary>
+    static GameObject SaveCombined(GameObject root, string folder, string name) {
+      var byMaterial = new Dictionary<Material, List<CombineInstance>>();
+      var world = root.transform.worldToLocalMatrix;
+      foreach (var f in root.GetComponentsInChildren<MeshFilter>()) {
+        var r = f.GetComponent<MeshRenderer>();
+        if (r == null || r.enabled == false || f.sharedMesh == null) continue;
+        var lod = f.GetComponentInParent<LODGroup>();
+        if (lod != null && lod.GetLODs().Length > 1 && System.Array.IndexOf(lod.GetLODs()[0].renderers, r) < 0) continue;
+        var mats = r.sharedMaterials;
+        for (var s = 0; s < f.sharedMesh.subMeshCount; s++) {
+          var mat = s < mats.Length ? mats[s] : mats[mats.Length - 1];
+          if (mat == null) continue;
+          if (!byMaterial.TryGetValue(mat, out var list)) byMaterial[mat] = list = new List<CombineInstance>();
+          list.Add(new CombineInstance { mesh = f.sharedMesh, subMeshIndex = s, transform = world * f.transform.localToWorldMatrix });
+        }
+      }
+      var parts = new List<CombineInstance>();
+      foreach (var kv in byMaterial) {
+        var m = new Mesh { indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+        m.CombineMeshes(kv.Value.ToArray(), true, true);
+        parts.Add(new CombineInstance { mesh = m, transform = Matrix4x4.identity });
+      }
+      var mesh = new Mesh { name = name + "_mesh", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+      mesh.CombineMeshes(parts.ToArray(), false, false);
+      mesh.RecalculateBounds();
+      AssetDatabase.CreateAsset(mesh, $"{folder}/{name}_mesh.asset");
+      var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+      go.GetComponent<MeshFilter>().sharedMesh = mesh;
+      var renderer = go.GetComponent<MeshRenderer>();
+      renderer.sharedMaterials = byMaterial.Keys.ToArray();
+      renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      var prefab = PrefabUtility.SaveAsPrefabAsset(go, $"{folder}/{name}.prefab");
+      Object.DestroyImmediate(go);
+      return prefab;
     }
 
     static void Slot(VisualCatalog catalog, string id, GameObject prefab, Vector3 size, float scale = 1f) {
