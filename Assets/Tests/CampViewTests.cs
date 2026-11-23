@@ -85,38 +85,79 @@ namespace FactoryWars.Tests {
       return rows;
     }
 
-    /// <summary>Fix 4 colour audit: mean luminance of each display vehicle's screen pixels (PMC black must stay below 0.3).</summary>
+    /// <summary>
+    /// Fix 6 colour audit (replaces fix 4's "luminance < 0.30"): inside each display vehicle's screen box, the model pixels (darker than
+    /// the light concrete) must have (a) mean luminance in the PMC dark band 0.10-0.38 and (b) internal contrast p90-p10 >= 0.08 so
+    /// parts stay distinguishable (fix 5's flat black failed this).
+    /// </summary>
     static List<string> ColourAudit(Camera camera, string png) {
       var rows = new List<string>();
       var tex = new Texture2D(2, 2);
       tex.LoadImage(File.ReadAllBytes(png));
-      var dark = 0;
+      var pass = 0;
       var total = 0;
       foreach (var (view, kind) in CampView().Displays) {
-        var rs = view.GetComponentsInChildren<Renderer>();
-        if (rs.Length == 0) continue;
-        var b = rs[0].bounds;
-        foreach (var r in rs) b.Encapsulate(r.bounds);
-        // Sample the fuselage/hull centre (the helicopter's crossed rotor leaves ground visible above the centre).
-        var sp = camera.WorldToViewportPoint(b.center);
-        if (sp.z <= 0f || sp.x < 0.02f || sp.x > 0.98f || sp.y < 0.02f || sp.y > 0.98f) continue;
-        var px = Mathf.RoundToInt(sp.x * tex.width);
-        var py = Mathf.RoundToInt(sp.y * tex.height);
-        var sum = 0f;
-        var n = 0;
-        for (var dx = -4; dx <= 4; dx++) for (var dy = -4; dy <= 4; dy++) {
-          var c = tex.GetPixel(px + dx, py + dy);
-          sum += 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
-          n++;
-        }
-        var lum = sum / n;
+        var lums = ModelPixels(camera, tex, view, 0.55f).Select(c => 0.299f * c.r + 0.587f * c.g + 0.114f * c.b).OrderBy(l => l).ToList();
+        if (lums.Count < 40) continue;
+        var mean = lums.Average();
+        var spread = lums[(int)(lums.Count * 0.9f)] - lums[(int)(lums.Count * 0.1f)];
+        var ok = mean >= 0.10f && mean <= 0.38f && spread >= 0.08f;
         total++;
-        if (lum < 0.3f) dark++;
-        rows.Add($"  colour | {kind} at {view.position.x:0},{view.position.z:0} | mean luminance {lum:0.00} {(lum < 0.3f ? "PASS" : "FAIL")}");
+        if (ok) pass++;
+        rows.Add($"  colour | {kind} at {view.position.x:0},{view.position.z:0} | mean {mean:0.00} spread {spread:0.00} {(ok ? "PASS" : "FAIL")}");
       }
-      rows.Insert(0, $"colour audit (display vehicles, luminance < 0.30): {dark}/{total} dark");
+      rows.Insert(0, $"colour audit (display vehicles, dark band 0.10-0.38 + contrast >= 0.08): {pass}/{total}");
       Object.Destroy(tex);
       return rows;
+    }
+
+    /// <summary>Pixels of the screenshot inside the projected bounds of <paramref name="view"/>, darker than <paramref name="maxLum"/>.</summary>
+    static List<Color> ModelPixels(Camera camera, Texture2D tex, Transform view, float maxLum) {
+      var list = new List<Color>();
+      var rs = view.GetComponentsInChildren<Renderer>();
+      if (rs.Length == 0) return list;
+      var b = rs[0].bounds;
+      foreach (var r in rs) b.Encapsulate(r.bounds);
+      var min = new Vector2(float.MaxValue, float.MaxValue);
+      var max = new Vector2(float.MinValue, float.MinValue);
+      for (var k = 0; k < 8; k++) {
+        var corner = b.center + Vector3.Scale(b.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1));
+        var sp = camera.WorldToViewportPoint(corner);
+        if (sp.z <= 0f) return list;
+        min = Vector2.Min(min, sp);
+        max = Vector2.Max(max, sp);
+      }
+      // Inner 60 % of the box (the outer ring is mostly ground around the silhouette).
+      var c0 = Vector2.Lerp(min, max, 0.2f);
+      var c1 = Vector2.Lerp(min, max, 0.8f);
+      int x0 = Mathf.Clamp((int)(c0.x * tex.width), 0, tex.width - 1), x1 = Mathf.Clamp((int)(c1.x * tex.width), 0, tex.width - 1);
+      int y0 = Mathf.Clamp((int)(c0.y * tex.height), 0, tex.height - 1), y1 = Mathf.Clamp((int)(c1.y * tex.height), 0, tex.height - 1);
+      for (var x = x0; x <= x1; x += 2) for (var y = y0; y <= y1; y += 2) {
+        var c = tex.GetPixel(x, y);
+        if (0.299f * c.r + 0.587f * c.g + 0.114f * c.b < maxLum) list.Add(c);
+      }
+      return list;
+    }
+
+    /// <summary>Fix 6 (c): skin-tone pixels on the troops in a close capture (faces must read as people, not shadows).</summary>
+    static string SkinAudit(Camera camera, string png) {
+      var tex = new Texture2D(2, 2);
+      tex.LoadImage(File.ReadAllBytes(png));
+      var troops = 0;
+      var withSkin = 0;
+      foreach (var t in CampView().Troops) {
+        if (t == null || t.gameObject.activeInHierarchy == false) continue;
+        var vp = camera.WorldToViewportPoint(t.position + Vector3.up);
+        if (vp.z <= 0f || vp.x < 0.05f || vp.x > 0.95f || vp.y < 0.05f || vp.y > 0.95f) continue;
+        troops++;
+        var skin = ModelPixels(camera, tex, t, 0.95f).Count(c => {
+          Color.RGBToHSV(c, out var h, out var sat, out var v);
+          return h * 360f >= 8f && h * 360f <= 40f && sat > 0.18f && sat < 0.65f && v > 0.35f;
+        });
+        if (skin > 0) withSkin++;
+      }
+      Object.Destroy(tex);
+      return $"skin audit (troops in the close capture with skin-tone pixels): {withSkin}/{troops} {(troops > 0 && withSkin * 2 >= troops ? "PASS" : "FAIL")}";
     }
 
     static int VisibleTroops(Camera camera) {
@@ -217,13 +258,19 @@ namespace FactoryWars.Tests {
       report.Add($"troops visible in the wide view: {VisibleTroops(camera)}");
       yield return Shot("camp_display", new Vector2(-30f, 0f), 58f);
       report.AddRange(ColourAudit(camera, Path.Combine(dir, $"camp_display_{iteration}.png")));
-      yield return Shot("camp_forecourt", new Vector2(0f, -9f), 30f);
+      // Fix 6 close-ups: tanks, helicopter (canopy/rotor), APC row, troops at the counter (faces), crate stacks.
+      yield return Shot("close_tanks", new Vector2(-40f, 3f), 22f);
+      report.AddRange(ColourAudit(camera, Path.Combine(dir, $"close_tanks_{iteration}.png")));
+      yield return Shot("close_heli", new Vector2(-27f, -2f), 20f);
+      yield return Shot("close_apc", new Vector2(-17f, -31f), 18f);
+      yield return Shot("close_troops", new Vector2(0f, -10f), 11f);
+      report.Add(SkinAudit(camera, Path.Combine(dir, $"close_troops_{iteration}.png")));
+      yield return Shot("close_crates", new Vector2(10.5f, -21f), 14f);
       yield return Shot("camp_gate", new Vector2(0f, -38f), 34f);
       // Scale line-up: one PMC trooper next to each vehicle at real scale on the open north ring road.
       // On the main east-west road (row 24, z = 124), clear of buildings.
       var lineup = ScaleLineup(new Vector3(104f, 0f, 124f));
-      yield return Shot("scale_lineup", new Vector2(136f, 118f), 40f);
-      Object.Destroy(lineup);
+      Object.Destroy(lineup); // fix 6: line-up shot dropped (fix 5 accepted it); the close-ups above replace it
       report.Add($"camp view: garrison {CampView()?.GarrisonShown} ambient {CampView()?.AmbientCount} display {CampView()?.DisplayShown}");
       report.AddRange(ScaleTable());
       File.WriteAllLines(Path.Combine(dir, $"perf_{iteration}.txt"), report);

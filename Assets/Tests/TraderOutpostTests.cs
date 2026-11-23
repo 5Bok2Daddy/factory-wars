@@ -19,6 +19,12 @@ namespace FactoryWars.Tests {
       var view = Battle().Trader;
       Assert.IsNotNull(view, "주둔지 화면");
       Assert.IsTrue(view.Built, "지어짐");
+      if (Map4P().MercenaryCamp) {
+        // Task 39 card 4: on the PMC camp map the camp perimeter/garrison replace the outpost fence, gates and guards
+        // (MercCampView); only the surveillance drones stay on the trader (CampViewTests cover the rest).
+        Assert.AreEqual(3, view.DroneTotal, "드론 3");
+        yield break;
+      }
       if (PackPresent) {
         Assert.AreEqual(28, view.FenceCount, "네 변 8칸씩, 출입구 4칸 비움");
         Assert.IsTrue(view.FenceYaws.All(y => Mathf.Abs(Mathf.DeltaAngle(y, Mathf.Round(y / 90f) * 90f)) < 0.01f), "울타리 90도 정렬");

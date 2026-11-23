@@ -126,12 +126,11 @@ namespace FactoryWars.EditorTools {
       RenderTexture.active = previous;
       RenderTexture.ReleaseTemporary(rt);
       var px = read.GetPixels32();
-      for (var i = 0; i < px.Length; i++) {
-        var c = px[i];
-        var lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) / 255f;
-        var v = 0.045f + lum * 0.075f; // fix 5: near-black, the camo only survives as faint panel shading
-        px[i] = new Color32((byte)(v * 255f), (byte)(v * 255f), (byte)((v + 0.008f) * 255f), c.a);
-      }
+      // Fix 6: per-swatch remap instead of darkening everything (Synty atlases are swatch palettes). Every swatch keeps its own
+      // value step; the class decides the PMC tone: glass -> tinted blue-grey, rubber -> near black, metal/greys -> gunmetal,
+      // greens -> olive dark slate, warm camo/tan -> charcoal, saturated accents -> amber, skin -> unchanged (troops read as people).
+      var vehicle = IsVehicleAtlas(source.name);
+      for (var i = 0; i < px.Length; i++) px[i] = PmcTone(px[i], vehicle);
       read.SetPixels32(px);
       System.IO.File.WriteAllBytes(path, read.EncodeToPNG());
       Object.DestroyImmediate(read);
@@ -146,6 +145,31 @@ namespace FactoryWars.EditorTools {
       var dark = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
       DarkTextures[source] = dark;
       return dark;
+    }
+
+    static bool IsVehicleAtlas(string name) {
+      var n = name.ToLowerInvariant();
+      return n.Contains("veh") || n.Contains("vehicle") || n.Contains("tank") || n.Contains("heli") || n.Contains("drone") || n.Contains("palette");
+    }
+
+    public static Color32 PmcTone(Color32 c, bool vehicle) {
+      Color.RGBToHSV(c, out var h, out var s, out var v);
+      var lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) / 255f;
+      var hue = h * 360f;
+      Color o;
+      // Skin: light pinkish beige only (hue 10-28, low-mid saturation, bright). Wood, tan camo and khaki cloth sit at hue 30-40
+      // or lower value and must not be kept (fix 6 round 1 kept them by mistake).
+      if (vehicle == false && s > 0.15f && s < 0.42f && v > 0.7f && hue >= 10f && hue <= 28f) return c;                  // skin
+      if (s > 0.55f && v > 0.5f && (hue < 55f || hue > 330f)) o = new Color(0.95f, 0.71f, 0.29f) * (0.55f + 0.45f * lum); // accents -> amber
+      else if (vehicle && s > 0.2f && hue >= 170f && hue <= 250f) o = new Color(0.16f, 0.2f, 0.26f) + new Color(0.2f, 0.24f, 0.3f) * lum; // glass
+      else if (lum < 0.12f) o = new Color(0.05f, 0.05f, 0.055f) + Color.white * (lum * 0.4f);                                // rubber, gaps
+      else if (s < 0.12f) { var g = 0.12f + lum * 0.42f; o = new Color(g, g * 1.02f, g * 1.08f); }                          // metal, greys
+      // Camo greens / tans: two tones (olive slate for darker swatches, gunmetal for lighter ones) with stretched value steps so
+      // camo patches and panels stay distinguishable.
+      else if (hue >= 60f && hue < 170f) o = Color.Lerp(new Color(0.2f, 0.23f, 0.19f), new Color(0.3f, 0.32f, 0.35f), Mathf.Clamp01((lum - 0.25f) * 3f)) * (0.35f + lum * 1.6f); // greens
+      else o = Color.Lerp(new Color(0.17f, 0.18f, 0.2f), new Color(0.32f, 0.31f, 0.28f), Mathf.Clamp01((lum - 0.3f) * 2.5f)) * (0.4f + lum * 1.5f); // tan/brown/wood/blue cloth
+      o.a = c.a / 255f;
+      return o;
     }
 
     /// <summary>Our PMC material variant of a pack material (pack material untouched): every albedo slot gets the charcoal atlas.</summary>

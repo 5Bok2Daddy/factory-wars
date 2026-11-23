@@ -289,6 +289,8 @@ namespace FactoryWars.Tests {
         Assert.IsNull(actor.Scaffold, "완공 시 비계·바리케이드 깔끔히 철거");
         Assert.AreEqual(0, actor.ConstructionCrew.Count, "완공 시 임시 건설 작업자 정리");
         Assert.IsTrue(actor.View.Model.activeSelf, "완공 본체 표시");
+        // The finished body rises to its rest height over time (MoveTowards, height x 3 m/s), so wait for it instead of 4 frames.
+        yield return WaitFor(() => Mathf.Abs(actor.View.Model.transform.localPosition.y - actor.BuildingModelY) <= 0.01f, 3f, "완공 본체 상승");
         Assert.AreEqual(actor.BuildingModelY, actor.View.Model.transform.localPosition.y, 0.01f, "완공 본체가 모델의 바닥 보정 높이에 안착");
 
         // 5) 건물 파괴 시 상주 작업자 대피/정리(에러 0건).

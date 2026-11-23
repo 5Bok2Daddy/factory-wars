@@ -134,9 +134,11 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(map.Bridges.Length, world.BridgeCount, "다리 상태 수 = 맵의 다리 수");
       var slots = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None).Where(t => t.name == "BridgeSlot").ToArray();
       Assert.AreEqual(map.Bridges.Length, slots.Length, "다리 모델 수 = 맵의 다리 수");
-      Assert.IsTrue(slots.All(slot => slot.GetComponentsInChildren<MeshRenderer>()
+      // Task 39 fix 2: on the grid map the intact bridge is drawn by ArchBridgeView (one steel arch per bridge); the old slot model is off.
+      var arches = Battle().ArchBridges?.Count ?? 0;
+      Assert.IsTrue(arches == map.Bridges.Length || slots.All(slot => slot.GetComponentsInChildren<MeshRenderer>()
         .Any(renderer => renderer.enabled && renderer.GetComponent<MeshFilter>()?.sharedMesh != null)),
-        "모든 다리 슬롯에 실제 표시되는 메쉬가 있다");
+        $"모든 다리에 실제 표시되는 메쉬가 있다(아치교 {arches})");
       Assert.IsTrue(world.BarrierVisible, "휴전 중 울타리가 서 있다");
       Assert.IsFalse(BarrierOpen());
       yield return WaitFor(BarrierOpen, 30f, "휴전 종료");
