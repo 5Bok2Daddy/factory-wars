@@ -1,19 +1,27 @@
 # Factory Wars — Mobile RTS Dashboard
 
-> **기준 일자:** **2026-11-22 (KST)**
+> **기준 일자:** **2026-11-23 (KST)**
 > **대상 플랫폼:** Android Mobile RTS (Touch-Only UI, Photon Quantum 3 결정론 `FP` 시뮬레이션 — 금지어 **0건**)
 > **Git 저장소 루트:** `Game/` (`origin/main` → `https://github.com/5Bok2Daddy/factory-wars.git`)
 > **아트 파이프라인:** Synty POLYGON 및 War FX에 Desert World, Roadside Tales와 NatureForge 맵 에셋을 선별 적용.
 
 ---
 
+### Task 39 수정 4차 — 검정 PMC 기지 (2026-11-23)
+
+> 검정 재질 원인(Synty 셰이더는 `_Albedo_Map`을 읽음) 수정. 아틀라스를 어둡게 만든 복사본을 써서 진열 차량 화면 밝기 0.14~0.21로 검사 10/10 통과. 간격 1.5m, 공격 헬기 3 + 경헬기 1, 병사 48명, 앞마당 포장. 예산: 넓은 시점 59.9만, 낮은 품질 29.0만. 감사 겹침·침범 0, 시험 8/8. [보고서](../SETUP-REPORT.md)
+
+| 기지 전체 | 진열 | 비율 |
+| --- | --- | --- |
+| ![기지](Docs/status_images/Map4PV4/t39_v4_camp_wide.png) | ![진열](Docs/status_images/Map4PV4/t39_v4_camp_display.png) | ![비율](Docs/status_images/Map4PV4/t39_v4_scale_lineup.png) |
+
 ### Task 39 카드 4 — PMC 용병 기지 (2026-11-23)
 
 > 철망 담장·감시탑·순환로·거래소·진열 차량(재고 연동)·움직이는 병력·경비대 출격, PMC 유닛 6종(드론 실유닛), 도개교 애니메이션, 온라인 체크섬 시험 통과. 남은 것: 성능(삼각형)·검은 모델·도개교 바닥 표시. [보고서](../SETUP-REPORT.md)
 
-| 목표 v2 vs 결과 | 도개교 |
+| 목표 v2 vs 결과 | 비고 |
 | --- | --- |
-| ![기지 비교](Docs/status_images/Map4PV4/t39_camp_vs_target.png) | ![도개교](Docs/status_images/Map4PV4/t39_drawbridge_raised.png) |
+| ![기지 비교](Docs/status_images/Map4PV4/t39_camp_vs_target.png) | (도개교 모드는 3차에서 끔) |
 
 ### Task 39 카드 1·3 (2026-11-23)
 
