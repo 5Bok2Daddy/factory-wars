@@ -333,6 +333,7 @@ namespace FactoryWars.EditorTools {
         Trader = true,
         TraderPosition = Position(0, 0),
         MercenaryCamp = true,
+        LogisticsEconomy = true,
         BlackBoxSpots = new[] { SnapToRoad(g, -76, 0), SnapToRoad(g, 0, 76), SnapToRoad(g, 76, 0), SnapToRoad(g, 0, -76) }.Select(p => Position(p.x, p.y)).ToArray(),
         Terrain = terrain.ToArray(),
         // 경사로 둘레, 중앙 요새, 본진 장식(BlockKit.BaseDecor와 같은 표: 장식 위에 건물을 짓지 않게 2m 여유).

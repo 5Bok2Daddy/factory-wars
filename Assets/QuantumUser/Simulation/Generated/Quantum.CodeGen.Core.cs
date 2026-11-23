@@ -82,6 +82,14 @@ namespace Quantum {
     Landed,
     Captured,
   }
+  public enum LogisticsState : byte {
+    ToYard,
+    Loading,
+    ToDock,
+    Unloading,
+    Aborting,
+    WaitingRoute,
+  }
   public enum MlrsStatus : byte {
     Idle,
     Searching,
@@ -2075,6 +2083,106 @@ namespace Quantum {
     }
   }
   [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct LogisticsTruck : Quantum.IComponent {
+    public const Int32 SIZE = 88;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(12)]
+    public Int32 Site;
+    [FieldOffset(1)]
+    public LogisticsState State;
+    [FieldOffset(0)]
+    public LogisticsState Resume;
+    [FieldOffset(56)]
+    public ResourceCost Cargo;
+    [FieldOffset(24)]
+    public FP Timer;
+    [FieldOffset(8)]
+    public Int32 DeliveryId;
+    [FieldOffset(4)]
+    public Int32 CreditedId;
+    [FieldOffset(32)]
+    public FPVector3 LastPosition;
+    [FieldOffset(16)]
+    public FP StuckTimer;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 12983;
+        hash = hash * 31 + Site.GetHashCode();
+        hash = hash * 31 + (Byte)State;
+        hash = hash * 31 + (Byte)Resume;
+        hash = hash * 31 + Cargo.GetHashCode();
+        hash = hash * 31 + Timer.GetHashCode();
+        hash = hash * 31 + DeliveryId.GetHashCode();
+        hash = hash * 31 + CreditedId.GetHashCode();
+        hash = hash * 31 + LastPosition.GetHashCode();
+        hash = hash * 31 + StuckTimer.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (LogisticsTruck*)ptr;
+        serializer.Stream.Serialize((Byte*)&p->Resume);
+        serializer.Stream.Serialize((Byte*)&p->State);
+        serializer.Stream.Serialize(&p->CreditedId);
+        serializer.Stream.Serialize(&p->DeliveryId);
+        serializer.Stream.Serialize(&p->Site);
+        FP.Serialize(&p->StuckTimer, serializer);
+        FP.Serialize(&p->Timer, serializer);
+        FPVector3.Serialize(&p->LastPosition, serializer);
+        Quantum.ResourceCost.Serialize(&p->Cargo, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct LogisticsYard : Quantum.IComponent {
+    public const Int32 SIZE = 136;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(8)]
+    public Int32 Site;
+    [FieldOffset(24)]
+    public FPVector3 Position;
+    [FieldOffset(12)]
+    public PlayerRef Owner;
+    [FieldOffset(72)]
+    public ResourceCost Buffer;
+    [FieldOffset(16)]
+    public EntityRef Truck;
+    [FieldOffset(48)]
+    public FPVector3 TruckAt;
+    [FieldOffset(104)]
+    public ResourceCost InTransit;
+    [FieldOffset(4)]
+    public Int32 RespawnFrame;
+    [FieldOffset(0)]
+    public Int32 Delivered;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 20807;
+        hash = hash * 31 + Site.GetHashCode();
+        hash = hash * 31 + Position.GetHashCode();
+        hash = hash * 31 + Owner.GetHashCode();
+        hash = hash * 31 + Buffer.GetHashCode();
+        hash = hash * 31 + Truck.GetHashCode();
+        hash = hash * 31 + TruckAt.GetHashCode();
+        hash = hash * 31 + InTransit.GetHashCode();
+        hash = hash * 31 + RespawnFrame.GetHashCode();
+        hash = hash * 31 + Delivered.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (LogisticsYard*)ptr;
+        serializer.Stream.Serialize(&p->Delivered);
+        serializer.Stream.Serialize(&p->RespawnFrame);
+        serializer.Stream.Serialize(&p->Site);
+        PlayerRef.Serialize(&p->Owner, serializer);
+        EntityRef.Serialize(&p->Truck, serializer);
+        FPVector3.Serialize(&p->Position, serializer);
+        FPVector3.Serialize(&p->TruckAt, serializer);
+        Quantum.ResourceCost.Serialize(&p->Buffer, serializer);
+        Quantum.ResourceCost.Serialize(&p->InTransit, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct MercCargo : Quantum.IComponent {
     public const Int32 SIZE = 40;
     public const Int32 ALIGNMENT = 8;
@@ -2856,6 +2964,10 @@ namespace Quantum {
       BuildSignalsArrayOnComponentRemoved<Quantum.Jammer>();
       BuildSignalsArrayOnComponentAdded<Quantum.LandingCraft>();
       BuildSignalsArrayOnComponentRemoved<Quantum.LandingCraft>();
+      BuildSignalsArrayOnComponentAdded<Quantum.LogisticsTruck>();
+      BuildSignalsArrayOnComponentRemoved<Quantum.LogisticsTruck>();
+      BuildSignalsArrayOnComponentAdded<Quantum.LogisticsYard>();
+      BuildSignalsArrayOnComponentRemoved<Quantum.LogisticsYard>();
       BuildSignalsArrayOnComponentAdded<MapEntityLink>();
       BuildSignalsArrayOnComponentRemoved<MapEntityLink>();
       BuildSignalsArrayOnComponentAdded<Quantum.MercCargo>();
@@ -3030,6 +3142,9 @@ namespace Quantum {
       typeRegistry.Register(typeof(Joint3D), Joint3D.SIZE);
       typeRegistry.Register(typeof(Quantum.LandingCraft), Quantum.LandingCraft.SIZE);
       typeRegistry.Register(typeof(LayerMask), LayerMask.SIZE);
+      typeRegistry.Register(typeof(Quantum.LogisticsState), 1);
+      typeRegistry.Register(typeof(Quantum.LogisticsTruck), Quantum.LogisticsTruck.SIZE);
+      typeRegistry.Register(typeof(Quantum.LogisticsYard), Quantum.LogisticsYard.SIZE);
       typeRegistry.Register(typeof(MapEntityId), MapEntityId.SIZE);
       typeRegistry.Register(typeof(MapEntityLink), MapEntityLink.SIZE);
       typeRegistry.Register(typeof(Quantum.MapShape), Quantum.MapShape.SIZE);
@@ -3096,7 +3211,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(Quantum._globals_), Quantum._globals_.SIZE);
     }
     static partial void InitComponentTypeIdGen() {
-      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 27)
+      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 29)
         .AddBuiltInComponents()
         .Add<Quantum.AirfieldWorks>(Quantum.AirfieldWorks.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Barricade>(Quantum.Barricade.Serialize, null, null, ComponentFlags.None)
@@ -3112,6 +3227,8 @@ namespace Quantum {
         .Add<Quantum.Fog>(Quantum.Fog.Serialize, null, null, ComponentFlags.Singleton)
         .Add<Quantum.Jammer>(Quantum.Jammer.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.LandingCraft>(Quantum.LandingCraft.Serialize, null, null, ComponentFlags.None)
+        .Add<Quantum.LogisticsTruck>(Quantum.LogisticsTruck.Serialize, null, null, ComponentFlags.None)
+        .Add<Quantum.LogisticsYard>(Quantum.LogisticsYard.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.MercCargo>(Quantum.MercCargo.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.MercGuard>(Quantum.MercGuard.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.MissileStrike>(Quantum.MissileStrike.Serialize, null, null, ComponentFlags.None)
@@ -3136,6 +3253,7 @@ namespace Quantum {
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.CaptureKind>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.DropPhase>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.InputButtons>();
+      FramePrinter.EnsurePrimitiveNotStripped<Quantum.LogisticsState>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.MlrsStatus>();
       FramePrinter.EnsurePrimitiveNotStripped<Quantum.PauseReason>();
       FramePrinter.EnsurePrimitiveNotStripped<QueryOptions>();

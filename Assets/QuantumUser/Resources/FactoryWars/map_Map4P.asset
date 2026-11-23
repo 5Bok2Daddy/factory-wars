@@ -24,6 +24,7 @@ MonoBehaviour:
     RawValue: 65536
   HasTrader: 1
   MercenaryCamp: 1
+  LogisticsEconomy: 1
   TraderPosition:
     X:
       RawValue: 0

@@ -76,6 +76,8 @@ namespace Quantum {
     public bool HasTrader;
     /// <summary>Task 39: the trader is the mercenary camp (garrison, diplomacy, shop; data in GameRulesSpec.Mercenary).</summary>
     public bool MercenaryCamp;
+    /// <summary>Task 41: edge expansion sites ship their resources by truck to the owner's dock (GameRulesSpec.Logistics).</summary>
+    public bool LogisticsEconomy;
     public FPVector3 TraderPosition;
     /// <summary>항목 37 블랙박스 추락 자리(순환). 비어 있으면 이 맵에는 없다.</summary>
     public FPVector3[] BlackBoxSpots;

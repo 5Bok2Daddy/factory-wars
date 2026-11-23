@@ -523,6 +523,36 @@ component CaptureSite {
     QBoolean Contested;
 }
 
+// Task 41: logistics yard at one of the four edge expansion sites. Resources gathered there go into Buffer (not the stock);
+// the owner's truck hauls them to the owner's dock (credited once, on unload). Owner = the player with a finished drop-off
+// building inside the site radius. Truck/TruckAt/InTransit let the system notice a lost truck and drop its cargo.
+enum LogisticsState : Byte { ToYard, Loading, ToDock, Unloading, Aborting, WaitingRoute }
+
+component LogisticsYard {
+    Int32 Site;
+    FPVector3 Position;
+    player_ref Owner;
+    ResourceCost Buffer;
+    entity_ref Truck;
+    FPVector3 TruckAt;
+    ResourceCost InTransit;
+    Int32 RespawnFrame;
+    Int32 Delivered;
+}
+
+// Task 41: automatic logistics truck (no player orders). DeliveryId increases once per credited unload.
+component LogisticsTruck {
+    Int32 Site;
+    LogisticsState State;
+    LogisticsState Resume;
+    ResourceCost Cargo;
+    FP Timer;
+    Int32 DeliveryId;
+    Int32 CreditedId;
+    FPVector3 LastPosition;
+    FP StuckTimer;
+}
+
 // 중립이다. 지정 공격과 범위 피해만 받는다.
 component Barricade {
     Int32 Index;
@@ -604,6 +634,8 @@ synced event SupplyDropIncoming { Int32 Group; Int32 Frame; }
 // 항목 34-B: 단계별 공개. Zone·Closing은 정확한 자리가 아니라 원의 중심과 반지름이다. Landed부터 상자 자리가 드러난다. Kind는 Captured일 때 보상 종류(0 자원, 1 긴급 출격권, 2 정찰 사진, 3 보급).
 synced event SupplyDropStage { DropPhase Phase; FPVector3 Position; FP Radius; Int32 Frame; Int32 Group; player_ref Player; Int32 Kind; }
 synced event CratePicked { player_ref Player; FPVector3 Position; ResourceCost Reward; }
+// Task 41 logistics: Kind 0 loaded, 1 delivered (Amount credited), 2 truck lost, 3 waiting for a route, 4 buffer full, 5 yard owner changed.
+synced event LogisticsNotice { player_ref Player; Int32 Site; Int32 Kind; ResourceCost Amount; }
 // 항목 34-C: 저격수가 쏜 사격. 피격 진영에 방향을 알리고 총구 섬광을 그린다.
 synced event SniperFired { player_ref Shooter; player_ref Victim; FPVector3 From; FPVector3 To; QBoolean Killed; }
 synced event JammerPlaced { player_ref Owner; entity_ref Jammer; FPVector3 Position; }

@@ -201,6 +201,8 @@ namespace Quantum {
     public bool DrawbridgeEnabled = true;
     /// <summary>Task 39 card 3: mercenary camp data (used on maps with MapSpec.MercenaryCamp).</summary>
     public AssetRef<MercenarySpec> Mercenary;
+    /// <summary>Task 41: expansion-site logistics data (used on maps with MapSpec.LogisticsEconomy).</summary>
+    public AssetRef<LogisticsSpec> Logistics;
     public FP DrawbridgeApproachRadius = 24;
     public FP DrawbridgeDeckClearSeconds = 2;
     public FP DrawbridgeRaiseSeconds = 4;

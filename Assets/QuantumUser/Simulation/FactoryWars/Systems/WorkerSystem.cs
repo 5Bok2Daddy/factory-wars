@@ -179,6 +179,16 @@ namespace Quantum.FactoryWars {
       var spec = f.FindAsset(f.Unsafe.GetPointer<Building>(dropOff)->Spec);
       var target = f.Unsafe.GetPointer<Transform3D>(dropOff)->Position;
       if (MoveInto(f, entity, worker, position, target, spec.FootprintRadius + rules.WorkRange, true)) {
+        // Task 41: drop-offs at an edge expansion site fill the site buffer (hauled home by truck); a full buffer stops extraction.
+        if (LogisticsSystem.TryDeposit(f, unit->Owner, target, worker->CarriedKind, worker->Carried, out var accepted)) {
+          if (accepted == false) {
+            MovementSystem.Halt(f, entity);
+            return;
+          }
+          worker->Carried = FP._0;
+          SetTask(worker, WorkerTask.Gather);
+          return;
+        }
         var state = FactoryWarsUtil.Player(f, unit->Owner);
         if (worker->CarriedKind == ResourceKind.Iron) {
           state->Stock.Iron += worker->Carried;

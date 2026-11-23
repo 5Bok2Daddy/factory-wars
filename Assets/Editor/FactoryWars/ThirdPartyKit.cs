@@ -49,7 +49,7 @@ namespace FactoryWars.EditorTools {
       },
       new Model {
         Folder = "MercHaulerTruck", Name = "merc_hauler_truck", Span = 7.5f, Yaw = 0f,
-        Slots = new[] { "unit/merc_cargo_truck" },
+        Slots = new[] { "unit/merc_cargo_truck", "unit/logistics_truck" },
         Notes = "CC BY 4.0 military cargo truck (see Assets/ThirdParty/CREDITS.md), decimated + flat palette, renamed; 7.5 m",
       },
       new Model {

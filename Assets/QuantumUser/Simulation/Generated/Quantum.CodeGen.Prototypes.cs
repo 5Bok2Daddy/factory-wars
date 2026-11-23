@@ -598,6 +598,66 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.LogisticsTruck))]
+  public unsafe partial class LogisticsTruckPrototype : ComponentPrototype<Quantum.LogisticsTruck> {
+    public Int32 Site;
+    public Quantum.QEnum8<LogisticsState> State;
+    public Quantum.QEnum8<LogisticsState> Resume;
+    public Quantum.Prototypes.ResourceCostPrototype Cargo;
+    public FP Timer;
+    public Int32 DeliveryId;
+    public Int32 CreditedId;
+    public FPVector3 LastPosition;
+    public FP StuckTimer;
+    partial void MaterializeUser(Frame frame, ref Quantum.LogisticsTruck result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.LogisticsTruck component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.LogisticsTruck result, in PrototypeMaterializationContext context = default) {
+        result.Site = this.Site;
+        result.State = this.State;
+        result.Resume = this.Resume;
+        this.Cargo.Materialize(frame, ref result.Cargo, in context);
+        result.Timer = this.Timer;
+        result.DeliveryId = this.DeliveryId;
+        result.CreditedId = this.CreditedId;
+        result.LastPosition = this.LastPosition;
+        result.StuckTimer = this.StuckTimer;
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.LogisticsYard))]
+  public unsafe class LogisticsYardPrototype : ComponentPrototype<Quantum.LogisticsYard> {
+    public Int32 Site;
+    public FPVector3 Position;
+    public PlayerRef Owner;
+    public Quantum.Prototypes.ResourceCostPrototype Buffer;
+    public MapEntityId Truck;
+    public FPVector3 TruckAt;
+    public Quantum.Prototypes.ResourceCostPrototype InTransit;
+    public Int32 RespawnFrame;
+    public Int32 Delivered;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.LogisticsYard component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.LogisticsYard result, in PrototypeMaterializationContext context = default) {
+        result.Site = this.Site;
+        result.Position = this.Position;
+        result.Owner = this.Owner;
+        this.Buffer.Materialize(frame, ref result.Buffer, in context);
+        PrototypeValidator.FindMapEntity(this.Truck, in context, out result.Truck);
+        result.TruckAt = this.TruckAt;
+        this.InTransit.Materialize(frame, ref result.InTransit, in context);
+        result.RespawnFrame = this.RespawnFrame;
+        result.Delivered = this.Delivered;
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.MapShape))]
   public unsafe partial class MapShapePrototype : StructPrototype {
     public FPVector3 Center;

@@ -255,6 +255,33 @@ namespace Quantum.Prototypes.Unity {
     }
   }
   [System.SerializableAttribute()]
+  public unsafe partial class LogisticsYardPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.LogisticsYardPrototype> {
+    public Int32 Site;
+    public FPVector3 Position;
+    public PlayerRef Owner;
+    public Quantum.Prototypes.ResourceCostPrototype Buffer;
+    public Quantum.QuantumEntityPrototype Truck;
+    public FPVector3 TruckAt;
+    public Quantum.Prototypes.ResourceCostPrototype InTransit;
+    public Int32 RespawnFrame;
+    public Int32 Delivered;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.LogisticsYardPrototype prototype);
+    public override Quantum.Prototypes.LogisticsYardPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.LogisticsYardPrototype();
+      converter.Convert(this.Site, out result.Site);
+      converter.Convert(this.Position, out result.Position);
+      converter.Convert(this.Owner, out result.Owner);
+      converter.Convert(this.Buffer, out result.Buffer);
+      converter.Convert(this.Truck, out result.Truck);
+      converter.Convert(this.TruckAt, out result.TruckAt);
+      converter.Convert(this.InTransit, out result.InTransit);
+      converter.Convert(this.RespawnFrame, out result.RespawnFrame);
+      converter.Convert(this.Delivered, out result.Delivered);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
   public unsafe partial class MercGuardPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.MercGuardPrototype> {
     public Int32 Slot;
     public FPVector3 Post;

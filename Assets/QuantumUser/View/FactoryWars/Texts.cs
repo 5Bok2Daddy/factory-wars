@@ -19,7 +19,7 @@ namespace FactoryWars.View {
       { "research_lab", "군수 연구 공장" }, { "vehicle_factory", "기동·화력 조립 공장" }, { "airfield", "항공·드론 조립 격납고" }, { "heavy_works", "중기갑 전차 공장" },
       { "ground_tower", "지상 방어탑" }, { "air_defense", "방공포대" }, { "collection_yard", "집하장" },
       { "lumber_mill", "제재소" }, { "iron_extractor", "철 채굴 공장" },
-      { "shipyard", "조선소" }, { "merc_cargo_truck", "교역 화물 트럭" },
+      { "shipyard", "조선소" }, { "merc_cargo_truck", "교역 화물 트럭" }, { "logistics_truck", "수송 트럭" },
       { "pmc_armored_suv", "PMC 장갑차" }, { "pmc_attack_drone", "PMC 공격 드론" }, { "pmc_attack_heli", "PMC 공격 헬기" }, { "pmc_marksman", "PMC 저격수" },
       { "pmc_operator_squad", "PMC 작전 분대" }, { "pmc_scout_heli", "PMC 경헬기" }, { "pmc_tank", "PMC 전차" },
       { "sandbags", "모래주머니 진지" }, { "bunker", "벙커" }, { "medic_tent", "의무대" }, { "repair_bay", "정비소" },

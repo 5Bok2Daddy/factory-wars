@@ -317,6 +317,9 @@ MonoBehaviour:
   Mercenary:
     Id:
       Value: 527416238448594318
+  Logistics:
+    Id:
+      Value: 526215570543285750
   DrawbridgeApproachRadius:
     RawValue: 1572864
   DrawbridgeDeckClearSeconds:

@@ -468,6 +468,36 @@ namespace FactoryWars.EditorTools {
     }
 
     /// <summary>Task 39 card 1: data + Map4P v5 bake in one batch call.</summary>
+    /// <summary>Task 41: logistics data (LogisticsSpec, truck unit) and the Map4P flag, without rebaking the map.</summary>
+    public static void ApplyTask41Data() {
+      var rules = AssetDatabase.LoadAssetAtPath<GameRulesSpec>($"{DataRoot}/game_rules.asset");
+      var spec = Asset<LogisticsSpec>("logistics");
+      spec.SiteRadius = 44;
+      spec.BufferCapacity = 600;
+      spec.ShipmentSize = 200;
+      spec.LoadSeconds = 6;
+      spec.UnloadSeconds = 5;
+      spec.MinLoad = 60;
+      spec.RespawnSeconds = 30;
+      spec.ArriveRadius = 6;
+      // Behind the start position, inside the base wedge ('B' cells): the inward direction ends on the diagonal avenue (fix after
+      // Logistics_NoQueueOnRingRoad found the docks on road cells).
+      spec.DockForward = -14;
+      spec.DockSpacing = 7;
+      spec.YardInset = 10;
+      spec.StuckSeconds = 6;
+      spec.CrateShare = N(0.5);
+      // Truck: the cargo-truck body (no weapon, no transport), free population, a bit sturdier so a single scout cannot farm it.
+      spec.Truck = Ref(CloneUnit("merc_cargo_truck", "logistics_truck", u => { u.Population = 0; u.MaxHealth = u.MaxHealth * N(1.2); }));
+      EditorUtility.SetDirty(spec);
+      rules.Logistics = Ref(spec);
+      EditorUtility.SetDirty(rules);
+      var map = AssetDatabase.LoadAssetAtPath<MapSpec>($"{DataRoot}/map_Map4P.asset");
+      if (map != null) { map.LogisticsEconomy = true; EditorUtility.SetDirty(map); }
+      AssetDatabase.SaveAssets();
+      Debug.Log("[FW-T41] logistics data applied");
+    }
+
     public static void BakeTask39() {
       ApplyTask39Data();
       DressKit.BuildBakeDress();
@@ -1634,6 +1664,7 @@ namespace FactoryWars.EditorTools {
       spec.HasTrader = def.Trader;
       spec.TraderPosition = def.TraderPosition;
       spec.MercenaryCamp = def.MercenaryCamp;
+      spec.LogisticsEconomy = def.LogisticsEconomy;
       spec.BlackBoxSpots = def.BlackBoxSpots;
       spec.WeatherFirstSeconds = def.WeatherFirst;
       spec.WeatherDurationSeconds = def.WeatherDuration;

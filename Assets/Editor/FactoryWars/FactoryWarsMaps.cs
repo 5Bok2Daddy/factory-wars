@@ -40,6 +40,7 @@ namespace FactoryWars.EditorTools {
       public int[] ExtraDrawbridges;
       /// <summary>Task 39 card 3: the trader is the mercenary camp.</summary>
       public bool MercenaryCamp;
+      public bool LogisticsEconomy;
       public MapShape[] ExtraRoads;
       public WaterStrip[] ExtraWater;
       public MapShape BaseArea;
