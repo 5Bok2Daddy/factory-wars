@@ -60,6 +60,14 @@ namespace FactoryWars.View {
     /// </summary>
     public static readonly (string Id, string Borrow, float Scale)[] TemporaryModels = {
       ("ff_scout_buggy", "cf_thunder_aa", 0.7f),
+      // Task 39 card 4: PMC goods and the cargo truck borrow a donor entry; unit/pmc_* and unit/merc_cargo_truck slots give the model.
+      ("pmc_operator_squad", "ff_ranger_squad", 1f),
+      ("pmc_marksman", "ff_sniper", 1f),
+      ("pmc_tank", "cf_dragonscale_tank", 1f),
+      ("pmc_attack_heli", "ff_hawk_gunship", 1f),
+      ("pmc_attack_drone", "ff_hawk_gunship", 0.4f),
+      ("pmc_armored_suv", "ff_scout_buggy", 1f),
+      ("merc_cargo_truck", "cf_apc_transport", 1f),
       ("ff_field_support", "cf_longwall_mlrs", 0.8f),
       ("ff_bulwark_tank", "ff_eagle_tank", 1.3f),
       ("cf_scout_bike", "ff_eagle_tank", 0.6f),

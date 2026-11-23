@@ -52,20 +52,20 @@ MonoBehaviour:
       RawValue: 0
   Truck:
     Id:
-      Value: 416579979627631182
+      Value: 321629475095388920
   DeliveryRadius:
     RawValue: 655360
   CargoDropShare:
     RawValue: 32768
   Offers:
-  - Name: "\uC6A9\uBCD1 \uC18C\uCD1D \uBD84\uB300"
+  - Name: "PMC \uC624\uD37C\uB808\uC774\uD130 \uBD84\uB300"
     Unit:
       Id:
-        Value: 442872915998123145
-    Count: 3
+        Value: 418376337499150081
+    Count: 1
     Cost:
       Iron:
-        RawValue: 9830400
+        RawValue: 10485760
       Wood:
         RawValue: 5242880
       Steel:
@@ -84,10 +84,10 @@ MonoBehaviour:
     MaxStock: 4
     CooldownSeconds:
       RawValue: 1966080
-  - Name: "\uC6A9\uBCD1 \uC800\uACA9\uC218"
+  - Name: "PMC \uC800\uACA9\uC218"
     Unit:
       Id:
-        Value: 517939919938993869
+        Value: 421045728063210500
     Count: 1
     Cost:
       Iron:
@@ -110,10 +110,10 @@ MonoBehaviour:
     MaxStock: 3
     CooldownSeconds:
       RawValue: 2621440
-  - Name: "\uC6A9\uBCD1 \uC804\uCC28"
+  - Name: "PMC \uC804\uCC28"
     Unit:
       Id:
-        Value: 310411429557659117
+        Value: 478283089608756680
     Count: 1
     Cost:
       Iron:
@@ -133,13 +133,13 @@ MonoBehaviour:
         RawValue: 0
       Power:
         RawValue: 0
-    MaxStock: 2
+    MaxStock: 4
     CooldownSeconds:
       RawValue: 3932160
-  - Name: "\uC6A9\uBCD1 \uACF5\uACA9 \uD5EC\uAE30"
+  - Name: "PMC \uACF5\uACA9 \uD5EC\uAE30"
     Unit:
       Id:
-        Value: 489920977364748690
+        Value: 409655917229728392
     Count: 1
     Cost:
       Iron:
@@ -159,9 +159,61 @@ MonoBehaviour:
         RawValue: 0
       Power:
         RawValue: 0
-    MaxStock: 1
+    MaxStock: 4
     CooldownSeconds:
       RawValue: 5898240
+  - Name: "PMC \uACF5\uACA9 \uB4DC\uB860"
+    Unit:
+      Id:
+        Value: 318822090122040979
+    Count: 1
+    Cost:
+      Iron:
+        RawValue: 9175040
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 3276800
+      Power:
+        RawValue: 3932160
+    Give:
+      Iron:
+        RawValue: 0
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 0
+    MaxStock: 2
+    CooldownSeconds:
+      RawValue: 2949120
+  - Name: "PMC \uC7A5\uAC11 SUV"
+    Unit:
+      Id:
+        Value: 363699722639761675
+    Count: 1
+    Cost:
+      Iron:
+        RawValue: 9830400
+      Wood:
+        RawValue: 2621440
+      Steel:
+        RawValue: 1966080
+      Power:
+        RawValue: 0
+    Give:
+      Iron:
+        RawValue: 0
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 0
+    MaxStock: 2
+    CooldownSeconds:
+      RawValue: 2621440
   - Name: "\uBCF4\uAE09 \uAD50\uD658(\uBAA9\uC7AC\u2192\uAC15\uCCA0)"
     Unit:
       Id:

@@ -258,7 +258,9 @@ namespace FactoryWars.View {
       });
       QuantumEvent.Subscribe<EventTraderShot>(this, e => {
         var to = e.To.ToUnityVector3() + Vector3.up * 0.8f;
-        var from = _trader != null ? _trader.ShotOrigin(e.From.ToUnityVector3(), to) : e.From.ToUnityVector3() + Vector3.up * 3f;
+        // Task 39: garrison shots start at the garrison soldier's muzzle.
+        var garrison = _merc?.ShotOrigin(e.From.ToUnityVector3(), to);
+        var from = garrison ?? (_trader != null ? _trader.ShotOrigin(e.From.ToUnityVector3(), to) : e.From.ToUnityVector3() + Vector3.up * 3f);
         var dir = (to - from).normalized;
         Fx.MuzzleFlash(from, dir, 0.45f);
         Fx.Needle(from + dir * 0.1f, to, 90f);
@@ -408,6 +410,10 @@ namespace FactoryWars.View {
       UpdateWeather(frame);
       _trader ??= new TraderView(_stage);
       _trader.Update(frame, _catalog, Fx, _controller != null && _controller.Input != null && _controller.Input.Selection.Building != EntityRef.None && frame.Has<NpcTrader>(_controller.Input.Selection.Building), dt);
+      _merc ??= new MercCampView(_stage);
+      _merc.Update(frame, dt);
+      _drawbridges ??= new DrawbridgeView(_stage);
+      _drawbridges.Update(frame, dt);
       World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
       UpdatePlacementRings(frame);
       UpdateStrikeRockets(frame, dt);
@@ -509,6 +515,10 @@ namespace FactoryWars.View {
 
     TraderView _trader;
     public TraderView Trader => _trader;
+    MercCampView _merc;
+    DrawbridgeView _drawbridges;
+    public DrawbridgeView Drawbridges => _drawbridges;
+    public MercCampView MercCamp => _merc;
     GameObject _weatherFx;
     bool _weatherOn;
     bool _fogBefore;

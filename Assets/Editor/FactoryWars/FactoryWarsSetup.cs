@@ -404,6 +404,19 @@ namespace FactoryWars.EditorTools {
       Debug.Log("[FW-T39] bridge traffic data applied");
     }
 
+    /// <summary>Task 39 card 4: a new unit spec with the stats of an existing one (its own asset; the importer assigns its Quantum guid).</summary>
+    static UnitSpec CloneUnit(string from, string to, System.Action<UnitSpec> edit) {
+      var source = AssetDatabase.LoadAssetAtPath<UnitSpec>($"{DataRoot}/{from}.asset");
+      var unit = Asset<UnitSpec>(to);
+      var id = unit.Identifier;
+      JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(source), unit);
+      unit.Identifier = id;
+      unit.name = to;
+      edit?.Invoke(unit);
+      EditorUtility.SetDirty(unit);
+      return unit;
+    }
+
     /// <summary>Task 39 card 3: mercenary camp data (garrison, diplomacy cargo, shop with shared stock). Korean names are shop labels.</summary>
     static MercenarySpec BuildMercenarySpec() {
       var spec = Asset<MercenarySpec>("mercenary_camp");
@@ -421,18 +434,29 @@ namespace FactoryWars.EditorTools {
       spec.GuardSpeed = 5;
       spec.MessageDelaySeconds = 8;
       spec.Cargo = R(300, 150);
-      spec.Truck = U("cf_apc_transport");
+      spec.Truck = Ref(CloneUnit("cf_apc_transport", "merc_cargo_truck", u => { u.Attack = AttackType.None; u.Damage = 0; u.Range = 0; u.TransportCapacity = 0; }));
       spec.DeliveryRadius = 10;
       spec.CargoDropShare = N(0.5);
       spec.RestockSeconds = 90;
       spec.AiContactAfterSeconds = 120;
       spec.AiReserve = R(150, 80);
       spec.AiEscorts = 2;
+      // Task 39 card 4: PMC goods are their own unit specs (stats cloned from existing units, PMC dark models via unit/pmc_* slots).
+      var squad = CloneUnit("ff_ranger_squad", "pmc_operator_squad", null);
+      var marksman = CloneUnit("ff_sniper", "pmc_marksman", null);
+      var tank = CloneUnit("cf_dragonscale_tank", "pmc_tank", null);
+      var heli = CloneUnit("ff_hawk_gunship", "pmc_attack_heli", null);
+      var drone = CloneUnit("ff_hawk_gunship", "pmc_attack_drone", u => {
+        u.Size = UnitSize.Small; u.MaxHealth = 140; u.Damage = 28; u.Range = 9; u.AttackInterval = N(1.2); u.MoveSpeed = 10; u.Population = 1; u.SightRange = 16;
+      });
+      var suv = CloneUnit("ff_scout_buggy", "pmc_armored_suv", u => { u.MaxHealth = u.MaxHealth * 2; });
       spec.Offers = new[] {
-        new MercOffer { Name = "용병 소총 분대", Unit = U("cf_militia"), Count = 3, Cost = R(150, 80), MaxStock = 4, CooldownSeconds = 30 },
-        new MercOffer { Name = "용병 저격수", Unit = U("ff_sniper"), Count = 1, Cost = R(160, 60, 40), MaxStock = 3, CooldownSeconds = 40 },
-        new MercOffer { Name = "용병 전차", Unit = U("cf_dragonscale_tank"), Count = 1, Cost = R(260, 0, 60, 60), MaxStock = 2, CooldownSeconds = 60 },
-        new MercOffer { Name = "용병 공격 헬기", Unit = U("ff_hawk_gunship"), Count = 1, Cost = R(300, 0, 110, 110), MaxStock = 1, CooldownSeconds = 90 },
+        new MercOffer { Name = "PMC 오퍼레이터 분대", Unit = Ref(squad), Count = 1, Cost = R(160, 80), MaxStock = 4, CooldownSeconds = 30 },
+        new MercOffer { Name = "PMC 저격수", Unit = Ref(marksman), Count = 1, Cost = R(160, 60, 40), MaxStock = 3, CooldownSeconds = 40 },
+        new MercOffer { Name = "PMC 전차", Unit = Ref(tank), Count = 1, Cost = R(260, 0, 60, 60), MaxStock = 4, CooldownSeconds = 60 },
+        new MercOffer { Name = "PMC 공격 헬기", Unit = Ref(heli), Count = 1, Cost = R(300, 0, 110, 110), MaxStock = 4, CooldownSeconds = 90 },
+        new MercOffer { Name = "PMC 공격 드론", Unit = Ref(drone), Count = 1, Cost = R(140, 0, 50, 60), MaxStock = 2, CooldownSeconds = 45 },
+        new MercOffer { Name = "PMC 장갑 SUV", Unit = Ref(suv), Count = 1, Cost = R(150, 40, 30), MaxStock = 2, CooldownSeconds = 40 },
         new MercOffer { Name = "보급 교환(목재→강철)", Cost = R(0, 200), Give = R(0, 0, 80), MaxStock = 5, CooldownSeconds = 20 },
       };
       EditorUtility.SetDirty(spec);

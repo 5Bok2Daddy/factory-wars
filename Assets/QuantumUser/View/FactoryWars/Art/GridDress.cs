@@ -104,6 +104,7 @@ namespace FactoryWars.View {
       var covered = new bool[n, n];
       var variantAt = new string[n, n];
       var low = GraphicsQuality.Current == QualityTier.Low;
+      var camp = map.MercenaryCamp && Kinds.ContainsKey("MK");
 
       int Pick(string kind, int r0, int c0, int h, int w, int salt) {
         if (!Kinds.TryGetValue(kind, out var list) || list.Count == 0) return 0;
@@ -170,6 +171,8 @@ namespace FactoryWars.View {
             case 'L': Put(parent, "L", Pick("L", r, c, 1, 1, 4), at, Hash(r, c, 9) % 2 == 0 ? 0f : 180f, $"{r},{c}"); break;
             case 'X': Put(parent, "X", Pick("X", r, c, 1, 1, 6), at, 90f * (Hash(r, c, 7) % 4), $"{r},{c}"); break;
             case 'Y': {
+              // Task 39: on the PMC camp map the compound's Y cells belong to the camp blocks (no container piles).
+              if (camp && Mathf.Abs(at.x) < 56f && Mathf.Abs(at.z) < 56f) break;
               // 요새 안 컨테이너는 등(쌓은 쪽)을 담장 쪽으로, 밖은 길 규칙.
               var dir = Mathf.Abs(at.x) < 80f && Mathf.Abs(at.z) < 80f
                 ? (Mathf.Abs(at.x) > Mathf.Abs(at.z) ? (at.x > 0 ? 3 : 1) : (at.z > 0 ? 0 : 2))
@@ -216,10 +219,16 @@ namespace FactoryWars.View {
         }
       }
 
+      var dirs = new[] { (1, 0, 0), (0, 1, 1), (-1, 0, 2), (0, -1, 3) };
+      // ---- Task 39 card 4: PMC camp = two baked blocks (perimeter + zones); the old wall/cover/container dressing is skipped.
+      if (camp) {
+        Put(parent, "MK", 0, new Vector3(0f, 0.02f, 0f), 0f, "camp-perimeter");
+        Put(parent, "MK", 1, new Vector3(0f, 0.02f, 0f), 0f, "camp-zones");
+        goto bridges;
+      }
       // ---- 중앙 요새: 칸 경계 담장(정문 16m 제외) + 모서리 기둥 + 정문 감시탑 + 대각 4곳 건물 무리.
       bool InCompound(int r, int c) { var ch = GridMapView.Cell(map, r, c); return (ch == 'C' || ch == 'Y' || ch == 'p') && Mathf.Abs(r - n / 2 + 0.5f) < 8 && Mathf.Abs(c - n / 2 + 0.5f) < 8; }
       bool Gate(float x, float z) => (Mathf.Abs(x) < 8.5f && Mathf.Abs(z) > 28f) || (Mathf.Abs(z) < 8.5f && Mathf.Abs(x) > 28f);
-      var dirs = new[] { (1, 0, 0), (0, 1, 1), (-1, 0, 2), (0, -1, 3) };
       for (var r = 0; r < n; r++) {
         for (var c = 0; c < n; c++) {
           if (!InCompound(r, c)) continue;
@@ -304,11 +313,13 @@ namespace FactoryWars.View {
         }
       }
 
+      bridges:
       // ---- 다리 난간: 다리(G) 칸의 물(W) 쪽 변.
       for (var r = 0; r < n; r++) {
         for (var c = 0; c < n; c++) {
           if (GridMapView.Cell(map, r, c) != 'G') continue;
           var center = Center(r, c, 1, 1);
+          if (DrawbridgeView.InDrawbridge(map, center)) continue;
           foreach (var (dr, dc, dir) in dirs) {
             if (GridMapView.Cell(map, r + dr, c + dc) != 'W') continue;
             Put(parent, "GR", 0, center + new Vector3(dc * (size / 2f - 0.3f), 0f, -dr * (size / 2f - 0.3f)), Yaw(dir), $"{r},{c},{dir}");

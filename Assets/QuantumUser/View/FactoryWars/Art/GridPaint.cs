@@ -210,6 +210,8 @@ namespace FactoryWars.View {
               var lv = .6f + h / 7 % 3 * .35f;
               kit.Poly(new[] { pc - u * lu - v * lv, pc + u * lu - v * lv, pc + u * lu + v * lv, pc - u * lu + v * lv }, .05f, Patch);
             }
+            // Task 39: drawbridge deck cells are drawn by DrawbridgeView (moving leaves).
+            if (ch == 'G' && DrawbridgeView.InDrawbridge(map, new Vector3((x0 + x1) / 2f, 0f, (z0 + z1) / 2f))) continue;
             if (ch == 'G') {
               kit.Rect(x0, z0, x1, z1, .04f, new Color(.46f, .45f, .43f));
               for (var k = 0; k < 4; k++) kit.Rect(x0 + .3f + k * 2f, z0, x0 + .42f + k * 2f, z1, .05f, new Color(.38f, .37f, .36f));

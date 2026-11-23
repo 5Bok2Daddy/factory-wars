@@ -6561,7 +6561,7 @@ MonoBehaviour:
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 79.759995, y: 0.9543916, z: 79.759995}
+    Size: {x: 96.99999, y: 0.9543916, z: 97}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -9528,6 +9528,56 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
+  - Id: dress4p/MK_00
+    Category: 5
+    Prefabs:
+    - {fileID: 5336176280553406684, guid: 3149a57eb5c57bd46929306f10fc6dee, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 112, y: 0, z: 112}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/MK_01
+    Category: 5
+    Prefabs:
+    - {fileID: 9098458663234763763, guid: 53ad34ad24edc4b44a1bfbb38375bbed, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 112, y: 0, z: 112}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress4p/CP_00
     Category: 5
     Prefabs:
@@ -9771,6 +9821,309 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: camp/display_tank
+    Category: 5
+    Prefabs:
+    - {fileID: 8402514608613543937, guid: c0c4e07f6c0b0544d81f0a467d15915d, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 3.2934344, y: 2.9725466, z: 6.603936}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp display model (CampKit.cs), pack dark colour variant
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: camp/display_mrap
+    Category: 5
+    Prefabs:
+    - {fileID: 6184442293050677931, guid: 3d0293bb285be4f459ca8e38e4f0450a, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2.5060673, y: 2.711237, z: 4.653719}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp display model (CampKit.cs), pack dark colour variant
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: camp/display_heli
+    Category: 5
+    Prefabs:
+    - {fileID: 4307466239846680120, guid: 1f3c91964ce463142bb69a8c2ea361ad, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 7.935976, y: 3.078089, z: 10.372702}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp display model (CampKit.cs), pack dark colour variant
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: camp/display_drone
+    Category: 5
+    Prefabs:
+    - {fileID: 3979188308498204579, guid: ab232347a0d7e5e4494f78a90ea75014, type: 3}
+    Scale: 0.9335725
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2, y: 2, z: 2}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp display model (CampKit.cs), pack dark colour variant
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: unit/pmc_tank
+    Category: 5
+    Prefabs:
+    - {fileID: 8402514608613543937, guid: c0c4e07f6c0b0544d81f0a467d15915d, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 3.2934344, y: 2.9725466, z: 6.603936}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp display model (CampKit.cs), pack dark colour variant
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: unit/pmc_armored_suv
+    Category: 5
+    Prefabs:
+    - {fileID: 6184442293050677931, guid: 3d0293bb285be4f459ca8e38e4f0450a, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2.5060673, y: 2.711237, z: 4.653719}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp display model (CampKit.cs), pack dark colour variant
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: unit/pmc_attack_heli
+    Category: 5
+    Prefabs:
+    - {fileID: 4307466239846680120, guid: 1f3c91964ce463142bb69a8c2ea361ad, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 7.935976, y: 3.078089, z: 10.372702}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp display model (CampKit.cs), pack dark colour variant
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: unit/pmc_attack_drone
+    Category: 5
+    Prefabs:
+    - {fileID: 3979188308498204579, guid: ab232347a0d7e5e4494f78a90ea75014, type: 3}
+    Scale: 0.9335725
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2, y: 2, z: 2}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp display model (CampKit.cs), pack dark colour variant
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: unit/pmc_soldier
+    Category: 0
+    Prefabs:
+    - {fileID: 1938819345475948, guid: 7808f0aeae535744d839b436592d7285, type: 3}
+    Scale: 0.8
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2.0516062, y: 1.9209248, z: 0.53488874}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC contractor (Synty Military SM_Chr_Contractor_Male_01, dark
+      outfit), trader_guard animator
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
+  - Id: unit/pmc_operator_squad
+    Category: 0
+    Prefabs:
+    - {fileID: 1938819345475948, guid: 7808f0aeae535744d839b436592d7285, type: 3}
+    Scale: 0.8
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2.0516062, y: 1.9209248, z: 0.53488874}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC contractor (Synty Military SM_Chr_Contractor_Male_01, dark
+      outfit), trader_guard animator
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
+  - Id: unit/pmc_marksman
+    Category: 0
+    Prefabs:
+    - {fileID: 1938819345475948, guid: 7808f0aeae535744d839b436592d7285, type: 3}
+    Scale: 0.8
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2.0516062, y: 1.9209248, z: 0.53488874}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC contractor (Synty Military SM_Chr_Contractor_Male_01, dark
+      outfit), trader_guard animator
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
+  - Id: unit/merc_cargo_truck
+    Category: 5
+    Prefabs:
+    - {fileID: 8363428880468286555, guid: b6dc01a836541104d85e73dd3fae352c, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 3.0521638, y: 3.1532836, z: 6.8340244}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp display model (CampKit.cs), pack dark colour variant
     TurretPart: 
     BarrelPart: 
     SpinParts: []

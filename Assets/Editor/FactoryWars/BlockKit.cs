@@ -83,8 +83,6 @@ namespace FactoryWars.EditorTools {
 
     public static readonly Decor[] CompoundCover = {
       new Decor { Name = "cover", Prefab = PM + "Props/SM_Prop_Barrier_02.prefab", U = 24, W = 24, Yaw = 45, Scale = 1f, Half = new Vector2(2.2f, 1f) },
-      new Decor { Name = "pallet", Prefab = PM + "Props/SM_Prop_Pallet_02.prefab", U = 25, W = 20, Yaw = 14, Scale = 1f },
-      new Decor { Name = "crate", Prefab = PM + "Props/SM_Prop_Crate_Wood_03.prefab", U = 23, W = 24, Yaw = 35, Scale = 1f },
     };
 
     /// <summary>프리팹을 바닥 가운데가 (x, z), 바닥이 y에 오도록 놓는다(팩 프리팹마다 기준점이 모서리·가운데로 다르다).</summary>
@@ -300,20 +298,55 @@ namespace FactoryWars.EditorTools {
           var p = Rotate(prop.U, prop.W);
           Place(street, prop.Prefab, new Vector3(p.x, 0, p.y), prop.Yaw - side * 90f, prop.Scale, $"{prop.Name}-{side}");
         }
-        // v5(2026-11-23): 요새가 147m → 96m로 줄어 v4 좌표를 0.65배 한다.
-        Vector2 S(float x, float z) => Rotate(x * 0.65f, z * 0.65f);
-        paving.Strip(S(28, 33), S(41, 33), 7f, 0.019f, asphalt);
-        paving.Strip(S(28, 38.2f), S(41, 38.2f), 0.26f, 0.027f, marking);
-        paving.Strip(S(0, 16), S(0, 57), 8f, 0.018f, asphalt);
-        for (var z = 17; z < 56; z += 8) {
-          paving.Strip(S(0, z), S(0, z + 3.6f), 0.24f, 0.026f, marking);
-        }
-        paving.Strip(S(11, 61), S(32, 61), 0.46f, 0.024f, asphalt);
-        paving.Strip(S(32, 61), S(61, 32), 0.46f, 0.024f, asphalt);
-        paving.Strip(S(61, 32), S(61, 11), 0.46f, 0.024f, asphalt);
+        // Task 39 card 4 (PMC camp): one asphalt loop around the HQ hub (square, centre line ±17, 6 m) with an amber centre dash,
+        // and an axis road from the loop to each gate. Per side: the loop edge, its dashes and the axis road.
+        var m = FactoryWars.View.CampLayout.RingMid;
+        var w = FactoryWars.View.CampLayout.RingWidth;
+        paving.Strip(Rotate(-m - w / 2f, -m), Rotate(m + w / 2f, -m), w, 0.019f, asphalt);
+        for (var x = -m + 1.5f; x < m - 1.5f; x += 4f) paving.Strip(Rotate(x, -m), Rotate(x + 2f, -m), 0.22f, 0.026f, marking);
+        paving.Strip(Rotate(0, -m - w / 2f), Rotate(0, -48.5f), FactoryWars.View.CampLayout.AxisHalf * 2f, 0.018f, asphalt);
+        for (var z = -m - 5f; z > -46f; z -= 4f) paving.Strip(Rotate(0, z), Rotate(0, z - 2f), 0.22f, 0.026f, marking);
       }
+      CampPaving(paving);
       paving.Save(root);
       return root;
+    }
+
+    /// <summary>Task 39 card 4: display bays (white lines), helipad, drone pads, firing range pad and the main gate stop line.</summary>
+    static void CampPaving(Paving paving) {
+      var white = new Color(0.86f, 0.86f, 0.82f);
+      var amber = new Color(0.86f, 0.62f, 0.18f);
+      var pad = new Color(0.42f, 0.43f, 0.42f);
+      var d = FactoryWars.View.CampLayout.DisplayPad;
+      paving.Polygon(new[] { new Vector2(d.x, d.y), new Vector2(d.z, d.y), new Vector2(d.z, d.w), new Vector2(d.x, d.w) }, 0.015f, new Color(0.17f, 0.17f, 0.18f));
+      foreach (var (p, yaw, kind) in FactoryWars.View.CampLayout.Bays) {
+        var c = new Vector2(p.x, p.z);
+        if (kind == FactoryWars.View.CampLayout.Bay.Heli) {
+          var ring = new List<Vector2>();
+          for (var i = 0; i < 24; i++) ring.Add(c + new Vector2(Mathf.Cos(i * Mathf.PI / 12f), Mathf.Sin(i * Mathf.PI / 12f)) * 4.3f);
+          paving.Polygon(ring, 0.02f, pad);
+          for (var i = 0; i < 24; i += 2) paving.Strip(ring[i] + (c - ring[i]) * 0.08f, ring[(i + 1) % 24] + (c - ring[(i + 1) % 24]) * 0.08f, 0.35f, 0.027f, amber);
+          paving.Strip(c + new Vector2(-1.6f, -2.2f), c + new Vector2(-1.6f, 2.2f), 0.5f, 0.028f, white);
+          paving.Strip(c + new Vector2(1.6f, -2.2f), c + new Vector2(1.6f, 2.2f), 0.5f, 0.028f, white);
+          paving.Strip(c + new Vector2(-1.6f, 0f), c + new Vector2(1.6f, 0f), 0.5f, 0.028f, white);
+          continue;
+        }
+        var half = kind == FactoryWars.View.CampLayout.Bay.Drone ? new Vector2(1.9f, 1.9f) : kind == FactoryWars.View.CampLayout.Bay.Tank ? new Vector2(4.2f, 3.0f) : new Vector2(2.8f, 4.0f);
+        if (kind == FactoryWars.View.CampLayout.Bay.Drone) {
+          paving.Polygon(new[] { c + new Vector2(-half.x, -half.y), c + new Vector2(half.x, -half.y), c + new Vector2(half.x, half.y), c + new Vector2(-half.x, half.y) }, 0.02f, pad);
+          paving.Strip(c + new Vector2(-half.x, -half.y), c + new Vector2(half.x, -half.y), 0.2f, 0.027f, amber);
+          paving.Strip(c + new Vector2(half.x, -half.y), c + new Vector2(half.x, half.y), 0.2f, 0.027f, amber);
+          paving.Strip(c + new Vector2(half.x, half.y), c + new Vector2(-half.x, half.y), 0.2f, 0.027f, amber);
+          paving.Strip(c + new Vector2(-half.x, half.y), c + new Vector2(-half.x, -half.y), 0.2f, 0.027f, amber);
+          continue;
+        }
+        paving.Strip(c + new Vector2(-half.x, -half.y), c + new Vector2(-half.x, half.y), 0.18f, 0.027f, white);
+        paving.Strip(c + new Vector2(half.x, -half.y), c + new Vector2(half.x, half.y), 0.18f, 0.027f, white);
+        paving.Strip(c + new Vector2(-half.x, -half.y), c + new Vector2(half.x, -half.y), 0.18f, 0.027f, white);
+      }
+      // Firing range pad and the stop line at the main gate.
+      paving.Polygon(new[] { new Vector2(7f, -40f), new Vector2(31f, -40f), new Vector2(31f, -23.2f), new Vector2(7f, -23.2f) }, 0.016f, new Color(0.52f, 0.5f, 0.45f));
+      paving.Strip(new Vector2(-3.2f, -44f), new Vector2(3.2f, -44f), 0.4f, 0.028f, white);
     }
 
     public static HashSet<(int, int)> BaseCells(char[,] grid) {

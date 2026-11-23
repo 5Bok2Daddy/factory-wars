@@ -44,6 +44,8 @@ namespace FactoryWars.EditorTools {
     }
 
     /// <summary>프리팹 정면 방향을 -Z로 돌리는 Y 각도. 유리 재질이 있으면 유리 면 방향, 없으면 세부(삼각형 수)가 가장 많은 수평 면.</summary>
+    internal static float FrontOf(string path) => Front(path);
+
     static float Front(string path) {
       if (FrontCache.TryGetValue(path, out var cached)) return cached;
       var source = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -364,6 +366,9 @@ namespace FactoryWars.EditorTools {
       Add("CW_00", 8, 2, b => { b.Margin = -1f; b.Prop(MP("Barrier_Tall_Group_01"), -1.45f, 0f, 90f); b.Prop(MP("Barrier_Tall_Group_02"), 1.45f, 0.04f, 90f); b.Prop(MM("RazorWire_01"), 0.3f, -0.9f); });
       Add("CW_01", 8, 2, b => { b.Margin = -1f; b.Prop(MP("Barrier_Tall_Group_02"), -1.45f, 0.03f, 90f); b.Prop(MP("Barrier_Tall_Group_01"), 1.45f, 0f, 90f); });
       Add("CW_02", 8, 2, b => { b.Margin = -1f; b.Prop(MP("Barrier_Tall_Group_01"), -1.45f, 0.02f, 90f); b.Prop(MP("Barrier_Tall_Group_01"), 1.45f, 0f, 90f); b.Prop(MM("Barrier_Base_Single_01"), -2.4f, -1.2f, 20f); });
+      // Task 39 card 4: PMC camp, two big baked blocks centred on the camp (CampKit). Margin off: CampKit checks every piece itself.
+      Add("MK_00", 112, 112, b => { b.Margin = -200f; CampKit.Perimeter(b.Root); });
+      Add("MK_01", 112, 112, b => { b.Margin = -200f; CampKit.Zones(b.Root); });
       Add("CP_00", 2, 2, b => { b.Margin = -1f; b.Prop(MP("Barrier_Tall_05"), 0f, 0f, 45f); });
       Add("CT_00", 8, 8, b => { b.Margin = -1f; b.Bld(MB("GuardTower_01"), 0f, 0.6f); b.Prop(MM("Barrier_Base_Row_01"), 0f, -2.6f); });
       Add("CB_00", 16, 16, b => {
@@ -588,6 +593,7 @@ namespace FactoryWars.EditorTools {
           Object.DestroyImmediate(root);
         }
       }
+      CampKit.RegisterDisplays(catalog, Out);
       catalog.Invalidate();
       EditorUtility.SetDirty(catalog);
       AssetDatabase.SaveAssets();

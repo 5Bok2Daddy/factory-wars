@@ -155,11 +155,16 @@ namespace FactoryWars.View {
       _ruin.SetActive(false);
 
       _gatesNorthSouth = GatesAlongNorthSouth(map, center);
-      Perimeter();
-      Interior();
+      // Task 39 card 4: inside the PMC camp the HQ hub has no own fence (the camp fence is the perimeter; no internal fences).
+      if (map.MercenaryCamp == false) {
+        Perimeter();
+        Interior();
+      }
       DressingSpawn.Place(DressKind.Ruin, _ruin.transform, Vector3.zero, 0f, 9904);
       DressingSpawn.Place(DressKind.Ruin, _ruin.transform, new Vector3(5f, 0f, -4f), 90f, 9905);
-      Guards(catalog);
+      if (map.MercenaryCamp == false) {
+        Guards(catalog);
+      }
       Drones();
 
       var kit = new MeshKit().Paint(Swatch.White);
