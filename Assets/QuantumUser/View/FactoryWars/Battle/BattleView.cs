@@ -1835,7 +1835,8 @@ namespace FactoryWars.View {
         actor.FootprintRadius = spec.FootprintRadius.AsFloat;
         actor.View.transform.position = position;
         actor.BuildingModelY = actor.View.Model.transform.localPosition.y;
-        FoundationView.Attach(actor.View.transform, World.Map, spec, position, 180f);
+        // Task 46: the sea barrier floats on the waterway (no concrete foundation slab).
+        if (spec.Role != BuildingRole.SeaBarrier) FoundationView.Attach(actor.View.transform, World.Map, spec, position, 180f);
         DressBuilding(actor, spec, position);
         var forward = spec.Role == BuildingRole.Headquarters && IsForward(frame, building->Owner, position);
         if (forward) {

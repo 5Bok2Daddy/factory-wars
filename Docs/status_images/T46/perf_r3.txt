@@ -1,0 +1,7 @@
+Task 46 captures r3
+full_map | 560m | draws 2487 | tris 5207501
+west_sector | 190m | draws 978 | tris 2156780
+barrier_tower | 40m | draws 94 | tris 129132
+harbour_truck | 60m | draws 144 | tris 258960
+canal_shipyard_tooltip | 45m | draws 48 | tris 93231
+waterway props 25

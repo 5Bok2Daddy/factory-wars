@@ -155,6 +155,15 @@ namespace FactoryWars.View {
           foreach (var (x, z) in new[] { (-6f, -18f), (6f, -18f) }) Place(depot, "logi/lumber", new Vector3(x, 0f, z), 90f);
           TreeCluster(depot, new Vector3(-22f, 0f, -16f), 3);
           TreeCluster(depot, new Vector3(22f, 0f, -16f), 3);
+          // Task 46: the depot moved 16 m inland behind the harbour quay; fill the inland half in groups (central truck lane
+          // |x| < 14 stays clear): a second timber shed, stacked lumber rows, log piles, planted corners.
+          Place(depot, "logi/warehouse_low", new Vector3(-24f, 0f, 22f), 90f);
+          foreach (var (x, z, yaw) in new[] { (20f, 13f, 0f), (20f, 16.5f, 0f), (24f, 13f, 4f), (24f, 16.5f, -3f), (20f, 22f, 90f), (24.5f, 22f, 88f) }) Place(depot, "logi/lumber_long", new Vector3(x, 0f, z), yaw);
+          foreach (var (x, z, yaw) in new[] { (-19f, 12f, 0f), (-23f, 12.5f, 10f), (17f, 27f, 0f) }) Place(depot, "logi/lumber", new Vector3(x, 0f, z), yaw);
+          foreach (var (x, z) in new[] { (27f, 6f), (27f, 9f) }) Place(depot, "logi/container", new Vector3(x, 0f, z), 90f);
+          TreeCluster(depot, new Vector3(-28f, 0f, 28f), 4);
+          TreeCluster(depot, new Vector3(28f, 0f, 28f), 3);
+          TreeCluster(depot, new Vector3(-28f, 0f, 2f), 2);
           break;
         case "north": // waterfront freight yard: container rows and a crane by the canal side
           foreach (var (x, z, yaw) in new[] { (-14f, -11f, 0f), (-14f, -14f, 0f), (14f, -11f, 0f), (17f, -14f, 0f), (0f, -16f, 90f) }) Place(depot, "logi/container", new Vector3(x, 0f, z), yaw);

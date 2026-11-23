@@ -342,8 +342,8 @@ namespace FactoryWars.Tests {
       camera.aspect = 16f / 9f;
       var report = new List<string> { $"Task 41 captures {iteration}" };
       IEnumerator Shot(string name, Vector2 focus, float height) {
-        rts.MoveTo(focus);
         rts.Height = height;
+        rts.MoveTo(focus);
         rts.Apply();
         yield return WaitFrames(Fps / 2);
         CaptureCameraPng(camera, System.IO.Path.Combine(dir, $"{name}_{iteration}.png"), 1920, 1080);

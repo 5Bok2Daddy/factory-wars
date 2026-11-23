@@ -330,8 +330,8 @@ namespace FactoryWars.Tests {
       camera.aspect = 16f / 9f;
       var report = new List<string> { $"Task 46 captures {iteration}" };
       IEnumerator Shot(string name, Vector2 focus, float height) {
-        rts.MoveTo(focus);
         rts.Height = height;
+        rts.MoveTo(focus);
         rts.Apply();
         yield return WaitFrames(Fps / 2);
         CaptureCameraPng(camera, System.IO.Path.Combine(dir, $"{name}_{iteration}.png"), 1920, 1080);
@@ -345,6 +345,8 @@ namespace FactoryWars.Tests {
         report.Add($"{name} | {height:0}m | draws {rs.Sum(r => r.sharedMaterials.Length)} | tris {tris}");
       }
       var gate = Map4PSpec.SeaGates[GateOfSeat(0)].Center;
+      var raider = SpawnSeat(PlayerOfSeat(1), "artillery_ship", Lane(gate.Z.AsFloat + 18f));
+      Game.SendCommand(PlayerOfSeat(1), new AttackTargetCommand { Units = new[] { raider }, Target = GateState(GateOfSeat(0)).Barrier });
       yield return Shot("full_map", new Vector2(0f, 0f), 560f);
       yield return Shot("west_sector", new Vector2(-250f, -60f), 190f);
       yield return Shot("barrier_tower", new Vector2(gate.X.AsFloat + 10f, gate.Z.AsFloat), 40f);

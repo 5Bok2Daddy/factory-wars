@@ -25,6 +25,11 @@ for r in range(36, 44):
     for c in range(4, 12):
         g[r][c] = 'M'
 
+# Planted corners (park 'K'): the paved depot shrinks to the truck rows (38-41) and the inland lane; about 37 % of the yard is green.
+for r, c0, c1 in [(36, 4, 8), (37, 4, 8), (42, 4, 8), (43, 4, 8), (36, 8, 12), (43, 8, 12)]:
+    for c in range(c0, c1):
+        g[r][c] = 'K'
+
 with open('Map4P_grid_v6.csv', 'w', newline='') as f:
     csv.writer(f, lineterminator='\n').writerows(g)
 print('wrote Map4P_grid_v6.csv')
