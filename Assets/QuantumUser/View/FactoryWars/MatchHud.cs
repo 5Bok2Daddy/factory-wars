@@ -341,6 +341,17 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventBarricadeDestroyed>(this, OnBarricade);
       QuantumEvent.Subscribe<EventBaseUnderAttack>(this, OnBaseAttacked);
       QuantumEvent.Subscribe<EventCratePicked>(this, OnCratePicked);
+      // Task 41: logistics alerts for the local player (delivered amount floats over the dock).
+      QuantumEvent.Subscribe<EventLogisticsNotice>(this, e => {
+        if (e.Player != Controller.Player) return;
+        switch (e.Kind) {
+          case 1: ShowAlert($"자원지 수송 도착: {Texts.Reward(e.Amount)}"); break;
+          case 2: ShowAlert("수송 트럭을 잃었습니다 — 화물 일부가 상자로 떨어짐, 30초 뒤 새 트럭"); break;
+          case 3: ShowAlert("수송 트럭: 경로 대기(길이 막힘)"); break;
+          case 4: ShowAlert("자원지 버퍼 가득 — 수송을 기다리는 중"); break;
+          case 5: ShowAlert("자원지 소유가 바뀌었습니다"); break;
+        }
+      });
       QuantumEvent.Subscribe<EventCityBuildingCollapsed>(this, e => GameAudio.Play(SoundEvent.Collapse));
       QuantumEvent.Subscribe<EventPlayerConnection>(this, OnConnection);
       QuantumEvent.Subscribe<EventRadarContact>(this, e => {

@@ -494,6 +494,7 @@ namespace FactoryWars.EditorTools {
       EditorUtility.SetDirty(rules);
       var map = AssetDatabase.LoadAssetAtPath<MapSpec>($"{DataRoot}/map_Map4P.asset");
       if (map != null) { map.LogisticsEconomy = true; EditorUtility.SetDirty(map); }
+      CampKit.RegisterLogistics(Resources.Load<FactoryWars.View.VisualCatalog>(FactoryWars.View.VisualCatalog.ResourcePath));
       AssetDatabase.SaveAssets();
       Debug.Log("[FW-T41] logistics data applied");
     }

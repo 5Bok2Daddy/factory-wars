@@ -236,5 +236,135 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(delivered[0], delivered[1]);
       Assert.Greater(delivered[0], 0, "at least one delivery inside 300 s");
     }
+
+    static string T41Root() => System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "../../screenshots/t41"));
+
+    /// <summary>Per seat: the edge site it is rotationally paired with (W→seat 0, S→1, E→2, N→3 by SeatMask) and a drop-off in it.</summary>
+    static List<(int Player, int Seat, int Site, FPVector3 Position)> SeatSites() {
+      var map = Map4P();
+      var list = new List<(int, int, int, FPVector3)>();
+      for (var player = 0; player < 4; player++) {
+        var seat = FactoryWarsUtil.SeatOf(Verified, player);
+        var wanted = new[] { 0, 1, 2, 3 }; // seat s takes the site whose mask contains s and (s+3)%4 → W, S, E, N in turn
+        for (var i = 0; i < map.Expansions.Length; i++) {
+          var e = map.Expansions[i];
+          if (e.Kind != ExpansionKind.Shared) continue;
+          var prev = (seat + 3) % 4;
+          if ((e.SeatMask & (1 << seat)) != 0 && (e.SeatMask & (1 << prev)) != 0) list.Add((player, seat, i, e.Position));
+        }
+      }
+      return list;
+    }
+
+    static void GiveSiteOutward(int player, FPVector3 site) {
+      var outward = new FPVector3(site.X, 0, site.Z).Normalized;
+      GiveSite(player, site + outward * 8);
+    }
+
+    static Vector3 BayPos(LogisticsSpec spec, int site) => LogisticsSystem.BayOf(Verified, spec, YardPtr(site)).ToUnityVector3();
+
+    static void FillAll(FP amount) {
+      foreach (var pair in Verified.GetComponentIterator<LogisticsYard>()) SetBuffer(pair.Component.Site, new ResourceCost { Iron = amount });
+    }
+
+    /// <summary>
+    /// Fairness (Task 41 phase 5): every seat runs its own rotationally paired edge site. Measures the first cycle (truck leaves the
+    /// garage → first credited unload), the second cycle, the straight dock-bay distance and the resulting throughput.
+    /// </summary>
+    [UnityTest, Explicit, Timeout(2400000)]
+    public IEnumerator Logistics_FairnessTable() {
+      FixedStep = true;
+      Restores.Add(() => FixedStep = false);
+      yield return StartMatch(Map4PScene, 4, truce: 0, seed: 4103);
+      yield return WaitFrames(Fps / 2);
+      var pairs = SeatSites();
+      Assert.AreEqual(4, pairs.Count, "each seat has a paired edge site");
+      foreach (var (player, seat, site, position) in pairs) GiveSiteOutward(player, position);
+      FillAll(600);
+      var start = Verified.Number;
+      var first = new Dictionary<int, int>();
+      var second = new Dictionary<int, int>();
+      yield return WaitFor(() => {
+        foreach (var (player, seat, site, position) in pairs) {
+          var d = Yard(site).Delivered;
+          if (d >= 1 && first.ContainsKey(site) == false) first[site] = Verified.Number;
+          if (d >= 2 && second.ContainsKey(site) == false) second[site] = Verified.Number;
+          if (Sum(Yard(site).Buffer) < 300) SetBuffer(site, new ResourceCost { Iron = 600 });
+        }
+        return second.Count == 4;
+      }, 1800f, "two deliveries at every seat");
+      var spec = LogiSpec;
+      var rows = new List<string> { "seat | site | dock-bay straight m | first cycle s | repeat cycle s | throughput /min" };
+      var cycles = new List<float>();
+      foreach (var (player, seat, site, position) in pairs.OrderBy(p => p.Seat)) {
+        var bay = BayPos(spec, site);
+        var dock = LogisticsSystem.DockOf(Verified, spec, player, site).ToUnityVector3();
+        var firstS = (first[site] - start) / (float)Fps;
+        var repeat = (second[site] - first[site]) / (float)Fps;
+        cycles.Add(repeat);
+        rows.Add($"{seat} | {site} | {Vector3.Distance(bay, dock):0} | {firstS:0.0} | {repeat:0.0} | {spec.ShipmentSize.AsFloat * 60f / repeat:0}");
+      }
+      var spread = (cycles.Max() - cycles.Min()) / cycles.Average() * 100f;
+      rows.Add($"repeat-cycle spread: {spread:0.0}% (limit 5%)");
+      System.IO.Directory.CreateDirectory(T41Root());
+      System.IO.File.WriteAllLines(System.IO.Path.Combine(T41Root(), "fairness.txt"), rows);
+      Debug.Log(string.Join("\n", rows));
+      Assert.LessOrEqual(spread, 5f, string.Join("\n", rows));
+    }
+
+    /// <summary>Task 41 captures: west depot (same focus/height as the handoff "before" shot), a base garage + dock, a truck at the bay.</summary>
+    [UnityTest, Explicit, Timeout(1800000)]
+    public IEnumerator Logistics_CaptureT41() {
+      var iteration = System.Environment.GetEnvironmentVariable("FW_MAP_ITER");
+      iteration = string.IsNullOrEmpty(iteration) ? "r1" : iteration;
+      var dir = T41Root();
+      System.IO.Directory.CreateDirectory(dir);
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 4101);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      var west = WestSite();
+      GiveSite(0, west.DropOff);
+      SetBuffer(west.Site, new ResourceCost { Iron = 400, Wood = 150 });
+      Time.timeScale = 1f;
+      yield return WaitFrames(2 * Fps);
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      var report = new List<string> { $"Task 41 captures {iteration}" };
+      IEnumerator Shot(string name, Vector2 focus, float height) {
+        rts.MoveTo(focus);
+        rts.Height = height;
+        rts.Apply();
+        yield return WaitFrames(Fps / 2);
+        CaptureCameraPng(camera, System.IO.Path.Combine(dir, $"{name}_{iteration}.png"), 1920, 1080);
+        var planes = GeometryUtility.CalculateFrustumPlanes(camera);
+        var rs = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None).Where(r => r.enabled && r.gameObject.activeInHierarchy && GeometryUtility.TestPlanesAABB(planes, r.bounds)).ToList();
+        long tris = 0;
+        foreach (var r in rs) {
+          var m = r is SkinnedMeshRenderer sk ? sk.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
+          for (var i = 0; m != null && i < m.subMeshCount; i++) tris += m.GetIndexCount(i) / 3;
+        }
+        report.Add($"{name} | {height:0}m | draws {rs.Sum(r => r.sharedMaterials.Length)} | tris {tris}");
+      }
+      var view = Battle().Logistics;
+      Assert.IsNotNull(view, "logistics view");
+      report.Add($"depot props {view.DepotProps}, docks {view.Docks}");
+      yield return Shot("west_depot", new Vector2(-282f, -6f), 70f);
+      yield return Shot("west_depot_close", new Vector2(west.Position.X.AsFloat, west.Position.Z.AsFloat), 36f);
+      var dock = view.DockOfSeat0;
+      yield return Shot("base_dock", new Vector2(dock.x, dock.z), 45f);
+      var truck = Yard(west.Site).Truck;
+      yield return WaitFor(() => Verified.Exists(truck) && (Truck(truck).State == LogisticsState.Loading || Truck(truck).State == LogisticsState.ToDock), 400f, "truck at the bay");
+      var at = Verified.Get<Transform3D>(truck).Position.ToUnityVector3();
+      yield return Shot("truck_loading", new Vector2(at.x, at.z), 28f);
+      yield return WaitFor(() => Truck(truck).State == LogisticsState.Unloading, 400f, "truck at the dock");
+      at = Verified.Get<Transform3D>(truck).Position.ToUnityVector3();
+      yield return Shot("truck_unloading", new Vector2(at.x, at.z), 28f);
+      yield return Shot("overview", new Vector2(-150f, -110f), 170f);
+      System.IO.File.WriteAllLines(System.IO.Path.Combine(dir, $"perf_{iteration}.txt"), report);
+      Debug.Log(string.Join("\n", report));
+    }
   }
 }

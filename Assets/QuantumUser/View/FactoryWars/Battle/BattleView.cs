@@ -416,6 +416,8 @@ namespace FactoryWars.View {
       _drawbridges.Update(frame, dt);
       _arches ??= new ArchBridgeView(_stage);
       _arches.Update(frame);
+      _logistics ??= new LogisticsView(_stage);
+      _logistics.Update(frame);
       World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
       UpdatePlacementRings(frame);
       UpdateStrikeRockets(frame, dt);
@@ -520,6 +522,8 @@ namespace FactoryWars.View {
     MercCampView _merc;
     DrawbridgeView _drawbridges;
     ArchBridgeView _arches;
+    LogisticsView _logistics;
+    public LogisticsView Logistics => _logistics;
     public ArchBridgeView ArchBridges => _arches;
     public DrawbridgeView Drawbridges => _drawbridges;
     public MercCampView MercCamp => _merc;

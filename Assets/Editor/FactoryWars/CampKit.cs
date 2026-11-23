@@ -401,6 +401,30 @@ namespace FactoryWars.EditorTools {
       return prefab;
     }
 
+    /// <summary>Task 41: logistics depot/garage models (pack prefabs, unchanged) for LogisticsView.</summary>
+    public static void RegisterLogistics(VisualCatalog catalog) {
+      foreach (var (id, path) in new[] {
+        ("logi/garage", MB("Plywood_Shed_01")),
+        ("logi/warehouse_low", MB("Plywood_Shed_Small_01")),
+        ("logi/warehouse_big", PB + "Buildings/SM_Bld_Warehouse_01.prefab"),
+        ("logi/lumber_long", PK + "Props/SM_Prop_Plank_Long_Stack_01.prefab"),
+        ("logi/lumber", PK + "Props/SM_Prop_Plank_Stack_01.prefab"),
+        ("logi/container", KP("Shipping_Container_01")),
+        ("logi/crane", PK + "Buildings/SM_Bld_Crane_01.prefab"),
+        ("logi/tree_a", PM + "Environment/SM_Env_Tree_01.prefab"),
+        ("logi/tree_b", PM + "Environment/SM_Env_Tree_02.prefab"),
+      }) {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (prefab == null) { Debug.LogWarning($"[FW-T41] missing {path}"); continue; }
+        catalog.Slots.RemoveAll(s => s != null && s.Id == id);
+        Slot(catalog, id, prefab, BlockKit.WorldBounds(prefab).size);
+        var slot = catalog.Slots.Find(s => s.Id == id);
+        slot.AutoFit = false;
+        slot.Notes = "Task 41 logistics depot model (pack prefab, unchanged)";
+      }
+      EditorUtility.SetDirty(catalog);
+    }
+
     static void Slot(VisualCatalog catalog, string id, GameObject prefab, Vector3 size, float scale = 1f) {
       BlockKit.Register(catalog, "tmp_" + id.Replace('/', '_'), prefab, size);
       var slot = catalog.Slots.Find(s => s != null && s.Id == "block/tmp_" + id.Replace('/', '_'));
