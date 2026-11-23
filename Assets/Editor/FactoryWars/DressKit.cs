@@ -369,6 +369,9 @@ namespace FactoryWars.EditorTools {
       // Task 39 card 4: PMC camp, two big baked blocks centred on the camp (CampKit). Margin off: CampKit checks every piece itself.
       Add("MK_00", 112, 112, b => { b.Margin = -200f; CampKit.Perimeter(b.Root); });
       Add("MK_01", 112, 112, b => { b.Margin = -200f; CampKit.Zones(b.Root); });
+      // Low-quality camp blocks (fix 4, budget): no razor wire, no small density props.
+      Add("MK_02", 112, 112, b => { b.Margin = -200f; CampKit.Perimeter(b.Root, true); });
+      Add("MK_03", 112, 112, b => { b.Margin = -200f; CampKit.Zones(b.Root, true); });
       Add("CP_00", 2, 2, b => { b.Margin = -1f; b.Prop(MP("Barrier_Tall_05"), 0f, 0f, 45f); });
       Add("CT_00", 8, 8, b => { b.Margin = -1f; b.Bld(MB("GuardTower_01"), 0f, 0.6f); b.Prop(MM("Barrier_Base_Row_01"), 0f, -2.6f); });
       Add("CB_00", 16, 16, b => {

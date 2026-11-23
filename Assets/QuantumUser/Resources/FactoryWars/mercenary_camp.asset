@@ -159,7 +159,7 @@ MonoBehaviour:
         RawValue: 0
       Power:
         RawValue: 0
-    MaxStock: 2
+    MaxStock: 3
     CooldownSeconds:
       RawValue: 5898240
   - Name: "PMC \uACF5\uACA9 \uB4DC\uB860"

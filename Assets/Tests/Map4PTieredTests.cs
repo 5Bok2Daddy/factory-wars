@@ -388,11 +388,24 @@ namespace FactoryWars.Tests {
         var medium = inView.Where(r => LodVisible(r, QualitySettings.lodBias)).ToList();
         var lowSet = inView.Where(r => LodVisible(r, 0.3f) && !r.name.StartsWith("SK_")).ToList();
         int Draws(System.Collections.Generic.List<MeshRenderer> rs, bool shadows) => rs.Sum(r => r.sharedMaterials.Length) + (shadows ? rs.Count(r => r.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off) : 0);
-        report.Add($"{name} | {rts.Height:0}m | {medium.Count} | {Draws(medium, true)} | {PilotTriangles(medium)} | {Draws(lowSet, false)} / {PilotTriangles(lowSet)}");
+        // Low quality places the light camp blocks MK_02/MK_03 instead of MK_00/MK_01 (GridDress); the estimate swaps their triangles.
+        long LowTris() {
+          var tris = PilotTriangles(lowSet);
+          foreach (var r in lowSet.Where(r => r.name.StartsWith("MK_00@") || r.name.StartsWith("MK_01@"))) {
+            tris -= PilotTriangles(new[] { r });
+            var light = VisualCatalog.Current.Slots.FirstOrDefault(sl => sl != null && sl.Id == GridDress.Prefix + (r.name.StartsWith("MK_00@") ? "MK_02" : "MK_03"));
+            if (light != null && light.Prefab != null) tris += PilotTriangles(light.Prefab.GetComponentsInChildren<MeshRenderer>());
+          }
+          return tris;
+        }
+        report.Add($"{name} | {rts.Height:0}m | {medium.Count} | {Draws(medium, true)} | {PilotTriangles(medium)} | {Draws(lowSet, false)} / {LowTris()}");
       }
 
       // ---- 금지 검사(블록 단위). 경계·담장·난간·스카이라인 조각은 맞대어 잇는 구조물이라 겹침·줄지음에서 뺀다.
-      var boundary = new System.Collections.Generic.HashSet<string> { "E", "EL", "EI", "SK", "CW", "CP", "CT", "GR" };
+      // MK = the PMC camp blocks (Task 39): one 112 m block per layer centred on the compound. Their slot-size footprint is a square
+      // that covers the ring road outside the octagon (that was the 152 "intrusions" and the MK_00/MK_01 "overlap"); their real
+      // contents are checked below vertex by vertex against the road cells instead.
+      var boundary = new System.Collections.Generic.HashSet<string> { "E", "EL", "EI", "SK", "CW", "CP", "CT", "GR", "MK" };
       var cells = dress.Where(b => !boundary.Contains(KindName(b))).ToList();
       var items = cells.Select(b => new SceneAudit.Item { Name = b.name, Kind = Variant(b), Bounds = SceneAudit.BoundsOf(b) }).ToList();
       Bounds Footprint(GameObject b) {
@@ -412,6 +425,19 @@ namespace FactoryWars.Tests {
         }
       }
       var intrusions = SceneAudit.Intrusions(footprints, keepOut);
+      foreach (var camp in dress.Where(b => KindName(b) == "MK")) {
+        var mesh = camp.GetComponent<MeshFilter>().sharedMesh;
+        var hits = new System.Collections.Generic.HashSet<string>();
+        foreach (var v in mesh.vertices) {
+          var w = camp.transform.TransformPoint(v);
+          if (w.y > 0.6f) continue;
+          var rr = Mathf.FloorToInt((320f - w.z) / 8f);
+          var cc = Mathf.FloorToInt((w.x + 320f) / 8f);
+          var ch = GridMapView.Cell(map, rr, cc);
+          if (ch == 'R' || ch == 's' || ch == 'G' || ch == 'P') hits.Add($"{camp.name} ground vertex in road({rr},{cc})");
+        }
+        intrusions.AddRange(hits);
+      }
       var rows = SceneAudit.RegularRows(items, maxSpacing: 24f);
       var flat = new System.Collections.Generic.List<string>();
       foreach (var (name, _, _) in shots) {

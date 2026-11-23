@@ -457,7 +457,7 @@ namespace FactoryWars.EditorTools {
         new MercOffer { Name = "PMC 오퍼레이터 분대", Unit = Ref(squad), Count = 1, Cost = R(160, 80), MaxStock = 4, CooldownSeconds = 30 },
         new MercOffer { Name = "PMC 저격수", Unit = Ref(marksman), Count = 1, Cost = R(160, 60, 40), MaxStock = 3, CooldownSeconds = 40 },
         new MercOffer { Name = "PMC 전차", Unit = Ref(tank), Count = 1, Cost = R(260, 0, 60, 60), MaxStock = 6, CooldownSeconds = 60 },
-        new MercOffer { Name = "PMC 공격 헬기", Unit = Ref(heli), Count = 1, Cost = R(300, 0, 110, 110), MaxStock = 2, CooldownSeconds = 90 },
+        new MercOffer { Name = "PMC 공격 헬기", Unit = Ref(heli), Count = 1, Cost = R(300, 0, 110, 110), MaxStock = 3, CooldownSeconds = 90 },
         new MercOffer { Name = "PMC 공격 드론", Unit = Ref(drone), Count = 1, Cost = R(140, 0, 50, 60), MaxStock = 2, CooldownSeconds = 45 },
         new MercOffer { Name = "PMC 장갑차", Unit = Ref(suv), Count = 1, Cost = R(150, 40, 30), MaxStock = 4, CooldownSeconds = 40 },
         new MercOffer { Name = "PMC 경헬기", Unit = Ref(scout), Count = 1, Cost = R(200, 0, 70, 70), MaxStock = 1, CooldownSeconds = 60 },
@@ -472,6 +472,8 @@ namespace FactoryWars.EditorTools {
       ApplyTask39Data();
       DressKit.BuildBakeDress();
       ThirdPartyKit.Apply();
+      CampKit.BlackenThirdParty(Resources.Load<FactoryWars.View.VisualCatalog>(FactoryWars.View.VisualCatalog.ResourcePath), DressKit.Out);
+      AssetDatabase.SaveAssets();
     }
 
     /// <summary>Task 39 fix 3: camp blocks + display slots + third-party models without re-baking the map.</summary>
@@ -479,6 +481,8 @@ namespace FactoryWars.EditorTools {
       ApplyTask39Data();
       DressKit.BuildAll();
       ThirdPartyKit.Apply();
+      CampKit.BlackenThirdParty(Resources.Load<FactoryWars.View.VisualCatalog>(FactoryWars.View.VisualCatalog.ResourcePath), DressKit.Out);
+      AssetDatabase.SaveAssets();
     }
 
     static UnitSpec BuildUnit(UnitRow row) {

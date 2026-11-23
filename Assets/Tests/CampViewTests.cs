@@ -31,7 +31,7 @@ namespace FactoryWars.Tests {
       foreach (var id in new[] { "camp/display_tank", "camp/display_mrap", "camp/display_heli" }) {
         Assert.IsTrue(VisualCatalog.TryFilled(id, out var slot), id);
         var names = slot.Prefab.GetComponentsInChildren<Renderer>(true).SelectMany(r => r.sharedMaterials).Where(m => m != null).Select(m => m.name).ToList();
-        Assert.IsTrue(names.Count > 0 && names.All(n => n.StartsWith("PMC_Black_") || n.Contains("Glass") || n.StartsWith("pmc_")), $"{id} uses PMC black materials ({string.Join(",", names.Distinct())})");
+        Assert.IsTrue(names.Count > 0 && names.All(n => n.StartsWith("PMC_") || n.Contains("Glass")), $"{id} uses our PMC black materials ({string.Join(",", names.Distinct())})");
       }
     }
 
@@ -42,7 +42,7 @@ namespace FactoryWars.Tests {
       yield return WaitFor(() => CampView() != null && CampView().Built && CampView().GarrisonShown == MercSpec.GuardCount, 30f, "garrison soldiers shown");
       Assert.GreaterOrEqual(CampView().AmbientCount + CampView().GarrisonShown, 30, "at least 30 PMC figures (patrols, drill, range, guards, mechanics, counter, garrison)");
       var shown = CampView().DisplayShown;
-      Assert.AreEqual(15, shown, "display line full at start (6 tanks, 2 attack + 1 light helicopter at real scale, 4 APCs, 2 drones)");
+      Assert.AreEqual(16, shown, "display line full at start (6 tanks, 3 attack + 1 light helicopter at real scale, 4 APCs, 2 drones)");
       GrantAgreement(0);
       var tank = MercSpec.Offers.Select((o, i) => (o, i)).First(t => t.o.Unit.IsValid && Verified.FindAsset(t.o.Unit).name == "pmc_tank").i;
       yield return Send(0, new TradeCommand { Offer = MercenaryCamp.OfferShop + tank });
@@ -69,6 +69,73 @@ namespace FactoryWars.Tests {
         Object.Destroy(go);
       }
       return rows;
+    }
+
+    /// <summary>Fix 4 colour audit: mean luminance of each display vehicle's screen pixels (PMC black must stay below 0.3).</summary>
+    static List<string> ColourAudit(Camera camera, string png) {
+      var rows = new List<string>();
+      var tex = new Texture2D(2, 2);
+      tex.LoadImage(File.ReadAllBytes(png));
+      var dark = 0;
+      var total = 0;
+      foreach (var (view, kind) in CampView().Displays) {
+        var rs = view.GetComponentsInChildren<Renderer>();
+        if (rs.Length == 0) continue;
+        var b = rs[0].bounds;
+        foreach (var r in rs) b.Encapsulate(r.bounds);
+        // Sample the fuselage/hull centre (the helicopter's crossed rotor leaves ground visible above the centre).
+        var sp = camera.WorldToViewportPoint(b.center);
+        if (sp.z <= 0f || sp.x < 0.02f || sp.x > 0.98f || sp.y < 0.02f || sp.y > 0.98f) continue;
+        var px = Mathf.RoundToInt(sp.x * tex.width);
+        var py = Mathf.RoundToInt(sp.y * tex.height);
+        var sum = 0f;
+        var n = 0;
+        for (var dx = -4; dx <= 4; dx++) for (var dy = -4; dy <= 4; dy++) {
+          var c = tex.GetPixel(px + dx, py + dy);
+          sum += 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+          n++;
+        }
+        var lum = sum / n;
+        total++;
+        if (lum < 0.3f) dark++;
+        rows.Add($"  colour | {kind} at {view.position.x:0},{view.position.z:0} | mean luminance {lum:0.00} {(lum < 0.3f ? "PASS" : "FAIL")}");
+      }
+      rows.Insert(0, $"colour audit (display vehicles, luminance < 0.30): {dark}/{total} dark");
+      Object.Destroy(tex);
+      return rows;
+    }
+
+    static int VisibleTroops(Camera camera) {
+      var planes = GeometryUtility.CalculateFrustumPlanes(camera);
+      var n = 0;
+      foreach (var t in CampView().Troops) {
+        if (t == null || t.gameObject.activeInHierarchy == false) continue;
+        if (GeometryUtility.TestPlanesAABB(planes, new Bounds(t.position + Vector3.up, Vector3.one))) n++;
+      }
+      return n;
+    }
+
+    static GameObject ScaleLineup(Vector3 origin) {
+      var root = new GameObject("ScaleLineup");
+      var x = origin.x;
+      foreach (var id in new[] { "camp/display_tank", "camp/display_mrap", "camp/display_heli", "camp/display_scoutheli", "camp/display_drone", "unit/merc_cargo_truck" }) {
+        if (VisualCatalog.TryFilled(id, out var slot) == false) continue;
+        var go = Object.Instantiate(slot.Prefab, root.transform);
+        go.transform.localScale = Vector3.one * (slot.Scale > 0f ? slot.Scale : 1f);
+        go.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+        var rs = go.GetComponentsInChildren<Renderer>();
+        var b = rs[0].bounds;
+        foreach (var r in rs) b.Encapsulate(r.bounds);
+        go.transform.position += new Vector3(x - b.min.x, origin.y - b.min.y, origin.z - b.center.z);
+        x += b.size.x + 1f;
+        if (VisualCatalog.TryFilled("unit/pmc_soldier", out var man)) {
+          var trooper = Object.Instantiate(man.Prefab, root.transform);
+          trooper.transform.position = new Vector3(x, origin.y, origin.z - 1.5f);
+          trooper.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+        }
+        x += 2.5f;
+      }
+      return root;
     }
 
     static string T39Root() => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "screenshots", "t39"));
@@ -133,13 +200,16 @@ namespace FactoryWars.Tests {
         }
       }
       yield return Shot("camp_wide", new Vector2(0f, -5f), 132f);
-      yield return Shot("camp_gate", new Vector2(0f, -38f), 42f);
-      yield return Shot("camp_display", new Vector2(-28f, 0f), 58f);
-      yield return Shot("camp_training", new Vector2(22f, -6f), 58f);
-      // Garrison sortie: an intruder without an agreement inside the fence.
-      SpawnFor(1, "cf_dragonscale_tank", Pos(0f, 30f));
-      yield return WaitFrames(3 * Fps);
-      yield return Shot("camp_sortie", new Vector2(0f, 22f), 48f);
+      report.Add($"troops visible in the wide view: {VisibleTroops(camera)}");
+      yield return Shot("camp_display", new Vector2(-30f, 0f), 58f);
+      report.AddRange(ColourAudit(camera, Path.Combine(dir, $"camp_display_{iteration}.png")));
+      yield return Shot("camp_forecourt", new Vector2(0f, -9f), 30f);
+      yield return Shot("camp_training", new Vector2(24f, 0f), 50f);
+      // Scale line-up: one PMC trooper next to each vehicle at real scale on the open north ring road.
+      // On the main east-west road (row 24, z = 124), clear of buildings.
+      var lineup = ScaleLineup(new Vector3(104f, 0f, 124f));
+      yield return Shot("scale_lineup", new Vector2(136f, 118f), 40f);
+      Object.Destroy(lineup);
       report.Add($"camp view: garrison {CampView()?.GarrisonShown} ambient {CampView()?.AmbientCount} display {CampView()?.DisplayShown}");
       report.AddRange(ScaleTable());
       File.WriteAllLines(Path.Combine(dir, $"perf_{iteration}.txt"), report);

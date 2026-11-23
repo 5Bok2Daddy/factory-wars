@@ -14,15 +14,17 @@ namespace FactoryWars.View {
 
     /// <summary>Display bays ("shop window"): position, facing yaw and what is parked there. Order inside a kind = stock order.</summary>
     public static readonly (Vector3 Position, float Yaw, Bay Kind)[] Bays = {
-      // West (real scale, fix 3): six black tanks (9.5 m) in a column, two attack helicopters (16 m) beside them, a light helicopter.
-      (new Vector3(-39f, 0f, 13.75f), 90f, Bay.Tank),
-      (new Vector3(-39f, 0f, 8.25f), 90f, Bay.Tank),
-      (new Vector3(-39f, 0f, 2.75f), 90f, Bay.Tank),
-      (new Vector3(-39f, 0f, -2.75f), 90f, Bay.Tank),
-      (new Vector3(-39f, 0f, -8.25f), 90f, Bay.Tank),
-      (new Vector3(-39f, 0f, -13.75f), 90f, Bay.Tank),
-      (new Vector3(-27f, 0f, 7f), 0f, Bay.Heli),
-      (new Vector3(-27f, 0f, -11f), 0f, Bay.Heli),
+      // West (real scale, fix 4): six black tanks (9.5 x 4.75 m) with 1.5 m gaps, three attack helicopters (16 x 11 m, rotors
+      // cannot fold - single mesh - so three fit) with 1.5 m gaps, and the light helicopter.
+      (new Vector3(-42f, 0f, 15.625f), 90f, Bay.Tank),
+      (new Vector3(-42f, 0f, 9.375f), 90f, Bay.Tank),
+      (new Vector3(-42f, 0f, 3.125f), 90f, Bay.Tank),
+      (new Vector3(-42f, 0f, -3.125f), 90f, Bay.Tank),
+      (new Vector3(-42f, 0f, -9.375f), 90f, Bay.Tank),
+      (new Vector3(-42f, 0f, -15.625f), 90f, Bay.Tank),
+      (new Vector3(-27f, 0f, 12.5f), 90f, Bay.Heli),
+      (new Vector3(-27f, 0f, 0f), 90f, Bay.Heli),
+      (new Vector3(-27f, 0f, -12.5f), 90f, Bay.Heli),
       (new Vector3(-34f, 0f, 24.5f), 90f, Bay.ScoutHeli),
       // South-west: four APCs (7.5 m) in a row, two drone pads.
       (new Vector3(-8.5f, 0f, -29f), 0f, Bay.Mrap),
@@ -34,7 +36,7 @@ namespace FactoryWars.View {
     };
 
     /// <summary>Dark display pads (x0, z0, x1, z1): tank/helicopter columns and the APC row.</summary>
-    public static readonly Vector4 DisplayPad = new Vector4(-44f, -22f, -21.5f, 22f);
+    public static readonly Vector4 DisplayPad = new Vector4(-46.5f, -21f, -19.5f, 21f);
     public static readonly Vector4 ApcPad = new Vector4(-30f, -33.5f, -5f, -24.5f);
     public static readonly Vector3 MainGate = new Vector3(0f, 0f, -48f);
 
@@ -62,7 +64,7 @@ namespace FactoryWars.View {
     /// <summary>East drill squad (3 x 3) between the barracks rows.</summary>
     public static readonly Vector3 DrillCentre = new Vector3(32.5f, 0f, 1f);
     /// <summary>Mechanics at the display vehicles.</summary>
-    public static readonly Vector3[] Mechanics = { new Vector3(-35.5f, 0f, 13f), new Vector3(-35.5f, 0f, -6.5f), new Vector3(-31.5f, 0f, 4f), new Vector3(-17.5f, 0f, -25.5f) };
+    public static readonly Vector3[] Mechanics = { new Vector3(-36.1f, 0f, 6.2f), new Vector3(-36.1f, 0f, -12.4f), new Vector3(-17.5f, 0f, -25.5f), new Vector3(23.5f, 0f, -16.8f), new Vector3(-6.2f, 0f, -17.6f), new Vector3(21.5f, 0f, 22.5f) };
     /// <summary>Trading-post counter: vendor behind it, customers in front.</summary>
     public static readonly Vector3[] Counter = { new Vector3(0f, 0f, -7.2f), new Vector3(-2.2f, 0f, -9.6f), new Vector3(1.6f, 0f, -9.9f), new Vector3(3.6f, 0f, -9.2f) };
   }

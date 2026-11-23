@@ -9578,6 +9578,56 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
+  - Id: dress4p/MK_02
+    Category: 5
+    Prefabs:
+    - {fileID: 8440942892726429564, guid: 86a16c4ec1a460a4fa8ee341d9ffd537, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 112, y: 0, z: 112}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/MK_03
+    Category: 5
+    Prefabs:
+    - {fileID: 5108554187169955161, guid: ba3f4e0752fa37b48a6c7e8a44dc6284, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 112, y: 0, z: 112}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress4p/CP_00
     Category: 5
     Prefabs:
@@ -9857,11 +9907,11 @@ MonoBehaviour:
     Category: 5
     Prefabs:
     - {fileID: 6184442293050677931, guid: 3d0293bb285be4f459ca8e38e4f0450a, type: 3}
-    Scale: 1.4270712
+    Scale: 1.5765013
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 3.3412054, y: 2.2348073, z: 5.255519}
+    Size: {x: 2.5054626, y: 2.4276817, z: 4.75737}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -9881,7 +9931,7 @@ MonoBehaviour:
   - Id: camp/display_heli
     Category: 0
     Prefabs:
-    - {fileID: 6212183397943261255, guid: 101627472b5b8e1499cb670d630de817, type: 3}
+    - {fileID: 2188580896861997525, guid: d7df5685fe779a24f828c39e7999e0ec, type: 3}
     - {fileID: 4307466239846680120, guid: 1f3c91964ce463142bb69a8c2ea361ad, type: 3}
     Scale: 0.996326
     AutoFit: 0
@@ -9908,7 +9958,7 @@ MonoBehaviour:
   - Id: camp/display_drone
     Category: 0
     Prefabs:
-    - {fileID: 8581499764795708232, guid: dd636273fafbeef4086f69ceb0a14dc5, type: 3}
+    - {fileID: 3849756881137006075, guid: 5ce7256081b0cf744b1cc0711a391590, type: 3}
     - {fileID: 3979188308498204579, guid: ab232347a0d7e5e4494f78a90ea75014, type: 3}
     Scale: 1.4201314
     AutoFit: 0
@@ -9961,11 +10011,11 @@ MonoBehaviour:
     Category: 5
     Prefabs:
     - {fileID: 6184442293050677931, guid: 3d0293bb285be4f459ca8e38e4f0450a, type: 3}
-    Scale: 1.4270712
+    Scale: 1.5765013
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 3.3412054, y: 2.2348073, z: 5.255519}
+    Size: {x: 2.5054626, y: 2.4276817, z: 4.75737}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -9985,7 +10035,7 @@ MonoBehaviour:
   - Id: unit/pmc_attack_heli
     Category: 0
     Prefabs:
-    - {fileID: 6212183397943261255, guid: 101627472b5b8e1499cb670d630de817, type: 3}
+    - {fileID: 2188580896861997525, guid: d7df5685fe779a24f828c39e7999e0ec, type: 3}
     - {fileID: 4307466239846680120, guid: 1f3c91964ce463142bb69a8c2ea361ad, type: 3}
     Scale: 0.996326
     AutoFit: 0
@@ -10012,7 +10062,7 @@ MonoBehaviour:
   - Id: unit/pmc_attack_drone
     Category: 0
     Prefabs:
-    - {fileID: 8581499764795708232, guid: dd636273fafbeef4086f69ceb0a14dc5, type: 3}
+    - {fileID: 3849756881137006075, guid: 5ce7256081b0cf744b1cc0711a391590, type: 3}
     - {fileID: 3979188308498204579, guid: ab232347a0d7e5e4494f78a90ea75014, type: 3}
     Scale: 1.4201314
     AutoFit: 0
@@ -10170,7 +10220,7 @@ MonoBehaviour:
   - Id: unit/pmc_scout_heli
     Category: 0
     Prefabs:
-    - {fileID: 1044302421640049383, guid: 04ebdf5d6d345e249b691675b536f482, type: 3}
+    - {fileID: 7285181232053374810, guid: ae386248ee49c8b4b8d2fb61bc677bc7, type: 3}
     Scale: 3.4
     AutoFit: 0
     YawOffset: 0
@@ -10196,7 +10246,7 @@ MonoBehaviour:
   - Id: camp/display_scoutheli
     Category: 0
     Prefabs:
-    - {fileID: 1044302421640049383, guid: 04ebdf5d6d345e249b691675b536f482, type: 3}
+    - {fileID: 7285181232053374810, guid: ae386248ee49c8b4b8d2fb61bc677bc7, type: 3}
     Scale: 3.4
     AutoFit: 0
     YawOffset: 0

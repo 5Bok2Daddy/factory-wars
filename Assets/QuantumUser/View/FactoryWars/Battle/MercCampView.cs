@@ -46,6 +46,9 @@ namespace FactoryWars.View {
     public int AmbientCount => _ambient.Count;
     public int DisplayShown { get { var n = 0; foreach (var d in _display) if (d.Shown && d.LeaveT < 0f) n++; return n; } }
     public bool Built => _built;
+    /// <summary>Shown display vehicles (for the colour audit).</summary>
+    public IEnumerable<(Transform View, CampLayout.Bay Kind)> Displays { get { foreach (var d in _display) if (d.Shown && d.LeaveT < 0f) yield return (d.View, d.Kind); } }
+    public IEnumerable<Transform> Troops { get { foreach (var s in _garrison.Values) yield return s.View; foreach (var (s, _, _) in _ambient) yield return s.View; } }
 
     public MercCampView(Transform root) {
       _root = root;
@@ -82,7 +85,7 @@ namespace FactoryWars.View {
       _camp = new GameObject("MercCamp");
       _camp.transform.SetParent(_root, false);
       // Ambient troops: kind 0 patrol, 1 jogger, 2 range shooter, 3 sentry, 4 mechanic.
-      for (var i = 0; i < 4; i++) Add(0, i);
+      for (var i = 0; i < 6; i++) Add(0, i);
       for (var i = 0; i < 6; i++) Add(1, i);
       for (var i = 0; i < 9; i++) Add(5, i);
       for (var i = 0; i < CampLayout.FiringLine.Length; i++) Add(2, i);
@@ -189,9 +192,9 @@ namespace FactoryWars.View {
           case 0: {
             // Two patrol pairs walking the loop in opposite directions (pairs 1.3 m apart).
             var pair = index / 2;
-            var dist = (pair == 0 ? 1f : -1f) * 1.4f * t + pair * 68f + (index % 2) * 1.3f;
-            (p, yaw) = CampLayout.Loop(dist, pair == 0 ? 1.4f : -1.4f);
-            if (pair == 1) yaw += 180f;
+            var dist = (pair % 2 == 0 ? 1f : -1f) * 1.4f * t + pair * 41f + (index % 2) * 1.3f;
+            (p, yaw) = CampLayout.Loop(dist, pair % 2 == 0 ? 1.4f : -1.4f);
+            if (pair % 2 == 1) yaw += 180f;
             state = UnitAnimState.Move; speed = 1.4f;
             break;
           }

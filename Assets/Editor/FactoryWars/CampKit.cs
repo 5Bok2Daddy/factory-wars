@@ -94,45 +94,117 @@ namespace FactoryWars.EditorTools {
 
     // ------------------------------------------------------------ PMC black (our darkened copies of pack materials)
 
-    static readonly Dictionary<(Material, bool), Material> DarkCache = new Dictionary<(Material, bool), Material>();
+    const string PmcMaterials = "Assets/FactoryWarsArt/Materials/PMC";
+    static readonly Dictionary<Material, Material> DarkCache = new Dictionary<Material, Material>();
+    static readonly Dictionary<Texture, Texture2D> DarkTextures = new Dictionary<Texture, Texture2D>();
 
-    /// <summary>A copy of a pack material with a dark base-colour tint, saved in FactoryWarsArt/PMC (the pack material is untouched).</summary>
-    public static Material Dark(Material source, float tint = 0.24f, bool flat = false) {
+    static void Folder(string path) {
+      var parts = path.Split('/');
+      for (var i = 1; i < parts.Length; i++) {
+        var parent = string.Join("/", parts.Take(i));
+        if (!AssetDatabase.IsValidFolder(parent + "/" + parts[i])) AssetDatabase.CreateFolder(parent, parts[i]);
+      }
+    }
+
+    /// <summary>
+    /// Root cause (fix 4): the Synty materials sample their colour from the atlas in the shader-graph property "_Albedo_Map"
+    /// (Generic_Basic), so clearing _BaseMap/_MainTex or tinting did nothing and the camo atlas stayed visible. Fix: a charcoal copy of
+    /// the atlas itself (detail kept, 22-30 % luminance, desaturated) saved in our folder and assigned to every albedo-like texture slot.
+    /// </summary>
+    static Texture2D DarkTexture(Texture source) {
       if (source == null) return null;
-      if (DarkCache.TryGetValue((source, flat), out var cached) && cached != null) return cached;
-      if (!AssetDatabase.IsValidFolder(PmcFolder)) AssetDatabase.CreateFolder("Assets/FactoryWarsArt", "PMC");
-      var path = $"{PmcFolder}/PMC_Black_{source.name}{(flat ? "_Matte" : "")}.mat";
-      var dark = AssetDatabase.LoadAssetAtPath<Material>(path);
-      if (dark == null) {
-        dark = new Material(source) { name = "PMC_Black_" + source.name };
-        AssetDatabase.CreateAsset(dark, path);
+      if (DarkTextures.TryGetValue(source, out var cached) && cached != null) return cached;
+      Folder(PmcMaterials + "/Textures");
+      var path = $"{PmcMaterials}/Textures/{source.name}_pmc.png";
+      var rt = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+      Graphics.Blit(source, rt);
+      var previous = RenderTexture.active;
+      RenderTexture.active = rt;
+      var read = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
+      read.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
+      read.Apply();
+      RenderTexture.active = previous;
+      RenderTexture.ReleaseTemporary(rt);
+      var px = read.GetPixels32();
+      for (var i = 0; i < px.Length; i++) {
+        var c = px[i];
+        var lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) / 255f;
+        var v = 0.07f + lum * 0.2f;
+        px[i] = new Color32((byte)(v * 255f), (byte)(v * 255f), (byte)((v + 0.008f) * 255f), c.a);
       }
-      dark.CopyPropertiesFromMaterial(source);
-      var c = new Color(tint, tint, tint * 1.05f, 1f);
-      if (dark.HasProperty("_BaseColor")) dark.SetColor("_BaseColor", c);
-      if (dark.HasProperty("_Color")) dark.SetColor("_Color", c);
-      if (dark.HasProperty("_Smoothness")) dark.SetFloat("_Smoothness", 0.1f);
-      if (flat) {
-        // Matte black without the camouflage texture (vehicles): the pack's camo pattern stays brown under any tint.
-        if (dark.HasProperty("_BaseMap")) dark.SetTexture("_BaseMap", null);
-        if (dark.HasProperty("_MainTex")) dark.SetTexture("_MainTex", null);
-        if (dark.HasProperty("_Albedo")) dark.SetTexture("_Albedo", null);
+      read.SetPixels32(px);
+      System.IO.File.WriteAllBytes(path, read.EncodeToPNG());
+      Object.DestroyImmediate(read);
+      AssetDatabase.ImportAsset(path);
+      if (AssetImporter.GetAtPath(path) is TextureImporter importer) {
+        importer.sRGBTexture = true;
+        importer.mipmapEnabled = true;
+        importer.wrapMode = TextureWrapMode.Repeat;
+        importer.maxTextureSize = 1024;
+        importer.SaveAndReimport();
       }
-      dark.name = System.IO.Path.GetFileNameWithoutExtension(path);
-      EditorUtility.SetDirty(dark);
-      DarkCache[(source, flat)] = dark;
+      var dark = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+      DarkTextures[source] = dark;
       return dark;
     }
 
-    static void Blacken(GameObject g, float tint = 0.24f, bool flat = false) {
+    /// <summary>Our PMC material variant of a pack material (pack material untouched): every albedo slot gets the charcoal atlas.</summary>
+    public static Material Dark(Material source) {
+      if (source == null) return null;
+      if (source.name.StartsWith("PMC_")) return source;
+      if (DarkCache.TryGetValue(source, out var cached) && cached != null) return cached;
+      Folder(PmcMaterials);
+      var path = $"{PmcMaterials}/PMC_{source.name}.mat";
+      var dark = AssetDatabase.LoadAssetAtPath<Material>(path);
+      if (dark == null) {
+        dark = new Material(source);
+        AssetDatabase.CreateAsset(dark, path);
+      }
+      dark.shader = source.shader;
+      dark.CopyPropertiesFromMaterial(source);
+      var any = false;
+      foreach (var name in source.GetTexturePropertyNames()) {
+        var lower = name.ToLowerInvariant();
+        if (!(lower.Contains("albedo") || lower.Contains("basemap") || lower.Contains("maintex") || lower.Contains("base_map"))) continue;
+        var tex = source.GetTexture(name);
+        if (tex == null) continue;
+        dark.SetTexture(name, DarkTexture(tex));
+        any = true;
+      }
+      var tint = any ? Color.white : new Color(0.14f, 0.14f, 0.15f, 1f);
+      foreach (var colour in new[] { "_BaseColor", "_Color" }) if (dark.HasProperty(colour)) dark.SetColor(colour, tint);
+      if (dark.HasProperty("_Smoothness")) dark.SetFloat("_Smoothness", 0.12f);
+      dark.enableInstancing = true;
+      EditorUtility.SetDirty(dark);
+      DarkCache[source] = dark;
+      return dark;
+    }
+
+    static void Blacken(GameObject g) {
       if (g == null) return;
-      foreach (var r in g.GetComponentsInChildren<Renderer>()) {
+      foreach (var r in g.GetComponentsInChildren<Renderer>(true)) {
         var mats = r.sharedMaterials;
         for (var i = 0; i < mats.Length; i++) {
-          if (mats[i] != null && mats[i].name.IndexOf("Glass") < 0) mats[i] = Dark(mats[i], tint, flat);
+          if (mats[i] != null && mats[i].name.IndexOf("Glass") < 0) mats[i] = Dark(mats[i]);
         }
         r.sharedMaterials = mats;
       }
+    }
+
+    /// <summary>Third-party PMC models (helicopters, drone): black prefab variants in our folder replace the slot prefabs.</summary>
+    public static void BlackenThirdParty(VisualCatalog catalog, string folder) {
+      foreach (var id in new[] { "camp/display_heli", "camp/display_scoutheli", "camp/display_drone", "unit/pmc_attack_heli", "unit/pmc_scout_heli", "unit/pmc_attack_drone" }) {
+        var slot = catalog.Slots.Find(s => s != null && s.Id == id);
+        if (slot == null || slot.Prefab == null || slot.Prefab.name.StartsWith("pmc_black_")) continue;
+        var item = (GameObject)PrefabUtility.InstantiatePrefab(slot.Prefab);
+        PrefabUtility.UnpackPrefabInstance(item, PrefabUnpackMode.OutermostRoot, InteractionMode.AutomatedAction);
+        Blacken(item);
+        var prefab = PrefabUtility.SaveAsPrefabAsset(item, $"{folder}/pmc_black_{slot.Prefab.name}.prefab");
+        Object.DestroyImmediate(item);
+        slot.Prefabs[0] = prefab;
+        Debug.Log($"[FW-Camp] {id} -> {prefab.name}");
+      }
+      EditorUtility.SetDirty(catalog);
     }
 
     static bool Gate(float x, float z) => (Mathf.Abs(x) < 8.5f && Mathf.Abs(z) > GateReach) || (Mathf.Abs(z) < 8.5f && Mathf.Abs(x) > GateReach);
@@ -148,7 +220,7 @@ namespace FactoryWars.EditorTools {
       catalog.Slots.RemoveAll(s => s != null && s.Id != null && s.Id.StartsWith("camp/"));
       var models = new (string Id, string Path)[] {
         ("tank", PM + "Vehicles/SM_Veh_Light_Tank_01.prefab"),
-        ("mrap", PM + "Vehicles/SM_Veh_APC_01.prefab"),
+        ("mrap", PB + "Vehicles/SM_Veh_Armored_Car_01.prefab"),
         ("heli", PM + "Vehicles/SM_Veh_Helicopter_Attack_02.prefab"),
       };
       foreach (var (id, path) in models) {
@@ -159,7 +231,7 @@ namespace FactoryWars.EditorTools {
         item.transform.localPosition = Vector3.zero;
         var b = BlockKit.WorldBounds(item);
         item.transform.localPosition = new Vector3(-b.center.x, -b.min.y, -b.center.z);
-        Blacken(item, 0.13f, true);
+        Blacken(item);
         var prefab = SaveCombined(root, folder, $"camp_display_{id}");
         Object.DestroyImmediate(root);
         // Real scale (fix 3, infantry 1.8 m): MBT 9.5 m long, APC 7.5 m; the attack helicopter is replaced by ThirdPartyKit.
@@ -247,7 +319,7 @@ namespace FactoryWars.EditorTools {
         keep.sharedMaterials = new[] { keep.sharedMaterials[0] };
       }
       foreach (var r in item.GetComponentsInChildren<Renderer>(true)) {
-        r.sharedMaterials = r.sharedMaterials.Select(m => Dark(m, 0.3f)).ToArray();
+        r.sharedMaterials = r.sharedMaterials.Select(m => Dark(m)).ToArray();
         r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         if (r is SkinnedMeshRenderer sk) sk.updateWhenOffscreen = false;
       }
@@ -305,7 +377,7 @@ namespace FactoryWars.EditorTools {
 
     // ------------------------------------------------------------ MK_00 perimeter
 
-    public static void Perimeter(Transform root) {
+    public static void Perimeter(Transform root, bool low = false) {
       Skipped.Clear();
       Placed.Clear();
       var size = FactoryWarsSetup.GridCell;
@@ -322,11 +394,14 @@ namespace FactoryWars.EditorTools {
           var ex = cx + dc * (size / 2f - 0.6f);
           var ez = cz - dr * (size / 2f - 0.6f);
           if (Gate(cx + dc * size / 2f, cz - dr * size / 2f)) continue;
+          // Two 5.2 m wall groups per 8 m edge, kept inside the edge (at ±1.4 they end at ±4.0; at ±2 they poked 0.6 m into the
+          // ring-road cell at the octagon's convex corners - 20 real intrusions in the fix 4 audit).
           for (var k = 0; k < 2; k++) {
-            var t = -2f + k * 4f;
+            var t = -1.4f + k * 2.8f;
             BlockKit.Place(root, walls[(r + c + k) % 2], new Vector3(horizontal ? cx + t : ex, 0f, horizontal ? ez : cz + t), horizontal ? 90f : 0f, 1f);
           }
-          BlockKit.Place(root, wire, new Vector3(horizontal ? cx : ex, 3.25f, horizontal ? ez : cz), horizontal ? 0f : 90f, 1f);
+          // Low quality (MK_02): the wall without the razor-wire coil (972 tris per edge).
+          if (low == false) BlockKit.Place(root, wire, new Vector3(horizontal ? cx : ex, 3.25f, horizontal ? ez : cz), horizontal ? 0f : 90f, 1f);
           Placed["perimeter wall"] = (Placed.TryGetValue("perimeter wall", out var n) ? n : 0) + 1;
         }
       }
@@ -351,21 +426,21 @@ namespace FactoryWars.EditorTools {
 
     // ------------------------------------------------------------ MK_01 zones
 
-    public static void Zones(Transform root) {
+    public static void Zones(Transform root, bool low = false) {
       // Centre: the Mercenary Trading Post, twice the old footprint (two tan office blocks side by side), counter canopy with crates.
       TradingPost(root);
       // North-west logistics: two warehouses facing the loop, ten dark crate/pallet stacks in two neat rows.
       Put(root, "logistics", MB("Plywood_Shed_01"), -9.5f, 23f, 180f);
       Put(root, "logistics", MB("Plywood_Shed_01"), -18.5f, 30.5f, 180f);
-      var goods = new[] { KP("Crate_Stack_01"), MM("Crate_Stack_03"), KP("PalletStack_01"), KP("PalletStack_02") };
-      for (var i = 0; i < 5; i++) Blacken(Put(root, "logistics", goods[i % goods.Length], -17f + i * 3.2f, 35.8f, 0f, 0f, false, 0.5f));
-      for (var i = 0; i < 5; i++) Blacken(Put(root, "logistics", goods[(i + 2) % goods.Length], -15.5f + i * 3.2f, 39.3f, 0f, 0f, false, 0.5f));
+      var goods = new[] { MM("Crate_Stack_03"), MM("Crate_Stack_Cover_03"), MM("Crate_Stack_03"), BR("PalletStack_01") };
+      for (var i = 0; i < 5 && low == false; i++) Blacken(Put(root, "logistics", goods[i % goods.Length], -17f + i * 3.2f, 35.8f, 0f, 0f, false, 0.5f));
+      for (var i = 0; i < 5 && low == false; i++) Blacken(Put(root, "logistics", goods[(i + 2) % goods.Length], -15.5f + i * 3.2f, 39.3f, 0f, 0f, false, 0.5f));
       // One tidy container row (north).
       Put(root, "logistics", KP("Shipping_Container_01"), 9.5f, 43.5f, 90f, 0f, false, 0.5f);
       Put(root, "logistics", KP("Shipping_Container_01"), 16.5f, 43.5f, 90f, 0f, false, 0.5f);
       // East barracks district: two barracks (north), six tents in two columns, two camo-net shelters, two crate yards, paths between.
-      Put(root, "barracks", MB("Barracks_01"), 11f, 23f, 90f, 0f, false, 0.6f);
-      Put(root, "barracks", MB("Barracks_01"), 11f, 33f, 90f, 0f, false, 0.6f);
+      Put(root, "barracks", MB("Barracks_01"), 11f, 23f, 90f, 0f, false, 0.6f); // one barracks; the rest are tents (triangle budget)
+      Put(root, "barracks", BB("Tent_01"), 11f, 33f, 90f, 0f, false, 0.6f);
       foreach (var z in new[] { -12f, 12f }) {
         Put(root, "barracks", BB("Tent_01"), 25.5f, z, 0f, 0f, false, 0.6f);
         Put(root, "barracks", BB("Tent_02"), 40f, z, 0f, 0f, false, 0.6f);
@@ -374,17 +449,35 @@ namespace FactoryWars.EditorTools {
       Put(root, "barracks", BB("Tent_02"), 25.5f, 1f, 0f, 0f, false, 0.6f);
       Put(root, "barracks", MB("CamoNet_Tent_03"), 26.5f, 30.5f, 0f, 0f, false, 0.4f);
       Put(root, "barracks", MB("CamoNet_Tent_04"), 33f, -21f, 0f, 0f, false, 0.4f);
-      var yard = new[] { MM("Crate_Stack_03"), KP("PalletStack_01"), MM("Crate_Stack_Cover_03") };
-      for (var i = 0; i < 6; i++) Blacken(Put(root, "crate yards", yard[i % yard.Length], 19f + (i % 3) * 2.6f, 37f + (i / 3) * 2.6f, 0f, 0f, false, 0.4f));
-      for (var i = 0; i < 6; i++) Blacken(Put(root, "crate yards", yard[(i + 1) % yard.Length], 36.5f + (i % 3) * 2.4f, 17.5f + (i / 3) * 2.4f, 0f, 0f, false, 0.4f));
+      var yard = new[] { MM("Crate_Stack_03"), MM("Crate_Stack_Cover_03"), MM("Crate_Stack_03") };
+      for (var i = 0; i < 6 && low == false; i++) Blacken(Put(root, "crate yards", yard[i % yard.Length], 19f + (i % 3) * 2.6f, 37f + (i / 3) * 2.6f, 0f, 0f, false, 0.4f));
+      for (var i = 0; i < 6 && low == false; i++) Blacken(Put(root, "crate yards", yard[(i + 1) % yard.Length], 36.5f + (i % 3) * 2.4f, 17.5f + (i / 3) * 2.4f, 0f, 0f, false, 0.4f));
       // South-east firing range: seven targets, Hesco backstop, shooting line barriers.
       for (var i = 0; i < 7; i++) Put(root, "range", BR("Target_01"), 10f + i * 3f, -36.5f, 0f, 0f, false, 0.4f);
       Put(root, "range", MM("Barrier_Base_Row_03"), 16f, -39.3f, 0f, 0f, false, 0.4f);
       for (var i = 0; i < 3; i++) Put(root, "range", MM("Barrier_Base_Single_01"), 10f + i * 6f, -26f, 0f, 0f, false, 0.4f);
       // Mechanics' corner by the display: generator and drums.
 
+      if (low == false) Density(root);
       foreach (var line in Skipped) Debug.Log($"[FW-Camp] {line}");
       Debug.Log("[FW-Camp] placed: " + string.Join(", ", Placed.Select(kv => $"{kv.Key} {kv.Value}")));
+    }
+
+    /// <summary>Fix 4 density: maintenance yard, parked trucks, fuel drums, generator/antenna clusters, more crate rows.</summary>
+    static void Density(Transform root) {
+      // South yard maintenance area (between the loop and the firing range).
+      Blacken(Put(root, "maintenance", PK + "Vehicles/SM_Veh_Truck_01.prefab", 23.5f, -19.5f, 90f, 0f, false, 0.4f));
+      Put(root, "maintenance", MP("Generator_Large_01"), -6.2f, -20.5f, 0f, 0f, false, 0.3f);
+      foreach (var (x, z) in new[] { (6f, -19f), (8.2f, -19f), (10.4f, -19.2f) }) Put(root, "fuel drums", MM("Barrel_Stack_01"), x, z, 0f, 0f, false, 0.3f);
+      foreach (var x in new[] { 6f, 9f, 12f, 15f }) Blacken(Put(root, "crate rows", MM("Crate_Stack_03"), x, -22.2f, 0f, 0f, false, 0.3f));
+      // North-west antenna + generator cluster, north strip crate rows.
+      Put(root, "antenna cluster", MP("Generator_Large_01"), -28.5f, 30f, 0f, 0f, false, 0.4f);
+      Put(root, "antenna cluster", MP("Satellite_Dish_02"), -25.5f, 32.5f, 200f, 0f, false, 0.4f);
+      Put(root, "antenna cluster", BR("RadioTower_01"), -26f, 36.5f, 0f, 0f, false, 0.4f);
+      foreach (var x in new[] { -4.5f, -1.5f, 1.5f, 4.5f }) Blacken(Put(root, "crate rows", MM("Crate_Stack_03"), x, 18.6f, 0f, 0f, false, 0.3f));
+      // East: drums by the tents, a second parked truck by the barracks.
+      foreach (var (x, z) in new[] { (44f, -3f), (44f, 5f) }) Put(root, "fuel drums", MM("Barrel_Stack_01"), x, z, 0f, 0f, false, 0.3f);
+
     }
 
     static void TradingPost(Transform root) {
@@ -398,7 +491,10 @@ namespace FactoryWars.EditorTools {
         if (x > 0) BlockKit.Place(root, MP("Satellite_Dish_02"), new Vector3(x + 2f, y + 0.6f, 3f), 200f, 1f);
       }
       // Counter: a camo-net canopy over a line of crates (the vendor stands behind it, see CampLayout.Counter).
-      BlockKit.Place(root, MB("CamoNet_Tent_06"), new Vector3(0f, 3.1f, -7.6f), 0f, 1f);
+      BlockKit.Place(root, MB("CamoNet_Tent_01"), new Vector3(-3.4f, 0f, -7.2f), 0f, 1f);
+      BlockKit.Place(root, MB("CamoNet_Tent_01"), new Vector3(3.4f, 0f, -7.2f), 0f, 1f);
+      Blacken(BlockKit.Place(root, BR("PalletStack_01"), new Vector3(-7.5f, 0f, -8.2f), 15f, 1f));
+      Blacken(BlockKit.Place(root, MM("Crate_Stack_03"), new Vector3(7.5f, 0f, -8.2f), -10f, 1f));
       foreach (var x in new[] { -2.8f, -1f, 0.8f, 2.6f }) BlockKit.Place(root, MM("Crate_Ammo_01"), new Vector3(x, 0f, -8.3f), 0f, 1f);
       BlockKit.Place(root, BR("RadioTower_01"), new Vector3(-9.5f, 0f, 6.5f), 0f, 1f);
       Placed["trading post"] = 2;

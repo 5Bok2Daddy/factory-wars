@@ -84,7 +84,7 @@ namespace FactoryWars.View {
       if (kind == "K" || kind == "L") item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
       // Task 39 fix 2 (triangle budget): parking lots, container yards and rubble fade out early in the far overview (each car/container
       // is thousands of triangles); at gameplay zoom they stay.
-      if (GraphicsQuality.Current != QualityTier.Low && (kind == "L" || kind == "Y" || kind == "X") && item.TryGetComponent<LODGroup>(out var far)) {
+      if (GraphicsQuality.Current != QualityTier.Low && (kind == "L" || kind == "Y" || kind == "X" || kind == "K") && item.TryGetComponent<LODGroup>(out var far)) {
         var lods = far.GetLODs();
         lods[0].screenRelativeTransitionHeight *= 5f;
         far.SetLODs(lods);
@@ -231,8 +231,8 @@ namespace FactoryWars.View {
       var dirs = new[] { (1, 0, 0), (0, 1, 1), (-1, 0, 2), (0, -1, 3) };
       // ---- Task 39 card 4: PMC camp = two baked blocks (perimeter + zones); the old wall/cover/container dressing is skipped.
       if (camp) {
-        Put(parent, "MK", 0, new Vector3(0f, 0.02f, 0f), 0f, "camp-perimeter");
-        Put(parent, "MK", 1, new Vector3(0f, 0.02f, 0f), 0f, "camp-zones");
+        Put(parent, "MK", low ? 2 : 0, new Vector3(0f, 0.02f, 0f), 0f, "camp-perimeter");
+        Put(parent, "MK", low ? 3 : 1, new Vector3(0f, 0.02f, 0f), 0f, "camp-zones");
         goto bridges;
       }
       // ---- 중앙 요새: 칸 경계 담장(정문 16m 제외) + 모서리 기둥 + 정문 감시탑 + 대각 4곳 건물 무리.

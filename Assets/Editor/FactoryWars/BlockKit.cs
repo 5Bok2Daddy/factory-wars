@@ -325,13 +325,16 @@ namespace FactoryWars.EditorTools {
       var pad = new Color(0.42f, 0.43f, 0.42f);
       var d = FactoryWars.View.CampLayout.DisplayPad;
       paving.Polygon(new[] { new Vector2(d.x, d.y), new Vector2(d.z, d.y), new Vector2(d.z, d.w), new Vector2(d.x, d.w) }, 0.015f, new Color(0.17f, 0.17f, 0.18f));
+      // Trading-post forecourt: light paving slabs in front of the counter (fix 4; it read as a sand patch).
+      paving.Polygon(new[] { new Vector2(-9.5f, -10.2f), new Vector2(9.5f, -10.2f), new Vector2(9.5f, -4.3f), new Vector2(-9.5f, -4.3f) }, 0.016f, new Color(0.62f, 0.6f, 0.56f));
+      for (var x = -8f; x <= 8f; x += 2f) paving.Strip(new Vector2(x, -10.2f), new Vector2(x, -4.3f), 0.06f, 0.0175f, new Color(0.5f, 0.48f, 0.45f));
       var e = FactoryWars.View.CampLayout.ApcPad;
       paving.Polygon(new[] { new Vector2(e.x, e.y), new Vector2(e.z, e.y), new Vector2(e.z, e.w), new Vector2(e.x, e.w) }, 0.015f, new Color(0.17f, 0.17f, 0.18f));
       foreach (var (p, yaw, kind) in FactoryWars.View.CampLayout.Bays) {
         var c = new Vector2(p.x, p.z);
         if (kind == FactoryWars.View.CampLayout.Bay.Heli || kind == FactoryWars.View.CampLayout.Bay.ScoutHeli) {
           var ring = new List<Vector2>();
-          for (var i = 0; i < 24; i++) ring.Add(c + new Vector2(Mathf.Cos(i * Mathf.PI / 12f), Mathf.Sin(i * Mathf.PI / 12f)) * (kind == FactoryWars.View.CampLayout.Bay.Heli ? 7.5f : 4.6f));
+          for (var i = 0; i < 24; i++) ring.Add(c + new Vector2(Mathf.Cos(i * Mathf.PI / 12f), Mathf.Sin(i * Mathf.PI / 12f)) * (kind == FactoryWars.View.CampLayout.Bay.Heli ? 6f : 4.6f));
           paving.Polygon(ring, 0.02f, pad);
           for (var i = 0; i < 24; i += 2) paving.Strip(ring[i] + (c - ring[i]) * 0.08f, ring[(i + 1) % 24] + (c - ring[(i + 1) % 24]) * 0.08f, 0.35f, 0.027f, amber);
           paving.Strip(c + new Vector2(-1.6f, -2.2f), c + new Vector2(-1.6f, 2.2f), 0.5f, 0.028f, white);
