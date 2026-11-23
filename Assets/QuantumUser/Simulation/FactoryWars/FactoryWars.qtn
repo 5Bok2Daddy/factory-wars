@@ -463,6 +463,13 @@ component Bridge {
     QBoolean Destroyed;
     QBoolean Pontoon;
     FP Work;
+    // Task 39: deck clearance (m above water) and drawbridge state. Lift 0 down, 1 raising, 2 up, 3 lowering; LiftT 0..1.
+    FP Clearance;
+    QBoolean Drawbridge;
+    Int32 Lift;
+    FP LiftT;
+    Int32 DeckClearFrames;
+    Int32 LowerAtFrame;
 }
 
 // 항목 37: 추락 수송기 블랙박스(점령형 목표). 한 쪽만 반경 안에 있으면 Progress가 오른다.
@@ -584,6 +591,7 @@ synced event WeatherChanged { QBoolean On; }
 synced event WreckLeft { entity_ref Wreck; FPVector3 Position; Int32 Size; }
 synced event WreckSalvaged { player_ref Player; FPVector3 Position; FP Iron; }
 synced event BridgeChanged { Int32 Index; QBoolean Destroyed; player_ref By; }
+event DrawbridgeMoved { Int32 Index; Int32 Lift; }
 synced event HqProtocol { player_ref Player; entity_ref Building; FPVector3 Position; }
 event HqProtocolShot { FPVector3 From; FPVector3 To; }
 synced event BlackBoxDown { entity_ref Box; FPVector3 Position; Int32 Seconds; }

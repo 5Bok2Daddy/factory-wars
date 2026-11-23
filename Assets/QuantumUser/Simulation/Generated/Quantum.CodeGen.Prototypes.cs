@@ -182,6 +182,12 @@ namespace Quantum.Prototypes {
     public QBoolean Destroyed;
     public QBoolean Pontoon;
     public FP Work;
+    public FP Clearance;
+    public QBoolean Drawbridge;
+    public Int32 Lift;
+    public FP LiftT;
+    public Int32 DeckClearFrames;
+    public Int32 LowerAtFrame;
     partial void MaterializeUser(Frame frame, ref Quantum.Bridge result, in PrototypeMaterializationContext context);
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.Bridge component = default;
@@ -196,6 +202,12 @@ namespace Quantum.Prototypes {
         result.Destroyed = this.Destroyed;
         result.Pontoon = this.Pontoon;
         result.Work = this.Work;
+        result.Clearance = this.Clearance;
+        result.Drawbridge = this.Drawbridge;
+        result.Lift = this.Lift;
+        result.LiftT = this.LiftT;
+        result.DeckClearFrames = this.DeckClearFrames;
+        result.LowerAtFrame = this.LowerAtFrame;
         MaterializeUser(frame, ref result, in context);
     }
   }

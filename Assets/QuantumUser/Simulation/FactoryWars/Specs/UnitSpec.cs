@@ -8,6 +8,8 @@ namespace Quantum {
     public bool IsAir;
     /// <summary>배(항목 24). 수상 NavMesh로만 다니고 점령은 못 한다. 대상으로는 지상과 같다(공중이 아니므로 지상 무기에 맞는다).</summary>
     public bool IsNaval;
+    /// <summary>Task 39: hull/mast height above the water line (m). A ship passes under a bridge only if this is not above the bridge clearance.</summary>
+    public FP HullHeight;
     /// <summary>항목 32: 소형 차량(버기·오토바이). 보병이 아니라 진지·엄폐·의무대 대상이 아니다.</summary>
     public bool IsVehicle;
     public ResourceCost Cost;

@@ -26,8 +26,8 @@ namespace FactoryWars.EditorTools {
     public const float GridCell = 8f;
     public const float GridHalf = GridCells * GridCell / 2f;
     /// <summary>사용자가 고치는 원본(작업 루트 design/maps). 없으면 저장소 안 사본을 쓴다.</summary>
-    const string GridCsvDesign = "../design/maps/Map4P_grid_v4.csv";
-    const string GridCsvRepo = "Tools/maps/Map4P_grid_v4.csv";
+    const string GridCsvDesign = "../design/maps/Map4P_grid_v5.csv";
+    const string GridCsvRepo = "Tools/maps/Map4P_grid_v5.csv";
 
     public static string GridCsvPath => File.Exists(GridCsvDesign) ? GridCsvDesign : GridCsvRepo;
 
@@ -149,6 +149,11 @@ namespace FactoryWars.EditorTools {
       return best;
     }
 
+    /// <summary>v5 요새 반폭(6칸 = 48m). 출입구는 축 위 |x| &lt; 8.5m에서 이 값의 0.6배보다 바깥 담장 변이다.</summary>
+    public const float CompoundHalf = 48f;
+    const float CompoundGateReach = CompoundHalf * 0.6f;
+    const float CompoundNoBuildRadius = CompoundHalf + 14f;
+
     public static bool GridBlocked(char cell) => cell == 'E' || cell == 'H' || cell == 'W';
 
     static MapDef BuildGridFourPlayer() => BuildGridMap("Map4P", ReadGrid(GridCsvPath));
@@ -190,7 +195,7 @@ namespace FactoryWars.EditorTools {
 
       // 중앙 요새: 가운데에서 C·p·Y로 이어진 칸. 둘레 담장, 동서남북 가운데 16m 출입구.
       var compound = Flood(g, (GridCells / 2, GridCells / 2), ch => ch == 'C' || ch == 'p' || ch == 'Y');
-      terrain.AddRange(EdgeWalls(compound, (r, c) => true, 1.2f, (x, z) => (Mathf.Abs(x) < 8.5f && Mathf.Abs(z) > 40f) || (Mathf.Abs(z) < 8.5f && Mathf.Abs(x) > 40f)));
+      terrain.AddRange(EdgeWalls(compound, (r, c) => true, 1.2f, (x, z) => (Mathf.Abs(x) < 8.5f && Mathf.Abs(z) > CompoundGateReach) || (Mathf.Abs(z) < 8.5f && Mathf.Abs(x) > CompoundGateReach)));
       foreach (var prop in BlockKit.CompoundCover.Where(prop => prop.Half.x > 0)) {
         var cover = Rect(prop.U, prop.W, prop.Half.x, prop.Half.y, prop.Yaw);
         for (var seat = 0; seat < 4; seat++) terrain.Add(Feature(TerrainKind.Wall, TurnShape(cover, seat)));
@@ -318,6 +323,9 @@ namespace FactoryWars.EditorTools {
         BaseArea = baseArea,
         Bridges = new MapShape[0],
         ExtraBridges = bridges.ToArray(),
+        // Task 39: every bridge is a deck 4 m above the water; the pair nearest the centre (main E-W roads) are drawbridges.
+        ExtraBridgeClearances = bridges.Select(_ => 4f).ToArray(),
+        ExtraDrawbridges = bridges.Select((b, i) => (i, z: Mathf.Abs(b.Center.Z.AsFloat))).OrderBy(t => t.z).Take(2).Select(t => t.i).OrderBy(i => i).ToArray(),
         WaterRects = water.ToArray(),
         WaterVisual = underBridge.ToArray(),
         Nodes = nodes.ToArray(),
@@ -327,7 +335,7 @@ namespace FactoryWars.EditorTools {
         BlackBoxSpots = new[] { SnapToRoad(g, -76, 0), SnapToRoad(g, 0, 76), SnapToRoad(g, 76, 0), SnapToRoad(g, 0, -76) }.Select(p => Position(p.x, p.y)).ToArray(),
         Terrain = terrain.ToArray(),
         // 경사로 둘레, 중앙 요새, 본진 장식(BlockKit.BaseDecor와 같은 표: 장식 위에 건물을 짓지 않게 2m 여유).
-        NoBuildZones = ramps.Select(r => { r.HalfLength += 4; r.HalfWidth += 4; return r; }).Concat(new[] { Circle(0, 0, 90) })
+        NoBuildZones = ramps.Select(r => { r.HalfLength += 4; r.HalfWidth += 4; return r; }).Concat(new[] { Circle(0, 0, CompoundNoBuildRadius) })
           .Concat(BlockKit.BaseDecor.Where(d => d.Half.x > 0f).SelectMany(d => SeatShapes(Rect(cornerX + d.U, cornerZ + d.W, d.Half.x + 2f, d.Half.y + 2f, d.Yaw))))
           .ToArray(),
         CameraPosition = new Vector3(0, 480, -400),

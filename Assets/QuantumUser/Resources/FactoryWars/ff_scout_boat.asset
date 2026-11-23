@@ -20,6 +20,8 @@ MonoBehaviour:
   RequiredTier: 1
   IsAir: 0
   IsNaval: 1
+  HullHeight:
+    RawValue: 104857
   IsVehicle: 0
   Cost:
     Iron:

@@ -213,6 +213,14 @@ namespace FactoryWars.View {
             if (ch == 'G') {
               kit.Rect(x0, z0, x1, z1, .04f, new Color(.46f, .45f, .43f));
               for (var k = 0; k < 4; k++) kit.Rect(x0 + .3f + k * 2f, z0, x0 + .42f + k * 2f, z1, .05f, new Color(.38f, .37f, .36f));
+              if (GridMapView.Deck(map, r, c)) {
+                // Task 39: deck fascia (0.7 m) on the sides that face open water; the canal runs on underneath.
+                var fascia = new Color(.40f, .39f, .37f);
+                if (Cell(r + 1, c) == 'W') kit.Wall(new Vector2(x0, z0), new Vector2(x1, z0), -.66f, .04f, new Vector2(0, -1), fascia);
+                if (Cell(r - 1, c) == 'W') kit.Wall(new Vector2(x1, z1), new Vector2(x0, z1), -.66f, .04f, new Vector2(0, 1), fascia);
+                if (Cell(r, c - 1) == 'W') kit.Wall(new Vector2(x0, z1), new Vector2(x0, z0), -.66f, .04f, new Vector2(-1, 0), fascia);
+                if (Cell(r, c + 1) == 'W') kit.Wall(new Vector2(x1, z0), new Vector2(x1, z1), -.66f, .04f, new Vector2(1, 0), fascia);
+              }
             }
             continue;
           }
@@ -313,7 +321,7 @@ namespace FactoryWars.View {
       for (var r = 0; r < n; r++) {
         for (var c = 0; c < n; c++) {
           var ch = Cell(r, c);
-          if (ch == 'W') continue;
+          if (ch == 'W' || GridMapView.Deck(map, r, c)) continue;
           if (map.HighGroundAt(new Vector3(GridMapView.CellX(map, c), 0, GridMapView.CellZ(map, r)).ToFPVector3()) >= 0) continue;
           var kit = kits[r / Chunk, c / Chunk];
           var x0 = -half + c * size;
@@ -323,7 +331,7 @@ namespace FactoryWars.View {
           var walls = new[] { (r + 1, c, new Vector2(x0, z0), new Vector2(x1, z0), new Vector2(0, -1)), (r - 1, c, new Vector2(x0, z1), new Vector2(x1, z1), new Vector2(0, 1)),
             (r, c - 1, new Vector2(x0, z0), new Vector2(x0, z1), new Vector2(-1, 0)), (r, c + 1, new Vector2(x1, z0), new Vector2(x1, z1), new Vector2(1, 0)) };
           foreach (var (nr, nc, a, b, normal) in walls) {
-            if (Cell(nr, nc) != 'W') continue;
+            if (Cell(nr, nc) != 'W' && !GridMapView.Deck(map, nr, nc)) continue;
             kit.Wall(a, b, waterTop - .35f, waterTop + .3f, normal, WallStain);
             kit.Wall(a, b, -.35f, .02f, normal, Coping * .9f);
             var len = (b - a).magnitude;

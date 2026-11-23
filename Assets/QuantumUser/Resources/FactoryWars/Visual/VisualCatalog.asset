@@ -6561,7 +6561,7 @@ MonoBehaviour:
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 122.46, y: 0.9543916, z: 122.46001}
+    Size: {x: 79.759995, y: 0.9543916, z: 79.759995}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 

@@ -101,7 +101,10 @@ namespace Quantum.FactoryWars {
       }
       var seat = BridgeSeat(FactoryWarsUtil.MapInfo(f), index);
       var barrierOpen = seat < 0 || f.Global->BarrierOpen || FactoryWarsUtil.PlayerAtSeat(f, seat) < 0;
-      f.NavMeshRegionMask->ToggleRegion(region, barrierOpen && destroyed == false);
+      // Task 39: a drawbridge that is not fully down closes the ground passage.
+      var entity = BridgeEntity(f, index);
+      var raised = entity != EntityRef.None && f.Unsafe.GetPointer<Bridge>(entity)->Lift != BridgeTraffic.Down;
+      f.NavMeshRegionMask->ToggleRegion(region, barrierOpen && destroyed == false && raised == false);
     }
 
     /// <summary>다리 양 끝(건너는 방향 = 사각형의 짧은 변) 중 이 공병이 갈 수 있는 가까운 쪽.</summary>
@@ -475,7 +478,10 @@ namespace Quantum.FactoryWars {
       for (var i = 0; i < map.Bridges.Length; i++) {
         var entity = f.Create();
         f.Add(entity, Transform3D.Create(map.Bridges[i].Center));
-        f.Add(entity, new Bridge { Index = i, Seat = BridgeSeat(map, i), Health = rules.BridgeHealth, MaxHealth = rules.BridgeHealth });
+        f.Add(entity, new Bridge {
+          Index = i, Seat = BridgeSeat(map, i), Health = rules.BridgeHealth, MaxHealth = rules.BridgeHealth,
+          Clearance = BridgeTraffic.ClearanceOf(map, rules, i), Drawbridge = BridgeTraffic.IsDrawbridge(map, i),
+        });
       }
     }
 
@@ -505,6 +511,7 @@ namespace Quantum.FactoryWars {
       }
       ProtocolFire(f, rules);
       BlackBoxes(f, rules);
+      BridgeTraffic.Update(f, rules);
     }
   }
 }

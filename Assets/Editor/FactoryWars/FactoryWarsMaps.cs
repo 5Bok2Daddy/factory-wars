@@ -35,6 +35,9 @@ namespace FactoryWars.EditorTools {
       public MapShape[] NoBuildZones;
       public MapShape[] Bridges;
       public MapShape[] ExtraBridges;
+      /// <summary>Task 39: clearance per ExtraBridges entry (m) and which ExtraBridges entries are drawbridges.</summary>
+      public float[] ExtraBridgeClearances;
+      public int[] ExtraDrawbridges;
       public MapShape[] ExtraRoads;
       public WaterStrip[] ExtraWater;
       public MapShape BaseArea;

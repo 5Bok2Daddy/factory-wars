@@ -92,7 +92,7 @@ namespace FactoryWars.EditorTools {
       BuildMapSpec(FourPlayerMap);
       BuildMapScene(FourPlayerMap);
       AssetDatabase.SaveAssets();
-      Debug.Log("Factory Wars baked Map4P (grid v4)");
+      Debug.Log("Factory Wars baked Map4P (grid v5)");
     }
 
     public static void ConfigurePlayer() {
@@ -374,6 +374,41 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "tf_wavecrest_lander", Size = UnitSize.Medium, Naval = true, Cost = R(300, 0, 150, 100), Build = 30, Health = 900, Attack = AttackType.Area, Damage = 50, Range = 14, Splash = 3, Interval = 4, Speed = 5 },
     };
 
+    /// <summary>Task 39: ship height above the water line (m). Fixed bridges clear 4 m, so only artillery ships need a drawbridge.</summary>
+    public static double HullHeightOf(string id, bool naval) =>
+      !naval ? 0 : id.Contains("artillery_ship") ? 6.5 : id.Contains("landing_craft") ? 2.8 : id.Contains("wavecrest") ? 3.2 : 1.6;
+
+    /// <summary>Task 39: bridge clearance and drawbridge timing (data, read by BridgeTraffic).</summary>
+    public static void ApplyBridgeTrafficRules(GameRulesSpec rules) {
+      rules.BridgeClearance = 4;
+      // Map4P bridges on one canal are 40 m apart: a ship held at the next fixed bridge must be outside this radius.
+      rules.DrawbridgeApproachRadius = 24;
+      rules.DrawbridgeDeckClearSeconds = 2;
+      rules.DrawbridgeRaiseSeconds = 4;
+      rules.DrawbridgeLowerDelaySeconds = 3;
+    }
+
+    /// <summary>Task 39: write hull heights and bridge rules into the existing assets without re-running the full setup.</summary>
+    [MenuItem("Tools/Factory Wars/Task 39/Apply bridge traffic data")]
+    public static void ApplyTask39Data() {
+      var rules = AssetDatabase.LoadAssetAtPath<GameRulesSpec>($"{DataRoot}/game_rules.asset");
+      ApplyBridgeTrafficRules(rules);
+      EditorUtility.SetDirty(rules);
+      foreach (var guid in AssetDatabase.FindAssets("t:UnitSpec", new[] { DataRoot })) {
+        var unit = AssetDatabase.LoadAssetAtPath<UnitSpec>(AssetDatabase.GUIDToAssetPath(guid));
+        var hull = N(HullHeightOf(unit.name, unit.IsNaval));
+        if (unit.HullHeight != hull) { unit.HullHeight = hull; EditorUtility.SetDirty(unit); }
+      }
+      AssetDatabase.SaveAssets();
+      Debug.Log("[FW-T39] bridge traffic data applied");
+    }
+
+    /// <summary>Task 39 card 1: data + Map4P v5 bake in one batch call.</summary>
+    public static void BakeTask39() {
+      ApplyTask39Data();
+      DressKit.BuildBakeDress();
+    }
+
     static UnitSpec BuildUnit(UnitRow row) {
       var spec = Asset<UnitSpec>(row.Id);
       spec.Size = row.Size;
@@ -399,6 +434,7 @@ namespace FactoryWars.EditorTools {
         : 0.65);
       spec.SpawnCount = row.Spawn > 0 ? row.Spawn : 1;
       spec.IsNaval = row.Naval;
+      spec.HullHeight = N(HullHeightOf(row.Id, row.Naval));
       spec.IsVehicle = row.Vehicle;
       // 항목 34 시야 반경(m): 보병 10, 차량·중형 9, 정찰 버기·오토바이 16, 정찰선 18, 공중 14. 값은 이 표가 원본이다.
       spec.SightRange = N(row.Id.Contains("scout_boat") ? 18 : row.Id.Contains("scout") ? 16 : row.Air ? 14 : row.Naval ? 12 : row.Vehicle || row.Size != UnitSize.Small ? 9 : 10);
@@ -1274,6 +1310,7 @@ namespace FactoryWars.EditorTools {
       rules.BridgeWorkRange = N(4);
       rules.BridgeCollapseDamage = 250;
       rules.BridgeRegion = BridgeRegion;
+      ApplyBridgeTrafficRules(rules);
       // 사령부 비상 프로토콜: 체력 40% 미만에서 한 번, 20초 피해 -60%, 수비 분대 2, 사거리 28 자동 사격(피해 60, 1.2초).
       rules.HqProtocolHealthRatio = N(0.4);
       rules.HqProtocolSeconds = 20;
@@ -1601,6 +1638,11 @@ namespace FactoryWars.EditorTools {
         bridgesList.AddRange(def.ExtraBridges);
       }
       spec.Bridges = bridgesList.ToArray();
+      // Task 39: clearance and drawbridge flags follow the ExtraBridges order after the orbit bridges.
+      var firstExtra = bridgesList.Count - (def.ExtraBridges?.Length ?? 0);
+      spec.BridgeClearances = bridgesList.Select((b, i) => i >= firstExtra && def.ExtraBridgeClearances != null && i - firstExtra < def.ExtraBridgeClearances.Length
+        ? N(def.ExtraBridgeClearances[i - firstExtra]) : FP._0).ToArray();
+      spec.Drawbridges = (def.ExtraDrawbridges ?? new int[0]).Select(i => firstExtra + i).ToArray();
 
       var allFords = def.Fords.SelectMany(shape => Orbit(def, shape)).ToArray();
       bool OverlapsExtraWater(FPVector3 pos, float margin) {

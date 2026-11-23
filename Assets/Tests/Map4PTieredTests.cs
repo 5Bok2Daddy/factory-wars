@@ -58,7 +58,7 @@ namespace FactoryWars.Tests {
     // 사용자가 칸 지도 v4(640m)로 바꾸면서 기준이 사라져 아래 Map4P_v4_* 시험으로 대체했다(SETUP-REPORT "Map4P v4 시범").
 
     static char[,] DesignGrid() {
-      var path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Tools", "maps", "Map4P_grid_v4.csv"));
+      var path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Tools", "maps", "Map4P_grid_v5.csv"));
       var lines = File.ReadAllLines(path).Where(l => l.Trim().Length > 0).ToArray();
       var grid = new char[80, 80];
       for (var r = 0; r < 80; r++) {
@@ -201,7 +201,8 @@ namespace FactoryWars.Tests {
       }
     }
 
-    static FPVector3[] CompoundEntries() => new[] { Pos(0f, 56f), Pos(56f, 0f), Pos(0f, -56f), Pos(-56f, 0f) };
+    // v5(2026-11-23): 요새가 96m 팔각으로 줄어 출입구 안쪽 점도 ±56 → ±36(담장 ±48 안쪽 12m).
+    static FPVector3[] CompoundEntries() => new[] { Pos(0f, 36f), Pos(36f, 0f), Pos(0f, -36f), Pos(-36f, 0f) };
 
     [UnityTest, Timeout(900000)]
     public IEnumerator Map4P_v4_CameraBoundsAndVehicleTravel() {
@@ -435,7 +436,7 @@ namespace FactoryWars.Tests {
       // 중앙 요새 안 빈 사각형(엄폐물·건물·컨테이너·상인 기지 기준).
       var compoundItems = dress.Where(b => Mathf.Abs(b.transform.position.x) < 80f && Mathf.Abs(b.transform.position.z) < 80f).Select(SceneAudit.BoundsOf).ToList();
       compoundItems.Add(new Bounds(Vector3.zero, new Vector3(30f, 4f, 30f)));
-      foreach (var (u, w) in new[] { (32f, 32f), (32f, -32f), (-32f, -32f), (-32f, 32f) }) compoundItems.Add(new Bounds(new Vector3(u, 1f, w), new Vector3(9f, 2f, 9f)));
+      foreach (var (u, w) in new[] { (24f, 24f), (24f, -24f), (-24f, -24f), (-24f, 24f) }) compoundItems.Add(new Bounds(new Vector3(u, 1f, w), new Vector3(9f, 2f, 9f)));
       var compoundEmpty = SceneAudit.LargestEmptySquare(new Rect(-80f, -80f, 160f, 160f), compoundItems, (x, z) =>
         GridMapView.Cell(map, Mathf.FloorToInt((320f - z) / 8f), Mathf.FloorToInt((x + 320f) / 8f)) == 'C' && Mathf.Abs(x) > 9f && Mathf.Abs(z) > 9f, out var compoundClear);
       report.Add($"compound empty square (outside cross/gate roads |x|,|z| < 9): {compoundEmpty:0}m at ({compoundClear.center.x:0},{compoundClear.center.y:0}) (limit {SceneAudit.EmptyLimit:0.0}m)");

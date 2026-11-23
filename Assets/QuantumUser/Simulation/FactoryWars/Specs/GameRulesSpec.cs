@@ -191,6 +191,16 @@ namespace Quantum {
     public FP BridgeWorkRange;
     public FP BridgeCollapseDamage;
     public string BridgeRegion;
+    /// <summary>
+    /// Task 39 bridges over water: default deck clearance (m). Drawbridge: raises when a ship taller than the clearance is within
+    /// ApproachRadius and the deck has been clear of ground units for DeckClearSeconds; takes RaiseSeconds to move; lowers
+    /// LowerDelaySeconds after the last tall ship left the approach radius. Ground passage is closed whenever the deck is not down.
+    /// </summary>
+    public FP BridgeClearance = 4;
+    public FP DrawbridgeApproachRadius = 24;
+    public FP DrawbridgeDeckClearSeconds = 2;
+    public FP DrawbridgeRaiseSeconds = 4;
+    public FP DrawbridgeLowerDelaySeconds = 3;
     /// <summary>사령부 비상 프로토콜: 발동 체력 비율·지속·받는 피해 배율·수비 분대 수·자동 사격 사거리·피해·간격.</summary>
     public FP HqProtocolHealthRatio;
     public FP HqProtocolSeconds;

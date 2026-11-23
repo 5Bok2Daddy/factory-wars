@@ -1458,22 +1458,34 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Bridge : Quantum.IComponent {
-    public const Int32 SIZE = 40;
+    public const Int32 SIZE = 72;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(0)]
-    public Int32 Index;
     [FieldOffset(4)]
-    public Int32 Seat;
+    public Int32 Index;
     [FieldOffset(16)]
+    public Int32 Seat;
+    [FieldOffset(40)]
     public FP Health;
-    [FieldOffset(24)]
+    [FieldOffset(56)]
     public FP MaxHealth;
-    [FieldOffset(8)]
+    [FieldOffset(20)]
     public QBoolean Destroyed;
-    [FieldOffset(12)]
+    [FieldOffset(28)]
     public QBoolean Pontoon;
-    [FieldOffset(32)]
+    [FieldOffset(64)]
     public FP Work;
+    [FieldOffset(32)]
+    public FP Clearance;
+    [FieldOffset(24)]
+    public QBoolean Drawbridge;
+    [FieldOffset(8)]
+    public Int32 Lift;
+    [FieldOffset(48)]
+    public FP LiftT;
+    [FieldOffset(0)]
+    public Int32 DeckClearFrames;
+    [FieldOffset(12)]
+    public Int32 LowerAtFrame;
     public override readonly Int32 GetHashCode() {
       unchecked { 
         var hash = 10909;
@@ -1484,16 +1496,28 @@ namespace Quantum {
         hash = hash * 31 + Destroyed.GetHashCode();
         hash = hash * 31 + Pontoon.GetHashCode();
         hash = hash * 31 + Work.GetHashCode();
+        hash = hash * 31 + Clearance.GetHashCode();
+        hash = hash * 31 + Drawbridge.GetHashCode();
+        hash = hash * 31 + Lift.GetHashCode();
+        hash = hash * 31 + LiftT.GetHashCode();
+        hash = hash * 31 + DeckClearFrames.GetHashCode();
+        hash = hash * 31 + LowerAtFrame.GetHashCode();
         return hash;
       }
     }
     public static void Serialize(void* ptr, FrameSerializer serializer) {
         var p = (Bridge*)ptr;
+        serializer.Stream.Serialize(&p->DeckClearFrames);
         serializer.Stream.Serialize(&p->Index);
+        serializer.Stream.Serialize(&p->Lift);
+        serializer.Stream.Serialize(&p->LowerAtFrame);
         serializer.Stream.Serialize(&p->Seat);
         QBoolean.Serialize(&p->Destroyed, serializer);
+        QBoolean.Serialize(&p->Drawbridge, serializer);
         QBoolean.Serialize(&p->Pontoon, serializer);
+        FP.Serialize(&p->Clearance, serializer);
         FP.Serialize(&p->Health, serializer);
+        FP.Serialize(&p->LiftT, serializer);
         FP.Serialize(&p->MaxHealth, serializer);
         FP.Serialize(&p->Work, serializer);
     }

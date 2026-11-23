@@ -82,9 +82,9 @@ namespace FactoryWars.EditorTools {
     };
 
     public static readonly Decor[] CompoundCover = {
-      new Decor { Name = "cover", Prefab = PM + "Props/SM_Prop_Barrier_02.prefab", U = 32, W = 32, Yaw = 45, Scale = 1f, Half = new Vector2(2.2f, 1f) },
-      new Decor { Name = "pallet", Prefab = PM + "Props/SM_Prop_Pallet_02.prefab", U = 38, W = 31, Yaw = 14, Scale = 1f },
-      new Decor { Name = "crate", Prefab = PM + "Props/SM_Prop_Crate_Wood_03.prefab", U = 35, W = 36, Yaw = 35, Scale = 1f },
+      new Decor { Name = "cover", Prefab = PM + "Props/SM_Prop_Barrier_02.prefab", U = 24, W = 24, Yaw = 45, Scale = 1f, Half = new Vector2(2.2f, 1f) },
+      new Decor { Name = "pallet", Prefab = PM + "Props/SM_Prop_Pallet_02.prefab", U = 25, W = 20, Yaw = 14, Scale = 1f },
+      new Decor { Name = "crate", Prefab = PM + "Props/SM_Prop_Crate_Wood_03.prefab", U = 23, W = 24, Yaw = 35, Scale = 1f },
     };
 
     /// <summary>프리팹을 바닥 가운데가 (x, z), 바닥이 y에 오도록 놓는다(팩 프리팹마다 기준점이 모서리·가운데로 다르다).</summary>
@@ -300,15 +300,17 @@ namespace FactoryWars.EditorTools {
           var p = Rotate(prop.U, prop.W);
           Place(street, prop.Prefab, new Vector3(p.x, 0, p.y), prop.Yaw - side * 90f, prop.Scale, $"{prop.Name}-{side}");
         }
-        paving.Strip(Rotate(28, 33), Rotate(41, 33), 10f, 0.019f, asphalt);
-        paving.Strip(Rotate(28, 38.2f), Rotate(41, 38.2f), 0.26f, 0.027f, marking);
-        paving.Strip(Rotate(0, 16), Rotate(0, 57), 10f, 0.018f, asphalt);
-        for (var z = 17; z < 56; z += 6) {
-          paving.Strip(Rotate(0, z), Rotate(0, z + 2.6f), 0.24f, 0.026f, marking);
+        // v5(2026-11-23): 요새가 147m → 96m로 줄어 v4 좌표를 0.65배 한다.
+        Vector2 S(float x, float z) => Rotate(x * 0.65f, z * 0.65f);
+        paving.Strip(S(28, 33), S(41, 33), 7f, 0.019f, asphalt);
+        paving.Strip(S(28, 38.2f), S(41, 38.2f), 0.26f, 0.027f, marking);
+        paving.Strip(S(0, 16), S(0, 57), 8f, 0.018f, asphalt);
+        for (var z = 17; z < 56; z += 8) {
+          paving.Strip(S(0, z), S(0, z + 3.6f), 0.24f, 0.026f, marking);
         }
-        paving.Strip(Rotate(11, 61), Rotate(32, 61), 0.46f, 0.024f, asphalt);
-        paving.Strip(Rotate(32, 61), Rotate(61, 32), 0.46f, 0.024f, asphalt);
-        paving.Strip(Rotate(61, 32), Rotate(61, 11), 0.46f, 0.024f, asphalt);
+        paving.Strip(S(11, 61), S(32, 61), 0.46f, 0.024f, asphalt);
+        paving.Strip(S(32, 61), S(61, 32), 0.46f, 0.024f, asphalt);
+        paving.Strip(S(61, 32), S(61, 11), 0.46f, 0.024f, asphalt);
       }
       paving.Save(root);
       return root;

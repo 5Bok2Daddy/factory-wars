@@ -311,6 +311,16 @@ MonoBehaviour:
   BridgeCollapseDamage:
     RawValue: 16384000
   BridgeRegion: Bridge
+  BridgeClearance:
+    RawValue: 262144
+  DrawbridgeApproachRadius:
+    RawValue: 1572864
+  DrawbridgeDeckClearSeconds:
+    RawValue: 131072
+  DrawbridgeRaiseSeconds:
+    RawValue: 262144
+  DrawbridgeLowerDelaySeconds:
+    RawValue: 196608
   HqProtocolHealthRatio:
     RawValue: 26214
   HqProtocolSeconds:

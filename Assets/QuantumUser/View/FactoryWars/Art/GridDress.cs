@@ -217,8 +217,8 @@ namespace FactoryWars.View {
       }
 
       // ---- 중앙 요새: 칸 경계 담장(정문 16m 제외) + 모서리 기둥 + 정문 감시탑 + 대각 4곳 건물 무리.
-      bool InCompound(int r, int c) { var ch = GridMapView.Cell(map, r, c); return (ch == 'C' || ch == 'Y' || ch == 'p') && Mathf.Abs(r - n / 2 + 0.5f) < 12 && Mathf.Abs(c - n / 2 + 0.5f) < 12; }
-      bool Gate(float x, float z) => (Mathf.Abs(x) < 8.5f && Mathf.Abs(z) > 40f) || (Mathf.Abs(z) < 8.5f && Mathf.Abs(x) > 40f);
+      bool InCompound(int r, int c) { var ch = GridMapView.Cell(map, r, c); return (ch == 'C' || ch == 'Y' || ch == 'p') && Mathf.Abs(r - n / 2 + 0.5f) < 8 && Mathf.Abs(c - n / 2 + 0.5f) < 8; }
+      bool Gate(float x, float z) => (Mathf.Abs(x) < 8.5f && Mathf.Abs(z) > 28f) || (Mathf.Abs(z) < 8.5f && Mathf.Abs(x) > 28f);
       var dirs = new[] { (1, 0, 0), (0, 1, 1), (-1, 0, 2), (0, -1, 3) };
       for (var r = 0; r < n; r++) {
         for (var c = 0; c < n; c++) {
@@ -261,7 +261,7 @@ namespace FactoryWars.View {
       for (var q = 0; q < 4; q++) {
         var sx = q % 2 == 0 ? -1 : 1;
         var sz = q < 2 ? -1 : 1;
-        var target = new Vector2(sx * 46f, sz * 46f);
+        var target = new Vector2(sx * 30f, sz * 30f);
         var best = (r: -1, c: -1, d: float.MaxValue);
         for (var r = 0; r + 1 < n; r++) {
           for (var c = 0; c + 1 < n; c++) {
@@ -282,7 +282,7 @@ namespace FactoryWars.View {
       // 정문 4곳 안쪽 양옆 엄폐 군집(진입로는 비운다).
       for (var side = 0; side < 4; side++) {
         foreach (var s in new[] { -1, 1 }) {
-          var p = side switch { 0 => new Vector3(s * 17f, 0f, -66f), 1 => new Vector3(66f, 0f, s * 17f), 2 => new Vector3(s * 17f, 0f, 66f), _ => new Vector3(-66f, 0f, s * 17f) };
+          var p = side switch { 0 => new Vector3(s * 11f, 0f, -43f), 1 => new Vector3(43f, 0f, s * 11f), 2 => new Vector3(s * 11f, 0f, 43f), _ => new Vector3(-43f, 0f, s * 11f) };
           var col = Mathf.FloorToInt((p.x + n * size / 2f) / size);
           var row = Mathf.FloorToInt((n * size / 2f - p.z) / size);
           if (GridMapView.Cell(map, row, col) != 'C' || covered[row, col]) continue;
