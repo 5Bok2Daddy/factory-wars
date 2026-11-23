@@ -320,6 +320,9 @@ MonoBehaviour:
   Logistics:
     Id:
       Value: 526215570543285750
+  Waterway:
+    Id:
+      Value: 508464813250765607
   DrawbridgeApproachRadius:
     RawValue: 1572864
   DrawbridgeDeckClearSeconds:

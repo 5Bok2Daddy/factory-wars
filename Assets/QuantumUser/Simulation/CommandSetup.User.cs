@@ -40,6 +40,7 @@ namespace Quantum
             factories.Add(new FactoryWars.OverdriveFactoryCommand());
             factories.Add(new FactoryWars.BoardTransportCommand());
             factories.Add(new FactoryWars.UnloadTransportCommand());
+            factories.Add(new FactoryWars.RebuildSeaBarrierCommand());
         }
     }
 }

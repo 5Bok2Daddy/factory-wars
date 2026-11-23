@@ -340,6 +340,17 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventSupplyDropStage>(this, OnDropStage);
       QuantumEvent.Subscribe<EventBarricadeDestroyed>(this, OnBarricade);
       QuantumEvent.Subscribe<EventBaseUnderAttack>(this, OnBaseAttacked);
+      // Task 46: sea barrier / watchtower under attack (once per attack window, from the simulation).
+      QuantumEvent.Subscribe<EventSeaBarrierAlert>(this, e => {
+        if (e.Player != Controller.Player) return;
+        SeaAlerts++;
+        GameAudio.Play(SoundEvent.UnderAttack);
+        ShowAlert(Texts.SeaBarrierAttacked);
+        PingAlert(e.Position.ToUnityVector3());
+      });
+      QuantumEvent.Subscribe<EventSeaGateChanged>(this, e => {
+        if (e.Destroyed) ShowAlert($"방벽 #{e.Gate + 1} 파괴됨 — 수로 개방");
+      });
       QuantumEvent.Subscribe<EventCratePicked>(this, OnCratePicked);
       // Task 41: logistics alerts for the local player (delivered amount floats over the dock).
       QuantumEvent.Subscribe<EventLogisticsNotice>(this, e => {
@@ -974,6 +985,9 @@ namespace FactoryWars.View {
       _tooltip.GetComponent<Image>().raycastTarget = false;
       _tooltip.gameObject.SetActive(false);
     }
+
+    /// <summary>Task 46: sea barrier alerts shown to the local player (tests read it).</summary>
+    public int SeaAlerts { get; private set; }
 
     void OnBaseAttacked(EventBaseUnderAttack e) {
       if (e.Player == Controller.Player) {
@@ -2319,6 +2333,10 @@ namespace FactoryWars.View {
         }
         var target = unitRef;
         var reason = UnitLock(frame, unit);
+        // Task 46: canal shipyards cannot build warships (low canal bridges); say so on the disabled button.
+        if (reason == null && frame.TryGet<Transform3D>(entity, out var yardAt) && SeaGateSystem.TooTallForYard(frame, yardAt.Position, unit)) {
+          reason = Texts.CanalYard;
+        }
         Entries.Add(new ContextEntry {
           Label = $"{Texts.NameOf(unit.name)}\n{(reason == null ? Texts.Cost(unit.Cost, stock) : Short(reason))}",
           Icon = UnitIcon(unit.name),

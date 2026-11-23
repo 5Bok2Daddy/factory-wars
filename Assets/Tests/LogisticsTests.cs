@@ -297,9 +297,7 @@ namespace FactoryWars.Tests {
             (Verified.Exists(Yard(p.Site).Truck) ? $"{Truck(Yard(p.Site).Truck).State} at {Verified.Get<Transform3D>(Yard(p.Site).Truck).Position}" : "none")).ToList();
           System.IO.Directory.CreateDirectory(T41Root());
           System.IO.File.WriteAllLines(System.IO.Path.Combine(T41Root(), "fairness_timeout.txt"), lines);
-          Assert.Fail("two deliveries at every seat within 900 s:
-" + string.Join("
-", lines));
+          Assert.Fail("two deliveries at every seat within 900 s:\n" + string.Join("\n", lines));
         }
         return false;
       }, 1800f, "two deliveries at every seat");

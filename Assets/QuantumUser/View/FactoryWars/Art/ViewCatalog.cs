@@ -125,6 +125,9 @@ namespace FactoryWars.View {
       ("cf_landing_craft", "cf_scout_boat", 1.35f),
       ("ff_transport_heli", "ff_hawk_gunship", 1.0f),
       ("cf_transport_heli", "cf_gale_gunship", 1.0f),
+      // Task 46: sea barrier boom and watchtower (building/sea_barrier, building/sea_watchtower slots give the pack models).
+      ("sea_barrier", "ff_ground_tower", 1f),
+      ("sea_watchtower", "ff_ground_tower", 1f),
     };
 
     public static string BorrowedId(string id) {

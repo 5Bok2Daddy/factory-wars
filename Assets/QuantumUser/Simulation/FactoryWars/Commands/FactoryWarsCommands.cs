@@ -804,6 +804,19 @@ namespace Quantum.FactoryWars {
     }
   }
 
+  /// <summary>Task 46: the sector owner rebuilds a destroyed sea barrier (pays the BuildingSpec cost; it builds itself).</summary>
+  public unsafe class RebuildSeaBarrierCommand : FactoryCommand {
+    public int Gate;
+
+    public override void Serialize(BitStream stream) {
+      stream.Serialize(ref Gate);
+    }
+
+    public override void Execute(Frame f, PlayerRef player) {
+      SeaGateSystem.Rebuild(f, player, Gate);
+    }
+  }
+
   /// <summary>항목 37: 공병이 기갑 잔해를 분해해 고철을 회수한다.</summary>
   public unsafe class SalvageCommand : FactoryCommand {
     public EntityRef[] Units = System.Array.Empty<EntityRef>();

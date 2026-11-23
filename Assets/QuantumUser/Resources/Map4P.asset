@@ -54,6 +54,8 @@ MonoBehaviour:
   - Bridge3
   - Bridge4
   - Bridge5
+  - SeaGate0
+  - SeaGate1
   StaticColliders2D: []
   StaticColliders3D: []
   MapEntities: []

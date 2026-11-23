@@ -1107,6 +1107,43 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.SeaGate))]
+  public unsafe class SeaGatePrototype : ComponentPrototype<Quantum.SeaGate> {
+    public Int32 Index;
+    public Int32 Seat;
+    public PlayerRef Owner;
+    public QBoolean Spawned;
+    public MapEntityId Barrier;
+    public MapEntityId Tower;
+    public Int32 State;
+    public Int32 StateFrame;
+    public QBoolean RegionOpen;
+    public FP BarrierHealth;
+    public FP TowerHealth;
+    public Int32 LastHitFrame;
+    public Int32 Alerts;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.SeaGate component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.SeaGate result, in PrototypeMaterializationContext context = default) {
+        result.Index = this.Index;
+        result.Seat = this.Seat;
+        result.Owner = this.Owner;
+        result.Spawned = this.Spawned;
+        PrototypeValidator.FindMapEntity(this.Barrier, in context, out result.Barrier);
+        PrototypeValidator.FindMapEntity(this.Tower, in context, out result.Tower);
+        result.State = this.State;
+        result.StateFrame = this.StateFrame;
+        result.RegionOpen = this.RegionOpen;
+        result.BarrierHealth = this.BarrierHealth;
+        result.TowerHealth = this.TowerHealth;
+        result.LastHitFrame = this.LastHitFrame;
+        result.Alerts = this.Alerts;
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.Sortie))]
   public unsafe class SortiePrototype : ComponentPrototype<Quantum.Sortie> {
     public PlayerRef Owner;

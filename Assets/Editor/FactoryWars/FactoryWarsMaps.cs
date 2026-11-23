@@ -99,6 +99,15 @@ namespace FactoryWars.EditorTools {
       /// <summary>화면에만 물로 그리는 칸(다리 밑).</summary>
       public MapShape[] WaterVisual;
       public byte[] CellGrid;
+      /// <summary>Task 46: outer waterway sea gates, towers, triggers, shipyard zones, harbours (copied into MapSpec as is).</summary>
+      public MapShape[] SeaGates;
+      public int[] SeaGateSeats;
+      public FPVector3[] SeaGateTowers;
+      public MapShape[] SeaGateTriggers;
+      public MapShape[] ShipyardZones;
+      public int[] ShipyardZoneSeats;
+      public bool[] ShipyardZoneSmallOnly;
+      public MapShape[] Harbours;
       public MapDef Clone() => (MapDef)MemberwiseClone();
     }
 

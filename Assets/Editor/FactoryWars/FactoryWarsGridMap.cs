@@ -26,8 +26,8 @@ namespace FactoryWars.EditorTools {
     public const float GridCell = 8f;
     public const float GridHalf = GridCells * GridCell / 2f;
     /// <summary>사용자가 고치는 원본(작업 루트 design/maps). 없으면 저장소 안 사본을 쓴다.</summary>
-    const string GridCsvDesign = "../design/maps/Map4P_grid_v5.csv";
-    const string GridCsvRepo = "Tools/maps/Map4P_grid_v5.csv";
+    const string GridCsvDesign = "../design/maps/Map4P_grid_v6.csv";
+    const string GridCsvRepo = "Tools/maps/Map4P_grid_v6.csv";
 
     public static string GridCsvPath => File.Exists(GridCsvDesign) ? GridCsvDesign : GridCsvRepo;
 
@@ -264,9 +264,12 @@ namespace FactoryWars.EditorTools {
       // 외곽 거점(M) 4곳: 변 가운데. 풍부한 철 + 목재, 이웃 두 본진이 다툰다(공유 확장).
       var center = new List<ResourceNodePlacement>();
       var siteWest = new Vector2(CellX(3.5f), CellZ(39.5f));
+      // Task 46 phase A: the west yard sits behind its harbour quay (yard content 16 m inland). Other sides follow in phase B.
+      var harbourShift = new Vector2(WestHarbour(g) ? 16f : 0f, 0f);
+      Vector2 SiteBase(int turn) => turn == 0 ? siteWest + harbourShift : siteWest;
       for (var turn = 0; turn < 4; turn++) {
-        var mine = Mine(siteWest.x + 6, siteWest.y - 12, 6500, 3.5);
-        var grove = Grove(siteWest.x + 6, siteWest.y + 12, 5.5, 6500);
+        var mine = Mine(SiteBase(turn).x + 6, SiteBase(turn).y - 12, 6500, 3.5);
+        var grove = Grove(SiteBase(turn).x + 6, SiteBase(turn).y + 12, 5.5, 6500);
         mine.Shape = TurnShape(mine.Shape, turn);
         grove.Shape = TurnShape(grove.Shape, turn);
         center.Add(mine);
@@ -277,11 +280,12 @@ namespace FactoryWars.EditorTools {
         expansions.Add(new ExpansionSite { Kind = ExpansionKind.IronForecourt, Position = TurnPoint(Local(U("forecourt"), W("forecourt")), s), SeatMask = 1 << s });
       }
       // 서쪽 거점은 자리 0(남서)·3(북서), 남쪽은 0·1, 동쪽은 1·2, 북쪽은 2·3이 다툰다.
-      var westSite = Position(siteWest.x + 22, siteWest.y);
       var sharedMasks = new[] { 1 << 0 | 1 << 3, 1 << 0 | 1 << 1, 1 << 1 | 1 << 2, 1 << 2 | 1 << 3 };
       for (var turn = 0; turn < 4; turn++) {
+        var westSite = Position(SiteBase(turn).x + 22, SiteBase(turn).y);
         expansions.Add(new ExpansionSite { Kind = ExpansionKind.Shared, Position = TurnPoint(westSite, turn), SeatMask = sharedMasks[turn] });
       }
+      var naval = BuildWestWaterway(g, bases);
 
       var crates = new List<CrateSpot>();
       for (var s = 0; s < 4; s++) {
@@ -362,6 +366,89 @@ namespace FactoryWars.EditorTools {
         SharedSeatOffsets = new[] { 0 },
         ExtraWater = new WaterStrip[0],
         CellGrid = cellBytes,
+        SeaGates = naval.Gates,
+        SeaGateSeats = naval.Seats,
+        SeaGateTowers = naval.Towers,
+        SeaGateTriggers = naval.Triggers,
+        ShipyardZones = naval.Zones,
+        ShipyardZoneSeats = naval.ZoneSeats,
+        ShipyardZoneSmallOnly = naval.ZoneSmall,
+        Harbours = naval.Harbours,
+      };
+    }
+
+    /// <summary>Task 46: the west harbour exists in the grid (col 2 water and col 3 quay beside the west yard).</summary>
+    static bool WestHarbour(char[,] g) => g[39, 0] == 'W' && g[39, 2] == 'W' && g[39, 3] == 'w';
+
+    /// <summary>Task 46 sea-gate geometry (m). The barrier sits this far past the end of the base wedge (artillery-ship range).</summary>
+    public const float SeaBarrierBeyondWedge = 24f;
+    const float SeaBarrierHalfThickness = 1.5f;
+    const float SeaTriggerReach = 18f;
+    const float SeaTowerOffset = 6f;
+
+    struct NavalData {
+      public MapShape[] Gates, Triggers, Zones, Harbours;
+      public int[] Seats, ZoneSeats;
+      public FPVector3[] Towers;
+      public bool[] ZoneSmall;
+    }
+
+    /// <summary>
+    /// Task 46 phase A (west only): one barrier per sector across the west waterway (cols 0-1), SeaBarrierBeyondWedge past the end of
+    /// that sector's base wedge; a watchtower on the coast strip on the sector side; a trigger zone around the barrier; the sector's
+    /// own coast strip (col 2, beyond the tower) as its shipyard zone; canal-bank quay cells ('w' next to the central canal) as
+    /// small-vessel zones for anyone; the W harbour basin.
+    /// </summary>
+    static NavalData BuildWestWaterway(char[,] g, HashSet<(int, int)>[] bases) {
+      var gates = new List<MapShape>();
+      var seats = new List<int>();
+      var towers = new List<FPVector3>();
+      var triggers = new List<MapShape>();
+      var zones = new List<MapShape>();
+      var zoneSeats = new List<int>();
+      var zoneSmall = new List<bool>();
+      var harbours = new List<MapShape>();
+      var westWater = Enumerable.Range(0, GridCells).All(r => g[r, 0] == 'W' && g[r, 1] == 'W');
+      if (westWater) {
+        var waterX = (CellX(0) + CellX(1)) / 2f;
+        var coastX = CellX(2);
+        // Seat 3 (NW) sector lies north of its barrier, seat 0 (SW) south.
+        foreach (var (seat, dir) in new[] { (3, 1f), (0, -1f) }) {
+          var cells = bases[seat].Where(b => b.Item2 <= 6).ToList();
+          var wedgeEdge = dir > 0 ? cells.Min(b => CellZ(b.Item1)) - GridCell / 2f : cells.Max(b => CellZ(b.Item1)) + GridCell / 2f;
+          var z = wedgeEdge - dir * SeaBarrierBeyondWedge;
+          gates.Add(Rect(waterX, z, GridCell, SeaBarrierHalfThickness));
+          seats.Add(seat);
+          var towerZ = z + dir * SeaTowerOffset;
+          towers.Add(Position(coastX, towerZ));
+          triggers.Add(Rect(waterX, z, GridCell, SeaTriggerReach));
+          var near = towerZ + dir * 8f;
+          var far = dir * (GridHalf - 24f);
+          zones.Add(Rect(coastX, (near + far) / 2f, GridCell / 2f, Mathf.Abs(far - near) / 2f));
+          zoneSeats.Add(seat);
+          zoneSmall.Add(false);
+          Debug.Log($"[FW-Grid] T46 seat {seat}: wedge edge z {wedgeEdge}, barrier z {z}, tower ({coastX},{towerZ}), shipyard zone z {near}..{far}");
+        }
+      }
+      // Canal banks: quay cells beside the central canal (|x| < 150 m) are small-vessel shipyard zones for anyone.
+      bool CanalQuay(int r, int c) {
+        if (g[r, c] != 'w' || Mathf.Abs(CellX(c)) > 150f) return false;
+        for (var k = 0; k < 4; k++) {
+          var rr = r + (k == 0 ? -1 : k == 1 ? 1 : 0);
+          var cc = c + (k == 2 ? -1 : k == 3 ? 1 : 0);
+          if (rr >= 0 && cc >= 0 && rr < GridCells && cc < GridCells && g[rr, cc] == 'W') return true;
+        }
+        return false;
+      }
+      foreach (var rect in MergeCells(CanalQuay)) {
+        zones.Add(CellRect(rect));
+        zoneSeats.Add(-1);
+        zoneSmall.Add(true);
+      }
+      if (WestHarbour(g)) harbours.Add(Rect(CellX(1), CellZ(39.5f), 1.5f * GridCell, 4f * GridCell));
+      return new NavalData {
+        Gates = gates.ToArray(), Seats = seats.ToArray(), Towers = towers.ToArray(), Triggers = triggers.ToArray(),
+        Zones = zones.ToArray(), ZoneSeats = zoneSeats.ToArray(), ZoneSmall = zoneSmall.ToArray(), Harbours = harbours.ToArray(),
       };
     }
 

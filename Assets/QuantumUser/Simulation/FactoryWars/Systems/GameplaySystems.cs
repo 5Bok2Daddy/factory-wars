@@ -151,7 +151,8 @@ namespace Quantum.FactoryWars {
         return;
       }
       if (CanPlaceResolved(f, spec, position, player, extractNode) == false) {
-        f.Events.ActionRejected(player, ActionKind.Build, RejectReason.BlockedLocation, 0);
+        var zone = (spec.Role == BuildingRole.Shipyard || spec.NeedsWater) && SeaGateSystem.ShipyardZoneAt(f, position, player) < 0;
+        f.Events.ActionRejected(player, ActionKind.Build, zone ? RejectReason.ShipyardZone : RejectReason.BlockedLocation, 0);
         return;
       }
       if (spec.RequiredTier > TechSystem.Tier(f, player)) {
@@ -220,6 +221,13 @@ namespace Quantum.FactoryWars {
     }
 
     /// <summary>맵 안, 걸어갈 수 있는 땅, 건물·자원·지형에서 떨어진 곳, 건설 금지 구역 밖에만 지을 수 있다. 전략 미사일 격납고는 점령한 중립 거점·암시장 18m 이내만 허용한다.</summary>
+    /// <summary>Task 46: why a placement is refused, for the ghost tooltip (Invalid = generic blocked).</summary>
+    public static RejectReason PlacementReason(Frame f, BuildingSpec spec, FPVector3 position, PlayerRef player) {
+      if (TryGetBuildPlacement(f, spec, position, player, out _)) return RejectReason.InsufficientResources;
+      if ((spec.Role == BuildingRole.Shipyard || spec.NeedsWater) && SeaGateSystem.ShipyardZoneAt(f, position, player) < 0) return RejectReason.ShipyardZone;
+      return RejectReason.BlockedLocation;
+    }
+
     public static bool CanPlace(Frame f, BuildingSpec spec, FPVector3 position, PlayerRef player = default) {
       return TryGetBuildPlacement(f, spec, position, player, out _);
     }
@@ -339,6 +347,10 @@ namespace Quantum.FactoryWars {
           return false;
         }
       }
+      // Task 46: shipyards only inside MapSpec.ShipyardZones (own sector coast, canal banks) when the map defines zones.
+      if (isShipyard && SeaGateSystem.ShipyardZoneAt(f, position, player) < 0) {
+        return false;
+      }
       if (isShipyard) {
         if (map.Channel != null) {
           for (var i = 0; i < map.Channel.Length; i++) {
@@ -408,6 +420,11 @@ namespace Quantum.FactoryWars {
       // 항목 37 기갑 요새화 군단: 전차·포격함 생산비 할인.
       if (TacticalSystem.DoctrineOf(f, player) == 3 && TacticalSystem.IsArmorClass(unit)) {
         cost = cost * FactoryWarsUtil.Rules(f).ArmorCostMultiplier;
+      }
+      // Task 46: a shipyard on a canal bank builds small vessels only (warships cannot pass the low canal bridges).
+      if (SeaGateSystem.TooTallForYard(f, f.Unsafe.GetPointer<Transform3D>(entity)->Position, unit)) {
+        f.Events.ActionRejected(player, ActionKind.Produce, RejectReason.CanalTooNarrow, 0);
+        return;
       }
       var population = unit.Population * unit.SpawnCount;
       for (var i = 0; i < count && building->QueueCount < building->Queue.Length; i++) {

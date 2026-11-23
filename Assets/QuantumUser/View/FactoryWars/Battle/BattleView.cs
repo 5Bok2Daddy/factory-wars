@@ -418,6 +418,8 @@ namespace FactoryWars.View {
       _arches.Update(frame);
       _logistics ??= new LogisticsView(_stage);
       _logistics.Update(frame);
+      _waterway ??= new WaterwayView(_stage);
+      _waterway.Update(frame);
       World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
       UpdatePlacementRings(frame);
       UpdateStrikeRockets(frame, dt);
@@ -524,6 +526,8 @@ namespace FactoryWars.View {
     ArchBridgeView _arches;
     LogisticsView _logistics;
     public LogisticsView Logistics => _logistics;
+    WaterwayView _waterway;
+    public WaterwayView Waterway => _waterway;
     public ArchBridgeView ArchBridges => _arches;
     public DrawbridgeView Drawbridges => _drawbridges;
     public MercCampView MercCamp => _merc;
@@ -734,6 +738,9 @@ namespace FactoryWars.View {
       Fx.Ring(point + Vector3.up * 0.2f, new Color(1f, 0.85f, 0.2f, 0.95f), 1.5f, 0.4f);
     }
 
+    /// <summary>Task 46: reason shown for a red ghost (null when valid or no specific reason).</summary>
+    public string PlacementHint { get; private set; }
+
     void UpdatePlacementRings(Frame frame) {
       UpdateUltimateAim(frame);
       if (_controller == null || _controller.Input == null || _controller.Input.IsPlacing == false) {
@@ -791,6 +798,9 @@ namespace FactoryWars.View {
           }
           if (_foundationPreview == null) _foundationPreview = FoundationView.CreatePreview(_stage);
           FoundationView.UpdatePreview(_foundationPreview, World.Map, world, spec.FootprintRadius.AsFloat, valid);
+          // Task 46: never fail silently: a red shipyard ghost says why (zone rule).
+          PlacementHint = valid ? null : ProductionSystem.PlacementReason(frame, spec, fp, player) == RejectReason.ShipyardZone ? Texts.ShipyardZone : null;
+          if (PlacementHint != null) _controller.Hud?.ShowTooltip(PlacementHint);
         }
       }
     }

@@ -512,6 +512,41 @@ namespace Quantum.Prototypes.Unity {
     }
   }
   [System.SerializableAttribute()]
+  public unsafe partial class SeaGatePrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.SeaGatePrototype> {
+    public Int32 Index;
+    public Int32 Seat;
+    public PlayerRef Owner;
+    public QBoolean Spawned;
+    public Quantum.QuantumEntityPrototype Barrier;
+    public Quantum.QuantumEntityPrototype Tower;
+    public Int32 State;
+    public Int32 StateFrame;
+    public QBoolean RegionOpen;
+    public FP BarrierHealth;
+    public FP TowerHealth;
+    public Int32 LastHitFrame;
+    public Int32 Alerts;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.SeaGatePrototype prototype);
+    public override Quantum.Prototypes.SeaGatePrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.SeaGatePrototype();
+      converter.Convert(this.Index, out result.Index);
+      converter.Convert(this.Seat, out result.Seat);
+      converter.Convert(this.Owner, out result.Owner);
+      converter.Convert(this.Spawned, out result.Spawned);
+      converter.Convert(this.Barrier, out result.Barrier);
+      converter.Convert(this.Tower, out result.Tower);
+      converter.Convert(this.State, out result.State);
+      converter.Convert(this.StateFrame, out result.StateFrame);
+      converter.Convert(this.RegionOpen, out result.RegionOpen);
+      converter.Convert(this.BarrierHealth, out result.BarrierHealth);
+      converter.Convert(this.TowerHealth, out result.TowerHealth);
+      converter.Convert(this.LastHitFrame, out result.LastHitFrame);
+      converter.Convert(this.Alerts, out result.Alerts);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
   public unsafe partial class SortiePrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.SortiePrototype> {
     public PlayerRef Owner;
     public AssetRef<UnitSpec> Spec;

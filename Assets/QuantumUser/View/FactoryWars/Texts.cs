@@ -309,6 +309,11 @@ namespace FactoryWars.View {
       return text;
     }
 
+    /// <summary>Task 46: canal shipyards build small vessels only; shipyards only in the waterway zones.</summary>
+    public const string CanalYard = "운하 조선소: 함선은 통과할 수 없어 생산할 수 없습니다 (외곽 도크에서 생산)";
+    public const string ShipyardZone = "수로 근처 지정 구역에만 건설 가능";
+    public const string SeaBarrierAttacked = "방벽 공격받는 중";
+
     public static string Rejected(RejectReason reason, MissingResource missing) {
       switch (reason) {
         case RejectReason.InsufficientResources:
@@ -322,6 +327,8 @@ namespace FactoryWars.View {
         case RejectReason.SizeLimit: return "대형 유닛 보유 한도";
         case RejectReason.Busy: return "이미 진행 중입니다";
         case RejectReason.NoVision: return "시야 없음";
+        case RejectReason.CanalTooNarrow: return CanalYard;
+        case RejectReason.ShipyardZone: return ShipyardZone;
         default: return "할 수 없습니다";
       }
     }

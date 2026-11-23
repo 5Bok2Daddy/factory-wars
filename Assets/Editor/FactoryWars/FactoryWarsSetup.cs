@@ -33,6 +33,8 @@ namespace FactoryWars.EditorTools {
     const int WaterGateArea = 5;
     const int WaterLayer = 4;
     const string WaterGateRegion = "WaterGate";
+    /// <summary>Task 46: must match WaterwaySpec.SeaGateRegion.</summary>
+    const string SeaGateRegion = "SeaGate";
     const int WorldMargin = 32;
 
     [MenuItem("Tools/Factory Wars/Run All Setup")]
@@ -1839,6 +1841,14 @@ namespace FactoryWars.EditorTools {
       spec.Channel = System.Array.Empty<MapShape>();
       spec.WaterGates = System.Array.Empty<MapShape>();
       spec.ChannelWidth = FP._0;
+      spec.SeaGates = def.SeaGates ?? new MapShape[0];
+      spec.SeaGateSeats = def.SeaGateSeats ?? new int[0];
+      spec.SeaGateTowers = def.SeaGateTowers ?? new FPVector3[0];
+      spec.SeaGateTriggers = def.SeaGateTriggers ?? new MapShape[0];
+      spec.ShipyardZones = def.ShipyardZones ?? new MapShape[0];
+      spec.ShipyardZoneSeats = def.ShipyardZoneSeats ?? new int[0];
+      spec.ShipyardZoneSmallOnly = def.ShipyardZoneSmallOnly ?? new bool[0];
+      spec.Harbours = def.Harbours ?? new MapShape[0];
       spec.CellGrid = def.CellGrid ?? new byte[0];
       spec.CellGridSize = def.CellGrid != null ? GridCells : 0;
       spec.CellGridCell = def.CellGrid != null ? N(GridCell) : FP._0;
@@ -2173,6 +2183,11 @@ namespace FactoryWars.EditorTools {
       var perSeat = Mathf.Max(1, gates.Length / Mathf.Max(1, spec.BaseAreas?.Length ?? 1));
       for (var i = 0; i < gates.Length; i++) {
         AddRegion(root, "WaterGate", gates[i], WaterGateArea, $"{WaterGateRegion}{i / perSeat}");
+      }
+      // Task 46: the passage under each sea barrier is its own region (SeaGateSystem toggles it).
+      var seaGates = spec.SeaGates ?? new MapShape[0];
+      for (var i = 0; i < seaGates.Length; i++) {
+        AddRegion(root, "SeaGate", seaGates[i], WaterGateArea, $"{SeaGateRegion}{i}");
       }
       foreach (Transform child in root) {
         child.gameObject.layer = WaterLayer;

@@ -146,6 +146,20 @@ namespace Quantum {
     public FP ChannelWidth;
     /// <summary>본진 운하와 외곽 수로가 만나는 수문. 자리 s의 수문은 수상 NavMesh 영역 "{WaterGateRegion}{s}"이다. 자리마다 2개, 자리 순서대로다.</summary>
     public MapShape[] WaterGates;
+    /// <summary>Task 46: barrier line of each sea gate (across the outer waterway). Water NavMesh region "{WaterwaySpec.SeaGateRegion}{i}".</summary>
+    public MapShape[] SeaGates;
+    /// <summary>Seat that owns sea gate i (its sector).</summary>
+    public int[] SeaGateSeats;
+    /// <summary>Watchtower position of sea gate i (on land beside the barrier, inside the sector).</summary>
+    public FPVector3[] SeaGateTowers;
+    /// <summary>Owner ships inside this shape open sea gate i.</summary>
+    public MapShape[] SeaGateTriggers;
+    /// <summary>Shipyards may only be placed inside these zones (if any). Seat -1 = any player. SmallOnly = canal bank (small vessels only).</summary>
+    public MapShape[] ShipyardZones;
+    public int[] ShipyardZoneSeats;
+    public bool[] ShipyardZoneSmallOnly;
+    /// <summary>Neutral harbours in front of the edge expansion quays (view, tests).</summary>
+    public MapShape[] Harbours;
     /// <summary>GroundGrid와 같은 칸의 도시 건물 번호 + 1. 0이면 건물이 없다. 붕괴한 칸은 잔해라 느리다.</summary>
     public short[] CityGrid;
 

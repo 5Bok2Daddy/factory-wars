@@ -122,6 +122,8 @@ namespace Quantum {
     Doctrine,
     Hostile,
     Closed,
+    CanalTooNarrow,
+    ShipyardZone,
   }
   public enum Relation : byte {
     Enemy,
@@ -2547,6 +2549,72 @@ namespace Quantum {
     }
   }
   [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct SeaGate : Quantum.IComponent {
+    public const Int32 SIZE = 72;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(4)]
+    public Int32 Index;
+    [FieldOffset(12)]
+    public Int32 Seat;
+    [FieldOffset(24)]
+    public PlayerRef Owner;
+    [FieldOffset(32)]
+    public QBoolean Spawned;
+    [FieldOffset(40)]
+    public EntityRef Barrier;
+    [FieldOffset(48)]
+    public EntityRef Tower;
+    [FieldOffset(16)]
+    public Int32 State;
+    [FieldOffset(20)]
+    public Int32 StateFrame;
+    [FieldOffset(28)]
+    public QBoolean RegionOpen;
+    [FieldOffset(56)]
+    public FP BarrierHealth;
+    [FieldOffset(64)]
+    public FP TowerHealth;
+    [FieldOffset(8)]
+    public Int32 LastHitFrame;
+    [FieldOffset(0)]
+    public Int32 Alerts;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 10337;
+        hash = hash * 31 + Index.GetHashCode();
+        hash = hash * 31 + Seat.GetHashCode();
+        hash = hash * 31 + Owner.GetHashCode();
+        hash = hash * 31 + Spawned.GetHashCode();
+        hash = hash * 31 + Barrier.GetHashCode();
+        hash = hash * 31 + Tower.GetHashCode();
+        hash = hash * 31 + State.GetHashCode();
+        hash = hash * 31 + StateFrame.GetHashCode();
+        hash = hash * 31 + RegionOpen.GetHashCode();
+        hash = hash * 31 + BarrierHealth.GetHashCode();
+        hash = hash * 31 + TowerHealth.GetHashCode();
+        hash = hash * 31 + LastHitFrame.GetHashCode();
+        hash = hash * 31 + Alerts.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (SeaGate*)ptr;
+        serializer.Stream.Serialize(&p->Alerts);
+        serializer.Stream.Serialize(&p->Index);
+        serializer.Stream.Serialize(&p->LastHitFrame);
+        serializer.Stream.Serialize(&p->Seat);
+        serializer.Stream.Serialize(&p->State);
+        serializer.Stream.Serialize(&p->StateFrame);
+        PlayerRef.Serialize(&p->Owner, serializer);
+        QBoolean.Serialize(&p->RegionOpen, serializer);
+        QBoolean.Serialize(&p->Spawned, serializer);
+        EntityRef.Serialize(&p->Barrier, serializer);
+        EntityRef.Serialize(&p->Tower, serializer);
+        FP.Serialize(&p->BarrierHealth, serializer);
+        FP.Serialize(&p->TowerHealth, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Sortie : Quantum.IComponent {
     public const Int32 SIZE = 288;
     public const Int32 ALIGNMENT = 8;
@@ -3010,6 +3078,8 @@ namespace Quantum {
       BuildSignalsArrayOnComponentRemoved<Quantum.ResourceNode>();
       BuildSignalsArrayOnComponentAdded<Quantum.ScorchedZone>();
       BuildSignalsArrayOnComponentRemoved<Quantum.ScorchedZone>();
+      BuildSignalsArrayOnComponentAdded<Quantum.SeaGate>();
+      BuildSignalsArrayOnComponentRemoved<Quantum.SeaGate>();
       BuildSignalsArrayOnComponentAdded<Quantum.Sortie>();
       BuildSignalsArrayOnComponentRemoved<Quantum.Sortie>();
       BuildSignalsArrayOnComponentAdded<Quantum.SupplyCrate>();
@@ -3190,6 +3260,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(Quantum.ResourceKind), 1);
       typeRegistry.Register(typeof(Quantum.ResourceNode), Quantum.ResourceNode.SIZE);
       typeRegistry.Register(typeof(Quantum.ScorchedZone), Quantum.ScorchedZone.SIZE);
+      typeRegistry.Register(typeof(Quantum.SeaGate), Quantum.SeaGate.SIZE);
       typeRegistry.Register(typeof(Shape2D), Shape2D.SIZE);
       typeRegistry.Register(typeof(Shape3D), Shape3D.SIZE);
       typeRegistry.Register(typeof(Quantum.Sortie), Quantum.Sortie.SIZE);
@@ -3211,7 +3282,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(Quantum._globals_), Quantum._globals_.SIZE);
     }
     static partial void InitComponentTypeIdGen() {
-      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 29)
+      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 30)
         .AddBuiltInComponents()
         .Add<Quantum.AirfieldWorks>(Quantum.AirfieldWorks.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Barricade>(Quantum.Barricade.Serialize, null, null, ComponentFlags.None)
@@ -3237,6 +3308,7 @@ namespace Quantum {
         .Add<Quantum.NpcTrader>(Quantum.NpcTrader.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.ResourceNode>(Quantum.ResourceNode.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.ScorchedZone>(Quantum.ScorchedZone.Serialize, null, null, ComponentFlags.None)
+        .Add<Quantum.SeaGate>(Quantum.SeaGate.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Sortie>(Quantum.Sortie.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.SupplyCrate>(Quantum.SupplyCrate.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Unit>(Quantum.Unit.Serialize, null, null, ComponentFlags.None)

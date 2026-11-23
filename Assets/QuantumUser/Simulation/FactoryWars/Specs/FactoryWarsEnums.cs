@@ -15,7 +15,10 @@ namespace Quantum {
     // 자원 노드 직결 자동 채굴 공장(공병 0~3명 주둔 배치).
     LumberMill,
     IronExtractor,
-    MlrsBattery
+    MlrsBattery,
+    // Task 46: outer-waterway sea barrier boom and its watchtower (placed by SeaGateSystem, not in the build menu).
+    SeaBarrier,
+    Watchtower
   }
 
   /// <summary>항목 32: 건물이 주변 유닛을 고치는 대상.</summary>
