@@ -478,6 +478,7 @@ namespace FactoryWars.EditorTools {
 
     /// <summary>Task 39 fix 3: camp blocks + display slots + third-party models without re-baking the map.</summary>
     public static void BuildCampViews() {
+      PmcIdentityKit.Import();
       ApplyTask39Data();
       DressKit.BuildAll();
       ThirdPartyKit.Apply();

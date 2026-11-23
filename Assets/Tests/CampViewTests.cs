@@ -23,6 +23,20 @@ namespace FactoryWars.Tests {
     static MercCampView CampView() => Object.FindAnyObjectByType<BattleView>()?.MercCamp;
 
     [Test]
+    public void Pmc_IdentityKitApplied() {
+      // Fix 5: Codex's PMC kit (art-staging/t39) is imported: shop icons + state overlays in UiCatalog, decals on the camp blocks.
+      foreach (var id in new[] { "pmc_operator_squad", "pmc_marksman", "pmc_armoured_suv", "pmc_attack_drone", "pmc_tank", "pmc_supply_trade", "pmc_diplomacy", "pmc_cargo_truck", "pmc_state_locked", "pmc_state_sold_out", "pmc_state_cooldown" }) {
+        Assert.IsNotNull(UiCatalog.Current.Get(id)?.Sprite, $"UiCatalog slot {id} has the PMC icon");
+      }
+      var mats = new System.Collections.Generic.List<string>();
+      foreach (var id in new[] { GridDress.Prefix + "MK_00", GridDress.Prefix + "MK_01", "camp/display_tank", "camp/display_mrap" }) {
+        Assert.IsTrue(VisualCatalog.TryFilled(id, out var slot), id);
+        foreach (var r in slot.Prefab.GetComponentsInChildren<Renderer>()) mats.AddRange(r.sharedMaterials.Where(m => m != null).Select(m => m.name));
+      }
+      foreach (var decal in new[] { "PMC_GateBanner", "PMC_EmblemAmber", "PMC_SideStripe", "PMC_Amber" }) Assert.Contains(decal, mats, $"{decal} is used in the camp");
+    }
+
+    [Test]
     public void Palette_BlackReservedForPmc() {
       foreach (var c in Palette.Colors) {
         var luminance = 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
@@ -204,7 +218,7 @@ namespace FactoryWars.Tests {
       yield return Shot("camp_display", new Vector2(-30f, 0f), 58f);
       report.AddRange(ColourAudit(camera, Path.Combine(dir, $"camp_display_{iteration}.png")));
       yield return Shot("camp_forecourt", new Vector2(0f, -9f), 30f);
-      yield return Shot("camp_training", new Vector2(24f, 0f), 50f);
+      yield return Shot("camp_gate", new Vector2(0f, -38f), 34f);
       // Scale line-up: one PMC trooper next to each vehicle at real scale on the open north ring road.
       // On the main east-west road (row 24, z = 124), clear of buildings.
       var lineup = ScaleLineup(new Vector3(104f, 0f, 124f));

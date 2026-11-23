@@ -129,7 +129,7 @@ namespace FactoryWars.EditorTools {
       for (var i = 0; i < px.Length; i++) {
         var c = px[i];
         var lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) / 255f;
-        var v = 0.07f + lum * 0.2f;
+        var v = 0.045f + lum * 0.075f; // fix 5: near-black, the camo only survives as faint panel shading
         px[i] = new Color32((byte)(v * 255f), (byte)(v * 255f), (byte)((v + 0.008f) * 255f), c.a);
       }
       read.SetPixels32(px);
@@ -219,7 +219,8 @@ namespace FactoryWars.EditorTools {
     public static void RegisterDisplays(VisualCatalog catalog, string folder) {
       catalog.Slots.RemoveAll(s => s != null && s.Id != null && s.Id.StartsWith("camp/"));
       var models = new (string Id, string Path)[] {
-        ("tank", PM + "Vehicles/SM_Veh_Light_Tank_01.prefab"),
+        // Fix 5: a main battle tank with turret and gun (BattleRoyale pack tank, 8.0k tris), loaded by GUID.
+        ("tank", AssetDatabase.GUIDToAssetPath("c67acd4846ba1774589d2830ac38c5de")),
         ("mrap", PB + "Vehicles/SM_Veh_Armored_Car_01.prefab"),
         ("heli", PM + "Vehicles/SM_Veh_Helicopter_Attack_02.prefab"),
       };
@@ -232,6 +233,15 @@ namespace FactoryWars.EditorTools {
         var b = BlockKit.WorldBounds(item);
         item.transform.localPosition = new Vector3(-b.center.x, -b.min.y, -b.center.z);
         Blacken(item);
+        if (id != "heli") {
+          // PMC side stripe (Codex identity kit) on both flanks, about 45 % of the hull length, 4:1.
+          var hull = BlockKit.WorldBounds(item);
+          var w = hull.size.z * 0.45f;
+          var stripe = PmcIdentityKit.Mat("SideStripe", "vehicle_side_stripe");
+          foreach (var side in new[] { -1f, 1f }) {
+            PmcIdentityKit.Quad(root.transform, "PmcStripe", stripe, new Vector3(side * (hull.extents.x + 0.03f), hull.min.y + hull.size.y * (id == "tank" ? 0.3f : 0.42f), hull.center.z), new Vector3(side, 0f, 0f), w, w / 4f);
+          }
+        }
         var prefab = SaveCombined(root, folder, $"camp_display_{id}");
         Object.DestroyImmediate(root);
         // Real scale (fix 3, infantry 1.8 m): MBT 9.5 m long, APC 7.5 m; the attack helicopter is replaced by ThirdPartyKit.
@@ -382,29 +392,8 @@ namespace FactoryWars.EditorTools {
       Placed.Clear();
       var size = FactoryWarsSetup.GridCell;
       var dirs = new[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
-      var walls = new[] { MP("Barrier_Tall_Group_01"), MP("Barrier_Tall_Group_02") };
       var wire = MM("RazorWire_01");
-      foreach (var (r, c) in Cells.OrderBy(t => t.Item1).ThenBy(t => t.Item2)) {
-        var cx = FactoryWarsSetup.CellX(c);
-        var cz = FactoryWarsSetup.CellZ(r);
-        foreach (var (dr, dc) in dirs) {
-          if (Cells.Contains((r + dr, c + dc))) continue;
-          // Tan concrete wall on the cell boundary, 0.6 m inside (the simulation wall is 1.2 m thick, inward); razor wire on top.
-          var horizontal = dr != 0;
-          var ex = cx + dc * (size / 2f - 0.6f);
-          var ez = cz - dr * (size / 2f - 0.6f);
-          if (Gate(cx + dc * size / 2f, cz - dr * size / 2f)) continue;
-          // Two 5.2 m wall groups per 8 m edge, kept inside the edge (at ±1.4 they end at ±4.0; at ±2 they poked 0.6 m into the
-          // ring-road cell at the octagon's convex corners - 20 real intrusions in the fix 4 audit).
-          for (var k = 0; k < 2; k++) {
-            var t = -1.4f + k * 2.8f;
-            BlockKit.Place(root, walls[(r + c + k) % 2], new Vector3(horizontal ? cx + t : ex, 0f, horizontal ? ez : cz + t), horizontal ? 90f : 0f, 1f);
-          }
-          // Low quality (MK_02): the wall without the razor-wire coil (972 tris per edge).
-          if (low == false) BlockKit.Place(root, wire, new Vector3(horizontal ? cx : ex, 3.25f, horizontal ? ez : cz), horizontal ? 0f : 90f, 1f);
-          Placed["perimeter wall"] = (Placed.TryGetValue("perimeter wall", out var n) ? n : 0) + 1;
-        }
-      }
+      ContinuousWall(root, wire, low);
       // Corner watchtowers and the two towers flanking the south gate.
       foreach (var (x, z) in new[] { (-30f, 30f), (30f, 30f), (-30f, -30f), (30f, -30f) }) Put(root, "towers", MB("GuardTower_01"), x, z, z > 0 ? 180f : 0f, 0f, false, 0.4f);
       Put(root, "towers", MB("GuardTower_02"), -13.5f, -41.5f, 0f, 0f, false, 0.4f);
@@ -424,6 +413,124 @@ namespace FactoryWars.EditorTools {
       }
     }
 
+
+    /// <summary>
+    /// Fix 5: one continuous 4.2 m concrete T-wall along the stepped octagon (no gaps at the stepped corners), built as panels of one
+    /// mesh textured from the pack barrier's own atlas region (same PolygonMilitary material, so it batches with the pack props).
+    /// ~7k triangles instead of 80 pack wall groups (71k). Razor wire (pack) runs along the whole top: two coils per 8 m edge.
+    /// </summary>
+    static void ContinuousWall(Transform root, string wire, bool low) {
+      const float Inset = 0.6f, Height = 4.2f, Stem = 0.34f, BaseDepth = 0.95f, BaseHeight = 0.5f, Panel = 1.55f, Gap = 0.05f;
+      var size = FactoryWarsSetup.GridCell;
+      var half = size / 2f;
+      var source = AssetDatabase.LoadAssetAtPath<GameObject>(MP("Barrier_Tall_Group_01"));
+      var sourceFilter = source.GetComponentInChildren<MeshFilter>();
+      var material = source.GetComponentInChildren<MeshRenderer>().sharedMaterial;
+      var uvMin = new Vector2(0.5f, 0.5f);
+      var uvMax = uvMin;
+      {
+        // UV box of the largest broad-face triangle of the pack barrier (its stained concrete).
+        var m = sourceFilter.sharedMesh;
+        var mv = m.vertices;
+        var muv = m.uv;
+        var mt = m.triangles;
+        var best = -1f;
+        for (var t = 0; t < mt.Length; t += 3) {
+          var a = mv[mt[t]];
+          var b = mv[mt[t + 1]];
+          var c = mv[mt[t + 2]];
+          var n = Vector3.Cross(b - a, c - a);
+          var area = n.magnitude;
+          if (area < 1e-4f || Mathf.Abs(n.normalized.x) < 0.8f || area <= best) continue;
+          best = area;
+          uvMin = Vector2.Min(Vector2.Min(muv[mt[t]], muv[mt[t + 1]]), muv[mt[t + 2]]);
+          uvMax = Vector2.Max(Vector2.Max(muv[mt[t]], muv[mt[t + 1]]), muv[mt[t + 2]]);
+        }
+      }
+      var verts = new List<Vector3>();
+      var uvs = new List<Vector2>();
+      var tris = new List<int>();
+      void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d) {
+        var k = verts.Count;
+        verts.AddRange(new[] { a, b, c, d });
+        uvs.AddRange(new[] { new Vector2(uvMin.x, uvMin.y), new Vector2(uvMax.x, uvMin.y), new Vector2(uvMax.x, uvMax.y), new Vector2(uvMin.x, uvMax.y) });
+        tris.AddRange(new[] { k, k + 2, k + 1, k, k + 3, k + 2 });
+      }
+      // Box without a bottom face; centre p (ground), half-extents along the wall (u) and across it (w).
+      void Box(Vector3 p, Vector3 u, Vector3 w, float y0, float y1) {
+        Vector3 P(float su, float sw, float y) => p + u * su + w * sw + Vector3.up * y;
+        Quad(P(-1, -1, y0), P(1, -1, y0), P(1, -1, y1), P(-1, -1, y1));
+        Quad(P(1, 1, y0), P(-1, 1, y0), P(-1, 1, y1), P(1, 1, y1));
+        Quad(P(1, -1, y0), P(1, 1, y0), P(1, 1, y1), P(1, -1, y1));
+        Quad(P(-1, 1, y0), P(-1, -1, y0), P(-1, -1, y1), P(-1, 1, y1));
+        Quad(P(-1, -1, y1), P(1, -1, y1), P(1, 1, y1), P(-1, 1, y1));
+      }
+      var dirs = new[] { (-1, 0), (1, 0), (0, -1), (0, 1) };
+      foreach (var (r, c) in Cells.OrderBy(t => t.Item1).ThenBy(t => t.Item2)) {
+        var cx = FactoryWarsSetup.CellX(c);
+        var cz = FactoryWarsSetup.CellZ(r);
+        foreach (var (dr, dc) in dirs) {
+          if (Cells.Contains((r + dr, c + dc))) continue;
+          if (Gate(cx + dc * half, cz - dr * half)) continue;
+          var horizontal = dr != 0;
+          // End of the wall line at each side: convex corner -> stop at the inset corner, concave -> run on to meet the
+          // perpendicular wall, straight -> to the cell edge.
+          float End(int s) {
+            var n = horizontal ? (r, c + s) : (r - s, c);
+            var d = horizontal ? (r + dr, c + s) : (r - s, c + dc);
+            if (Cells.Contains(n) == false) return half - Inset;
+            return Cells.Contains(d) ? half + Inset : half;
+          }
+          var a0 = -End(-1);
+          var a1 = End(1);
+          var along = horizontal ? Vector3.right : Vector3.forward;
+          var across = horizontal ? Vector3.forward : Vector3.right;
+          var line = horizontal ? new Vector3(cx, 0f, cz - dr * (half - Inset)) : new Vector3(cx + dc * (half - Inset), 0f, cz);
+          var length = a1 - a0;
+          var count = Mathf.Max(1, Mathf.RoundToInt(length / Panel));
+          var step = length / count;
+          for (var k = 0; k < count; k++) {
+            var p = line + along * (a0 + step * (k + 0.5f));
+            var u = along * (step / 2f - Gap);
+            Box(p, u, across * (BaseDepth / 2f), 0f, BaseHeight);
+            Box(p, u, across * (Stem / 2f), BaseHeight, Height);
+          }
+          if (low == false) {
+            foreach (var t in new[] { -2f, 2f }) BlockKit.Place(root, wire, line + along * t + Vector3.up * Height, horizontal ? 0f : 90f, 1f);
+          }
+          Placed["perimeter wall"] = (Placed.TryGetValue("perimeter wall", out var placed) ? placed : 0) + 1;
+        }
+      }
+      var mesh = new Mesh { name = "pmc_perimeter_wall", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+      mesh.SetVertices(verts);
+      mesh.SetUVs(0, uvs);
+      mesh.SetTriangles(tris, 0);
+      mesh.RecalculateNormals();
+      mesh.RecalculateBounds();
+      var go = new GameObject("PerimeterWall", typeof(MeshFilter), typeof(MeshRenderer));
+      go.transform.SetParent(root, false);
+      go.GetComponent<MeshFilter>().sharedMesh = mesh;
+      go.GetComponent<MeshRenderer>().sharedMaterial = material;
+      Debug.Log($"[FW-Camp] continuous wall: {tris.Count / 3} tris");
+      GateIdentity(root);
+    }
+
+    /// <summary>Fix 5: gate gantry with the PMC banner (both faces) and a flag pole with the emblem flag inside the gate.</summary>
+    static void GateIdentity(Transform root) {
+      var charcoal = PmcIdentityKit.Mat("Charcoal", null, PmcIdentityKit.Charcoal);
+      var banner = PmcIdentityKit.Mat("GateBanner", "gate_banner");
+      var emblem = PmcIdentityKit.Mat("EmblemAmber", "emblem_amber");
+      const float Z = -45.6f;
+      foreach (var s in new[] { -1f, 1f }) PmcIdentityKit.Box(root, "GatePost", charcoal, new Vector3(s * 7.2f, 4.2f, Z), new Vector3(0.45f, 8.4f, 0.45f));
+      PmcIdentityKit.Box(root, "GateBeam", charcoal, new Vector3(0f, 8.2f, Z), new Vector3(14.9f, 0.4f, 0.45f));
+      PmcIdentityKit.Quad(root, "GateBanner", banner, new Vector3(0f, 6.1f, Z - 0.25f), Vector3.back, 7.6f, 3.8f);
+      PmcIdentityKit.Quad(root, "GateBannerIn", banner, new Vector3(0f, 6.1f, Z + 0.25f), Vector3.forward, 7.6f, 3.8f);
+      PmcIdentityKit.Box(root, "FlagPole", charcoal, new Vector3(-10.6f, 5f, -42.5f), new Vector3(0.18f, 10f, 0.18f));
+      PmcIdentityKit.Box(root, "Flag", charcoal, new Vector3(-9.05f, 9f, -42.5f), new Vector3(2.9f, 1.8f, 0.04f));
+      PmcIdentityKit.Quad(root, "FlagEmblem", emblem, new Vector3(-9.05f, 9f, -42.55f), Vector3.back, 1.6f, 1.6f);
+      PmcIdentityKit.Quad(root, "FlagEmblemIn", emblem, new Vector3(-9.05f, 9f, -42.45f), Vector3.forward, 1.6f, 1.6f);
+    }
+
     // ------------------------------------------------------------ MK_01 zones
 
     public static void Zones(Transform root, bool low = false) {
@@ -440,9 +547,9 @@ namespace FactoryWars.EditorTools {
       Put(root, "logistics", KP("Shipping_Container_01"), 16.5f, 43.5f, 90f, 0f, false, 0.5f);
       // East barracks district: two barracks (north), six tents in two columns, two camo-net shelters, two crate yards, paths between.
       Put(root, "barracks", MB("Barracks_01"), 11f, 23f, 90f, 0f, false, 0.6f); // one barracks; the rest are tents (triangle budget)
-      Put(root, "barracks", BB("Tent_01"), 11f, 33f, 90f, 0f, false, 0.6f);
+      Put(root, "barracks", BB("Tent_02"), 11f, 33f, 90f, 0f, false, 0.6f); // fix 5: tan tents only (Tent_01 is green)
       foreach (var z in new[] { -12f, 12f }) {
-        Put(root, "barracks", BB("Tent_01"), 25.5f, z, 0f, 0f, false, 0.6f);
+        Put(root, "barracks", BB("Tent_02"), 25.5f, z, 0f, 0f, false, 0.6f);
         Put(root, "barracks", BB("Tent_02"), 40f, z, 0f, 0f, false, 0.6f);
       }
       Put(root, "barracks", BB("Tent_02"), 40f, 1f, 0f, 0f, false, 0.6f);
@@ -468,7 +575,7 @@ namespace FactoryWars.EditorTools {
       // South yard maintenance area (between the loop and the firing range).
       Blacken(Put(root, "maintenance", PK + "Vehicles/SM_Veh_Truck_01.prefab", 23.5f, -19.5f, 90f, 0f, false, 0.4f));
       Put(root, "maintenance", MP("Generator_Large_01"), -6.2f, -20.5f, 0f, 0f, false, 0.3f);
-      foreach (var (x, z) in new[] { (6f, -19f), (8.2f, -19f), (10.4f, -19.2f) }) Put(root, "fuel drums", MM("Barrel_Stack_01"), x, z, 0f, 0f, false, 0.3f);
+      foreach (var (x, z) in new[] { (6f, -19f), (8.2f, -19f), (10.4f, -19.2f) }) Blacken(Put(root, "fuel drums", MM("Barrel_Stack_01"), x, z, 0f, 0f, false, 0.3f));
       foreach (var x in new[] { 6f, 9f, 12f, 15f }) Blacken(Put(root, "crate rows", MM("Crate_Stack_03"), x, -22.2f, 0f, 0f, false, 0.3f));
       // North-west antenna + generator cluster, north strip crate rows.
       Put(root, "antenna cluster", MP("Generator_Large_01"), -28.5f, 30f, 0f, 0f, false, 0.4f);
@@ -476,26 +583,49 @@ namespace FactoryWars.EditorTools {
       Put(root, "antenna cluster", BR("RadioTower_01"), -26f, 36.5f, 0f, 0f, false, 0.4f);
       foreach (var x in new[] { -4.5f, -1.5f, 1.5f, 4.5f }) Blacken(Put(root, "crate rows", MM("Crate_Stack_03"), x, 18.6f, 0f, 0f, false, 0.3f));
       // East: drums by the tents, a second parked truck by the barracks.
-      foreach (var (x, z) in new[] { (44f, -3f), (44f, 5f) }) Put(root, "fuel drums", MM("Barrel_Stack_01"), x, z, 0f, 0f, false, 0.3f);
+      foreach (var (x, z) in new[] { (44f, -3f), (44f, 5f) }) Blacken(Put(root, "fuel drums", MM("Barrel_Stack_01"), x, z, 0f, 0f, false, 0.3f));
+      // Fix 5: east lane between the tents and the wall - tidy supply rows and a generator.
+      foreach (var z in new[] { -18f, -15f, 9f, 12f, 15f }) Blacken(Put(root, "east lane", MM("Crate_Stack_03"), 45f, z, 90f, 0f, false, 0.2f));
+      Put(root, "east lane", MP("Generator_Large_01"), 45f, -8.5f, 90f, 0f, false, 0.2f);
+      // Fix 5: north-west strip - supply rows behind the light helicopter and along the north wall.
+      foreach (var (x, z) in new[] { (-42f, 27f), (-42f, 30f), (-39f, 30f), (-30f, 41.5f), (-27f, 41.5f), (-24f, 41.5f), (-21f, 43f),
+        (-26f, 25.5f), (-23f, 25.5f), (-22.5f, 36f), (-25.5f, 39f), (-34.5f, 30.5f), (-37f, 31f), (-40f, 23f), (-44.5f, 22.5f) }) Blacken(Put(root, "nw strip", MM("Crate_Stack_03"), x, z, 0f, 0f, false, 0.2f));
+      foreach (var (x, z) in new[] { (-36f, 33f), (-33.5f, 33f) }) Blacken(Put(root, "nw strip", MM("Barrel_Stack_01"), x, z, 0f, 0f, false, 0.2f));
 
     }
 
     static void TradingPost(Transform root) {
       var basePath = PC + "Buildings/SM_Bld_OfficeOld_Small_Base_01.prefab";
       var yaw = DressKit.FrontOf(basePath);
+      var front = 1.5f;
+      var height = 6f;
       foreach (var x in new[] { -5.45f, 5.45f }) {
         var y = 0f;
         var piece = BlockKit.Place(root, basePath, new Vector3(x, y, 1.5f), yaw, 1f);
+        if (piece != null) {
+          var fb = BlockKit.WorldBounds(piece);
+          front = Mathf.Min(front, root.InverseTransformPoint(fb.min).z); // world bounds -> block-local (the block root is offset)
+          height = fb.size.y;
+        }
         y += piece != null ? BlockKit.WorldBounds(piece).size.y : 6f;
         BlockKit.Place(root, PC + "Buildings/SM_Bld_OfficeOld_Small_Roof_01.prefab", new Vector3(x, y, 1.5f), yaw, 1f);
         if (x > 0) BlockKit.Place(root, MP("Satellite_Dish_02"), new Vector3(x + 2f, y + 0.6f, 3f), 200f, 1f);
       }
-      // Counter: a camo-net canopy over a line of crates (the vendor stands behind it, see CampLayout.Counter).
-      BlockKit.Place(root, MB("CamoNet_Tent_01"), new Vector3(-3.4f, 0f, -7.2f), 0f, 1f);
-      BlockKit.Place(root, MB("CamoNet_Tent_01"), new Vector3(3.4f, 0f, -7.2f), 0f, 1f);
+      // Fix 5 front: PMC signboard (banner art) across the facade, black awnings with an amber valance, a counter of two tables
+      // with the vendor behind it, crates being handed over.
+      Debug.Log($"[FW-Camp] trading post front z {front:0.00}, ground floor height {height:0.00}");
+      PmcIdentityKit.Quad(root, "PmcSign", PmcIdentityKit.Mat("GateBanner", "gate_banner"), new Vector3(0f, Mathf.Max(3.6f, height - 1.4f), front - 0.06f), Vector3.back, 6.4f, 3.2f);
+      var amber = PmcIdentityKit.Mat("Amber", null, PmcIdentityKit.Amber);
+      foreach (var x in new[] { -3.4f, 3.4f }) {
+        var net = BlockKit.Place(root, MB("CamoNet_Tent_01"), new Vector3(x, 0f, -7.2f), 0f, 1f);
+        Blacken(net);
+        var nb = BlockKit.WorldBounds(net);
+        PmcIdentityKit.Box(root, "AwningValance", amber, new Vector3(x, root.InverseTransformPoint(nb.max).y - 0.45f, root.InverseTransformPoint(nb.min).z - 0.02f), new Vector3(nb.size.x * 0.96f, 0.32f, 0.06f));
+      }
+      foreach (var x in new[] { -1.15f, 1.15f }) Blacken(BlockKit.Place(root, "Assets/ExternalAssets/Synty/PolygonGeneric/Prefabs/Props/SM_Gen_Prop_Table_01.prefab", new Vector3(x, 0f, -8.15f), 0f, 1f));
       Blacken(BlockKit.Place(root, BR("PalletStack_01"), new Vector3(-7.5f, 0f, -8.2f), 15f, 1f));
       Blacken(BlockKit.Place(root, MM("Crate_Stack_03"), new Vector3(7.5f, 0f, -8.2f), -10f, 1f));
-      foreach (var x in new[] { -2.8f, -1f, 0.8f, 2.6f }) BlockKit.Place(root, MM("Crate_Ammo_01"), new Vector3(x, 0f, -8.3f), 0f, 1f);
+      foreach (var (x, y, z) in new[] { (-1.6f, 0.72f, -8.15f), (0.9f, 0.72f, -8.15f), (-4.2f, 0f, -9.6f), (4.4f, 0f, -9.4f) }) Blacken(BlockKit.Place(root, MM("Crate_Ammo_01"), new Vector3(x, y, z), x * 7f, 1f));
       BlockKit.Place(root, BR("RadioTower_01"), new Vector3(-9.5f, 0f, 6.5f), 0f, 1f);
       Placed["trading post"] = 2;
     }

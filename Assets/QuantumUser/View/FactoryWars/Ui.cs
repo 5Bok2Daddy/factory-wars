@@ -312,6 +312,28 @@ namespace FactoryWars.View {
     }
 
     /// <summary>항목 31: 잠긴 칸. 누를 수는 있고(이유 표시), 회색 바탕·흐린 글자·자물쇠.</summary>
+    /// <summary>Task 39 fix 5: full-button state overlay (PMC kit art sits in the top-right with transparent margins); replaces the generic lock mark.</summary>
+    public static void SetOverlay(Button button, Sprite sprite) {
+      var slot = button.transform.Find("StateOverlay");
+      if (slot == null && sprite != null) {
+        var rect = Rect("StateOverlay", button.transform);
+        Stretch(rect);
+        var image = rect.gameObject.AddComponent<Image>();
+        image.raycastTarget = false;
+        image.preserveAspect = true;
+        slot = rect;
+      }
+      if (slot != null) {
+        slot.gameObject.SetActive(sprite != null);
+        if (sprite != null) {
+          slot.GetComponent<Image>().sprite = sprite;
+          slot.SetAsLastSibling();
+          var mark = button.transform.Find("Lock");
+          if (mark != null) mark.gameObject.SetActive(false);
+        }
+      }
+    }
+
     public static void SetLocked(Button button, bool locked, bool highlight = false) {
       button.interactable = true;
       var theme = UiTheme.Current;

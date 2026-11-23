@@ -1,0 +1,45 @@
+Map4P v4 dress audit i3
+dress blocks: 2029 - E 162 (7 variants), EI 272 (4 variants), EL 126 (4 variants), H1 123 (10 variants), H1S 31 (6 variants), H1T 28 (6 variants), H4 38 (6 variants), H4S 10 (5 variants), H4T 8 (5 variants), HD 120 (4 variants), HDS 13 (4 variants), HDT 21 (4 variants), HW 44 (6 variants), HWS 28 (6 variants), HWT 25 (6 variants), K 165 (4 variants), L 198 (4 variants), M 68 (3 variants), MK 2 (2 variants), Q 94 (3 variants), SK 124 (8 variants), X 210 (4 variants), Y 119 (4 variants)
+view | height | renderers | draw calls (renderer x submesh + shadow casters) | triangles | low estimate (lodBias 0.3, no shadows, no skyline) draws / tris
+base_wide | 108m | 179 | 371 | 226141 | 189 / 212409
+base_close | 62m | 90 | 179 | 95840 | 91 / 87307
+base_ramp | 50m | 24 | 53 | 59966 | 34 / 59966
+diagonal_road | 62m | 37 | 91 | 184461 | 35 / 98928
+city | 62m | 35 | 103 | 219455 | 61 / 174099
+city_close | 38m | 15 | 37 | 94007 | 19 / 66384
+canal_bridge | 62m | 32 | 78 | 107202 | 33 / 74589
+compound | 132m | 44 | 136 | 376976 | 94 / 221371
+compound_close | 70m | 25 | 64 | 268749 | 35 / 92485
+outer_edge | 76m | 89 | 239 | 252219 | 114 / 168252
+outer_west | 76m | 79 | 183 | 179930 | 92 / 156302
+rubble | 55m | 62 | 177 | 287687 | 5 / 27038
+outpost | 70m | 71 | 192 | 331894 | 53 / 152483
+flat-colour base_wide: 9.5 %
+flat-colour base_close: 15.3 %
+flat-colour base_ramp: 14.7 %
+flat-colour diagonal_road: 19.6 %
+flat-colour city: 11.8 %
+flat-colour city_close: 17.4 %
+flat-colour canal_bridge: 9.5 %
+flat-colour compound: 11.0 %
+flat-colour compound_close: 11.5 %
+flat-colour outer_edge: 7.9 %
+flat-colour outer_west: 12.4 %
+flat-colour rubble: 27.2 %
+flat-colour outpost: 17.1 %
+compound empty square (outside cross/gate roads |x|,|z| < 9): 0m at (0,0) (limit 12.0m)
+base unassigned empty square: 10m at local (5,123)
+  next base empty square: 10m at local (23,129)
+  next base empty square: 10m at local (27,111)
+  next base empty square: 10m at local (105,45)
+  next base empty square: 10m at local (117,21)
+  next base empty square: 10m at local (121,5)
+  next base empty square: 10m at local (131,5)
+overlap (block footprints): PASS
+floating/sunk: PASS
+road intrusion (block footprints): PASS
+regular rows (same variant): PASS
+flat colour > 30%: PASS
+empty > 8 units: PASS
+magenta/missing material: PASS
+map renderers 2944, triangles 9180731, distinct materials 36

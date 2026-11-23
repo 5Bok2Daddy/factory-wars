@@ -9882,11 +9882,11 @@ MonoBehaviour:
     Category: 5
     Prefabs:
     - {fileID: 8402514608613543937, guid: c0c4e07f6c0b0544d81f0a467d15915d, type: 3}
-    Scale: 1.438536
+    Scale: 0.95210093
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 3.2934344, y: 2.9725466, z: 6.603936}
+    Size: {x: 3.7754235, y: 4.329843, z: 9.977934}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -9986,11 +9986,11 @@ MonoBehaviour:
     Category: 5
     Prefabs:
     - {fileID: 8402514608613543937, guid: c0c4e07f6c0b0544d81f0a467d15915d, type: 3}
-    Scale: 1.438536
+    Scale: 0.95210093
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 3.2934344, y: 2.9725466, z: 6.603936}
+    Size: {x: 3.7754235, y: 4.329843, z: 9.977934}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 

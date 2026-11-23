@@ -165,7 +165,7 @@ namespace FactoryWars.View {
       if (map.MercenaryCamp == false) {
         Guards(catalog);
       }
-      Drones();
+      Drones(map.MercenaryCamp);
 
       var kit = new MeshKit().Paint(Swatch.White);
       ArtView.DashedRing(kit, Half * 1.45f, Half * 1.45f + 0.7f, 56);
@@ -491,14 +491,15 @@ namespace FactoryWars.View {
       return item;
     }
 
-    void Drones() {
+    void Drones(bool camp = false) {
       DroneMeshes();
       for (var i = 0; i < DroneCount; i++) {
         var root = new GameObject("PatrolDrone").transform;
         root.SetParent(_alive.transform, false);
         // 120도 간격, 반경 10·13·16m, 같은 방향·같은 각속도라 간격이 그대로 유지된다(높이만 조금씩 다름).
         var drone = new Drone { Body = root, Angle = i * 120f, Radius = DroneRadii[i % DroneRadii.Length], Height = 5.2f + i * 0.8f, Speed = DroneSpeed, Phase = i * 1.7f };
-        if (VisualCatalog.TryFilled(DroneSlot, out var slot)) {
+        // Fix 5: over the PMC camp the surveillance drones are the black PMC drone.
+        if ((camp && VisualCatalog.TryFilled("camp/display_drone", out var slot)) || VisualCatalog.TryFilled(DroneSlot, out slot)) {
           // 공용 고정익 드론 모델(사용자 CC BY 모델). 회전익이 없으므로 로터를 만들지 않는다.
           var model = Object.Instantiate(slot.Prefab, root);
           var (offset, _) = VisualCatalog.Measure(slot.Prefab, slot);

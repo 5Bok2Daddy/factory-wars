@@ -20,6 +20,8 @@ namespace FactoryWars.View {
     public string Reason;
     /// <summary>길게 누를 때 보일 설명(잠기지 않은 칸).</summary>
     public string Detail;
+    /// <summary>Task 39 fix 5: top-right state overlay (UiCatalog id, e.g. pmc_state_sold_out).</summary>
+    public string Overlay;
   }
 
   /// <summary>
@@ -1806,8 +1808,10 @@ namespace FactoryWars.View {
         _context[i].gameObject.SetActive(used);
         if (used) {
           Ui.SetLabel(_context[i], Entries[i].Label);
-          Ui.SetIcon(_context[i], Entries[i].Icon != null ? Ui.IconSprite(Entries[i].Icon) : null);
+          var icon = Entries[i].Icon;
+          Ui.SetIcon(_context[i], icon == null ? null : icon.StartsWith("pmc_") ? UiCatalog.SpriteFor(icon) ?? Ui.IconSprite("ui_rally") : Ui.IconSprite(icon));
           Ui.SetLocked(_context[i], Entries[i].Enabled == false, Entries[i].Highlight);
+          Ui.SetOverlay(_context[i], Entries[i].Overlay != null ? UiCatalog.SpriteFor(Entries[i].Overlay) : null);
         }
       }
     }
@@ -1903,6 +1907,18 @@ namespace FactoryWars.View {
       return input.Mode == MatchInput.TapMode.Drone ? "자폭 드론: 목표 지점을 누르세요" : "암시장 무기상 — 공격하면 영구 적대";
     }
 
+    /// <summary>Task 39 fix 5: shop line → PMC icon (Codex kit). Helicopters have no icon in the kit yet → generic.</summary>
+    static string PmcIcon(Frame frame, MercOffer line) {
+      if (line.Unit.IsValid == false) return "pmc_supply_trade";
+      var name = frame.FindAsset(line.Unit).name;
+      if (name.Contains("operator")) return "pmc_operator_squad";
+      if (name.Contains("marksman")) return "pmc_marksman";
+      if (name.Contains("drone")) return "pmc_attack_drone";
+      if (name.Contains("tank")) return "pmc_tank";
+      if (name.Contains("suv") || name.Contains("mrap") || name.Contains("armor")) return "pmc_armoured_suv";
+      return "ui_rally";
+    }
+
     /// <summary>Task 39: PMC camp panel. Stage (적대 → 접촉 → 합의), message, cargo truck, then the shop lines from MercenarySpec.</summary>
     string CampEntries(Frame frame, PlayerState* state, NpcTrader trader, MercenarySpec camp, int index) {
       var bit = index >= 0 && index < 4 ? 1 << index : 0;
@@ -1913,13 +1929,15 @@ namespace FactoryWars.View {
       var truck = bit != 0 && frame.Exists(trader.Trucks[index]);
       if (agreed == false) {
         Entries.Add(new ContextEntry {
-          Label = waiting ? "외교 메시지\n답신 대기" : contacted ? "외교 메시지\n답신 받음" : "외교 메시지\n보내기", Icon = "ui_rally",
+          Label = waiting ? "외교 메시지\n답신 대기" : contacted ? "외교 메시지\n답신 받음" : "외교 메시지\n보내기", Icon = "pmc_diplomacy",
+          Overlay = waiting ? "pmc_state_cooldown" : null,
           Enabled = contacted == false && waiting == false, Locked = contacted || waiting, Reason = "이미 보냈습니다",
           Detail = "용병단에 통행·거래를 요청합니다(무료)", Action = () => Controller.Send(new TradeCommand { Offer = MercenaryCamp.OfferMessage }),
         });
         var canSend = contacted && truck == false && stock.Covers(camp.Cargo);
         Entries.Add(new ContextEntry {
-          Label = truck ? "교역 물자\n수송 중" : $"교역 물자 발송\n{Texts.Cost(camp.Cargo, stock)}", Icon = "ui_upgrade",
+          Label = truck ? "교역 물자\n수송 중" : $"교역 물자 발송\n{Texts.Cost(camp.Cargo, stock)}", Icon = "pmc_cargo_truck",
+          Overlay = contacted == false ? "pmc_state_locked" : truck ? "pmc_state_cooldown" : null,
           Enabled = canSend, Locked = canSend == false, Reason = contacted == false ? "먼저 메시지를 보내세요" : truck ? "트럭이 가는 중입니다" : "자원이 부족합니다",
           Detail = "트럭이 정문까지 스스로 갑니다. 파괴되면 교역 실패(물자 일부가 상자로 떨어짐)",
           Action = () => Controller.Send(new TradeCommand { Offer = MercenaryCamp.OfferDispatch }),
@@ -1934,7 +1952,8 @@ namespace FactoryWars.View {
         var ok = left > 0 && wait == 0 && stock.Covers(line.Cost);
         var offer = MercenaryCamp.OfferShop + i;
         Entries.Add(new ContextEntry {
-          Label = wait > 0 ? $"{line.Name}\n대기 {wait}초" : $"{line.Name} ({left})\n{Texts.Cost(line.Cost, stock)}", Icon = line.Unit.IsValid ? "ui_rally" : "ui_upgrade",
+          Label = wait > 0 ? $"{line.Name}\n대기 {wait}초" : $"{line.Name} ({left})\n{Texts.Cost(line.Cost, stock)}", Icon = PmcIcon(frame, line),
+          Overlay = left <= 0 ? "pmc_state_sold_out" : wait > 0 ? "pmc_state_cooldown" : null,
           Enabled = ok, Locked = ok == false, Reason = left <= 0 ? "재고가 없습니다(공유 재고, 시간이 지나면 채워짐)" : wait > 0 ? "다음 구매까지 기다리세요" : "자원이 부족합니다",
           Detail = line.Unit.IsValid ? "정문에서 인도(내 부대)" : "자원 교환", Action = () => Controller.Send(new TradeCommand { Offer = offer }),
         });
