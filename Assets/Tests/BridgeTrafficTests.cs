@@ -179,6 +179,8 @@ namespace FactoryWars.Tests {
       var checksums = new ulong[2];
       var lifts = new List<int>[2];
       for (var run = 0; run < 2; run++) {
+        FixedStep = true;
+        Restores.Add(() => FixedStep = false);
         // Map4P v5 drawbridge 0 is the row-24 bridge (centre -16, 124). Units are scenario units so they exist from frame 0,
         // and there is a single command right after the start (a later Send lands on a real-time dependent frame).
         yield return StartMatch(Map4PScene, 2, truce: 0, seed: 3939,

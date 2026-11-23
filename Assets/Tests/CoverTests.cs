@@ -99,7 +99,10 @@ namespace FactoryWars.Tests {
     [UnityTest, Timeout(240000)]
     public IEnumerator Cover_DeterministicAcrossRuns() {
       var checksums = new ulong[2];
+      FixedStep = true;
+      Restores.Add(() => FixedStep = false);
       for (var run = 0; run < 2; run++) {
+        FixedStep = true;
         yield return StartMatch(seed: 4242, buildings: SandbagSite, units: new[] { (0, "ff_ranger_squad", 0, 24), (0, "ff_ranger_squad", 3, 24), (1, "cf_militia", 0, 40), (1, "cf_militia", 4, 40) });
         yield return Send(0, new MoveUnitsCommand { Units = UnitsNamed(0, "ff_ranger_squad").ToArray(), Target = V(0, 34), AttackMove = true });
         var stop = 40 * Fps;

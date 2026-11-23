@@ -65,7 +65,16 @@ namespace FactoryWars.Tests {
       var all = NavMeshRegionMask.Default;
       Assert.IsTrue(water.Contains(canal, all, true), "본진 운하는 물 위");
       Assert.IsFalse(water.Contains(map.StartPositions[0], all, true), "본진 땅은 물이 아님");
-      foreach (var outside in new[] { V(-162, -83), V(162, 83), V(-83, -162), V(83, 162) }) {
+      // 2026-11-23: Map4P is the 640 m grid map (v4/v5) now; the old 320 m points (±162, ±83) are inside the city. Check points just
+      // beyond the ±320 m world edge instead, and that no canal piece reaches past the edge.
+      var half = map.BoundsMax.X.AsFloat;
+      Assert.AreEqual(320f, half, 0.01f, "640 m map");
+      foreach (var piece in map.River) {
+        var extent = (piece.IsCircle ? piece.Radius : FPMath.Max(piece.HalfLength, piece.HalfWidth)).AsFloat;
+        Assert.LessOrEqual(Mathf.Abs(piece.Center.X.AsFloat) + extent, half + 0.01f, $"canal piece {piece.Center} inside the world");
+        Assert.LessOrEqual(Mathf.Abs(piece.Center.Z.AsFloat) + extent, half + 0.01f, $"canal piece {piece.Center} inside the world");
+      }
+      foreach (var outside in new[] { V(-326, -166), V(326, 166), V(-166, -326), V(166, 326) }) {
         Assert.IsFalse(water.Contains(outside, all, true), $"외곽 수상 NavMesh {outside}");
         Assert.IsFalse(ground.Contains(outside, all, true), $"외곽 지상 NavMesh {outside}");
       }

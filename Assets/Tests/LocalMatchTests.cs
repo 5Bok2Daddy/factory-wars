@@ -19,6 +19,8 @@ namespace FactoryWars.Tests {
     const int Fps = 20;
     // 커맨드가 입력 지연(4틱)을 지나 실행될 때까지 기다리는 프레임.
     const int CommandFrames = 15;
+    /// <summary>Set by determinism tests before StartMatch: one simulation frame per Unity frame (see StartMatch).</summary>
+    static bool FixedStep;
 
     readonly List<EventActionRejected> _rejected = new List<EventActionRejected>();
     static AssetRef<FactionSpec>[] _sceneFactions;
@@ -32,6 +34,9 @@ namespace FactoryWars.Tests {
 
     IEnumerator StartMatch(string scene = TestScene, int players = 2, bool jointVictory = true, bool teamMode = false, (int Owner, string Unit, int X, int Z)[] units = null, (int Owner, string Building, int X, int Z)[] buildings = null, BotDifficulty[] bots = null, int? seed = null, ResourceCost? stock = null, bool swapFactions = false, int truce = 0, int mirrorFaction = -1, int startingTier = 0, int[] factionLayout = null, string[] factionNames = null) {
       Time.timeScale = TimeScale;
+      // 2026-11-23 (Task 39 C4): determinism tests step exactly one simulation frame per Unity frame, so a command sent from the
+      // coroutine lands on the same frame in every run (with Time.deltaTime the number of frames per Unity frame followed real time).
+      Time.captureDeltaTime = FixedStep ? 1f / (Fps * TimeScale) : 0f;
       // 씬 로드 직후, 러너의 Start 전에 규칙을 바꾼다.
       UnityEngine.Events.UnityAction<Scene, LoadSceneMode> onLoaded = (loaded, mode) => {
         var runner = Object.FindAnyObjectByType<QuantumRunnerLocalDebug>();
@@ -223,6 +228,7 @@ namespace FactoryWars.Tests {
     [TearDown]
     public void TearDown() {
       Time.timeScale = 1f;
+      Time.captureDeltaTime = 0f;
       // 나중에 바꾼 것부터 되돌린다(같은 값을 두 번 바꿨어도 처음 값으로 돌아간다).
       for (var i = Restores.Count - 1; i >= 0; i--) {
         Restores[i]();

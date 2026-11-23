@@ -145,6 +145,8 @@ namespace FactoryWars.Tests {
       var checksums = new ulong[2];
       var masks = new int[2];
       for (var run = 0; run < 2; run++) {
+        FixedStep = true;
+        Restores.Add(() => FixedStep = false);
         // TearDown restores the data after each run, so set the short AI timings again for every run.
         Restores.Add(() => { spec.AiContactAfterSeconds = contact; spec.MessageDelaySeconds = delay; });
         spec.AiContactAfterSeconds = 4;
