@@ -34,7 +34,7 @@ namespace FactoryWars.View {
     /// <summary>낮음 품질 LOD 문턱 배율: 작은 블록 4배, 큰 도시 건물 2.5배, 나머지 1배.</summary>
     public static float LowCullFactor(string kind) =>
       kind == "K" || kind == "L" || kind == "X" || kind == "Y" || kind == "Q" || kind == "M" || kind == "CC" || kind == "EI" || kind == "GR" || kind.StartsWith("H1") ? 4f
-      : kind == "HW" || kind == "HD" || kind == "H4" ? 2.5f : 1f;
+      : kind.StartsWith("HW") || kind.StartsWith("HD") || kind.StartsWith("H4") ? 2.5f : 1f;
 
     public static bool Ready() {
       if (Kinds.Count == 0) LoadKinds();
@@ -154,8 +154,8 @@ namespace FactoryWars.View {
             var frontOnLongSide = (dir == 0 || dir == 2) == wide;
             kind = frontOnLongSide ? "HW" : "HD";
           }
-          // 동·서향 1칸 건물은 카메라 쪽 옆면을 꾸민 변형으로(민벽 금지).
-          if (kind == "H1" && (dir == 1 || dir == 3) && Kinds.ContainsKey(dir == 1 ? "H1S" : "H1T")) kind = dir == 1 ? "H1S" : "H1T";
+          // 동·서향 건물은 카메라 쪽 옆면을 꾸민 변형으로(민벽 금지).
+          if ((dir == 1 || dir == 3) && Kinds.ContainsKey(kind + (dir == 1 ? "S" : "T"))) kind += dir == 1 ? "S" : "T";
           Put(parent, kind, Pick(kind, r, c, rows, cols, 2), Center(r, c, rows, cols), yaw, $"{r},{c}");
         }
       }

@@ -297,6 +297,17 @@ namespace FactoryWars.EditorTools {
       });
       Add("H4_05", 16, 16, b => { b.Bld(PC + "Buildings/SM_Bld_OfficeSquare_02.prefab", 0f, 0f); b.Prop(P("Roof_Aircon_02"), -3f, 2f, 0, 9.05f); b.Prop(P("Roof_Aircon_03"), 3.5f, -2.5f, 90, 9.05f); });
 
+      // HWS/HWT·HDS/HDT·H4S/H4T: 정면이 동·서인 2칸·4칸 건물. 카메라(남)에 보이는 옆면(S = 로컬 -X, T = 로컬 +X)을 꾸민다.
+      foreach (var src in list.Where(x => x.Id.StartsWith("HW_") || x.Id.StartsWith("HD_") || x.Id.StartsWith("H4_")).ToList()) {
+        var baseSpec = src;
+        foreach (var (tag, face) in new[] { ("S", 1), ("T", 2) }) {
+          var id = baseSpec.Id.Substring(0, 2) + tag + baseSpec.Id.Substring(2);
+          Spec me = null;
+          me = new Spec(id, baseSpec.SizeX, baseSpec.SizeZ, b => { baseSpec.Build(b); WallDress(b, me, face); });
+          list.Add(me);
+        }
+      }
+
       // ---- K 공원(8×8). 나무 군집 + 벤치·등.
       Add("K_00", 8, 8, b => { b.Prop(ME("Tree_Round_02"), -1.6f, 1.2f); b.Prop(ME("Tree_Small_01"), 2.2f, 2.4f); b.Prop(ME("Bush_Group_01"), 2.4f, -1.6f); b.Prop(P("ParkBench_01"), -1.2f, -2.6f, 180f); });
       Add("K_01", 8, 8, b => { b.Prop(ME("Tree_Round_03"), 0.6f, 0.8f); b.Prop(ME("Bush_Small_01"), -2.6f, -2.2f); b.Prop(ME("Bush_Small_02"), -2.0f, -2.8f); b.Prop(P("LightPole_Base_02"), 2.9f, -2.9f); });
@@ -382,24 +393,107 @@ namespace FactoryWars.EditorTools {
       return list;
     }
 
-    /// <summary>도시 건물 뒷벽(로컬 +Z): 얇은 배관·환기구·실외기로 민벽을 깬다(칸 밖으로 나가지 않게 0.5m 이내).</summary>
-    static void BackDress(B b, Spec spec) {
-      // 건물 조각(SM_Bld_*, 높이 2.5m 이상)만으로 뒷벽을 정한다. 칸 밖으로 나가면 생략(떠 있는 소품 금지).
-      var parts = b.Root.Cast<Transform>().Where(t => t.name.StartsWith("SM_Bld") || t.GetComponentsInChildren<Transform>().Any(c => c.name.StartsWith("SM_Bld"))).ToList();
-      if (parts.Count == 0) return;
-      var all = BlockKit.WorldBounds(parts[0].gameObject);
-      foreach (var t in parts) all.Encapsulate(BlockKit.WorldBounds(t.gameObject));
-      if (all.size.y < 6f) return;
+    /// <summary>건물 조각(SM_Bld_*)을 위치별 기둥으로 묶는다(한 채 = 같은 x,z에 쌓인 조각들).</summary>
+    static List<Bounds> Columns(B b) {
+      var groups = new Dictionary<(int, int), Bounds>();
+      foreach (Transform t in b.Root) {
+        if (!t.name.StartsWith("SM_Bld")) continue;
+        var key = (Mathf.RoundToInt(t.localPosition.x * 2f), Mathf.RoundToInt(t.localPosition.z * 2f));
+        var w = BlockKit.WorldBounds(t.gameObject);
+        if (groups.TryGetValue(key, out var g)) { g.Encapsulate(w); groups[key] = g; } else groups[key] = w;
+      }
       var o = b.Root.position;
-      var back = all.max.z - o.z;
-      if (back + 0.5f > spec.SizeZ / 2f - 0.1f) return;
-      var h = spec.Id.GetHashCode() & 0xff;
-      var span = all.size.x * 0.35f;
-      var x0 = all.center.x - o.x;
-      b.Prop(P("Pipe_Small_01"), x0 - span + (h % 3) * 0.4f, back + 0.2f, 180f);
-      b.Prop(P("Pipe_Small_02"), x0 + span * 0.6f, back + 0.2f, 180f);
-      b.Prop(P("Aircon_01"), x0 + (h % 5 - 2) * 0.5f, back + 0.25f, Front(P("Aircon_01")) + 180f, 3.4f);
-      if (all.size.y > 9f) b.Prop(P("Vents_Straight_01"), x0 - span * 0.3f, back + 0.2f, 180f, 6.5f);
+      return groups.Values.Select(g => new Bounds(g.center - o, g.size)).ToList();
+    }
+
+    /// <summary>벽 소품 하나: 얇은 축을 벽에 수직으로 돌려 벽면(perp = wall)에 붙인다. 칸 밖·다른 조각과 겹치면 취소.</summary>
+    static GameObject WallProp(B b, string path, int axis, float sign, float wall, float along, float y, float turn) {
+      var yaw = Front(path) + turn;
+      var g = b.Prop(path, 0f, 0f, yaw, y);
+      if (g == null) return null;
+      var w = BlockKit.WorldBounds(g);
+      var perpSize = axis == 0 ? w.size.x : w.size.z;
+      var alongSize = axis == 0 ? w.size.z : w.size.x;
+      if (perpSize > alongSize + 0.05f) {
+        Object.DestroyImmediate(g);
+        g = b.Prop(path, 0f, 0f, yaw + 90f, y);
+        w = BlockKit.WorldBounds(g);
+        perpSize = axis == 0 ? w.size.x : w.size.z;
+        alongSize = axis == 0 ? w.size.z : w.size.x;
+      }
+      var perp = wall + sign * (perpSize / 2f + 0.03f);
+      var center = axis == 0 ? new Vector3(perp, y, along) : new Vector3(along, y, perp);
+      var o = b.Root.position;
+      var off = center - new Vector3(w.center.x - o.x, w.min.y - o.y, w.center.z - o.z);
+      g.transform.position += off;
+      w = BlockKit.WorldBounds(g);
+      var lo = w.min - o;
+      var hi = w.max - o;
+      var ok = lo.x > -b.HalfX + 0.1f && hi.x < b.HalfX - 0.1f && lo.z > -b.HalfZ + 0.1f && hi.z < b.HalfZ - 0.1f;
+      if (ok) {
+        var shrink = new Bounds(w.center, w.size - Vector3.one * 0.12f);
+        foreach (Transform t in b.Root) {
+          if (t == g.transform) continue;
+          if (BlockKit.WorldBounds(t.gameObject).Intersects(shrink)) { ok = false; break; }
+        }
+      }
+      if (!ok) { Object.DestroyImmediate(g); return null; }
+      return g;
+    }
+
+    /// <summary>
+    /// 민벽 꾸미기. face 0 = 뒷벽(+Z), 1 = 왼쪽 옆면(-X), 2 = 오른쪽 옆면(+X).
+    /// 여유 1.7m 이상: 층마다 비상계단 + 바닥 실외기. 좁으면: 광고판(높은 벽) 또는 배관·실외기·환기구.
+    /// 기둥(한 채)마다 꾸미고, 같은 블록의 다른 채가 앞을 가리면 그 지붕 위부터 꾸민다.
+    /// </summary>
+    static void WallDress(B b, Spec spec, int face) {
+      var cols = Columns(b);
+      if (cols.Count == 0) return;
+      var axis = face == 0 ? 2 : 0;
+      var sign = face == 1 ? -1f : 1f;
+      var half = face == 0 ? b.HalfZ : b.HalfX;
+      var turn = face == 0 ? 180f : face == 1 ? 90f : -90f;
+      var seed = (spec.Id.GetHashCode() & 0x7fffffff) + face * 7;
+      foreach (var c in cols) {
+        seed = seed * 31 + 11 & 0x7fffffff;
+        var height = c.max.y;
+        if (height < 5.5f) continue;
+        var wall = axis == 0 ? (sign > 0 ? c.max.x : c.min.x) : c.max.z;
+        var room = half - sign * wall;
+        var a0 = axis == 0 ? c.center.z : c.center.x;
+        var len = axis == 0 ? c.size.z : c.size.x;
+        // 같은 블록의 다른 채가 이 벽 앞을 가리면: 그 채 지붕 위부터 꾸민다(틈 = 여유).
+        var occ = 0f;
+        foreach (var d in cols) {
+          if (d == c) continue;
+          var near = axis == 0 ? (sign > 0 ? d.min.x : -d.max.x) : d.min.z;
+          var lo = axis == 0 ? Mathf.Max(c.min.z, d.min.z) : Mathf.Max(c.min.x, d.min.x);
+          var hi = axis == 0 ? Mathf.Min(c.max.z, d.max.z) : Mathf.Min(c.max.x, d.max.x);
+          if (near < sign * wall - 0.1f || hi - lo < 1f) continue;
+          occ = Mathf.Max(occ, d.max.y);
+          room = Mathf.Min(room, near - sign * wall);
+        }
+        var y0 = occ > 0f ? occ + 0.4f : 0f;
+        if (len < 3f || room < 0.35f || height - y0 < 3f) continue;
+        var placed = 0;
+        if (room >= 1.75f && len >= 3.6f) {
+          var esc = PC + "Buildings/SM_Bld_FireEscape_0" + (2 + seed % 2) + ".prefab";
+          var a = a0 + (seed % 3 - 1) * Mathf.Min(0.6f, (len - 3.4f) / 2f);
+          for (var y = Mathf.Max(3.0f, y0); y + 3.4f <= height + 0.3f; y += 3.6f) if (WallProp(b, esc, axis, sign, wall, a, y, turn) != null) placed++;
+          if (occ == 0f) WallProp(b, P("Aircon_01"), axis, sign, wall, a0 + (len / 2f - 0.8f) * ((seed & 1) == 0 ? 1 : -1), 0f, turn);
+        }
+        if (placed == 0) {
+          if (height - y0 >= 4.5f && height >= 7f && len >= 4.6f && (seed % 3 != 0 || occ > 0f)) {
+            var bb = P("Billboard_Sign_0" + (1 + seed % 7));
+            var by = Mathf.Min(height - 2.6f, Mathf.Max(y0, 4.2f + seed % 2 * 1.5f));
+            if (WallProp(b, bb, axis, sign, wall, a0 + (seed % 3 - 1) * Mathf.Min(0.5f, (len - 4.4f) / 2f), by, turn) != null) placed++;
+          }
+          if (room >= 0.8f) WallProp(b, P("Aircon_01"), axis, sign, wall, a0 + (seed % 5 - 2) * 0.5f, Mathf.Max(y0, placed > 0 ? 1.4f : 3.4f), turn);
+          if (height > 9f && placed == 0) WallProp(b, P("Vents_Straight_01"), axis, sign, wall, a0 - len * 0.12f, Mathf.Max(y0, 6.5f), turn);
+        }
+        WallProp(b, P("Pipe_Small_01"), axis, sign, wall, a0 - len / 2f + 0.5f + (seed % 3) * 0.2f, y0, turn);
+        if (occ == 0f) WallProp(b, P("Pipe_Small_02"), axis, sign, wall, a0 + len / 2f - 1.0f, 0f, turn);
+      }
     }
 
     // ------------------------------------------------------------ bake
@@ -482,7 +576,7 @@ namespace FactoryWars.EditorTools {
         var b = new B { Root = root.transform, Id = spec.Id, HalfX = spec.SizeX / 2f, HalfZ = spec.SizeZ / 2f };
         try {
           spec.Build(b);
-          if (spec.Id.StartsWith("H")) BackDress(b, spec);
+          if (spec.Id.StartsWith("H")) WallDress(b, spec, 0);
           var prefab = Bake(root, spec);
           BlockKit.Register(catalog, spec.Id, prefab, new Vector3(spec.SizeX, 0f, spec.SizeZ));
           var slot = catalog.Slots.First(s => s != null && s.Id == "block/" + spec.Id);

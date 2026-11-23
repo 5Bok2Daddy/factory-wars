@@ -456,6 +456,15 @@ namespace FactoryWars.Tests {
       var unassigned = SceneAudit.LargestEmptySquare(area, baseItems, (x, z) => InBase(x, z) && !BuildPlot(x, z) && !expansion.Contains(new Vector2(x, z)), out var unassignedArea);
       report.Add($"base unassigned empty square: {unassigned:0}m at local ({unassignedArea.center.x - corner.x:0},{unassignedArea.center.y - corner.z:0})");
       if (unassigned >= SceneAudit.EmptyLimit) empty.Add($"base (outside build and marked expansion plots) empty {unassigned:0}m");
+      // 진단: 다음으로 큰 빈 사각형들(8m 이상)을 차례로 적는다(한 번에 채울 자리 확인용).
+      var probe = new System.Collections.Generic.List<Bounds>(baseItems);
+      var probeArea = unassignedArea;
+      for (var k = 0; k < 6; k++) {
+        probe.Add(new Bounds(new Vector3(probeArea.center.x, 1f, probeArea.center.y), new Vector3(probeArea.width, 2f, probeArea.height)));
+        var next = SceneAudit.LargestEmptySquare(area, probe, (x, z) => InBase(x, z) && !BuildPlot(x, z) && !expansion.Contains(new Vector2(x, z)), out probeArea);
+        if (next < 8f) break;
+        report.Add($"  next base empty square: {next:0}m at local ({probeArea.center.x - corner.x:0},{probeArea.center.y - corner.z:0})");
+      }
       var magenta = dress.Concat(blocks).SelectMany(b => b.GetComponentsInChildren<Renderer>())
         .Where(r => r.sharedMaterials.Any(m => m == null || m.shader == null || m.shader.name.Contains("InternalError"))).Select(r => r.name).Distinct().ToList();
       void Section(string title, System.Collections.Generic.List<string> hits) {
