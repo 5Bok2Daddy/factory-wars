@@ -7,6 +7,19 @@
 
 ---
 
+## Map4P 전체 지도 검수
+
+**640m 플레이 맵 · 2026-11-23 16:45 KST · 기존 Unity 캡처 `j1`**
+
+| 직상공 전체 지도 · 1,600×1,600 | RTS 사선 · 1,920×1,080 |
+| --- | --- |
+| [![네 모서리와 플레이 경계 전체가 보이는 Map4P 직상공](Docs/status_images/Map4PV4/handoff_t39_j1_top.png)](Docs/status_images/Map4PV4/handoff_t39_j1_top.png) | [![중앙 PMC 기지와 둘레 도로·인접 건물의 RTS 사선 화면](Docs/status_images/Map4PV4/handoff_t39_j1_oblique.png)](Docs/status_images/Map4PV4/handoff_t39_j1_oblique.png) |
+| [전체 해상도 원본](Docs/status_images/Map4PV4/handoff_t39_j1_top.png) · 네 본진, 운하, 교량, 순환로 | [사선 원본](Docs/status_images/Map4PV4/handoff_t39_j1_oblique.png) · 중앙 기지와 도시 연결부 |
+
+직상공과 사선은 `aaa7847`을 바탕으로 로컬 6차 1회차를 적용한 화면이다. 플레이 기준 `fd8bba2`의 최종 색 보정은 캠프 사진에서 확인할 수 있다. [시각 인수인계와 개선 우선순위](Docs/Map4P-Visual-Handoff.md) · [최종 캠프](Docs/status_images/T39/t39_v6_camp_wide.png)
+
+---
+
 ## 작업 진행 현황
 
 | 작업 | 날짜 | 상태 | 대표 캡처 | 결과 요약 |
