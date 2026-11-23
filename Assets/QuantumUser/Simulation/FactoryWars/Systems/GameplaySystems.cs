@@ -1454,6 +1454,8 @@ namespace Quantum.FactoryWars {
 
     public void OnNavMeshWaypointReached(Frame f, EntityRef entity, FPVector3 waypoint, Navigation.WaypointFlag waypointFlags, ref bool resetAgent) {
       if ((waypointFlags & Navigation.WaypointFlag.Target) != 0 && f.Unsafe.TryGetPointer<Unit>(entity, out var unit)) {
+        // Task 46: a ship that reached the closed gate of its own sector keeps its order; SeaGateSystem re-routes it when the gate opens.
+        if (f.Unsafe.TryGetPointer<Transform3D>(entity, out var at) && SeaGateSystem.WaitsForGate(f, at, unit)) return;
         if (unit->Order == UnitOrder.Move) {
           var spec = f.FindAsset(unit->Spec);
           if (!spec.IsAir && !spec.IsNaval && FactoryWarsUtil.FlatDistanceSqr(waypoint, unit->TargetPosition) > FP._1
@@ -1482,6 +1484,7 @@ namespace Quantum.FactoryWars {
 
     public void OnNavMeshSearchFailed(Frame f, EntityRef entity, ref bool resetAgent) {
       if (f.Unsafe.TryGetPointer<Unit>(entity, out var unit) && unit->Order != UnitOrder.AttackTarget) {
+        if (f.Unsafe.TryGetPointer<Transform3D>(entity, out var at) && SeaGateSystem.WaitsForGate(f, at, unit)) return;
         unit->Order = UnitOrder.Stop;
       }
     }

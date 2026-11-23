@@ -120,31 +120,40 @@ namespace FactoryWars.Tests {
       yield return Send(enemy, new MoveUnitsCommand { Units = new[] { raider }, Target = Lane(-300f) });
       yield return WaitFrames(25 * Fps);
       Assert.Greater(At(raider).Z.AsFloat, z, "barrier alive: no enemy path into the sector");
+      yield return Send(enemy, new MoveUnitsCommand { Units = new[] { raider }, Target = Lane(z + 16f, -308f) });
+      yield return WaitFor(() => At(raider).Z.AsFloat < z + 22f, 60f, "raider waits just outside the barrier");
 
       // Owner ship leaves the dock basin for the harbour: the gate opens for it (2 s), it passes, then closes over 10 s.
       var own = SpawnSeat(owner, "artillery_ship", Lane(-300f, -308f));
       var states = new List<int>();
-      QuantumEvent.Subscribe<EventSeaGateChanged>(_listener, e => { if (e.Gate == g) states.Add(e.State); });
+      var closingAt = -1;
+      var closedAt = -1;
+      QuantumEvent.Subscribe<EventSeaGateChanged>(_listener, e => {
+        if (e.Gate != g) return;
+        states.Add(e.State);
+        if (e.State == SeaGateSystem.Closing) closingAt = e.Tick;
+        if (e.State == SeaGateSystem.Closed && closingAt >= 0 && closedAt < 0) closedAt = e.Tick;
+      });
       yield return Send(owner, new MoveUnitsCommand { Units = new[] { own }, Target = Lane(-10f) });
       yield return WaitFor(() => At(own).Z.AsFloat > z + 20f, 120f, "owner ship passes its own gate");
       CollectionAssert.Contains(states, SeaGateSystem.Opening);
       CollectionAssert.Contains(states, SeaGateSystem.Open);
       yield return WaitFor(() => GateState(g).State == SeaGateSystem.Closing, 60f, "gate starts closing after the owner ship left");
-      var closingFrame = Verified.Number;
       Assert.IsTrue(GateState(g).RegionOpen, "passage still open while closing");
       // An enemy that slips in during the 10 s close gets in.
       yield return Send(enemy, new MoveUnitsCommand { Units = new[] { raider }, Target = Lane(-300f) });
       yield return WaitFor(() => GateState(g).State == SeaGateSystem.Closed, 60f, "gate closed");
-      var seconds = (Verified.Number - closingFrame) / (float)Fps;
+      var seconds = (closedAt - closingAt) / (float)Fps;
       Debug.Log($"[FW-T46] gate close took {seconds:0.0} s; raider z {At(raider).Z.AsFloat:0.0} (barrier z {z:0.0})");
       Assert.AreEqual(WaySpec.CloseSeconds.AsFloat, seconds, 0.6f, "closing takes 10 s");
       Assert.Less(At(raider).Z.AsFloat, z, "the enemy that slipped in during closing is inside the sector");
 
       // Ground units can damage the barrier.
       var before = BarrierHealth(g);
-      var gunner = SpawnSeat(enemy, "at_rocket", Pos(-300f, z + 14f));
+      var gunner = SpawnSeat(enemy, "at_rocket", Pos(-301f, z + 4f));
       yield return Send(enemy, new AttackTargetCommand { Units = new[] { gunner }, Target = GateState(g).Barrier });
-      yield return WaitFor(() => BarrierHealth(g) < before, 40f, "a ground unit damages the barrier");
+      _rejected.Clear();
+      yield return WaitFor(() => BarrierHealth(g) < before, 40f, $"a ground unit on the coast damages the barrier (rejected: {string.Join(",", _rejected.Select(r => r.Reason))})");
 
       // Destroyed barrier opens the passage the same frame; rebuilding closes it again.
       KillBarrier(g);

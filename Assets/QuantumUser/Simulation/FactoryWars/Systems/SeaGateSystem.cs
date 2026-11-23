@@ -87,14 +87,56 @@ namespace Quantum.FactoryWars {
     public static bool BarrierAlive(Frame f, SeaGate* gate) =>
       gate->Barrier != EntityRef.None && f.Unsafe.TryGetPointer<Building>(gate->Barrier, out var b) && b->Health > FP._0 && b->ConstructionRemaining <= FP._0;
 
-    static bool OwnerShipIn(Frame f, MapShape trigger, PlayerRef owner) {
+    static bool OwnerShipIn(Frame f, MapSpec map, int index, MapShape trigger, PlayerRef owner) {
       var units = f.Filter<Transform3D, Unit>();
       while (units.NextUnsafe(out _, out var transform, out var unit)) {
         if (unit->Owner != owner || unit->Health <= FP._0 || unit->Transport != EntityRef.None) continue;
         if (f.FindAsset(unit->Spec).IsNaval == false) continue;
-        if (trigger.Distance(transform->Position) <= FP._0) return true;
+        if (trigger.Distance(transform->Position) <= FP._0 || Crosses(map.SeaGates[index], transform->Position, unit)) return true;
       }
       return false;
+    }
+
+    /// <summary>Barrier space: along the boom (long side) and across it (along the waterway).</summary>
+    static void Local(MapShape shape, FPVector3 p, out FP along, out FP across, out FP halfAlong) {
+      var yaw = shape.Yaw * FP.Deg2Rad;
+      var axis = new FPVector3(FPMath.Cos(yaw), FP._0, -FPMath.Sin(yaw));
+      var side = new FPVector3(FPMath.Sin(yaw), FP._0, FPMath.Cos(yaw));
+      var d = p - shape.Center;
+      d.Y = FP._0;
+      var u = FPVector3.Dot(d, axis);
+      var v = FPVector3.Dot(d, side);
+      if (shape.HalfLength >= shape.HalfWidth) { along = u; across = v; halfAlong = shape.HalfLength; }
+      else { along = v; across = u; halfAlong = shape.HalfWidth; }
+    }
+
+    /// <summary>A ship in the waterway corridor with a move order to the other side of this barrier asks for the gate.</summary>
+    static bool Crosses(MapShape gate, FPVector3 position, Unit* unit) {
+      if (unit->Order != UnitOrder.Move && unit->Order != UnitOrder.AttackMove && unit->Order != UnitOrder.Patrol) return false;
+      Local(gate, position, out var along, out var across, out var half);
+      if (FPMath.Abs(along) > half + FP._8) return false;
+      Local(gate, unit->TargetPosition, out var targetAlong, out var targetAcross, out _);
+      return FPMath.Abs(targetAlong) <= half + FP._8 * 4 && (across > FP._0) != (targetAcross > FP._0);
+    }
+
+    /// <summary>MovementSystem: an owner ship waiting on its own closed gate keeps its order (re-routed when the gate opens).</summary>
+    public static bool WaitsForGate(Frame f, Transform3D* transform, Unit* unit) {
+      if (Spec(f) == null) return false;
+      var map = FactoryWarsUtil.MapInfo(f);
+      var gates = f.Filter<SeaGate>();
+      while (gates.NextUnsafe(out _, out var gate)) {
+        if (gate->Owner != unit->Owner || gate->RegionOpen) continue;
+        if (Crosses(map.SeaGates[gate->Index], transform->Position, unit)) return true;
+      }
+      return false;
+    }
+
+    static void Release(Frame f, MapSpec map, SeaGate* gate) {
+      var units = f.Filter<Transform3D, Unit>();
+      while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
+        if (unit->Owner != gate->Owner || unit->Health <= FP._0 || f.FindAsset(unit->Spec).IsNaval == false) continue;
+        if (Crosses(map.SeaGates[gate->Index], transform->Position, unit)) MovementSystem.SetDestination(f, entity, unit->TargetPosition);
+      }
     }
 
     static void UpdateGate(Frame f, WaterwaySpec spec, MapSpec map, SeaGate* gate) {
@@ -120,7 +162,7 @@ namespace Quantum.FactoryWars {
         return;
       }
       var trigger = map.SeaGateTriggers != null && gate->Index < map.SeaGateTriggers.Length ? map.SeaGateTriggers[gate->Index] : map.SeaGates[gate->Index];
-      var ship = OwnerShipIn(f, trigger, gate->Owner);
+      var ship = OwnerShipIn(f, map, gate->Index, trigger, gate->Owner);
       var previous = gate->State;
       switch (gate->State) {
         case Closed:
@@ -139,7 +181,9 @@ namespace Quantum.FactoryWars {
           break;
       }
       if (previous != gate->State) f.Events.SeaGateChanged(gate->Index, gate->State, false);
+      var wasOpen = gate->RegionOpen;
       Apply(f, gate, gate->State == Open || gate->State == Closing);
+      if (wasOpen == false && gate->RegionOpen) Release(f, map, gate);
     }
 
     static void TrackHits(Frame f, WaterwaySpec spec, MapSpec map, SeaGate* gate) {
