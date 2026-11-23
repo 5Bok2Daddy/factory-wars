@@ -273,8 +273,7 @@ namespace FactoryWars.Tests {
     /// </summary>
     [UnityTest, Explicit, Timeout(2400000)]
     public IEnumerator Logistics_FairnessTable() {
-      FixedStep = true;
-      Restores.Add(() => FixedStep = false);
+      // Not a determinism test: run at the normal test time scale (FixedStep made 4 seats x 2 cycles exceed 30 min real time).
       yield return StartMatch(Map4PScene, 4, truce: 0, seed: 4103);
       yield return WaitFrames(Fps / 2);
       var pairs = SeatSites();
@@ -291,7 +290,18 @@ namespace FactoryWars.Tests {
           if (d >= 2 && second.ContainsKey(site) == false) second[site] = Verified.Number;
           if (Sum(Yard(site).Buffer) < 300) SetBuffer(site, new ResourceCost { Iron = 600 });
         }
-        return second.Count == 4;
+        if (second.Count == 4) return true;
+        if (Verified.Number - start > 900 * Fps) {
+          // Diagnose instead of a bare timeout: which seats delivered, and where each truck is.
+          var lines = pairs.Select(p => $"seat {p.Seat} site {p.Site}: delivered {Yard(p.Site).Delivered}, truck " +
+            (Verified.Exists(Yard(p.Site).Truck) ? $"{Truck(Yard(p.Site).Truck).State} at {Verified.Get<Transform3D>(Yard(p.Site).Truck).Position}" : "none")).ToList();
+          System.IO.Directory.CreateDirectory(T41Root());
+          System.IO.File.WriteAllLines(System.IO.Path.Combine(T41Root(), "fairness_timeout.txt"), lines);
+          Assert.Fail("two deliveries at every seat within 900 s:
+" + string.Join("
+", lines));
+        }
+        return false;
       }, 1800f, "two deliveries at every seat");
       var spec = LogiSpec;
       var rows = new List<string> { "seat | site | dock-bay straight m | first cycle s | repeat cycle s | throughput /min" };
@@ -343,7 +353,7 @@ namespace FactoryWars.Tests {
         var rs = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None).Where(r => r.enabled && r.gameObject.activeInHierarchy && GeometryUtility.TestPlanesAABB(planes, r.bounds)).ToList();
         long tris = 0;
         foreach (var r in rs) {
-          var m = r is SkinnedMeshRenderer sk ? sk.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
+          var m = r is SkinnedMeshRenderer sk ? sk.sharedMesh : r.TryGetComponent<MeshFilter>(out var mf) ? mf.sharedMesh : null;
           for (var i = 0; m != null && i < m.subMeshCount; i++) tris += m.GetIndexCount(i) / 3;
         }
         report.Add($"{name} | {height:0}m | draws {rs.Sum(r => r.sharedMaterials.Length)} | tris {tris}");
