@@ -1,0 +1,204 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb5d2c89bcffb3a45ab9b6c88ec5ae80, type: 3}
+  m_Name: mercenary_camp
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/mercenary_camp
+    Guid:
+      Value: 527416238448594318
+  CampRadius:
+    RawValue: 3276800
+  LeashRadius:
+    RawValue: 4718592
+  GateDistance:
+    RawValue: 3801088
+  VisionRadius:
+    RawValue: 4325376
+  GuardCount: 8
+  GuardPostRadius:
+    RawValue: 1703936
+  GuardHealth:
+    RawValue: 26214400
+  GuardDamage:
+    RawValue: 1966080
+  GuardRange:
+    RawValue: 1048576
+  GuardInterval:
+    RawValue: 65536
+  GuardSpeed:
+    RawValue: 327680
+  GuardRadius:
+    RawValue: 65536
+  MessageDelaySeconds:
+    RawValue: 524288
+  Cargo:
+    Iron:
+      RawValue: 19660800
+    Wood:
+      RawValue: 9830400
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  Truck:
+    Id:
+      Value: 416579979627631182
+  DeliveryRadius:
+    RawValue: 655360
+  CargoDropShare:
+    RawValue: 32768
+  Offers:
+  - Name: "\uC6A9\uBCD1 \uC18C\uCD1D \uBD84\uB300"
+    Unit:
+      Id:
+        Value: 442872915998123145
+    Count: 3
+    Cost:
+      Iron:
+        RawValue: 9830400
+      Wood:
+        RawValue: 5242880
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 0
+    Give:
+      Iron:
+        RawValue: 0
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 0
+    MaxStock: 4
+    CooldownSeconds:
+      RawValue: 1966080
+  - Name: "\uC6A9\uBCD1 \uC800\uACA9\uC218"
+    Unit:
+      Id:
+        Value: 517939919938993869
+    Count: 1
+    Cost:
+      Iron:
+        RawValue: 10485760
+      Wood:
+        RawValue: 3932160
+      Steel:
+        RawValue: 2621440
+      Power:
+        RawValue: 0
+    Give:
+      Iron:
+        RawValue: 0
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 0
+    MaxStock: 3
+    CooldownSeconds:
+      RawValue: 2621440
+  - Name: "\uC6A9\uBCD1 \uC804\uCC28"
+    Unit:
+      Id:
+        Value: 310411429557659117
+    Count: 1
+    Cost:
+      Iron:
+        RawValue: 17039360
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 3932160
+      Power:
+        RawValue: 3932160
+    Give:
+      Iron:
+        RawValue: 0
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 0
+    MaxStock: 2
+    CooldownSeconds:
+      RawValue: 3932160
+  - Name: "\uC6A9\uBCD1 \uACF5\uACA9 \uD5EC\uAE30"
+    Unit:
+      Id:
+        Value: 489920977364748690
+    Count: 1
+    Cost:
+      Iron:
+        RawValue: 19660800
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 7208960
+      Power:
+        RawValue: 7208960
+    Give:
+      Iron:
+        RawValue: 0
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 0
+    MaxStock: 1
+    CooldownSeconds:
+      RawValue: 5898240
+  - Name: "\uBCF4\uAE09 \uAD50\uD658(\uBAA9\uC7AC\u2192\uAC15\uCCA0)"
+    Unit:
+      Id:
+        Value: 0
+    Count: 0
+    Cost:
+      Iron:
+        RawValue: 0
+      Wood:
+        RawValue: 13107200
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 0
+    Give:
+      Iron:
+        RawValue: 0
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 5242880
+      Power:
+        RawValue: 0
+    MaxStock: 5
+    CooldownSeconds:
+      RawValue: 1310720
+  RestockSeconds:
+    RawValue: 5898240
+  AiContactAfterSeconds:
+    RawValue: 7864320
+  AiReserve:
+    Iron:
+      RawValue: 9830400
+    Wood:
+      RawValue: 5242880
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  AiEscorts: 2

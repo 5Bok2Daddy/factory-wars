@@ -255,6 +255,27 @@ namespace Quantum.Prototypes.Unity {
     }
   }
   [System.SerializableAttribute()]
+  public unsafe partial class MercGuardPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.MercGuardPrototype> {
+    public Int32 Slot;
+    public FPVector3 Post;
+    public FP Health;
+    public FP MaxHealth;
+    public FP Cooldown;
+    public Quantum.QuantumEntityPrototype Target;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.MercGuardPrototype prototype);
+    public override Quantum.Prototypes.MercGuardPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.MercGuardPrototype();
+      converter.Convert(this.Slot, out result.Slot);
+      converter.Convert(this.Post, out result.Post);
+      converter.Convert(this.Health, out result.Health);
+      converter.Convert(this.MaxHealth, out result.MaxHealth);
+      converter.Convert(this.Cooldown, out result.Cooldown);
+      converter.Convert(this.Target, out result.Target);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
   public unsafe partial class NpcTraderPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.NpcTraderPrototype> {
     public FP Health;
     public FP MaxHealth;
@@ -263,6 +284,20 @@ namespace Quantum.Prototypes.Unity {
     public FP Cooldown;
     public Quantum.QuantumEntityPrototype Target;
     public PlayerRef Killer;
+    public Int32 ContactMask;
+    public Int32 AgreementMask;
+    public Int32 ThreatMask;
+    [ArrayLengthAttribute(4)]
+    public Int32[] ReplyFrames = new Int32[4];
+    [ArrayLengthAttribute(4)]
+    public Quantum.QuantumEntityPrototype[] Trucks = new Quantum.QuantumEntityPrototype[4];
+    [ArrayLengthAttribute(4)]
+    public FPVector3[] TruckAt = new FPVector3[4];
+    [ArrayLengthAttribute(8)]
+    public Int32[] Stock = new Int32[8];
+    public Int32 RestockFrame;
+    [ArrayLengthAttribute(32)]
+    public Int32[] ReadyFrames = new Int32[32];
     partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.NpcTraderPrototype prototype);
     public override Quantum.Prototypes.NpcTraderPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
       var result = new Quantum.Prototypes.NpcTraderPrototype();
@@ -273,6 +308,15 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Cooldown, out result.Cooldown);
       converter.Convert(this.Target, out result.Target);
       converter.Convert(this.Killer, out result.Killer);
+      converter.Convert(this.ContactMask, out result.ContactMask);
+      converter.Convert(this.AgreementMask, out result.AgreementMask);
+      converter.Convert(this.ThreatMask, out result.ThreatMask);
+      converter.Convert(this.ReplyFrames, out result.ReplyFrames);
+      converter.Convert(this.Trucks, out result.Trucks);
+      converter.Convert(this.TruckAt, out result.TruckAt);
+      converter.Convert(this.Stock, out result.Stock);
+      converter.Convert(this.RestockFrame, out result.RestockFrame);
+      converter.Convert(this.ReadyFrames, out result.ReadyFrames);
       ConvertUser(converter, ref result);
       return result;
     }

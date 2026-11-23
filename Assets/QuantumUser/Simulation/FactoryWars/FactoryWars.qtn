@@ -293,6 +293,32 @@ component NpcTrader {
     FP Cooldown;
     entity_ref Target;
     player_ref Killer;
+    // Task 39 card 3 mercenary camp (player bit masks). Contact = reply received, Agreement = cargo delivered, Threat = garrison engages.
+    Int32 ContactMask;
+    Int32 AgreementMask;
+    Int32 ThreatMask;
+    array<Int32>[4] ReplyFrames;
+    array<entity_ref>[4] Trucks;
+    array<FPVector3>[4] TruckAt;
+    array<Int32>[8] Stock;
+    Int32 RestockFrame;
+    array<Int32>[32] ReadyFrames;
+}
+
+// Task 39 card 3: mercenary garrison member (neutral, not a player Unit). Sorties to Target, returns to Post.
+component MercGuard {
+    Int32 Slot;
+    FPVector3 Post;
+    FP Health;
+    FP MaxHealth;
+    FP Cooldown;
+    entity_ref Target;
+}
+
+// Task 39 card 3: an armoured truck carrying trade goods to the mercenary camp gate.
+component MercCargo {
+    player_ref Owner;
+    ResourceCost Cargo;
 }
 
 // 항목 33 공중 항모. Docked는 격납 중인 드론 수, BuildProgress는 잃은 드론 재생산 진행(초), Assembling=true면 비행장 패드 지상 조립 중(지상 공격 가능).
@@ -602,6 +628,9 @@ synced event TraderHostile { player_ref Player; }
 synced event TraderDestroyed { player_ref Killer; ResourceCost Bounty; }
 synced event TraderTrade { player_ref Player; Int32 Offer; }
 synced event TraderShot { FPVector3 From; FPVector3 To; }
+// Stage: 1 message sent, 2 reply, 3 truck dispatched, 4 agreement, 5 truck lost, 6 agreement revoked.
+synced event MercDiplomacy { player_ref Player; Int32 Stage; }
+synced event MercPurchase { player_ref Player; Int32 Offer; }
 synced event BaseUnderAttack { player_ref Player; FPVector3 Position; }
 synced event CityBuildingDamaged { entity_ref Building; Int32 Index; Int32 Stage; }
 synced event CityBuildingCollapsed { Int32 Index; }

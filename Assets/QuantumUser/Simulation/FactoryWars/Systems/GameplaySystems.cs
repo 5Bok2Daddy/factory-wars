@@ -744,6 +744,9 @@ namespace Quantum.FactoryWars {
     }
 
     static bool IsValidTarget(Frame f, in Weapon weapon, EntityRef target) {
+      if (f.Has<MercGuard>(target)) {
+        return MercenaryCamp.IsValidGuardTarget(f, target) && weapon.Attack != AttackType.AntiAir;
+      }
       if (f.Unsafe.TryGetPointer<NpcTrader>(target, out var trader)) {
         return trader->Destroyed == false && FactoryWarsUtil.InTruce(f) == false && weapon.Attack != AttackType.AntiAir;
       }
@@ -1017,6 +1020,8 @@ namespace Quantum.FactoryWars {
         CitySystem.Hit(f, target, city, cityDmg);
       } else if (f.Unsafe.TryGetPointer<NpcTrader>(target, out var trader)) {
         NpcTraderSystem.Hit(f, target, trader, weapon.Owner, amount * BuildingMultiplier(FactoryWarsUtil.Rules(f), weapon.Attack));
+      } else if (f.Unsafe.TryGetPointer<MercGuard>(target, out var guard)) {
+        MercenaryCamp.HitGuard(f, target, guard, weapon.Owner, amount);
       }
     }
 
@@ -1367,6 +1372,8 @@ namespace Quantum.FactoryWars {
   public unsafe class MovementSystem : SystemMainThread, ISignalOnNavMeshWaypointReached, ISignalOnNavMeshSearchFailed {
     public static void Order(Frame f, EntityRef entity, Unit* unit, UnitOrder order, FPVector3 target) {
       target = FactoryWarsUtil.MapInfo(f).ClampToPlayable(target);
+      // Task 39: without an agreement nobody is ordered into the mercenary camp (the order stops at the gate).
+      target = MercenaryCamp.ClampEntry(f, unit->Owner, target);
       // 항목 32: 명령이 엄폐보다 우선한다. 공격 이동을 다시 받는 것(AI 파도)은 엄폐를 유지한다.
       if (order != UnitOrder.AttackMove || unit->Order != UnitOrder.AttackMove) {
         CoverSystem.Release(f, unit);

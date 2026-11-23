@@ -38,6 +38,8 @@ namespace FactoryWars.EditorTools {
       /// <summary>Task 39: clearance per ExtraBridges entry (m) and which ExtraBridges entries are drawbridges.</summary>
       public float[] ExtraBridgeClearances;
       public int[] ExtraDrawbridges;
+      /// <summary>Task 39 card 3: the trader is the mercenary camp.</summary>
+      public bool MercenaryCamp;
       public MapShape[] ExtraRoads;
       public WaterStrip[] ExtraWater;
       public MapShape BaseArea;

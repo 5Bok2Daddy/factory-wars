@@ -230,6 +230,17 @@ namespace Quantum.FactoryWars {
         }
         return;
       }
+      // Task 39: mercenary garrison members are attackable (attacking revokes the agreement).
+      if (f.Has<MercGuard>(Target)) {
+        if (FactoryWarsUtil.InTruce(f)) {
+          f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.Truce, 0);
+          return;
+        }
+        if (MercenaryCamp.IsValidGuardTarget(f, Target)) {
+          Order(f, player);
+        }
+        return;
+      }
       if (f.Unsafe.TryGetPointer<CityBuilding>(Target, out var city)) {
         if (FactoryWarsUtil.InTruce(f)) {
           f.Events.ActionRejected(player, ActionKind.Attack, RejectReason.Truce, 0);

@@ -119,6 +119,8 @@ namespace FactoryWars.Tests {
       Assert.IsTrue(ReachableNow(navMesh, start0).Contains(navMesh.FindTriangle2D(start1, NavMeshRegionMask.Default, true)), "개방 뒤에는 경로가 있음");
 
       var tank = PilotTruceTank();
+      // Task 39 card 3: entering the mercenary camp needs an agreement; this test checks the opened truce gate, not diplomacy.
+      GrantAgreement(0);
       var target = CompoundEntries()[3];
       yield return Send(0, new MoveUnitsCommand { Units = new[] { tank }, Target = target });
       yield return WaitFor(() => FactoryWarsUtil.FlatDistanceSqr(Verified.Get<Transform3D>(tank).Position, target) < 9, 60f, "관문을 지나 요새 진입");

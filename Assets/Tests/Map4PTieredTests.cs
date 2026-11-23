@@ -212,6 +212,8 @@ namespace FactoryWars.Tests {
         return (seat, tankId, (int)spawn.X, (int)spawn.Z);
       }).ToArray();
       yield return StartMatch(Map4PScene, 4, truce: 5, mirrorFaction: 0, units: spawns, seed: 42);
+      // Task 39 card 3: the compound is the mercenary camp; entering needs an agreement (else the garrison engages). This test measures travel.
+      for (var p = 0; p < 4; p++) GrantAgreement(p);
       yield return WaitForHud();
       yield return WaitFor(BarrierOpen, 90f, "truce end before travel");
 

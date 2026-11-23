@@ -313,6 +313,9 @@ MonoBehaviour:
   BridgeRegion: Bridge
   BridgeClearance:
     RawValue: 262144
+  Mercenary:
+    Id:
+      Value: 527416238448594318
   DrawbridgeApproachRadius:
     RawValue: 1572864
   DrawbridgeDeckClearSeconds:

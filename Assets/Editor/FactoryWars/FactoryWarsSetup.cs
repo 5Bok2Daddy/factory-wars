@@ -393,6 +393,7 @@ namespace FactoryWars.EditorTools {
     public static void ApplyTask39Data() {
       var rules = AssetDatabase.LoadAssetAtPath<GameRulesSpec>($"{DataRoot}/game_rules.asset");
       ApplyBridgeTrafficRules(rules);
+      rules.Mercenary = Ref(BuildMercenarySpec());
       EditorUtility.SetDirty(rules);
       foreach (var guid in AssetDatabase.FindAssets("t:UnitSpec", new[] { DataRoot })) {
         var unit = AssetDatabase.LoadAssetAtPath<UnitSpec>(AssetDatabase.GUIDToAssetPath(guid));
@@ -401,6 +402,41 @@ namespace FactoryWars.EditorTools {
       }
       AssetDatabase.SaveAssets();
       Debug.Log("[FW-T39] bridge traffic data applied");
+    }
+
+    /// <summary>Task 39 card 3: mercenary camp data (garrison, diplomacy cargo, shop with shared stock). Korean names are shop labels.</summary>
+    static MercenarySpec BuildMercenarySpec() {
+      var spec = Asset<MercenarySpec>("mercenary_camp");
+      AssetRef<UnitSpec> U(string id) => Ref(AssetDatabase.LoadAssetAtPath<UnitSpec>($"{DataRoot}/{id}.asset"));
+      spec.CampRadius = 50;
+      spec.LeashRadius = 72;
+      spec.GateDistance = 58;
+      spec.VisionRadius = 66;
+      spec.GuardCount = 8;
+      spec.GuardPostRadius = 26;
+      spec.GuardHealth = 400;
+      spec.GuardDamage = 30;
+      spec.GuardRange = 16;
+      spec.GuardInterval = 1;
+      spec.GuardSpeed = 5;
+      spec.MessageDelaySeconds = 8;
+      spec.Cargo = R(300, 150);
+      spec.Truck = U("cf_apc_transport");
+      spec.DeliveryRadius = 10;
+      spec.CargoDropShare = N(0.5);
+      spec.RestockSeconds = 90;
+      spec.AiContactAfterSeconds = 120;
+      spec.AiReserve = R(150, 80);
+      spec.AiEscorts = 2;
+      spec.Offers = new[] {
+        new MercOffer { Name = "용병 소총 분대", Unit = U("cf_militia"), Count = 3, Cost = R(150, 80), MaxStock = 4, CooldownSeconds = 30 },
+        new MercOffer { Name = "용병 저격수", Unit = U("ff_sniper"), Count = 1, Cost = R(160, 60, 40), MaxStock = 3, CooldownSeconds = 40 },
+        new MercOffer { Name = "용병 전차", Unit = U("cf_dragonscale_tank"), Count = 1, Cost = R(260, 0, 60, 60), MaxStock = 2, CooldownSeconds = 60 },
+        new MercOffer { Name = "용병 공격 헬기", Unit = U("ff_hawk_gunship"), Count = 1, Cost = R(300, 0, 110, 110), MaxStock = 1, CooldownSeconds = 90 },
+        new MercOffer { Name = "보급 교환(목재→강철)", Cost = R(0, 200), Give = R(0, 0, 80), MaxStock = 5, CooldownSeconds = 20 },
+      };
+      EditorUtility.SetDirty(spec);
+      return spec;
     }
 
     /// <summary>Task 39 card 1: data + Map4P v5 bake in one batch call.</summary>
@@ -1556,6 +1592,7 @@ namespace FactoryWars.EditorTools {
       spec.SupplyRewardMultiplier = N(def.SupplyReward);
       spec.HasTrader = def.Trader;
       spec.TraderPosition = def.TraderPosition;
+      spec.MercenaryCamp = def.MercenaryCamp;
       spec.BlackBoxSpots = def.BlackBoxSpots;
       spec.WeatherFirstSeconds = def.WeatherFirst;
       spec.WeatherDurationSeconds = def.WeatherDuration;

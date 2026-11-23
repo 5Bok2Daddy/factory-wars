@@ -21,6 +21,8 @@ namespace Quantum.FactoryWars {
       var entity = f.Create();
       f.Add(entity, Transform3D.Create(map.TraderPosition));
       f.Add(entity, new NpcTrader { Health = rules.TraderHealth, MaxHealth = rules.TraderHealth, Killer = PlayerRef.None });
+      // Task 39 card 3: on camp maps the trader is the mercenary camp (garrison, stock).
+      MercenaryCamp.Init(f, f.Unsafe.GetPointer<NpcTrader>(entity), map.TraderPosition);
     }
 
     public static bool IsHostile(NpcTrader* trader, PlayerRef player) {
@@ -34,6 +36,9 @@ namespace Quantum.FactoryWars {
         return;
       }
       var index = (int)attacker;
+      if (MercenaryCamp.Spec(f) != null) {
+        MercenaryCamp.Attacked(f, trader, attacker);
+      }
       if (index >= 0 && index < Players && (trader->HostileMask & (1 << index)) == 0) {
         trader->HostileMask |= 1 << index;
         f.Events.TraderHostile(attacker);
@@ -55,6 +60,9 @@ namespace Quantum.FactoryWars {
 
     /// <summary>거래. 실패하면 이유를 알린다(적대·닫힘·대기·자원·시야).</summary>
     public static void Trade(Frame f, PlayerRef player, int offer, FPVector3 target) {
+      if (MercenaryCamp.Trade(f, player, offer)) {
+        return;
+      }
       var rules = FactoryWarsUtil.Rules(f);
       var state = FactoryWarsUtil.Player(f, player);
       NpcTrader* trader = null;
@@ -68,7 +76,7 @@ namespace Quantum.FactoryWars {
         f.Events.ActionRejected(player, ActionKind.Produce, RejectReason.Closed, 0);
         return;
       }
-      if (IsHostile(trader, player)) {
+      if (IsHostile(trader, player) || (MercenaryCamp.Spec(f) != null && MercenaryCamp.HasAgreement(trader, player) == false)) {
         f.Events.ActionRejected(player, ActionKind.Produce, RejectReason.Hostile, 0);
         return;
       }
@@ -139,7 +147,8 @@ namespace Quantum.FactoryWars {
       }
       var rules = FactoryWarsUtil.Rules(f);
       var traders = f.Filter<Transform3D, NpcTrader>();
-      while (traders.NextUnsafe(out _, out var transform, out var trader)) {
+      while (traders.NextUnsafe(out var traderEntity, out var transform, out var trader)) {
+        MercenaryCamp.Update(f, traderEntity, trader, transform->Position);
         if (trader->Destroyed || trader->HostileMask == 0) {
           continue;
         }

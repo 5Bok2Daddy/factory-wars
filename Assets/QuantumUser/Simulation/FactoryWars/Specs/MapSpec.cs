@@ -74,6 +74,8 @@ namespace Quantum {
     /// <summary>항목 37 기상: 첫 발동 시각, 지속, 주기(초). 0이면 기상 없음. 기상 중 기본 시야 배율.</summary>
     /// <summary>중앙 암시장(NPC 무기상)이 있는지와 그 자리.</summary>
     public bool HasTrader;
+    /// <summary>Task 39: the trader is the mercenary camp (garrison, diplomacy, shop; data in GameRulesSpec.Mercenary).</summary>
+    public bool MercenaryCamp;
     public FPVector3 TraderPosition;
     /// <summary>항목 37 블랙박스 추락 자리(순환). 비어 있으면 이 맵에는 없다.</summary>
     public FPVector3[] BlackBoxSpots;

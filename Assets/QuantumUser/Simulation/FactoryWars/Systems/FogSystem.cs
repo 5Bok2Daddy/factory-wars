@@ -217,6 +217,15 @@ namespace Quantum.FactoryWars {
           Mark(fog, fog->Grids.GetPointer(radarOwner), radarAt->Position, rules.RadarSiteRadius);
         }
       }
+      // Task 39: a mercenary camp agreement reveals the camp interior and its surroundings.
+      var merc = MercenaryCamp.Spec(f);
+      if (merc != null && MercenaryCamp.Find(f, out _, out var camp, out var campAt) && camp->Destroyed == false) {
+        for (var p = 0; p < Players; p++) {
+          if ((camp->AgreementMask & (1 << p)) != 0) {
+            Mark(fog, fog->Grids.GetPointer(p), campAt, merc.VisionRadius);
+          }
+        }
+      }
       ShareWithAllies(f, fog);
       for (var p = 0; p < Players; p++) {
         var grid = fog->Grids.GetPointer(p);

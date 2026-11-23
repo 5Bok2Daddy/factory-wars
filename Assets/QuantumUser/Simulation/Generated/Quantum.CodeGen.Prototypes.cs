@@ -616,6 +616,46 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.MercCargo))]
+  public unsafe partial class MercCargoPrototype : ComponentPrototype<Quantum.MercCargo> {
+    public PlayerRef Owner;
+    public Quantum.Prototypes.ResourceCostPrototype Cargo;
+    partial void MaterializeUser(Frame frame, ref Quantum.MercCargo result, in PrototypeMaterializationContext context);
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.MercCargo component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.MercCargo result, in PrototypeMaterializationContext context = default) {
+        result.Owner = this.Owner;
+        this.Cargo.Materialize(frame, ref result.Cargo, in context);
+        MaterializeUser(frame, ref result, in context);
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.MercGuard))]
+  public unsafe class MercGuardPrototype : ComponentPrototype<Quantum.MercGuard> {
+    public Int32 Slot;
+    public FPVector3 Post;
+    public FP Health;
+    public FP MaxHealth;
+    public FP Cooldown;
+    public MapEntityId Target;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.MercGuard component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.MercGuard result, in PrototypeMaterializationContext context = default) {
+        result.Slot = this.Slot;
+        result.Post = this.Post;
+        result.Health = this.Health;
+        result.MaxHealth = this.MaxHealth;
+        result.Cooldown = this.Cooldown;
+        PrototypeValidator.FindMapEntity(this.Target, in context, out result.Target);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.MissileStrike))]
   public unsafe partial class MissileStrikePrototype : ComponentPrototype<Quantum.MissileStrike> {
     public PlayerRef Owner;
@@ -716,6 +756,20 @@ namespace Quantum.Prototypes {
     public FP Cooldown;
     public MapEntityId Target;
     public PlayerRef Killer;
+    public Int32 ContactMask;
+    public Int32 AgreementMask;
+    public Int32 ThreatMask;
+    [ArrayLengthAttribute(4)]
+    public Int32[] ReplyFrames = new Int32[4];
+    [ArrayLengthAttribute(4)]
+    public MapEntityId[] Trucks = new MapEntityId[4];
+    [ArrayLengthAttribute(4)]
+    public FPVector3[] TruckAt = new FPVector3[4];
+    [ArrayLengthAttribute(8)]
+    public Int32[] Stock = new Int32[8];
+    public Int32 RestockFrame;
+    [ArrayLengthAttribute(32)]
+    public Int32[] ReadyFrames = new Int32[32];
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.NpcTrader component = default;
         Materialize((Frame)f, ref component, in context);
@@ -729,6 +783,25 @@ namespace Quantum.Prototypes {
         result.Cooldown = this.Cooldown;
         PrototypeValidator.FindMapEntity(this.Target, in context, out result.Target);
         result.Killer = this.Killer;
+        result.ContactMask = this.ContactMask;
+        result.AgreementMask = this.AgreementMask;
+        result.ThreatMask = this.ThreatMask;
+        for (int i = 0, count = PrototypeValidator.CheckLength(ReplyFrames, 4, in context); i < count; ++i) {
+          result.ReplyFrames[i] = this.ReplyFrames[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(Trucks, 4, in context); i < count; ++i) {
+          PrototypeValidator.FindMapEntity(this.Trucks[i], in context, out *result.Trucks.GetPointer(i));
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(TruckAt, 4, in context); i < count; ++i) {
+          *result.TruckAt.GetPointer(i) = this.TruckAt[i];
+        }
+        for (int i = 0, count = PrototypeValidator.CheckLength(Stock, 8, in context); i < count; ++i) {
+          result.Stock[i] = this.Stock[i];
+        }
+        result.RestockFrame = this.RestockFrame;
+        for (int i = 0, count = PrototypeValidator.CheckLength(ReadyFrames, 32, in context); i < count; ++i) {
+          result.ReadyFrames[i] = this.ReadyFrames[i];
+        }
     }
   }
   [System.SerializableAttribute()]
