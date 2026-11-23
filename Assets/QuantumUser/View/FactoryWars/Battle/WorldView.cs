@@ -199,6 +199,8 @@ namespace FactoryWars.View {
     }
 
     void BuildStatic() {
+      // Task 39 fix 2: the grid map's canal is a deep cut so ships pass under street-level bridge decks (water ~6.5 m down).
+      TerrainKit.CanalDepthOverride = GridMapView.Uses(_map) ? GridMapView.CanalDepth : 0f;
       var biome = TerrainKit.BiomeOf(_map);
       UrbanDecor.ApplyWaterBiome(_map);
       var ground = new MeshKit { Shading = MeshKit.ShadeMode.Ground };
@@ -463,6 +465,7 @@ namespace FactoryWars.View {
         pontoon.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
         pontoon.SetActive(false);
 
+        if (GridMapView.Uses(_map)) intactGo.SetActive(false);
         _bridges.Add(new BridgeVisual { Intact = intactGo, Broken = broken, Pontoon = pontoon, State = 0 });
       }
     }
@@ -777,7 +780,8 @@ namespace FactoryWars.View {
           continue;
         }
         visual.State = next;
-        visual.Intact.SetActive(next == 0);
+        // Task 39 fix 2: on the grid map the intact bridge is the steel arch bridge (ArchBridgeView); the old wooden model stays off.
+        visual.Intact.SetActive(next == 0 && GridMapView.Uses(_map) == false);
         visual.Broken.SetActive(next == 1);
         visual.Pontoon.SetActive(next == 2);
       }

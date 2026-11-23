@@ -33,7 +33,9 @@ namespace FactoryWars.View {
     }
 
     /// <summary>수면 높이. 프로필의 강 깊이를 따른다.</summary>
-    public static float WaterLevel => -Mathf.Max(0.8f, VisualProfile.Current.WaterDepth);
+    /// <summary>Task 39: per-map override of the water depth (grid map deep canal), set by WorldView before building.</summary>
+    public static float CanalDepthOverride;
+    public static float WaterLevel => -Mathf.Max(0.8f, Mathf.Max(VisualProfile.Current.WaterDepth, CanalDepthOverride));
     const float Step = 4f;
     const float OuterStep = 20f;
     const float Margin = 80f;

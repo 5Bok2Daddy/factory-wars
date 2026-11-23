@@ -36,6 +36,27 @@ namespace FactoryWars.EditorTools {
         Slots = new[] { "unit/cf_artillery_ship" },
         Notes = "CC BY 4.0 gun warship (see Assets/ThirdParty/CREDITS.md), decimated + flat palette, markings removed",
       },
+      // Task 39 fix 3 (2026-11-23): PMC models from temp-assets/bridge (CC BY 4.0), real scale (infantry 1.8 m).
+      new Model {
+        Folder = "PmcStrikeHeli", Name = "pmc_strike_heli", Span = 16f, Yaw = 0f,
+        Slots = new[] { "unit/pmc_attack_heli", "camp/display_heli" },
+        Notes = "CC BY 4.0 attack helicopter (see Assets/ThirdParty/CREDITS.md), decimated + flat palette, renamed; 16 m real scale",
+      },
+      new Model {
+        Folder = "PmcScoutHeli", Name = "pmc_scout_heli", Span = 8.5f, Yaw = 0f,
+        Slots = new[] { "unit/pmc_scout_heli", "camp/display_scoutheli" },
+        Notes = "CC BY 4.0 light helicopter (see Assets/ThirdParty/CREDITS.md), decimated + flat palette, renamed; 8.5 m real scale",
+      },
+      new Model {
+        Folder = "MercHaulerTruck", Name = "merc_hauler_truck", Span = 7.5f, Yaw = 0f,
+        Slots = new[] { "unit/merc_cargo_truck" },
+        Notes = "CC BY 4.0 military cargo truck (see Assets/ThirdParty/CREDITS.md), decimated + flat palette, renamed; 7.5 m",
+      },
+      new Model {
+        Folder = "PmcLoiterDrone", Name = "pmc_loiter_drone", Span = 2.5f, Yaw = 90f,
+        Slots = new[] { "unit/pmc_attack_drone", "camp/display_drone" },
+        Notes = "CC BY 4.0 loitering drone (see Assets/ThirdParty/CREDITS.md), decimated + flat palette, renamed; 2.5 m",
+      },
     };
 
     public static string PrefabPath(Model model) => $"{Root}/{model.Folder}/{model.Name}.prefab";

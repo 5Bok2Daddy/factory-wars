@@ -1,0 +1,3 @@
+newmtl merc_hauler_truck
+Kd 1 1 1
+map_Kd merc_hauler_truck_palette.png

@@ -133,7 +133,7 @@ MonoBehaviour:
         RawValue: 0
       Power:
         RawValue: 0
-    MaxStock: 4
+    MaxStock: 6
     CooldownSeconds:
       RawValue: 3932160
   - Name: "PMC \uACF5\uACA9 \uD5EC\uAE30"
@@ -159,7 +159,7 @@ MonoBehaviour:
         RawValue: 0
       Power:
         RawValue: 0
-    MaxStock: 4
+    MaxStock: 2
     CooldownSeconds:
       RawValue: 5898240
   - Name: "PMC \uACF5\uACA9 \uB4DC\uB860"
@@ -188,7 +188,7 @@ MonoBehaviour:
     MaxStock: 2
     CooldownSeconds:
       RawValue: 2949120
-  - Name: "PMC \uC7A5\uAC11 SUV"
+  - Name: "PMC \uC7A5\uAC11\uCC28"
     Unit:
       Id:
         Value: 363699722639761675
@@ -211,9 +211,35 @@ MonoBehaviour:
         RawValue: 0
       Power:
         RawValue: 0
-    MaxStock: 2
+    MaxStock: 4
     CooldownSeconds:
       RawValue: 2621440
+  - Name: "PMC \uACBD\uD5EC\uAE30"
+    Unit:
+      Id:
+        Value: 476765324832615674
+    Count: 1
+    Cost:
+      Iron:
+        RawValue: 13107200
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 4587520
+      Power:
+        RawValue: 4587520
+    Give:
+      Iron:
+        RawValue: 0
+      Wood:
+        RawValue: 0
+      Steel:
+        RawValue: 0
+      Power:
+        RawValue: 0
+    MaxStock: 1
+    CooldownSeconds:
+      RawValue: 3932160
   - Name: "\uBCF4\uAE09 \uAD50\uD658(\uBAA9\uC7AC\u2192\uAC15\uCCA0)"
     Unit:
       Id:

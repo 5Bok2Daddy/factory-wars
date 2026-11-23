@@ -14,7 +14,8 @@ namespace Quantum.FactoryWars {
     public static FP ClearanceOf(MapSpec map, GameRulesSpec rules, int index) =>
       map.BridgeClearances != null && index < map.BridgeClearances.Length && map.BridgeClearances[index] > FP._0 ? map.BridgeClearances[index] : rules.BridgeClearance;
 
-    public static bool IsDrawbridge(MapSpec map, int index) {
+    public static bool IsDrawbridge(MapSpec map, GameRulesSpec rules, int index) {
+      if (rules.DrawbridgeEnabled == false) return false;
       for (var i = 0; map.Drawbridges != null && i < map.Drawbridges.Length; i++) {
         if (map.Drawbridges[i] == index) return true;
       }

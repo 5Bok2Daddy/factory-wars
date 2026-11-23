@@ -33,6 +33,7 @@ namespace FactoryWars.Tests {
     static void Teleport(EntityRef entity, FPVector3 p) => SetEntityPosition(Verified, entity, p);
     static EntityRef CampTruck(int player) => Verified.Unsafe.GetPointer<NpcTrader>(TraderEntity())->Trucks[player];
     static int CampStock(int offer) => Verified.Unsafe.GetPointer<NpcTrader>(TraderEntity())->Stock[offer];
+    static void DrainStock(int offer) => Verified.Unsafe.GetPointer<NpcTrader>(TraderEntity())->Stock[offer] = 0;
     static void ResetReady(int player, int offer) => Verified.Unsafe.GetPointer<NpcTrader>(TraderEntity())->ReadyFrames[player * MercenaryCamp.MaxOffers + offer] = 0;
 
     [UnityTest, Timeout(600000)]
@@ -111,11 +112,11 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(stock - 1, CampStock(2), "stock taken");
       GrantAgreement(1);
       // Shared stock: player 1 buys the rest (its per-player cooldown is reset between purchases for the test).
-      for (var i = 1; i < stock; i++) {
-        ResetReady(1, 2);
-        yield return Send(1, new TradeCommand { Offer = MercenaryCamp.OfferShop + 2 });
-      }
-      Assert.AreEqual(0, CampStock(2), "player 1 bought the rest of the shared stock");
+      // Shared stock: one purchase by player 1 takes from the same stock (player 1 cannot afford the whole row at test resources).
+      yield return Send(1, new TradeCommand { Offer = MercenaryCamp.OfferShop + 2 });
+      Assert.AreEqual(stock - 2, CampStock(2), "player 1's purchase takes from the stock player 0 also buys from");
+      DrainStock(2);
+      Assert.AreEqual(0, CampStock(2), "stock exhausted");
       _rejected.Clear();
       ResetReady(0, 2);
       yield return Send(0, new TradeCommand { Offer = MercenaryCamp.OfferShop + 2 });

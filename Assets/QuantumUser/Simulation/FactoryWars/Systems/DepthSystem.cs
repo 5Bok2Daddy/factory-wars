@@ -480,7 +480,7 @@ namespace Quantum.FactoryWars {
         f.Add(entity, Transform3D.Create(map.Bridges[i].Center));
         f.Add(entity, new Bridge {
           Index = i, Seat = BridgeSeat(map, i), Health = rules.BridgeHealth, MaxHealth = rules.BridgeHealth,
-          Clearance = BridgeTraffic.ClearanceOf(map, rules, i), Drawbridge = BridgeTraffic.IsDrawbridge(map, i),
+          Clearance = BridgeTraffic.ClearanceOf(map, rules, i), Drawbridge = BridgeTraffic.IsDrawbridge(map, rules, i),
         });
       }
     }

@@ -74,7 +74,7 @@ for nid in np.unique(N):
     ext = (np.asarray(sub.vertices).max(0) - np.asarray(sub.vertices).min(0)).max()
     parts.append((nid, np.asarray(sub.vertices, np.float32), np.asarray(sub.faces, np.int32), ext > 0.5 * length, np.where(m)[0]))
 big = sum(len(p[2]) for p in parts if p[3]); small = sum(len(p[2]) for p in parts if not p[3])
-big_ratio = 0.7 if len(F) > target else 1.0  # hull/deck plates (welded) are only reduced gently
+big_ratio = (float(os.environ.get('FW_BIG_RATIO', '0.7')) if len(F) > target else 1.0)  # hull/deck plates (welded) are reduced gently; FW_BIG_RATIO overrides
 small_ratio = 1.0 if len(F) <= target else max(0.05, (target - big * (0.8 if waterline is not None else 1.0)) / max(1, small))
 print('parts', len(parts), 'big', big, 'x', round(big_ratio, 2), 'small', small, 'x', round(small_ratio, 2))
 outV, outF, outL = [], [], []

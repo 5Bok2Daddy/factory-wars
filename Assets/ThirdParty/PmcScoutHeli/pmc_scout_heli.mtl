@@ -1,0 +1,3 @@
+newmtl pmc_scout_heli
+Kd 1 1 1
+map_Kd pmc_scout_heli_palette.png

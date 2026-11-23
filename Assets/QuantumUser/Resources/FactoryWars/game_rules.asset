@@ -312,7 +312,8 @@ MonoBehaviour:
     RawValue: 16384000
   BridgeRegion: Bridge
   BridgeClearance:
-    RawValue: 262144
+    RawValue: 524288
+  DrawbridgeEnabled: 0
   Mercenary:
     Id:
       Value: 527416238448594318

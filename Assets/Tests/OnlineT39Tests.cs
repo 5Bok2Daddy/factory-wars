@@ -29,6 +29,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Explicit, Category("Online"), Timeout(900000)]
     public IEnumerator Online_T39_DrawbridgeAndCampChecksumsMatch() {
+      EnableDrawbridgeMode();
       Time.timeScale = 1f;
       LogAssert.ignoreFailingMessages = true;
 #if UNITY_EDITOR

@@ -197,6 +197,8 @@ namespace Quantum {
     /// LowerDelaySeconds after the last tall ship left the approach radius. Ground passage is closed whenever the deck is not down.
     /// </summary>
     public FP BridgeClearance = 4;
+    /// <summary>Task 39 fix 2: drawbridge mode (MapSpec.Drawbridges raise for tall ships). Off: every bridge is a fixed high bridge.</summary>
+    public bool DrawbridgeEnabled = true;
     /// <summary>Task 39 card 3: mercenary camp data (used on maps with MapSpec.MercenaryCamp).</summary>
     public AssetRef<MercenarySpec> Mercenary;
     public FP DrawbridgeApproachRadius = 24;

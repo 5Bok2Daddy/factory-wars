@@ -1,0 +1,3 @@
+newmtl pmc_loiter_drone
+Kd 1 1 1
+map_Kd pmc_loiter_drone_palette.png

@@ -13,6 +13,7 @@ namespace FactoryWars.View {
     /// <summary>외부 모델 출처(Assets/ThirdParty/CREDITS.md와 같은 내용). CC BY 4.0은 작가·라이선스·출처 표기가 의무다.</summary>
     public const string Credits =
       "모델 출처: 정찰 드론 — Viktor_ (sketchfab.com/Viktor.Zhuravlev), 대형 포함 — SIpriv (sketchfab.com/S1Priv), CC BY 4.0, 감량·재색칠·이름 변경\n" +
+      "공격 헬기 — Araon, 경헬기 — Muhamad Mirza Arrafi, 화물 트럭 — leoxx300, 배회 드론 — RotodrelloCompamy (sketchfab.com), CC BY 4.0, 감량·재색칠·이름 변경\n" +
       "Synty POLYGON 팩(구입), Kenney (CC0), Strategy GUI Kit(구입)";
 
     public static RectTransform Build(Transform parent, UnityEngine.Events.UnityAction onClose) {

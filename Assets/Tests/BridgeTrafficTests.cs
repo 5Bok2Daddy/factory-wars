@@ -44,6 +44,20 @@ namespace FactoryWars.Tests {
     static float AcrossOf(MapShape bridge, FPVector3 p) =>
       bridge.HalfLength < bridge.HalfWidth ? (p - bridge.Center).X.AsFloat : (p - bridge.Center).Z.AsFloat;
 
+    /// <summary>
+    /// Task 39 fix 2: the shipped data has high fixed bridges (8 m, drawbridge mode off). The drawbridge tests switch the old mode back on
+    /// for the test (mode on + 4 m clearances) so the mechanism stays covered.
+    /// </summary>
+    void EnableDrawbridgeMode() {
+      var rules = Resources.Load<GameRulesSpec>("FactoryWars/game_rules");
+      var map = Resources.Load<MapSpec>("FactoryWars/map_Map4P");
+      var mode = rules.DrawbridgeEnabled;
+      var clearances = map.BridgeClearances.ToArray();
+      Restores.Add(() => { rules.DrawbridgeEnabled = mode; map.BridgeClearances = clearances; });
+      rules.DrawbridgeEnabled = true;
+      map.BridgeClearances = clearances.Select(_ => FP._4).ToArray();
+    }
+
     static EntityRef Spawn(string id, FPVector3 p) => ProductionSystem.SpawnUnitAt(Verified, 0, SpecRef(id), p, null);
 
     [UnityTest, Timeout(600000)]
@@ -83,28 +97,45 @@ namespace FactoryWars.Tests {
         Assert.IsTrue(water.Contains(map.Bridges[i].Center, mask, true), $"water continues under bridge {i}");
         Assert.AreEqual(Navigation.FindPathResult.Code.Success, Verified.Navigation.FindPath((FrameThreadSafe)Verified, a, b, water, in mask).Result, $"water path under bridge {i}");
         Assert.IsTrue(OnGroundNavMesh(Verified, map.Bridges[i].Center), $"deck {i} carries ground units");
-        Assert.AreEqual(4f, BridgeState(i).Clearance.AsFloat, 0.01f, $"bridge {i} clearance");
+        Assert.AreEqual(8f, BridgeState(i).Clearance.AsFloat, 0.01f, $"bridge {i} clearance 8 m (tallest ship + 1 m)");
+        Assert.IsFalse(BridgeState(i).Drawbridge, $"bridge {i} is a fixed high bridge (drawbridge mode off)");
       }
-      Assert.Greater(Resources.Load<UnitSpec>("FactoryWars/ff_artillery_ship").HullHeight.AsFloat, 4f, "artillery ship is taller than a fixed bridge");
-      Assert.LessOrEqual(Resources.Load<UnitSpec>("FactoryWars/ff_scout_boat").HullHeight.AsFloat, 4f, "scout boat fits under a fixed bridge");
+      Assert.LessOrEqual(Resources.Load<UnitSpec>("FactoryWars/ff_artillery_ship").HullHeight.AsFloat + 1f, 8f, "the tallest ship clears the bridges by 1 m");
 
-      // A scout boat sails under a fixed bridge; an artillery ship waits at it.
-      var fixedIndex = Enumerable.Range(0, map.Bridges.Length).First(i => map.Drawbridges.Contains(i) == false);
+      // Every ship class passes under a bridge (here the old drawbridge position, now a fixed arch bridge).
+      var fixedIndex = map.Drawbridges[0];
       var bridge = map.Bridges[fixedIndex];
       var (from, to) = AcrossBridge(bridge, 14);
       var boat = Spawn("ff_scout_boat", from);
       var ship = Spawn("ff_artillery_ship", from + (from - to).Normalized * FP._6);
       yield return Send(0, new MoveUnitsCommand { Units = new[] { boat, ship }, Target = to });
-      yield return WaitFor(() => FactoryWarsUtil.FlatDistanceSqr(Verified.Get<Transform3D>(boat).Position, to) < 36, 60f, "scout boat passes under the fixed bridge");
-      yield return WaitFrames(10 * Fps);
-      var side = Mathf.Sign(AcrossOf(bridge, from));
-      var shipAcross = AcrossOf(bridge, Verified.Get<Transform3D>(ship).Position);
-      Assert.AreEqual(side, Mathf.Sign(shipAcross), $"artillery ship stays on its side of the fixed bridge ({shipAcross:F1})");
-      Assert.GreaterOrEqual(Mathf.Abs(shipAcross), (bridge.HalfLength < bridge.HalfWidth ? bridge.HalfLength : bridge.HalfWidth).AsFloat, "and does not slide under the deck");
+      yield return WaitFor(() => FactoryWarsUtil.FlatDistanceSqr(Verified.Get<Transform3D>(boat).Position, to) < 36, 60f, "scout boat passes under the bridge");
+      yield return WaitFor(() => FactoryWarsUtil.FlatDistanceSqr(Verified.Get<Transform3D>(ship).Position, to) < 81, 90f, "artillery ship passes under the bridge");
+      Assert.IsTrue(OnGroundNavMesh(Verified, bridge.Center), "ground traffic is never blocked");
+    }
+
+    [UnityTest, Timeout(600000)]
+    public IEnumerator Drawbridge_DisabledModeNeverBlocksGround() {
+      yield return StartMatch(Map4PScene, 2, truce: 0);
+      var map = Map4PSpec;
+      var index = map.Drawbridges[0];
+      var bridge = map.Bridges[index];
+      var (from, to) = AcrossBridge(bridge, 16);
+      var ship = Spawn("ff_artillery_ship", from);
+      var moves = new List<int>();
+      QuantumEvent.Subscribe<EventDrawbridgeMoved>(_listener, e => moves.Add(e.Lift));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { ship }, Target = to });
+      for (var t = 0; t < 10 * Fps; t++) {
+        yield return WaitFrames(1);
+        Assert.IsTrue(OnGroundNavMesh(Verified, bridge.Center), "deck stays open to ground units");
+      }
+      Assert.IsEmpty(moves, "no drawbridge moves in the shipped data");
+      yield return WaitFor(() => FactoryWarsUtil.FlatDistanceSqr(Verified.Get<Transform3D>(ship).Position, to) < 81, 90f, "tall ship passes under");
     }
 
     [UnityTest, Timeout(600000)]
     public IEnumerator Drawbridge_OpensForTallShipOnlyWhenDeckClear() {
+      EnableDrawbridgeMode();
       yield return StartMatch(Map4PScene, 2, truce: 0);
       var map = Map4PSpec;
       var index = map.Drawbridges[0];
@@ -139,6 +170,7 @@ namespace FactoryWars.Tests {
 
     [UnityTest, Timeout(600000)]
     public IEnumerator Drawbridge_BlocksGroundWhileOpen() {
+      EnableDrawbridgeMode();
       yield return StartMatch(Map4PScene, 2, truce: 0);
       var map = Map4PSpec;
       var index = map.Drawbridges[0];
@@ -181,6 +213,7 @@ namespace FactoryWars.Tests {
       for (var run = 0; run < 2; run++) {
         FixedStep = true;
         Restores.Add(() => FixedStep = false);
+        EnableDrawbridgeMode();
         // Map4P v5 drawbridge 0 is the row-24 bridge (centre -16, 124). Units are scenario units so they exist from frame 0,
         // and there is a single command right after the start (a later Send lands on a real-time dependent frame).
         yield return StartMatch(Map4PScene, 2, truce: 0, seed: 3939,

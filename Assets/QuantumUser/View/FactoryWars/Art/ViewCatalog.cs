@@ -67,6 +67,7 @@ namespace FactoryWars.View {
       ("pmc_attack_heli", "ff_hawk_gunship", 1f),
       ("pmc_attack_drone", "ff_hawk_gunship", 0.4f),
       ("pmc_armored_suv", "ff_scout_buggy", 1f),
+      ("pmc_scout_heli", "ff_hawk_gunship", 0.6f),
       ("merc_cargo_truck", "cf_apc_transport", 1f),
       ("ff_field_support", "cf_longwall_mlrs", 0.8f),
       ("ff_bulwark_tank", "ff_eagle_tank", 1.3f),

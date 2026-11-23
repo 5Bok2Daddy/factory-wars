@@ -26,6 +26,7 @@ namespace FactoryWars.View {
       public UnitAnimatorBridge Anim;
       public List<RiflemanRig> Rigs;
       public Vector3 Last;
+      public List<Renderer> Gear = new List<Renderer>();
     }
 
     readonly Dictionary<EntityRef, Soldier> _garrison = new Dictionary<EntityRef, Soldier>();
@@ -50,8 +51,8 @@ namespace FactoryWars.View {
       _root = root;
     }
 
-    static Soldier MakeSoldier(Transform parent, string name) {
-      if (VisualCatalog.TryFilled(GuardSlot, out var slot) == false && VisualCatalog.TryFilled(FallbackSlot, out slot) == false) return null;
+    static Soldier MakeSoldier(Transform parent, string name, bool female = false) {
+      if ((female == false || VisualCatalog.TryFilled(GuardSlot + "_f", out var slot) == false) && VisualCatalog.TryFilled(GuardSlot, out slot) == false && VisualCatalog.TryFilled(FallbackSlot, out slot) == false) return null;
       var view = new GameObject(name).transform;
       view.SetParent(parent, false);
       var model = Object.Instantiate(slot.Prefab, view);
@@ -68,7 +69,12 @@ namespace FactoryWars.View {
         r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         if (body != null && r is SkinnedMeshRenderer && r != body) r.enabled = false;
       }
-      return new Soldier { View = view, Anim = UnitAnimatorBridge.Attach(model, slot), Rigs = RiflemanRig.AttachAll(model, BattleView.Weapon(DressKind.Rifle)) };
+      var soldier = new Soldier { View = view, Anim = UnitAnimatorBridge.Attach(model, slot), Rigs = RiflemanRig.AttachAll(model, BattleView.Weapon(DressKind.Rifle)) };
+      // Rifles are several renderers and ~3k triangles each; they are only drawn close up (see Cull).
+      foreach (var r in model.GetComponentsInChildren<Renderer>()) {
+        if (r is SkinnedMeshRenderer == false) { r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; soldier.Gear.Add(r); }
+      }
+      return soldier;
     }
 
     void Build() {
@@ -82,6 +88,7 @@ namespace FactoryWars.View {
       for (var i = 0; i < CampLayout.FiringLine.Length; i++) Add(2, i);
       for (var i = 0; i < CampLayout.Sentries.Length; i++) Add(3, i);
       for (var i = 0; i < CampLayout.Mechanics.Length; i++) Add(4, i);
+      for (var i = 0; i < CampLayout.Counter.Length; i++) Add(6, i);
       // Display vehicles.
       foreach (var (position, yaw, kind) in CampLayout.Bays) {
         var id = "camp/display_" + kind.ToString().ToLowerInvariant();
@@ -95,17 +102,22 @@ namespace FactoryWars.View {
       }
 
       void Add(int kind, int index) {
-        var s = MakeSoldier(_camp.transform, $"PmcAmbient{kind}_{index}");
+        var s = MakeSoldier(_camp.transform, $"PmcAmbient{kind}_{index}", (kind * 7 + index) % 3 == 0);
         if (s != null) _ambient.Add((s, kind, index));
       }
     }
 
-    const float CullDistance = 110f;
+    const float CullDistance = 220f;
 
     /// <summary>Hide soldiers far from the camera (they are a few pixels tall there).</summary>
+    const float GearDistance = 70f;
+
     static void Cull(Soldier s, Vector3 camera) {
-      var show = (s.View.position - camera).sqrMagnitude < CullDistance * CullDistance;
+      var d2 = (s.View.position - camera).sqrMagnitude;
+      var show = d2 < CullDistance * CullDistance;
       if (s.View.gameObject.activeSelf != show) s.View.gameObject.SetActive(show);
+      var gear = d2 < GearDistance * GearDistance;
+      foreach (var r in s.Gear) if (r != null && r.enabled != gear) r.enabled = gear;
     }
 
     public void Update(Frame frame, float dt) {
@@ -218,6 +230,13 @@ namespace FactoryWars.View {
             state = Mathf.Repeat(t * 0.5f + (index % 3) * 0.05f, 2f) < 1f ? UnitAnimState.Attack : UnitAnimState.Idle;
             break;
           }
+          case 6: {
+            // Trading-post counter: the vendor faces the customers (south), customers face the counter.
+            p = CampLayout.Counter[index];
+            yaw = index == 0 ? 180f : 0f;
+            state = index == 0 && Mathf.Repeat(t * 0.4f, 3f) < 1f ? UnitAnimState.Gather : UnitAnimState.Idle;
+            break;
+          }
           default: {
             p = CampLayout.Mechanics[index];
             yaw = 90f * index + Mathf.Sin(t * 0.5f + index) * 40f;
@@ -239,7 +258,7 @@ namespace FactoryWars.View {
       for (var i = 0; i < spec.Offers.Length && i < MercenaryCamp.MaxOffers; i++) {
         if (spec.Offers[i].Unit.IsValid == false) continue;
         var name = frame.FindAsset(spec.Offers[i].Unit).name;
-        CampLayout.Bay? kind = name.Contains("tank") ? CampLayout.Bay.Tank : name.Contains("suv") || name.Contains("mrap") ? CampLayout.Bay.Mrap
+        CampLayout.Bay? kind = name.Contains("scout_heli") ? CampLayout.Bay.ScoutHeli : name.Contains("tank") ? CampLayout.Bay.Tank : name.Contains("suv") || name.Contains("mrap") ? CampLayout.Bay.Mrap
           : name.Contains("drone") ? CampLayout.Bay.Drone : name.Contains("heli") || name.Contains("gunship") ? CampLayout.Bay.Heli : (CampLayout.Bay?)null;
         if (kind.HasValue) stock[kind.Value] = (stock.TryGetValue(kind.Value, out var n) ? n : 0) + trader.Stock[i];
       }
@@ -257,7 +276,7 @@ namespace FactoryWars.View {
         if (d.LeaveT >= 0f) {
           // Sold: leave through the main gate (air goods climb and fly off).
           d.LeaveT += dt;
-          var air = d.Kind == CampLayout.Bay.Drone || d.Kind == CampLayout.Bay.Heli;
+          var air = d.Kind == CampLayout.Bay.Drone || d.Kind == CampLayout.Bay.Heli || d.Kind == CampLayout.Bay.ScoutHeli;
           var exit = CampLayout.MainGate + new Vector3(0f, air ? 18f : 0f, -12f);
           var a = Mathf.Clamp01(d.LeaveT / 6f);
           var from = d.Home + (air ? Vector3.up * Mathf.Clamp01(d.LeaveT) * 4f : Vector3.zero);

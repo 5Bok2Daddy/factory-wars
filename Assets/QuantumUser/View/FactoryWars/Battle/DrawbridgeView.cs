@@ -113,7 +113,10 @@ namespace FactoryWars.View {
     public unsafe void Update(Frame frame, float dt) {
       var map = FactoryWarsUtil.MapInfo(frame);
       if (map == null) return;
-      if (_built == false) Build(map);
+      if (_built == false) {
+        if (FactoryWarsUtil.Rules(frame).DrawbridgeEnabled == false) { _built = true; return; }
+        Build(map);
+      }
       if (_spans.Count == 0) return;
       foreach (var pair in frame.GetComponentIterator<Bridge>()) {
         var bridge = pair.Component;

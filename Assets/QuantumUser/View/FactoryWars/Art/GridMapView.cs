@@ -21,6 +21,9 @@ namespace FactoryWars.View {
     public static bool Uses(MapSpec map) => map != null && map.CellGridSize > 0 && map.CellGrid != null && map.CellGrid.Length == map.CellGridSize * map.CellGridSize;
 
     /// <summary>Task 39: a bridge cell over the canal (G next to W). Its ground drops to the canal floor so the water runs on under the deck.</summary>
+    /// <summary>Task 39 fix 2: canal water depth below the street on the grid map (bridge decks stay at street level, ships pass under).</summary>
+    public const float CanalDepth = 9.6f;
+
     public static bool Deck(MapSpec map, int r, int c) => Cell(map, r, c) == 'G' &&
       (Cell(map, r - 1, c) == 'W' || Cell(map, r + 1, c) == 'W' || Cell(map, r, c - 1) == 'W' || Cell(map, r, c + 1) == 'W');
 

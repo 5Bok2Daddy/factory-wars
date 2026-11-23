@@ -324,7 +324,7 @@ namespace FactoryWars.EditorTools {
         Bridges = new MapShape[0],
         ExtraBridges = bridges.ToArray(),
         // Task 39: every bridge is a deck 4 m above the water; the pair nearest the centre (main E-W roads) are drawbridges.
-        ExtraBridgeClearances = bridges.Select(_ => 4f).ToArray(),
+        ExtraBridgeClearances = bridges.Select(_ => 8f).ToArray(),
         ExtraDrawbridges = bridges.Select((b, i) => (i, z: Mathf.Abs(b.Center.Z.AsFloat))).OrderBy(t => t.z).Take(2).Select(t => t.i).OrderBy(i => i).ToArray(),
         WaterRects = water.ToArray(),
         WaterVisual = underBridge.ToArray(),

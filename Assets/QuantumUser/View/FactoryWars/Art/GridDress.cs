@@ -82,6 +82,13 @@ namespace FactoryWars.View {
       item.isStatic = true;
       // Task 39 C1: parks and parking lots (many, small) do not cast shadows.
       if (kind == "K" || kind == "L") item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      // Task 39 fix 2 (triangle budget): parking lots, container yards and rubble fade out early in the far overview (each car/container
+      // is thousands of triangles); at gameplay zoom they stay.
+      if (GraphicsQuality.Current != QualityTier.Low && (kind == "L" || kind == "Y" || kind == "X") && item.TryGetComponent<LODGroup>(out var far)) {
+        var lods = far.GetLODs();
+        lods[0].screenRelativeTransitionHeight *= 5f;
+        far.SetLODs(lods);
+      }
       if (GraphicsQuality.Current == QualityTier.Low) {
         item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         // 낮음: 작은 블록(공원·주차·잔해·컨테이너·부두·설비·엄폐·경계 안쪽)은 멀면 일찍 감춘다(삼각형 예산).
@@ -321,7 +328,8 @@ namespace FactoryWars.View {
         for (var c = 0; c < n; c++) {
           if (GridMapView.Cell(map, r, c) != 'G') continue;
           var center = Center(r, c, 1, 1);
-          if (DrawbridgeView.InDrawbridge(map, center)) continue;
+          // Task 39 fix 2: bridges carry concrete parapets and steel arches (ArchBridgeView), no wooden rails.
+          if (map.MercenaryCamp) continue;
           foreach (var (dr, dc, dir) in dirs) {
             if (GridMapView.Cell(map, r + dr, c + dc) != 'W') continue;
             Put(parent, "GR", 0, center + new Vector3(dc * (size / 2f - 0.3f), 0f, -dr * (size / 2f - 0.3f)), Yaw(dir), $"{r},{c},{dir}");

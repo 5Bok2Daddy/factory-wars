@@ -14038,12 +14038,12 @@ MonoBehaviour:
     Yaw:
       RawValue: 0
   BridgeClearances:
-  - RawValue: 262144
-  - RawValue: 262144
-  - RawValue: 262144
-  - RawValue: 262144
-  - RawValue: 262144
-  - RawValue: 262144
+  - RawValue: 524288
+  - RawValue: 524288
+  - RawValue: 524288
+  - RawValue: 524288
+  - RawValue: 524288
+  - RawValue: 524288
   Drawbridges: 0200000003000000
   River:
   - Center:

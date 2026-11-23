@@ -380,7 +380,9 @@ namespace FactoryWars.EditorTools {
 
     /// <summary>Task 39: bridge clearance and drawbridge timing (data, read by BridgeTraffic).</summary>
     public static void ApplyBridgeTrafficRules(GameRulesSpec rules) {
-      rules.BridgeClearance = 4;
+      // Task 39 fix 2 (user review 13:14): high fixed bridges, clearance 8 m (tallest ship 6.5 m + 1 m); drawbridge mode off.
+      rules.BridgeClearance = 8;
+      rules.DrawbridgeEnabled = false;
       // Map4P bridges on one canal are 40 m apart: a ship held at the next fixed bridge must be outside this radius.
       rules.DrawbridgeApproachRadius = 24;
       rules.DrawbridgeDeckClearSeconds = 2;
@@ -450,13 +452,15 @@ namespace FactoryWars.EditorTools {
         u.Size = UnitSize.Small; u.MaxHealth = 140; u.Damage = 28; u.Range = 9; u.AttackInterval = N(1.2); u.MoveSpeed = 10; u.Population = 1; u.SightRange = 16;
       });
       var suv = CloneUnit("ff_scout_buggy", "pmc_armored_suv", u => { u.MaxHealth = u.MaxHealth * 2; });
+      var scout = CloneUnit("ff_hawk_gunship", "pmc_scout_heli", u => { u.MaxHealth = u.MaxHealth * N(0.6); u.Damage = u.Damage * N(0.6); u.MoveSpeed = u.MoveSpeed * N(1.3); u.SightRange = 18; });
       spec.Offers = new[] {
         new MercOffer { Name = "PMC 오퍼레이터 분대", Unit = Ref(squad), Count = 1, Cost = R(160, 80), MaxStock = 4, CooldownSeconds = 30 },
         new MercOffer { Name = "PMC 저격수", Unit = Ref(marksman), Count = 1, Cost = R(160, 60, 40), MaxStock = 3, CooldownSeconds = 40 },
-        new MercOffer { Name = "PMC 전차", Unit = Ref(tank), Count = 1, Cost = R(260, 0, 60, 60), MaxStock = 4, CooldownSeconds = 60 },
-        new MercOffer { Name = "PMC 공격 헬기", Unit = Ref(heli), Count = 1, Cost = R(300, 0, 110, 110), MaxStock = 4, CooldownSeconds = 90 },
+        new MercOffer { Name = "PMC 전차", Unit = Ref(tank), Count = 1, Cost = R(260, 0, 60, 60), MaxStock = 6, CooldownSeconds = 60 },
+        new MercOffer { Name = "PMC 공격 헬기", Unit = Ref(heli), Count = 1, Cost = R(300, 0, 110, 110), MaxStock = 2, CooldownSeconds = 90 },
         new MercOffer { Name = "PMC 공격 드론", Unit = Ref(drone), Count = 1, Cost = R(140, 0, 50, 60), MaxStock = 2, CooldownSeconds = 45 },
-        new MercOffer { Name = "PMC 장갑 SUV", Unit = Ref(suv), Count = 1, Cost = R(150, 40, 30), MaxStock = 2, CooldownSeconds = 40 },
+        new MercOffer { Name = "PMC 장갑차", Unit = Ref(suv), Count = 1, Cost = R(150, 40, 30), MaxStock = 4, CooldownSeconds = 40 },
+        new MercOffer { Name = "PMC 경헬기", Unit = Ref(scout), Count = 1, Cost = R(200, 0, 70, 70), MaxStock = 1, CooldownSeconds = 60 },
         new MercOffer { Name = "보급 교환(목재→강철)", Cost = R(0, 200), Give = R(0, 0, 80), MaxStock = 5, CooldownSeconds = 20 },
       };
       EditorUtility.SetDirty(spec);
@@ -467,6 +471,14 @@ namespace FactoryWars.EditorTools {
     public static void BakeTask39() {
       ApplyTask39Data();
       DressKit.BuildBakeDress();
+      ThirdPartyKit.Apply();
+    }
+
+    /// <summary>Task 39 fix 3: camp blocks + display slots + third-party models without re-baking the map.</summary>
+    public static void BuildCampViews() {
+      ApplyTask39Data();
+      DressKit.BuildAll();
+      ThirdPartyKit.Apply();
     }
 
     static UnitSpec BuildUnit(UnitRow row) {

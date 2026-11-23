@@ -298,14 +298,20 @@ namespace FactoryWars.EditorTools {
           var p = Rotate(prop.U, prop.W);
           Place(street, prop.Prefab, new Vector3(p.x, 0, p.y), prop.Yaw - side * 90f, prop.Scale, $"{prop.Name}-{side}");
         }
-        // Task 39 card 4 (PMC camp): one asphalt loop around the HQ hub (square, centre line ±17, 6 m) with an amber centre dash,
-        // and an axis road from the loop to each gate. Per side: the loop edge, its dashes and the axis road.
-        var m = FactoryWars.View.CampLayout.RingMid;
-        var w = FactoryWars.View.CampLayout.RingWidth;
-        paving.Strip(Rotate(-m - w / 2f, -m), Rotate(m + w / 2f, -m), w, 0.019f, asphalt);
-        for (var x = -m + 1.5f; x < m - 1.5f; x += 4f) paving.Strip(Rotate(x, -m), Rotate(x + 2f, -m), 0.22f, 0.026f, marking);
-        paving.Strip(Rotate(0, -m - w / 2f), Rotate(0, -48.5f), FactoryWars.View.CampLayout.AxisHalf * 2f, 0.018f, asphalt);
-        for (var z = -m - 5f; z > -46f; z -= 4f) paving.Strip(Rotate(0, z), Rotate(0, z - 2f), 0.22f, 0.026f, marking);
+      }
+      // Task 39 fix 2: one 6 m loop road around the trading post (rectangle) and one road to the south gate, amber centre dashes.
+      {
+        var lx = FactoryWars.View.CampLayout.LoopX;
+        var lz = FactoryWars.View.CampLayout.LoopZ;
+        var w = FactoryWars.View.CampLayout.RoadWidth;
+        paving.Strip(new Vector2(-lx - w / 2f, -lz), new Vector2(lx + w / 2f, -lz), w, 0.019f, asphalt);
+        paving.Strip(new Vector2(-lx - w / 2f, lz), new Vector2(lx + w / 2f, lz), w, 0.019f, asphalt);
+        paving.Strip(new Vector2(-lx, -lz), new Vector2(-lx, lz), w, 0.0185f, asphalt);
+        paving.Strip(new Vector2(lx, -lz), new Vector2(lx, lz), w, 0.0185f, asphalt);
+        paving.Strip(new Vector2(0f, -lz - w / 2f), new Vector2(0f, -48.5f), FactoryWars.View.CampLayout.GateRoadHalf * 2f, 0.018f, asphalt);
+        for (var x = -lx + 2f; x < lx - 2f; x += 4f) { paving.Strip(new Vector2(x, -lz), new Vector2(x + 2f, -lz), 0.2f, 0.026f, marking); paving.Strip(new Vector2(x, lz), new Vector2(x + 2f, lz), 0.2f, 0.026f, marking); }
+        for (var z = -lz + 2f; z < lz - 2f; z += 4f) { paving.Strip(new Vector2(-lx, z), new Vector2(-lx, z + 2f), 0.2f, 0.026f, marking); paving.Strip(new Vector2(lx, z), new Vector2(lx, z + 2f), 0.2f, 0.026f, marking); }
+        for (var z = -lz - 5f; z > -46f; z -= 4f) paving.Strip(new Vector2(0f, z), new Vector2(0f, z - 2f), 0.2f, 0.026f, marking);
       }
       CampPaving(paving);
       paving.Save(root);
@@ -319,11 +325,13 @@ namespace FactoryWars.EditorTools {
       var pad = new Color(0.42f, 0.43f, 0.42f);
       var d = FactoryWars.View.CampLayout.DisplayPad;
       paving.Polygon(new[] { new Vector2(d.x, d.y), new Vector2(d.z, d.y), new Vector2(d.z, d.w), new Vector2(d.x, d.w) }, 0.015f, new Color(0.17f, 0.17f, 0.18f));
+      var e = FactoryWars.View.CampLayout.ApcPad;
+      paving.Polygon(new[] { new Vector2(e.x, e.y), new Vector2(e.z, e.y), new Vector2(e.z, e.w), new Vector2(e.x, e.w) }, 0.015f, new Color(0.17f, 0.17f, 0.18f));
       foreach (var (p, yaw, kind) in FactoryWars.View.CampLayout.Bays) {
         var c = new Vector2(p.x, p.z);
-        if (kind == FactoryWars.View.CampLayout.Bay.Heli) {
+        if (kind == FactoryWars.View.CampLayout.Bay.Heli || kind == FactoryWars.View.CampLayout.Bay.ScoutHeli) {
           var ring = new List<Vector2>();
-          for (var i = 0; i < 24; i++) ring.Add(c + new Vector2(Mathf.Cos(i * Mathf.PI / 12f), Mathf.Sin(i * Mathf.PI / 12f)) * 4.3f);
+          for (var i = 0; i < 24; i++) ring.Add(c + new Vector2(Mathf.Cos(i * Mathf.PI / 12f), Mathf.Sin(i * Mathf.PI / 12f)) * (kind == FactoryWars.View.CampLayout.Bay.Heli ? 7.5f : 4.6f));
           paving.Polygon(ring, 0.02f, pad);
           for (var i = 0; i < 24; i += 2) paving.Strip(ring[i] + (c - ring[i]) * 0.08f, ring[(i + 1) % 24] + (c - ring[(i + 1) % 24]) * 0.08f, 0.35f, 0.027f, amber);
           paving.Strip(c + new Vector2(-1.6f, -2.2f), c + new Vector2(-1.6f, 2.2f), 0.5f, 0.028f, white);
@@ -331,7 +339,7 @@ namespace FactoryWars.EditorTools {
           paving.Strip(c + new Vector2(-1.6f, 0f), c + new Vector2(1.6f, 0f), 0.5f, 0.028f, white);
           continue;
         }
-        var half = kind == FactoryWars.View.CampLayout.Bay.Drone ? new Vector2(1.9f, 1.9f) : kind == FactoryWars.View.CampLayout.Bay.Tank ? new Vector2(4.2f, 3.0f) : new Vector2(2.8f, 4.0f);
+        var half = kind == FactoryWars.View.CampLayout.Bay.Drone ? new Vector2(1.9f, 1.9f) : kind == FactoryWars.View.CampLayout.Bay.Tank ? new Vector2(5.3f, 2.65f) : new Vector2(2.7f, 4.3f);
         if (kind == FactoryWars.View.CampLayout.Bay.Drone) {
           paving.Polygon(new[] { c + new Vector2(-half.x, -half.y), c + new Vector2(half.x, -half.y), c + new Vector2(half.x, half.y), c + new Vector2(-half.x, half.y) }, 0.02f, pad);
           paving.Strip(c + new Vector2(-half.x, -half.y), c + new Vector2(half.x, -half.y), 0.2f, 0.027f, amber);
