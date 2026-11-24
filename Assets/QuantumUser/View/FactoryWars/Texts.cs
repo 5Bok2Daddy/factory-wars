@@ -49,6 +49,16 @@ namespace FactoryWars.View {
       // 항목 33 궁극 전력(가칭, 실존 함정·항공기·미사일 이름과 무관)
       { "ff_stormnest_carrier", "스톰네스트 공중 항모" }, { "ff_nest_drone", "둥지 드론" }, { "tf_wavecrest_lander", "파도머리 상륙정" },
       { "ff_carrier_yard", "항모 조립창" }, { "cf_missile_silo", "미사일 격납고" }, { "tf_assault_dock", "강습 도크" },
+      // Task 42 현대전 확장 유닛 17종 (자유 연방 8 · 대륙 연방 9, 가상 명칭)
+      { "ff_striker_ifv", "스트라이커 보병전투차" }, { "cf_rampart_ifv", "성벽 보병전투차" },
+      { "ff_vanguard_mrap", "선봉 지뢰방호차" }, { "cf_ironhide_mrap", "철갑 수송차" },
+      { "ff_paladin_sph", "팔라딘 자주포" }, { "cf_bastion_sph", "보루 자주포" },
+      { "ff_aegis_ew", "이지스 전자전차" }, { "cf_shroud_ew", "장막 전자전차" },
+      { "cf_field_recovery", "야전 구난수리차" },
+      { "ff_recon_drone", "정찰 드론" }, { "cf_recon_drone", "정찰 드론" },
+      { "ff_loiter_munition", "배회 자폭 드론" }, { "cf_loiter_munition", "배회 자폭 드론" },
+      { "ff_drone_operator", "드론 운용반" }, { "cf_drone_operator", "드론 운용반" },
+      { "ff_antidrone_gunner", "대드론 사수" }, { "cf_antidrone_gunner", "대드론 사수" },
       { "module_piercing_rounds", "관통탄" }, { "module_reactive_armor", "반응장갑" },
     };
 

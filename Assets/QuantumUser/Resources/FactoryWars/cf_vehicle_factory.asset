@@ -76,6 +76,16 @@ MonoBehaviour:
       Value: 531812353698324117
   - Id:
       Value: 416579979627631182
+  - Id:
+      Value: 490641231398829388
+  - Id:
+      Value: 509579717984214949
+  - Id:
+      Value: 313935725764634003
+  - Id:
+      Value: 443725440884756022
+  - Id:
+      Value: 510754123355189005
   Attack: 0
   GroundOnly: 0
   Damage:
@@ -111,3 +121,28 @@ MonoBehaviour:
     RawValue: 0
   InterceptInterval:
     RawValue: 0
+  RequiresResourceNode: 0
+  RequiredNodeKind: 0
+  WorkerSlotCapacity: 0
+  ExtractIntervalSeconds:
+    RawValue: 0
+  ExtractAmountPerCycle:
+    RawValue: 0
+  RocketCapacity: 0
+  RocketReloadSeconds:
+    RawValue: 0
+  RocketTierThreeReloadMultiplier:
+    RawValue: 0
+  RocketAimSeconds:
+    RawValue: 0
+  RocketSearchSeconds:
+    RawValue: 0
+  RocketSpeed:
+    RawValue: 0
+  RocketArc:
+    RawValue: 0
+  RocketEdgeDamage:
+    RawValue: 0
+  RocketElevation:
+    RawValue: 0
+  RocketMuzzles: []

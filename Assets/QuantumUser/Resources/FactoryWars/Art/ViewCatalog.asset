@@ -519,7 +519,7 @@ MonoBehaviour:
   IronExtractorDrill: {fileID: 4740824422671669703, guid: 5a5fd050065361048a83a1ecbdcb6822, type: 3}
   LumberCargo: {fileID: 1118550264440206, guid: 9cbc4baaec1a2af49b7cc0aefc7a9df7, type: 3}
   IronCargo: {fileID: 1422711539331082, guid: 95c8aa87567729b4fb5db0d23f730ed5, type: 3}
-  EngineerLocomotion: {fileID: 9100000, guid: 2c4a56f323494dc499a4a9b0bafe36fb, type: 2}
+  EngineerLocomotion: {fileID: 0}
   WarFx:
   - Key: nuke
     Prefab: {fileID: 100002, guid: 6ecf76dc4f268d340b2666896a954bcc, type: 3}

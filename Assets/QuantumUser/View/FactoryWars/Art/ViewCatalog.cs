@@ -128,6 +128,24 @@ namespace FactoryWars.View {
       // Task 46: sea barrier boom and watchtower (building/sea_barrier, building/sea_watchtower slots give the pack models).
       ("sea_barrier", "ff_ground_tower", 1f),
       ("sea_watchtower", "ff_ground_tower", 1f),
+      // Task 42: modern-warfare combined-arms expansion (17 units; VisualCatalog slots provide the Synty prefabs).
+      ("ff_striker_ifv", "cf_dragonscale_tank", 0.9f),
+      ("cf_rampart_ifv", "cf_dragonscale_tank", 0.9f),
+      ("ff_vanguard_mrap", "ff_field_support", 0.85f),
+      ("cf_ironhide_mrap", "cf_apc_transport", 0.85f),
+      ("ff_paladin_sph", "ff_eagle_tank", 1.05f),
+      ("cf_bastion_sph", "cf_fortress_tank", 1.0f),
+      ("ff_aegis_ew", "ff_mobile_sam", 1.0f),
+      ("cf_shroud_ew", "cf_mobile_sam", 1.0f),
+      ("cf_field_recovery", "cf_apc_transport", 1.0f),
+      ("ff_recon_drone", "ff_nest_drone", 1.0f),
+      ("cf_recon_drone", "ff_nest_drone", 1.0f),
+      ("ff_loiter_munition", "ff_nest_drone", 1.1f),
+      ("cf_loiter_munition", "ff_nest_drone", 1.1f),
+      ("ff_drone_operator", "ff_ranger_squad", 1.0f),
+      ("cf_drone_operator", "cf_militia", 1.0f),
+      ("ff_antidrone_gunner", "ff_skyguard_squad", 1.0f),
+      ("cf_antidrone_gunner", "cf_at_rocket", 1.0f),
     };
 
     public static string BorrowedId(string id) {

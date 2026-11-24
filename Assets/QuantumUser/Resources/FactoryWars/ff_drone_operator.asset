@@ -1,0 +1,149 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946fb8225d8a67b488f649875809ea13, type: 3}
+  m_Name: ff_drone_operator
+  m_EditorClassIdentifier: 
+  Identifier:
+    Path: QuantumUser/Resources/FactoryWars/ff_drone_operator
+    Guid:
+      Value: 367304123937206449
+  Size: 1
+  RequiredTier: 1
+  IsAir: 0
+  IsNaval: 0
+  HullHeight:
+    RawValue: 0
+  IsVehicle: 0
+  Cost:
+    Iron:
+      RawValue: 7208960
+    Wood:
+      RawValue: 2293760
+    Steel:
+      RawValue: 1966080
+    Power:
+      RawValue: 2293760
+  BuildTimeSeconds:
+    RawValue: 1048576
+  MaxHealth:
+    RawValue: 4194304
+  Attack: 1
+  Damage:
+    RawValue: 393216
+  Range:
+    RawValue: 458752
+  MinRange:
+    RawValue: 0
+  SplashRadius:
+    RawValue: 0
+  AttackInterval:
+    RawValue: 72089
+  IsRanged: 1
+  MoveSpeed:
+    RawValue: 249036
+  ColliderRadius:
+    RawValue: 42598
+  Population:
+    RawValue: 131072
+  ModuleSlots: 1
+  SpawnCount: 1
+  Ability: 0
+  AbilityMultiplier:
+    RawValue: 65536
+  AbilitySeconds:
+    RawValue: 0
+  AbilityRadius:
+    RawValue: 0
+  AbilityCount: 0
+  AbilityCooldownSeconds:
+    RawValue: 0
+  SightRange:
+    RawValue: 655360
+  GarrisonFireOnly: 0
+  GarrisonSightRange:
+    RawValue: 0
+  SetupSeconds:
+    RawValue: 0
+  VehicleDamageRatio:
+    RawValue: 65536
+  MaxOwned: 0
+  StealthSeconds:
+    RawValue: 0
+  StealthCooldownSeconds:
+    RawValue: 0
+  StealthSpeedMultiplier:
+    RawValue: 65536
+  StealthExposeRadius:
+    RawValue: 0
+  JammerRange:
+    RawValue: 0
+  JammerSetupSeconds:
+    RawValue: 0
+  JammerSeconds:
+    RawValue: 0
+  JammerHealth:
+    RawValue: 0
+  JammerGatherMultiplier:
+    RawValue: 65536
+  DetectRadius:
+    RawValue: 0
+  SortieKind: 0
+  SortieSpeed:
+    RawValue: 0
+  SortieHealth:
+    RawValue: 0
+  SortieRearmSeconds:
+    RawValue: 0
+  SortieApproach:
+    RawValue: 0
+  SortieExit:
+    RawValue: 0
+  SortieTurn:
+    RawValue: 0
+  SortieWidth:
+    RawValue: 0
+  SortieTicks: 0
+  SortieBombs: 0
+  SortieBombGap:
+    RawValue: 0
+  SortieBuildingMultiplier:
+    RawValue: 65536
+  SortieCost:
+    Iron:
+      RawValue: 0
+    Wood:
+      RawValue: 0
+    Steel:
+      RawValue: 0
+    Power:
+      RawValue: 0
+  SortieCargo:
+    Id:
+      Value: 0
+  SortieCargoCount: 0
+  TransportCapacity: 0
+  TransportAllowsVehicles: 0
+  TransportEjectHealthRatio:
+    RawValue: 0
+  OperatorDrone:
+    Id:
+      Value: 527856479947150416
+  OperatorMaxDrones: 2
+  OperatorLeash:
+    RawValue: 1703936
+  OperatorBatterySeconds:
+    RawValue: 1638400
+  OperatorRelaunchSeconds:
+    RawValue: 524288
+  OperatorLaunchRange:
+    RawValue: 1441792
+  SelfDestructOnAttack: 0

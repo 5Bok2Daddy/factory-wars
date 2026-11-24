@@ -111,5 +111,7 @@ namespace Quantum {
     public FP OperatorRelaunchSeconds;
     /// <summary>적 감지 및 드론 발사 사거리(m).</summary>
     public FP OperatorLaunchRange;
+    /// <summary>작업 42: 배회 자폭 드론(Loitering Munition)은 공격 타격 직후 결정론적으로 자폭한다.</summary>
+    public bool SelfDestructOnAttack;
   }
 }

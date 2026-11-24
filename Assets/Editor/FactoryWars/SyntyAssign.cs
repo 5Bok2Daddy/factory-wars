@@ -138,6 +138,11 @@ namespace FactoryWars.EditorTools {
       yield return Squad("cf_breacher", 0.8f, None, "chr_bombsuit");
       yield return Squad("ff_sniper", 0.8f, SoldiersFree, "chr_ghillie");
       yield return Squad("cf_sniper", 0.8f, None, "chr_ghillie");
+      // Task 42 보병 4종: 드론 운용반·대드론 사수 (양 진영, Synty 군인 변형 모델)
+      yield return Squad("ff_drone_operator", 0.8f, SoldiersFree, "chr_soldier_1_alt1");
+      yield return Squad("cf_drone_operator", 0.8f, None, "chr_soldier_2_alt1");
+      yield return Squad("ff_antidrone_gunner", 0.8f, SoldiersFree, "chr_soldier_1_alt2");
+      yield return Squad("cf_antidrone_gunner", 0.8f, None, "chr_soldier_2_alt2");
       yield return Squad("trader_guard", 0.8f, None, "chr_soldier_2_alt3");
       // 차량·전차·공중·해상: 1.0x~1.1x 전술 비율(0.8x 보병 대비 확연한 덩치 차이 + 1.25x 공장과 자연스러운 조화).
       yield return Vehicle("ff_scout_buggy", "buggy", LightFree, 4.2f);
@@ -154,6 +159,20 @@ namespace FactoryWars.EditorTools {
       yield return Vehicle("cf_rocket_artillery", "rocket_truck", LandContinental, 5.8f, "_Base", null, "Rocket_Battery");
       yield return Vehicle("ff_mobile_sam", "radar_tank", LandFree, 5.0f, null, null, null, "Radar_Base:Y");
       yield return Vehicle("cf_mobile_sam", "radar_tank", LandContinental, 5.0f, null, null, null, "Radar_Base:Y");
+      // Task 42 현대전 기갑·지원·드론 13종 (소유 Synty 모델 + 진영 색 변형, 올블랙 금지)
+      yield return Vehicle("ff_striker_ifv", "tank_light", LandFree, 5.2f, "Turret", "Barrel", "Barrel");
+      yield return Vehicle("cf_rampart_ifv", "tank_light", LandContinental, 5.2f, "Turret", "Barrel", "Barrel");
+      yield return Vehicle("ff_vanguard_mrap", "apc", LandFree, 4.4f);
+      yield return Vehicle("cf_ironhide_mrap", "apc", LandContinental, 4.4f);
+      yield return Vehicle("ff_paladin_sph", "tank_a", LandFree, 6.2f, "Turret", "Barrel", "Barrel");
+      yield return Vehicle("cf_bastion_sph", "tank_b", LandContinental, 6.2f, "Turret", "Barrel", "Barrel");
+      yield return Vehicle("ff_aegis_ew", "radar_tank", LandFree, 5.0f, null, null, null, "Radar_Base:Y");
+      yield return Vehicle("cf_shroud_ew", "radar_tank", LandContinental, 5.0f, null, null, null, "Radar_Base:Y");
+      yield return Vehicle("cf_field_recovery", "apc", LandContinental, 5.0f);
+      yield return Vehicle("ff_recon_drone", "drone", None, 1.8f, null, null, null, "Drone_Prop");
+      yield return Vehicle("cf_recon_drone", "drone", None, 1.8f, null, null, null, "Drone_Prop");
+      yield return Vehicle("ff_loiter_munition", "drone", None, 2.0f, null, null, null, "Drone_Prop");
+      yield return Vehicle("cf_loiter_munition", "drone", None, 2.0f, null, null, null, "Drone_Prop");
       yield return Vehicle("ff_hawk_gunship", "heli_a", None, 6.4f, null, null, null, "Blades_Main", "Blades_Back");
       yield return Vehicle("cf_gale_gunship", "heli_b", HeliContinental, 6.4f, null, null, null, "Blades_Main", "Blades_Back");
       yield return Vehicle("ff_transport_heli", "heli_a", None, 6.6f, null, null, null, "Blades_Main", "Blades_Back");

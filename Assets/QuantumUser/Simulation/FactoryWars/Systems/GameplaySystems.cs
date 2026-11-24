@@ -1261,6 +1261,9 @@ namespace Quantum.FactoryWars {
       } else {
         Damage(f, weapon, target, amount);
       }
+      if (spec.SelfDestructOnAttack) {
+        unit->Health = FP._0;
+      }
     }
 
     public override void Update(Frame f) {

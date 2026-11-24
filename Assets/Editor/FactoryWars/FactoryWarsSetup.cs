@@ -363,6 +363,24 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "cf_scout_boat", At = "shipyard", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
       new UnitRow { Id = "cf_artillery_ship", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(350, 0, 120, 100), Build = 35, Health = 600, Attack = AttackType.Area, Damage = 90, Range = 24, MinRange = 8, Splash = 4, Interval = 4, Speed = 3, Population = 4 },
       new UnitRow { Id = "cf_landing_craft", At = "shipyard", Size = UnitSize.Medium, Naval = true, Cost = R(200, 60, 60, 40), Build = 24, Health = 550, Attack = AttackType.AntiInfantry, Damage = 12, Range = 7, Interval = 1.2, Speed = 6.5, Population = 2, TransportCapacity = 6, TransportAllowsVehicles = true, TransportEjectHealthRatio = 0 },
+      // Task 42: Modern-warfare combined-arms roster expansion (8 FF + 9 CF, fictional names, data-driven).
+      new UnitRow { Id = "ff_striker_ifv", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(190, 30, 60, 40), Build = 24, Health = 480, Attack = AttackType.AntiInfantry, Damage = 22, Range = 8.5, Splash = 1.6, Interval = 1.3, Speed = 6.2, Population = 2, TransportCapacity = 4, TransportEjectHealthRatio = 0.4 },
+      new UnitRow { Id = "cf_rampart_ifv", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(175, 30, 55, 35), Build = 22, Health = 510, Attack = AttackType.AntiInfantry, Damage = 20, Range = 8.0, Splash = 1.6, Interval = 1.3, Speed = 6.0, Population = 2, TransportCapacity = 4, TransportEjectHealthRatio = 0.4 },
+      new UnitRow { Id = "ff_vanguard_mrap", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Small, Cost = R(120, 35, 25, 15), Build = 16, Health = 280, Attack = AttackType.AntiInfantry, Damage = 14, Range = 7.5, Interval = 1.0, Speed = 7.2, Population = 1, TransportCapacity = 3, TransportEjectHealthRatio = 0.4 },
+      new UnitRow { Id = "cf_ironhide_mrap", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Small, Cost = R(110, 35, 20, 15), Build = 15, Health = 300, Attack = AttackType.AntiInfantry, Damage = 13, Range = 7.2, Interval = 1.0, Speed = 7.0, Population = 1, TransportCapacity = 3, TransportEjectHealthRatio = 0.4 },
+      new UnitRow { Id = "ff_paladin_sph", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(240, 0, 95, 65), Build = 32, Health = 420, Attack = AttackType.Area, Damage = 85, Range = 18, MinRange = 6, Splash = 3.2, Interval = 4.6, Speed = 3.8, Population = 3 },
+      new UnitRow { Id = "cf_bastion_sph", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(225, 0, 90, 60), Build = 30, Health = 450, Attack = AttackType.Area, Damage = 82, Range = 18, MinRange = 6, Splash = 3.2, Interval = 4.6, Speed = 3.8, Population = 3 },
+      new UnitRow { Id = "ff_aegis_ew", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(180, 0, 65, 70), Build = 24, Health = 380, Attack = AttackType.AntiAir, Damage = 32, Range = 14, Interval = 1.2, Speed = 6.2, Population = 2, Ability = SpecialAbility.CarrierHunter, AbilityMultiplier = 2.0 },
+      new UnitRow { Id = "cf_shroud_ew", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(170, 0, 60, 65), Build = 23, Health = 400, Attack = AttackType.AntiAir, Damage = 31, Range = 14, Interval = 1.2, Speed = 6.2, Population = 2, Ability = SpecialAbility.CarrierHunter, AbilityMultiplier = 2.0 },
+      new UnitRow { Id = "cf_field_recovery", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(185, 50, 55, 35), Build = 28, Health = 520, Attack = AttackType.AntiInfantry, Damage = 8, Range = 6, Interval = 1, Speed = 5.0, Population = 2, Ability = SpecialAbility.FieldRepair, AbilityMultiplier = 15, AbilityRadius = 7, AbilityCount = 3 },
+      new UnitRow { Id = "ff_recon_drone", At = "airfield", Size = UnitSize.Small, Air = true, Cost = R(70, 0, 20, 30), Build = 10, Health = 110, Attack = AttackType.None, Speed = 12.0, Population = 1 },
+      new UnitRow { Id = "cf_recon_drone", At = "airfield", Size = UnitSize.Small, Air = true, Cost = R(65, 0, 20, 25), Build = 10, Health = 115, Attack = AttackType.None, Speed = 12.0, Population = 1 },
+      new UnitRow { Id = "ff_loiter_munition", At = "airfield", Size = UnitSize.Small, Air = true, Cost = R(90, 0, 35, 35), Build = 12, Health = 95, Attack = AttackType.Area, Damage = 135, Range = 3.5, Splash = 3.0, Interval = 1.0, Speed = 11.0, Population = 1 },
+      new UnitRow { Id = "cf_loiter_munition", At = "airfield", Size = UnitSize.Small, Air = true, Cost = R(85, 0, 30, 35), Build = 12, Health = 100, Attack = AttackType.Area, Damage = 130, Range = 3.5, Splash = 3.0, Interval = 1.0, Speed = 11.0, Population = 1 },
+      new UnitRow { Id = "ff_drone_operator", At = "barracks", Size = UnitSize.Small, Cost = R(110, 35, 30, 35), Build = 16, Health = 64, Attack = AttackType.AntiInfantry, Damage = 6, Range = 7, Interval = 1.1, Speed = 3.8, Population = 2 },
+      new UnitRow { Id = "cf_drone_operator", At = "barracks", Size = UnitSize.Small, Cost = R(105, 35, 25, 35), Build = 16, Health = 68, Attack = AttackType.AntiInfantry, Damage = 6, Range = 7, Interval = 1.1, Speed = 3.8, Population = 2 },
+      new UnitRow { Id = "ff_antidrone_gunner", At = "barracks", Size = UnitSize.Small, Cost = R(60, 25, 15, 20), Build = 10, Health = 62, Attack = AttackType.AntiAir, Damage = 14, Range = 11, Interval = 1.0, Speed = 4.0, Population = 1, Ability = SpecialAbility.CarrierHunter, AbilityMultiplier = 2.0 },
+      new UnitRow { Id = "cf_antidrone_gunner", At = "barracks", Size = UnitSize.Small, Cost = R(55, 25, 15, 20), Build = 10, Health = 66, Attack = AttackType.AntiAir, Damage = 14, Range = 11, Interval = 1.0, Speed = 4.0, Population = 1, Ability = SpecialAbility.CarrierHunter, AbilityMultiplier = 2.0 },
     };
 
     // 항목 33 궁극 전력 유닛(가칭, 실존 함정·항공기 이름과 무관). 진영 유닛 목록(FactionSpec.Units)에는 넣지 않고 UltimateSpec에서만 가리킨다.
@@ -511,6 +529,87 @@ namespace FactoryWars.EditorTools {
       CampKit.RegisterLogistics(Resources.Load<FactoryWars.View.VisualCatalog>(FactoryWars.View.VisualCatalog.ResourcePath));
       AssetDatabase.SaveAssets();
       Debug.Log("[FW-T41] logistics data applied");
+    }
+
+    /// <summary>Task 42: modern-warfare combined-arms roster expansion (17 units: 8 FF + 9 CF), without rebaking Map4P.</summary>
+    public static void ApplyTask42Data() {
+      var task42Ids = new HashSet<string> {
+        "ff_striker_ifv", "cf_rampart_ifv",
+        "ff_vanguard_mrap", "cf_ironhide_mrap",
+        "ff_paladin_sph", "cf_bastion_sph",
+        "ff_aegis_ew", "cf_shroud_ew",
+        "cf_field_recovery",
+        "ff_recon_drone", "cf_recon_drone",
+        "ff_loiter_munition", "cf_loiter_munition",
+        "ff_drone_operator", "cf_drone_operator",
+        "ff_antidrone_gunner", "cf_antidrone_gunner",
+      };
+      var built = new Dictionary<string, UnitSpec>();
+      foreach (var row in Units) {
+        if (!task42Ids.Contains(row.Id)) continue;
+        var spec = BuildUnit(row);
+        if (row.Id.EndsWith("_loiter_munition")) {
+          spec.SelfDestructOnAttack = true;
+          spec.SightRange = 14;
+        } else if (row.Id.EndsWith("_recon_drone")) {
+          spec.SightRange = 22;
+          spec.DetectRadius = 18;
+        } else if (row.Id.EndsWith("_ew")) {
+          spec.SightRange = 16;
+          spec.DetectRadius = 16;
+        } else if (row.Id.EndsWith("_mrap")) {
+          spec.DetectRadius = 12;
+        } else if (row.Id.EndsWith("_antidrone_gunner")) {
+          spec.DetectRadius = 14;
+        }
+        EditorUtility.SetDirty(spec);
+        built[row.Id] = spec;
+      }
+      // Wire faction drone operator squads to launch autonomous strike drones via Task 40 OperatorDroneSystem.
+      var strikeDrone = AssetDatabase.LoadAssetAtPath<UnitSpec>($"{DataRoot}/pmc_strike_drone.asset");
+      foreach (var opId in new[] { "ff_drone_operator", "cf_drone_operator" }) {
+        if (built.TryGetValue(opId, out var op) && strikeDrone != null) {
+          op.OperatorDrone = Ref(strikeDrone);
+          op.OperatorMaxDrones = 2;
+          op.OperatorLeash = 26;
+          op.OperatorBatterySeconds = 25;
+          op.OperatorRelaunchSeconds = 8;
+          op.OperatorLaunchRange = 22;
+          EditorUtility.SetDirty(op);
+        }
+      }
+      // Append to FactionSpec.Units and BuildingSpec.Producible (deduplicated).
+      void AppendUnit(ref AssetRef<UnitSpec>[] list, UnitSpec unit) {
+        var r = Ref(unit);
+        var cur = list != null ? list.ToList() : new List<AssetRef<UnitSpec>>();
+        if (cur.Any(x => x.Id == r.Id)) return;
+        cur.Add(r);
+        list = cur.ToArray();
+      }
+      foreach (var (prefix, factionAsset) in new[] { ("ff_", "faction_free_federation"), ("cf_", "faction_continental_federation") }) {
+        var faction = AssetDatabase.LoadAssetAtPath<FactionSpec>($"{DataRoot}/{factionAsset}.asset");
+        foreach (var row in Units) {
+          if (!task42Ids.Contains(row.Id) || !row.Id.StartsWith(prefix)) continue;
+          var unit = built[row.Id];
+          if (faction != null) {
+            AppendUnit(ref faction.Units, unit);
+            EditorUtility.SetDirty(faction);
+          }
+          if (!string.IsNullOrEmpty(row.At)) {
+            var bld = AssetDatabase.LoadAssetAtPath<BuildingSpec>($"{DataRoot}/{prefix}{row.At}.asset");
+            if (bld != null) {
+              AppendUnit(ref bld.Producible, unit);
+              EditorUtility.SetDirty(bld);
+            }
+          }
+        }
+      }
+      AssetDatabase.SaveAssets();
+      SyntyAssign.Run();
+      ThirdPartyKit.Apply();
+      CampKit.BlackenThirdParty(Resources.Load<FactoryWars.View.VisualCatalog>(FactoryWars.View.VisualCatalog.ResourcePath), DressKit.Out);
+      AssetDatabase.SaveAssets();
+      Debug.Log($"[FW-T42] applied {built.Count} modern-warfare units + Synty visuals");
     }
 
     public static void BakeTask39() {
