@@ -418,6 +418,15 @@ namespace FactoryWars.View {
       _arches.Update(frame);
       _logistics ??= new LogisticsView(_stage);
       _logistics.Update(frame);
+      // Logistics trucks: the cargo crates in the truck model ("Cargo" child) show only while it carries a load.
+      foreach (var pair in frame.GetComponentIterator<LogisticsTruck>()) {
+        if (_actors.TryGetValue(pair.Entity, out var truckActor) == false || truckActor.View == null || truckActor.View.Model == null) continue;
+        var cargo = truckActor.View.Model.transform.Find("Cargo");
+        if (cargo == null) continue;
+        var c = pair.Component.Cargo;
+        var loaded = c.Iron + c.Wood + c.Steel + c.Power > FP._0;
+        if (cargo.gameObject.activeSelf != loaded) cargo.gameObject.SetActive(loaded);
+      }
       _waterway ??= new WaterwayView(_stage);
       _waterway.Update(frame);
       World.ShowNoBuild(_controller != null && _controller.Input != null && _controller.Input.IsPlacing);
@@ -504,6 +513,10 @@ namespace FactoryWars.View {
       if (actor.IsBuilding) {
         // 파괴된 기지 건물은 사라지지 않고 영구 붕괴 콘크리트 잔해 더미 + 영구 그을음으로 남는다.
         Fx.PermanentRubble(actor.View.transform.position, Mathf.Max(2.8f, actor.Radius * 0.9f));
+      } else if (actor.View.Slot != null && actor.View.Slot.WreckPrefab != null && actor.View.Model != null) {
+        // The slot's own destroyed model (same pivot and scale as the live model), then the usual fire.
+        var model = actor.View.Model.transform;
+        Fx.ModelWreck(actor.View.Slot.WreckPrefab, model.position, model.rotation, model.lossyScale, 30f);
       } else if (actor.IsAir == false && actor.IsNaval == false && actor.Radius > 1.8f) {
         Fx.Wreck(actor.View.transform.position, actor.Radius * 0.85f, 30f);
       }

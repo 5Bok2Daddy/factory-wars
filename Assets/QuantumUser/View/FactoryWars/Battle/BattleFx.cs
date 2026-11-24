@@ -714,6 +714,22 @@ namespace FactoryWars.View {
       return item;
     }
 
+    /// <summary>A unit's own destroyed model (slot WreckPrefab) left for <paramref name="seconds"/>, with fire, in the wreck queue.</summary>
+    public void ModelWreck(GameObject prefab, Vector3 position, Quaternion rotation, Vector3 scale, float seconds) {
+      if (_wrecks.Count >= MaxWrecks) {
+        var old = _wrecks.Dequeue();
+        if (old.Item != null) {
+          Destroy(old.Item);
+        }
+      }
+      var item = Instantiate(prefab, position, rotation, transform);
+      item.name = "Wreck";
+      item.transform.localScale = scale;
+      var flat = new Vector3(position.x, 0f, position.z);
+      SpawnWarFx("fire_black", flat + Vector3.up * 0.35f, Quaternion.identity, 0.65f, 0.35f);
+      _wrecks.Enqueue((item, Time.time - (WreckSeconds - seconds), flat, 1.5f, Time.time + 2.8f));
+    }
+
     public void Wreck(Vector3 position, float radius, float seconds) {
       if (_wrecks.Count >= MaxWrecks) {
         var old = _wrecks.Dequeue();

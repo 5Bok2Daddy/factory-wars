@@ -49,7 +49,8 @@ namespace FactoryWars.EditorTools {
       },
       new Model {
         Folder = "MercHaulerTruck", Name = "merc_hauler_truck", Span = 7.5f, Yaw = 0f,
-        Slots = new[] { "unit/merc_cargo_truck", "unit/logistics_truck" },
+        // 2026-11-24: PMC cargo truck only. The Task 41 logistics truck is the Synty canopy truck (LogisticsTruckKit).
+        Slots = new[] { "unit/merc_cargo_truck" },
         Notes = "CC BY 4.0 military cargo truck (see Assets/ThirdParty/CREDITS.md), decimated + flat palette, renamed; 7.5 m",
       },
       new Model {

@@ -63,6 +63,8 @@ namespace FactoryWars.View {
     /// 포탑(조준 회전), 포신(반동·포구), 돌아가는 부분(회전축은 메쉬가 가장 얇은 축).
     /// </summary>
     public string TurretPart;
+    /// <summary>2026-11-24 (AGY fix A): optional destroyed model left where the unit died (e.g. Synty *_Destroyed). Empty = generic wreck.</summary>
+    public GameObject WreckPrefab;
     public string BarrelPart;
     public string[] SpinParts = new string[0];
     /// <summary>사격 효과 위치. MuzzlePart가 비어 있으면 모델 원점 + MuzzleOffset(모델 좌표).</summary>
