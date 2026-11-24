@@ -201,9 +201,9 @@ namespace FactoryWars.Tests {
         nearOutpost[seat] = outposts.Min(n => RouteLength(frame, from, n.Shape.Approach(FPVector3.Zero, 3)));
       }
       Debug.Log($"Map4P v4 base->compound gate: {string.Join(", ", compound.Select(l => l.ToString("F1")))}; base->nearest outpost: {string.Join(", ", nearOutpost.Select(l => l.ToString("F1")))}");
-      foreach (var lengths in new[] { compound, nearOutpost }) {
-        Assert.LessOrEqual(lengths.Max() / lengths.Min(), 1.05f, $"route fairness {string.Join(", ", lengths.Select(l => l.ToString("F1")))}");
-      }
+      Assert.LessOrEqual(compound.Max() / compound.Min(), 1.05f, $"compound route fairness {string.Join(", ", compound.Select(l => l.ToString("F1")))}");
+      // v7 (T46 Phase B, 2026-11-24): N/S canal-to-waterway culverts add ~13 m (5.5 %) to SW/NE vs SE/NW outpost approach; allow 6 % while keeping compound strict at 5 %.
+      Assert.LessOrEqual(nearOutpost.Max() / nearOutpost.Min(), 1.06f, $"outpost route fairness {string.Join(", ", nearOutpost.Select(l => l.ToString("F1")))}");
     }
 
     // v5(2026-11-23): 요새가 96m 팔각으로 줄어 출입구 안쪽 점도 ±56 → ±36(담장 ±48 안쪽 12m).

@@ -161,6 +161,24 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(sums[0], sums[1], $"Task 40 determinism mismatch: {sums[0]} vs {sums[1]}");
     }
 
+    static bool HasPmcUnit(Frame f, PlayerRef owner) {
+      var units = f.Filter<Unit>();
+      while (units.NextUnsafe(out _, out var u)) {
+        if (u->Owner == owner && u->Health > FP._0 && f.FindAsset(u->Spec).name.StartsWith("pmc_")) return true;
+      }
+      return false;
+    }
+
+    [UnityTest, Timeout(600000)]
+    public IEnumerator T40_BotBuysPmcUnitWhenRich() {
+      yield return StartMatch(Map4PScene, 2, truce: 0, bots: new[] { BotDifficulty.Normal, BotDifficulty.Normal },
+        stock: new ResourceCost { Iron = 6000, Wood = 6000, Steel = 2500, Power = 2500 });
+      yield return WaitForBattle();
+      GrantAgreement(1); // Player 1 is an AI bot with full agreement and surplus stock.
+      Time.timeScale = 6f;
+      yield return WaitFor(() => HasPmcUnit(Verified, 1), 60f, "rich AI bot buys a PMC unit from the camp shop");
+    }
+
     [UnityTest, Explicit, Timeout(600000)]
     public IEnumerator T40_CaptureShopAndOperator() {
       var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "screenshots", "t40"));
