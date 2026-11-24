@@ -301,8 +301,10 @@ namespace FactoryWars.EditorTools {
       foreach (var (unit, display) in new[] { ("pmc_tank", "tank"), ("pmc_armored_suv", "mrap"), ("pmc_attack_heli", "heli"), ("pmc_attack_drone", "drone"), ("pmc_strike_drone", "drone") }) {
         var slot = catalog.Slots.Find(s => s != null && s.Id == "camp/display_" + display);
         if (slot == null) continue;
-        Slot(catalog, "unit/" + unit, slot.Prefab, slot.Size, slot.Scale);
-        catalog.Slots.Find(s => s.Id == "unit/" + unit).AutoFit = false;
+        // Combat unit slots use AutoFit = true (scale 1) so PMC tanks/MRAPs/helicopters match FF/CF combat unit scale,
+        // while camp/display_* slots preserve their 1:1 motor-pool display scale inside the PMC camp.
+        Slot(catalog, "unit/" + unit, slot.Prefab, slot.Size, 1f);
+        catalog.Slots.Find(s => s.Id == "unit/" + unit).AutoFit = true;
       }
       // PMC troopers: Mercenary male/female, merged into one skinned mesh with a black copy of the character material.
       var guard = catalog.Slots.Find(s => s != null && s.Id == "unit/trader_guard");

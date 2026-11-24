@@ -148,9 +148,12 @@ namespace FactoryWars.EditorTools {
         slot.Category = VisualCategory.Unit;
         slot.PivotOffset = pivot;
         slot.Size = size;
-        slot.AutoFit = false;
+        // Combat unit slots (unit/*) auto-fit to RTS UnitSpec size so PMC helicopters match FF/CF gunships;
+        // camp/display_* slots keep their 1:1 motor-pool display span inside the PMC camp.
+        var isCombatUnit = id.StartsWith("unit/");
+        slot.AutoFit = isCombatUnit;
         slot.YawOffset = 0f;
-        slot.Scale = model.Span / Mathf.Max(0.01f, Mathf.Max(size.x, size.z));
+        slot.Scale = isCombatUnit ? 1f : model.Span / Mathf.Max(0.01f, Mathf.Max(size.x, size.z));
         slot.TeamColor = TeamColorMode.None;
         slot.TeamTextures = new Texture2D[0];
         slot.SpinParts = new string[0];
