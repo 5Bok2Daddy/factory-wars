@@ -122,6 +122,14 @@ for r, c, ch in EAST_Y_DRESS:
         y_dressed += 1
 print(f'Eastern/Western Y strip dressed (180-sym pairs): {y_dressed}')
 
+# Fairness polish (2026-11-24): the N/S culvert + park (col 46) opened a direct diagonal entry from NE->North & SW->South (241.1 m),
+# whereas NW->North & SE->South detoured around 3 H cells on cols 34-35 (254.4 m = 5.5 % spread > 5 %). Turn those 3 mirror pairs
+# into pocket parks 'K' so all 4 seats have equal outpost approach (<= 2 % spread) while keeping 180-degree symmetry.
+for r, c in [(4, 35), (6, 34), (6, 35), (7, 34)]:
+    for rr, cc in ((r, c), (N - 1 - r, N - 1 - c)):
+        if g[rr][cc] == 'H':
+            g[rr][cc] = 'K'
+
 with open('Map4P_grid_v7.csv', 'w', newline='') as f:
     csv.writer(f, lineterminator='\n').writerows(g)
 

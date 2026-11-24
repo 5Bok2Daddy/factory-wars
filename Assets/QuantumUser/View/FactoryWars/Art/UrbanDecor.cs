@@ -689,11 +689,11 @@ namespace FactoryWars.View {
           mat.SetFloat("_FoamWidth", 1.4f);
           break;
         default:
-          var baseColor = profile.WaterColor.a > 0f ? (Color)profile.WaterColor : new Color(0.29f, 0.64f, 0.84f);
-          mat.SetColor("_Shallow", profile.WaterShallowTint.a > 0f ? (Color)profile.WaterShallowTint : Color.Lerp(baseColor, Color.white, 0.28f));
-          mat.SetColor("_Deep", profile.WaterDeepTint.a > 0f ? (Color)profile.WaterDeepTint : baseColor * 0.78f);
-          mat.SetColor("_Foam", profile.WaterFoamTint);
-          mat.SetFloat("_FoamWidth", profile.WaterFoamWidth);
+          // 2026-11-24: deep harbor blue-teal paired with IgniteCoders WaterSurface_single wave texture (replaces flat mint).
+          mat.SetColor("_Shallow", new Color(0.14f, 0.44f, 0.56f, 1f));
+          mat.SetColor("_Deep", new Color(0.08f, 0.23f, 0.38f, 1f));
+          mat.SetColor("_Foam", new Color(0.94f, 0.98f, 1f, 1f));
+          mat.SetFloat("_FoamWidth", 1.15f);
           break;
       }
       RefreshWater();
