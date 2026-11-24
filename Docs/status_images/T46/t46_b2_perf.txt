@@ -1,0 +1,9 @@
+Task 46 captures b2
+full_map | 560m | draws 2409 | tris 5300924
+west_sector | 190m | draws 843 | tris 2014363
+barrier_tower | 40m | draws 93 | tris 106676
+harbour_truck | 60m | draws 123 | tris 220516
+north_harbour_culvert | 80m | draws 138 | tris 225200
+south_barrier | 45m | draws 51 | tris 59514
+canal_shipyard_tooltip | 45m | draws 79 | tris 112156
+waterway props 100

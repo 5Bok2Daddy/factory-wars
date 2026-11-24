@@ -82,12 +82,16 @@ namespace FactoryWars.View {
       item.isStatic = true;
       // Task 39 C1: parks and parking lots (many, small) do not cast shadows.
       if (kind == "K" || kind == "L") item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      // Task 39 fix 2 (triangle budget): parking lots, container yards and rubble fade out early in the far overview (each car/container
-      // is thousands of triangles); at gameplay zoom they stay.
-      if (GraphicsQuality.Current != QualityTier.Low && (kind == "L" || kind == "Y" || kind == "X" || kind == "K") && item.TryGetComponent<LODGroup>(out var far)) {
+      // Task 39 fix 2 (triangle budget): parking lots, container yards and parks fade out early in the far overview;
+      // B2 (2026-11-24): ruins (X, XC) stay visible at sector/gameplay zoom (1.5x instead of 5x) so X lots never read as bare ground.
+      if (GraphicsQuality.Current != QualityTier.Low && (kind == "L" || kind == "Y" || kind == "K") && item.TryGetComponent<LODGroup>(out var far)) {
         var lods = far.GetLODs();
         lods[0].screenRelativeTransitionHeight *= 5f;
         far.SetLODs(lods);
+      } else if (GraphicsQuality.Current != QualityTier.Low && (kind == "X" || kind == "XC") && item.TryGetComponent<LODGroup>(out var farX)) {
+        var lods = farX.GetLODs();
+        lods[0].screenRelativeTransitionHeight *= 1.5f;
+        farX.SetLODs(lods);
       }
       if (GraphicsQuality.Current == QualityTier.Low) {
         item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -158,7 +162,11 @@ namespace FactoryWars.View {
           string kind;
           var yaw = Yaw(dir);
           if (rows == 2 && cols == 2) kind = "H4";
-          else if (rows == 1 && cols == 1) kind = "H1";
+          else if (rows == 1 && cols == 1) {
+            // B2: mix damaged/destroyed buildings into the former X belt (rows 33-46, west/east wings).
+            var inBelt = r >= 33 && r <= 46 && (c <= 26 || c >= 53);
+            kind = inBelt && Kinds.ContainsKey("HR") && Hash(r, c, 23) % 3 == 0 ? "HR" : "H1";
+          }
           else {
             var wide = cols == 2;
             var frontOnLongSide = (dir == 0 || dir == 2) == wide;
@@ -178,7 +186,12 @@ namespace FactoryWars.View {
           switch (ch) {
             case 'K': Put(parent, "K", Pick("K", r, c, 1, 1, 3), at, Yaw(FrontDir(map, r, c, 1, 1)), $"{r},{c}"); break;
             case 'L': Put(parent, "L", Pick("L", r, c, 1, 1, 4), at, Hash(r, c, 9) % 2 == 0 ? 0f : 180f, $"{r},{c}"); break;
-            case 'X': Put(parent, "X", Pick("X", r, c, 1, 1, 6), at, 90f * (Hash(r, c, 7) % 4), $"{r},{c}"); break;
+            case 'X': {
+              var isConstruction = Kinds.ContainsKey("XC") && ((r == 39 && c == 17) || (r == 40 && c == 62));
+              if (isConstruction) Put(parent, "XC", 0, at, Yaw(FrontDir(map, r, c, 1, 1)), $"{r},{c}");
+              else Put(parent, "X", Pick("X", r, c, 1, 1, 6), at, 90f * (Hash(r, c, 7) % 4), $"{r},{c}");
+              break;
+            }
             case 'Y': {
               // Task 39: on the PMC camp map the compound's Y cells belong to the camp blocks (no container piles).
               if (camp && Mathf.Abs(at.x) < 56f && Mathf.Abs(at.z) < 56f) break;

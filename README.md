@@ -1,6 +1,6 @@
 # Factory Wars — Mobile RTS Dashboard
 
-> **기준 일자:** **2026-11-23 (KST)**
+> **기준 일자:** **2026-11-24 (KST)**
 > **대상 플랫폼:** Android Mobile RTS (Touch-Only UI, Photon Quantum 3 결정론 `FP` 시뮬레이션 — 금지어 **0건**)
 > **Git 저장소 루트:** `Game/` (`origin/main` → `https://github.com/5Bok2Daddy/factory-wars.git`)
 > **아트 파이프라인:** Synty POLYGON 및 War FX에 Desert World, Roadside Tales와 NatureForge 맵 에셋을 선별 적용.
@@ -9,14 +9,12 @@
 
 ## Map4P 전체 지도 검수
 
-**640m 플레이 맵 · 2026-11-23 16:45 KST · 기존 Unity 캡처 `j1`**
+**640m 플레이 맵 · 2026-11-24 14:35 KST · T46 Phase B + B2(4면 외곽 수로·빈 `X` 부지 건물/폐허화) + Fix C(PMC 톤 통일)**
 
-| 직상공 전체 지도 · 1,600×1,600 | RTS 사선 · 1,920×1,080 |
+| 직상공 전체 지도 · 1,920×1,080 | 서쪽 구역 (B2 전후 비교) |
 | --- | --- |
-| [![네 모서리와 플레이 경계 전체가 보이는 Map4P 직상공](Docs/status_images/Map4PV4/handoff_t39_j1_top.png)](Docs/status_images/Map4PV4/handoff_t39_j1_top.png) | [![중앙 PMC 기지와 둘레 도로·인접 건물의 RTS 사선 화면](Docs/status_images/Map4PV4/handoff_t39_j1_oblique.png)](Docs/status_images/Map4PV4/handoff_t39_j1_oblique.png) |
-| [전체 해상도 원본](Docs/status_images/Map4PV4/handoff_t39_j1_top.png) · 네 본진, 운하, 교량, 순환로 | [사선 원본](Docs/status_images/Map4PV4/handoff_t39_j1_oblique.png) · 중앙 기지와 도시 연결부 |
-
-직상공과 사선은 `aaa7847`을 바탕으로 로컬 6차 1회차를 적용한 화면이다. 플레이 기준 `fd8bba2`의 최종 색 보정은 캠프 사진에서 확인할 수 있다. [시각 인수인계와 개선 우선순위](Docs/Map4P-Visual-Handoff.md) · [최종 캠프](Docs/status_images/T39/t39_v6_camp_wide.png)
+| [![Map4P v7 4면 수로 및 B2 시가지·폐허 전체 화면](Docs/status_images/T46/t46_b2_full_map.png)](Docs/status_images/T46/t46_b2_full_map.png) | [![빈 모래 X 부지를 건물·폐허·공사 부지로 채운 전후 비교](Docs/status_images/T46/t46_b2_west_before_after.png)](Docs/status_images/T46/t46_b2_west_before_after.png) |
+| [전체 지도 원본](Docs/status_images/T46/t46_b2_full_map.png) · 4면 외곽 수로, 8개 방벽, 4개 중립항, B2 건물/폐허 | [서쪽 전후 비교](Docs/status_images/T46/t46_b2_west_before_after.png) · [시각 인수인계](Docs/Map4P-Visual-Handoff.md) · [최종 PMC 캠프](Docs/status_images/T39/t39_fixc_camp_wide.png) |
 
 ---
 
@@ -24,7 +22,15 @@
 
 | 작업 | 날짜 | 상태 | 대표 캡처 | 결과 요약 |
 | --- | --- | --- | --- | --- |
-| 46 — Phase A 남은 검사(트럭 위협 우회·함선 교행·항구 표적·온라인 5분) | 2026-11-24 | 부분 (Phase B 대기) | [방벽·감시탑](Docs/status_images/T46/t46_barrier_tower.png) · [항구·트럭](Docs/status_images/T46/t46_harbour_truck.png) | [통과] 트럭 우회(사거리 안 15.5→0 s, +5.0 %, 정산 1회), 교행 최대 정지 0.15 s, 안개 시야 밖 미사격·정찰 후 사격, 온라인 2클라이언트 300 s 체크섬 72,279회 일치, 회귀 13/13 · [수정] 트럭이 사령부 모서리에 붙어 도크를 못 떠나던 이동 버그 · [실패] T41 4자리 반복 주기 차이 5.8 %(Phase A 서쪽 비대칭) |
+| 46 Phase B + B2 — 4면 외곽 수로·빈 `X` 부지 건물/폐허화 | 2026-11-24 | 부분 (경로 공정성 0.5% 초과 확인 필요) | [전체 지도](Docs/status_images/T46/t46_b2_full_map.png) · [서쪽 전후](Docs/status_images/T46/t46_b2_west_before_after.png) · [북항·저교](Docs/status_images/T46/t46b_north_harbour_culvert.png) | [통과] 4면 수로(`grid v7`)·방벽 8·중립항 4·남북 저교(3m), B2 빈 `X` 부지 63.6%/65.1% 건물(`84H` 서/동 180도 대칭)+폐허(`SM_Bld_Destroyed_01/02`)+공사 부지(`XC`), `Logistics_FairnessTable` 4.5%(상한 5%), `Map4P_v4_GridMatchesCsv`, `Waterway_LayoutAndRange`/`SailFairness`/`TruckThreatDetour`, 게임 시점 예산(51~138 draw/59~225k) · [실패] `Map4P_v4_SymmetryFairnessAndReach` `base->compound` 경로 공정성 5.5%(254.4 vs 241.1m, 상한 5%) |
+| AGY Fix C + F — PMC 톤 통일·병사 겹침 감사·저품질 그래픽 감사 | 2026-11-24 | 완료 | [전차 전후](Docs/status_images/T39/t39_fixc_before_after.png) · [캠프 전체](Docs/status_images/T39/t39_fixc_camp_wide.png) · [감사표](Docs/status_images/T39/placeholder_audit.md) | [통과] `PmcMuted` 건메탈/차콜 2톤(색 감사 진열 10/10·전차 2/2·APC 2/2), 병사 겹침 최소 간격 1.20m PASS, 북쪽 컨테이너·감시탑 지붕·위장망 톤 통일, `VisualCatalog` 419슬롯 전수 감사표 작성 |
+| 41 2차 + Fix A — 물류 화면 표시·Synty 캐노피 트럭 교체 | 2026-11-24 | 완료 | [적재(캐노피 트럭)](Docs/status_images/T41/t41_truck_loading.png) · [하역](Docs/status_images/T41/t41_truck_unloading.png) · [도크](Docs/status_images/T41/t41_base_dock.png) | [통과] 로켓 트럭 → `SM_Veh_Truck_01_Canopy` 키트 교체(`b1e7793`), 슬롯 커버리지 테스트, 물류 시험 7/7, 4자리 공정성 4.5%(Phase B+B2 후 통과) |
+| 40 — PMC 상점 목록·드론 오퍼레이터 | 2026-11-24 | 보류 — 11-23 21:35 순서 변경(T46 맵 선행) | — | [못 돌림] T46 완료 후 다음 작업 예정 (`HANDOFF.md` 설계 기본값 반영) |
+| 42 — 현대전 유닛 목록 확장 | 2026-11-24 | 보류 — 11-23 21:35 순서 변경(T46 맵 선행) | — | [못 돌림] T40 이후 예정 |
+| 43 — 도시 사실감·구역화 | 2026-11-24 | 보류 — 11-23 21:35 순서 변경(T46 맵 선행) | — | [못 돌림] T42 이후 예정 |
+| 44 — 사용자 GLB 모델 시범·일괄 적용 | 2026-11-24 | 보류 — 11-23 21:35 순서 변경(T46 맵 선행) | — | [못 돌림] T43 이후 예정 (구축함 아치교 통과 검증 포함) |
+| 45 — 파괴 가능 도시 소품·건물 | 2026-11-24 | 보류 — 11-23 21:35 순서 변경(T46 맵 선행) | — | [못 돌림] `NEXT-TASKS-40-42.md` 명세 추가 완료, T44 이후 예정 |
+| 46 — Phase A 남은 검사(트럭 위협 우회·함선 교행·항구 표적·온라인 5분) | 2026-11-24 | 완료 (Phase B 확장 완료) | [방벽·감시탑](Docs/status_images/T46/t46_barrier_tower.png) · [항구·트럭](Docs/status_images/T46/t46_harbour_truck.png) | [통과] 트럭 우회(사거리 안 15.5→0 s, +5.0 %, 정산 1회), 교행 최대 정지 0.15 s, 안개 시야 밖 미사격·정찰 후 사격, 온라인 2클라이언트 300 s 체크섬 72,279회 일치, 회귀 13/13 · [수정] 트럭이 사령부 모서리에 붙어 도크를 못 떠나던 이동 버그 |
 | 46 — 해군 수로 Phase A(서쪽 시범: 16 m 수로·방벽·감시탑·중립항) | 2026-11-24 | 부분 (Phase B 보류) | [서쪽 전후](Docs/status_images/T46/t46_west_before_after.png) · [방벽·감시탑](Docs/status_images/T46/t46_barrier_tower.png) · [항구·트럭](Docs/status_images/T46/t46_harbour_truck.png) | [통과] 방벽 차단, 소유자 수문(2초 열림·10초 닫힘, 닫히는 중 적 진입), 파괴 즉시 개방·재건 시 폐쇄, 지상 유닛 피해, 경고 1회, 조선소 구역·운하 함선 생산 거부, 항해 시간 1.1배 이내·NW/SW 차이 0.2%, 결정론 2회 일치, 사거리 기하(기지 37 m·사령부 60 m 밖), 물류 회귀 3/3, 게임 시점 예산(94/129k·144/259k) · [실패] 트럭 위협 회피 경로 미구현 · [못 돌림] 함선 교행·항구 포격·시야 제한·2클라이언트 5분 온라인 |
 | 41 2차 — 물류 화면 표시·HUD·캡처 시험 | 2026-11-24 | 부분 | [서쪽 전후](Docs/status_images/T41/t41_west_before_after.png) · [적재](Docs/status_images/T41/t41_truck_loading.png) · [도크](Docs/status_images/T41/t41_base_dock.png) | [통과] 컴파일 오류 0, 물류 시험 7/7(정산 1회·중복 없음·버퍼 가득·트럭 재생성·소유권·순환로 대기 없음·결정론 2회 체크섬 일치) · [실패] 캡처 시험 측정 코드 예외(캡처 6장은 저장됨, 코드 수정), 공정성 표 30분 시간 초과(진단 추가) · [실패] 서쪽 야적장 빈 포장 넓음 → T46 부두 재배치에서 수정 |
 | 41 — 확장 자원지 물류(야적장 버퍼·자동 트럭·하역 시 1회 정산·파괴 시 상자·소유권 이전) | 2026-11-23 | 완료 (04f83f7) | — | [통과] 물류 시험 4/4 |

@@ -74,6 +74,36 @@ for r in range(2, 12):
         assert g[r][c] == 'G' and g[N - 1 - r][N - 1 - c] == 'G'
 assert g[12][44] == 'W' and g[67][35] == 'W', 'channel meets the canal'
 
+# B2 (2026-11-24 user request): fill the empty X lots between edge yards and PMC camp with ~60 % buildings ('H') and ~40 % real ruins ('X').
+# Keep every 's' alley and 'R' road untouched. Choose organic block clusters (no checkerboard) on the west side, then mirror 180 deg to east.
+# Reserve (39, 17) on west and its mirror (40, 62) on east as 'X' for the PolygonConstruction half-built site.
+B2_BUILD_BLOCKS = [
+    # West top strip (rows 33-37): leave corner (33,12..13) as X ruins so NW->W / SE->E outpost routes stay <= 5% fair
+    (34, 12, 3, 2), (33, 15, 2, 3), (35, 17, 3, 3), (33, 21, 3, 2), (35, 25, 3, 2),
+    # West mid strip (rows 39-40): buildings flanking the central construction site at (39, 17)
+    (39, 12, 2, 2), (39, 15, 2, 2), (39, 19, 2, 1), (39, 21, 2, 2), (39, 25, 2, 2),
+    # West bottom strip (rows 42-46): vertical mirror of top strip (leaves corner 46,12..13 as X ruins)
+    (43, 12, 3, 2), (45, 15, 2, 3), (42, 17, 3, 3), (44, 21, 3, 2), (42, 25, 3, 2),
+]
+w_to_h = e_to_h = 0
+for r0, c0, h_len, w_len in B2_BUILD_BLOCKS:
+    for dr in range(h_len):
+        for dc in range(w_len):
+            r, c = r0 + dr, c0 + dc
+            mr, mc = N - 1 - r, N - 1 - c
+            if (r, c) == (39, 17) or (mr, mc) == (40, 62):
+                continue
+            if g[r][c] == 'X' and g[mr][mc] in ('X', 'Y', 'K', 'L'):
+                g[r][c] = 'H'
+                g[mr][mc] = 'H'
+                w_to_h += 1
+                e_to_h += 1
+assert g[39][17] == 'X' and g[40][62] == 'X', 'construction sites stay X'
+w_x_left = sum(1 for r in range(33, 47) for c in range(12, 27) if g[r][c] in ('X', 'Y'))
+e_x_left = sum(1 for r in range(33, 47) for c in range(53, 68) if g[r][c] in ('X', 'Y'))
+assert w_to_h == e_to_h, f'180-deg symmetry mismatch: west {w_to_h} != east {e_to_h}'
+print(f'B2 X->H: west {w_to_h}H/{w_x_left}XY ({w_to_h/(w_to_h+w_x_left)*100:.1f}% H), east {e_to_h}H/{e_x_left}XY ({e_to_h/(e_to_h+e_x_left)*100:.1f}% H)')
+
 with open('Map4P_grid_v7.csv', 'w', newline='') as f:
     csv.writer(f, lineterminator='\n').writerows(g)
 

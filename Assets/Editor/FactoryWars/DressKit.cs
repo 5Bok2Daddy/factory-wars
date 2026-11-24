@@ -322,11 +322,26 @@ namespace FactoryWars.EditorTools {
       Add("L_01", 8, 8, b => { b.Prop(CV("Car_Van_01"), 1.35f, 0.5f, 180f); b.Prop(P("ParkingMeter_02"), 3.4f, -3.3f); b.Prop(P("Cone_01"), -1.3f, -1.6f); });
       Add("L_02", 8, 8, b => { b.Prop(CV("Car_Taxi_01"), -1.25f, 0.6f, 180f); b.Prop(CV("Car_Small_01"), 1.35f, 0.9f, 2f); });
       Add("L_03", 8, 8, b => { b.Prop(CV("Car_Muscle_01"), 1.35f, 0.4f, 0f); b.Prop(P("Skip_02"), -2.4f, 2.6f, 90f); b.Prop(P("TrashBag_02"), -1.2f, 2.9f); });
-      // ---- X 잔해·엄폐(8×8, 통행 가능): 가운데 3m 길은 비운다.
-      Add("X_00", 8, 8, b => { b.Prop(MD("DebrisPile_02"), -0.4f, 2.6f, 0f); b.Prop(MV("Pickup_Small_Destroyed_01"), -2.6f, -1.2f, 12f); b.Prop(MD("Rubble_Pile_04"), 2.6f, -2.4f, 40f); });
-      Add("X_01", 8, 8, b => { b.Prop(MM("Barrier_Base_Row_02"), 0f, -2.9f, 0f); b.Prop(MD("Rubble_Pile_06"), 2.2f, 2.2f, 70f); b.Prop(MD("Vehicle_Debris_07"), -2.4f, 1.6f, 25f); });
+      // ---- X 잔해·엄폐(8×8, 통행 가능): 가운데 3m 길은 비운다. B2: 파괴 건물 뼈대·잔해·엄폐 + 공사 부지(XC) + 파괴 시가지(HR).
+      Add("X_00", 8, 8, b => { b.Prop(MD("DebrisPile_02"), -0.4f, 2.6f, 0f); b.Prop(MV("Pickup_Small_Destroyed_01"), -2.6f, -1.2f, 12f); b.Prop(MD("Rubble_Pile_04"), 2.6f, -2.4f, 40f); b.Prop(MM("Barrier_Base_Single_02"), 2.4f, 1.8f, 90f); });
+      Add("X_01", 8, 8, b => { b.Prop(MM("Barrier_Base_Row_02"), 0f, -2.9f, 0f); b.Prop(MD("Rubble_Pile_06"), 2.2f, 2.2f, 70f); b.Prop(MD("Vehicle_Debris_07"), -2.4f, 1.6f, 25f); b.Prop(MD("DebrisPile_01"), 2.6f, -0.4f, 15f); });
       Add("X_02", 8, 8, b => { b.Bld(MB("Ruins_04"), 0.4f, 1.4f); b.Prop(MD("Rubble_Pile_05"), -1.4f, -2.6f, -15f); b.Prop(MM("Barrier_Base_Single_02"), 2.8f, -2.4f, 30f); });
       Add("X_03", 8, 8, b => { b.Prop(MV("SUV_Destroyed_01"), 2.3f, 0.5f, 100f); b.Prop(MD("DebrisPile_04"), -1.0f, -2.8f, 0f); b.Prop(MP("Barrier_06"), -2.8f, 2.2f, 0f); b.Prop(MD("Rubble_Pile_03"), -2.4f, 0.6f, 60f); });
+      Add("X_04", 8, 8, b => { b.Bld(MB("Destroyed_01"), -0.6f, 1.6f); b.Prop(MD("Rubble_Pile_04"), 2.4f, -2.2f, 20f); b.Prop(MM("Barrier_Base_Row_02"), -1.2f, -2.8f, 10f); });
+      Add("X_05", 8, 8, b => { b.Bld(MB("Destroyed_02"), 0.8f, 1.4f, 90f); b.Prop(MV("Pickup_Small_Destroyed_01"), -2.4f, -1.8f, -20f); b.Prop(MD("DebrisPile_02"), 2.2f, -2.4f, 45f); });
+      // ---- XC 반쯤 지어진 공사 부지(PolygonConstruction, 면당 1곳)
+      Add("XC_00", 8, 8, b => {
+        b.Bld(PK + "Buildings/SM_Bld_ConcreteFrame_Wall_01.prefab", -1.4f, 2.2f, 0f);
+        b.Bld(PK + "Buildings/SM_Bld_ConcreteRebar_Wall_01.prefab", 1.8f, 2.2f, 90f);
+        b.Bld(PK + "Buildings/SM_Bld_ConcreteFrame_Pillar_01.prefab", -2.4f, -1.8f, 0f);
+        b.Prop(KP("Beam_Stack_01"), 1.6f, -2.2f, 15f);
+        b.Prop(KP("Concrete_Mixer_01"), -0.4f, -2.2f, -30f);
+        b.Prop(KP("ConcreteBag_Stack_01"), 2.6f, -0.4f, 0f);
+      });
+      // ---- HR 손상·파괴된 시가지 건물(1칸 H 블록에 섞어 배치)
+      Add("HR_00", 8, 8, b => { b.Bld(MB("Shop_02_Destroyed"), 0f, 0.2f); b.Prop(MD("Rubble_Pile_04"), -2.4f, -2.6f, 15f); b.Prop(MD("DebrisPile_01"), 2.4f, -2.6f, -20f); });
+      Add("HR_01", 8, 8, b => { b.Bld(MB("Shop_05_Destroyed"), 0f, 0.2f); b.Prop(MD("Rubble_Pile_06"), 2.2f, -2.6f, 40f); b.Prop(MM("Barrier_Base_Single_02"), -2.2f, -2.7f, 0f); });
+      Add("HR_02", 8, 8, b => { b.Bld(MB("Shop_07_Destroyed"), 0f, 0.2f); b.Prop(MD("DebrisPile_02"), -2.2f, -2.6f, 10f); b.Prop(MD("Rubble_Pile_03"), 2.3f, -2.5f, -35f); });
 
       // ---- Y 컨테이너(8×8): 뒤쪽(북) 가장자리에 쌓고 앞은 통로.
       var container = KP("Shipping_Container_01");

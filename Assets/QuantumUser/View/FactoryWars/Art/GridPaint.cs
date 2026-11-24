@@ -258,9 +258,10 @@ namespace FactoryWars.View {
               break;
             }
             case 'X': {
-              kit.Poly(outline, .07f, Rubble);
-              Blob(kit, new Vector2(cx - 1.3f + h % 3, cz + .6f), 2.2f, .075f, Dirt, h);
-              Blob(kit, new Vector2(cx + 1.8f, cz - 1.7f + h % 2), 1.3f, .076f, Dirt * 1.08f, h / 3);
+              // B2 (2026-11-24): dark cracked concrete/rubble apron instead of flat sand with blotches.
+              kit.Poly(outline, .07f, Color.Lerp(Lot, Rubble, 0.32f));
+              Blob(kit, new Vector2(cx - 1.3f + h % 3, cz + .6f), 2.1f, .075f, Color.Lerp(Lot, Dirt, 0.45f), h);
+              Blob(kit, new Vector2(cx + 1.8f, cz - 1.7f + h % 2), 1.3f, .076f, Lot * 0.88f, h / 3);
               kit.Strip(new Vector2(x0 + 1f + h % 3, z0 + .8f), new Vector2(x1 - 1.5f, z1 - 1f - h % 2), .08f, .078f, Stain);
               break;
             }
