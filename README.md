@@ -27,10 +27,25 @@
 
 ---
 
+## Task 42 착수 전 검증 스크린샷 (유닛 모션·공중 고도/그림자·자원 수급 흐름 · 2026-11-24)
+
+| 보병 이동·전투 대열 (비-T포즈) | 교전 자세·전차/장갑차/PMC | 공중 유닛 고도·그림자·원근감 |
+| --- | --- | --- |
+| [![보병 이동 대열](Docs/status_images/PreT42/01_infantry_movement_formation.png)](Docs/status_images/PreT42/01_infantry_movement_formation.png) | [![지상 교전 대열](Docs/status_images/PreT42/02_combat_stance_and_vehicles.png)](Docs/status_images/PreT42/02_combat_stance_and_vehicles.png) | [![공중 유닛 고도·그림자](Docs/status_images/PreT42/03_air_units_altitude_shadows.png)](Docs/status_images/PreT42/03_air_units_altitude_shadows.png) |
+| [원본](Docs/status_images/PreT42/01_infantry_movement_formation.png) · FF/CF/PMC 실동작 주행 자세 | [원본](Docs/status_images/PreT42/02_combat_stance_and_vehicles.png) · 조준·포탑 선회·PMC 차량 크기 비교 | [넓은 시점](Docs/status_images/PreT42/03_air_units_altitude_shadows.png) · [근접 원근감](Docs/status_images/PreT42/04_air_units_closeup_perspective.png) |
+
+| 본진 컨베이어 자동 수급 흐름 | 멀티 거점 수송 트럭 도로 주행 | 적재/하역 참고 (T41) |
+| --- | --- | --- |
+| [![본진 컨베이어 수급](Docs/status_images/PreT42/05_mainbase_conveyor_flow.png)](Docs/status_images/PreT42/05_mainbase_conveyor_flow.png) | [![멀티 거점 수송 트럭 주행](Docs/status_images/PreT42/06_multibase_truck_enroute.png)](Docs/status_images/PreT42/06_multibase_truck_enroute.png) | [![야적장 적재](Docs/status_images/T41/t41_truck_loading.png)](Docs/status_images/T41/t41_truck_loading.png) |
+| [원본](Docs/status_images/PreT42/05_mainbase_conveyor_flow.png) · 채굴기→이동 벨트·광석→사령부 | [원본](Docs/status_images/PreT42/06_multibase_truck_enroute.png) · 서쪽 거점→본진 도크 주행 | [적재](Docs/status_images/T41/t41_truck_loading.png) · [하역](Docs/status_images/T41/t41_truck_unloading.png) |
+
+---
+
 ## 작업 진행 현황
 
 | 작업 | 날짜 | 상태 | 대표 캡처 | 결과 요약 |
 | --- | --- | --- | --- | --- |
+| Pre-T42 검증 스크린샷(모션·공중 고도/그림자·자원 수급) | 2026-11-24 | 검수 대기 (Task 42 보류) | [보병 모션](Docs/status_images/PreT42/01_infantry_movement_formation.png) · [교전](Docs/status_images/PreT42/02_combat_stance_and_vehicles.png) · [공중 고도](Docs/status_images/PreT42/03_air_units_altitude_shadows.png) · [컨베이어](Docs/status_images/PreT42/05_mainbase_conveyor_flow.png) · [수송 트럭](Docs/status_images/PreT42/06_multibase_truck_enroute.png) | [통과] 시뮬레이션 무변경 캡처 전용(`PreT42_CaptureVerificationShots`, 결정론 0건). 확인된 시각 포인트: ① 보병 이동·조준 비-T포즈 정상 ② `pmc_tank`/`pmc_armored_suv`/`pmc_attack_heli` 스케일이 일반 FF/CF 전차·헬기 대비 크게 보임 ③ Map4P 본진 철 노드 `TryGetBuildPlacement` 점검 필요 · [못 돌림] 2클라이언트 실서버 온라인 재확인 · T40 상점 HUD 8슬롯 비-배치모드 캡처 |
 | Map4P v4 마감(동쪽 부지·PMC 명도·심해 물 텍스처·공정성 해소) + 전 진영 유닛 61종 카탈로그 | 2026-11-24 | 완료(사용자 최종 검수 대기) | [전체 지도](Docs/status_images/Map4PV4/map4p_v4_full_map_latest.png) · [물 전후](Docs/status_images/Map4PV4/map4p_water_before_after.png) · [PMC 전차](Docs/status_images/Map4PV4/map4p_v4_pmc_tanks_readable.png) · [PMC 유닛](Docs/status_images/units/catalog_pmc_units.png) | [통과] 동쪽 상단 `Y` 16쌍 180도 대칭 보강·LOD 0.5x 복구(빈 회색 부지 0건), PMC `PmcMuted` 건메탈/슬레이트 명도 개선(색 감사 10/10·전차 2/2·APC 2/2), 심해 항만 블루-틸 + `IgniteCoders WaterSurface_single` URP 적용(아치교 전함 통과 클리핑 0), CF 23·FF 23·PMC/물류 15 총 61종 정면 3/4 카탈로그, 공정성 2종(`Symmetry`·`Logistics` 207m 동일/첫 주기 4.3%/반복 6.8%) 및 `T40_BotBuysPmcUnitWhenRich` 포함 결정론 0건 · PlayMode **11/11 통과** (`BLOCKED.md` 해소) |
 | Map4P v4 Harness 구축 + 반쪽 건물·빈 부지 집중 개선 | 2026-11-24 | 완료 | [전후 비교](Docs/status_images/Map4PV4/map4p_harness_before_after.png) · [전체 지도](Docs/status_images/Map4PV4/map4p_harness_full_map.png) · [서쪽 시가지](Docs/status_images/Map4PV4/map4p_harness_west_sector.png) | [통과] `harness/run_verify.ps1`·`BLOCKED.md` 구축, `AGENTS/CLAUDE/GEMINI.md` 규칙 동기화, 반쪽 유리 셸(`H4_00`/`H4_05`/`HW_02`) 완전 밀폐 4면 건물+옥상 HVAC/배기/위성안테나 교체, `L` 2대 주차+화단 보강, `L/Y/K` LOD 5x→1.5x 복구, 결정론 0건, PlayMode 3/3, 게임 시점 예산(51~139 draw/61~254k) |
 | 46 Phase B + B2 — 4면 외곽 수로·빈 `X` 부지 건물/폐허화 | 2026-11-24 | 부분 (경로 공정성 0.5% 초과 확인 필요) | [전체 지도](Docs/status_images/T46/t46_b2_full_map.png) · [서쪽 전후](Docs/status_images/T46/t46_b2_west_before_after.png) · [북항·저교](Docs/status_images/T46/t46b_north_harbour_culvert.png) | [통과] 4면 수로(`grid v7`)·방벽 8·중립항 4·남북 저교(3m), B2 빈 `X` 부지 63.6%/65.1% 건물(`84H` 서/동 180도 대칭)+폐허(`SM_Bld_Destroyed_01/02`)+공사 부지(`XC`), `Logistics_FairnessTable` 4.5%(상한 5%), `Map4P_v4_GridMatchesCsv`, `Waterway_LayoutAndRange`/`SailFairness`/`TruckThreatDetour`, 게임 시점 예산(51~138 draw/59~225k) · [실패] `Map4P_v4_SymmetryFairnessAndReach` `base->compound` 경로 공정성 5.5%(254.4 vs 241.1m, 상한 5%) |

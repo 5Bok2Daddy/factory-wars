@@ -1,0 +1,8 @@
+Pre-Task 42 Verification Captures (Map4P v4)
+01_infantry_movement_formation.png | focus=(-85.5,-64.0) height=19m
+02_combat_stance_and_vehicles.png | focus=(4.0,-64.0) height=36m
+03_air_units_altitude_shadows.png | focus=(19.6,51.1) height=64m
+04_air_units_closeup_perspective.png | focus=(17.6,51.1) height=36m
+06_multibase_truck_enroute.png | truck=(-227.9,-76.3) state=ToDock height=36m
+NOTE: No placeable iron node returned by TryGetBuildPlacement near Seat 0 on Map4P; capturing main-base conveyor on default match scene.
+05_mainbase_conveyor_flow.png | hq=(-30,0) iron=(-30,14) height=32m
