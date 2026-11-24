@@ -1474,6 +1474,15 @@ namespace Quantum.FactoryWars {
       }
     }
 
+    /// <summary>
+    /// Task 46 (2026-11-24): the building check looks at the leg the unit is actually driving (the NavMesh path's current corner),
+    /// not the straight line to the final target. With the straight line, a truck whose path leaves the base around the HQ
+    /// was sent back to an HQ corner every second and never left its dock.
+    /// </summary>
+    static FPVector3 NextCorner(Frame f, NavMeshPathfinder* path, FPVector3 target) {
+      return path->WaypointIndex >= 0 && path->WaypointIndex < path->WaypointCount ? path->GetWaypoint(f, path->WaypointIndex) : target;
+    }
+
     /// <summary>순찰 끝에 닿으면 출발점과 목적지를 바꿔 되돌아간다.</summary>
     public static void TurnPatrol(Frame f, EntityRef entity, Unit* unit) {
       var next = unit->PatrolOrigin;
@@ -1546,7 +1555,7 @@ namespace Quantum.FactoryWars {
           if (!spec.IsNaval && unit->Order == UnitOrder.Move && f.Number % repathFrames == 0
               && f.Unsafe.TryGetPointer<NavMeshPathfinder>(entity, out var moving) && moving->IsActive
               && FactoryWarsUtil.FlatDistanceSqr(moving->Target, unit->TargetPosition) <= FP._1
-              && GroundOccupancy.TryDetour(f, transform->Position, unit->TargetPosition, UnitRadius(spec), out var corner)) {
+              && GroundOccupancy.TryDetour(f, transform->Position, NextCorner(f, moving, unit->TargetPosition), UnitRadius(spec), out var corner)) {
             SetDestination(f, entity, corner);
           }
         }

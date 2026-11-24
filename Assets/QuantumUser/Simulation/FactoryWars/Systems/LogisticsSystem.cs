@@ -100,6 +100,7 @@ namespace Quantum.FactoryWars {
         // The old owner's truck aborts: loaded → finish delivering what it carries; empty → drive home and leave.
         truck->State = Total(truck->Cargo) > FP._0 && truck->State != LogisticsState.Unloading ? LogisticsState.ToDock : truck->State == LogisticsState.Unloading ? LogisticsState.Unloading : LogisticsState.Aborting;
         truck->Site = -1 - truck->Site;
+        truck->Detour = 0;
       }
       yard->Truck = EntityRef.None;
       yard->InTransit = default;
@@ -198,6 +199,7 @@ namespace Quantum.FactoryWars {
           t->Timer += f.DeltaTime;
           if (t->Timer >= FP._2) {
             t->StuckTimer = FP._0;
+            t->Detour = 0;
             t->State = t->Resume;
             t->Timer = FP._0;
             unit->Order = UnitOrder.Stop;
@@ -229,16 +231,31 @@ namespace Quantum.FactoryWars {
       t->State = next;
       t->Timer = FP._0;
       t->StuckTimer = FP._0;
+      t->Detour = 0;
     }
 
     static void Drive(Frame f, LogisticsSpec spec, EntityRef entity, Unit* unit, LogisticsTruck* t, FPVector3 at, FPVector3 target) {
+      // Task 46: a visible hostile armed ship covering the route → drive to an inland waypoint first, then finish the leg.
+      // Detour: odd = heading to waypoint n, even = after it; at most 3 waypoints per leg (Stop / re-route resets it to 0).
+      if (t->Detour % 2 == 1) {
+        var near = spec.ArriveRadius * 2;
+        if (FactoryWarsUtil.FlatDistanceSqr(at, t->Waypoint) <= near * near) t->Detour++;
+        else target = t->Waypoint;
+      } else if (t->Detour < 6 && f.Number % 10 == 0 && TryDetour(f, spec, entity, unit, at, target, out var waypoint)) {
+        t->Detour++;
+        t->Waypoint = waypoint;
+        t->Detours++;
+        target = waypoint;
+        if (t->Detour == 1) f.Events.LogisticsNotice(unit->Owner, t->Site < 0 ? -1 - t->Site : t->Site, 6, default);
+      }
       if (unit->Order != UnitOrder.Move || FactoryWarsUtil.FlatDistanceSqr(unit->TargetPosition, target) > FP._1) {
         MovementSystem.Order(f, entity, unit, UnitOrder.Move, target);
         t->LastPosition = at;
         t->StuckTimer = FP._0;
         return;
       }
-      if (FactoryWarsUtil.FlatDistanceSqr(at, t->LastPosition) > FP._0_25) {
+      // Progress = 2 m away from the last anchor (a truck jiggling in place against an obstacle is stuck, not moving).
+      if (FactoryWarsUtil.FlatDistanceSqr(at, t->LastPosition) > FP._4) {
         t->LastPosition = at;
         t->StuckTimer = FP._0;
         return;
@@ -249,6 +266,65 @@ namespace Quantum.FactoryWars {
         t->State = LogisticsState.WaitingRoute;
         t->Timer = FP._0;
         f.Events.LogisticsNotice(unit->Owner, t->Site, 3, default);
+      }
+    }
+
+    /// <summary>
+    /// Task 46: the deepest intrusion of a visible hostile armed ship's circle (Range + ThreatMargin) into the truck's remaining
+    /// route (current NavMesh path corners, then the leg end). The waypoint is that route point pushed straight away from the ship
+    /// to the circle edge (at most DetourMax), snapped to free ground. False when nothing threatens the route or no ground is free.
+    /// </summary>
+    public static bool TryDetour(Frame f, LogisticsSpec spec, EntityRef entity, Unit* truck, FPVector3 at, FPVector3 target, out FPVector3 waypoint) {
+      waypoint = target;
+      var bestDepth = FP._0;
+      var bestPoint = FPVector3.Zero;
+      var bestAway = FPVector3.Zero;
+      var from = at;
+      // Only the route the truck really drives: wait until the NavMesh path to this leg's end exists (the straight line can cross
+      // the ship itself and give no usable side).
+      if (f.Unsafe.TryGetPointer<NavMeshPathfinder>(entity, out var path) == false || path->IsActive == false
+          || FactoryWarsUtil.FlatDistanceSqr(path->Target, target) > spec.ArriveRadius * spec.ArriveRadius) return false;
+      for (var i = path->WaypointIndex; i < path->WaypointCount; i++) {
+        var corner = path->GetWaypoint(f, i);
+        Threat(f, spec, truck->Owner, from, corner, ref bestDepth, ref bestPoint, ref bestAway);
+        from = corner;
+      }
+      Threat(f, spec, truck->Owner, from, target, ref bestDepth, ref bestPoint, ref bestAway);
+      if (bestDepth <= FP._0) return false;
+      var point = FactoryWarsUtil.MapInfo(f).ClampToPlayable(bestPoint + bestAway * FPMath.Min(bestDepth, spec.DetourMax));
+      if (GroundOccupancy.TryGoal(f, point, MovementSystem.UnitRadius(f.FindAsset(truck->Spec)), out waypoint) == false) return false;
+      // A waypoint next to the truck or the leg's end is no detour.
+      var minimum = spec.ArriveRadius * 2;
+      return FactoryWarsUtil.FlatDistanceSqr(waypoint, at) > minimum * minimum && FactoryWarsUtil.FlatDistanceSqr(waypoint, target) > minimum * minimum;
+    }
+
+    static void Threat(Frame f, LogisticsSpec spec, PlayerRef owner, FPVector3 a, FPVector3 b, ref FP bestDepth, ref FPVector3 bestPoint, ref FPVector3 bestAway) {
+      var leg = b - a;
+      leg.Y = FP._0;
+      var length = leg.SqrMagnitude;
+      var units = f.Filter<Transform3D, Unit>();
+      while (units.NextUnsafe(out var entity, out var transform, out var unit)) {
+        if (unit->Health <= FP._0 || DiplomacySystem.CanAttack(f, owner, unit->Owner) == false) continue;
+        var shipSpec = f.FindAsset(unit->Spec);
+        if (shipSpec.IsNaval == false || shipSpec.Attack == AttackType.None || FactoryWarsUtil.IsVisibleTo(f, owner, entity) == false) continue;
+        var s = transform->Position;
+        var u = length > FP._0 ? FPMath.Clamp01(FPVector3.Dot(s - a, leg) / length) : FP._0;
+        var p = a + leg * u;
+        var radius = shipSpec.Range + spec.ThreatMargin;
+        var gap = p - s;
+        gap.Y = FP._0;
+        var distance = gap.Magnitude;
+        if (distance >= radius || radius - distance <= bestDepth) continue;
+        // Ship (almost) on the route: no side to prefer → inland, toward the map centre.
+        if (distance < FP._2) {
+          gap = FPVector3.Zero - p;
+          gap.Y = FP._0;
+          distance = gap.Magnitude;
+          if (distance < FP._0_10) continue;
+        }
+        bestDepth = radius - distance;
+        bestPoint = p;
+        bestAway = gap / distance;
       }
     }
 

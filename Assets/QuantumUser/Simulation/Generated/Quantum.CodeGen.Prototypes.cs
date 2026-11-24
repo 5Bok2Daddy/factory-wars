@@ -609,6 +609,9 @@ namespace Quantum.Prototypes {
     public Int32 CreditedId;
     public FPVector3 LastPosition;
     public FP StuckTimer;
+    public Int32 Detour;
+    public FPVector3 Waypoint;
+    public Int32 Detours;
     partial void MaterializeUser(Frame frame, ref Quantum.LogisticsTruck result, in PrototypeMaterializationContext context);
     public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
         Quantum.LogisticsTruck component = default;
@@ -625,6 +628,9 @@ namespace Quantum.Prototypes {
         result.CreditedId = this.CreditedId;
         result.LastPosition = this.LastPosition;
         result.StuckTimer = this.StuckTimer;
+        result.Detour = this.Detour;
+        result.Waypoint = this.Waypoint;
+        result.Detours = this.Detours;
         MaterializeUser(frame, ref result, in context);
     }
   }

@@ -36,7 +36,7 @@ MonoBehaviour:
   ArriveRadius:
     RawValue: 393216
   DockForward:
-    RawValue: -917504
+    RawValue: -1310720
   DockSpacing:
     RawValue: 458752
   YardInset:
@@ -45,3 +45,7 @@ MonoBehaviour:
     RawValue: 393216
   CrateShare:
     RawValue: 32768
+  ThreatMargin:
+    RawValue: 393216
+  DetourMax:
+    RawValue: 3145728

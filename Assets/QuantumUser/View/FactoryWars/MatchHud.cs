@@ -361,6 +361,7 @@ namespace FactoryWars.View {
           case 3: ShowAlert("수송 트럭: 경로 대기(길이 막힘)"); break;
           case 4: ShowAlert("자원지 버퍼 가득 — 수송을 기다리는 중"); break;
           case 5: ShowAlert("자원지 소유가 바뀌었습니다"); break;
+          case 6: ShowAlert("수송 트럭: 적 함선 사거리를 피해 내륙으로 우회"); break;
         }
       });
       QuantumEvent.Subscribe<EventCityBuildingCollapsed>(this, e => GameAudio.Play(SoundEvent.Collapse));

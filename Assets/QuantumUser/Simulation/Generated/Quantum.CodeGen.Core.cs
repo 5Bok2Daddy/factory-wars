@@ -2086,26 +2086,32 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct LogisticsTruck : Quantum.IComponent {
-    public const Int32 SIZE = 88;
+    public const Int32 SIZE = 120;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(12)]
+    [FieldOffset(20)]
     public Int32 Site;
     [FieldOffset(1)]
     public LogisticsState State;
     [FieldOffset(0)]
     public LogisticsState Resume;
-    [FieldOffset(56)]
+    [FieldOffset(88)]
     public ResourceCost Cargo;
-    [FieldOffset(24)]
+    [FieldOffset(32)]
     public FP Timer;
     [FieldOffset(8)]
     public Int32 DeliveryId;
     [FieldOffset(4)]
     public Int32 CreditedId;
-    [FieldOffset(32)]
+    [FieldOffset(40)]
     public FPVector3 LastPosition;
-    [FieldOffset(16)]
+    [FieldOffset(24)]
     public FP StuckTimer;
+    [FieldOffset(12)]
+    public Int32 Detour;
+    [FieldOffset(64)]
+    public FPVector3 Waypoint;
+    [FieldOffset(16)]
+    public Int32 Detours;
     public override readonly Int32 GetHashCode() {
       unchecked { 
         var hash = 12983;
@@ -2118,6 +2124,9 @@ namespace Quantum {
         hash = hash * 31 + CreditedId.GetHashCode();
         hash = hash * 31 + LastPosition.GetHashCode();
         hash = hash * 31 + StuckTimer.GetHashCode();
+        hash = hash * 31 + Detour.GetHashCode();
+        hash = hash * 31 + Waypoint.GetHashCode();
+        hash = hash * 31 + Detours.GetHashCode();
         return hash;
       }
     }
@@ -2127,10 +2136,13 @@ namespace Quantum {
         serializer.Stream.Serialize((Byte*)&p->State);
         serializer.Stream.Serialize(&p->CreditedId);
         serializer.Stream.Serialize(&p->DeliveryId);
+        serializer.Stream.Serialize(&p->Detour);
+        serializer.Stream.Serialize(&p->Detours);
         serializer.Stream.Serialize(&p->Site);
         FP.Serialize(&p->StuckTimer, serializer);
         FP.Serialize(&p->Timer, serializer);
         FPVector3.Serialize(&p->LastPosition, serializer);
+        FPVector3.Serialize(&p->Waypoint, serializer);
         Quantum.ResourceCost.Serialize(&p->Cargo, serializer);
     }
   }

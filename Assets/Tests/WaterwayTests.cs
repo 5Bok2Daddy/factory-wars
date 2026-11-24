@@ -272,6 +272,269 @@ namespace FactoryWars.Tests {
       Assert.LessOrEqual(spread, 5f);
     }
 
+    static void Pin(EntityRef e, FPVector3 p) {
+      if (Verified.Exists(e) == false) return;
+      var t = Verified.Unsafe.GetPointer<Transform3D>(e);
+      if (FactoryWarsUtil.FlatDistanceSqr(t->Position, p) > FP._4) t->Position = p;
+    }
+    static readonly List<string> _frameLog = new List<string>();
+    static string FrameLine(Frame f, EntityRef e) {
+      if (f.Exists(e) == false) return "gone";
+      var u = f.Get<Unit>(e);
+      var p = f.Get<Transform3D>(e).Position;
+      var pf = f.Get<NavMeshPathfinder>(e);
+      var t = f.Get<LogisticsTruck>(e);
+      return $"#{f.Number} ({p.X.AsFloat:0.0},{p.Z.AsFloat:0.0}) order {u.Order} tgt ({u.TargetPosition.X.AsFloat:0},{u.TargetPosition.Z.AsFloat:0}) path {pf.IsActive} ({pf.Target.X.AsFloat:0},{pf.Target.Z.AsFloat:0}) wp {pf.WaypointIndex}/{pf.WaypointCount} st {t.State} stuck {t.StuckTimer.AsFloat:0.00}";
+    }
+    static string PathReport(EntityRef e) {
+      if (Verified.Unsafe.TryGetPointer<NavMeshPathfinder>(e, out var pf) == false) return "no pathfinder";
+      var pts = new List<string>();
+      for (var i = 0; i < pf->WaypointCount; i++) { var w = pf->GetWaypoint(Verified, i); pts.Add($"({w.X.AsFloat:0},{w.Z.AsFloat:0})"); }
+      var v = Verified.Unsafe.TryGetPointer<NavMeshSteeringAgent>(e, out var st) ? $" speed {st->Velocity.Magnitude.AsFloat:0.0}" : "";
+      return $"path active {pf->IsActive} target {pf->Target} idx {pf->WaypointIndex}/{pf->WaypointCount}: {string.Join(" ", pts)}{v}";
+    }
+    static string NearbyReport(FPVector3 p, float radius) {
+      var items = new List<string>();
+      foreach (var pair in Verified.GetComponentIterator<Transform3D>()) {
+        var q = pair.Component.Position;
+        var d = Mathf.Sqrt(FactoryWarsUtil.FlatDistanceSqr(q, p).AsFloat);
+        if (d > radius || d < 0.01f) continue;
+        var name = Verified.Has<Unit>(pair.Entity) ? "unit " + Verified.FindAsset(Verified.Get<Unit>(pair.Entity).Spec).name + " p" + Verified.Get<Unit>(pair.Entity).Owner + " " + Verified.Get<Unit>(pair.Entity).Order
+          : Verified.Has<Building>(pair.Entity) ? "bld " + Verified.FindAsset(Verified.Get<Building>(pair.Entity).Spec).name + " p" + Verified.Get<Building>(pair.Entity).Owner : "ent";
+        items.Add($"{name} d{d:0.0} ({q.X.AsFloat:0},{q.Z.AsFloat:0})");
+      }
+      return string.Join("; ", items);
+    }
+    static FPVector3 BayNow(int site) => LogisticsSystem.BayOf(Verified, LogiSpec, YardPtr(site));
+    static int TruckDetours(EntityRef truck) => Verified.Exists(truck) ? Truck(truck).Detours : 0;
+
+    /// <summary>
+    /// One delivery cycle at the west yard for the SW seat. Returns (cycle seconds, seconds within <paramref name="range"/> of
+    /// <paramref name="probe"/>, closest approach to the west water lane, detours, credited stock, truck positions).
+    /// With <paramref name="threat"/> an enemy artillery ship is held at <paramref name="probe"/>.
+    /// </summary>
+    IEnumerator TruckCycle(bool threat, FPVector3 probe, float range, List<float> result, List<Vector3> track) {
+      yield return WaterwayMatch(4611);
+      var owner = PlayerOfSeat(0);
+      var west = WestSite();
+      GiveSite(owner, west.DropOff);
+      SetBuffer(west.Site, new ResourceCost { Iron = 200 });
+      var ship = EntityRef.None;
+      if (threat) {
+        ship = SpawnSeat(PlayerOfSeat(1), "artillery_ship", probe);
+        yield return WaitFrames(2);
+        probe = At(ship);
+      }
+      yield return WaitFor(() => Verified.Exists(Yard(west.Site).Truck), 10f, "truck leaves the garage");
+      var truck = Yard(west.Site).Truck;
+      var before = StockOf(owner);
+      var start = Verified.Number;
+      var exposed = 0;
+      var coast = float.MaxValue;
+      var lost = false;
+      var states = new List<string>();
+      _frameLog.Clear();
+      QuantumCallback.Subscribe<CallbackSimulateFinished>(_listener, e => {
+        if (e.Frame.IsVerified == false) return;
+        _frameLog.Add(FrameLine(e.Frame, truck));
+        if (_frameLog.Count > 40) _frameLog.RemoveAt(0);
+      });
+      var lastState = (LogisticsState)255;
+      var lastDetours = 0;
+      yield return WaitFor(() => {
+        if (threat) Pin(ship, probe);
+        if (Verified.Exists(truck) == false) { lost = true; return true; }
+        var p = At(truck);
+        track.Add(p.ToUnityVector3());
+        var st = Truck(truck).State;
+        var dn = Truck(truck).Detours;
+        if (dn != lastDetours) { var w = Truck(truck).Waypoint; states.Add($"wp{dn}({w.X.AsFloat:0},{w.Z.AsFloat:0})@{(Verified.Number - start) / (float)Fps:0}s from({p.X.AsFloat:0},{p.Z.AsFloat:0})"); lastDetours = dn; }
+        if (st != lastState) { states.Add($"{st}@{(Verified.Number - start) / (float)Fps:0}s({p.X.AsFloat:0},{p.Z.AsFloat:0})"); lastState = st; }
+        Assert.AreNotEqual('W', CellAt(p), "a truck never enters the water");
+        if (FactoryWarsUtil.FlatDistanceSqr(p, probe) <= FP.FromFloat_UNSAFE(range * range)) exposed++;
+        coast = Mathf.Min(coast, p.X.AsFloat + 312f);
+        if (Verified.Number - start > 250 * Fps || (Verified.Number - start > 60 * Fps && track.Count > 0 && track.Max(q => (q - track[0]).magnitude) < 20f)) {
+          var tt = Truck(truck);
+          var line = $"threat {threat}: truck {tt.State} detour {tt.Detour}/{tt.Detours} waypoint {tt.Waypoint} at {p} stuck {tt.StuckTimer}, yard owner {Yard(west.Site).Owner} buffer {Yard(west.Site).Buffer.Iron}, bay {BayNow(west.Site)}, dock {LogisticsSystem.DockOf(Verified, LogiSpec, owner, west.Site)}, order {Verified.Get<Unit>(truck).Order} target {Verified.Get<Unit>(truck).TargetPosition}";
+          line += " | states " + string.Join(" ", states) + " | " + PathReport(truck) + " | near: " + NearbyReport(p, 14f);
+          System.IO.Directory.CreateDirectory(T46Root());
+          System.IO.File.WriteAllText(System.IO.Path.Combine(T46Root(), "truck_detour_timeout.txt"), line + "\n" + string.Join("\n", _frameLog) + "\n" + string.Join(" ", track.Where((q, i) => i % (5 * Fps) == 0).Select(q => $"({q.x:0},{q.z:0})")));
+          Assert.Fail(line);
+        }
+        return Yard(west.Site).Delivered >= 1;
+      }, 1200f, "one delivery cycle");
+      Assert.IsFalse(lost, "the truck survives the cycle");
+      var t = Truck(truck);
+      Assert.AreEqual(t.DeliveryId, t.CreditedId, "the delivery is credited");
+      var gained = StockOf(owner).Iron - before.Iron;
+      Debug.Log("[FW-T46] truck states " + string.Join(" ", states));
+      if (threat) { System.IO.Directory.CreateDirectory(T46Root()); System.IO.File.WriteAllText(System.IO.Path.Combine(T46Root(), "truck_detour_states.txt"), string.Join(" ", states)); }
+      result.AddRange(new[] { (Verified.Number - start) / (float)Fps, exposed / (float)Fps, coast, TruckDetours(truck), gained.AsFloat });
+      if (threat) {
+        // Credit-once still holds: replaying the unload of the credited delivery pays nothing.
+        var again = StockOf(owner);
+        ReplayUnload(truck, t.Cargo);
+        yield return WaitFrames(Fps * 6);
+        Assert.AreEqual(again.Iron.AsFloat, StockOf(owner).Iron.AsFloat, 0.01f, "no second credit for the same delivery id");
+      }
+      TearDown();
+      yield return null;
+    }
+
+    /// <summary>
+    /// Reroute: baseline cycle at the west yard, then the same cycle with an enemy artillery ship held on the water next to the
+    /// truck's closest approach to the coast. The truck must detour inland (fewer seconds in ship range), report the extra time %.
+    /// </summary>
+    [UnityTest, Timeout(2400000)]
+    public IEnumerator Waterway_TruckThreatDetour() {
+      var ship = Resources.Load<UnitSpec>("FactoryWars/ff_artillery_ship");
+      var range = ship.Range.AsFloat;
+      var baseTrack = new List<Vector3>();
+      var baseline = new List<float>();
+      yield return TruckCycle(false, FPVector3.Zero, 0f, baseline, baseTrack);
+      // Probe: the water lane abreast of the baseline route point nearest the coast.
+      // Real geometry: the closest the route gets to the west water lane (x -308) is reported as the coastal exposure.
+      var coastGap = baseTrack.Min(p => p.x + 308f);
+      var coastExposed = coastGap <= range;
+      // Mechanism probe: an enemy armed ship held 20 m west of the outbound route's westmost point (a ship on a coastal
+      // waterway beside the road; phase B adds such roads). The truck must leave the leg for an inland waypoint.
+      var dockU = baseTrack[0];
+      var bayU = baseTrack.OrderBy(p => p.z).Last();
+      var nearest = baseTrack.Where(p => (p - dockU).magnitude > 50f && (p - bayU).magnitude > 50f).OrderBy(p => p.x).First();
+      var probe = Pos(nearest.x - 20f, nearest.z);
+      var baseExposed = baseTrack.Count(p => (p - probe.ToUnityVector3()).sqrMagnitude <= range * range) / (float)Fps;
+      var threatTrack = new List<Vector3>();
+      var threatened = new List<float>();
+      yield return TruckCycle(true, probe, range, threatened, threatTrack);
+      var extra = (threatened[0] - baseline[0]) / baseline[0] * 100f;
+      var rows = new List<string> {
+        $"real map: SW dock -> W yard route stays {coastGap:0.0} m from the west water lane (ship range {range:0} m) -> exposed to harbour ships: {coastExposed}",
+        $"mechanism probe: enemy artillery ship held at ({probe.X.AsFloat:0},{probe.Z.AsFloat:0}), 20 m beside the route; threat radius = range {range:0} m + margin {LogiSpec.ThreatMargin.AsFloat:0} m",
+        $"baseline: cycle {baseline[0]:0.0} s, closest to lane {baseline[2]:0.0} m, exposed {baseExposed:0.0} s, credited {baseline[4]:0}",
+        $"threat:   cycle {threatened[0]:0.0} s, closest to lane {threatened[2]:0.0} m, exposed {threatened[1]:0.0} s, detours {threatened[3]:0}, credited {threatened[4]:0}",
+        $"extra time {extra:0.0}%",
+      };
+      Debug.Log("[FW-T46] " + string.Join("\n", rows));
+      System.IO.Directory.CreateDirectory(T46Root());
+      System.IO.File.WriteAllLines(System.IO.Path.Combine(T46Root(), "truck_detour.txt"), rows);
+      Assert.Greater(baseExposed, 0f, "baseline route passes within ship range of the probe (otherwise the probe is wrong)");
+      Assert.GreaterOrEqual(threatened[3], 1f, "the truck detoured");
+      Assert.Less(threatened[1], baseExposed, "fewer seconds in ship range with the detour");
+      Assert.AreEqual(baseline[4], threatened[4], 0.01f, "same cargo credited");
+    }
+
+
+    /// <summary>Two artillery ships of one owner sail past each other in the 16 m west waterway: no stall over 2 s, both arrive.</summary>
+    [UnityTest, Timeout(900000)]
+    public IEnumerator Waterway_ShipsPassEachOther() {
+      yield return WaterwayMatch();
+      var owner = PlayerOfSeat(0);
+      var a = SpawnSeat(owner, "artillery_ship", Lane(-60f));
+      var b = SpawnSeat(owner, "artillery_ship", Lane(60f));
+      yield return WaitFrames(2);
+      var aTo = Lane(60f);
+      var bTo = Lane(-60f);
+      yield return Send(owner, new MoveUnitsCommand { Units = new[] { a }, Target = aTo });
+      yield return Send(owner, new MoveUnitsCommand { Units = new[] { b }, Target = bTo });
+      var last = new[] { At(a), At(b) };
+      var stall = new int[2];
+      var worst = new int[2];
+      var done = new bool[2];
+      var landed = false;
+      yield return WaitFor(() => {
+        var ships = new[] { a, b };
+        var goals = new[] { aTo, bTo };
+        for (var i = 0; i < 2; i++) {
+          if (done[i]) continue;
+          var p = At(ships[i]);
+          if (CellAt(p) != 'W') landed = true;
+          stall[i] = (p - last[i]).SqrMagnitude < FP._0_01 * FP._0_01 ? stall[i] + 1 : 0;
+          worst[i] = Mathf.Max(worst[i], stall[i]);
+          last[i] = p;
+          done[i] = FactoryWarsUtil.FlatDistanceSqr(p, goals[i]) < 64;
+        }
+        return done[0] && done[1];
+      }, 180f, "both ships reach the other end");
+      var row = $"pass: worst stall A {worst[0] / (float)Fps:0.00} s, B {worst[1] / (float)Fps:0.00} s, left water {landed}";
+      Debug.Log("[FW-T46] " + row);
+      System.IO.Directory.CreateDirectory(T46Root());
+      System.IO.File.WriteAllText(System.IO.Path.Combine(T46Root(), "ships_pass.txt"), row);
+      Assert.IsFalse(landed, "ships stay on water");
+      Assert.LessOrEqual(worst[0] / (float)Fps, 2f, "ship A never stalls over 2 s");
+      Assert.LessOrEqual(worst[1] / (float)Fps, 2f, "ship B never stalls over 2 s");
+    }
+
+    static string ShipDiag(EntityRef ship, EntityRef target, int raider) {
+      var u = Verified.Get<Unit>(ship);
+      var tu = Verified.Get<Unit>(target);
+      var d = Mathf.Sqrt(FactoryWarsUtil.FlatDistanceSqr(At(ship), At(target)).AsFloat);
+      var ts = Verified.FindAsset(tu.Spec);
+      return $"ship order {u.Order} target {u.TargetEntity} cooldown {u.AttackCooldown} at {At(ship)}; truck {target} owner {tu.Owner} at {At(target)} cell '{CellAt(At(target))}' d {d:0.0} hp {tu.Health}; canAttack {DiplomacySystem.CanAttack(Verified, raider, tu.Owner)} visible {FactoryWarsUtil.IsVisibleTo(Verified, raider, target)} truce {FactoryWarsUtil.InTruce(Verified)} truckSpec attackable air {ts.IsAir} naval {ts.IsNaval}";
+    }
+    static EntityRef SpawnRef(int player, AssetRef<UnitSpec> spec, FPVector3 at) => ProductionSystem.SpawnUnitAt(Verified, player, spec, at, null);
+    static FP HealthOf(EntityRef e) {
+      if (Verified.Exists(e) == false) return FP._0;
+      if (Verified.Unsafe.TryGetPointer<Unit>(e, out var u)) return u->Health;
+      return Verified.Unsafe.TryGetPointer<Building>(e, out var b) ? b->Health : FP._0;
+    }
+
+    /// <summary>
+    /// Harbour targeting with fog on: an enemy artillery ship in the W harbour hits a truck on the yard quay within its 12 m
+    /// sight; a truck 18 m away (inside range, outside sight) is not fired on until a spotter of the ship's owner sees it.
+    /// </summary>
+    [UnityTest, Timeout(900000)]
+    public IEnumerator Waterway_HarbourTargetingNeedsSight() {
+      UseFog();
+      yield return WaterwayMatch();
+      var map = Map4PSpec;
+      var harbour = map.Harbours[0].Center;
+      var victim = PlayerOfSeat(0);
+      var raider = PlayerOfSeat(1);
+      var ship = SpawnSeat(raider, "artillery_ship", Pos(-302f, harbour.Z.AsFloat));
+      yield return WaitFrames(2);
+      var at = At(ship);
+      var spec = Verified.FindAsset(Verified.Get<Unit>(ship).Spec);
+      var truckSpec = LogiSpec.Truck;
+      // Quay targets east of the ship (inland): one at 10 m (inside sight), one at 18 m (in range, outside sight).
+      // Fog is a 96 x 96 grid (about 6.9 m cells), so "12 m sight" covers 8.5-15 m depending on cell alignment: pick a quay spot
+      // the grid shows to the raider (>= min range) and a spot inside range that it does not show.
+      var nearOff = Enumerable.Range(0, 13).Select(i => 8.5f + i * 0.5f).FirstOrDefault(o => FogSystem.IsVisible(Verified, raider, at + new FPVector3(FP.FromFloat_UNSAFE(o), 0, 0)) && CellAt(at + new FPVector3(FP.FromFloat_UNSAFE(o), 0, 0)) != 'W');
+      var farOff = Enumerable.Range(0, 15).Select(i => 15f + i * 0.5f).FirstOrDefault(o => FogSystem.IsVisible(Verified, raider, at + new FPVector3(FP.FromFloat_UNSAFE(o), 0, 0)) == false);
+      Assert.Greater(nearOff, 0f, "a visible quay spot within 8.5-14.5 m");
+      Assert.Greater(farOff, 0f, "an unseen spot within 15-22 m");
+      var near = SpawnRef(victim, truckSpec, at + new FPVector3(FP.FromFloat_UNSAFE(nearOff), 0, 0));
+      yield return WaitFrames(2);
+      var nearHp = HealthOf(near);
+      var nearPos = At(near);
+      Assert.AreNotEqual('W', CellAt(nearPos), "near truck on the quay");
+      var waited = Verified.Number;
+      yield return WaitFor(() => {
+        if (HealthOf(near) < nearHp) return true;
+        if (Verified.Number - waited > 20 * Fps) Assert.Fail("quay truck not hit: " + ShipDiag(ship, near, raider));
+        return false;
+      }, 120f, "the ship hits a truck on the quay inside its sight");
+      Verified.Destroy(near);
+      var far = SpawnRef(victim, truckSpec, at + new FPVector3(FP.FromFloat_UNSAFE(farOff), 0, 0));
+      yield return WaitFrames(2);
+      var farPos = At(far);
+      var distance = Mathf.Sqrt(FactoryWarsUtil.FlatDistanceSqr(farPos, at).AsFloat);
+      Assert.Greater(distance, spec.SightRange.AsFloat, "far truck outside the ship's sight");
+      Assert.Less(distance, spec.Range.AsFloat, "far truck inside the ship's range");
+      var farHp = HealthOf(far);
+      yield return WaitFrames(10 * Fps);
+      var unspotted = HealthOf(far);
+      Assert.AreEqual(farHp.AsFloat, unspotted.AsFloat, 0.01f, "no fire past 12 m sight without a spotter");
+      // A spotter (raider scout boat next to the truck) reveals it → the ship fires.
+      var spotter = SpawnSeat(raider, "scout_boat", Pos(-300f, farPos.Z.AsFloat));
+      yield return WaitFrames(2);
+      Assert.Less(Mathf.Sqrt(FactoryWarsUtil.FlatDistanceSqr(At(spotter), farPos).AsFloat), 18f, "spotter boat sees the far truck");
+      yield return WaitFor(() => HealthOf(far) < farHp || Verified.Exists(far) == false, 30f, "spotted truck is fired on");
+      var row = $"harbour targeting (fog on): ship ({at.X.AsFloat:0},{at.Z.AsFloat:0}), quay truck {nearOff:0.0} m hit, far {distance:0.0} m (sight {spec.SightRange.AsFloat:0}, range {spec.Range.AsFloat:0}) untouched 10 s unspotted, hit after spotter";
+      Debug.Log("[FW-T46] " + row);
+      System.IO.Directory.CreateDirectory(T46Root());
+      System.IO.File.WriteAllText(System.IO.Path.Combine(T46Root(), "harbour_targeting.txt"), row);
+    }
+
     static string T46Root() => System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "../../screenshots/t46"));
 
     /// <summary>Two runs with the same seed and commands (gate cycle + barrier break) end on the same checksum.</summary>

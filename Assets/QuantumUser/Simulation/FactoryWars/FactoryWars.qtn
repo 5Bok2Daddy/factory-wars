@@ -551,6 +551,10 @@ component LogisticsTruck {
     Int32 CreditedId;
     FPVector3 LastPosition;
     FP StuckTimer;
+    // Task 46: threat detour. 0 direct, 1 driving to Waypoint (inland of a hostile ship's range), 2 final leg. Detours = count.
+    Int32 Detour;
+    FPVector3 Waypoint;
+    Int32 Detours;
 }
 
 // Task 46: outer-waterway sea gate (barrier boom + watchtower) of one player sector. Index = MapSpec.SeaGates index.

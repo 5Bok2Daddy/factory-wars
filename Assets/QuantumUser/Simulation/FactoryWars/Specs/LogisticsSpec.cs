@@ -21,7 +21,7 @@ namespace Quantum {
     /// <summary>Arrival radius at the yard bay and the dock bay.</summary>
     public FP ArriveRadius = 6;
     /// <summary>Dock bay: from the seat's start position toward the map centre, then sideways per site so trucks never share a bay.</summary>
-    public FP DockForward = -14;
+    public FP DockForward = -20;
     public FP DockSpacing = 7;
     /// <summary>Yard bay: from the site position toward its owner's base (inside the site, off the ring road).</summary>
     public FP YardInset = 10;
@@ -29,5 +29,9 @@ namespace Quantum {
     public FP StuckSeconds = 6;
     /// <summary>Share of the cargo dropped as a lootable crate when a loaded truck is destroyed.</summary>
     public FP CrateShare = FP._0_50;
+    /// <summary>Task 46: a visible hostile armed ship whose range + this margin covers the truck's leg makes the truck detour inland.</summary>
+    public FP ThreatMargin = 6;
+    /// <summary>Task 46: the inland waypoint is never further than this from the threatened point of the leg (keeps detours short).</summary>
+    public FP DetourMax = 48;
   }
 }
