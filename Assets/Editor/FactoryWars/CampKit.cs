@@ -239,7 +239,7 @@ namespace FactoryWars.EditorTools {
 
     /// <summary>Third-party PMC models (helicopters, drone): black prefab variants in our folder replace the slot prefabs.</summary>
     public static void BlackenThirdParty(VisualCatalog catalog, string folder) {
-      foreach (var id in new[] { "camp/display_heli", "camp/display_scoutheli", "camp/display_drone", "unit/pmc_attack_heli", "unit/pmc_scout_heli", "unit/pmc_attack_drone" }) {
+      foreach (var id in new[] { "camp/display_heli", "camp/display_scoutheli", "camp/display_drone", "unit/pmc_attack_heli", "unit/pmc_scout_heli", "unit/pmc_attack_drone", "unit/pmc_strike_drone" }) {
         var slot = catalog.Slots.Find(s => s != null && s.Id == id);
         if (slot == null || slot.Prefab == null || slot.Prefab.name.StartsWith("pmc_black_")) continue;
         var item = (GameObject)PrefabUtility.InstantiatePrefab(slot.Prefab);
@@ -298,7 +298,7 @@ namespace FactoryWars.EditorTools {
       var drone = catalog.Slots.Find(s => s != null && s.Id == "unit/shared_scout_drone");
       if (drone != null && drone.Prefab != null) Slot(catalog, "camp/display_drone", drone.Prefab, Vector3.one * 2f, drone.Scale);
       catalog.Slots.RemoveAll(s => s != null && s.Id != null && (s.Id.StartsWith("unit/pmc_") || s.Id == "unit/merc_cargo_truck"));
-      foreach (var (unit, display) in new[] { ("pmc_tank", "tank"), ("pmc_armored_suv", "mrap"), ("pmc_attack_heli", "heli"), ("pmc_attack_drone", "drone") }) {
+      foreach (var (unit, display) in new[] { ("pmc_tank", "tank"), ("pmc_armored_suv", "mrap"), ("pmc_attack_heli", "heli"), ("pmc_attack_drone", "drone"), ("pmc_strike_drone", "drone") }) {
         var slot = catalog.Slots.Find(s => s != null && s.Id == "camp/display_" + display);
         if (slot == null) continue;
         Slot(catalog, "unit/" + unit, slot.Prefab, slot.Size, slot.Scale);
@@ -309,7 +309,7 @@ namespace FactoryWars.EditorTools {
       var male = Trooper(PB + "Characters/Character_MercenaryMale_01.prefab", folder, "pmc_trooper_m");
       var female = Trooper(PB + "Characters/Character_MercenaryFemale_01.prefab", folder, "pmc_trooper_f");
       if (guard != null && male != null) {
-        foreach (var (id, prefab) in new[] { ("unit/pmc_soldier", male), ("unit/pmc_soldier_f", female ?? male), ("unit/pmc_operator_squad", male), ("unit/pmc_marksman", female ?? male) }) {
+        foreach (var (id, prefab) in new[] { ("unit/pmc_soldier", male), ("unit/pmc_soldier_f", female ?? male), ("unit/pmc_operator_squad", male), ("unit/pmc_drone_operator", male), ("unit/pmc_marksman", female ?? male) }) {
           catalog.Slots.RemoveAll(s => s != null && s.Id == id);
           var copy = JsonUtility.FromJson<VisualSlot>(JsonUtility.ToJson(guard));
           copy.Id = id;

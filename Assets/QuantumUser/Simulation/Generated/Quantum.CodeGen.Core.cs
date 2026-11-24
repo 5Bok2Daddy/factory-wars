@@ -1929,6 +1929,28 @@ namespace Quantum {
     }
   }
   [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct DroneOperator : Quantum.IComponent {
+    public const Int32 SIZE = 16;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(8)]
+    public FP LaunchCooldown;
+    [FieldOffset(0)]
+    public EntityRef Target;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 14821;
+        hash = hash * 31 + LaunchCooldown.GetHashCode();
+        hash = hash * 31 + Target.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (DroneOperator*)ptr;
+        EntityRef.Serialize(&p->Target, serializer);
+        FP.Serialize(&p->LaunchCooldown, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Fog : Quantum.IComponentSingleton {
     public const Int32 SIZE = 9464;
     public const Int32 ALIGNMENT = 8;
@@ -2493,6 +2515,28 @@ namespace Quantum {
     }
   }
   [StructLayout(LayoutKind.Explicit)]
+  public unsafe partial struct OperatorDrone : Quantum.IComponent {
+    public const Int32 SIZE = 16;
+    public const Int32 ALIGNMENT = 8;
+    [FieldOffset(0)]
+    public EntityRef Operator;
+    [FieldOffset(8)]
+    public FP Battery;
+    public override readonly Int32 GetHashCode() {
+      unchecked { 
+        var hash = 17747;
+        hash = hash * 31 + Operator.GetHashCode();
+        hash = hash * 31 + Battery.GetHashCode();
+        return hash;
+      }
+    }
+    public static void Serialize(void* ptr, FrameSerializer serializer) {
+        var p = (OperatorDrone*)ptr;
+        EntityRef.Serialize(&p->Operator, serializer);
+        FP.Serialize(&p->Battery, serializer);
+    }
+  }
+  [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct ResourceNode : Quantum.IComponent {
     public const Int32 SIZE = 72;
     public const Int32 ALIGNMENT = 8;
@@ -3038,6 +3082,8 @@ namespace Quantum {
       BuildSignalsArrayOnComponentRemoved<Quantum.Diplomacy>();
       BuildSignalsArrayOnComponentAdded<Quantum.Drone>();
       BuildSignalsArrayOnComponentRemoved<Quantum.Drone>();
+      BuildSignalsArrayOnComponentAdded<Quantum.DroneOperator>();
+      BuildSignalsArrayOnComponentRemoved<Quantum.DroneOperator>();
       BuildSignalsArrayOnComponentAdded<Quantum.Fog>();
       BuildSignalsArrayOnComponentRemoved<Quantum.Fog>();
       BuildSignalsArrayOnComponentAdded<Quantum.Jammer>();
@@ -3070,6 +3116,8 @@ namespace Quantum {
       BuildSignalsArrayOnComponentRemoved<NavMeshSteeringAgent>();
       BuildSignalsArrayOnComponentAdded<Quantum.NpcTrader>();
       BuildSignalsArrayOnComponentRemoved<Quantum.NpcTrader>();
+      BuildSignalsArrayOnComponentAdded<Quantum.OperatorDrone>();
+      BuildSignalsArrayOnComponentRemoved<Quantum.OperatorDrone>();
       BuildSignalsArrayOnComponentAdded<PhysicsBody2D>();
       BuildSignalsArrayOnComponentRemoved<PhysicsBody2D>();
       BuildSignalsArrayOnComponentAdded<PhysicsBody3D>();
@@ -3191,6 +3239,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(DistanceJoint), DistanceJoint.SIZE);
       typeRegistry.Register(typeof(DistanceJoint3D), DistanceJoint3D.SIZE);
       typeRegistry.Register(typeof(Quantum.Drone), Quantum.Drone.SIZE);
+      typeRegistry.Register(typeof(Quantum.DroneOperator), Quantum.DroneOperator.SIZE);
       typeRegistry.Register(typeof(Quantum.DropPhase), 1);
       typeRegistry.Register(typeof(EntityPrototypeRef), EntityPrototypeRef.SIZE);
       typeRegistry.Register(typeof(EntityRef), EntityRef.SIZE);
@@ -3246,6 +3295,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(NullableFPVector2), NullableFPVector2.SIZE);
       typeRegistry.Register(typeof(NullableFPVector3), NullableFPVector3.SIZE);
       typeRegistry.Register(typeof(NullableNonNegativeFP), NullableNonNegativeFP.SIZE);
+      typeRegistry.Register(typeof(Quantum.OperatorDrone), Quantum.OperatorDrone.SIZE);
       typeRegistry.Register(typeof(Quantum.PauseReason), 1);
       typeRegistry.Register(typeof(PhysicsBody2D), PhysicsBody2D.SIZE);
       typeRegistry.Register(typeof(PhysicsBody3D), PhysicsBody3D.SIZE);
@@ -3294,7 +3344,7 @@ namespace Quantum {
       typeRegistry.Register(typeof(Quantum._globals_), Quantum._globals_.SIZE);
     }
     static partial void InitComponentTypeIdGen() {
-      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 30)
+      ComponentTypeId.Reset(ComponentTypeId.BuiltInComponentCount + 32)
         .AddBuiltInComponents()
         .Add<Quantum.AirfieldWorks>(Quantum.AirfieldWorks.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Barricade>(Quantum.Barricade.Serialize, null, null, ComponentFlags.None)
@@ -3307,6 +3357,7 @@ namespace Quantum {
         .Add<Quantum.CoverSpot>(Quantum.CoverSpot.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Diplomacy>(Quantum.Diplomacy.Serialize, null, null, ComponentFlags.Singleton)
         .Add<Quantum.Drone>(Quantum.Drone.Serialize, null, null, ComponentFlags.None)
+        .Add<Quantum.DroneOperator>(Quantum.DroneOperator.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.Fog>(Quantum.Fog.Serialize, null, null, ComponentFlags.Singleton)
         .Add<Quantum.Jammer>(Quantum.Jammer.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.LandingCraft>(Quantum.LandingCraft.Serialize, null, null, ComponentFlags.None)
@@ -3318,6 +3369,7 @@ namespace Quantum {
         .Add<Quantum.MlrsMagazine>(Quantum.MlrsMagazine.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.MlrsRocket>(Quantum.MlrsRocket.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.NpcTrader>(Quantum.NpcTrader.Serialize, null, null, ComponentFlags.None)
+        .Add<Quantum.OperatorDrone>(Quantum.OperatorDrone.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.ResourceNode>(Quantum.ResourceNode.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.ScorchedZone>(Quantum.ScorchedZone.Serialize, null, null, ComponentFlags.None)
         .Add<Quantum.SeaGate>(Quantum.SeaGate.Serialize, null, null, ComponentFlags.None)

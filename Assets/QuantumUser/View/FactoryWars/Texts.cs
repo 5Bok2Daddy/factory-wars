@@ -21,6 +21,7 @@ namespace FactoryWars.View {
       { "lumber_mill", "제재소" }, { "iron_extractor", "철 채굴 공장" },
       { "shipyard", "조선소" }, { "merc_cargo_truck", "교역 화물 트럭" }, { "logistics_truck", "수송 트럭" },
       { "pmc_armored_suv", "PMC 장갑차" }, { "pmc_attack_drone", "PMC 공격 드론" }, { "pmc_attack_heli", "PMC 공격 헬기" }, { "pmc_marksman", "PMC 저격수" },
+      { "pmc_drone_operator", "PMC 드론 오퍼레이터" }, { "pmc_strike_drone", "PMC 타격 드론" },
       { "pmc_operator_squad", "PMC 작전 분대" }, { "pmc_scout_heli", "PMC 경헬기" }, { "pmc_tank", "PMC 전차" },
       { "sandbags", "모래주머니 진지" }, { "bunker", "벙커" }, { "medic_tent", "의무대" }, { "repair_bay", "정비소" },
       { "radar", "레이더 기지" }, { "helipad", "헬기장" }, { "artillery", "포병 진지" }, { "patriot_turret", "광역 요격 포대" }, { "scout_boat", "정찰선" }, { "artillery_ship", "포격함" },

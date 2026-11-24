@@ -162,16 +162,16 @@ MonoBehaviour:
     MaxStock: 3
     CooldownSeconds:
       RawValue: 5898240
-  - Name: "PMC \uACF5\uACA9 \uB4DC\uB860"
+  - Name: "PMC \uB4DC\uB860 \uC624\uD37C\uB808\uC774\uD130"
     Unit:
       Id:
-        Value: 318822090122040979
+        Value: 415293571503365127
     Count: 1
     Cost:
       Iron:
-        RawValue: 9175040
+        RawValue: 11796480
       Wood:
-        RawValue: 0
+        RawValue: 2621440
       Steel:
         RawValue: 3276800
       Power:

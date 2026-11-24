@@ -1937,9 +1937,9 @@ namespace FactoryWars.View {
     static string PmcIcon(Frame frame, MercOffer line) {
       if (line.Unit.IsValid == false) return "pmc_supply_trade";
       var name = frame.FindAsset(line.Unit).name;
+      if (name.Contains("drone")) return "pmc_attack_drone";
       if (name.Contains("operator")) return "pmc_operator_squad";
       if (name.Contains("marksman")) return "pmc_marksman";
-      if (name.Contains("drone")) return "pmc_attack_drone";
       if (name.Contains("tank")) return "pmc_tank";
       if (name.Contains("suv") || name.Contains("mrap") || name.Contains("armor")) return "pmc_armoured_suv";
       return "ui_rally";

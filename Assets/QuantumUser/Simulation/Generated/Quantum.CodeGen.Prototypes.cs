@@ -459,6 +459,21 @@ namespace Quantum.Prototypes {
     }
   }
   [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.DroneOperator))]
+  public unsafe class DroneOperatorPrototype : ComponentPrototype<Quantum.DroneOperator> {
+    public FP LaunchCooldown;
+    public MapEntityId Target;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.DroneOperator component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.DroneOperator result, in PrototypeMaterializationContext context = default) {
+        result.LaunchCooldown = this.LaunchCooldown;
+        PrototypeValidator.FindMapEntity(this.Target, in context, out result.Target);
+    }
+  }
+  [System.SerializableAttribute()]
   [Quantum.Prototypes.Prototype(typeof(Quantum.Fog))]
   public unsafe partial class FogPrototype : ComponentPrototype<Quantum.Fog> {
     [ArrayLengthAttribute(4)]
@@ -868,6 +883,21 @@ namespace Quantum.Prototypes {
         for (int i = 0, count = PrototypeValidator.CheckLength(ReadyFrames, 32, in context); i < count; ++i) {
           result.ReadyFrames[i] = this.ReadyFrames[i];
         }
+    }
+  }
+  [System.SerializableAttribute()]
+  [Quantum.Prototypes.Prototype(typeof(Quantum.OperatorDrone))]
+  public unsafe class OperatorDronePrototype : ComponentPrototype<Quantum.OperatorDrone> {
+    public MapEntityId Operator;
+    public FP Battery;
+    public override Boolean AddToEntity(FrameBase f, EntityRef entity, in PrototypeMaterializationContext context) {
+        Quantum.OperatorDrone component = default;
+        Materialize((Frame)f, ref component, in context);
+        return f.Set(entity, component) == SetResult.ComponentAdded;
+    }
+    public void Materialize(Frame frame, ref Quantum.OperatorDrone result, in PrototypeMaterializationContext context = default) {
+        PrototypeValidator.FindMapEntity(this.Operator, in context, out result.Operator);
+        result.Battery = this.Battery;
     }
   }
   [System.SerializableAttribute()]

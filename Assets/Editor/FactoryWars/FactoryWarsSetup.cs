@@ -453,6 +453,18 @@ namespace FactoryWars.EditorTools {
       var drone = CloneUnit("ff_hawk_gunship", "pmc_attack_drone", u => {
         u.Size = UnitSize.Small; u.MaxHealth = 140; u.Damage = 28; u.Range = 9; u.AttackInterval = N(1.2); u.MoveSpeed = 10; u.Population = 1; u.SightRange = 16;
       });
+      // Task 40: autonomous strike drone launched by pmc_drone_operator (Population = 0 so autonomous drones do not consume cap).
+      var strikeDrone = CloneUnit("ff_hawk_gunship", "pmc_strike_drone", u => {
+        u.Size = UnitSize.Small; u.MaxHealth = 140; u.Damage = 28; u.Range = 9; u.AttackInterval = N(1.2); u.MoveSpeed = 10; u.Population = 0; u.SightRange = 16;
+      });
+      var droneOp = CloneUnit("ff_ranger_squad", "pmc_drone_operator", u => {
+        u.OperatorDrone = Ref(strikeDrone);
+        u.OperatorMaxDrones = 2;
+        u.OperatorLeash = 26;
+        u.OperatorBatterySeconds = 25;
+        u.OperatorRelaunchSeconds = 8;
+        u.OperatorLaunchRange = 22;
+      });
       var suv = CloneUnit("ff_scout_buggy", "pmc_armored_suv", u => { u.MaxHealth = u.MaxHealth * 2; });
       var scout = CloneUnit("ff_hawk_gunship", "pmc_scout_heli", u => { u.MaxHealth = u.MaxHealth * N(0.6); u.Damage = u.Damage * N(0.6); u.MoveSpeed = u.MoveSpeed * N(1.3); u.SightRange = 18; });
       spec.Offers = new[] {
@@ -460,7 +472,7 @@ namespace FactoryWars.EditorTools {
         new MercOffer { Name = "PMC 저격수", Unit = Ref(marksman), Count = 1, Cost = R(160, 60, 40), MaxStock = 3, CooldownSeconds = 40 },
         new MercOffer { Name = "PMC 전차", Unit = Ref(tank), Count = 1, Cost = R(260, 0, 60, 60), MaxStock = 6, CooldownSeconds = 60 },
         new MercOffer { Name = "PMC 공격 헬기", Unit = Ref(heli), Count = 1, Cost = R(300, 0, 110, 110), MaxStock = 3, CooldownSeconds = 90 },
-        new MercOffer { Name = "PMC 공격 드론", Unit = Ref(drone), Count = 1, Cost = R(140, 0, 50, 60), MaxStock = 2, CooldownSeconds = 45 },
+        new MercOffer { Name = "PMC 드론 오퍼레이터", Unit = Ref(droneOp), Count = 1, Cost = R(180, 40, 50, 60), MaxStock = 2, CooldownSeconds = 45 },
         new MercOffer { Name = "PMC 장갑차", Unit = Ref(suv), Count = 1, Cost = R(150, 40, 30), MaxStock = 4, CooldownSeconds = 40 },
         new MercOffer { Name = "PMC 경헬기", Unit = Ref(scout), Count = 1, Cost = R(200, 0, 70, 70), MaxStock = 1, CooldownSeconds = 60 },
         new MercOffer { Name = "보급 교환(목재→강철)", Cost = R(0, 200), Give = R(0, 0, 80), MaxStock = 5, CooldownSeconds = 20 },

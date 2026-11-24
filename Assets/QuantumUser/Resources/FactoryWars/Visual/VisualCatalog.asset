@@ -9259,6 +9259,162 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
+  - Id: dress4p/X_04
+    Category: 5
+    Prefabs:
+    - {fileID: 994955910446577751, guid: d526c1c00c10b3d4f96270effe4c876c, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/X_05
+    Category: 5
+    Prefabs:
+    - {fileID: 4739363118913095518, guid: 6855593a56513b8458d8df6dc53a51ab, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/XC_00
+    Category: 5
+    Prefabs:
+    - {fileID: 7565876551140916145, guid: 53d973975bf32014ba4719e2254581b0, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HR_00
+    Category: 5
+    Prefabs:
+    - {fileID: 5583423056046500375, guid: fdc373012b89ac040a3aa7a45ffd5c15, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HR_01
+    Category: 5
+    Prefabs:
+    - {fileID: 1950219225493491713, guid: de7aceefbf9b8484f834aac8d986d101, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: dress4p/HR_02
+    Category: 5
+    Prefabs:
+    - {fileID: 1498528069553471243, guid: d13884a594b85d84a9b74c36488f77a6, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 8, y: 0, z: 8}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Map4P v4 dress block (DressKit.cs), baked Synty pieces
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: dress4p/Y_00
     Category: 5
     Prefabs:
@@ -10775,6 +10931,32 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0.63434, z: 0.7921802}
     MembersByQuality: 
     OwnerRing: 1
+  - Id: unit/pmc_strike_drone
+    Category: 5
+    Prefabs:
+    - {fileID: 9001594016411026524, guid: 2395b3b9405497a48ba561e66d5da168, type: 3}
+    Scale: 0.9335725
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2, y: 2, z: 2}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp model (CampKit.cs), PMC black copy of pack materials
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
   - Id: unit/pmc_soldier
     Category: 0
     Prefabs:
@@ -10830,6 +11012,33 @@ MonoBehaviour:
     MembersByQuality: 010000000100000001000000
     OwnerRing: 1
   - Id: unit/pmc_operator_squad
+    Category: 0
+    Prefabs:
+    - {fileID: 5336377252740909723, guid: 814371c500c895a4abd752585cc39a36, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2.0516062, y: 1.9209248, z: 0.53488874}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC trooper (Synty BattleRoyale Mercenary, parts merged, PMC black
+      copy of its material), trader_guard animator
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
+  - Id: unit/pmc_drone_operator
     Category: 0
     Prefabs:
     - {fileID: 5336377252740909723, guid: 814371c500c895a4abd752585cc39a36, type: 3}

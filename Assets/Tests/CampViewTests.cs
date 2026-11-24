@@ -63,11 +63,11 @@ namespace FactoryWars.Tests {
       yield return Send(0, new TradeCommand { Offer = MercenaryCamp.OfferShop + tank });
       Assert.AreEqual(1, UnitsNamed(0, "pmc_tank").Count, "bought PMC tank belongs to the buyer");
       yield return WaitFor(() => CampView().DisplayShown == shown - 1, 20f, "sold tank leaves the display line");
-      var drone = MercSpec.Offers.Select((o, i) => (o, i)).First(t => t.o.Unit.IsValid && Verified.FindAsset(t.o.Unit).name == "pmc_attack_drone").i;
-      yield return Send(0, new TradeCommand { Offer = MercenaryCamp.OfferShop + drone });
-      var bought = UnitsNamed(0, "pmc_attack_drone");
-      Assert.AreEqual(1, bought.Count, "attack drone bought");
-      Assert.IsTrue(Verified.FindAsset(Verified.Get<Unit>(bought[0]).Spec).IsAir, "attack drone is a real air unit");
+      var droneOp = MercSpec.Offers.Select((o, i) => (o, i)).First(t => t.o.Unit.IsValid && Verified.FindAsset(t.o.Unit).name == "pmc_drone_operator").i;
+      yield return Send(0, new TradeCommand { Offer = MercenaryCamp.OfferShop + droneOp });
+      var bought = UnitsNamed(0, "pmc_drone_operator");
+      Assert.AreEqual(1, bought.Count, "drone operator bought");
+      Assert.IsTrue(Verified.FindAsset(Verified.Get<Unit>(bought[0]).Spec).OperatorDrone.IsValid, "drone operator carries strike drone spec");
     }
 
     /// <summary>Task 39 fix 3: real-scale table (infantry 1.8 m reference) measured from the slots as shown in the camp / as units.</summary>

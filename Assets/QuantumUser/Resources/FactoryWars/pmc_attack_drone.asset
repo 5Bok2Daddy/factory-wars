@@ -134,3 +134,15 @@ MonoBehaviour:
   TransportAllowsVehicles: 0
   TransportEjectHealthRatio:
     RawValue: 0
+  OperatorDrone:
+    Id:
+      Value: 0
+  OperatorMaxDrones: 0
+  OperatorLeash:
+    RawValue: 0
+  OperatorBatterySeconds:
+    RawValue: 0
+  OperatorRelaunchSeconds:
+    RawValue: 0
+  OperatorLaunchRange:
+    RawValue: 0

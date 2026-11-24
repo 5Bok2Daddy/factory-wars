@@ -234,6 +234,19 @@ namespace Quantum.Prototypes.Unity {
     }
   }
   [System.SerializableAttribute()]
+  public unsafe partial class DroneOperatorPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.DroneOperatorPrototype> {
+    public FP LaunchCooldown;
+    public Quantum.QuantumEntityPrototype Target;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.DroneOperatorPrototype prototype);
+    public override Quantum.Prototypes.DroneOperatorPrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.DroneOperatorPrototype();
+      converter.Convert(this.LaunchCooldown, out result.LaunchCooldown);
+      converter.Convert(this.Target, out result.Target);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
   public unsafe partial class JammerPrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.JammerPrototype> {
     public PlayerRef Owner;
     public Quantum.QuantumEntityPrototype Node;
@@ -344,6 +357,19 @@ namespace Quantum.Prototypes.Unity {
       converter.Convert(this.Stock, out result.Stock);
       converter.Convert(this.RestockFrame, out result.RestockFrame);
       converter.Convert(this.ReadyFrames, out result.ReadyFrames);
+      ConvertUser(converter, ref result);
+      return result;
+    }
+  }
+  [System.SerializableAttribute()]
+  public unsafe partial class OperatorDronePrototype : Quantum.QuantumUnityPrototypeAdapter<Quantum.Prototypes.OperatorDronePrototype> {
+    public Quantum.QuantumEntityPrototype Operator;
+    public FP Battery;
+    partial void ConvertUser(Quantum.QuantumEntityPrototypeConverter converter, ref Quantum.Prototypes.OperatorDronePrototype prototype);
+    public override Quantum.Prototypes.OperatorDronePrototype Convert(Quantum.QuantumEntityPrototypeConverter converter) {
+      var result = new Quantum.Prototypes.OperatorDronePrototype();
+      converter.Convert(this.Operator, out result.Operator);
+      converter.Convert(this.Battery, out result.Battery);
       ConvertUser(converter, ref result);
       return result;
     }

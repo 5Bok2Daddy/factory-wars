@@ -348,6 +348,18 @@ component Drone {
     entity_ref Carrier;
 }
 
+// 작업 40: PMC 드론 오퍼레이터. 사거리 안 적을 감지하면 타격 드론을 발사한다.
+component DroneOperator {
+    FP LaunchCooldown;
+    entity_ref Target;
+}
+
+// 작업 40: 오퍼레이터가 발사한 타격 드론. 끈 반경·배터리·오퍼레이터 사망 연동을 따른다.
+component OperatorDrone {
+    entity_ref Operator;
+    FP Battery;
+}
+
 // 날아오는 전략 미사일. Origin에서 Target으로 포물선 비행하며 Health(300)를 가진다. 패트리어트 요격으로 체력이 0이 되면 공중 폭발한다.
 component MissileStrike {
     player_ref Owner;

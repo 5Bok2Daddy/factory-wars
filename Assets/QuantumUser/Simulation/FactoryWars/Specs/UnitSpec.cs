@@ -97,5 +97,19 @@ namespace Quantum {
     public bool TransportAllowsVehicles;
     /// <summary>수송기 파괴 시 승객 탈출 체력 비율(지상 APC 0.40 = 40% 체력 생존 탈출, 공중·해상은 0 = 전원 손실).</summary>
     public FP TransportEjectHealthRatio;
+
+    // ---- 작업 40: 드론 오퍼레이터 (데이터 기반, 0/Invalid이면 일반 유닛) ----
+    /// <summary>오퍼레이터가 발사하는 자율 타격 드론 스펙.</summary>
+    public AssetRef<UnitSpec> OperatorDrone;
+    /// <summary>동시 운용 가능한 최대 드론 수.</summary>
+    public int OperatorMaxDrones;
+    /// <summary>오퍼레이터 기준 드론 끈 반경(m). 넘으면 귀환한다.</summary>
+    public FP OperatorLeash;
+    /// <summary>드론 배터리 지속 시간(초). 0이 되면 추락한다.</summary>
+    public FP OperatorBatterySeconds;
+    /// <summary>드론 재발사 대기 시간(초).</summary>
+    public FP OperatorRelaunchSeconds;
+    /// <summary>적 감지 및 드론 발사 사거리(m).</summary>
+    public FP OperatorLaunchRange;
   }
 }
