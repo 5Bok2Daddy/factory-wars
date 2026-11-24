@@ -1,0 +1,98 @@
+Task 39 camp captures c2
+view | height | renderers in view | draw calls (renderer x material + shadow casters) | triangles
+camp_wide | 132m | 114 | 237 | 578658
+  GridDress/MK: 25 draws, 193092 tris
+  MercCamp/camp/display: 42 draws, 101294 tris
+  BattleView/Stage: 34 draws, 47513 tris
+  GridDress/H4: 16 draws, 42948 tris
+  GridDress/H1: 27 draws, 35880 tris
+  GridDress/HD: 22 draws, 34603 tris
+  MercCamp/PmcAmbient5: 9 draws, 16674 tris
+  GridDress/H1S: 9 draws, 16521 tris
+  MercCamp/PmcAmbient1: 6 draws, 11116 tris
+  MercCamp/PmcAmbient0: 6 draws, 11116 tris
+  MercCamp/PmcAmbient4: 6 draws, 11116 tris
+  MercCamp/PmcAmbient3: 5 draws, 9424 tris
+troops visible in the wide view: 48
+camp_display | 58m | 69 | 119 | 354516
+  GridDress/MK: 25 draws, 193092 tris
+  MercCamp/camp/display: 26 draws, 62030 tris
+  BattleView/Stage: 20 draws, 36347 tris
+  GridDress/L: 6 draws, 19599 tris
+  MercCamp/PmcAmbient4: 13 draws, 9078 tris
+  MercCamp/PmcAmbient6: 4 draws, 7732 tris
+  MercCamp/PmcAmbient0: 4 draws, 7250 tris
+  GridDress/K: 5 draws, 5234 tris
+  MercCamp/PmcGarrison5: 6 draws, 3693 tris
+  MercCamp/PmcGarrison4: 6 draws, 3693 tris
+  MercCamp/PmcGarrison3: 1 draws, 1692 tris
+  MercCamp/PmcGarrison1: 1 draws, 1692 tris
+colour audit (display vehicles, dark band 0.10-0.38 + contrast >= 0.08): 10/10
+  colour | Tank at -42,16 | mean 0.26 spread 0.11 PASS
+  colour | Tank at -42,9 | mean 0.26 spread 0.12 PASS
+  colour | Tank at -42,3 | mean 0.27 spread 0.11 PASS
+  colour | Tank at -42,-3 | mean 0.26 spread 0.11 PASS
+  colour | Tank at -42,-9 | mean 0.26 spread 0.12 PASS
+  colour | Tank at -42,-16 | mean 0.26 spread 0.11 PASS
+  colour | Heli at -27,13 | mean 0.26 spread 0.38 PASS
+  colour | Heli at -27,0 | mean 0.26 spread 0.39 PASS
+  colour | Heli at -27,-13 | mean 0.26 spread 0.36 PASS
+  colour | ScoutHeli at -34,25 | mean 0.28 spread 0.35 PASS
+close_tanks | 22m | 29 | 67 | 276819
+  GridDress/MK: 25 draws, 193092 tris
+  MercCamp/camp/display: 21 draws, 48557 tris
+  BattleView/Stage: 9 draws, 27784 tris
+  MercCamp/PmcAmbient4: 6 draws, 3693 tris
+  MercCamp/PmcGarrison3: 6 draws, 3693 tris
+colour audit (display vehicles, dark band 0.10-0.38 + contrast >= 0.08): 2/2
+  colour | Tank at -42,3 | mean 0.26 spread 0.14 PASS
+  colour | Tank at -42,-3 | mean 0.24 spread 0.14 PASS
+close_heli | 20m | 30 | 66 | 271121
+  GridDress/MK: 25 draws, 193092 tris
+  MercCamp/camp/display: 18 draws, 40549 tris
+  BattleView/Stage: 8 draws, 26645 tris
+  MercCamp/PmcAmbient4: 6 draws, 3693 tris
+  MercCamp/PmcGarrison4: 6 draws, 3693 tris
+  MercCamp/PmcGarrison3: 3 draws, 3449 tris
+close_apc | 18m | 26 | 62 | 266300
+  GridDress/MK: 25 draws, 193092 tris
+  MercCamp/camp/display: 16 draws, 39264 tris
+  BattleView/Stage: 9 draws, 26076 tris
+  MercCamp/PmcAmbient4: 6 draws, 4175 tris
+  MercCamp/PmcGarrison5: 6 draws, 3693 tris
+colour audit (display vehicles, dark band 0.10-0.38 + contrast >= 0.08): 2/2
+  colour | Mrap at -15,-29 | mean 0.24 spread 0.13 PASS
+  colour | Mrap at -21,-29 | mean 0.24 spread 0.13 PASS
+close_troops | 11m | 45 | 71 | 246302
+  GridDress/MK: 25 draws, 193092 tris
+  BattleView/Stage: 10 draws, 29606 tris
+  MercCamp/PmcAmbient6: 24 draws, 15736 tris
+  MercCamp/PmcAmbient0: 12 draws, 7868 tris
+skin audit (troops in the close capture with skin-tone pixels): 4/6 PASS
+close_crates | 14m | 40 | 65 | 242329
+  GridDress/MK: 25 draws, 193092 tris
+  BattleView/Stage: 8 draws, 25942 tris
+  MercCamp/PmcAmbient0: 14 draws, 11734 tris
+  MercCamp/PmcAmbient2: 12 draws, 7868 tris
+  MercCamp/PmcGarrison6: 6 draws, 3693 tris
+troop overlap audit: min gap 1.20 m (limit 1.2 m) PASS, separated 1
+camp_gate | 34m | 118 | 156 | 333841
+  GridDress/MK: 25 draws, 193092 tris
+  MercCamp/camp/display: 18 draws, 42103 tris
+  BattleView/Stage: 11 draws, 26254 tris
+  MercCamp/PmcAmbient1: 36 draws, 23122 tris
+  MercCamp/PmcAmbient2: 20 draws, 14834 tris
+  MercCamp/PmcAmbient3: 14 draws, 11623 tris
+  MercCamp/PmcAmbient4: 18 draws, 11561 tris
+  MercCamp/PmcAmbient0: 2 draws, 3866 tris
+  MercCamp/PmcGarrison6: 6 draws, 3693 tris
+  MercCamp/PmcGarrison5: 6 draws, 3693 tris
+camp view: garrison 8 ambient 40 display 16
+scale | slot | shown length m | shown height m | real target m
+scale | unit/pmc_soldier | 2.0 | 1.9 | 1.8 tall
+scale | camp/display_tank | 9.5 | 4.1 | 9-10
+scale | camp/display_mrap | 7.5 | 3.8 | 7-8
+scale | camp/display_heli | 16.0 | 5.4 | 15-17
+scale | camp/display_scoutheli | 8.5 | 3.2 | 8-9
+scale | camp/display_drone | 2.5 | 1.3 | 2-3
+scale | unit/merc_cargo_truck | 7.5 | 3.3 | 7-8

@@ -110,6 +110,50 @@ namespace FactoryWars.View {
       }
     }
 
+    /// <summary>AGY fix C (2026-11-24): minimum gap between two camp soldiers (garrison + ambient), view only.</summary>
+    public const float MinTroopGap = 1.2f;
+    /// <summary>Smallest soldier-to-soldier distance after the last separation pass (overlap audit).</summary>
+    public float TroopGap { get; private set; } = float.MaxValue;
+    /// <summary>Pairs closer than MinTroopGap before the last separation pass.</summary>
+    public int TroopOverlaps { get; private set; }
+
+    readonly List<Transform> _troops = new List<Transform>();
+
+    /// <summary>
+    /// Garrison soldiers stand where the simulation puts them and ambient soldiers follow their scripted paths, so two can meet
+    /// (two soldiers at the centre of the crates view). One deterministic pass pushes the later soldier of a close pair away
+    /// (horizontal only), then records the smallest remaining gap.
+    /// </summary>
+    void SeparateTroops() {
+      _troops.Clear();
+      foreach (var s in _garrison.Values) _troops.Add(s.View);
+      foreach (var (s, _, _) in _ambient) _troops.Add(s.View);
+      var overlaps = 0;
+      for (var pass = 0; pass < 2; pass++) {
+        for (var i = 0; i < _troops.Count; i++) {
+          for (var j = i + 1; j < _troops.Count; j++) {
+            var d = _troops[j].position - _troops[i].position;
+            d.y = 0f;
+            var m = d.magnitude;
+            if (m >= MinTroopGap) continue;
+            if (pass == 0) overlaps++;
+            var dir = m > 0.001f ? d / m : new Vector3(Mathf.Cos(j * 2.4f), 0f, Mathf.Sin(j * 2.4f));
+            _troops[j].position += dir * (MinTroopGap - m);
+          }
+        }
+      }
+      var gap = float.MaxValue;
+      for (var i = 0; i < _troops.Count; i++) {
+        for (var j = i + 1; j < _troops.Count; j++) {
+          var d = _troops[j].position - _troops[i].position;
+          d.y = 0f;
+          gap = Mathf.Min(gap, d.magnitude);
+        }
+      }
+      TroopOverlaps = overlaps;
+      TroopGap = gap;
+    }
+
     const float CullDistance = 220f;
 
     /// <summary>Hide soldiers far from the camera (they are a few pixels tall there).</summary>
@@ -135,6 +179,7 @@ namespace FactoryWars.View {
       var t = frame.Number * SimStep;
       Garrison(frame, dt);
       Ambience(t, dt);
+      SeparateTroops();
       DisplayLine(frame, trader, dt);
       var cam = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
       foreach (var s in _garrison.Values) Cull(s, cam);

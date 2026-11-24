@@ -95,8 +95,8 @@ namespace FactoryWars.EditorTools {
     // ------------------------------------------------------------ PMC black (our darkened copies of pack materials)
 
     const string PmcMaterials = "Assets/FactoryWarsArt/Materials/PMC";
-    static readonly Dictionary<Material, Material> DarkCache = new Dictionary<Material, Material>();
-    static readonly Dictionary<Texture, Texture2D> DarkTextures = new Dictionary<Texture, Texture2D>();
+    static readonly Dictionary<(Material, bool), Material> DarkCache = new Dictionary<(Material, bool), Material>();
+    static readonly Dictionary<(Texture, bool), Texture2D> DarkTextures = new Dictionary<(Texture, bool), Texture2D>();
 
     static void Folder(string path) {
       var parts = path.Split('/');
@@ -111,11 +111,11 @@ namespace FactoryWars.EditorTools {
     /// (Generic_Basic), so clearing _BaseMap/_MainTex or tinting did nothing and the camo atlas stayed visible. Fix: a charcoal copy of
     /// the atlas itself (detail kept, 22-30 % luminance, desaturated) saved in our folder and assigned to every albedo-like texture slot.
     /// </summary>
-    static Texture2D DarkTexture(Texture source) {
+    static Texture2D DarkTexture(Texture source, bool muted = false) {
       if (source == null) return null;
-      if (DarkTextures.TryGetValue(source, out var cached) && cached != null) return cached;
+      if (DarkTextures.TryGetValue((source, muted), out var cached) && cached != null) return cached;
       Folder(PmcMaterials + "/Textures");
-      var path = $"{PmcMaterials}/Textures/{source.name}_pmc.png";
+      var path = $"{PmcMaterials}/Textures/{source.name}_{(muted ? "pmcm" : "pmc")}.png";
       var rt = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
       Graphics.Blit(source, rt);
       var previous = RenderTexture.active;
@@ -130,7 +130,7 @@ namespace FactoryWars.EditorTools {
       // value step; the class decides the PMC tone: glass -> tinted blue-grey, rubber -> near black, metal/greys -> gunmetal,
       // greens -> olive dark slate, warm camo/tan -> charcoal, saturated accents -> amber, skin -> unchanged (troops read as people).
       var vehicle = IsVehicleAtlas(source.name);
-      for (var i = 0; i < px.Length; i++) px[i] = PmcTone(px[i], vehicle);
+      for (var i = 0; i < px.Length; i++) px[i] = muted ? PmcMuted(px[i], vehicle) : PmcTone(px[i], vehicle);
       read.SetPixels32(px);
       System.IO.File.WriteAllBytes(path, read.EncodeToPNG());
       Object.DestroyImmediate(read);
@@ -143,7 +143,7 @@ namespace FactoryWars.EditorTools {
         importer.SaveAndReimport();
       }
       var dark = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-      DarkTextures[source] = dark;
+      DarkTextures[(source, muted)] = dark;
       return dark;
     }
 
@@ -172,13 +172,35 @@ namespace FactoryWars.EditorTools {
       return o;
     }
 
+    /// <summary>
+    /// 2026-11-24 (AGY fix C): muted PMC tone for vehicles, camo nets and big camp pieces. The per-swatch remap kept the camo pattern
+    /// (olive slate vs gunmetal with a wide value stretch), which read as green camo next to the gunmetal helicopters. Muted = a
+    /// low-contrast olive-grey / gunmetal two-tone with a narrow value band; skin (troops), glass and rubber keep their classes, and
+    /// saturated accents (red containers, red roofs) fall into the same two-tone (the amber PMC stripes are separate quads).
+    /// </summary>
+    public static Color32 PmcMuted(Color32 c, bool vehicle) {
+      Color.RGBToHSV(c, out var h, out var s, out var v);
+      var lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) / 255f;
+      var hue = h * 360f;
+      if (vehicle == false && s > 0.15f && s < 0.42f && v > 0.7f && hue >= 10f && hue <= 28f) return c;                   // skin
+      Color o;
+      if (vehicle && s > 0.2f && hue >= 170f && hue <= 250f) o = new Color(0.16f, 0.2f, 0.26f) + new Color(0.2f, 0.24f, 0.3f) * lum; // glass
+      else if (lum < 0.12f) o = new Color(0.05f, 0.05f, 0.055f) + Color.white * (lum * 0.4f);                                 // rubber, gaps
+      else {
+        var t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((lum - 0.20f) / 0.30f));
+        o = Color.Lerp(new Color(0.15f, 0.165f, 0.165f), new Color(0.33f, 0.34f, 0.36f), t) * (0.88f + lum * 0.24f);           // charcoal / gunmetal two-tone
+      }
+      o.a = c.a / 255f;
+      return o;
+    }
+
     /// <summary>Our PMC material variant of a pack material (pack material untouched): every albedo slot gets the charcoal atlas.</summary>
-    public static Material Dark(Material source) {
+    public static Material Dark(Material source, bool muted = false) {
       if (source == null) return null;
-      if (source.name.StartsWith("PMC_")) return source;
-      if (DarkCache.TryGetValue(source, out var cached) && cached != null) return cached;
+      if (source.name.StartsWith("PMC_") || source.name.StartsWith("PMCM_")) return source;
+      if (DarkCache.TryGetValue((source, muted), out var cached) && cached != null) return cached;
       Folder(PmcMaterials);
-      var path = $"{PmcMaterials}/PMC_{source.name}.mat";
+      var path = $"{PmcMaterials}/{(muted ? "PMCM_" : "PMC_")}{source.name}.mat";
       var dark = AssetDatabase.LoadAssetAtPath<Material>(path);
       if (dark == null) {
         dark = new Material(source);
@@ -192,7 +214,7 @@ namespace FactoryWars.EditorTools {
         if (!(lower.Contains("albedo") || lower.Contains("basemap") || lower.Contains("maintex") || lower.Contains("base_map"))) continue;
         var tex = source.GetTexture(name);
         if (tex == null) continue;
-        dark.SetTexture(name, DarkTexture(tex));
+        dark.SetTexture(name, DarkTexture(tex, muted));
         any = true;
       }
       var tint = any ? Color.white : new Color(0.14f, 0.14f, 0.15f, 1f);
@@ -200,16 +222,16 @@ namespace FactoryWars.EditorTools {
       if (dark.HasProperty("_Smoothness")) dark.SetFloat("_Smoothness", 0.12f);
       dark.enableInstancing = true;
       EditorUtility.SetDirty(dark);
-      DarkCache[source] = dark;
+      DarkCache[(source, muted)] = dark;
       return dark;
     }
 
-    static void Blacken(GameObject g) {
+    static void Blacken(GameObject g, bool muted = false) {
       if (g == null) return;
       foreach (var r in g.GetComponentsInChildren<Renderer>(true)) {
         var mats = r.sharedMaterials;
         for (var i = 0; i < mats.Length; i++) {
-          if (mats[i] != null && mats[i].name.IndexOf("Glass") < 0) mats[i] = Dark(mats[i]);
+          if (mats[i] != null && mats[i].name.IndexOf("Glass") < 0) mats[i] = Dark(mats[i], muted);
         }
         r.sharedMaterials = mats;
       }
@@ -256,7 +278,8 @@ namespace FactoryWars.EditorTools {
         item.transform.localPosition = Vector3.zero;
         var b = BlockKit.WorldBounds(item);
         item.transform.localPosition = new Vector3(-b.center.x, -b.min.y, -b.center.z);
-        Blacken(item);
+        // Fix C: tank and APC in the muted two-tone (no green camo); the helicopter keeps the fix-6 tones that passed review.
+        Blacken(item, id != "heli");
         if (id != "heli") {
           // PMC side stripe (Codex identity kit) on both flanks, about 45 % of the hull length, 4:1.
           var hull = BlockKit.WorldBounds(item);
@@ -444,8 +467,9 @@ namespace FactoryWars.EditorTools {
       ContinuousWall(root, wire, low);
       // Corner watchtowers and the two towers flanking the south gate.
       foreach (var (x, z) in new[] { (-30f, 30f), (30f, 30f), (-30f, -30f), (30f, -30f) }) Put(root, "towers", MB("GuardTower_01"), x, z, z > 0 ? 180f : 0f, 0f, false, 0.4f);
-      Put(root, "towers", MB("GuardTower_02"), -13.5f, -41.5f, 0f, 0f, false, 0.4f);
-      Put(root, "towers", MB("GuardTower_02"), 13.5f, -41.5f, 0f, 0f, false, 0.4f);
+      // Fix C: the gate towers had a red roof; muted camp two-tone.
+      Blacken(Put(root, "towers", MB("GuardTower_02"), -13.5f, -41.5f, 0f, 0f, false, 0.4f), true);
+      Blacken(Put(root, "towers", MB("GuardTower_02"), 13.5f, -41.5f, 0f, 0f, false, 0.4f), true);
       // South gate: barrier, guard hut, floodlights; firing lines of barriers and crates inside the gate; tank traps outside the line.
       Put(root, "gate", MM("Road_Barrier_01"), -6.5f, -43.5f, 0f, 0f, false, 0.2f);
       Put(root, "gate", MB("Plywood_Shed_Small_01"), 13f, -33.5f, 90f, 0f, false, 0.4f);
@@ -591,8 +615,9 @@ namespace FactoryWars.EditorTools {
       for (var i = 0; i < 5 && low == false; i++) Blacken(Put(root, "logistics", goods[i % goods.Length], -17f + i * 3.2f, 35.8f, 0f, 0f, false, 0.5f));
       for (var i = 0; i < 5 && low == false; i++) Blacken(Put(root, "logistics", goods[(i + 2) % goods.Length], -15.5f + i * 3.2f, 39.3f, 0f, 0f, false, 0.5f));
       // One tidy container row (north).
-      Put(root, "logistics", KP("Shipping_Container_01"), 9.5f, 43.5f, 90f, 0f, false, 0.5f);
-      Put(root, "logistics", KP("Shipping_Container_01"), 16.5f, 43.5f, 90f, 0f, false, 0.5f);
+      // Fix C: the two north containers were pack red; muted camp two-tone.
+      Blacken(Put(root, "logistics", KP("Shipping_Container_01"), 9.5f, 43.5f, 90f, 0f, false, 0.5f), true);
+      Blacken(Put(root, "logistics", KP("Shipping_Container_01"), 16.5f, 43.5f, 90f, 0f, false, 0.5f), true);
       // East barracks district: two barracks (north), six tents in two columns, two camo-net shelters, two crate yards, paths between.
       Put(root, "barracks", MB("Barracks_01"), 11f, 23f, 90f, 0f, false, 0.6f); // one barracks; the rest are tents (triangle budget)
       Put(root, "barracks", BB("Tent_02"), 11f, 33f, 90f, 0f, false, 0.6f); // fix 5: tan tents only (Tent_01 is green)
@@ -666,7 +691,8 @@ namespace FactoryWars.EditorTools {
       var amber = PmcIdentityKit.Mat("Amber", null, PmcIdentityKit.Amber);
       foreach (var x in new[] { -3.4f, 3.4f }) {
         var net = BlockKit.Place(root, MB("CamoNet_Tent_01"), new Vector3(x, 0f, -7.2f), 0f, 1f);
-        Blacken(net);
+        // Fix C: the net's black/white blotches -> muted two-tone.
+        Blacken(net, true);
         var nb = BlockKit.WorldBounds(net);
         PmcIdentityKit.Box(root, "AwningValance", amber, new Vector3(x, root.InverseTransformPoint(nb.max).y - 0.45f, root.InverseTransformPoint(nb.min).z - 0.02f), new Vector3(nb.size.x * 0.96f, 0.32f, 0.06f));
       }

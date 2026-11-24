@@ -6839,6 +6839,294 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0, z: 0}
     MembersByQuality: 
     OwnerRing: 0
+  - Id: building/sea_barrier
+    Category: 1
+    Prefabs:
+    - {fileID: 4694002124297281209, guid: eb1c20ff755e3d14581cf972a1975d7c, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 21.253443, y: 6.261702, z: 0.74070776}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: 'Task 46 sea barrier boom: POLYGON Battle Royale port walls + dock poles
+      (kitbash, unchanged pieces)'
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: building/sea_watchtower
+    Category: 1
+    Prefabs:
+    - {fileID: 1170082105736364, guid: 2519fcdc1183c2e46be8eb01405a2ac3, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2.275641, y: 6.9879127, z: 2.6489234}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: 'Task 46 watchtower: POLYGON Battle Royale guard tower'
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: naval/dock
+    Category: 5
+    Prefabs:
+    - {fileID: 1478546915634164, guid: db8d0616d60ffdb42842cf3aea878066, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 3.369419, y: 0.27736056, z: 5.122612}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: naval/dock_poles
+    Category: 5
+    Prefabs:
+    - {fileID: 1862978732126336, guid: cdc65718edf46c04a92b8ac282fe3896, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 4.05344, y: 4.055824, z: 0.7407074}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: naval/boat_tie
+    Category: 5
+    Prefabs:
+    - {fileID: 1986833058304084, guid: 2da28168743016746b5df127f2837a4e, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0.7408229, y: 0.6472499, z: 0.35588825}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: naval/slab
+    Category: 5
+    Prefabs:
+    - {fileID: 1702446890745766, guid: 367c6fe1a26480944a9793eb305d824f, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2, y: 3.6511786, z: 2.0000002}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: naval/port_wall
+    Category: 5
+    Prefabs:
+    - {fileID: 1103690880632860, guid: 0d765ad87b911904c8136bcfcbab23a1, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2, y: 3.9058783, z: 0.29873472}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: naval/port_corner
+    Category: 5
+    Prefabs:
+    - {fileID: 1698987728837202, guid: 40f4d454ca407bc4c961796fa8161151, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0.50871944, y: 4.046271, z: 0.50871944}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: naval/boat
+    Category: 5
+    Prefabs:
+    - {fileID: 1279670778009808, guid: 70fd0bd89e9f9144b982ec327a051c90, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 3.4457119, y: 3.2280662, z: 8.348417}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: naval/crane
+    Category: 5
+    Prefabs:
+    - {fileID: 1718362735809908, guid: 8b68a98b3c3a9b046b1a705f4349abb9, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 7.4914646, y: 43.919273, z: 45.175705}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: unit/logistics_truck
+    Category: 0
+    Prefabs:
+    - {fileID: 2955361136377676643, guid: 970dd4acf2c4c134f8219999c43bc462, type: 3}
+    Scale: 1.0906119
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0.0033870935, z: -0.6808622}
+    Size: {x: 3.0521638, y: 3.38379, z: 6.876873}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Synty PolygonMilitary SM_Veh_Truck_01 + SM_Veh_Truck_01_Canopy (project
+      kit + Cargo crates); wreck SM_Veh_Truck_01_Destroyed + SM_Veh_Truck_01_Canopy_Destroyed
+    TurretPart: 
+    WreckPrefab: {fileID: 6621951340863246435, guid: f4b3a6ad2ff4f214cab3281faf5df71f, type: 3}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.368653, z: 3.0945928}
+    MembersByQuality: 
+    OwnerRing: 1
   - Id: dress4p/H1_00
     Category: 5
     Prefabs:
@@ -10675,294 +10963,6 @@ MonoBehaviour:
     SpinParts: []
     MuzzlePart: 
     MuzzleOffset: {x: 0, y: 0.65352, z: 1.0664101}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: building/sea_barrier
-    Category: 1
-    Prefabs:
-    - {fileID: 4694002124297281209, guid: eb1c20ff755e3d14581cf972a1975d7c, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 21.253443, y: 6.261702, z: 0.74070776}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: 'Task 46 sea barrier boom: POLYGON Battle Royale port walls + dock poles
-      (kitbash, unchanged pieces)'
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: building/sea_watchtower
-    Category: 1
-    Prefabs:
-    - {fileID: 1170082105736364, guid: 2519fcdc1183c2e46be8eb01405a2ac3, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 2.275641, y: 6.9879127, z: 2.6489234}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: 'Task 46 watchtower: POLYGON Battle Royale guard tower'
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: naval/dock
-    Category: 5
-    Prefabs:
-    - {fileID: 1478546915634164, guid: db8d0616d60ffdb42842cf3aea878066, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 3.369419, y: 0.27736056, z: 5.122612}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: naval/dock_poles
-    Category: 5
-    Prefabs:
-    - {fileID: 1862978732126336, guid: cdc65718edf46c04a92b8ac282fe3896, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 4.05344, y: 4.055824, z: 0.7407074}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: naval/boat_tie
-    Category: 5
-    Prefabs:
-    - {fileID: 1986833058304084, guid: 2da28168743016746b5df127f2837a4e, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0.7408229, y: 0.6472499, z: 0.35588825}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: naval/slab
-    Category: 5
-    Prefabs:
-    - {fileID: 1702446890745766, guid: 367c6fe1a26480944a9793eb305d824f, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 2, y: 3.6511786, z: 2.0000002}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: naval/port_wall
-    Category: 5
-    Prefabs:
-    - {fileID: 1103690880632860, guid: 0d765ad87b911904c8136bcfcbab23a1, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 2, y: 3.9058783, z: 0.29873472}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: naval/port_corner
-    Category: 5
-    Prefabs:
-    - {fileID: 1698987728837202, guid: 40f4d454ca407bc4c961796fa8161151, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0.50871944, y: 4.046271, z: 0.50871944}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: naval/boat
-    Category: 5
-    Prefabs:
-    - {fileID: 1279670778009808, guid: 70fd0bd89e9f9144b982ec327a051c90, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 3.4457119, y: 3.2280662, z: 8.348417}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: naval/crane
-    Category: 5
-    Prefabs:
-    - {fileID: 1718362735809908, guid: 8b68a98b3c3a9b046b1a705f4349abb9, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 7.4914646, y: 43.919273, z: 45.175705}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: unit/logistics_truck
-    Category: 0
-    Prefabs:
-    - {fileID: 2955361136377676643, guid: 970dd4acf2c4c134f8219999c43bc462, type: 3}
-    Scale: 1.0906119
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: -0.0033870935, z: -0.6808622}
-    Size: {x: 3.0521638, y: 3.38379, z: 6.876873}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Synty PolygonMilitary SM_Veh_Truck_01 + SM_Veh_Truck_01_Canopy (project
-      kit + Cargo crates); wreck SM_Veh_Truck_01_Destroyed + SM_Veh_Truck_01_Canopy_Destroyed
-    TurretPart: 
-    WreckPrefab: {fileID: 6621951340863246435, guid: f4b3a6ad2ff4f214cab3281faf5df71f, type: 3}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 2.368653, z: 3.0945928}
     MembersByQuality: 
     OwnerRing: 1
   Enabled: 1

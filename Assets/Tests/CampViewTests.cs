@@ -55,6 +55,7 @@ namespace FactoryWars.Tests {
       yield return WaitForHud();
       yield return WaitFor(() => CampView() != null && CampView().Built && CampView().GarrisonShown == MercSpec.GuardCount, 30f, "garrison soldiers shown");
       Assert.GreaterOrEqual(CampView().AmbientCount + CampView().GarrisonShown, 30, "at least 30 PMC figures (patrols, drill, range, guards, mechanics, counter, garrison)");
+      Assert.GreaterOrEqual(CampView().TroopGap, MercCampView.MinTroopGap - 0.01f, $"camp troops must stay at least {MercCampView.MinTroopGap:0.0} m apart (min gap {CampView().TroopGap:0.00} m)");
       var shown = CampView().DisplayShown;
       Assert.AreEqual(16, shown, "display line full at start (6 tanks, 3 attack + 1 light helicopter at real scale, 4 APCs, 2 drones)");
       GrantAgreement(0);
@@ -127,6 +128,8 @@ namespace FactoryWars.Tests {
         min = Vector2.Min(min, sp);
         max = Vector2.Max(max, sp);
       }
+      // Skip vehicles clipped outside the viewport (otherwise the box samples mostly ground around an edge sliver).
+      if (min.x < 0.01f || max.x > 0.99f || min.y < 0.01f || max.y > 0.99f) return list;
       // Inner 60 % of the box (the outer ring is mostly ground around the silhouette).
       var c0 = Vector2.Lerp(min, max, 0.2f);
       var c1 = Vector2.Lerp(min, max, 0.8f);
@@ -263,9 +266,11 @@ namespace FactoryWars.Tests {
       report.AddRange(ColourAudit(camera, Path.Combine(dir, $"close_tanks_{iteration}.png")));
       yield return Shot("close_heli", new Vector2(-27f, -2f), 20f);
       yield return Shot("close_apc", new Vector2(-17f, -31f), 18f);
+      report.AddRange(ColourAudit(camera, Path.Combine(dir, $"close_apc_{iteration}.png")));
       yield return Shot("close_troops", new Vector2(0f, -10f), 11f);
       report.Add(SkinAudit(camera, Path.Combine(dir, $"close_troops_{iteration}.png")));
       yield return Shot("close_crates", new Vector2(10.5f, -21f), 14f);
+      report.Add($"troop overlap audit: min gap {CampView().TroopGap:0.00} m (limit {MercCampView.MinTroopGap:0.0} m) {(CampView().TroopGap >= MercCampView.MinTroopGap - 0.01f ? "PASS" : "FAIL")}, separated {CampView().TroopOverlaps}");
       yield return Shot("camp_gate", new Vector2(0f, -38f), 34f);
       // Scale line-up: one PMC trooper next to each vehicle at real scale on the open north ring road.
       // On the main east-west road (row 24, z = 124), clear of buildings.
