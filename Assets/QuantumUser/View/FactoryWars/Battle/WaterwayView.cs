@@ -47,12 +47,12 @@ namespace FactoryWars.View {
         var half = gates[i].HalfLength.AsFloat;
         for (var k = 0; k < 2; k++) {
           var end = c + across * (k == 0 ? -half - 0.6f : half + 0.6f);
-          var lamp = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+          var lamp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
           Object.Destroy(lamp.GetComponent<Collider>());
           lamp.name = $"GateLamp{i}_{k}";
           lamp.transform.SetParent(parent, false);
-          lamp.transform.position = end + Vector3.up * 3.4f;
-          lamp.transform.localScale = new Vector3(0.45f, 0.25f, 0.45f);
+          lamp.transform.position = end + Vector3.up * 3.35f;
+          lamp.transform.localScale = new Vector3(0.32f, 0.24f, 0.32f);
           var r = lamp.GetComponent<Renderer>();
           r.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
           r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;

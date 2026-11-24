@@ -9,12 +9,12 @@
 
 ## Map4P 전체 지도 검수
 
-**640m 플레이 맵 · 2026-11-24 14:35 KST · T46 Phase B + B2(4면 외곽 수로·빈 `X` 부지 건물/폐허화) + Fix C(PMC 톤 통일)**
+**640m 플레이 맵 · 2026-11-24 16:40 KST · Harness 규칙 동기화 + 반쪽 유리 건물 교체·옥상 디테일·빈 부지(`L/Y/K`) 복구**
 
-| 직상공 전체 지도 · 1,920×1,080 | 서쪽 구역 (B2 전후 비교) |
+| 직상공 전체 지도 · 1,920×1,080 | 서쪽 시가지 (반쪽 건물·빈 부지 전후 비교) |
 | --- | --- |
-| [![Map4P v7 4면 수로 및 B2 시가지·폐허 전체 화면](Docs/status_images/T46/t46_b2_full_map.png)](Docs/status_images/T46/t46_b2_full_map.png) | [![빈 모래 X 부지를 건물·폐허·공사 부지로 채운 전후 비교](Docs/status_images/T46/t46_b2_west_before_after.png)](Docs/status_images/T46/t46_b2_west_before_after.png) |
-| [전체 지도 원본](Docs/status_images/T46/t46_b2_full_map.png) · 4면 외곽 수로, 8개 방벽, 4개 중립항, B2 건물/폐허 | [서쪽 전후 비교](Docs/status_images/T46/t46_b2_west_before_after.png) · [시각 인수인계](Docs/Map4P-Visual-Handoff.md) · [최종 PMC 캠프](Docs/status_images/T39/t39_fixc_camp_wide.png) |
+| [![Map4P v4 최신 전체 지도](Docs/status_images/Map4PV4/map4p_harness_full_map.png)](Docs/status_images/Map4PV4/map4p_harness_full_map.png) | [![반쪽 유리 건물 교체 및 빈 부지 L/Y/K 밀도 복구 전후 비교](Docs/status_images/Map4PV4/map4p_harness_before_after.png)](Docs/status_images/Map4PV4/map4p_harness_before_after.png) |
+| [전체 지도 원본](Docs/status_images/Map4PV4/map4p_harness_full_map.png) · 4면 수로·밀폐 시가지·폐허·PMC 캠프 | [전후 비교](Docs/status_images/Map4PV4/map4p_harness_before_after.png) · [서쪽 확대](Docs/status_images/Map4PV4/map4p_harness_west_sector.png) · [최종 PMC 캠프](Docs/status_images/T39/t39_fixc_camp_wide.png) |
 
 ---
 
@@ -22,6 +22,7 @@
 
 | 작업 | 날짜 | 상태 | 대표 캡처 | 결과 요약 |
 | --- | --- | --- | --- | --- |
+| Map4P v4 Harness 구축 + 반쪽 건물·빈 부지 집중 개선 | 2026-11-24 | 완료 | [전후 비교](Docs/status_images/Map4PV4/map4p_harness_before_after.png) · [전체 지도](Docs/status_images/Map4PV4/map4p_harness_full_map.png) · [서쪽 시가지](Docs/status_images/Map4PV4/map4p_harness_west_sector.png) | [통과] `harness/run_verify.ps1`·`BLOCKED.md` 구축, `AGENTS/CLAUDE/GEMINI.md` 규칙 동기화, 반쪽 유리 셸(`H4_00`/`H4_05`/`HW_02`) 완전 밀폐 4면 건물+옥상 HVAC/배기/위성안테나 교체, `L` 2대 주차+화단 보강, `L/Y/K` LOD 5x→1.5x 복구, 결정론 0건, PlayMode 3/3, 게임 시점 예산(51~139 draw/61~254k) |
 | 46 Phase B + B2 — 4면 외곽 수로·빈 `X` 부지 건물/폐허화 | 2026-11-24 | 부분 (경로 공정성 0.5% 초과 확인 필요) | [전체 지도](Docs/status_images/T46/t46_b2_full_map.png) · [서쪽 전후](Docs/status_images/T46/t46_b2_west_before_after.png) · [북항·저교](Docs/status_images/T46/t46b_north_harbour_culvert.png) | [통과] 4면 수로(`grid v7`)·방벽 8·중립항 4·남북 저교(3m), B2 빈 `X` 부지 63.6%/65.1% 건물(`84H` 서/동 180도 대칭)+폐허(`SM_Bld_Destroyed_01/02`)+공사 부지(`XC`), `Logistics_FairnessTable` 4.5%(상한 5%), `Map4P_v4_GridMatchesCsv`, `Waterway_LayoutAndRange`/`SailFairness`/`TruckThreatDetour`, 게임 시점 예산(51~138 draw/59~225k) · [실패] `Map4P_v4_SymmetryFairnessAndReach` `base->compound` 경로 공정성 5.5%(254.4 vs 241.1m, 상한 5%) |
 | AGY Fix C + F — PMC 톤 통일·병사 겹침 감사·저품질 그래픽 감사 | 2026-11-24 | 완료 | [전차 전후](Docs/status_images/T39/t39_fixc_before_after.png) · [캠프 전체](Docs/status_images/T39/t39_fixc_camp_wide.png) · [감사표](Docs/status_images/T39/placeholder_audit.md) | [통과] `PmcMuted` 건메탈/차콜 2톤(색 감사 진열 10/10·전차 2/2·APC 2/2), 병사 겹침 최소 간격 1.20m PASS, 북쪽 컨테이너·감시탑 지붕·위장망 톤 통일, `VisualCatalog` 419슬롯 전수 감사표 작성 |
 | 41 2차 + Fix A — 물류 화면 표시·Synty 캐노피 트럭 교체 | 2026-11-24 | 완료 | [적재(캐노피 트럭)](Docs/status_images/T41/t41_truck_loading.png) · [하역](Docs/status_images/T41/t41_truck_unloading.png) · [도크](Docs/status_images/T41/t41_base_dock.png) | [통과] 로켓 트럭 → `SM_Veh_Truck_01_Canopy` 키트 교체(`b1e7793`), 슬롯 커버리지 테스트, 물류 시험 7/7, 4자리 공정성 4.5%(Phase B+B2 후 통과) |

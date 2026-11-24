@@ -190,7 +190,10 @@ namespace FactoryWars.EditorTools {
         var v = i;
         Add($"H1_{v:00}", 8, 8, b => {
           b.Stack(0f, 0.45f, s.G, s.F, s.N, s.R, s.Top);
-          if (v % 3 == 0) b.Prop(PC + "Props/SM_Prop_Roof_Aircon_01.prefab", 1.0f, 1.2f, 0, 3f * (s.N + 1) + 0.6f);
+          var roofY = 3f * (s.N + 1) + 0.6f;
+          if (v % 3 == 0) { b.Prop(P("Roof_Aircon_01"), 1.0f, 1.2f, 0, roofY); b.Prop(P("Vents_Exhaust_01"), -1.1f, 0.8f, 90, roofY); }
+          else if (v % 3 == 1) { b.Prop(P("Roof_Aircon_02"), -0.8f, 1.1f, 90, roofY); b.Prop(P("SatDish_01"), 1.2f, -0.4f, 180, roofY); }
+          else { b.Prop(P("Roof_Aircon_03"), 0.7f, 1.0f, 0, roofY); }
           Street(b, v, 4f, -4f);
         });
       }
@@ -235,8 +238,12 @@ namespace FactoryWars.EditorTools {
         Street(b, 1, 8f, -4f);
       });
       Add("HW_02", 16, 8, b => {
-        b.Bld(PC + "Buildings/SM_Bld_Station_03.prefab", -2.0f, 0.4f);
-        b.Prop(ME("Tree_Round_01"), 5.2f, 0.5f); b.Prop(P("ParkBench_01"), 5.0f, -2.6f, 180f);
+        // Harness fix (2026-11-24): SM_Bld_Station_03 was an open-sided blue-glass shell -> replaced with complete enclosed 4-sided shop/apartment + rooftop HVAC.
+        b.Stack(-4.2f, 0.45f, "SM_Bld_Shop_04", "SM_Bld_Apartment_02", 2, "SM_Bld_Apartment_Roof_02");
+        b.Stack(1.8f, 0.45f, "SM_Bld_Shop_02", "SM_Bld_Apartment_01", 1, "SM_Bld_Apartment_Roof_01");
+        b.Prop(P("Roof_Aircon_01"), -4.2f, 0.8f, 0f, 9.6f);
+        b.Prop(P("SatDish_01"), 1.8f, 0.6f, 90f, 6.6f);
+        b.Prop(ME("Tree_Round_01"), 5.6f, 0.5f); b.Prop(P("ParkBench_01"), 5.4f, -2.6f, 180f);
         Street(b, 2, 8f, -4f);
       });
       Add("HW_03", 16, 8, b => {
@@ -270,19 +277,39 @@ namespace FactoryWars.EditorTools {
         Street(b, 3, 4f, -8f);
       });
 
-      // ---- H4: 2×2(16×16).
-      Add("H4_00", 16, 16, b => { b.Bld(PC + "Buildings/SM_Bld_OfficeSquare_04.prefab", 0f, 0f); b.Prop(P("SatDish_01"), 3f, 3f, 0, 7.6f); });
+      // ---- H4: 2×2(16×16). Harness fix (2026-11-24): replaced open-sided OfficeSquare_02/04 shells with complete enclosed buildings + rooftop HVAC/vents/antennas.
+      Add("H4_00", 16, 16, b => {
+        var y = 0f;
+        var base0 = b.Bld(PC + "Buildings/SM_Bld_OfficeOld_Large_Base_01.prefab", 0f, 0.4f);
+        y += base0 != null ? BlockKit.WorldBounds(base0).size.y : 6f;
+        var flr = b.Bld(PC + "Buildings/SM_Bld_OfficeOld_Large_Floor_01.prefab", 0f, 0.4f, 0f, y);
+        y += flr != null ? BlockKit.WorldBounds(flr).size.y : 3.2f;
+        var roof = b.Bld(PC + "Buildings/SM_Bld_OfficeOld_Large_Roof_01.prefab", 0f, 0.4f, 0f, y);
+        var topY = roof != null ? BlockKit.WorldBounds(roof).max.y : y + 1.2f;
+        b.Prop(P("Roof_Aircon_01"), -2.4f, 1.8f, 0f, topY);
+        b.Prop(P("Roof_Aircon_02"), 2.2f, -1.2f, 90f, topY);
+        b.Prop(P("SatDish_01"), 2.8f, 2.6f, 45f, topY);
+        b.Prop(P("Vents_Exhaust_01"), -2.6f, -1.8f, 0f, topY);
+        b.Prop(P("Planter_01"), -5.4f, -6.6f); b.Prop(P("Planter_02"), 5.2f, -6.6f);
+        Street(b, 0, 8f, -8f);
+      });
       Add("H4_01", 16, 16, b => {
         var y = 0f;
         var base0 = b.Bld(PC + "Buildings/SM_Bld_OfficeOld_Small_Base_01.prefab", -1.6f, 1.6f);
         y += base0 != null ? BlockKit.WorldBounds(base0).size.y : 6f;
         for (var i = 0; i < 2; i++) { var f = b.Bld(PC + "Buildings/SM_Bld_OfficeOld_Small_Floor_01.prefab", -1.6f, 1.6f, 0f, y); y += f != null ? BlockKit.WorldBounds(f).size.y : 3.2f; }
-        b.Bld(PC + "Buildings/SM_Bld_OfficeOld_Small_Roof_01.prefab", -1.6f, 1.6f, 0f, y);
+        var roof = b.Bld(PC + "Buildings/SM_Bld_OfficeOld_Small_Roof_01.prefab", -1.6f, 1.6f, 0f, y);
+        var topY = roof != null ? BlockKit.WorldBounds(roof).max.y : y + 1.2f;
+        b.Prop(P("Roof_Aircon_03"), -1.4f, 2.2f, 0f, topY);
+        b.Prop(P("Vents_Exhaust_01"), -2.8f, 0.4f, 90f, topY);
         b.Prop(ME("Tree_Round_02"), 5.6f, -5.2f); b.Prop(P("ParkBench_01"), 1.6f, -6.4f, 180f); b.Prop(P("LightPole_Base_01"), -6.2f, -7.4f, 90f);
       });
       Add("H4_02", 16, 16, b => {
         b.Bld(MB("Shop_05"), -2.2f, 1.8f);
         b.Stack(4.6f, -3.9f, "SM_Bld_Shop_Corner_02", "SM_Bld_Apartment_Corner_02", 1, "SM_Bld_Apartment_Roof_Corner_02");
+        b.Prop(P("Roof_Aircon_01"), 4.6f, -3.6f, 0f, 6.6f);
+        b.Prop(CV("Car_Sedan_01"), -3.4f, -4.6f, 90f);
+        b.Prop(ME("Tree_Small_01"), 5.2f, 4.4f);
         Street(b, 2, 8f, -8f);
       });
       Add("H4_03", 16, 16, b => {
@@ -290,14 +317,29 @@ namespace FactoryWars.EditorTools {
         b.Stack(4.4f, -3.9f, "SM_Bld_Shop_Corner_01", "SM_Bld_Apartment_Corner_02", 3, "SM_Bld_Apartment_Roof_Corner_02");
         b.Stack(-4.4f, 4.4f, "SM_Bld_Apartment_Door_02", "SM_Bld_Apartment_Stack_03", 1, "SM_Bld_Apartment_Roof_03");
         b.Stack(4.4f, 4.4f, "SM_Bld_Shop_06", "SM_Bld_Apartment_01", 0, "SM_Bld_Apartment_Roof_01");
+        b.Prop(P("Roof_Aircon_02"), 4.4f, -3.6f, 0f, 12.6f);
+        b.Prop(P("SatDish_01"), -4.4f, 4.6f, 90f, 6.6f);
         b.Prop(PC + "Environments/SM_Env_Tree_02.prefab", 0f, 0.3f); Street(b, 3, 8f, -8f);
       });
       Add("H4_04", 16, 16, b => {
         b.Bld(MB("Shop_04"), -2.6f, 1.4f);
         b.Stack(4.6f, 3.8f, "SM_Bld_Shop_05", "SM_Bld_Apartment_03", 2, "SM_Bld_Apartment_Roof_03");
-        b.Prop(CV("Car_Taxi_01"), 4.6f, -3.8f, 180f); Street(b, 4, 8f, -8f);
+        b.Prop(P("Roof_Aircon_01"), 4.6f, 4.0f, 90f, 9.6f);
+        b.Prop(CV("Car_Taxi_01"), 4.6f, -3.8f, 180f); b.Prop(P("Planter_02"), 1.6f, -5.8f);
+        Street(b, 4, 8f, -8f);
       });
-      Add("H4_05", 16, 16, b => { b.Bld(PC + "Buildings/SM_Bld_OfficeSquare_02.prefab", 0f, 0f); b.Prop(P("Roof_Aircon_02"), -3f, 2f, 0, 9.05f); b.Prop(P("Roof_Aircon_03"), 3.5f, -2.5f, 90, 9.05f); });
+      Add("H4_05", 16, 16, b => {
+        b.Stack(-4.3f, 3.8f, "SM_Bld_Shop_02", "SM_Bld_Apartment_02", 2, "SM_Bld_Apartment_Roof_02");
+        b.Stack(4.3f, 3.8f, "SM_Bld_Shop_Corner_01", "SM_Bld_Apartment_Corner_03", 1, "SM_Bld_Apartment_Roof_Corner_03");
+        b.Stack(-4.3f, -3.8f, "SM_Bld_Shop_06", "SM_Bld_Apartment_01", 1, "SM_Bld_Apartment_Roof_01");
+        b.Prop(P("Roof_Aircon_02"), -4.3f, 4.0f, 0f, 9.6f);
+        b.Prop(P("Vents_Wide_01"), 4.3f, 4.0f, 90f, 6.6f);
+        b.Prop(P("SatDish_01"), -4.3f, -3.6f, 180f, 6.6f);
+        b.Prop(CV("Car_Small_01"), 4.2f, -4.0f, 0f);
+        b.Prop(ME("Tree_Round_01"), 1.6f, -3.4f);
+        b.Prop(P("ParkBench_01"), 4.6f, -6.6f, 180f);
+        Street(b, 5, 8f, -8f);
+      });
 
       // HWS/HWT·HDS/HDT·H4S/H4T: 정면이 동·서인 2칸·4칸 건물. 카메라(남)에 보이는 옆면(S = 로컬 -X, T = 로컬 +X)을 꾸민다.
       foreach (var src in list.Where(x => x.Id.StartsWith("HW_") || x.Id.StartsWith("HD_") || x.Id.StartsWith("H4_")).ToList()) {
@@ -316,12 +358,11 @@ namespace FactoryWars.EditorTools {
       Add("K_02", 8, 8, b => { b.Prop(PC + "Environments/SM_Env_Tree_01.prefab", -2.3f, 2.0f); b.Prop(PC + "Environments/SM_Env_Tree_03.prefab", 2.0f, 2.6f); b.Prop(PC + "Environments/SM_Env_Tree_02.prefab", 2.6f, -1.3f); b.Prop(P("PicnicTable_01"), -1.2f, -1.2f, 15f); });
       Add("K_03", 8, 8, b => { b.Prop(ME("Tree_Small_03"), -2.0f, -0.6f); b.Prop(ME("Bush_Group_02"), 1.8f, 1.8f); b.Prop(P("ParkBench_01"), 2.2f, -2.4f, 200f); b.Prop(P("TrashCan_01"), 0.8f, -3.0f); });
 
-      // ---- L 주차(8×8). 주차선은 GridPaint가 X 방향으로 칠한다(차는 남북 방향).
-      var cars = new[] { "Car_Sedan_01", "Car_Van_01", "Car_Small_01", "Car_Taxi_01", "Car_Medium_01", "Car_Muscle_01" };
-      Add("L_00", 8, 8, b => { b.Prop(CV("Car_Sedan_01"), -1.25f, 0.6f); b.Prop(P("ParkingMeter_01"), -3.4f, -3.3f); b.Prop(P("TrashCan_01"), 3.3f, 3.2f); });
-      Add("L_01", 8, 8, b => { b.Prop(CV("Car_Van_01"), 1.35f, 0.5f, 180f); b.Prop(P("ParkingMeter_02"), 3.4f, -3.3f); b.Prop(P("Cone_01"), -1.3f, -1.6f); });
-      Add("L_02", 8, 8, b => { b.Prop(CV("Car_Taxi_01"), -1.25f, 0.6f, 180f); b.Prop(CV("Car_Small_01"), 1.35f, 0.9f, 2f); });
-      Add("L_03", 8, 8, b => { b.Prop(CV("Car_Muscle_01"), 1.35f, 0.4f, 0f); b.Prop(P("Skip_02"), -2.4f, 2.6f, 90f); b.Prop(P("TrashBag_02"), -1.2f, 2.9f); });
+      // ---- L 주차(8×8). 주차선은 GridPaint가 X 방향으로 칠한다(차는 남북 방향). Harness fix: 빈 회색 판 방지(2대+화단/등주/소품).
+      Add("L_00", 8, 8, b => { b.Prop(CV("Car_Sedan_01"), -1.25f, 0.6f); b.Prop(CV("Car_Small_01"), 1.35f, 0.4f, 180f); b.Prop(P("ParkingMeter_01"), -3.4f, -3.3f); b.Prop(P("Planter_01"), 3.1f, -3.0f); b.Prop(P("TrashCan_01"), 3.3f, 3.2f); });
+      Add("L_01", 8, 8, b => { b.Prop(CV("Car_Van_01"), 1.35f, 0.5f, 180f); b.Prop(CV("Car_Medium_01"), -1.35f, 0.7f, 0f); b.Prop(P("ParkingMeter_02"), 3.4f, -3.3f); b.Prop(P("LightPole_Base_01"), -3.2f, 3.0f, 90f); b.Prop(P("Cone_01"), -1.3f, -2.2f); });
+      Add("L_02", 8, 8, b => { b.Prop(CV("Car_Taxi_01"), -1.25f, 0.6f, 180f); b.Prop(CV("Car_Small_01"), 1.35f, 0.9f, 2f); b.Prop(P("Planter_02"), -3.1f, -3.0f); b.Prop(P("Hydrant_01"), 3.2f, -3.2f); });
+      Add("L_03", 8, 8, b => { b.Prop(CV("Car_Muscle_01"), 1.35f, 0.4f, 0f); b.Prop(CV("Car_Sedan_01"), -1.35f, 0.8f, 180f); b.Prop(P("Skip_02"), -2.4f, 3.0f, 90f); b.Prop(P("TrashBag_02"), -1.2f, 3.1f); b.Prop(P("LightPole_Base_02"), 3.2f, -3.1f); });
       // ---- X 잔해·엄폐(8×8, 통행 가능): 가운데 3m 길은 비운다. B2: 파괴 건물 뼈대·잔해·엄폐 + 공사 부지(XC) + 파괴 시가지(HR).
       Add("X_00", 8, 8, b => { b.Prop(MD("DebrisPile_02"), -0.4f, 2.6f, 0f); b.Prop(MV("Pickup_Small_Destroyed_01"), -2.6f, -1.2f, 12f); b.Prop(MD("Rubble_Pile_04"), 2.6f, -2.4f, 40f); b.Prop(MM("Barrier_Base_Single_02"), 2.4f, 1.8f, 90f); });
       Add("X_01", 8, 8, b => { b.Prop(MM("Barrier_Base_Row_02"), 0f, -2.9f, 0f); b.Prop(MD("Rubble_Pile_06"), 2.2f, 2.2f, 70f); b.Prop(MD("Vehicle_Debris_07"), -2.4f, 1.6f, 25f); b.Prop(MD("DebrisPile_01"), 2.6f, -0.4f, 15f); });

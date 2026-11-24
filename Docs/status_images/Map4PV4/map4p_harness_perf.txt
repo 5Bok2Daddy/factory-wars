@@ -1,0 +1,9 @@
+Task 46 captures h2
+full_map | 560m | draws 2396 | tris 6363979
+west_sector | 190m | draws 853 | tris 2369547
+barrier_tower | 40m | draws 98 | tris 125801
+harbour_truck | 60m | draws 124 | tris 228698
+north_harbour_culvert | 80m | draws 139 | tris 254585
+south_barrier | 45m | draws 51 | tris 61478
+canal_shipyard_tooltip | 45m | draws 79 | tris 112156
+waterway props 100

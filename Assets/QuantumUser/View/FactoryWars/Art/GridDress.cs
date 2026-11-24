@@ -82,16 +82,12 @@ namespace FactoryWars.View {
       item.isStatic = true;
       // Task 39 C1: parks and parking lots (many, small) do not cast shadows.
       if (kind == "K" || kind == "L") item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      // Task 39 fix 2 (triangle budget): parking lots, container yards and parks fade out early in the far overview;
-      // B2 (2026-11-24): ruins (X, XC) stay visible at sector/gameplay zoom (1.5x instead of 5x) so X lots never read as bare ground.
-      if (GraphicsQuality.Current != QualityTier.Low && (kind == "L" || kind == "Y" || kind == "K") && item.TryGetComponent<LODGroup>(out var far)) {
-        var lods = far.GetLODs();
-        lods[0].screenRelativeTransitionHeight *= 5f;
-        far.SetLODs(lods);
-      } else if (GraphicsQuality.Current != QualityTier.Low && (kind == "X" || kind == "XC") && item.TryGetComponent<LODGroup>(out var farX)) {
-        var lods = farX.GetLODs();
+      // Harness fix (2026-11-24): keep parking lots (L), container yards (Y), parks (K) and ruins (X/XC) visible at gameplay & sector zoom
+      // (1.5x instead of 5x) so plots never pop out into bare grey/green slabs.
+      if (GraphicsQuality.Current != QualityTier.Low && (kind == "L" || kind == "Y" || kind == "K" || kind == "X" || kind == "XC") && item.TryGetComponent<LODGroup>(out var farPlot)) {
+        var lods = farPlot.GetLODs();
         lods[0].screenRelativeTransitionHeight *= 1.5f;
-        farX.SetLODs(lods);
+        farPlot.SetLODs(lods);
       }
       if (GraphicsQuality.Current == QualityTier.Low) {
         item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
