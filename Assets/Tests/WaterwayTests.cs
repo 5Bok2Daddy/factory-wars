@@ -57,47 +57,64 @@ namespace FactoryWars.Tests {
       Assert.IsNotNull(SeaGateSystem.Spec(Verified), "Map4P v6 has the waterway (rules.Waterway + MapSpec.SeaGates)");
     }
 
+    /// <summary>Side of a point as quarter turns from the west frame (west 0, south 1, east 2, north 3), like the map generator.</summary>
+    static int SideOf(float x, float z) => Mathf.Abs(x) >= Mathf.Abs(z) ? (x < 0f ? 0 : 2) : (z < 0f ? 1 : 3);
+    /// <summary>Undo t quarter turns of (x, z) -> (-z, x): back to the west frame.</summary>
+    static Vector2 ToWest(float x, float z, int t) {
+      for (var i = 0; i < t; i++) (x, z) = (z, -x);
+      return new Vector2(x, z);
+    }
+
     [UnityTest, Timeout(600000)]
     public IEnumerator Waterway_LayoutAndRange() {
       yield return WaterwayMatch();
       var map = Map4PSpec;
-      Assert.AreEqual(2, map.SeaGates.Length, "phase A: NW and SW sea gates");
-      CollectionAssert.AreEquivalent(new[] { 3, 0 }, map.SeaGateSeats);
-      for (var r = 0; r < 80; r++) {
-        Assert.AreEqual('W', (char)map.CellGrid[r * 80], $"row {r} col 0 is waterway");
-        Assert.AreEqual('W', (char)map.CellGrid[r * 80 + 1], $"row {r} col 1 is waterway");
+      Assert.AreEqual(8, map.SeaGates.Length, "phase B: two sea gates per side");
+      CollectionAssert.AreEquivalent(new[] { 3, 0, 0, 1, 1, 2, 2, 3 }, map.SeaGateSeats, "each seat guards one gate on each of its two sides");
+      for (var i = 0; i < 80; i++) {
+        foreach (var (r, c) in new[] { (i, 0), (i, 1), (i, 78), (i, 79), (0, i), (1, i), (78, i), (79, i) }) {
+          Assert.AreEqual('W', (char)map.CellGrid[r * 80 + c], $"edge cell ({r},{c}) is waterway");
+        }
       }
-      Assert.AreEqual(1, map.Harbours.Length, "W neutral harbour");
-      Assert.GreaterOrEqual(map.Harbours[0].HalfLength.AsFloat * 2f, 24f, "harbour turning water >= 24 m wide");
+      Assert.AreEqual(4, map.Harbours.Length, "one neutral harbour per side");
+      foreach (var h in map.Harbours) Assert.GreaterOrEqual(Mathf.Min(h.HalfLength.AsFloat, h.HalfWidth.AsFloat) * 2f, 24f, "harbour turning water >= 24 m wide");
       var ship = Resources.Load<UnitSpec>("FactoryWars/ff_artillery_ship");
       var report = new List<string>();
+      var nearestBySide = new float[4];
       for (var g = 0; g < map.SeaGates.Length; g++) {
         var seat = map.SeaGateSeats[g];
         var gate = map.SeaGates[g];
-        var dir = Mathf.Sign(gate.Center.Z.AsFloat); // sector side (+z for NW, -z for SW)
-        // Closest point a ship outside the barrier can hold: barrier half thickness + hull radius on the far side.
-        var outside = gate.Center.Z.AsFloat - dir * (gate.HalfWidth.AsFloat + ship.ColliderRadius.AsFloat);
+        var side = SideOf(gate.Center.X.AsFloat, gate.Center.Z.AsFloat);
+        var gw = ToWest(gate.Center.X.AsFloat, gate.Center.Z.AsFloat, side);
+        var dir = Mathf.Sign(gw.y);
+        // Closest point a ship outside the barrier can hold: barrier half thickness + hull radius on the far side (west frame).
+        var outside = gw.y - dir * (gate.HalfWidth.AsFloat + ship.ColliderRadius.AsFloat);
         var nearest = float.MaxValue;
         for (var r = 0; r < 80; r++) for (var c = 0; c < 80; c++) {
           var ch = (char)map.CellGrid[r * 80 + c];
           if (ch != 'B' && ch != 'p' && ch != 'v') continue;
-          var cz = 320f - 8f * r - 4f;
-          var cx = -320f + 8f * c + 4f;
-          // Base wedge cells of this seat only (high ground flood of its corner).
-          if (Mathf.Sign(cz) != dir || cx > 0f || c <= 2) continue;
-          var dx = Mathf.Max(0f, Mathf.Abs(cx - (-312f)) - 4f);
-          var dz = Mathf.Max(0f, Mathf.Abs(cz - outside) - 4f);
+          var cell = ToWest(-320f + 8f * c + 4f, 320f - 8f * r - 4f, side);
+          // Base wedge cells of this sector only (west frame: its side of the barrier, away from the coast strip).
+          // Excludes the coast sidewalk strip (west-frame col 2, x -300) as the phase A test did (c <= 2).
+          if (Mathf.Sign(cell.y) != dir || cell.x > 0f || cell.x < -296f) continue;
+          var dx = Mathf.Max(0f, Mathf.Abs(cell.x - (-312f)) - 4f);
+          var dz = Mathf.Max(0f, Mathf.Abs(cell.y - outside) - 4f);
           nearest = Mathf.Min(nearest, Mathf.Sqrt(dx * dx + dz * dz));
         }
         var hq = FactoryWarsUtil.StartPosition(Verified, Mathf.Max(0, PlayerOfSeat(seat))).ToUnityVector3();
-        var hqWater = hq.x - (-304f);
-        report.Add($"gate {g} seat {seat}: barrier z {gate.Center.Z.AsFloat:0.0}, nearest base cell from outside {nearest:0.0} m, HQ from water {hqWater:0.0} m, ship range {ship.Range.AsFloat:0}");
+        var hqWest = ToWest(hq.x, hq.z, side);
+        var hqWater = hqWest.x - (-304f);
+        report.Add($"gate {g} side {side} seat {seat}: barrier ({gate.Center.X.AsFloat:0},{gate.Center.Z.AsFloat:0}), nearest base cell from outside {nearest:0.0} m, HQ from water {hqWater:0.0} m, ship range {ship.Range.AsFloat:0}");
         Assert.Greater(nearest, ship.Range.AsFloat, $"a ship outside barrier {g} cannot reach base ground");
         Assert.Greater(hqWater, ship.Range.AsFloat + 3.8f, "HQ is out of artillery range even after a breach");
         var tower = map.SeaGateTowers[g];
         Assert.AreNotEqual('W', CellAt(tower), "watchtower on land");
+        nearestBySide[side] = nearestBySide[side] == 0f ? nearest : Mathf.Min(nearestBySide[side], nearest);
       }
       Debug.Log("[FW-T46] " + string.Join("\n", report));
+      System.IO.Directory.CreateDirectory(T46Root());
+      System.IO.File.WriteAllLines(System.IO.Path.Combine(T46Root(), "layout_b.txt"), report);
+      Assert.Less(nearestBySide.Max() - nearestBySide.Min(), 0.5f, "the four sides are mirror images");
     }
 
     [UnityTest, Timeout(900000)]
@@ -235,11 +252,17 @@ namespace FactoryWars.Tests {
       yield return WaterwayMatch();
       var rows = new List<string>();
       var times = new List<float>();
-      foreach (var seat in new[] { 3, 0 }) {
+      // Phase B: every sector of every side (west frame NW/SW turned t quarter turns: (x, z) -> (-z, x)).
+      FPVector3 Turned(float x, float z, int t) {
+        for (var i = 0; i < t; i++) (x, z) = (-z, x);
+        return Pos(x, z);
+      }
+      foreach (var (t, westSeat) in Enumerable.Range(0, 4).SelectMany(t => new[] { (t, 3), (t, 0) })) {
+        var seat = (westSeat + t) % 4;
         var owner = PlayerOfSeat(seat);
-        var dir = seat == 3 ? 1f : -1f;
-        var from = Lane(dir * 300f, -308f);
-        var to = Lane(0f, -308f);
+        var dir = westSeat == 3 ? 1f : -1f;
+        var from = Turned(-308f, dir * 300f, t);
+        var to = Turned(-308f, 0f, t);
         var ship = SpawnSeat(owner, "artillery_ship", from);
         var spec = Verified.FindAsset(Verified.Get<Unit>(ship).Spec);
         yield return WaitFrames(2);
@@ -257,15 +280,15 @@ namespace FactoryWars.Tests {
           return FactoryWarsUtil.FlatDistanceSqr(p, to) < 64;
         }, 240f, $"seat {seat} ship reaches the harbour");
         var seconds = (Verified.Number - start - CommandFrames) / (float)Fps;
-        var bound = (Mathf.Abs(from.Z.AsFloat - to.Z.AsFloat) - 8f) / spec.MoveSpeed.AsFloat;
-        rows.Add($"seat {seat}: {seconds:0.0} s (straight bound {bound:0.0} s x1.1 = {bound * 1.1f:0.0} s), left water {landed}");
+        var bound = (Mathf.Sqrt(FactoryWarsUtil.FlatDistanceSqr(from, to).AsFloat) - 8f) / spec.MoveSpeed.AsFloat;
+        rows.Add($"side {t} seat {seat}: {seconds:0.0} s (straight bound {bound:0.0} s x1.1 = {bound * 1.1f:0.0} s), left water {landed}");
         times.Add(seconds);
         Assert.IsFalse(landed, "ship stays on water cells");
         Assert.LessOrEqual(seconds, bound * 1.1f + WaySpec.OpenSeconds.AsFloat, $"seat {seat}: sail time within 1.1 x distance/speed (+ gate open delay)");
         Verified.Destroy(ship);
       }
-      var spread = Mathf.Abs(times[0] - times[1]) / times.Average() * 100f;
-      rows.Add($"NW vs SW spread {spread:0.0}% (limit 5%)");
+      var spread = (times.Max() - times.Min()) / times.Average() * 100f;
+      rows.Add($"8 sectors spread {spread:0.0}% (limit 5%)");
       Debug.Log("[FW-T46] " + string.Join("\n", rows));
       System.IO.Directory.CreateDirectory(T46Root());
       System.IO.File.WriteAllLines(System.IO.Path.Combine(T46Root(), "sail_fairness.txt"), rows);
@@ -616,6 +639,10 @@ namespace FactoryWars.Tests {
       var truck = Yard(west.Site).Truck;
       yield return WaitFor(() => Verified.Exists(truck), 120f, "logistics truck");
       yield return Shot("harbour_truck", new Vector2(-285f, 0f), 60f);
+      // Phase B: the north harbour with the low culvert to the canal, and a south-side barrier (turned with its side).
+      yield return Shot("north_harbour_culvert", new Vector2(10f, 270f), 80f);
+      var south = Map4PSpec.SeaGates.First(g => g.Center.Z.AsFloat < -250f).Center;
+      yield return Shot("south_barrier", new Vector2(south.X.AsFloat, south.Z.AsFloat + 10f), 45f);
       // Canal shipyard: the warship button is disabled with the canal reason.
       var map = Map4PSpec;
       var yardRef = FactionOf(me).Buildings.First(b => Verified.FindAsset(b).name.EndsWith("_shipyard"));

@@ -115,7 +115,11 @@ namespace Quantum.FactoryWars {
       inward.Y = FP._0;
       inward = inward.SqrMagnitude > FP._0 ? inward.Normalized : FPVector3.Forward;
       var side = new FPVector3(-inward.Z, FP._0, inward.X);
-      var slot = site % 4 - FP._1 - FP._0_50;
+      // Task 46 phase B: the bay follows the site's turn RELATIVE to the owner's seat (sites 4..7 are in turn order), so every seat
+      // gets the same bay for the same neighbour (the raw site index gave each seat a different lateral offset: 191-207 m routes).
+      var seat = FactoryWarsUtil.SeatOf(f, owner);
+      var relative = ((site % 4 - seat) % 4 + 4) % 4;
+      var slot = relative - FP._1 - FP._0_50;
       return start + inward * spec.DockForward + side * (spec.DockSpacing * slot);
     }
 

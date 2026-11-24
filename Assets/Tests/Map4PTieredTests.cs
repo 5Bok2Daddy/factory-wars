@@ -58,7 +58,7 @@ namespace FactoryWars.Tests {
     // 사용자가 칸 지도 v4(640m)로 바꾸면서 기준이 사라져 아래 Map4P_v4_* 시험으로 대체했다(SETUP-REPORT "Map4P v4 시범").
 
     static char[,] DesignGrid() {
-      var path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Tools", "maps", "Map4P_grid_v5.csv"));
+      var path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Tools", "maps", "Map4P_grid_v7.csv"));
       var lines = File.ReadAllLines(path).Where(l => l.Trim().Length > 0).ToArray();
       var grid = new char[80, 80];
       for (var r = 0; r < 80; r++) {
@@ -120,7 +120,12 @@ namespace FactoryWars.Tests {
       var bridges = 0;
       for (var r = 0; r < 80; r++) {
         for (var c = 0; c < 80; c++) {
-          if (grid[r, c] == 'G' && (c == 0 || grid[r, c - 1] != 'G')) bridges++;
+          // A G run that continues the run above with the same columns is the same (vertically merged) bridge, e.g. the culverts.
+          if (grid[r, c] != 'G' || (c > 0 && grid[r, c - 1] == 'G')) continue;
+          var end = c;
+          while (end + 1 < 80 && grid[r, end + 1] == 'G') end++;
+          var continues = r > 0 && grid[r - 1, c] == 'G' && (c == 0 || grid[r - 1, c - 1] != 'G') && grid[r - 1, end] == 'G' && (end == 79 || grid[r - 1, end + 1] != 'G');
+          if (continues == false) bridges++;
         }
       }
       Assert.AreEqual(bridges, map.Bridges.Length, "one bridge per G run");
@@ -220,8 +225,9 @@ namespace FactoryWars.Tests {
       var rts = Controller().Camera;
       var camera = rts.GetComponent<Camera>();
       camera.aspect = 16f / 9f;
-      Assert.AreEqual(new Vector2(-320f, -320f), rts.BoundsMin);
-      Assert.AreEqual(new Vector2(320f, 320f), rts.BoundsMax);
+      // Task 46 phase B: outer-waterway maps let the view pass the edge by WaterwayCameraMargin.
+      Assert.AreEqual(new Vector2(-320f - MatchController.WaterwayCameraMargin, -320f - MatchController.WaterwayCameraMargin), rts.BoundsMin);
+      Assert.AreEqual(new Vector2(320f + MatchController.WaterwayCameraMargin, 320f + MatchController.WaterwayCameraMargin), rts.BoundsMax);
       Assert.IsTrue(rts.KeepViewportInside);
       rts.Zoom(10000f);
       Assert.AreEqual(RtsCamera.MinHeight, rts.Height, 0.01f);
@@ -236,8 +242,10 @@ namespace FactoryWars.Tests {
             var ray = camera.ViewportPointToRay(new Vector3(x, y));
             Assert.IsTrue(new UnityEngine.Plane(Vector3.up, Vector3.zero).Raycast(ray, out var distance));
             var ground = ray.GetPoint(distance);
-            Assert.That(ground.x, Is.InRange(-320.05f, 320.05f));
-            Assert.That(ground.z, Is.InRange(-320.05f, 320.05f));
+            // Task 46 phase B: the view may pass the edge by WaterwayCameraMargin on outer-waterway maps.
+            var edge = 320.05f + MatchController.WaterwayCameraMargin;
+            Assert.That(ground.x, Is.InRange(-edge, edge));
+            Assert.That(ground.z, Is.InRange(-edge, edge));
           }
         }
       }

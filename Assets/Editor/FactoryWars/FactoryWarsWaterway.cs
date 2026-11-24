@@ -69,12 +69,12 @@ namespace FactoryWars.EditorTools {
       Debug.Log("[FW-T46] waterway data applied");
     }
 
-    /// <summary>Task 46 phase A: data + Map4P v6 (west waterway) bake in one batch call.</summary>
+    /// <summary>Task 46: data + Map4P v7 (four-side waterway) bake in one batch call.</summary>
     public static void BakeTask46() {
       ApplyTask46Data();
       WaterwayKit.Build();
       BakeMap4P();
-      Debug.Log("[FW-T46] Map4P v6 baked");
+      Debug.Log("[FW-T46] Map4P v7 baked");
     }
   }
 }

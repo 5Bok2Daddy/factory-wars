@@ -42,10 +42,11 @@ namespace FactoryWars.View {
       _lamps = new Renderer[gates.Length * 2];
       for (var i = 0; i < gates.Length; i++) {
         var c = gates[i].Center.ToUnityVector3();
-        var alongX = gates[i].HalfLength >= gates[i].HalfWidth;
-        var half = (alongX ? gates[i].HalfLength : gates[i].HalfWidth).AsFloat;
+        // Phase B: the barrier spans the waterway across its side (west-frame x, turned with the side).
+        var across = SideTurn(c) * Vector3.right;
+        var half = gates[i].HalfLength.AsFloat;
         for (var k = 0; k < 2; k++) {
-          var end = c + (alongX ? Vector3.right : Vector3.forward) * (k == 0 ? -half - 0.6f : half + 0.6f);
+          var end = c + across * (k == 0 ? -half - 0.6f : half + 0.6f);
           var lamp = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
           Object.Destroy(lamp.GetComponent<Collider>());
           lamp.name = $"GateLamp{i}_{k}";
@@ -58,29 +59,41 @@ namespace FactoryWars.View {
           _lamps[i * 2 + k] = r;
         }
       }
-      // Harbours: a quay wall along the land edge, finger docks into the basin with moored boats, boat ties, a crane on the quay.
+      // Harbours (one per side): a quay wall along the land edge, finger docks into the basin with moored boats, boat ties, a crane
+      // on the quay. Laid out in the west frame and turned with the side.
       foreach (var h in _map.Harbours ?? new MapShape[0]) {
-        var c = h.Center.ToUnityVector3();
-        var west = c.x < 0f && Mathf.Abs(c.x) > Mathf.Abs(c.z);
-        if (west == false) continue; // phase A: the west harbour only
-        var edgeX = c.x + h.HalfLength.AsFloat; // land edge (quay face)
+        var turn = SideTurn(h.Center.ToUnityVector3());
+        var c = Quaternion.Inverse(turn) * h.Center.ToUnityVector3();
+        var edgeX = c.x + h.HalfLength.AsFloat; // land edge (quay face), west frame
         var halfZ = h.HalfWidth.AsFloat;
-        var face = Quaternion.Euler(0f, 90f, 0f);
-        for (var z = -halfZ + 4f; z <= halfZ - 4f; z += 8f) Place(parent, "naval/port_wall", new Vector3(edgeX + 0.6f, -1.2f, c.z + z), face);
+        var face = turn * Quaternion.Euler(0f, 90f, 0f);
+        Vector3 W(float x, float y, float z) => turn * new Vector3(x, y, z);
+        for (var z = -halfZ + 4f; z <= halfZ - 4f; z += 8f) Place(parent, "naval/port_wall", W(edgeX + 0.6f, -1.2f, c.z + z), face);
         foreach (var (dz, boatSide) in new[] { (-20f, 1f), (-4f, -1f), (14f, 1f) }) {
-          Place(parent, "naval/dock", new Vector3(edgeX - 5f, -0.4f, c.z + dz), face);
-          Place(parent, "naval/boat", new Vector3(edgeX - 6f, -0.3f, c.z + dz + boatSide * 4.2f), Quaternion.Euler(0f, 90f + boatSide * 4f, 0f));
+          Place(parent, "naval/dock", W(edgeX - 5f, -0.4f, c.z + dz), face);
+          Place(parent, "naval/boat", W(edgeX - 6f, -0.3f, c.z + dz + boatSide * 4.2f), turn * Quaternion.Euler(0f, 90f + boatSide * 4f, 0f));
         }
-        foreach (var dz in new[] { -26f, -12f, 6f, 22f }) Place(parent, "naval/boat_tie", new Vector3(edgeX + 1.4f, 0f, c.z + dz), face);
-        Place(parent, "naval/crane", new Vector3(edgeX + 5f, 0f, c.z + 26f), face);
+        foreach (var dz in new[] { -26f, -12f, 6f, 22f }) Place(parent, "naval/boat_tie", W(edgeX + 1.4f, 0f, c.z + dz), face);
+        Place(parent, "naval/crane", W(edgeX + 5f, 0f, c.z + 26f), face);
       }
-      // Dock basins (sector corners): a finger dock and a moored boat in each west corner basin.
+      // Dock basins (sector corners): a finger dock and a moored boat in each sector's corner basin (west frame, turned).
       foreach (var g in gates) {
-        var corner = new Vector3(-308f, 0f, Mathf.Sign(g.Center.Z.AsFloat) * 300f);
-        Place(parent, "naval/dock", corner + new Vector3(8f, -0.4f, -Mathf.Sign(corner.z) * 10f), Quaternion.Euler(0f, 90f, 0f));
-        Place(parent, "naval/boat", corner + new Vector3(4f, -0.3f, -Mathf.Sign(corner.z) * 14f), Quaternion.Euler(0f, 180f, 0f));
-        Place(parent, "naval/dock_poles", corner + new Vector3(10f, -0.5f, -Mathf.Sign(corner.z) * 20f), Quaternion.identity);
+        var turn = SideTurn(g.Center.ToUnityVector3());
+        var local = Quaternion.Inverse(turn) * g.Center.ToUnityVector3();
+        var corner = new Vector3(-308f, 0f, Mathf.Sign(local.z) * 300f);
+        Place(parent, "naval/dock", turn * (corner + new Vector3(8f, -0.4f, -Mathf.Sign(corner.z) * 10f)), turn * Quaternion.Euler(0f, 90f, 0f));
+        Place(parent, "naval/boat", turn * (corner + new Vector3(4f, -0.3f, -Mathf.Sign(corner.z) * 14f)), turn * Quaternion.Euler(0f, 180f, 0f));
+        Place(parent, "naval/dock_poles", turn * (corner + new Vector3(10f, -0.5f, -Mathf.Sign(corner.z) * 20f)), turn);
       }
+    }
+
+    /// <summary>
+    /// Side of the map a point belongs to, as the rotation from the west frame (the map generator's TurnShape (x, z) -> (-z, x) per
+    /// quarter turn = Euler(0, -90, 0)): west 0, south 1, east 2, north 3.
+    /// </summary>
+    public static Quaternion SideTurn(Vector3 p) {
+      var t = Mathf.Abs(p.x) >= Mathf.Abs(p.z) ? (p.x < 0f ? 0 : 2) : (p.z < 0f ? 1 : 3);
+      return Quaternion.Euler(0f, -90f * t, 0f);
     }
 
     void Place(Transform parent, string slotId, Vector3 world, Quaternion rotation) {

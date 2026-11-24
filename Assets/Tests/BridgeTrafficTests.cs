@@ -32,7 +32,9 @@ namespace FactoryWars.Tests {
     static (FPVector3 A, FPVector3 B) AcrossBridge(MapShape bridge, float gap) {
       var c = bridge.Center;
       var water = FactoryWarsUtil.Rules(Verified).WaterNavMeshName;
-      var alongX = bridge.HalfLength < bridge.HalfWidth;
+      // Task 46 phase B: a culvert (low deck over the whole N/S link channel) carries the water along its LONG axis.
+      var culvert = Mathf.Abs(c.Z.AsFloat) > 200f;
+      var alongX = culvert ? bridge.HalfLength > bridge.HalfWidth : bridge.HalfLength < bridge.HalfWidth;
       var half = (alongX ? bridge.HalfLength : bridge.HalfWidth).AsFloat + gap;
       var a = alongX ? c + Pos(half, 0) : c + Pos(0, half);
       var b = alongX ? c - Pos(half, 0) : c - Pos(0, half);
@@ -97,10 +99,17 @@ namespace FactoryWars.Tests {
         Assert.IsTrue(water.Contains(map.Bridges[i].Center, mask, true), $"water continues under bridge {i}");
         Assert.AreEqual(Navigation.FindPathResult.Code.Success, Verified.Navigation.FindPath((FrameThreadSafe)Verified, a, b, water, in mask).Result, $"water path under bridge {i}");
         Assert.IsTrue(OnGroundNavMesh(Verified, map.Bridges[i].Center), $"deck {i} carries ground units");
-        Assert.AreEqual(8f, BridgeState(i).Clearance.AsFloat, 0.01f, $"bridge {i} clearance 8 m (tallest ship + 1 m)");
+        // Task 46 phase B: bridges over the N/S canal-to-waterway channels (|z| > 200 m) are low, 3 m (small vessels only).
+        var low = Mathf.Abs(map.Bridges[i].Center.Z.AsFloat) > 200f;
+        Assert.AreEqual(low ? 3f : 8f, BridgeState(i).Clearance.AsFloat, 0.01f, $"bridge {i} clearance {(low ? "3 m (low, small vessels)" : "8 m (tallest ship + 1 m)")}");
         Assert.IsFalse(BridgeState(i).Drawbridge, $"bridge {i} is a fixed high bridge (drawbridge mode off)");
       }
       Assert.LessOrEqual(Resources.Load<UnitSpec>("FactoryWars/ff_artillery_ship").HullHeight.AsFloat + 1f, 8f, "the tallest ship clears the bridges by 1 m");
+      // Low bridges (3 m): scout boat 1.6 m and landing craft 2.8 m pass under, the artillery ship 6.5 m does not (BridgeTraffic rule).
+      Assert.LessOrEqual(Resources.Load<UnitSpec>("FactoryWars/ff_scout_boat").HullHeight.AsFloat, 3f, "scout boat passes a low bridge");
+      Assert.LessOrEqual(Resources.Load<UnitSpec>("FactoryWars/ff_landing_craft").HullHeight.AsFloat, 3f, "landing craft passes a low bridge");
+      Assert.Greater(Resources.Load<UnitSpec>("FactoryWars/ff_artillery_ship").HullHeight.AsFloat, 3f, "the artillery ship cannot pass a low bridge");
+      Assert.AreEqual(2, Enumerable.Range(0, map.Bridges.Length).Count(i => Mathf.Abs(map.Bridges[i].Center.Z.AsFloat) > 200f), "one low culvert on each N/S channel");
 
       // Every ship class passes under a bridge (here the old drawbridge position, now a fixed arch bridge).
       var fixedIndex = map.Drawbridges[0];

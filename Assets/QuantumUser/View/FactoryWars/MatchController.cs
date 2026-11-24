@@ -8,6 +8,9 @@ namespace FactoryWars.View {
 
   /// <summary>대전 화면의 입력·카메라·HUD를 묶는다. 사람 자리가 있는 경기에서만 동작한다.</summary>
   public unsafe class MatchController : MonoBehaviour {
+    /// <summary>Task 46 phase B: camera margin (m) past the map edge on outer-waterway maps.</summary>
+    public const float WaterwayCameraMargin = 12f;
+
     public MatchInput Input { get; } = new MatchInput();
     public MatchHud Hud { get; private set; }
     public RtsCamera Camera { get; private set; }
@@ -55,6 +58,8 @@ namespace FactoryWars.View {
       GraphicsQuality.Bind(main);
       // 외곽 수로(항목 24)까지 카메라가 갈 수 있다.
       var channel = map.SealedPerimeter ? 0f : TerrainKit.Channel(map);
+      // Task 46 phase B: on outer-waterway maps the view may pass the edge a little so the waterway is not pinned to the screen border.
+      if (map.SeaGates != null && map.SeaGates.Length > 0) channel = Mathf.Max(channel, WaterwayCameraMargin);
       Camera.KeepViewportInside = map.SealedPerimeter;
       Camera.BoundsMin = new Vector2(map.BoundsMin.X.AsFloat - channel, map.BoundsMin.Y.AsFloat - channel);
       Camera.BoundsMax = new Vector2(map.BoundsMax.X.AsFloat + channel, map.BoundsMax.Y.AsFloat + channel);
