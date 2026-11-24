@@ -15,6 +15,9 @@ namespace FactoryWars.View {
     readonly float _length;
     readonly float _cargoScale;
     readonly ConveyorBeltSurface _belt;
+    readonly Renderer _statusBeacon;
+    readonly Material _statusMat;
+    bool _lastProducing;
     float _nextLaunch;
     int _nextCargo;
 
@@ -26,7 +29,7 @@ namespace FactoryWars.View {
 
     public static ExtractorDeliveryView Create(Transform parent, MapSpec map, EntityRef headquarters, Vector3 from,
         float sourceRadius, Vector3 to, float destinationRadius, GameObject cargoPrefab,
-        System.Predicate<GroundFootprint> clear) {
+        System.Predicate<GroundFootprint> clear, ResourceKind kind = ResourceKind.Iron) {
       var direction = Vector3.ProjectOnPlane(to - from, Vector3.up);
       var length = direction.magnitude;
       if (length <= sourceRadius + destinationRadius + 0.5f ||
@@ -40,13 +43,13 @@ namespace FactoryWars.View {
         var angle = Quaternion.LookRotation(side);
         var area = new GroundFootprint((start + end + side) * 0.5f, new Vector3(1.10f, 0f, (end - start).magnitude * 0.5f + 1.10f), angle);
         if (!clear(area)) continue;
-        return new ExtractorDeliveryView(parent, map, headquarters, start, end, slot, cargoPrefab);
+        return new ExtractorDeliveryView(parent, map, headquarters, start, end, slot, cargoPrefab, kind);
       }
       return null;
     }
 
     ExtractorDeliveryView(Transform parent, MapSpec map, EntityRef headquarters, Vector3 from, Vector3 to,
-        VisualSlot conveyorSlot, GameObject cargoPrefab) {
+        VisualSlot conveyorSlot, GameObject cargoPrefab, ResourceKind kind) {
       Headquarters = headquarters;
       Root = new GameObject("ExtractorDelivery");
       Root.transform.SetParent(parent, false);
@@ -69,6 +72,56 @@ namespace FactoryWars.View {
         Quaternion.Inverse(Root.transform.rotation) * heading, new Vector3(2.55f, 0.18f, 2.6f));
       MapPolishArt.Place("Crates", Root.transform, Root.transform.InverseTransformPoint(apron) + Vector3.up * 0.1f,
         Quaternion.Inverse(Root.transform.rotation) * heading, new Vector3(1.48f, 0.76f, 0.85f));
+
+      // Industrial intake & discharge stage props (Iron: intake hopper + steel storage silo; Timber: intake roller + stacked log rack).
+      var stageKit = new MeshKit();
+      var startLocal = Root.transform.InverseTransformPoint(_points[0]);
+      var endLocal = Root.transform.InverseTransformPoint(_points[_points.Length - 1]);
+      var localRot = Quaternion.Inverse(Root.transform.rotation) * heading;
+      if (kind == ResourceKind.Iron) {
+        // Intake hopper at belt start
+        stageKit.Paint(Swatch.MetalLight).Box(new Vector3(0f, 0.78f, 0f), new Vector3(1.55f, 0.55f, 1.35f));
+        stageKit.Paint(Swatch.MetalDark).Box(new Vector3(0f, 0.42f, 0f), new Vector3(1.10f, 0.35f, 0.95f));
+        stageKit.Paint(Swatch.Hazard).Box(new Vector3(0f, 1.08f, 0f), new Vector3(1.62f, 0.09f, 1.42f));
+        PlaceKit(Root.transform, "IntakeHopper", stageKit.ToMesh("IntakeHopper"), startLocal, localRot);
+
+        // Storage silo at belt discharge
+        var siloKit = new MeshKit();
+        siloKit.Paint(Swatch.MetalLight).Cylinder(new Vector3(1.35f, 1.35f, 0.65f), 0.92f, 2.5f, 14);
+        siloKit.Paint(Swatch.Hazard).Cylinder(new Vector3(1.35f, 2.25f, 0.65f), 0.96f, 0.24f, 14);
+        siloKit.Paint(Swatch.MetalDark).Cylinder(new Vector3(1.35f, 2.68f, 0.65f), 0.65f, 0.28f, 14);
+        PlaceKit(Root.transform, "IronStorageSilo", siloKit.ToMesh("IronStorageSilo"), endLocal, localRot);
+      } else {
+        // Timber intake roller guide at belt start
+        stageKit.Paint(Swatch.ArmorDark).Box(new Vector3(0f, 0.62f, 0f), new Vector3(1.55f, 0.36f, 0.85f));
+        stageKit.Paint(Swatch.Wood).Cylinder(new Vector3(0f, 0.88f, 0f), 0.24f, 1.35f, 10);
+        PlaceKit(Root.transform, "TimberIntakeGuide", stageKit.ToMesh("TimberIntakeGuide"), startLocal, localRot);
+
+        // Timber log stack rack at belt discharge
+        var rackKit = new MeshKit();
+        rackKit.Paint(Swatch.ArmorDark).Box(new Vector3(1.30f, 0.16f, 0.65f), new Vector3(1.35f, 0.24f, 1.75f));
+        rackKit.Paint(Swatch.Wood);
+        for (var row = 0; row < 2; row++) {
+          for (var col = -1; col <= 1; col++) {
+            rackKit.Box(new Vector3(1.30f + col * 0.34f, 0.44f + row * 0.28f, 0.65f), new Vector3(0.28f, 0.24f, 1.55f));
+          }
+        }
+        PlaceKit(Root.transform, "TimberLogRack", rackKit.ToMesh("TimberLogRack"), endLocal, localRot);
+      }
+      // Active / stopped state indicator beacon on the discharge stage.
+      var beaconGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+      beaconGo.name = "ExtractorStateBeacon";
+      Object.Destroy(beaconGo.GetComponent<Collider>());
+      beaconGo.transform.SetParent(Root.transform, false);
+      beaconGo.transform.localPosition = endLocal + localRot * new Vector3(1.35f, kind == ResourceKind.Iron ? 2.95f : 1.25f, 0.65f);
+      beaconGo.transform.localScale = new Vector3(0.38f, 0.14f, 0.38f);
+      _statusBeacon = beaconGo.GetComponent<Renderer>();
+      _statusMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")) {
+        hideFlags = HideFlags.HideAndDontSave,
+        color = new Color(0.22f, 0.90f, 0.38f),
+      };
+      _statusBeacon.sharedMaterial = _statusMat;
+      _lastProducing = true;
 
       var bounds = VisualCatalog.LocalBounds(conveyorSlot.Prefab);
       var alongX = bounds.size.x > bounds.size.z;
@@ -105,11 +158,24 @@ namespace FactoryWars.View {
       }
     }
 
+    static void PlaceKit(Transform parent, string name, Mesh mesh, Vector3 localPos, Quaternion localRot) {
+      var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+      go.transform.SetParent(parent, false);
+      go.transform.localPosition = localPos;
+      go.transform.localRotation = localRot;
+      go.GetComponent<MeshFilter>().sharedMesh = mesh;
+      go.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+    }
+
     static void DisableColliders(Transform root) {
       foreach (var collider in root.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
     }
 
     public void Update(bool producing, float dt) {
+      if (_statusMat != null && producing != _lastProducing) {
+        _lastProducing = producing;
+        _statusMat.color = producing ? new Color(0.22f, 0.90f, 0.38f) : new Color(0.88f, 0.28f, 0.20f);
+      }
       if (_cargo[0] == null) {
         if (producing) _belt?.Advance(CargoSpeed * dt);
         return;

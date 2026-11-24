@@ -68,6 +68,9 @@ namespace FactoryWars.View {
       public Transform ExtractorEquipment;
       public ExtractorDeliveryView ExtractorDelivery;
       public float ExtractorRouteCheckAt;
+      public Transform PowerTurbine;
+      public Material PowerBeaconMat;
+      public Transform NavalWake;
       public readonly List<(Transform Part, Vector3 Home, Vector3 Reach, float Speed)> Sliders = new List<(Transform, Vector3, Vector3, float)>();
       public readonly List<(Transform Part, Quaternion Home, float Swing, float Speed)> Swingers = new List<(Transform, Quaternion, float, float)>();
       public GameObject Scaffold;
@@ -1234,11 +1237,14 @@ namespace FactoryWars.View {
       var before = actor.Position;
       actor.Position += moved * (1f - Mathf.Exp(-VisualProfile.Current.FollowRate * dt));
       var assemblingCarrier = actor.IsCarrier && frame.Unsafe.TryGetPointer<Carrier>(entity, out var cPtr) && cPtr->Assembling;
-      var hover = (spec.IsAir && assemblingCarrier == false) ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.14f : 0f;
+      var hover = (spec.IsAir && assemblingCarrier == false) ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.16f : 0f;
+      var navalBob = spec.IsNaval ? Mathf.Sin(Time.time * 1.45f + actor.Phase) * 0.10f - 0.10f : 0f;
       actor.View.transform.position = (spec.IsAir && assemblingCarrier == false) ? actor.Position : actor.Position + Vector3.up * TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z);
-      if (spec.IsNaval) actor.View.transform.position = actor.Position + Vector3.up * TerrainKit.WaterLevel;
-      var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(actor.View.Entry.Altitude, 10.5f) : actor.View.Entry.Altitude);
+      if (spec.IsNaval) actor.View.transform.position = actor.Position + Vector3.up * (TerrainKit.WaterLevel + navalBob);
+      var baseAirAlt = spec.IsAir ? Mathf.Max(actor.View.Entry.Altitude, spec.Size == UnitSize.Large ? 9.5f : spec.Size == UnitSize.Medium ? 7.2f : 5.6f) : actor.View.Entry.Altitude;
+      var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(baseAirAlt, 10.5f) : baseAirAlt);
       actor.View.Turn.localPosition = Vector3.up * (altitude + hover);
+      if (spec.IsNaval) UpdateNavalWake(actor, before, dt);
       if (visible && assemblingCarrier == false) {
         if (spec.IsAir) {
           var rotor = spec.name.EndsWith("_gunship") || spec.name.EndsWith("_heli") || actor.IsCarrier;
@@ -1348,7 +1354,7 @@ namespace FactoryWars.View {
     /// 값은 VisualProfile(화면 전용). 시뮬레이션은 읽기만 한다.
     /// </summary>
     void Tilt(Actor actor, UnitSpec spec, Vector3 before, float dt) {
-      if (dt <= 0f || spec.IsNaval || (spec.Size == UnitSize.Small && spec.IsVehicle == false && spec.IsAir == false) || spec.Size == UnitSize.Engineer) {
+      if (dt <= 0f || (spec.Size == UnitSize.Small && spec.IsVehicle == false && spec.IsAir == false && spec.IsNaval == false) || spec.Size == UnitSize.Engineer) {
         return;
       }
       var profile = VisualProfile.Current;
@@ -1357,7 +1363,12 @@ namespace FactoryWars.View {
       actor.Velocity = Vector3.Lerp(actor.Velocity, velocity, 1f - Mathf.Exp(-8f * dt));
       var forward = Quaternion.Euler(0, actor.HullYaw, 0) * Vector3.forward;
       float pitch, roll = 0f;
-      if (spec.IsAir) {
+      if (spec.IsNaval) {
+        // Subtle wave buoyancy pitch/roll + slight bow lift under headway (preserves bridge vertical clearance).
+        var speed = Mathf.Max(0f, Vector3.Dot(actor.Velocity, forward));
+        pitch = Mathf.Sin(Time.time * 1.15f + actor.Phase * 1.3f) * 1.2f - Mathf.Clamp(speed * 0.25f, 0f, 1.5f);
+        roll = Mathf.Sin(Time.time * 0.95f + actor.Phase * 0.7f) * 1.9f;
+      } else if (spec.IsAir) {
         var speed = Vector3.Dot(actor.Velocity, forward);
         var right = Quaternion.Euler(0, actor.HullYaw, 0) * Vector3.right;
         var turn = Vector3.Dot(accel, right);
@@ -1965,6 +1976,9 @@ namespace FactoryWars.View {
         UpdatePips(actor, 0, false);
         UpdateActivityCrew(actor, false, null);
       }
+      if (spec.Role == BuildingRole.PowerPlant) {
+        UpdatePowerPlantVisual(actor, powered, dt);
+      }
       var operating = powered && (processing || producing || researching || ultimateBusy || overdriving || extracting || spec.Role == BuildingRole.PowerPlant);
       var busy = operating || (powered && (yard || spec.Role == BuildingRole.Headquarters));
       Animate(actor, dt, powered, busy);
@@ -2124,12 +2138,106 @@ namespace FactoryWars.View {
             return true;
           }
           route = ExtractorDeliveryView.Create(actor.View.transform, World.Map, best, actor.Position, actor.FootprintRadius,
-            destination, radius, cargo, Clear);
+            destination, radius, cargo, Clear, kind);
           if (route != null) _ambientWorkers?.AvoidYard(route.WalkObstacle);
         }
         actor.ExtractorDelivery = route;
       }
       route?.Update(extracting, dt);
+    }
+
+    void UpdatePowerPlantVisual(Actor actor, bool powered, float dt) {
+      if (actor.PowerTurbine == null) {
+        var root = new GameObject("PowerPlantDistribution").transform;
+        root.SetParent(actor.View.transform, false);
+        var offset = new Vector3(actor.FootprintRadius * 0.65f, 0.05f, -actor.FootprintRadius * 0.78f);
+        root.localPosition = offset;
+
+        // Transformer bank + distribution busbars (no solid black, clean industrial steel + hazard accents).
+        var bank = new MeshKit();
+        bank.Paint(Swatch.MetalLight).Box(new Vector3(0f, 0.65f, 0.95f), new Vector3(1.55f, 1.25f, 1.05f));
+        bank.Paint(Swatch.MetalDark).Box(new Vector3(0f, 0.65f, 1.50f), new Vector3(1.25f, 0.95f, 0.14f));
+        bank.Paint(Swatch.Hazard).Cylinder(new Vector3(-0.42f, 1.52f, 0.95f), 0.12f, 0.55f, 8);
+        bank.Paint(Swatch.Hazard).Cylinder(new Vector3(0.42f, 1.52f, 0.95f), 0.12f, 0.55f, 8);
+        // Generator housing base
+        bank.Paint(Swatch.MetalLight).Cylinder(new Vector3(0f, 0.45f, -0.75f), 0.92f, 0.85f, 14);
+        var bankGo = new GameObject("TransformerBank", typeof(MeshFilter), typeof(MeshRenderer));
+        bankGo.transform.SetParent(root, false);
+        bankGo.GetComponent<MeshFilter>().sharedMesh = bank.ToMesh("TransformerBank");
+        bankGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+
+        // Spinning turbine rotor on top of the generator housing
+        var rotorKit = new MeshKit();
+        rotorKit.Paint(Swatch.MetalDark).Cylinder(Vector3.zero, 0.28f, 0.36f, 10);
+        rotorKit.Paint(Swatch.MetalLight).Box(new Vector3(0f, 0.08f, 0f), new Vector3(1.58f, 0.10f, 0.24f));
+        rotorKit.Paint(Swatch.MetalLight).Box(new Vector3(0f, 0.08f, 0f), new Vector3(0.24f, 0.10f, 1.58f));
+        var rotorGo = new GameObject("GeneratorTurbineRotor", typeof(MeshFilter), typeof(MeshRenderer));
+        rotorGo.transform.SetParent(root, false);
+        rotorGo.transform.localPosition = new Vector3(0f, 0.96f, -0.75f);
+        rotorGo.GetComponent<MeshFilter>().sharedMesh = rotorKit.ToMesh("GeneratorTurbineRotor");
+        rotorGo.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+        actor.PowerTurbine = rotorGo.transform;
+
+        // Running / Offline status beacon
+        var beacon = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        beacon.name = "PowerStatusBeacon";
+        Destroy(beacon.GetComponent<Collider>());
+        beacon.transform.SetParent(root, false);
+        beacon.transform.localPosition = new Vector3(0f, 1.92f, 0.95f);
+        beacon.transform.localScale = new Vector3(0.42f, 0.16f, 0.42f);
+        actor.PowerBeaconMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")) {
+          hideFlags = HideFlags.HideAndDontSave,
+          color = new Color(0.20f, 0.92f, 1.0f),
+        };
+        beacon.GetComponent<Renderer>().sharedMaterial = actor.PowerBeaconMat;
+      }
+      if (powered) {
+        actor.PowerTurbine.Rotate(Vector3.up, dt * 240f, Space.Self);
+      }
+      if (actor.PowerBeaconMat != null) {
+        actor.PowerBeaconMat.color = powered ? new Color(0.20f, 0.92f, 1.0f) : new Color(0.84f, 0.20f, 0.18f);
+      }
+    }
+
+    void UpdateNavalWake(Actor actor, Vector3 before, float dt) {
+      if (actor.NavalWake == null) {
+        var root = new GameObject("NavalWaterlineWake").transform;
+        root.SetParent(actor.View.transform, false);
+        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Transparent")) {
+          hideFlags = HideFlags.HideAndDontSave,
+          color = new Color(0.86f, 0.95f, 1.0f, 0.34f),
+        };
+        mat.SetFloat("_Surface", 1f); // Transparent
+        mat.SetFloat("_Blend", 0f);   // Alpha
+        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        mat.SetInt("_ZWrite", 0);
+        mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        mat.renderQueue = 3000;
+
+        // Sleek V-shaped angled foam wake arms fanning aft at +-16 deg from the stern (no boxy H crossbar).
+        for (var side = -1; side <= 1; side += 2) {
+          var arm = GameObject.CreatePrimitive(PrimitiveType.Quad);
+          arm.name = side < 0 ? "WakePort" : "WakeStarboard";
+          Destroy(arm.GetComponent<Collider>());
+          arm.transform.SetParent(root, false);
+          arm.transform.localPosition = new Vector3(side * 0.72f, 0.04f, -3.2f);
+          arm.transform.localRotation = Quaternion.Euler(90f, side * 16f, 0f);
+          arm.transform.localScale = new Vector3(0.28f, 4.2f, 1f);
+          arm.GetComponent<Renderer>().sharedMaterial = mat;
+        }
+        actor.NavalWake = root;
+      }
+      var speed = dt > 0f ? (actor.Position - before).magnitude / dt : 0f;
+      var active = speed > 0.25f;
+      if (actor.NavalWake.gameObject.activeSelf != active) actor.NavalWake.gameObject.SetActive(active);
+      if (active) {
+        var wakeLen = Mathf.Lerp(0.45f, 1.20f, Mathf.Clamp01(speed / 5f));
+        var wakeWidth = Mathf.Lerp(0.70f, 1.05f, Mathf.Clamp01(speed / 5f));
+        actor.NavalWake.localPosition = new Vector3(0f, 0.14f, 0f);
+        actor.NavalWake.localRotation = Quaternion.Euler(0f, actor.HullYaw, 0f);
+        actor.NavalWake.localScale = new Vector3(wakeWidth, 1f, wakeLen);
+      }
     }
 
     void SyncSynergyPipelines(Frame frame) {
