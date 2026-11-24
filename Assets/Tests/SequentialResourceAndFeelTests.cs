@@ -229,5 +229,166 @@ namespace FactoryWars.Tests {
       yield return WaitFrames(6);
       CaptureCameraPng(camera, Path.Combine(dir, "p3_pmc_camp_and_operator.png"), 1920, 1080);
     }
+
+    [UnityTest, Explicit, Timeout(1200000)]
+    public IEnumerator PolishPass_CaptureMotionClipsAndDiagnoseMap4P() {
+      var dir = PolishDir();
+      var framesDir = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(framesDir);
+      var diag = new List<string> { "Map4P Seat 0 Iron/Wood Node Placement & Motion Clip Diagnostics" };
+
+      // --- Part A: Diagnose Map4P Seat 0 resource nodes + capture Naval & Air/Ground motion bursts ---
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 4289, startingTier: 3,
+        stock: new ResourceCost { Iron = 8000, Wood = 8000, Steel = 4000, Power = 4000 });
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+
+      var hqPos = Verified.Get<Transform3D>(Headquarters(0)).Position;
+      var ironSpec = Verified.FindAsset(BuildingOf(0, "iron_extractor"));
+      var woodSpec = Verified.FindAsset(BuildingOf(0, "lumber_mill"));
+      var placeableIron = 0;
+      var placeableWood = 0;
+      foreach (var pair in Verified.GetComponentIterator<ResourceNode>()) {
+        var p = Verified.Get<Transform3D>(pair.Entity).Position;
+        var d = FPMath.Sqrt(FactoryWarsUtil.FlatDistanceSqr(hqPos, p)).AsFloat;
+        if (d > 140f) continue;
+        var spec = pair.Component.Kind == ResourceKind.Iron ? ironSpec : woodSpec;
+        var ok = ProductionSystem.TryGetBuildPlacement(Verified, spec, p, 0, out var aligned);
+        var reason = ok ? "OK" : ProductionSystem.PlacementReason(Verified, spec, p, 0).ToString();
+        if (ok && pair.Component.Kind == ResourceKind.Iron) placeableIron++;
+        if (ok && pair.Component.Kind == ResourceKind.Wood) placeableWood++;
+        diag.Add($"Node {pair.Component.Kind} at ({p.X.AsFloat:0.0},{p.Z.AsFloat:0.0}) dist={d:0.0}m canPlace={ok} reason={reason}");
+      }
+      diag.Add($"Summary: placeableIron={placeableIron}, placeableWood={placeableWood}");
+      File.WriteAllLines(Path.Combine(dir, "map4p_node_diag.txt"), diag);
+      Debug.Log(string.Join("\n", diag));
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      Time.timeScale = 1f;
+
+      // Motion Clip 1: Naval Buoyancy & V-Wake sailing under north arch bridge (10 frames @ 0.25s = 2.5s)
+      var ship = SpawnUnitByName(Verified, 0, "cf_artillery_ship", new FPVector3(-16, 0, 102));
+      var boat = SpawnUnitByName(Verified, 0, "ff_scout_boat", new FPVector3(-22, 0, 108));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { ship, boat }, Target = new FPVector3(-16, 0, 156) });
+      yield return WaitFrames(Fps);
+      rts.Height = 40f;
+      rts.MoveTo(new Vector2(-16f, 122f));
+      rts.Apply();
+      for (var f = 0; f < 10; f++) {
+        yield return WaitFrames(15);
+        CaptureCameraPng(camera, Path.Combine(framesDir, $"naval_{f:00}.png"), 960, 540);
+      }
+
+      // Motion Clip 2: Air units (helicopters/drones/bomber) + ground infantry/tanks moving in formation (10 frames)
+      var center = new FPVector3(-8, 0, -64);
+      var ground = new[] {
+        SpawnUnitByName(Verified, 0, "ff_striker_ifv", center + new FPVector3(-16, 0, -3)),
+        SpawnUnitByName(Verified, 0, "ff_eagle_tank",  center + new FPVector3(-16, 0,  3)),
+        SpawnUnitByName(Verified, 0, "ff_ranger_squad", center + new FPVector3(-10, 0, -2)),
+        SpawnUnitByName(Verified, 0, "pmc_operator_squad", center + new FPVector3(-10, 0, 2)),
+      };
+      var air = new[] {
+        SpawnUnitByName(Verified, 0, "ff_hawk_gunship", center + new FPVector3(-14, 0, 0)),
+        SpawnUnitByName(Verified, 0, "pmc_attack_heli", center + new FPVector3(-6, 0, 4)),
+        SpawnUnitByName(Verified, 0, "ff_recon_drone",  center + new FPVector3(-8, 0, -5)),
+      };
+      yield return Send(0, new MoveUnitsCommand { Units = ground.Concat(air).ToArray(), Target = center + new FPVector3(30, 0, 0) });
+      rts.Height = 36f;
+      rts.MoveTo(new Vector2(center.X.AsFloat + 4f, center.Z.AsFloat));
+      rts.Apply();
+      for (var f = 0; f < 10; f++) {
+        yield return WaitFrames(12);
+        CaptureCameraPng(camera, Path.Combine(framesDir, $"airground_{f:00}.png"), 960, 540);
+      }
+
+      // --- Part B: Resource Chain Motion Clip (Iron conveyor + Power turbine running, 10 frames) ---
+      TearDown();
+      yield return null;
+      yield return StartMatch(stock: Stock(2000, 2000, 1000, 200));
+      yield return WaitForHud();
+      var ironPos = V(-30, 14);
+      var powerPos = V(-42, 0);
+      var eng0 = Engineers(0)[0];
+      var eng1 = SpawnUnitByName(Verified, 0, "ff_engineer", V(-38, 2));
+      yield return Build(0, "iron_extractor", ironPos, eng0);
+      var ironSite = BuildingAt(ironPos);
+      yield return Build(0, "power_plant", powerPos, eng1);
+      var plant = BuildingAt(powerPos);
+      Time.timeScale = 6f;
+      yield return WaitFor(() => Finished(ironSite) && CitySystem.Occupants(Verified, ironSite) >= 1 && Finished(plant), 90f, "iron & power built");
+      Time.timeScale = 1f;
+      var bv = Battle();
+      yield return WaitFor(() => bv.Actors.TryGetValue(ironSite, out var a) && a.ExtractorDelivery?.FirstCargo != null && a.ExtractorDelivery.FirstCargo.gameObject.activeInHierarchy, 15f, "conveyor active");
+      camera = Camera.main;
+      rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      rts.Height = 30f;
+      rts.MoveTo(new Vector2(-35f, 7f));
+      rts.Apply();
+      for (var f = 0; f < 10; f++) {
+        yield return WaitFrames(12);
+        CaptureCameraPng(camera, Path.Combine(framesDir, $"resource_{f:00}.png"), 960, 540);
+      }
+
+      File.WriteAllLines(Path.Combine(dir, "map4p_node_diag.txt"), diag);
+      Debug.Log(string.Join("\n", diag));
+    }
+
+    [UnityTest, Timeout(600000)]
+    public IEnumerator T42_CombinedArmsBalanceCheck() {
+      var ffWins = 0;
+      var cfWins = 0;
+      var lines = new List<string> { "Task 42 Equal-Cost Combined-Arms Skirmish Balance (4 seeds)" };
+      for (var run = 0; run < 4; run++) {
+        yield return StartMatch(Map4PScene, 2, truce: 0, seed: 4250 + run, startingTier: 3);
+        yield return WaitForBattle();
+        GrantAgreement(0);
+        GrantAgreement(1);
+        var center = new FPVector3(0, 0, -64);
+        var flip = run % 2 == 0 ? 1 : -1;
+        var ff = new[] {
+          SpawnUnitByName(Verified, 0, "ff_striker_ifv",      center + new FPVector3(-18 * flip, 0, -4)),
+          SpawnUnitByName(Verified, 0, "ff_vanguard_mrap",    center + new FPVector3(-14 * flip, 0,  4)),
+          SpawnUnitByName(Verified, 0, "ff_paladin_sph",      center + new FPVector3(-24 * flip, 0,  0)),
+          SpawnUnitByName(Verified, 0, "ff_aegis_ew",         center + new FPVector3(-16 * flip, 0,  5)),
+          SpawnUnitByName(Verified, 0, "ff_drone_operator",   center + new FPVector3(-11 * flip, 0, -3)),
+          SpawnUnitByName(Verified, 0, "ff_antidrone_gunner", center + new FPVector3(-11 * flip, 0,  3)),
+          SpawnUnitByName(Verified, 0, "ff_loiter_munition",  center + new FPVector3( -9 * flip, 0,  0)),
+        };
+        var cf = new[] {
+          SpawnUnitByName(Verified, 1, "cf_rampart_ifv",      center + new FPVector3( 18 * flip, 0, -4)),
+          SpawnUnitByName(Verified, 1, "cf_ironhide_mrap",    center + new FPVector3( 14 * flip, 0,  4)),
+          SpawnUnitByName(Verified, 1, "cf_bastion_sph",      center + new FPVector3( 24 * flip, 0,  0)),
+          SpawnUnitByName(Verified, 1, "cf_shroud_ew",        center + new FPVector3( 16 * flip, 0,  5)),
+          SpawnUnitByName(Verified, 1, "cf_drone_operator",   center + new FPVector3( 11 * flip, 0, -3)),
+          SpawnUnitByName(Verified, 1, "cf_antidrone_gunner", center + new FPVector3( 11 * flip, 0,  3)),
+          SpawnUnitByName(Verified, 1, "cf_loiter_munition",  center + new FPVector3(  9 * flip, 0,  0)),
+        };
+        yield return Send(0, new AttackTargetCommand { Units = ff, Target = cf[0] });
+        yield return Send(1, new AttackTargetCommand { Units = cf, Target = ff[0] });
+        Time.timeScale = 6f;
+        yield return WaitFrames(Fps * 22);
+        var ffHp = ff.Sum(e => UnitHealth(Verified, e).AsFloat);
+        var cfHp = cf.Sum(e => UnitHealth(Verified, e).AsFloat);
+        var ffAlive = ff.Count(e => Verified.Exists(e));
+        var cfAlive = cf.Count(e => Verified.Exists(e));
+        if (ffHp > cfHp) ffWins++;
+        else if (cfHp > ffHp) cfWins++;
+        lines.Add($"seed {4250 + run} (flip={flip}): FF alive={ffAlive} (HP {ffHp:0}) vs CF alive={cfAlive} (HP {cfHp:0})");
+        TearDown();
+        yield return null;
+      }
+      lines.Add($"Result: FF wins={ffWins}, CF wins={cfWins}");
+      Directory.CreateDirectory(PolishDir());
+      File.WriteAllLines(Path.Combine(PolishDir(), "t42_balance.txt"), lines);
+      Debug.Log(string.Join("\n", lines));
+      Assert.IsTrue(ffWins + cfWins > 0, "at least one decisive skirmish");
+    }
   }
 }

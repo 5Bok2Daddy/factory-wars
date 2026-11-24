@@ -1,0 +1,6 @@
+Task 42 Equal-Cost Combined-Arms Skirmish Balance (4 seeds)
+seed 4250 (flip=1): FF alive=4 (HP 896) vs CF alive=3 (HP 886)
+seed 4251 (flip=-1): FF alive=4 (HP 896) vs CF alive=3 (HP 886)
+seed 4252 (flip=1): FF alive=4 (HP 896) vs CF alive=3 (HP 886)
+seed 4253 (flip=-1): FF alive=4 (HP 896) vs CF alive=3 (HP 886)
+Result: FF wins=4, CF wins=0

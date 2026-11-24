@@ -1,0 +1,7 @@
+Map4P Seat 0 Iron/Wood Node Placement & Motion Clip Diagnostics
+Node Iron at (160.0,-274.0) dist=46.9m canPlace=False reason=BlockedLocation
+Node Iron at (274.0,-160.0) dist=114.6m canPlace=False reason=BlockedLocation
+Node Wood at (228.0,-274.0) dist=43.9m canPlace=False reason=BlockedLocation
+Node Iron at (270.0,-152.0) dist=118.1m canPlace=False reason=BlockedLocation
+Node Wood at (274.0,-192.0) dist=93.7m canPlace=True reason=OK
+Summary: placeableIron=0, placeableWood=1
