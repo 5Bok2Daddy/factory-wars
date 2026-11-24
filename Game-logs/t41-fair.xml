@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-24 00:57:55Z" end-time="2026-11-24 00:58:27Z" duration="32.1402054">
+  <test-suite type="TestSuite" id="1632" name="Factory Wars" fullname="Factory Wars" runstate="Runnable" testcasecount="616" result="Failed" site="Child" start-time="2026-11-24 00:57:55Z" end-time="2026-11-24 00:58:27Z" duration="32.140205" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1627" name="FactoryWars.Tests.dll" fullname="C:/Users/MinGyu/FactoryWars/Game/Library/ScriptAssemblies/FactoryWars.Tests.dll" runstate="Runnable" testcasecount="616" result="Failed" site="Child" start-time="2026-11-24 00:57:55Z" end-time="2026-11-24 00:58:27Z" duration="32.129300" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="43060" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1628" name="FactoryWars" fullname="FactoryWars" runstate="Runnable" testcasecount="616" result="Failed" site="Child" start-time="2026-11-24 00:57:55Z" end-time="2026-11-24 00:58:27Z" duration="32.126338" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1629" name="Tests" fullname="FactoryWars.Tests" runstate="Runnable" testcasecount="616" result="Failed" site="Child" start-time="2026-11-24 00:57:55Z" end-time="2026-11-24 00:58:27Z" duration="32.123348" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestFixture" id="1001" name="LocalMatchTests" fullname="FactoryWars.Tests.LocalMatchTests" classname="FactoryWars.Tests.LocalMatchTests" runstate="Runnable" testcasecount="610" result="Failed" site="Child" start-time="2026-11-24 00:57:55Z" end-time="2026-11-24 00:58:27Z" duration="32.118478" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-case id="1401" name="Logistics_FairnessTable" fullname="FactoryWars.Tests.LocalMatchTests.Logistics_FairnessTable" methodname="Logistics_FairnessTable" classname="FactoryWars.Tests.LocalMatchTests" runstate="Explicit" seed="1451662913" result="Failed" start-time="2026-11-24 00:57:55Z" end-time="2026-11-24 00:58:27Z" duration="32.077769" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="Timeout" value="2400000" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[  seat | site | dock-bay straight m | first cycle s | repeat cycle s | throughput /min
+0 | 4 | 207 | 102.2 | 107.9 | 111
+1 | 5 | 201 | 109.7 | 104.7 | 115
+2 | 6 | 196 | 111.3 | 110.9 | 108
+3 | 7 | 190 | 107.9 | 109.7 | 109
+repeat-cycle spread: 5.8% (limit 5%)
+  Expected: less than or equal to 5.0f
+  But was:  5.77300549f
+]]></message>
+                <stack-trace><![CDATA[at FactoryWars.Tests.LocalMatchTests+<Logistics_FairnessTable>d__584.MoveNext () [0x00382] in C:\Users\MinGyu\FactoryWars\Game\Assets\Tests\LogisticsTests.cs:320
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@082c24152fd4\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[seat | site | dock-bay straight m | first cycle s | repeat cycle s | throughput /min
+0 | 4 | 207 | 102.2 | 107.9 | 111
+1 | 5 | 201 | 109.7 | 104.7 | 115
+2 | 6 | 196 | 111.3 | 110.9 | 108
+3 | 7 | 190 | 107.9 | 109.7 | 109
+repeat-cycle spread: 5.8% (limit 5%)
+Saving results to: C:/Users/MinGyu/AppData/LocalLow/MinGyu/Factory Wars\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

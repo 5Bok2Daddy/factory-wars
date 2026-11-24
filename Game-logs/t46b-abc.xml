@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-24 00:38:09Z" end-time="2026-11-24 00:38:46Z" duration="37.3843101">
+  <test-suite type="TestSuite" id="1631" name="Factory Wars" fullname="Factory Wars" runstate="Runnable" testcasecount="615" result="Passed" start-time="2026-11-24 00:38:09Z" end-time="2026-11-24 00:38:46Z" duration="37.384310" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1626" name="FactoryWars.Tests.dll" fullname="C:/Users/MinGyu/FactoryWars/Game/Library/ScriptAssemblies/FactoryWars.Tests.dll" runstate="Runnable" testcasecount="615" result="Passed" start-time="2026-11-24 00:38:09Z" end-time="2026-11-24 00:38:46Z" duration="37.371506" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="15556" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1627" name="FactoryWars" fullname="FactoryWars" runstate="Runnable" testcasecount="615" result="Passed" start-time="2026-11-24 00:38:09Z" end-time="2026-11-24 00:38:46Z" duration="37.366296" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1628" name="Tests" fullname="FactoryWars.Tests" runstate="Runnable" testcasecount="615" result="Passed" start-time="2026-11-24 00:38:09Z" end-time="2026-11-24 00:38:46Z" duration="37.361057" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1001" name="LocalMatchTests" fullname="FactoryWars.Tests.LocalMatchTests" classname="FactoryWars.Tests.LocalMatchTests" runstate="Runnable" testcasecount="609" result="Passed" start-time="2026-11-24 00:38:09Z" end-time="2026-11-24 00:38:46Z" duration="37.355032" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1612" name="Waterway_HarbourTargetingNeedsSight" fullname="FactoryWars.Tests.LocalMatchTests.Waterway_HarbourTargetingNeedsSight" methodname="Waterway_HarbourTargetingNeedsSight" classname="FactoryWars.Tests.LocalMatchTests" runstate="Runnable" seed="1911061534" result="Passed" start-time="2026-11-24 00:38:09Z" end-time="2026-11-24 00:38:15Z" duration="6.281632" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="Timeout" value="900000" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[FW-T46] harbour targeting (fog on): ship (-302,0), quay truck 8.5 m hit, far 15.0 m (sight 12, range 24) untouched 10 s unspotted, hit after spotter
+]]></output>
+            </test-case>
+            <test-case id="1610" name="Waterway_TruckThreatDetour" fullname="FactoryWars.Tests.LocalMatchTests.Waterway_TruckThreatDetour" methodname="Waterway_TruckThreatDetour" classname="FactoryWars.Tests.LocalMatchTests" runstate="Runnable" seed="1095265130" result="Passed" start-time="2026-11-24 00:38:15Z" end-time="2026-11-24 00:38:46Z" duration="31.012510" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="Timeout" value="2400000" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[FW-T46] truck states ToYard@0s(-249,-216) Loading@44s(-246,-15) ToDock@50s(-246,-15) Unloading@96s(-247,-215) ToYard@101s(-247,-215)
+[FW-T46] truck states wp1(-221,-56)@0s from(-251,-215) ToYard@0s(-251,-215) Loading@49s(-246,-15) ToDock@55s(-246,-15) Unloading@101s(-247,-215) ToYard@106s(-247,-215)
+[FW-T46] real map: SW dock -> W yard route stays 59.0 m from the west water lane (ship range 24 m) -> exposed to harbour ships: False
+mechanism probe: enemy artillery ship held at (-250,-62), 20 m beside the route; threat radius = range 24 m + margin 6 m
+baseline: cycle 100.9 s, closest to lane 63.0 m, exposed 15.5 s, credited 200
+threat:   cycle 105.9 s, closest to lane 61.0 m, exposed 0.0 s, detours 1, credited 200
+extra time 5.0%
+Saving results to: C:/Users/MinGyu/AppData/LocalLow/MinGyu/Factory Wars\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
