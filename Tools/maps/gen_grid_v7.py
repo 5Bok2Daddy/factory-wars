@@ -104,6 +104,24 @@ e_x_left = sum(1 for r in range(33, 47) for c in range(53, 68) if g[r][c] in ('X
 assert w_to_h == e_to_h, f'180-deg symmetry mismatch: west {w_to_h} != east {e_to_h}'
 print(f'B2 X->H: west {w_to_h}H/{w_x_left}XY ({w_to_h/(w_to_h+w_x_left)*100:.1f}% H), east {e_to_h}H/{e_x_left}XY ({e_to_h/(e_to_h+e_x_left)*100:.1f}% H)')
 
+# Harness fix (2026-11-24): break up the remaining bare-looking Y container strips on the eastern upper side (rows 28, 30-31, cols 53-67)
+# and their exact 180-degree west mirror (rows 48-49, 51, cols 12-26) with buildings ('H'), parking ('L'), and parks ('K').
+EAST_Y_DRESS = [
+    (30, 56, 'H'), (30, 57, 'H'), (31, 56, 'H'), (31, 57, 'H'),
+    (30, 60, 'H'), (30, 61, 'H'), (31, 60, 'H'), (31, 61, 'H'),
+    (30, 62, 'K'), (31, 62, 'L'), (30, 63, 'H'), (31, 63, 'H'),
+    (30, 66, 'H'), (31, 66, 'H'), (30, 67, 'K'), (31, 67, 'L'),
+    (28, 56, 'H'), (28, 57, 'K'), (28, 60, 'H'), (28, 61, 'H'), (28, 62, 'L'), (28, 66, 'H'), (28, 67, 'K'),
+]
+y_dressed = 0
+for r, c, ch in EAST_Y_DRESS:
+    mr, mc = N - 1 - r, N - 1 - c
+    if g[r][c] == 'Y' and g[mr][mc] == 'Y':
+        g[r][c] = ch
+        g[mr][mc] = ch
+        y_dressed += 1
+print(f'Eastern/Western Y strip dressed (180-sym pairs): {y_dressed}')
+
 with open('Map4P_grid_v7.csv', 'w', newline='') as f:
     csv.writer(f, lineterminator='\n').writerows(g)
 

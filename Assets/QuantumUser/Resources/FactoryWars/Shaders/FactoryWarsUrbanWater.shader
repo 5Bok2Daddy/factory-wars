@@ -6,13 +6,14 @@ Shader "FactoryWars/UrbanWater"
 {
     Properties
     {
-        _Shallow ("Shallow", Color) = (0.45, 0.86, 0.74, 1)
-        _Deep ("Deep", Color) = (0.17, 0.62, 0.64, 1)
-        _Foam ("Foam", Color) = (0.97, 1, 1, 1)
+        _Shallow ("Shallow", Color) = (0.14, 0.44, 0.56, 1)
+        _Deep ("Deep", Color) = (0.08, 0.23, 0.38, 1)
+        _Foam ("Foam", Color) = (0.94, 0.98, 1, 1)
+        _WaveTex ("Wave Surface (IgniteCoders)", 2D) = "gray" {}
         _Flow ("Flow (xz speed)", Vector) = (0.06, 0.03, 0, 0)
-        _Scale ("Pattern scale", Float) = 0.11
-        _FoamWidth ("Depth foam width (m)", Float) = 0.9
-        _DepthFade ("Depth fade distance (m)", Float) = 3.5
+        _Scale ("Pattern scale", Float) = 0.08
+        _FoamWidth ("Depth foam width (m)", Float) = 1.1
+        _DepthFade ("Depth fade distance (m)", Float) = 3.8
     }
 
     SubShader
@@ -32,6 +33,9 @@ Shader "FactoryWars/UrbanWater"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+
+            TEXTURE2D(_WaveTex);
+            SAMPLER(sampler_WaveTex);
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Shallow;
@@ -74,8 +78,15 @@ Shader "FactoryWars/UrbanWater"
             {
                 float t = _Time.y;
                 float2 p = input.positionWS.xz * _Scale + _Flow.xy * t;
-                float n = WNoise(p) * 0.6 + WNoise(p * 2.3 + float2(t * 0.05, 7.0)) * 0.4;
-                half3 color = lerp(_Deep.rgb, _Shallow.rgb, saturate(n * 1.25));
+                float2 uv1 = input.positionWS.xz * 0.045 + float2(t * 0.018, t * 0.011);
+                float2 uv2 = input.positionWS.xz * 0.085 - float2(t * 0.013, -t * 0.019);
+                half w1 = SAMPLE_TEXTURE2D(_WaveTex, sampler_WaveTex, uv1).r;
+                half w2 = SAMPLE_TEXTURE2D(_WaveTex, sampler_WaveTex, uv2).g;
+                float waveTex = saturate((w1 + w2) * 0.5);
+                float n = WNoise(p) * 0.45 + waveTex * 0.55;
+                half3 color = lerp(_Deep.rgb, _Shallow.rgb, saturate(n * 1.15));
+                // IgniteCoders wave crest highlights + gentle directional sun sheen.
+                color += smoothstep(0.68, 0.92, waveTex) * half3(0.08, 0.13, 0.16);
                 // 잔물결 하이라이트: 좁은 띠가 흐른다.
                 #if defined(_FW_DEPTH_FOAM)
                     // Two traveling waves tilt the reflection. Fade them before they become subpixel.

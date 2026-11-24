@@ -634,7 +634,7 @@ namespace FactoryWars.View {
 
     static Material _water;
 
-    /// <summary>물 표면 공용 머티리얼(우리 셰이더, 인스턴스마다 새로 만들지 않음). 셰이더가 없으면 null.</summary>
+    /// <summary>물 표면 공용 머티리얼(UrbanWater URP 셰이더 + 신규 IgniteCoders WaterSurface 텍스처 + 심해 항만 팔레트).</summary>
     public static Material WaterMaterial() {
       if (_water == null) {
         var shader = Shader.Find("FactoryWars/UrbanWater");
@@ -643,12 +643,13 @@ namespace FactoryWars.View {
         }
         var profile = VisualProfile.Current;
         _water = new Material(shader) { name = "UrbanWater" };
-        // 항목 36 추가: 파스텔 에메랄드. 프로필 값이 있으면 그것, 없으면(옛 프로필) 물색에서 계산한다.
-        var baseColor = profile.WaterColor.a > 0f ? (Color)profile.WaterColor : new Color(0.29f, 0.64f, 0.84f);
-        _water.SetColor("_Shallow", profile.WaterShallowTint.a > 0f ? (Color)profile.WaterShallowTint : Color.Lerp(baseColor, Color.white, 0.28f));
-        _water.SetColor("_Deep", profile.WaterDeepTint.a > 0f ? (Color)profile.WaterDeepTint : baseColor * 0.78f);
-        _water.SetColor("_Foam", profile.WaterFoamTint);
-        _water.SetFloat("_FoamWidth", profile.WaterFoamWidth);
+        var waveTex = Resources.Load<Texture2D>("WaterSurface_single");
+        if (waveTex != null) _water.SetTexture("_WaveTex", waveTex);
+        // 2026-11-24: replace flat mint with deep harbor blue-teal (IgniteCoders palette) while keeping exact water elevation & ship sorting.
+        _water.SetColor("_Shallow", new Color(0.14f, 0.44f, 0.56f, 1f));
+        _water.SetColor("_Deep", new Color(0.08f, 0.23f, 0.38f, 1f));
+        _water.SetColor("_Foam", new Color(0.94f, 0.98f, 1f, 1f));
+        _water.SetFloat("_FoamWidth", Mathf.Max(1.0f, profile.WaterFoamWidth));
         _water.SetVector("_Flow", new Vector4(profile.WaterFlowSpeed.x, profile.WaterFlowSpeed.y, 0f, 0f));
       }
       RefreshWater();

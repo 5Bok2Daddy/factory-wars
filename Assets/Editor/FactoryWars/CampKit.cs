@@ -187,8 +187,8 @@ namespace FactoryWars.EditorTools {
       if (vehicle && s > 0.2f && hue >= 170f && hue <= 250f) o = new Color(0.16f, 0.2f, 0.26f) + new Color(0.2f, 0.24f, 0.3f) * lum; // glass
       else if (lum < 0.12f) o = new Color(0.05f, 0.05f, 0.055f) + Color.white * (lum * 0.4f);                                 // rubber, gaps
       else {
-        var t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((lum - 0.20f) / 0.30f));
-        o = Color.Lerp(new Color(0.15f, 0.165f, 0.165f), new Color(0.33f, 0.34f, 0.36f), t) * (0.88f + lum * 0.24f);           // charcoal / gunmetal two-tone
+        var t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((lum - 0.18f) / 0.34f));
+        o = Color.Lerp(new Color(0.21f, 0.225f, 0.235f), new Color(0.42f, 0.44f, 0.47f), t) * (0.90f + lum * 0.22f);           // readable gunmetal / slate two-tone
       }
       o.a = c.a / 255f;
       return o;

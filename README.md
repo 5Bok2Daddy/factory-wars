@@ -9,12 +9,21 @@
 
 ## Map4P 전체 지도 검수
 
-**640m 플레이 맵 · 2026-11-24 16:40 KST · Harness 규칙 동기화 + 반쪽 유리 건물 교체·옥상 디테일·빈 부지(`L/Y/K`) 복구**
+**640m 플레이 맵 · 2026-11-24 17:15 KST · 동쪽 빈 부지 마감 · PMC 차량 명도 개선 · IgniteCoders 물 텍스처 URP 적용**
 
-| 직상공 전체 지도 · 1,920×1,080 | 서쪽 시가지 (반쪽 건물·빈 부지 전후 비교) |
+| 직상공 전체 지도 · 1,920×1,080 | 물 셰이더 전후 (아치교 전함 통과) |
 | --- | --- |
-| [![Map4P v4 최신 전체 지도](Docs/status_images/Map4PV4/map4p_harness_full_map.png)](Docs/status_images/Map4PV4/map4p_harness_full_map.png) | [![반쪽 유리 건물 교체 및 빈 부지 L/Y/K 밀도 복구 전후 비교](Docs/status_images/Map4PV4/map4p_harness_before_after.png)](Docs/status_images/Map4PV4/map4p_harness_before_after.png) |
-| [전체 지도 원본](Docs/status_images/Map4PV4/map4p_harness_full_map.png) · 4면 수로·밀폐 시가지·폐허·PMC 캠프 | [전후 비교](Docs/status_images/Map4PV4/map4p_harness_before_after.png) · [서쪽 확대](Docs/status_images/Map4PV4/map4p_harness_west_sector.png) · [최종 PMC 캠프](Docs/status_images/T39/t39_fixc_camp_wide.png) |
+| [![Map4P v4 최신 전체 지도](Docs/status_images/Map4PV4/map4p_v4_full_map_latest.png)](Docs/status_images/Map4PV4/map4p_v4_full_map_latest.png) | [![IgniteCoders 물 텍스처 적용 및 아치교 전함 통과 전후](Docs/status_images/Map4PV4/map4p_water_before_after.png)](Docs/status_images/Map4PV4/map4p_water_before_after.png) |
+| [전체 지도 원본](Docs/status_images/Map4PV4/map4p_v4_full_map_latest.png) · 동쪽 빈 부지 보강·4면 수로·밀폐 시가지 | [물 셰이더 비교](Docs/status_images/Map4PV4/map4p_water_before_after.png) · [PMC 전차 명도](Docs/status_images/Map4PV4/map4p_v4_pmc_tanks_readable.png) · [외곽 수로 방벽](Docs/status_images/Map4PV4/map4p_v4_water_barrier.png) |
+
+---
+
+## 전 진영 유닛 전수 검수 카탈로그 (총 61종 · 2026-11-24)
+
+| 자유연방 (FF · 23종) | 대륙연방 (CF · 23종) | 중립 PMC 용병단 & 물류 (15종) |
+| --- | --- | --- |
+| [![FF 전 유닛 카탈로그](Docs/status_images/units/catalog_ff_units.png)](Docs/status_images/units/catalog_ff_units.png) | [![CF 전 유닛 카탈로그](Docs/status_images/units/catalog_cf_units.png)](Docs/status_images/units/catalog_cf_units.png) | [![PMC 및 물류 전 유닛 카탈로그](Docs/status_images/units/catalog_pmc_units.png)](Docs/status_images/units/catalog_pmc_units.png) |
+| [FF 원본 시트](Docs/status_images/units/catalog_ff_units.png) | [CF 원본 시트](Docs/status_images/units/catalog_cf_units.png) | [PMC 원본 시트](Docs/status_images/units/catalog_pmc_units.png) · [전수 목록](Docs/status_images/units/catalog_manifest.txt) |
 
 ---
 
@@ -22,6 +31,7 @@
 
 | 작업 | 날짜 | 상태 | 대표 캡처 | 결과 요약 |
 | --- | --- | --- | --- | --- |
+| Map4P v4 마감(동쪽 부지·PMC 명도·신규 물 텍스처) + 전 진영 유닛 61종 카탈로그 | 2026-11-24 | 완료(사용자 검수 대기) | [전체 지도](Docs/status_images/Map4PV4/map4p_v4_full_map_latest.png) · [물 전후](Docs/status_images/Map4PV4/map4p_water_before_after.png) · [PMC 전차](Docs/status_images/Map4PV4/map4p_v4_pmc_tanks_readable.png) · [PMC 유닛](Docs/status_images/units/catalog_pmc_units.png) | [통과] 동쪽 상단 `Y` 16쌍 180도 대칭 보강·LOD 0.5x 복구(빈 회색 부지 0건), PMC `PmcMuted` 건메탈/슬레이트 명도 개선(색 감사 10/10·전차 2/2·APC 2/2), `IgniteCoders WaterSurface_single` + `UrbanWater` URP 적용(아치교 전함 통과 클리핑 0), CF 23·FF 23·PMC/물류 15 총 61종 정면 3/4 캡처·시트 생성, 결정론 0건, PlayMode 6/6 |
 | Map4P v4 Harness 구축 + 반쪽 건물·빈 부지 집중 개선 | 2026-11-24 | 완료 | [전후 비교](Docs/status_images/Map4PV4/map4p_harness_before_after.png) · [전체 지도](Docs/status_images/Map4PV4/map4p_harness_full_map.png) · [서쪽 시가지](Docs/status_images/Map4PV4/map4p_harness_west_sector.png) | [통과] `harness/run_verify.ps1`·`BLOCKED.md` 구축, `AGENTS/CLAUDE/GEMINI.md` 규칙 동기화, 반쪽 유리 셸(`H4_00`/`H4_05`/`HW_02`) 완전 밀폐 4면 건물+옥상 HVAC/배기/위성안테나 교체, `L` 2대 주차+화단 보강, `L/Y/K` LOD 5x→1.5x 복구, 결정론 0건, PlayMode 3/3, 게임 시점 예산(51~139 draw/61~254k) |
 | 46 Phase B + B2 — 4면 외곽 수로·빈 `X` 부지 건물/폐허화 | 2026-11-24 | 부분 (경로 공정성 0.5% 초과 확인 필요) | [전체 지도](Docs/status_images/T46/t46_b2_full_map.png) · [서쪽 전후](Docs/status_images/T46/t46_b2_west_before_after.png) · [북항·저교](Docs/status_images/T46/t46b_north_harbour_culvert.png) | [통과] 4면 수로(`grid v7`)·방벽 8·중립항 4·남북 저교(3m), B2 빈 `X` 부지 63.6%/65.1% 건물(`84H` 서/동 180도 대칭)+폐허(`SM_Bld_Destroyed_01/02`)+공사 부지(`XC`), `Logistics_FairnessTable` 4.5%(상한 5%), `Map4P_v4_GridMatchesCsv`, `Waterway_LayoutAndRange`/`SailFairness`/`TruckThreatDetour`, 게임 시점 예산(51~138 draw/59~225k) · [실패] `Map4P_v4_SymmetryFairnessAndReach` `base->compound` 경로 공정성 5.5%(254.4 vs 241.1m, 상한 5%) |
 | AGY Fix C + F — PMC 톤 통일·병사 겹침 감사·저품질 그래픽 감사 | 2026-11-24 | 완료 | [전차 전후](Docs/status_images/T39/t39_fixc_before_after.png) · [캠프 전체](Docs/status_images/T39/t39_fixc_camp_wide.png) · [감사표](Docs/status_images/T39/placeholder_audit.md) | [통과] `PmcMuted` 건메탈/차콜 2톤(색 감사 진열 10/10·전차 2/2·APC 2/2), 병사 겹침 최소 간격 1.20m PASS, 북쪽 컨테이너·감시탑 지붕·위장망 톤 통일, `VisualCatalog` 419슬롯 전수 감사표 작성 |

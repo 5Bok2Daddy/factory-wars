@@ -82,11 +82,10 @@ namespace FactoryWars.View {
       item.isStatic = true;
       // Task 39 C1: parks and parking lots (many, small) do not cast shadows.
       if (kind == "K" || kind == "L") item.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      // Harness fix (2026-11-24): keep parking lots (L), container yards (Y), parks (K) and ruins (X/XC) visible at gameplay & sector zoom
-      // (1.5x instead of 5x) so plots never pop out into bare grey/green slabs.
+      // Harness fix (2026-11-24): keep L/Y/K/X/XC visible even in wide overview (0.5x transition height) so no bare grey/green plot slabs appear.
       if (GraphicsQuality.Current != QualityTier.Low && (kind == "L" || kind == "Y" || kind == "K" || kind == "X" || kind == "XC") && item.TryGetComponent<LODGroup>(out var farPlot)) {
         var lods = farPlot.GetLODs();
-        lods[0].screenRelativeTransitionHeight *= 1.5f;
+        lods[0].screenRelativeTransitionHeight *= 0.5f;
         farPlot.SetLODs(lods);
       }
       if (GraphicsQuality.Current == QualityTier.Low) {
