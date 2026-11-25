@@ -7,6 +7,15 @@
 
 ---
 
+## 연속 이동·업그레이드 연동 질주(+25%) · 자원지 3인 작업자(`3/3` 배지) · 함정 조타수 · A2UI 대시보드 (2026-11-25 · 3/3 통과)
+
+| 업그레이드 전 보행 vs. 해금 후 질주 (`SprintForward`) | 자원지 3인 비겹침 작업자 & `3/3` 월드 배지 | 전함·초계정·상륙정 조타수 & 파티클 항적 |
+| --- | --- | --- |
+| [![업그레이드 연동 질주 전후](Docs/status_images/SprintAndWorkers/sprint_before_after.png)](Docs/status_images/SprintAndWorkers/sprint_before_after.png) | [![자원지 3인 작업자 및 3/3 배지](Docs/status_images/SprintAndWorkers/three_workers_badge_3of3.png)](Docs/status_images/SprintAndWorkers/three_workers_badge_3of3.png) | [![함정 조타수 및 아치교 통과 파티클 항적](Docs/status_images/SprintAndWorkers/naval_helmsman_and_particle_wake.png)](Docs/status_images/SprintAndWorkers/naval_helmsman_and_particle_wake.png) |
+| [전후 비교](Docs/status_images/SprintAndWorkers/sprint_before_after.png) · [질주 모션 GIF](Docs/status_images/SprintAndWorkers/sprint_upgrade_motion.gif) (`+25%`, 43클립) | [3/3 배지 원본](Docs/status_images/SprintAndWorkers/three_workers_badge_3of3.png) · 철·목재·전기 각 3명 상한 + HUD/월드 표시 | [함정 조타수 원본](Docs/status_images/SprintAndWorkers/naval_helmsman_and_particle_wake.png) · [A2UI/상태 요약](Docs/FactoryWars_Status.md) |
+
+---
+
 ## Mixamo 휴머노이드 애니메이션 통합 (42종 클립 · 보병 순찰/전투 전환 · 자원 작업자 · 차량/항공 승무원 · 2026-11-25 · 2/2 통과)
 
 | 보병/PMC 순찰 보행 vs. 전투 조준/사격 전후 | 순찰 → 교전 전환 & 발전소 작업자 모션 (GIF) | 차량·오토바이·함정 승무원(`Drive`) 자세 |

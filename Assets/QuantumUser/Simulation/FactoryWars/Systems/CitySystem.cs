@@ -66,7 +66,8 @@ namespace Quantum.FactoryWars {
         shape = new MapShape { Center = f.Unsafe.GetPointer<Transform3D>(building)->Position, HalfLength = spec.FootprintRadius, HalfWidth = spec.FootprintRadius };
         if (spec.RequiresResourceNode && f.TryGet<ResourceNode>(own->ExtractNode, out var node)
             && node.Shape.Reach > spec.FootprintRadius) shape = node.Shape;
-        capacity = spec.RequiresResourceNode ? spec.WorkerSlotCapacity : spec.GarrisonCapacity;
+        var workerFacility = spec.RequiresResourceNode || spec.Role == BuildingRole.PowerPlant;
+        capacity = workerFacility ? spec.WorkerSlotCapacity : spec.GarrisonCapacity;
         holder = own->Owner;
         return capacity > 0;
       }
@@ -88,8 +89,11 @@ namespace Quantum.FactoryWars {
       if (unit->Health <= FP._0 || unit->Garrison != EntityRef.None || unit->Transport != EntityRef.None) {
         return false;
       }
-      if (f.Unsafe.TryGetPointer<Building>(building, out var own) && f.FindAsset(own->Spec).RequiresResourceNode) {
-        return own->Owner == unit->Owner && f.Has<Worker>(entity);
+      if (f.Unsafe.TryGetPointer<Building>(building, out var own)) {
+        var bSpec = f.FindAsset(own->Spec);
+        if (bSpec.RequiresResourceNode || bSpec.Role == BuildingRole.PowerPlant) {
+          return own->Owner == unit->Owner && f.Has<Worker>(entity);
+        }
       }
       return IsInfantry(f.FindAsset(unit->Spec));
     }

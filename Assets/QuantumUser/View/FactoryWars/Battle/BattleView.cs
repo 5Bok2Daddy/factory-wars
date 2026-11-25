@@ -90,6 +90,10 @@ namespace FactoryWars.View {
       public float ExtractorEntryTime;
       public GameObject ActivityCrew;
       public MixamoMotion ActivityMotion;
+      public readonly List<GameObject> ActivityCrewList = new List<GameObject>(3);
+      public readonly List<MixamoMotion> ActivityMotionList = new List<MixamoMotion>(3);
+      public GameObject WorkerCountRoot;
+      public TextMesh WorkerCountBadge;
       public bool ActivityUnavailable;
       public GameObject VehicleCrew;
       public MixamoMotion VehicleCrewMotion;
@@ -1308,6 +1312,7 @@ namespace FactoryWars.View {
         actor.View.Animation.Cover = unit->InCover;
         actor.View.Animation.Prone = unit->StealthUntilFrame > frame.Number;
         actor.View.Animation.CombatAlert = actor.InCombat;
+        actor.View.Animation.SprintUnlocked = TechSystem.HasSprintUpgrade(frame, unit->Owner, spec);
         actor.View.Animation.Set(AnimState(speed, hasTarget, workingAnim ? wAnim->Task : WorkerTask.Idle), speed);
       }
     }
@@ -1958,25 +1963,35 @@ namespace FactoryWars.View {
         actor.ExtractorEquipment.Rotate(Vector3.up, dt * 160f, Space.Self);
       }
       if (spec.RequiresResourceNode && buildingSeen && (buildingViewer.IsValid == false || building->Owner == buildingViewer)) {
+        var cap = Mathf.Max(1, spec.WorkerSlotCapacity);
         if (actor.PipRoot == null) {
-          actor.PipRoot = HeroVisuals.CreatePassengerPips(actor.View, spec.WorkerSlotCapacity, out actor.PipRenderers);
+          actor.PipRoot = HeroVisuals.CreatePassengerPips(actor.View, cap, out actor.PipRenderers);
           if (actor.PipRoot != null) actor.PipRoot.transform.localScale = Vector3.one * 1.65f;
         }
         UpdatePips(actor, staff, staff > 0 || _marked.Contains(actor), 0.65f);
+        UpdateWorkerCountBadge(actor, staff, cap, true);
         var stage = (frame.Number / 50) % 5;
-        var pose = spec.RequiredNodeKind == ResourceKind.Wood
-          ? (stage == 0 || stage == 1 ? "Chop" : stage == 2 ? "PickUp" : stage == 3 ? "BoxJog" : "PutDown")
-          : (stage == 0 ? "Dig" : stage == 1 ? "PickUp" : stage == 2 ? "HoldingWalk" : stage == 3 ? "PutDown" : "Inspect");
-        UpdateActivityCrew(actor, extracting, pose);
+        var p0 = spec.RequiredNodeKind == ResourceKind.Wood ? "Chop" : "Dig";
+        var p1 = spec.RequiredNodeKind == ResourceKind.Wood
+          ? (stage % 2 == 0 ? "PickUp" : "BoxJog")
+          : (stage % 2 == 0 ? "PickUp" : "HoldingWalk");
+        var p2 = stage % 2 == 0 ? "PutDown" : "Inspect";
+        UpdateActivityCrewMulti(actor, extracting ? Mathf.Clamp(staff, 1, 3) : 0, p0, p1, p2);
         UpdateExtractorDelivery(frame, actor, building->Owner, spec.RequiredNodeKind, extracting, dt);
       } else if (spec.RequiresResourceNode) {
         UpdatePips(actor, 0, false);
-        UpdateActivityCrew(actor, false, null);
+        UpdateWorkerCountBadge(actor, 0, Mathf.Max(1, spec.WorkerSlotCapacity), false);
+        UpdateActivityCrewMulti(actor, 0, null, null, null);
       }
       if (spec.Role == BuildingRole.PowerPlant) {
         UpdatePowerPlantVisual(actor, powered, dt);
-        var powerPose = (frame.Number / 65) % 2 == 0 ? "Device" : "Inspect";
-        UpdateActivityCrew(actor, powered && buildingSeen, powerPose);
+        var pCap = Mathf.Max(3, spec.WorkerSlotCapacity);
+        var pStaff = CitySystem.Occupants(frame, entity);
+        var showPower = buildingSeen && (buildingViewer.IsValid == false || building->Owner == buildingViewer);
+        UpdateWorkerCountBadge(actor, pStaff, pCap, showPower);
+        var pCount = (powered && buildingSeen) ? Mathf.Clamp(Mathf.Max(pStaff, 1), 1, 3) : 0;
+        var powerPose0 = (frame.Number / 65) % 2 == 0 ? "Device" : "Inspect";
+        UpdateActivityCrewMulti(actor, pCount, powerPose0, "Inspect", "Lever");
       }
       var bHpRatio = spec.MaxHealth > FP._0 ? (building->Health / spec.MaxHealth).AsFloat : 1f;
       UpdateDamageFire(actor, bHpRatio, 1.4f);
@@ -2067,6 +2082,10 @@ namespace FactoryWars.View {
       else if (id == "ff_scout_buggy") { pose = "Drive"; seat = new Vector3(-0.22f, 0.48f, 0.05f); scale = 0.72f; }
       else if (id == "ff_scout_boat") { pose = "Drive"; seat = new Vector3(0f, 0.95f, -0.65f); scale = 0.85f; }
       else if (id == "ff_landing_craft") { pose = "Drive"; seat = new Vector3(0f, 1.35f, -1.75f); scale = 0.85f; }
+      else if (id == "ff_artillery_ship" || id == "cf_artillery_ship") {
+        // 함교 갑판 조타수 배치(마스트 높이 이하로 유지해 아치교 수직 통과 여유 보존).
+        pose = "Drive"; seat = new Vector3(0f, 2.35f, 1.45f); scale = 0.78f;
+      }
       else if (id == "ff_hawk_gunship" || id == "cf_gale_gunship" || id == "pmc_scout_heli" || id == "pmc_attack_heli") {
         pose = "Pilot"; seat = new Vector3(0f, 0.75f, 1.05f); scale = 0.78f;
       }
@@ -2091,31 +2110,98 @@ namespace FactoryWars.View {
     }
 
     void UpdateActivityCrew(Actor actor, bool active, string pose) {
-      if (active && actor.ActivityCrew == null) {
-        if (actor.ActivityUnavailable || !MixamoMotion.HasWorkerController) return;
-        if (!VisualCatalog.TryFilled(VisualCatalog.FxId("const_worker_0"), out var slot) || slot.Prefab == null) return;
-        var crew = Instantiate(slot.Prefab, actor.View.transform, false);
-        crew.name = "FacilityActivityWorker";
-        var animator = crew.GetComponentInChildren<Animator>(true);
-        actor.ActivityMotion = MixamoMotion.Attach(animator);
-        if (actor.ActivityMotion == null) {
-          actor.ActivityUnavailable = true;
-          Destroy(crew);
-          return;
+      UpdateActivityCrewMulti(actor, active ? 1 : 0, pose, pose, pose);
+    }
+
+    static readonly Vector3[] WorkerSlotOffsets = {
+      new Vector3(-1.65f, 0f, -0.95f),
+      new Vector3( 0.05f, 0f, -1.08f),
+      new Vector3( 1.75f, 0f, -0.95f),
+    };
+
+    void UpdateActivityCrewMulti(Actor actor, int count, string pose0, string pose1, string pose2) {
+      count = Mathf.Clamp(count, 0, 3);
+      if (count > 0 && actor.ActivityCrewList.Count < count && !actor.ActivityUnavailable && MixamoMotion.HasWorkerController) {
+        if (VisualCatalog.TryFilled(VisualCatalog.FxId("const_worker_0"), out var slot) && slot.Prefab != null) {
+          while (actor.ActivityCrewList.Count < count) {
+            var idx = actor.ActivityCrewList.Count;
+            var crew = Instantiate(slot.Prefab, actor.View.transform, false);
+            crew.name = $"FacilityActivityWorker_{idx}";
+            var animator = crew.GetComponentInChildren<Animator>(true);
+            var motion = MixamoMotion.Attach(animator);
+            if (motion == null) {
+              actor.ActivityUnavailable = true;
+              Destroy(crew);
+              break;
+            }
+            if (idx == 0 && pose0 == "Chop") AttachChoppingAxe(animator);
+            foreach (var collider in crew.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+            var off = WorkerSlotOffsets[idx];
+            crew.transform.localPosition = new Vector3(off.x, 0f, -(actor.FootprintRadius - off.z));
+            crew.transform.localRotation = Quaternion.Euler(0f, idx == 0 ? 18f : idx == 2 ? -18f : 0f, 0f);
+            crew.transform.localScale = Vector3.one * 0.95f;
+            actor.ActivityCrewList.Add(crew);
+            actor.ActivityMotionList.Add(motion);
+            if (idx == 0) {
+              actor.ActivityCrew = crew;
+              actor.ActivityMotion = motion;
+            }
+          }
         }
-        if (pose == "Chop") AttachChoppingAxe(animator);
-        foreach (var collider in crew.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
-        crew.transform.localPosition = new Vector3(0.15f, 0f, -(actor.FootprintRadius + 0.95f));
-        crew.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-        crew.transform.localScale = Vector3.one * 0.95f;
-        actor.ActivityCrew = crew;
       }
-      if (actor.ActivityCrew == null) return;
-      if (actor.ActivityCrew.activeSelf != active) {
-        if (!active) actor.ActivityMotion.Set(null);
-        actor.ActivityCrew.SetActive(active);
+      var poses = new[] { pose0, pose1, pose2 };
+      for (var i = 0; i < actor.ActivityCrewList.Count; i++) {
+        var crew = actor.ActivityCrewList[i];
+        var motion = actor.ActivityMotionList[i];
+        var want = i < count;
+        if (crew.activeSelf != want) {
+          if (!want) motion.Set(null);
+          crew.SetActive(want);
+        }
+        if (want && !string.IsNullOrEmpty(poses[i])) {
+          motion.Set(poses[i], Mathf.Repeat(actor.Phase * 0.2f + i * 0.31f, 1f));
+        }
       }
-      if (active) actor.ActivityMotion.Set(pose, (actor.Phase * 0.2f) % 1f);
+    }
+
+    void UpdateWorkerCountBadge(Actor actor, int staff, int capacity, bool visible) {
+      if (!visible && actor.WorkerCountRoot == null) return;
+      if (actor.WorkerCountRoot == null) {
+        var root = new GameObject("WorkerCountBadge");
+        root.transform.SetParent(actor.View.transform, false);
+        var bg = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        bg.name = "BadgeBg";
+        bg.transform.SetParent(root.transform, false);
+        bg.transform.localScale = new Vector3(2.35f, 1.05f, 1f);
+        bg.transform.localPosition = new Vector3(0f, 0f, 0.04f);
+        Destroy(bg.GetComponent<Collider>());
+        var bgMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default")) {
+          color = new Color(0.08f, 0.11f, 0.16f, 0.88f)
+        };
+        bg.GetComponent<MeshRenderer>().sharedMaterial = bgMat;
+
+        var textGo = new GameObject("BadgeText");
+        textGo.transform.SetParent(root.transform, false);
+        var tm = textGo.AddComponent<TextMesh>();
+        tm.anchor = TextAnchor.MiddleCenter;
+        tm.alignment = TextAlignment.Center;
+        tm.fontSize = 48;
+        tm.characterSize = 0.14f;
+        tm.fontStyle = FontStyle.Bold;
+        tm.color = new Color(0.32f, 0.96f, 0.56f, 1f);
+        actor.WorkerCountRoot = root;
+        actor.WorkerCountBadge = tm;
+      }
+      if (actor.WorkerCountRoot.activeSelf != visible) actor.WorkerCountRoot.SetActive(visible);
+      if (!visible) return;
+      actor.WorkerCountRoot.transform.localPosition = new Vector3(0f, 3.4f, -(actor.FootprintRadius + 0.35f));
+      var cam = Camera.main;
+      if (cam != null) actor.WorkerCountRoot.transform.rotation = cam.transform.rotation;
+      var label = $"{staff}/{capacity}";
+      if (actor.WorkerCountBadge.text != label) actor.WorkerCountBadge.text = label;
+      actor.WorkerCountBadge.color = staff >= capacity
+        ? new Color(0.28f, 0.98f, 0.54f, 1f)
+        : staff > 0 ? new Color(1f, 0.86f, 0.28f, 1f) : new Color(0.86f, 0.90f, 0.96f, 1f);
     }
 
     static void AttachChoppingAxe(Animator animator) {

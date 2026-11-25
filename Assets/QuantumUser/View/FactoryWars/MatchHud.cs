@@ -2310,20 +2310,21 @@ namespace FactoryWars.View {
         });
       }
       // 항목 33 벙커: 안의 분대를 내보낸다.
-      var capacity = spec.RequiresResourceNode ? spec.WorkerSlotCapacity : spec.GarrisonCapacity;
+      var isWorkerSite = spec.RequiresResourceNode || spec.Role == BuildingRole.PowerPlant;
+      var capacity = isWorkerSite ? spec.WorkerSlotCapacity : spec.GarrisonCapacity;
       if (capacity > 0) {
         var inside = 0;
         foreach (var pair in frame.GetComponentIterator<Unit>()) {
           inside += pair.Component.Garrison == entity ? 1 : 0;
         }
         Entries.Add(new ContextEntry {
-          Label = spec.RequiresResourceNode ? $"공병 빼기\n{inside}/{capacity}" : $"내보내기\n{inside}/{capacity}",
+          Label = isWorkerSite ? $"작업자 빼기\n{inside}/{capacity}" : $"내보내기\n{inside}/{capacity}",
           Icon = "ui_rally_clear", Enabled = inside > 0, Locked = false,
-          Detail = spec.RequiresResourceNode ? "배치된 공병을 한 명 내보냅니다. 배치된 공병이 없으면 채굴을 멈춥니다."
+          Detail = isWorkerSite ? "배치된 작업자를 한 명 내보냅니다. 최대 3명까지 배치할 수 있습니다."
             : "보병 분대를 고르고 벙커를 누르면 들어갑니다. 안에서는 맞지 않고, 벙커가 부서지면 튕겨 나옵니다",
           Action = () => Controller.Send(new ExitGarrisonCommand { Building = entity }),
         });
-        status += spec.RequiresResourceNode ? $"  공병 {inside}/{capacity}" : $"  수용 {inside}/{capacity}";
+        status += isWorkerSite ? $"  작업자 {inside}/{capacity}" : $"  수용 {inside}/{capacity}";
       }
 
       var stock = state->Stock;

@@ -97,3 +97,4 @@ MonoBehaviour:
     RawValue: 0
   InterceptInterval:
     RawValue: 0
+  WorkerSlotCapacity: 3

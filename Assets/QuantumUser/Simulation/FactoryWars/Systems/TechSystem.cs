@@ -305,13 +305,30 @@ namespace Quantum.FactoryWars {
       return mul;
     }
 
-    /// <summary>이동 속도 배율. 자유 연방 전술 네트워크(+8%), 제3진영 신속 전개(+25%), 공중 항모 지휘 오라(+10%).</summary>
+    /// <summary>보병 기동/질주 업그레이드 해금 여부(소형 공격/장갑 1단계 이상, 신속 전개 또는 속사 특화 연구 완료 시 해금).</summary>
+    public static bool HasSprintUpgrade(Frame f, PlayerRef owner, UnitSpec spec) {
+      if (spec == null || spec.IsAir || spec.IsNaval || spec.IsVehicle || spec.Size != UnitSize.Small) {
+        return false;
+      }
+      var state = FactoryWarsUtil.Player(f, owner);
+      if (state == null) {
+        return false;
+      }
+      var small = (int)UnitSize.Small;
+      return state->AttackLevels[small] >= 1
+        || state->ArmorLevels[small] >= 1
+        || HasSpecial(f, owner, FactionSpecial.RapidDeployment);
+    }
+
+    /// <summary>이동 속도 배율. 자유 연방 전술 네트워크(+8%), 제3진영 신속 전개(+25%), 보병 질주 업그레이드(+25%), 공중 항모 지휘 오라(+10%).</summary>
     public static FP MoveSpeedMultiplier(Frame f, PlayerRef owner, UnitSpec spec, FPVector3 position) {
       var mul = FP._1;
       if (InTacticalNetwork(f, owner, position)) {
         mul = mul * (FP)108 / (FP)100;
       }
       if (HasSpecial(f, owner, FactionSpecial.RapidDeployment)) {
+        mul = mul * (FP)125 / (FP)100;
+      } else if (HasSprintUpgrade(f, owner, spec)) {
         mul = mul * (FP)125 / (FP)100;
       }
       if (spec != null && spec.IsAir == false && UltimateSystem.InCarrierAura(f, owner, position)) {

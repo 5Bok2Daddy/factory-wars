@@ -44,13 +44,13 @@ namespace FactoryWars.View {
       if (!_animator.isActiveAndEnabled) return false;
       var next = pose == null ? _locomotion : Animator.StringToHash("Base Layer.Mixamo" + pose);
       if (next == _active || (pose == null && _active == 0)) {
-        if (pose != null) _animator.speed = speed;
+        if (pose != null) _animator.speed = Mathf.Lerp(_animator.speed, speed, 0.28f);
         return true;
       }
       if (!_animator.HasState(0, next)) return false;
       _active = pose == null ? 0 : next;
-      _animator.speed = speed;
-      _animator.CrossFade(next, 0.13f, 0, phase);
+      _animator.speed = Mathf.Lerp(_animator.speed, speed, 0.45f);
+      _animator.CrossFadeInFixedTime(next, 0.22f, 0, phase);
       return true;
     }
   }

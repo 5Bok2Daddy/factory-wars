@@ -40,6 +40,8 @@ namespace FactoryWars.View {
     public bool Prone;
     /// <summary>교전/경계 상태면 true(전투 조준·전투 이동), false면 평시 순찰 보행·대기.</summary>
     public bool CombatAlert;
+    /// <summary>기동/질주 업그레이드 해금 여부. true면 이동 시 질주(SprintForward/RifleRun) 자세로 전환된다.</summary>
+    public bool SprintUnlocked;
     /// <summary>현재 활성 Mixamo 포즈 이름(검증·디버그용).</summary>
     public string ActiveMixamoPose { get; private set; }
     readonly HashSet<int> _params = new HashSet<int>();
@@ -47,6 +49,8 @@ namespace FactoryWars.View {
     static readonly string[] DeathPoses = { "DeathFront", "DeathBack", "DeathSide" };
     bool _wasInCover;
     UnitAnimState _prevState = UnitAnimState.Idle;
+    float _smoothedSpeed;
+    float _stopGraceUntil;
     float _actionUntil;
     public bool IsActing => Time.time < _actionUntil;
 
@@ -126,28 +130,42 @@ namespace FactoryWars.View {
       if (State == UnitAnimState.Dead) {
         return;
       }
-      State = state;
+      var dt = Mathf.Max(Time.deltaTime, 0.016f);
+      _smoothedSpeed = Mathf.Lerp(_smoothedSpeed, speed, 1f - Mathf.Exp(-10f * dt));
+      if (state == UnitAnimState.Move || _smoothedSpeed > 0.28f) {
+        _stopGraceUntil = Time.time + 0.16f;
+      }
+      // 히스테리시스: 미세한 NavMesh 속도 떨림으로 Move<->Idle이 뚝뚝 끊기지 않게 부드럽게 유지한다.
+      var effectiveState = state;
+      if (state == UnitAnimState.Idle && _prevState == UnitAnimState.Move && (_smoothedSpeed > 0.14f || Time.time < _stopGraceUntil)) {
+        effectiveState = UnitAnimState.Move;
+      }
+      State = effectiveState;
       if (_mixamo.Count != 0) {
-        if (state == UnitAnimState.Move) _actionUntil = 0f;
-        if (Cover != _wasInCover && state != UnitAnimState.Move) {
+        if (effectiveState == UnitAnimState.Move) _actionUntil = 0f;
+        if (Cover != _wasInCover && effectiveState != UnitAnimState.Move) {
           Action(Cover ? "EnterCover" : "LeaveCover", 0.36f);
-        } else if (state == UnitAnimState.Idle && _prevState == UnitAnimState.Move && !CombatAlert && !Cover && !IsActing) {
+        } else if (effectiveState == UnitAnimState.Idle && _prevState == UnitAnimState.Move && !CombatAlert && !Cover && !IsActing) {
           Action("MilitarySignaling", 0.85f);
         }
         if (!IsActing) {
           string pose;
           float clipSpeed = 1f;
-          if (Cover && state != UnitAnimState.Move) {
+          if (Cover && effectiveState != UnitAnimState.Move) {
             pose = "CoverIdle";
-          } else if (state == UnitAnimState.Move) {
-            if (CombatAlert) {
-              pose = speed >= 3.2f ? "RifleRun" : "RifleWalk";
-              clipSpeed = Mathf.Clamp(speed / 3.6f, 0.8f, 1.45f);
+          } else if (effectiveState == UnitAnimState.Move) {
+            var moveSpeed = Mathf.Max(_smoothedSpeed, speed);
+            if (SprintUnlocked) {
+              pose = CombatAlert ? "RifleRun" : "SprintForward";
+              clipSpeed = Mathf.Clamp(moveSpeed / 4.2f, 0.95f, 1.55f);
+            } else if (CombatAlert) {
+              pose = moveSpeed >= 3.2f ? "RifleRun" : "RifleWalk";
+              clipSpeed = Mathf.Clamp(moveSpeed / 3.6f, 0.8f, 1.45f);
             } else {
               pose = "WalkWithRifle";
-              clipSpeed = Mathf.Clamp(speed / 2.6f, 0.78f, 1.35f);
+              clipSpeed = Mathf.Clamp(moveSpeed / 2.6f, 0.78f, 1.35f);
             }
-          } else if (state == UnitAnimState.Attack || CombatAlert) {
+          } else if (effectiveState == UnitAnimState.Attack || CombatAlert) {
             pose = "IdleAiming";
           } else {
             pose = "RifleIdle";
@@ -162,7 +180,7 @@ namespace FactoryWars.View {
         }
         _wasInCover = Cover;
       }
-      _prevState = state;
+      _prevState = effectiveState;
       var hasSpeed = Has(Speed);
       var hasMoving = Has(Moving);
       var hasBuilding = Has(Building);

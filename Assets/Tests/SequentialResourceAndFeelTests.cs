@@ -893,5 +893,128 @@ namespace FactoryWars.Tests {
       CaptureCameraPng(camera, Path.Combine(dir, "mixamo_naval_crew_poses.png"), 1920, 1080);
       Debug.Log("[Mixamo_InfantryWorkersAndCrew_VerifyAndCapture] PASS (42 Humanoid clips, Patrol->Combat, PowerPlant Crew, Drive/Pilot Crew)");
     }
+
+    [UnityTest, Explicit, Timeout(1200000)]
+    public IEnumerator SprintUpgrade_ThreeWorkersBadge_AndHelmsman_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "SprintAndWorkers"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 6001, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      var bv = Battle();
+
+      // 1. Before Sprint Upgrade: smooth normal walk ("WalkWithRifle", 1.0x speed).
+      var rangerSpec = Resources.Load<UnitSpec>("FactoryWars/ff_ranger_squad");
+      Assert.IsNotNull(rangerSpec, "ff_ranger_squad spec loaded");
+      Assert.IsFalse(TechSystem.HasSprintUpgrade(Verified, 0, rangerSpec), "Sprint upgrade locked before research");
+      var baseSpeedMul = TechSystem.MoveSpeedMultiplier(Verified, 0, rangerSpec, new FPVector3(-20, 0, -64)).AsFloat;
+
+      var squad = SpawnUnitByName(Verified, 0, "ff_ranger_squad", new FPVector3(-22, 0, -64));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { squad }, Target = new FPVector3(16, 0, -64) });
+      rts.Height = 16f;
+      rts.MoveTo(new Vector2(-14f, -64f));
+      rts.Apply();
+      var sawWalk = false;
+      for (var i = 0; i < 6; i++) {
+        yield return WaitFrames(6);
+        if (bv.Actors.TryGetValue(squad, out var a) && a.View?.Animation?.ActiveMixamoPose == "WalkWithRifle") sawWalk = true;
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "sprint_before_walk.png"), 1920, 1080);
+      Assert.IsTrue(sawWalk, "Before upgrade: infantry moves smoothly with WalkWithRifle");
+
+      // Unlock Sprint Upgrade (Small Attack Lv1) -> +25% speed & SprintForward pose!
+      UnlockSmallUpgrade(Verified, 0);
+      if (Game?.Frames?.Predicted != null) UnlockSmallUpgrade(Game.Frames.Predicted, 0);
+      Assert.IsTrue(TechSystem.HasSprintUpgrade(Verified, 0, rangerSpec), "Sprint upgrade unlocked after research");
+      var sprintSpeedMul = TechSystem.MoveSpeedMultiplier(Verified, 0, rangerSpec, new FPVector3(0, 0, -64)).AsFloat;
+      Assert.Greater(sprintSpeedMul, baseSpeedMul * 1.20f, $"Sprint upgrade boosts movement speed (+25%: {baseSpeedMul:F2} -> {sprintSpeedMul:F2})");
+
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { squad }, Target = new FPVector3(24, 0, -64) });
+      var sawSprint = false;
+      for (var i = 0; i < 8; i++) {
+        yield return WaitFrames(6);
+        var p = Verified.Get<Transform3D>(squad).Position;
+        rts.MoveTo(new Vector2(p.X.AsFloat, p.Z.AsFloat));
+        rts.Apply();
+        if (bv.Actors.TryGetValue(squad, out var a) && a.View?.Animation?.ActiveMixamoPose == "SprintForward") sawSprint = true;
+        CaptureCameraPng(camera, Path.Combine(frames, $"sprint_{i:00}.png"), 960, 540);
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "sprint_after_upgrade.png"), 1920, 1080);
+      Assert.IsTrue(sawSprint, "After upgrade: infantry transitions smoothly into SprintForward");
+
+      // 2. Up to 3 Workers Per Resource Site & Visible "3/3" World-Space Badge.
+      var powerSpec = Resources.Load<BuildingSpec>("FactoryWars/ff_power_plant");
+      var ironSpec  = Resources.Load<BuildingSpec>("FactoryWars/ff_iron_extractor");
+      Assert.AreEqual(3, powerSpec.WorkerSlotCapacity, "PowerPlant supports 3 workers");
+      Assert.AreEqual(3, ironSpec.WorkerSlotCapacity,  "IronExtractor supports 3 workers");
+      var powerPlant = ProductionSystem.CreateFinishedBuilding(Verified, 0, powerSpec, new FPVector3(-26, 0, -64));
+      var eng1 = SpawnUnitByName(Verified, 0, "ff_engineer", new FPVector3(-28, 0, -68));
+      var eng2 = SpawnUnitByName(Verified, 0, "ff_engineer", new FPVector3(-26, 0, -68));
+      var eng3 = SpawnUnitByName(Verified, 0, "ff_engineer", new FPVector3(-24, 0, -68));
+      AssignGarrison(Verified, eng1, powerPlant);
+      AssignGarrison(Verified, eng2, powerPlant);
+      AssignGarrison(Verified, eng3, powerPlant);
+      if (Game?.Frames?.Predicted != null) {
+        AssignGarrison(Game.Frames.Predicted, eng1, powerPlant);
+        AssignGarrison(Game.Frames.Predicted, eng2, powerPlant);
+        AssignGarrison(Game.Frames.Predicted, eng3, powerPlant);
+      }
+      yield return WaitFrames(15);
+
+      Assert.AreEqual(3, CitySystem.Occupants(Verified, powerPlant), "3 workers assigned to PowerPlant");
+      Assert.IsFalse(CitySystem.CanEnter(Verified, 0, powerPlant), "4th worker rejected when 3/3 full");
+      Assert.IsTrue(bv.Actors.TryGetValue(powerPlant, out var ppAct), "PowerPlant actor found");
+      Assert.AreEqual(3, ppAct.ActivityCrewList.Count, "3 distinct visible workers spawned at resource site");
+      Assert.Greater(Vector3.Distance(ppAct.ActivityCrewList[0].transform.localPosition, ppAct.ActivityCrewList[1].transform.localPosition), 1.2f, "Workers 0 & 1 non-overlapping");
+      Assert.Greater(Vector3.Distance(ppAct.ActivityCrewList[1].transform.localPosition, ppAct.ActivityCrewList[2].transform.localPosition), 1.2f, "Workers 1 & 2 non-overlapping");
+      Assert.IsNotNull(ppAct.WorkerCountBadge, "World-space worker count badge created");
+      Assert.AreEqual("3/3", ppAct.WorkerCountBadge.text, "Worker count badge displays 3/3");
+
+      rts.Height = 18f;
+      rts.MoveTo(new Vector2(-26f, -66f));
+      rts.Apply();
+      yield return WaitFrames(8);
+      CaptureCameraPng(camera, Path.Combine(dir, "three_workers_badge_3of3.png"), 1920, 1080);
+
+      // 3. Naval Helmsman / Crew Visibility + Particle Wakes (no rigid bar wakes).
+      var ship  = SpawnUnitByName(Verified, 0, "ff_artillery_ship", new FPVector3(-14, 0, 108));
+      var boat  = SpawnUnitByName(Verified, 0, "ff_scout_boat",     new FPVector3(-22, 0, 114));
+      var craft = SpawnUnitByName(Verified, 0, "ff_landing_craft",  new FPVector3( -8, 0, 114));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { ship, boat, craft }, Target = new FPVector3(-15, 0, 148) });
+      yield return WaitFrames(Fps);
+
+      Assert.IsTrue(bv.Actors.TryGetValue(ship,  out var shipAct)  && shipAct.VehicleCrew  != null && shipAct.VehicleCrewPose  == "Drive", "Battleship bridge helmsman visible");
+      Assert.IsTrue(bv.Actors.TryGetValue(boat,  out var boatAct)  && boatAct.VehicleCrew  != null && boatAct.VehicleCrewPose  == "Drive", "Scout boat helmsman visible");
+      Assert.IsTrue(bv.Actors.TryGetValue(craft, out var craftAct) && craftAct.VehicleCrew != null && craftAct.VehicleCrewPose == "Drive", "Landing craft helmsman visible");
+      Assert.IsNotNull(shipAct.NavalWake, "ParticlePack naval wake active on ship");
+      Assert.IsNull(shipAct.View.transform.Find("NavalWaterlineWake"), "Rigid V-bar wake remains removed");
+
+      rts.Height = 28f;
+      rts.MoveTo(new Vector2(-15f, 116f));
+      rts.Apply();
+      yield return WaitFrames(8);
+      CaptureCameraPng(camera, Path.Combine(dir, "naval_helmsman_and_particle_wake.png"), 1920, 1080);
+      Debug.Log($"[SprintUpgrade_ThreeWorkersBadge_AndHelmsman_VerifyAndCapture] PASS speedMul=({baseSpeedMul:F2}->{sprintSpeedMul:F2}) badge={ppAct.WorkerCountBadge.text} workers={ppAct.ActivityCrewList.Count}");
+    }
+
+    static unsafe void UnlockSmallUpgrade(Frame f, PlayerRef player) {
+      var st = FactoryWarsUtil.Player(f, player);
+      if (st != null) st->AttackLevels[(int)UnitSize.Small] = 1;
+    }
+
+    static unsafe void AssignGarrison(Frame f, EntityRef unitEntity, EntityRef buildingEntity) {
+      if (f.Unsafe.TryGetPointer<Unit>(unitEntity, out var u)) u->Garrison = buildingEntity;
+    }
   }
 }
