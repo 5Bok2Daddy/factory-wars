@@ -91,6 +91,9 @@ namespace FactoryWars.View {
       public GameObject ActivityCrew;
       public MixamoMotion ActivityMotion;
       public bool ActivityUnavailable;
+      public GameObject VehicleCrew;
+      public MixamoMotion VehicleCrewMotion;
+      public string VehicleCrewPose;
       public readonly List<ConstructionWorkView> ConstructionWork = new List<ConstructionWorkView>();
       public float WeldFxAt;
       public float FootprintRadius;
@@ -1160,6 +1163,8 @@ namespace FactoryWars.View {
           actor.View.Animation?.EnableMixamoInfantry();
         } else if (spec.Size == UnitSize.Engineer) {
           actor.EngineerWork = ConstructionWorkView.Attach(actor.View.Model, _catalog.IronExtractorDrill);
+        } else {
+          AttachVehicleCrew(actor, spec);
         }
       }
       var color = frame.Global->Players.GetPointer(unit->Owner)->ColorIndex;
@@ -1302,6 +1307,7 @@ namespace FactoryWars.View {
         var speed = dt > 0f ? (actor.Position - before).magnitude / dt : 0f;
         actor.View.Animation.Cover = unit->InCover;
         actor.View.Animation.Prone = unit->StealthUntilFrame > frame.Number;
+        actor.View.Animation.CombatAlert = actor.InCombat;
         actor.View.Animation.Set(AnimState(speed, hasTarget, workingAnim ? wAnim->Task : WorkerTask.Idle), speed);
       }
     }
@@ -1957,8 +1963,10 @@ namespace FactoryWars.View {
           if (actor.PipRoot != null) actor.PipRoot.transform.localScale = Vector3.one * 1.65f;
         }
         UpdatePips(actor, staff, staff > 0 || _marked.Contains(actor), 0.65f);
-        var pose = spec.RequiredNodeKind == ResourceKind.Wood ? "Chop"
-          : (frame.Number / 55) % 3 == 0 ? "Device" : (frame.Number / 55) % 3 == 1 ? "Lever" : "Button";
+        var stage = (frame.Number / 50) % 5;
+        var pose = spec.RequiredNodeKind == ResourceKind.Wood
+          ? (stage == 0 || stage == 1 ? "Chop" : stage == 2 ? "PickUp" : stage == 3 ? "BoxJog" : "PutDown")
+          : (stage == 0 ? "Dig" : stage == 1 ? "PickUp" : stage == 2 ? "HoldingWalk" : stage == 3 ? "PutDown" : "Inspect");
         UpdateActivityCrew(actor, extracting, pose);
         UpdateExtractorDelivery(frame, actor, building->Owner, spec.RequiredNodeKind, extracting, dt);
       } else if (spec.RequiresResourceNode) {
@@ -1967,6 +1975,8 @@ namespace FactoryWars.View {
       }
       if (spec.Role == BuildingRole.PowerPlant) {
         UpdatePowerPlantVisual(actor, powered, dt);
+        var powerPose = (frame.Number / 65) % 2 == 0 ? "Device" : "Inspect";
+        UpdateActivityCrew(actor, powered && buildingSeen, powerPose);
       }
       var bHpRatio = spec.MaxHealth > FP._0 ? (building->Health / spec.MaxHealth).AsFloat : 1f;
       UpdateDamageFire(actor, bHpRatio, 1.4f);
@@ -2047,6 +2057,39 @@ namespace FactoryWars.View {
       }
     }
 
+    void AttachVehicleCrew(Actor actor, UnitSpec spec) {
+      if (actor?.View == null || spec == null || !MixamoMotion.HasWorkerController) return;
+      var id = spec.name ?? "";
+      string pose = null;
+      Vector3 seat = Vector3.zero;
+      float scale = 0.64f;
+      if (id == "cf_scout_bike") { pose = "Drive"; seat = new Vector3(0f, 0.72f, -0.15f); scale = 0.68f; }
+      else if (id == "ff_scout_buggy") { pose = "Drive"; seat = new Vector3(-0.22f, 0.42f, 0.05f); scale = 0.64f; }
+      else if (id == "ff_scout_boat") { pose = "Drive"; seat = new Vector3(0f, 0.62f, -0.55f); scale = 0.68f; }
+      else if (id == "ff_landing_craft") { pose = "Drive"; seat = new Vector3(0f, 1.05f, -1.65f); scale = 0.72f; }
+      else if (id == "ff_hawk_gunship" || id == "cf_gale_gunship" || id == "pmc_scout_heli" || id == "pmc_attack_heli") {
+        pose = "Pilot"; seat = new Vector3(0f, 0.55f, 0.85f); scale = 0.60f;
+      }
+      if (pose == null) return;
+      if (!VisualCatalog.TryFilled(VisualCatalog.FxId("const_worker_0"), out var slot) || slot.Prefab == null) return;
+      var parent = actor.View.Turn != null ? actor.View.Turn : actor.View.transform;
+      var crew = Instantiate(slot.Prefab, parent, false);
+      crew.name = pose == "Pilot" ? "VehicleCrew_Pilot" : "VehicleCrew_Driver";
+      foreach (var collider in crew.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+      crew.transform.localPosition = seat;
+      crew.transform.localRotation = Quaternion.identity;
+      crew.transform.localScale = Vector3.one * scale;
+      var animator = crew.GetComponentInChildren<Animator>(true);
+      var motion = MixamoMotion.Attach(animator, infantry: false);
+      if (motion == null || !motion.Set(pose, (actor.Phase * 0.17f) % 1f)) {
+        Destroy(crew);
+        return;
+      }
+      actor.VehicleCrew = crew;
+      actor.VehicleCrewMotion = motion;
+      actor.VehicleCrewPose = pose;
+    }
+
     void UpdateActivityCrew(Actor actor, bool active, string pose) {
       if (active && actor.ActivityCrew == null) {
         if (actor.ActivityUnavailable || !MixamoMotion.HasWorkerController) return;
@@ -2062,8 +2105,8 @@ namespace FactoryWars.View {
         }
         if (pose == "Chop") AttachChoppingAxe(animator);
         foreach (var collider in crew.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
-        crew.transform.localPosition = new Vector3(actor.FootprintRadius * 0.68f, 0f, actor.FootprintRadius * 0.72f);
-        crew.transform.localRotation = Quaternion.Euler(0f, 184f, 0f);
+        crew.transform.localPosition = new Vector3(0.15f, 0f, -(actor.FootprintRadius + 0.95f));
+        crew.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
         crew.transform.localScale = Vector3.one * 0.82f;
         actor.ActivityCrew = crew;
       }

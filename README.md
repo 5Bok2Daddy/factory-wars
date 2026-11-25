@@ -7,6 +7,15 @@
 
 ---
 
+## Mixamo 휴머노이드 애니메이션 통합 (42종 클립 · 보병 순찰/전투 전환 · 자원 작업자 · 차량/항공 승무원 · 2026-11-25 · 2/2 통과)
+
+| 보병/PMC 순찰 보행 vs. 전투 조준/사격 전후 | 순찰 → 교전 전환 모션 클립 (GIF) | 차량 승무원(`Drive`) & 발전소 작업자(`Device`/`Inspect`) |
+| --- | --- | --- |
+| [![보병 순찰 vs 전투 전환](Docs/status_images/Mixamo/mixamo_patrol_vs_combat_before_after.png)](Docs/status_images/Mixamo/mixamo_patrol_vs_combat_before_after.png) | [![보병 순찰→교전 전환 GIF](Docs/status_images/Mixamo/mixamo_infantry_patrol_to_combat.gif)](Docs/status_images/Mixamo/mixamo_infantry_patrol_to_combat.gif) | [![차량 승무원 Drive 자세](Docs/status_images/Mixamo/mixamo_vehicle_and_crew_poses.png)](Docs/status_images/Mixamo/mixamo_vehicle_and_crew_poses.png) |
+| [전후 비교](Docs/status_images/Mixamo/mixamo_patrol_vs_combat_before_after.png) · `WalkWithRifle` ↔ `IdleAiming`/`FiringRifle`/`RifleRun`/`Reload` | [GIF 클립](Docs/status_images/Mixamo/mixamo_infantry_patrol_to_combat.gif) · Bake-Into-Pose 루트 잠금·X Bot 메시 0건 | [차량 승무원](Docs/status_images/Mixamo/mixamo_vehicle_and_crew_poses.png) · [자원/발전소 작업자](Docs/status_images/Mixamo/mixamo_resource_workers.png) (`Dig`/`Chop`/`Device`/`Inspect`) |
+
+---
+
 ## 기동형 MLS 궁극기 교체 · 이동 사격 · 발사 경고 제거 · 양 진영 1기 상한 (2026-11-25 · 3/3 통과)
 
 | 기동형 MLS 이동 사격 정지화면 | 이동 사격 로켓 궤적 모션 클립 (GIF) | 기동형 MLS 근접 가독성 (`SM_Veh_Rocket_Truck_01`) |

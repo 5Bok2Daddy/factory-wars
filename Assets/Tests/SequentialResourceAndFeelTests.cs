@@ -790,5 +790,99 @@ namespace FactoryWars.Tests {
       Assert.Greater(rocketsSeen, 0, $"Mobile MLS launched real parabolic MlrsRocket projectiles (samples={rocketsSeen})");
       Debug.Log($"[MobileMls_FireWhileMoving_NoWarning_AndUnitCaps] PASS dx={maxMovedX:F2}m rocketsSeen={rocketsSeen} warnings={strategicWarnings}");
     }
+
+    [UnityTest, Explicit, Timeout(1200000)]
+    public IEnumerator Mixamo_InfantryWorkersAndCrew_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "Mixamo"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 5901, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      var bv = Battle();
+
+      // 1. Infantry & PMC: Relaxed Patrol Walk ("WalkWithRifle") -> Active Combat ("IdleAiming"/"FiringRifle"/"RifleRun").
+      var origin = new FPVector3(-14, 0, -64);
+      var ffInf  = SpawnUnitByName(Verified, 0, "ff_ranger_squad",    origin + new FPVector3(0, 0, -2));
+      var pmcInf = SpawnUnitByName(Verified, 0, "pmc_operator_squad", origin + new FPVector3(0, 0,  2));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { ffInf, pmcInf }, Target = origin + new FPVector3(24, 0, 0) });
+
+      rts.Height = 16f;
+      rts.MoveTo(new Vector2(-4f, -64f));
+      rts.Apply();
+
+      var sawPatrolWalk = false;
+      for (var f = 0; f < 6; f++) {
+        yield return WaitFrames(8);
+        if (bv.Actors.TryGetValue(ffInf, out var a) && a.View?.Animation?.ActiveMixamoPose == "WalkWithRifle") sawPatrolWalk = true;
+        CaptureCameraPng(camera, Path.Combine(frames, $"infantry_motion_{f:00}.png"), 960, 540);
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "mixamo_infantry_patrol_walk.png"), 1920, 1080);
+      Assert.IsTrue(sawPatrolWalk, "Infantry uses relaxed Mixamo WalkWithRifle during non-combat movement");
+      Assert.IsNull(GameObject.Find("X Bot"), "No X Bot mesh spawned in gameplay scene");
+
+      // Phase B: Spawn enemy squad and engage in active combat -> verify distinct combat pose (IdleAiming / FiringRifle / RifleRun / Reload)
+      var enemyInf = SpawnUnitByName(Verified, 1, "cf_militia", new FPVector3(8, 0, -64));
+      yield return Send(0, new AttackTargetCommand { Units = new[] { ffInf, pmcInf }, Target = enemyInf });
+      yield return Send(1, new AttackTargetCommand { Units = new[] { enemyInf }, Target = ffInf });
+
+      var sawCombatPose = false;
+      for (var f = 6; f < 12; f++) {
+        yield return WaitFrames(8);
+        if (bv.Actors.TryGetValue(ffInf, out var a)) {
+          var pose = a.View?.Animation?.ActiveMixamoPose;
+          if (pose == "IdleAiming" || pose == "FiringRifle" || pose == "RifleWalk" || pose == "RifleRun" || pose == "Reload") {
+            sawCombatPose = true;
+          }
+        }
+        CaptureCameraPng(camera, Path.Combine(frames, $"infantry_motion_{f:00}.png"), 960, 540);
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "mixamo_infantry_combat_aim_fire.png"), 1920, 1080);
+      Assert.IsTrue(sawCombatPose, "Infantry transitions into Mixamo combat stance (IdleAiming/FiringRifle/RifleRun)");
+
+      // 2. Resource Workers (Power Plant Device/Inspect crew on clear open pad).
+      var powerSpec = Resources.Load<BuildingSpec>("FactoryWars/ff_power_plant");
+      Assert.IsNotNull(powerSpec, "ff_power_plant spec loaded");
+      var powerPlant = ProductionSystem.CreateFinishedBuilding(Verified, 0, powerSpec, new FPVector3(-26, 0, -64));
+      yield return WaitFrames(20);
+      Assert.IsTrue(bv.Actors.TryGetValue(powerPlant, out var ppAct) && ppAct.ActivityCrew != null && ppAct.ActivityCrew.activeSelf,
+        "PowerPlant spawns live Mixamo technician crew (Device/Inspect)");
+      rts.Height = 18f;
+      rts.MoveTo(new Vector2(-24f, -62f));
+      rts.Apply();
+      yield return WaitFrames(8);
+      CaptureCameraPng(camera, Path.Combine(dir, "mixamo_resource_workers.png"), 1920, 1080);
+
+      // 3. Vehicle, Aircraft & Naval Crew (Drive & Pilot) on clear open road.
+      var buggy = SpawnUnitByName(Verified, 0, "ff_scout_buggy",   new FPVector3(-12, 0, -60));
+      var bike  = SpawnUnitByName(Verified, 0, "cf_scout_bike",    new FPVector3( -6, 0, -60));
+      var heli  = SpawnUnitByName(Verified, 0, "ff_hawk_gunship",  new FPVector3( -9, 0, -56));
+      var boat  = SpawnUnitByName(Verified, 0, "ff_scout_boat",    new FPVector3(-16, 0, 118));
+      var craft = SpawnUnitByName(Verified, 0, "ff_landing_craft", new FPVector3(-22, 0, 118));
+      yield return WaitFrames(15);
+
+      Assert.IsTrue(bv.Actors.TryGetValue(buggy, out var buggyAct) && buggyAct.VehicleCrew != null && buggyAct.VehicleCrewPose == "Drive", "Scout buggy crew uses Mixamo Drive");
+      Assert.IsTrue(bv.Actors.TryGetValue(bike,  out var bikeAct)  && bikeAct.VehicleCrew  != null && bikeAct.VehicleCrewPose  == "Drive", "Scout bike crew uses Mixamo Drive");
+      Assert.IsTrue(bv.Actors.TryGetValue(boat,  out var boatAct)  && boatAct.VehicleCrew  != null && boatAct.VehicleCrewPose  == "Drive", "Scout boat crew uses Mixamo Drive");
+      Assert.IsTrue(bv.Actors.TryGetValue(craft, out var craftAct) && craftAct.VehicleCrew != null && craftAct.VehicleCrewPose == "Drive", "Landing craft crew uses Mixamo Drive");
+      Assert.IsTrue(bv.Actors.TryGetValue(heli,  out var heliAct)  && heliAct.VehicleCrew  != null && heliAct.VehicleCrewPose  == "Pilot", "Helicopter crew uses Mixamo Pilot");
+
+      rts.Height = 16f;
+      rts.MoveTo(new Vector2(-9f, -60f));
+      rts.Apply();
+      yield return WaitFrames(8);
+      CaptureCameraPng(camera, Path.Combine(dir, "mixamo_vehicle_and_crew_poses.png"), 1920, 1080);
+      Debug.Log("[Mixamo_InfantryWorkersAndCrew_VerifyAndCapture] PASS (42 Humanoid clips, Patrol->Combat, PowerPlant Crew, Drive/Pilot Crew)");
+    }
   }
 }

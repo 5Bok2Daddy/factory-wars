@@ -38,10 +38,15 @@ namespace FactoryWars.View {
     public bool Cover;
     /// <summary>은신(엎드려 숨은 저격수) 중이면 true. 사망 연출이 엎드린 자세(DeathProne)가 된다.</summary>
     public bool Prone;
+    /// <summary>교전/경계 상태면 true(전투 조준·전투 이동), false면 평시 순찰 보행·대기.</summary>
+    public bool CombatAlert;
+    /// <summary>현재 활성 Mixamo 포즈 이름(검증·디버그용).</summary>
+    public string ActiveMixamoPose { get; private set; }
     readonly HashSet<int> _params = new HashSet<int>();
     readonly List<MixamoMotion> _mixamo = new List<MixamoMotion>();
     static readonly string[] DeathPoses = { "DeathFront", "DeathBack", "DeathSide" };
     bool _wasInCover;
+    UnitAnimState _prevState = UnitAnimState.Idle;
     float _actionUntil;
     public bool IsActing => Time.time < _actionUntil;
 
@@ -55,8 +60,14 @@ namespace FactoryWars.View {
 
     void Action(string pose, float seconds) {
       if (_mixamo.Count == 0) return;
-      foreach (var motion in _mixamo) motion.Set(pose);
-      _actionUntil = Time.time + seconds;
+      var applied = false;
+      foreach (var motion in _mixamo) {
+        if (motion.Set(pose)) applied = true;
+      }
+      if (applied) {
+        ActiveMixamoPose = pose;
+        _actionUntil = Time.time + seconds;
+      }
     }
 
     public void Hit() {
@@ -120,12 +131,38 @@ namespace FactoryWars.View {
         if (state == UnitAnimState.Move) _actionUntil = 0f;
         if (Cover != _wasInCover && state != UnitAnimState.Move) {
           Action(Cover ? "EnterCover" : "LeaveCover", 0.36f);
+        } else if (state == UnitAnimState.Idle && _prevState == UnitAnimState.Move && !CombatAlert && !Cover && !IsActing) {
+          Action("MilitarySignaling", 0.85f);
         }
         if (!IsActing) {
-          foreach (var motion in _mixamo) motion.Set(null);
+          string pose;
+          float clipSpeed = 1f;
+          if (Cover && state != UnitAnimState.Move) {
+            pose = "CoverIdle";
+          } else if (state == UnitAnimState.Move) {
+            if (CombatAlert) {
+              pose = speed >= 3.2f ? "RifleRun" : "RifleWalk";
+              clipSpeed = Mathf.Clamp(speed / 3.6f, 0.8f, 1.45f);
+            } else {
+              pose = "WalkWithRifle";
+              clipSpeed = Mathf.Clamp(speed / 2.6f, 0.78f, 1.35f);
+            }
+          } else if (state == UnitAnimState.Attack || CombatAlert) {
+            pose = "IdleAiming";
+          } else {
+            pose = "RifleIdle";
+          }
+          var ok = false;
+          for (var i = 0; i < _mixamo.Count; i++) {
+            var phase = Mathf.Repeat(0.29f * i, 1f);
+            if (_mixamo[i].Set(pose, phase, clipSpeed)) ok = true;
+            else _mixamo[i].Set(null);
+          }
+          ActiveMixamoPose = ok ? pose : null;
         }
         _wasInCover = Cover;
       }
+      _prevState = state;
       var hasSpeed = Has(Speed);
       var hasMoving = Has(Moving);
       var hasBuilding = Has(Building);
@@ -160,7 +197,11 @@ namespace FactoryWars.View {
 
     public void Fire() {
       AttackCount++;
-      if (AttackCount % 7 == 0 && State == UnitAnimState.Attack && !Cover && !IsActing) Action("Reload", 0.65f);
+      if (AttackCount % 7 == 0 && State == UnitAnimState.Attack && !Cover && !IsActing) {
+        Action("Reload", 0.65f);
+      } else if (!Cover && !IsActing) {
+        Action("FiringRifle", 0.42f);
+      }
       if (Has(AttackTrigger) == false) {
         return;
       }
