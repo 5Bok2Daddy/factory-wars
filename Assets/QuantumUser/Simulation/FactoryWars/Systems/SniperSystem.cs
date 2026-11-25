@@ -28,7 +28,7 @@ namespace Quantum.FactoryWars {
       var count = 0;
       var units = f.Filter<Unit>();
       while (units.NextUnsafe(out _, out var unit)) {
-        if (unit->Owner == player && ReferenceEquals(f.FindAsset(unit->Spec), spec)) {
+        if (unit->Owner == player && unit->Health > FP._0 && ReferenceEquals(f.FindAsset(unit->Spec), spec)) {
           count++;
         }
       }

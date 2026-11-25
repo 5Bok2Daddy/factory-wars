@@ -66,7 +66,7 @@ namespace FactoryWars.View {
     public static string FactionName(string factionId) => factionId == "free_federation" ? "자유 연방" : factionId == "continental_federation" ? "대륙 연방" : "시험 진영";
 
     /// <summary>궁극 전력 이름(항목 33).</summary>
-    public static string UltimateName(UltimateKind kind) => kind == UltimateKind.Carrier ? "공중 항모" : kind == UltimateKind.StrategicMissile ? "전략 미사일" : "상륙 강습단";
+    public static string UltimateName(UltimateKind kind) => kind == UltimateKind.Carrier ? "공중 항모" : kind == UltimateKind.StrategicMissile ? "기동형 MLS" : "상륙 강습단";
 
     /// <summary>궁극 전력을 시작하지 못하는 이유 목록(자물쇠 설명). siteName은 전용 건물 이름.</summary>
     public static string UltimateLocks(UltimateLock locks, int tier, string siteName) {

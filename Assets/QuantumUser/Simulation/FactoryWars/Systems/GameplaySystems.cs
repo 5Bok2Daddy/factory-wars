@@ -180,7 +180,7 @@ namespace Quantum.FactoryWars {
       WorkerSystem.Assign(f, engineer, WorkerTask.Build, created);
       if (spec.Role == BuildingRole.UltimateSite) {
         var ult = UltimateSystem.SpecOf(f, player);
-        if (ult != null) {
+        if (ult != null && ult.Kind != UltimateKind.StrategicMissile) {
           f.Events.UltimateNotice(player, UltimateStage.Started, ult.Kind, position, -FPMath.CeilToInt(spec.BuildTimeSeconds));
         }
       }
@@ -1225,7 +1225,7 @@ namespace Quantum.FactoryWars {
       }
     }
 
-    static void Fire(Frame f, in Weapon weapon, Unit* unit, EntityRef target, FPVector3 position, FPVector3 targetPosition, FP range) {
+    static void Fire(Frame f, EntityRef attacker, in Weapon weapon, Unit* unit, EntityRef target, FPVector3 position, FPVector3 targetPosition, FP range) {
       var spec = weapon.Spec;
       // 항목 31: 공격 연구와 정예화.
       var amount = spec.Damage * TechSystem.OutgoingMultiplier(f, unit->Owner, unit, spec) * TacticalSystem.VetDamage(f, unit);
@@ -1245,6 +1245,10 @@ namespace Quantum.FactoryWars {
       }
       if (spec.Ability == SpecialAbility.MultiAirTarget) {
         FireMultiAir(f, weapon, target, position, range, amount);
+      } else if (spec.FireWhileMoving && spec.Attack == AttackType.Area) {
+        // 기동형 MLS 궁극기: 이동 중에도 거치 없이 포물선 로켓 일제 사격(배기·궤적·착탄 VFX 연동).
+        var splash = spec.SplashRadius * TechSystem.SplashRadiusMultiplier(f, unit->Owner, spec);
+        MlrsSystem.LaunchMobileRocket(f, attacker, unit->Owner, position, targetPosition, amount, splash);
       } else if (spec.Ability == SpecialAbility.RocketSalvo) {
         // 다연장 로켓포차: 4발 결정론적 스플래시 로켓 일제 사격.
         var splash = spec.SplashRadius * TechSystem.SplashRadiusMultiplier(f, unit->Owner, spec);
@@ -1323,14 +1327,14 @@ namespace Quantum.FactoryWars {
             unit->TargetEntity = air;
           }
         }
-        // 이동 명령 중에는 자동 조준하지 않는다(기동 대공차 제외).
+        // 이동 명령 중에는 자동 조준하지 않는다(기동 대공차 및 FireWhileMoving 기동형 MLS 제외).
         if (unit->Order != UnitOrder.Move && unit->Order != UnitOrder.AttackTarget && spec.Ability == SpecialAbility.AirPriority) {
           var air = FindTarget(f, weapon, position, spec.MinRange, range, airOnly: true);
           if (air != EntityRef.None) {
             unit->TargetEntity = air;
           }
         }
-        if (unit->TargetEntity == EntityRef.None && unit->Order != UnitOrder.Move) {
+        if (unit->TargetEntity == EntityRef.None && (unit->Order != UnitOrder.Move || spec.FireWhileMoving)) {
           unit->TargetEntity = FindTarget(f, weapon, position, spec.MinRange, range);
         }
         if (unit->TargetEntity == EntityRef.None || unit->AttackCooldown > FP._0) {
@@ -1340,14 +1344,14 @@ namespace Quantum.FactoryWars {
         var targetPosition = f.Unsafe.GetPointer<Transform3D>(unit->TargetEntity)->Position;
         var distance = FactoryWarsUtil.FlatDistanceSqr(targetPosition, position);
         if (distance > ReachSqr(f, unit->TargetEntity, RangeTo(f, range, position, targetPosition)) || distance < spec.MinRange * spec.MinRange) {
-          // 정지·위치 고수 상태에서 사거리를 벗어난 대상은 쫓지 않는다.
-          if (unit->Order == UnitOrder.Stop || unit->Order == UnitOrder.Hold) {
+          // 정지·위치 고수 상태에서 사거리를 벗어난 대상은 쫓지 않는다. 이동 중 기동 사격 유닛도 사거리 밖이면 타겟 해제.
+          if (unit->Order == UnitOrder.Stop || unit->Order == UnitOrder.Hold || (unit->Order == UnitOrder.Move && spec.FireWhileMoving)) {
             unit->TargetEntity = EntityRef.None;
           }
           continue;
         }
 
-        Fire(f, weapon, unit, unit->TargetEntity, position, targetPosition, range);
+        Fire(f, entity, weapon, unit, unit->TargetEntity, position, targetPosition, range);
       }
 
       UpdateTowers(f);

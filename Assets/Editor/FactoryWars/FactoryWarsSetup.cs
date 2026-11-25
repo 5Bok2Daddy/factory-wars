@@ -298,6 +298,8 @@ namespace FactoryWars.EditorTools {
       public int TransportCapacity;
       public bool TransportAllowsVehicles;
       public double TransportEjectHealthRatio;
+      public int MaxOwned;
+      public bool FireWhileMoving;
       /// <summary>생산 건물 id 뒷부분(barracks, vehicle_factory, airfield, heavy_works, shipyard, headquarters). 항목 31.</summary>
       public string At;
     }
@@ -321,7 +323,7 @@ namespace FactoryWars.EditorTools {
       new UnitRow { Id = "ff_mobile_sam", At = "vehicle_factory", Vehicle = true, Size = UnitSize.Medium, Cost = R(190, 0, 70, 55), Build = 26, Health = 400, Attack = AttackType.AntiAir, Damage = 38, Range = 13, Interval = 1.6, Speed = 6.5, Population = 2, Ability = SpecialAbility.CarrierHunter, AbilityMultiplier = 1.5 },
       new UnitRow { Id = "ff_hawk_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(250, 0, 100, 100), Build = 40, Health = 450, Attack = AttackType.AntiArmor, Damage = 55, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
       new UnitRow { Id = "ff_transport_heli", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(210, 0, 75, 70), Build = 28, Health = 420, Attack = AttackType.None, Speed = 7.8, Population = 2, TransportCapacity = 4, TransportEjectHealthRatio = 0 },
-      new UnitRow { Id = "ff_skyfortress_bomber", At = "airfield", Size = UnitSize.Large, Air = true, Cost = R(500, 0, 250, 350), Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, Ability = SpecialAbility.CarpetBomb, AbilityMultiplier = 1.5, AbilityRadius = 8, AbilityCount = 5, AbilityCooldown = 45 },
+      new UnitRow { Id = "ff_skyfortress_bomber", At = "airfield", Size = UnitSize.Large, Air = true, Cost = R(500, 0, 250, 350), Build = 70, Health = 1600, Attack = AttackType.Area, Damage = 200, Range = 4, Splash = 4, Interval = 5, Speed = 5, MaxOwned = 1, Ability = SpecialAbility.CarpetBomb, AbilityMultiplier = 1.5, AbilityRadius = 8, AbilityCount = 5, AbilityCooldown = 45 },
       // 항목 31 새 대형: 중공업 기지의 중전차(B1: 자유 연방 중공업 기지가 만들 것이 없던 문제).
       new UnitRow { Id = "ff_bulwark_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(400, 0, 170, 125), Build = 50, Health = 2000, Attack = AttackType.AntiArmor, Damage = 125, Range = 9, Interval = 2.5, Speed = 3.5 },
       new UnitRow { Id = "cf_engineer", At = "headquarters", Size = UnitSize.Engineer, Cost = R(80), Build = 8, Health = 70, Attack = AttackType.None, Speed = 4, Ability = SpecialAbility.EngineerWork },
@@ -347,7 +349,7 @@ namespace FactoryWars.EditorTools {
       // 항목 31 새 중형 공중: 비행장의 공격헬기(B2: 대륙 연방 비행장이 만들 것이 없던 문제).
       new UnitRow { Id = "cf_gale_gunship", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(200, 0, 75, 75), Build = 30, Health = 480, Attack = AttackType.AntiArmor, Damage = 56, Range = 8, Interval = 2, Speed = 7, Ability = SpecialAbility.GroundArmorResist, AbilityMultiplier = 0.5 },
       new UnitRow { Id = "cf_transport_heli", At = "airfield", Size = UnitSize.Medium, Air = true, Cost = R(210, 0, 75, 70), Build = 28, Health = 420, Attack = AttackType.None, Speed = 7.8, Population = 2, TransportCapacity = 4, TransportEjectHealthRatio = 0 },
-      new UnitRow { Id = "cf_longwall_mlrs", At = "heavy_works", Size = UnitSize.Large, Cost = R(360, 0, 170, 170), Build = 48, Health = 1100, Attack = AttackType.Area, Damage = 195, Range = 18, MinRange = 6, Splash = 4, Interval = 4.5, Speed = 3, Ability = SpecialAbility.LongRangeBarrage },
+      new UnitRow { Id = "cf_longwall_mlrs", At = "heavy_works", Size = UnitSize.Large, Cost = R(360, 0, 170, 170), Build = 48, Health = 1100, Attack = AttackType.Area, Damage = 195, Range = 18, MinRange = 0, Splash = 4, Interval = 4.5, Speed = 3, MaxOwned = 1, FireWhileMoving = true, Ability = SpecialAbility.LongRangeBarrage },
       // 항목 31 새 대형: 중공업 기지의 요새 전차(물량형이라 자유 연방 중전차보다 싸고 약하다).
       new UnitRow { Id = "cf_fortress_tank", At = "heavy_works", Size = UnitSize.Large, Cost = R(340, 0, 140, 100), Build = 42, Health = 2000, Attack = AttackType.AntiArmor, Damage = 128, Range = 9, Interval = 2.5, Speed = 3.5, Population = 5 },
       new UnitRow { Id = "ff_scout_boat", At = "shipyard", Size = UnitSize.Small, Naval = true, Cost = R(120, 50, 0, 20), Build = 16, Health = 180, Attack = AttackType.AntiInfantry, Damage = 20, Range = 6, Interval = 1, Speed = 8, Population = 2 },
@@ -683,7 +685,8 @@ namespace FactoryWars.EditorTools {
       spec.GarrisonSightRange = 0;
       spec.SetupSeconds = 0;
       spec.VehicleDamageRatio = 1;
-      spec.MaxOwned = 0;
+      spec.MaxOwned = row.MaxOwned;
+      spec.FireWhileMoving = row.FireWhileMoving;
       spec.StealthSeconds = 0;
       spec.StealthCooldownSeconds = 0;
       spec.StealthSpeedMultiplier = 1;

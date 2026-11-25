@@ -57,7 +57,9 @@ namespace Quantum {
     public FP CarrierAuraAttackBonus;
     public FP CarrierAuraSpeedBonus;
 
-    // ---------- 전략 미사일 ----------
+    // ---------- 전략 미사일 (기동형 MLS 교체) ----------
+    /// <summary>고정 미사일 사일로를 대체하는 기동형 MLS 유닛 스펙(예: cf_longwall_mlrs, 진영당 최대 1기).</summary>
+    public AssetRef<UnitSpec> MobileMls;
     /// <summary>발사부터 착탄까지(6~8초 비행 궤적). 이 동안 모든 플레이어에게 착탄 지점과 비행체가 보인다.</summary>
     public FP WarningSeconds;
     /// <summary>비행 중 전략 미사일 요격 체력(기본 300 HP).</summary>

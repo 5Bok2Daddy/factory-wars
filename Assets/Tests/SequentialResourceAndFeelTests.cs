@@ -691,5 +691,104 @@ namespace FactoryWars.Tests {
         $"Helicopter actively steered past tall building (startX={startPos.X.AsFloat:F1}, endX={finalHeliX:F1}, maxDeflect={maxLateralDeflection:F2}m)");
       Debug.Log($"[AirFlight_AltitudeVfxAndBuildingAvoidance] PASS alt=({droneAlt:F1}/{heliAlt:F1}/{bomberAlt:F1}m) cell=({bRow},{bCol}) maxDeflect={maxLateralDeflection:F2}m");
     }
+
+    [UnityTest, Explicit, Timeout(1200000)]
+    public IEnumerator MobileMls_FireWhileMoving_NoWarning_AndUnitCaps() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "MobileMls"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 5801, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      // 1. Verify data specs: Mobile MLS ultimate link, FireWhileMoving, and 1-unit cap on BOTH cf_longwall_mlrs and ff_skyfortress_bomber.
+      var mlsSpec = Resources.Load<UnitSpec>("FactoryWars/cf_longwall_mlrs");
+      var bomberSpec = Resources.Load<UnitSpec>("FactoryWars/ff_skyfortress_bomber");
+      var cfUlt = Resources.Load<UltimateSpec>("FactoryWars/ultimate_cf_missile");
+      Assert.IsNotNull(mlsSpec, "cf_longwall_mlrs spec loaded");
+      Assert.IsNotNull(bomberSpec, "ff_skyfortress_bomber spec loaded");
+      Assert.IsNotNull(cfUlt, "ultimate_cf_missile spec loaded");
+      Assert.IsTrue(cfUlt.MobileMls.IsValid, "ultimate_cf_missile points to MobileMls unit");
+      Assert.AreEqual(mlsSpec.Guid, cfUlt.MobileMls.Id, "ultimate_cf_missile.MobileMls == cf_longwall_mlrs");
+      Assert.AreEqual(1, mlsSpec.MaxOwned, "Mobile MLS MaxOwned == 1");
+      Assert.IsTrue(mlsSpec.FireWhileMoving, "Mobile MLS FireWhileMoving == true");
+      Assert.AreEqual(1, bomberSpec.MaxOwned, "FF Skyfortress Bomber MaxOwned == 1");
+
+      // 2. Verify 1-unit cap & post-destruction rebuild for BOTH Mobile MLS (CF) and Bomber (FF).
+      Assert.IsTrue(TechSystem.CanProduce(Verified, 1, mlsSpec, out _), "CF can produce first Mobile MLS");
+      var capMls = SpawnUnitByName(Verified, 1, "cf_longwall_mlrs", new FPVector3(24, 0, -64));
+      Assert.IsFalse(TechSystem.CanProduce(Verified, 1, mlsSpec, out var mlsReject), "CF blocked from producing 2nd Mobile MLS");
+      Assert.AreEqual(RejectReason.Limit, mlsReject, "CF 2nd Mobile MLS rejected with Limit");
+      Assert.AreNotEqual(UltimateLock.None, UltimateSystem.Locks(Verified, 1) & UltimateLock.Busy, "CF Ultimate locked Busy while Mobile MLS alive");
+      SetUnitHealthRatio(Verified, capMls, FP._0);
+      yield return WaitFrames(5);
+      Assert.IsTrue(TechSystem.CanProduce(Verified, 1, mlsSpec, out _), "CF can rebuild Mobile MLS after destruction");
+
+      Assert.IsTrue(TechSystem.CanProduce(Verified, 0, bomberSpec, out _), "FF can produce first Skyfortress Bomber");
+      var capBomber = SpawnUnitByName(Verified, 0, "ff_skyfortress_bomber", new FPVector3(-24, 0, -64));
+      Assert.IsFalse(TechSystem.CanProduce(Verified, 0, bomberSpec, out var bomberReject), "FF blocked from producing 2nd Bomber");
+      Assert.AreEqual(RejectReason.Limit, bomberReject, "FF 2nd Bomber rejected with Limit");
+      SetUnitHealthRatio(Verified, capBomber, FP._0);
+      yield return WaitFrames(5);
+      Assert.IsTrue(TechSystem.CanProduce(Verified, 0, bomberSpec, out _), "FF can rebuild Bomber after destruction");
+
+      // 3. Verify launch warning removal (zero StrategicMissile EventUltimateNotice alerts) & Fire-While-Moving with rocket VFX.
+      var strategicWarnings = 0;
+      var sub = QuantumEvent.SubscribeManual<EventUltimateNotice>(e => {
+        if (e.Kind == UltimateKind.StrategicMissile) strategicWarnings++;
+      });
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+
+      var origin = new FPVector3(-18, 0, -64);
+      var moveGoal = new FPVector3(20, 0, -64);
+      var mobileMls = SpawnUnitByName(Verified, 1, "cf_longwall_mlrs", origin);
+      var target1 = SpawnUnitByName(Verified, 0, "ff_eagle_tank",  new FPVector3(-2, 0, -54));
+      var target2 = SpawnUnitByName(Verified, 0, "ff_striker_ifv", new FPVector3( 5, 0, -54));
+
+      // Close-up readability screenshot of the Mobile MLS (Synty SM_Veh_Rocket_Truck_01) before rolling out
+      yield return WaitFrames(4);
+      rts.Height = 22f;
+      rts.MoveTo(new Vector2(origin.X.AsFloat, origin.Z.AsFloat));
+      rts.Apply();
+      yield return WaitFrames(4);
+      CaptureCameraPng(camera, Path.Combine(dir, "mobile_mls_closeup_readability.png"), 1920, 1080);
+
+      // Issue pure MOVE command (no static deploy/attack lock) and verify Mobile MLS fires parabolic rockets while driving!
+      yield return Send(1, new MoveUnitsCommand { Units = new[] { mobileMls }, Target = moveGoal });
+      rts.Height = 38f;
+      rts.MoveTo(new Vector2(-2f, -60f));
+      rts.Apply();
+
+      var rocketsSeen = 0;
+      var firedWhileMoving = false;
+      var maxMovedX = 0f;
+      for (var f = 0; f < 12; f++) {
+        yield return WaitFrames(8);
+        var u = Verified.Get<Unit>(mobileMls);
+        var p = Verified.Get<Transform3D>(mobileMls).Position;
+        maxMovedX = Mathf.Max(maxMovedX, p.X.AsFloat - origin.X.AsFloat);
+        if (u.LastFiredFrame > 0 && u.Order == UnitOrder.Move) firedWhileMoving = true;
+        foreach (var _ in Verified.GetComponentIterator<MlrsRocket>()) rocketsSeen++;
+        CaptureCameraPng(camera, Path.Combine(frames, $"mobile_mls_{f:00}.png"), 960, 540);
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "mobile_mls_firing_on_the_move.png"), 1920, 1080);
+
+      sub.Dispose();
+      Assert.AreEqual(0, strategicWarnings, "Zero strategic missile launch warning alerts emitted");
+      Assert.AreEqual(0, Battle().StrikeMarks, "Zero strategic missile red warning rings active");
+      Assert.Greater(maxMovedX, 2.5f, $"Mobile MLS actively moved during fire-on-the-move (dx={maxMovedX:F2}m)");
+      Assert.IsTrue(firedWhileMoving, "Mobile MLS fired missiles while executing UnitOrder.Move");
+      Assert.Greater(rocketsSeen, 0, $"Mobile MLS launched real parabolic MlrsRocket projectiles (samples={rocketsSeen})");
+      Debug.Log($"[MobileMls_FireWhileMoving_NoWarning_AndUnitCaps] PASS dx={maxMovedX:F2}m rocketsSeen={rocketsSeen} warnings={strategicWarnings}");
+    }
   }
 }

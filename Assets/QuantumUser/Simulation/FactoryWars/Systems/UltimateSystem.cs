@@ -152,7 +152,10 @@ namespace Quantum.FactoryWars {
       var locks = UltimateLock.None;
       if (state->UltimatePhase == UltimatePhase.Cooldown) {
         locks |= UltimateLock.Cooldown;
-      } else if (state->UltimatePhase != UltimatePhase.None || (spec.Kind == UltimateKind.Carrier && CountOwned<Carrier>(f, player) >= spec.OwnedLimit)) {
+      } else if (state->UltimatePhase != UltimatePhase.None
+          || (spec.Kind == UltimateKind.Carrier && CountOwned<Carrier>(f, player) >= spec.OwnedLimit)
+          || (spec.Kind == UltimateKind.StrategicMissile && spec.MobileMls.IsValid
+              && SniperSystem.CountOwnedAndQueued(f, player, f.FindAsset(spec.MobileMls)) >= (spec.OwnedLimit > 0 ? spec.OwnedLimit : 1))) {
         locks |= UltimateLock.Busy;
       }
       if (TechSystem.Tier(f, player) < spec.RequiredTier) {
@@ -171,6 +174,10 @@ namespace Quantum.FactoryWars {
     }
 
     static void Notice(Frame f, PlayerRef player, UltimateStage stage, UltimateSpec spec, FPVector3 position, int value) {
+      // 기동형 MLS로 교체된 전략 미사일 궁극기는 발사/준비 경보 알림을 출력하지 않는다.
+      if (spec != null && spec.Kind == UltimateKind.StrategicMissile) {
+        return;
+      }
       f.Events.UltimateNotice(player, stage, spec.Kind, position, value);
     }
 
@@ -471,7 +478,12 @@ namespace Quantum.FactoryWars {
           }
           return;
         case UltimatePhase.Active:
-          if (spec.Kind == UltimateKind.Carrier ? CountOwned<Carrier>(f, player) == 0 : CountOwned<LandingCraft>(f, player) == 0) {
+          var activeGone = spec.Kind == UltimateKind.Carrier
+            ? CountOwned<Carrier>(f, player) == 0
+            : (spec.Kind == UltimateKind.StrategicMissile && spec.MobileMls.IsValid)
+              ? CountOwnedUnit(f, player, spec.MobileMls) == 0
+              : CountOwned<LandingCraft>(f, player) == 0;
+          if (activeGone) {
             state->UltimatePhase = UltimatePhase.Cooldown;
             state->UltimateRemaining = spec.CooldownSeconds;
             state->UltimateTotal = spec.CooldownSeconds;
@@ -492,6 +504,17 @@ namespace Quantum.FactoryWars {
       var units = f.Filter<Unit, T>();
       while (units.NextUnsafe(out _, out var unit, out _)) {
         count += unit->Owner == player && unit->Health > FP._0 ? 1 : 0;
+      }
+      return count;
+    }
+
+    static int CountOwnedUnit(Frame f, PlayerRef player, AssetRef<UnitSpec> specRef) {
+      var count = 0;
+      var units = f.Filter<Unit>();
+      while (units.NextUnsafe(out _, out var unit)) {
+        if (unit->Owner == player && unit->Health > FP._0 && unit->Spec == specRef) {
+          count++;
+        }
       }
       return count;
     }
@@ -520,6 +543,13 @@ namespace Quantum.FactoryWars {
             cu->ReservedUntilFrame = 0;
           }
         }
+        Used(f, state);
+        state->UltimatePhase = UltimatePhase.Active;
+        state->UltimatePaid = default;
+      } else if (spec.Kind == UltimateKind.StrategicMissile && spec.MobileMls.IsValid) {
+        // 고정 미사일 포대 대신 기동형 MLS(1기 상한) 유닛을 소환한다.
+        Building* sitePtr = f.Unsafe.TryGetPointer<Building>(state->UltimateSite, out var b) ? b : null;
+        ProductionSystem.SpawnUnit(f, player, spec.MobileMls, position, 0, sitePtr);
         Used(f, state);
         state->UltimatePhase = UltimatePhase.Active;
         state->UltimatePaid = default;

@@ -40,7 +40,7 @@ MonoBehaviour:
   Range:
     RawValue: 1179648
   MinRange:
-    RawValue: 393216
+    RawValue: 0
   SplashRadius:
     RawValue: 262144
   AttackInterval:
@@ -73,7 +73,7 @@ MonoBehaviour:
     RawValue: 0
   VehicleDamageRatio:
     RawValue: 65536
-  MaxOwned: 0
+  MaxOwned: 1
   StealthSeconds:
     RawValue: 0
   StealthCooldownSeconds:
@@ -132,3 +132,4 @@ MonoBehaviour:
   TransportAllowsVehicles: 0
   TransportEjectHealthRatio:
     RawValue: 0
+  FireWhileMoving: 1

@@ -298,15 +298,10 @@ namespace FactoryWars.View {
       });
       // 항목 33: 미사일 착탄·항모 격추는 기존 폭발 효과를 크게 쓴다(새 그래픽 없음).
       QuantumEvent.Subscribe<EventUltimateNotice>(this, e => {
-        if (e.Stage == UltimateStage.Launched && e.Kind == UltimateKind.StrategicMissile) {
-          var siloPos = FindSiloPosition(e.Game.Frames.Verified, e.Player, e.Position.ToUnityVector3());
-          Fx.SiloSteam(siloPos);
-          var frame = e.Game.Frames.Verified;
-          var viewer = _controller != null ? _controller.Player : PlayerRef.None;
-          if (viewer.IsValid == false || e.Player == viewer || (frame != null && FogSystem.IsVisible(frame, viewer, siloPos.ToFPVector3()))) {
-            _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.RocketFire, siloPos));
-          }
-        } else if (e.Stage == UltimateStage.Impact) {
+        if (e.Kind == UltimateKind.StrategicMissile && e.Stage != UltimateStage.Impact) {
+          return;
+        }
+        if (e.Stage == UltimateStage.Impact) {
           if (e.Value < 0) {
             Fx.Explosion(e.Position.ToUnityVector3(), 4.4f);
             Fx.Burst(e.Position.ToUnityVector3(), new Color(0.28f, 0.95f, 1f), 3.2f);
@@ -439,26 +434,8 @@ namespace FactoryWars.View {
       UpdatePlacementRings(frame);
       UpdateStrikeRockets(frame, dt);
       UpdateScorchedAndEmpFx(frame);
-      // 항목 33: 날아오는 전략 미사일의 착탄 지점을 모든 플레이어에게 보인다(폭발 반경만큼 붉은 고리 + 연막 신호).
-      if (Time.time >= _strikeAt) {
-        _strikeAt = Time.time + 0.3f;
-        StrikeMarks = 0;
-        foreach (var pair in frame.GetComponentIterator<MissileStrike>()) {
-          var target = pair.Component.Target.ToUnityVector3();
-          var radius = frame.FindAsset(pair.Component.Spec).BlastRadius.AsFloat;
-          // 붉은 레이저 조준 레티클: 외곽 반경 고리 + 박동 내부 고리 + 십자선 레이저 4줄 + 상공 수직 유도 레이저.
-          var pulse = 0.25f + 0.45f * Mathf.PingPong(Time.time * 2.8f, 1f);
-          Fx.Ring(target, StrikeColor, radius, 0.45f);
-          Fx.Ring(target, new Color(1f, 0.14f, 0.14f, 0.95f), radius * pulse, 0.35f);
-          Fx.Ring(target, new Color(1f, 0.28f, 0.18f, 0.9f), 2.2f, 0.35f);
-          Fx.Needle(target + Vector3.up * 26f, target + Vector3.up * 0.2f, 130f);
-          foreach (var dir in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right }) {
-            Fx.Needle(target + dir * (radius * 0.85f) + Vector3.up * 0.25f, target + dir * 1.4f + Vector3.up * 0.25f, 80f);
-          }
-          Fx.Signal(target);
-          StrikeMarks++;
-        }
-      }
+      // 기동형 MLS 전환에 따라 전략 미사일 발사/착탄 붉은 경고 링·레이저 표시를 비활성화한다.
+      StrikeMarks = 0;
       UpdateSuperweaponVisuals(dt);
 
       _audio.Begin(Camera.main);

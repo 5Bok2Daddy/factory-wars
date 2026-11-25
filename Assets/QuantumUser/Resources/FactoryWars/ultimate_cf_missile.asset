@@ -91,6 +91,9 @@ MonoBehaviour:
     RawValue: 0
   CarrierAuraSpeedBonus:
     RawValue: 0
+  MobileMls:
+    Id:
+      Value: 348477871482375792
   WarningSeconds:
     RawValue: 458752
   MissileHealth:

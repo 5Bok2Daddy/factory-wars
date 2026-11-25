@@ -572,9 +572,11 @@ namespace FactoryWars.View {
     unsafe void DrawUltimates(Frame frame) {
       UltimateMarks = 0;
       var pulse = Mathf.PingPong(Time.unscaledTime * 3.5f, 1f) > 0.5f;
-      // 건설 중인 전략 미사일 격납고·항모 조립창: 모든 플레이어에게 상시 붉은 경보 비콘 표시.
+      // 건설 중인 항모 조립창 경보 비콘 표시(전략 미사일/기동형 MLS 발사 경보는 비활성화).
       foreach (var pair in frame.GetComponentIterator<Building>()) {
         if (pair.Component.ConstructionRemaining > FP._0 && frame.FindAsset(pair.Component.Spec).Role == BuildingRole.UltimateSite) {
+          var ultSpec = UltimateSystem.SpecOf(frame, pair.Component.Owner);
+          if (ultSpec != null && ultSpec.Kind == UltimateKind.StrategicMissile) continue;
           var world = frame.Get<Transform3D>(pair.Entity).Position.ToUnityVector3();
           Square(world, 6, StrikeColor, true);
           Ring(world, pulse ? 8 : 6, StrikeColor);
@@ -584,7 +586,9 @@ namespace FactoryWars.View {
       }
       for (var i = 0; i < frame.PlayerCount; i++) {
         var state = frame.Global->Players.GetPointer(i);
-        if (state->Active == false || (state->UltimatePhase != UltimatePhase.Preparing && state->UltimatePhase != UltimatePhase.Ready)
+        var uSpec = UltimateSystem.SpecOf(frame, i);
+        if (state->Active == false || (uSpec != null && uSpec.Kind == UltimateKind.StrategicMissile)
+            || (state->UltimatePhase != UltimatePhase.Preparing && state->UltimatePhase != UltimatePhase.Ready)
             || frame.Exists(state->UltimateSite) == false) {
           continue;
         }

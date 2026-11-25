@@ -73,7 +73,7 @@ MonoBehaviour:
     RawValue: 0
   VehicleDamageRatio:
     RawValue: 65536
-  MaxOwned: 0
+  MaxOwned: 1
   StealthSeconds:
     RawValue: 0
   StealthCooldownSeconds:

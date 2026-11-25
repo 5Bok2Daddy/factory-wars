@@ -456,15 +456,12 @@ namespace FactoryWars.View {
         color.a = Mathf.Min(color.a, UltimateFillAlpha);
         bar.FillImage.color = color;
       }
-      foreach (var pair in frame.GetComponentIterator<MissileStrike>()) {
-        var left = Mathf.Max(0f, (pair.Component.ImpactFrame - frame.Number) / (float)frame.SessionConfig.UpdateFPS);
-        var total = Mathf.Max(1f, (pair.Component.ImpactFrame - pair.Component.LaunchFrame) / (float)frame.SessionConfig.UpdateFPS);
-        Show($"전략 미사일 착탄 {Mathf.CeilToInt(left)}초", 1f - left / total, theme.Danger);
-      }
+      // 기동형 MLS 교체에 따라 전략 미사일 발사/착탄 경보 카운트다운 바를 비활성화한다.
       for (var i = 0; i < frame.PlayerCount; i++) {
         var state = frame.Global->Players.GetPointer(i);
         var spec = UltimateSystem.SpecOf(frame, i);
-        if (state->Active == false || spec == null || (state->UltimatePhase != UltimatePhase.Preparing && state->UltimatePhase != UltimatePhase.Ready)) {
+        if (state->Active == false || spec == null || spec.Kind == UltimateKind.StrategicMissile
+            || (state->UltimatePhase != UltimatePhase.Preparing && state->UltimatePhase != UltimatePhase.Ready)) {
           continue;
         }
         var color = (Color)Palette.Of(frame, i);
@@ -494,7 +491,7 @@ namespace FactoryWars.View {
         return;
       }
       _ultimateQuickButton.gameObject.SetActive(true);
-      var shortName = spec.Kind == UltimateKind.StrategicMissile ? "전략 미사일" : "공중항모";
+      var shortName = spec.Kind == UltimateKind.StrategicMissile ? "기동형 MLS" : "공중항모";
       var fill = 0f;
       var frameCol = new Color(0.35f, 0.38f, 0.44f, 0.92f);
       var fillCol = new Color(0.95f, 0.76f, 0.22f, 0.45f);
@@ -600,8 +597,11 @@ namespace FactoryWars.View {
       return EntityRef.None;
     }
 
-    /// <summary>궁극 전력 알림은 모든 플레이어에게 보인다(누가·무엇을·남은 시간). 알림을 누르면 그 자리로 간다.</summary>
+    /// <summary>궁극 전력 알림은 모든 플레이어에게 보인다(전략 미사일/기동형 MLS 발사 경보는 비활성화).</summary>
     void OnUltimateNotice(EventUltimateNotice e) {
+      if (e.Kind == UltimateKind.StrategicMissile) {
+        return;
+      }
       var frame = e.Game.Frames.Verified;
       var mine = e.Player == Controller.Player;
       ShowAlert(Texts.UltimateNotice(Who(frame, e.Player), e.Stage, e.Kind, e.Value));

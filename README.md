@@ -7,6 +7,15 @@
 
 ---
 
+## 기동형 MLS 궁극기 교체 · 이동 사격 · 발사 경고 제거 · 양 진영 1기 상한 (2026-11-25 · 3/3 통과)
+
+| 기동형 MLS 이동 사격 정지화면 | 이동 사격 로켓 궤적 모션 클립 (GIF) | 기동형 MLS 근접 가독성 (`SM_Veh_Rocket_Truck_01`) |
+| --- | --- | --- |
+| [![기동형 MLS 이동 사격](Docs/status_images/MobileMls/mobile_mls_firing_on_the_move.png)](Docs/status_images/MobileMls/mobile_mls_firing_on_the_move.png) | [![기동형 MLS 이동 사격 GIF](Docs/status_images/MobileMls/mobile_mls_fire_while_moving.gif)](Docs/status_images/MobileMls/mobile_mls_fire_while_moving.gif) | [![기동형 MLS 근접 검수](Docs/status_images/MobileMls/mobile_mls_closeup_readability.png)](Docs/status_images/MobileMls/mobile_mls_closeup_readability.png) |
+| [원본](Docs/status_images/MobileMls/mobile_mls_firing_on_the_move.png) · 주행 중 포대 선회·포물선 로켓 2연발·발사 경고 0건 | [GIF 클립](Docs/status_images/MobileMls/mobile_mls_fire_while_moving.gif) · 거치 잠금 없이 이동 사격 + 착탄 폭발 VFX | [근접 원본](Docs/status_images/MobileMls/mobile_mls_closeup_readability.png) · CF 기동형 MLS & FF 폭격기 각 1기 보유 상한·파괴 후 재생산 검증 |
+
+---
+
 ## 공중 비행 VFX · 고도 상향 · 고층 빌딩 우회 & 해상/화염 VFX (2026-11-25 · 4/4 통과)
 
 | 공중 고도 상향 + 비행 VFX 전후 | 고층 빌딩 우회 모션 클립 (GIF) | 함선 파티클 항적 & 교전 화염 VFX |

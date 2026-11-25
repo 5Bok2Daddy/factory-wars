@@ -134,6 +134,38 @@ namespace Quantum.FactoryWars {
       f.Events.MlrsLaunched(battery, owner, origin, direction);
     }
 
+    public static void LaunchMobileRocket(Frame f, EntityRef launcher, PlayerRef owner, FPVector3 position, FPVector3 target, FP damage, FP splashRadius) {
+      var delta = target - position;
+      delta.Y = FP._0;
+      var heading = delta.SqrMagnitude > FP._0_01 ? delta.Normalized : FPVector3.Forward;
+      var right = new FPVector3(heading.Z, FP._0, -heading.X);
+      var speed = (FP)24;
+      var arc = (FP)5 + FP._0_50;
+      var pitch = (FP)36 * FP.Deg2Rad;
+      var direction = heading * FPMath.Cos(pitch) + FPVector3.Up * FPMath.Sin(pitch);
+      var perRocketDamage = damage * FP._0_50;
+      var edgeDamage = perRocketDamage * FP._0_50;
+      for (var i = 0; i < 2; i++) {
+        var side = i == 0 ? -FP._0_50 : FP._0_50;
+        var origin = position + right * side + FPVector3.Up * (FP._2 + FP._0_50) + heading * FP._0_50;
+        var impactTarget = target + right * (side * FP._2);
+        var flightFrames = Frames(f, (impactTarget - origin).Magnitude / speed);
+        var rocket = f.Create();
+        f.Add(rocket, new MlrsRocket {
+          Owner = owner,
+          Origin = origin,
+          Target = impactTarget,
+          Arc = arc,
+          LaunchFrame = f.Number,
+          ImpactFrame = f.Number + flightFrames,
+          BlastRadius = splashRadius > FP._0 ? splashRadius : FP._4,
+          Damage = perRocketDamage,
+          EdgeDamage = edgeDamage,
+        });
+        f.Events.MlrsLaunched(launcher, owner, origin, direction);
+      }
+    }
+
     public static FPVector3 PositionAt(in MlrsRocket rocket, int frame) {
       var progress = FPMath.Clamp01((FP)(frame - rocket.LaunchFrame) / (rocket.ImpactFrame - rocket.LaunchFrame));
       return rocket.Origin + (rocket.Target - rocket.Origin) * progress
