@@ -1,4 +1,5 @@
 namespace FactoryWars.View {
+  using Microlight.MicroBar;
   using UnityEngine;
   using UnityEngine.Rendering;
 
@@ -31,6 +32,11 @@ namespace FactoryWars.View {
     public GameObject Ring;
     public GameObject Bar;
     public Transform Fill;
+    public MicroBar MicroBar;
+    public bool HasMicroBar => MicroBar != null;
+    float _lastHealth = 1f;
+    static GameObject _microBarPrefab;
+    static bool _microBarLoaded;
 
     /// <summary>프로필의 유닛 배율. 건물은 바닥판 칸 크기가 정해져 있어 따로 다룬다.</summary>
     public static float ScaleOf(ViewCatalog.Entry entry) => entry.Unit ? VisualProfile.Current.UnitScale : 1f;
@@ -86,12 +92,40 @@ namespace FactoryWars.View {
       view.Ring.SetActive(false);
 
       var width = Mathf.Clamp(entry.RingRadius * extra * BarPerRadius, BarMinWidth, BarMaxWidth);
-      view.Bar = Marker("Bar", view.transform, BarBackMesh());
-      view.Bar.transform.localPosition = Vector3.up * entry.BarHeight * extra;
-      view.Bar.transform.localRotation = Quaternion.Euler(BarPitch, 0, 0);
-      view.Bar.transform.localScale = new Vector3(width, BarThickness, 1);
-      view.Fill = Marker("Fill", view.Bar.transform, BarFillMesh()).transform;
-      view.Bar.SetActive(false);
+      if (!_microBarLoaded) {
+        _microBarLoaded = true;
+        _microBarPrefab = Resources.Load<GameObject>("FactoryWars/UI/MicroBar/Delayed_SpriteMicroBar");
+      }
+      if (_microBarPrefab != null) {
+        view.Bar = Instantiate(_microBarPrefab, view.transform);
+        view.Bar.name = "Bar";
+        view.Bar.transform.localPosition = Vector3.up * entry.BarHeight * extra;
+        view.Bar.transform.localRotation = Quaternion.Euler(BarPitch, 0, 0);
+        // MicroBar 스프라이트 기본 폭(~2.56m)을 유닛/건물/폭격기 폭에 맞춰 RTS 줌에서 선명하게 스케일링.
+        var nativeWidth = 2.56f;
+        var sr = view.Bar.GetComponentInChildren<SpriteRenderer>(true);
+        if (sr != null && sr.sprite != null && sr.sprite.bounds.size.x > 0.1f) {
+          nativeWidth = sr.sprite.bounds.size.x;
+        }
+        var barScale = Mathf.Clamp((width * 1.18f) / nativeWidth, 0.35f, 1.35f);
+        view.Bar.transform.localScale = new Vector3(barScale, barScale * 0.85f, 1f);
+        foreach (var r in view.Bar.GetComponentsInChildren<SpriteRenderer>(true)) {
+          r.shadowCastingMode = ShadowCastingMode.Off;
+          r.receiveShadows = false;
+        }
+        view.MicroBar = view.Bar.GetComponentInChildren<MicroBar>(true);
+        if (view.MicroBar != null) {
+          view.MicroBar.Initialize(1f);
+        }
+        view.Bar.SetActive(false);
+      } else {
+        view.Bar = Marker("Bar", view.transform, BarBackMesh());
+        view.Bar.transform.localPosition = Vector3.up * entry.BarHeight * extra;
+        view.Bar.transform.localRotation = Quaternion.Euler(BarPitch, 0, 0);
+        view.Bar.transform.localScale = new Vector3(width, BarThickness, 1);
+        view.Fill = Marker("Fill", view.Bar.transform, BarFillMesh()).transform;
+        view.Bar.SetActive(false);
+      }
 
       view.ApplyQuality();
       return view;
@@ -276,11 +310,20 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>0~1. 왼쪽을 기준으로 줄어든다.</summary>
+    /// <summary>0~1. MicroBar 애니메이션 체력바(지연 고스트바 포함) 또는 폴백 Fill 갱신.</summary>
     public void SetHealth(float ratio) {
       var value = Mathf.Clamp01(ratio);
-      Fill.localScale = new Vector3(value, 1, 1);
-      Fill.localPosition = new Vector3((value - 1f) * 0.5f, 0, 0);
+      if (MicroBar != null) {
+        if (Mathf.Abs(value - _lastHealth) > 0.002f) {
+          _lastHealth = value;
+          MicroBar.UpdateBar(value);
+        }
+        return;
+      }
+      if (Fill != null) {
+        Fill.localScale = new Vector3(value, 1, 1);
+        Fill.localPosition = new Vector3((value - 1f) * 0.5f, 0, 0);
+      }
     }
 
     GameObject _plate;

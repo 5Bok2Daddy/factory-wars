@@ -1660,5 +1660,154 @@ namespace FactoryWars.Tests {
 
       Debug.Log($"[Priority1And2_VerifyAndCapture] PASS fences={fenceCount} overlaps=0 factory={extAct.View.Slot.Prefab.name} iron={ironBefore}->{ironAfter} tankGifs=({hitFrames}/{dmgFrames}/{dieFrames}) waveTex={waveTex.name} ultCapBothOrderingsAndCancelDestroy=OK");
     }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator MicroBar_HealthBars_AndVehiclePedestrianYield_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "MicroBarAndYield"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 9101, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      GrantLargeStock(Verified, 0);
+      GrantLargeStock(Verified, 1);
+      if (Game.Frames.Predicted != null) {
+        GrantLargeStock(Game.Frames.Predicted, 0);
+        GrantLargeStock(Game.Frames.Predicted, 1);
+      }
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      var bv = Battle();
+
+      // 1. Verify MicroBar active on tanks, ground infantry, structures, and elevated bomber
+      var spot = new FPVector3(0, 0, -68);
+      var targetTank = SpawnUnitByName(Verified, 1, "cf_fortress_tank", spot + new FPVector3(8, 0, 0));
+      var atkTank1   = SpawnUnitByName(Verified, 0, "ff_eagle_tank",    spot + new FPVector3(-12, 0, -3));
+      var atkTank2   = SpawnUnitByName(Verified, 0, "ff_eagle_tank",    spot + new FPVector3(-12, 0,  3));
+      yield return WaitFrames(10);
+
+      Assert.IsTrue(bv.Actors.TryGetValue(targetTank, out var tankAct) && tankAct.View.HasMicroBar, "Tank uses MicroBar");
+      Assert.IsTrue(bv.Actors.TryGetValue(atkTank1, out var atkAct) && atkAct.View.HasMicroBar, "Attacker tank uses MicroBar");
+
+      rts.Height = 36f;
+      rts.MoveTo(new Vector2(spot.X.AsFloat + 2f, spot.Z.AsFloat));
+      rts.Apply();
+      yield return Send(0, new AttackTargetCommand { Units = new[] { atkTank1, atkTank2 }, Target = targetTank });
+
+      var capturedCombat = false;
+      var combatFrameCount = 0;
+      for (var i = 0; i < 65; i++) {
+        yield return WaitFrames(5);
+        if (!Verified.Exists(targetTank)) break;
+        var hpRatio = (Verified.Get<Unit>(targetTank).Health / Verified.FindAsset(Verified.Get<Unit>(targetTank).Spec).MaxHealth).AsFloat;
+        if (hpRatio < 0.99f && combatFrameCount < 12) {
+          CaptureCameraPng(camera, Path.Combine(frames, $"microbar_combat_{combatFrameCount:00}.png"), 960, 540);
+          if (!capturedCombat && hpRatio < 0.78f) {
+            capturedCombat = true;
+            CaptureCameraPng(camera, Path.Combine(dir, "01_microbar_tank_combat.png"), 1920, 1080);
+          }
+          combatFrameCount++;
+        }
+        if (combatFrameCount >= 12) break;
+      }
+      if (!capturedCombat) CaptureCameraPng(camera, Path.Combine(dir, "01_microbar_tank_combat.png"), 1920, 1080);
+      Assert.GreaterOrEqual(combatFrameCount, 4, "Captured MicroBar animated health depletion during tank combat");
+
+      // 2. Structure MicroBar + Mobility-Upgraded Soldier MicroBar & Single Chevron '^' (no Mk.2!)
+      var powerSpec = Resources.Load<BuildingSpec>("FactoryWars/ff_power_plant");
+      var structure = ProductionSystem.CreateFinishedBuilding(Verified, 0, powerSpec, new FPVector3(-24, 0, -64));
+      var soldier   = SpawnUnitByName(Verified, 0, "ff_ranger_squad", new FPVector3(-16, 0, -64));
+      yield return WaitFrames(8);
+
+      // Unlock mobility upgrade for player 0 & damage structure/soldier slightly so MicroBar shows cleanly
+      UnlockSmallUpgrade(Verified, 0);
+      if (Game?.Frames?.Predicted != null) UnlockSmallUpgrade(Game.Frames.Predicted, 0);
+      var sB = Verified.Get<Building>(structure);
+      sB.Health = powerSpec.MaxHealth * FP.FromFloat_UNSAFE(0.62f);
+      Verified.Set(structure, sB);
+      if (Game.Frames.Predicted != null && Game.Frames.Predicted.Exists(structure)) Game.Frames.Predicted.Set(structure, sB);
+
+      var uS = Verified.Get<Unit>(soldier);
+      uS.Health = Verified.FindAsset(uS.Spec).MaxHealth * FP.FromFloat_UNSAFE(0.75f);
+      Verified.Set(soldier, uS);
+      if (Game.Frames.Predicted != null && Game.Frames.Predicted.Exists(soldier)) Game.Frames.Predicted.Set(soldier, uS);
+
+      Controller().Input.Selection.Units.Clear();
+      Controller().Input.Selection.Units.Add(soldier);
+      yield return WaitFrames(10);
+
+      Assert.IsTrue(bv.Actors.TryGetValue(structure, out var structAct) && structAct.View.HasMicroBar, "Structure uses MicroBar");
+      Assert.IsTrue(bv.Actors.TryGetValue(soldier, out var solAct) && solAct.View.HasMicroBar, "Soldier uses MicroBar");
+      if (solAct.UpgradeChevron != null) {
+        Assert.AreEqual("^", solAct.UpgradeChevron.text, "Mobility-upgraded soldier keeps single '^' chevron beside MicroBar (no Mk.2)");
+      }
+      rts.Height = 32f;
+      rts.MoveTo(new Vector2(-20f, -64f));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "02_microbar_structure_and_soldier_chevron.png"), 1920, 1080);
+
+      // 3. Elevated Bomber MicroBar Alignment (no height/offset drift)
+      var bomberPos = new FPVector3(0, 0, -40);
+      var bomber = SpawnUnitByName(Verified, 0, "ff_skyfortress_bomber", bomberPos);
+      yield return WaitFrames(10);
+      var bU = Verified.Get<Unit>(bomber);
+      bU.Health = Verified.FindAsset(bU.Spec).MaxHealth * FP.FromFloat_UNSAFE(0.58f);
+      Verified.Set(bomber, bU);
+      if (Game.Frames.Predicted != null && Game.Frames.Predicted.Exists(bomber)) Game.Frames.Predicted.Set(bomber, bU);
+      yield return WaitFrames(8);
+
+      Assert.IsTrue(bv.Actors.TryGetValue(bomber, out var bAct) && bAct.View.HasMicroBar, "Elevated bomber uses MicroBar");
+      var bAlt = bAct.View.Turn.localPosition.y;
+      Assert.GreaterOrEqual(bAlt, 25.0f, $"Bomber stays at elevated altitude ({bAlt:F1}m)");
+      Assert.GreaterOrEqual(bAct.View.Bar.transform.localPosition.y, bAlt + 3.9f, "Bomber MicroBar aligned above bomber without drift");
+      rts.Height = 66f;
+      rts.MoveTo(new Vector2(bomberPos.X.AsFloat, bomberPos.Z.AsFloat + 16f));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "03_microbar_bomber_elevated.png"), 1920, 1080);
+
+      // 4. Vehicle Yielding / Steering Around People (on wide open asphalt road Z=-56, zero clipping, reaches goal cleanly)
+      var roadY = -56;
+      var truck = SpawnUnitByName(Verified, 0, "merc_cargo_truck", new FPVector3(-18, 0, roadY));
+      var person = SpawnUnitByName(Verified, 0, "ff_engineer",     new FPVector3( -2, 0, roadY));
+      yield return WaitFrames(6);
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { truck }, Target = new FPVector3(16, 0, roadY) });
+
+      rts.Height = 34f;
+      rts.MoveTo(new Vector2(0f, roadY));
+      rts.Apply();
+
+      var minPersonDist = float.MaxValue;
+      var maxLateralOffset = 0f;
+      var yieldFrames = 0;
+      for (var step = 0; step < 30; step++) {
+        yield return WaitFrames(10);
+        var tp = Verified.Get<Transform3D>(truck).Position.ToUnityVector3();
+        var pp = Verified.Get<Transform3D>(person).Position.ToUnityVector3();
+        var d = Vector2.Distance(new Vector2(tp.x, tp.z), new Vector2(pp.x, pp.z));
+        minPersonDist = Mathf.Min(minPersonDist, d);
+        maxLateralOffset = Mathf.Max(maxLateralOffset, Mathf.Abs(tp.z - roadY));
+        if (yieldFrames < 14) {
+          CaptureCameraPng(camera, Path.Combine(frames, $"yield_{yieldFrames:00}.png"), 960, 540);
+          yieldFrames++;
+        }
+        if (tp.x >= 12f) break;
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "04_vehicle_avoid_person.png"), 1920, 1080);
+      var finalTruckX = Verified.Get<Transform3D>(truck).Position.X.AsFloat;
+      Assert.Greater(minPersonDist, 1.25f, $"Vehicle steered around/yielded to pedestrian without clipping (minDist={minPersonDist:F2}m)");
+      Assert.Greater(finalTruckX, 6.0f, $"Vehicle smoothly passed pedestrian without getting stuck (finalX={finalTruckX:F1})");
+
+      Debug.Log($"[MicroBar_HealthBars_AndVehiclePedestrianYield] PASS combatFrames={combatFrameCount} bomberAlt={bAlt:F1}m minPersonDist={minPersonDist:F2}m maxLat={maxLateralOffset:F2}m finalX={finalTruckX:F1}");
+    }
   }
 }

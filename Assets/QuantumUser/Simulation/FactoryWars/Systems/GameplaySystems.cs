@@ -1582,7 +1582,12 @@ namespace Quantum.FactoryWars {
         if (spec.IsAir && hasDestination) {
           MoveAir(f, entity, transform, unit, spec, map.ClampToPlayable(destination));
         } else if (spec.IsAir == false && f.Unsafe.TryGetPointer<NavMeshSteeringAgent>(entity, out var agent)) {
-          agent->MaxSpeed = GroundSpeed(f, map, rules, spec, unit, transform->Position);
+          var speed = GroundSpeed(f, map, rules, spec, unit, transform->Position);
+          if (!spec.IsNaval && (spec.IsVehicle || spec.Size >= UnitSize.Medium)
+              && unit->Order != UnitOrder.Stop && unit->Order != UnitOrder.Hold) {
+            ApplyPedestrianYieldAndSteer(f, entity, transform, unit, spec, ref speed);
+          }
+          agent->MaxSpeed = speed;
           if (!spec.IsNaval && unit->Order == UnitOrder.Move && f.Number % repathFrames == 0
               && f.Unsafe.TryGetPointer<NavMeshPathfinder>(entity, out var moving) && moving->IsActive
               && FactoryWarsUtil.FlatDistanceSqr(moving->Target, unit->TargetPosition) <= FP._1
@@ -1595,6 +1600,75 @@ namespace Quantum.FactoryWars {
       SeparateUnits(f);
       PushOutOfBuildings(f);
       PushHeavyArmorOutOfRubble(f);
+    }
+
+    /// <summary>
+    /// 보행자(공병·보병) 앞 차량 정지·양보 또는 우회 회피(100% FP 결정론):
+    /// - 진행 방향 전방 시야 콘 안에 이동 중인 보행자가 있으면 일시 정지·양보(속도 0).
+    /// - 정지 중인 보행자가 앞을 막고 있으면 NavMesh 안전 범위 내에서 측면으로 부드럽게 우회 조향해 관통·정체 방지.
+    /// </summary>
+    static void ApplyPedestrianYieldAndSteer(Frame f, EntityRef entity, Transform3D* transform, Unit* unit, UnitSpec spec, ref FP maxSpeed) {
+      if (maxSpeed <= FP._0) return;
+      var goal = unit->TargetPosition;
+      if (f.Unsafe.TryGetPointer<NavMeshPathfinder>(entity, out var path) && path->IsActive) {
+        goal = NextCorner(f, path, goal);
+      }
+      var toGoal = goal - transform->Position;
+      toGoal.Y = FP._0;
+      if (toGoal.SqrMagnitude <= FP._0_25) return;
+      var fwd = toGoal.Normalized;
+      var right = new FPVector3(-fwd.Z, FP._0, fwd.X);
+      var vehRadius = UnitRadius(spec);
+      var detectAhead = vehRadius + (FP)4;
+      var lateralHalf = vehRadius + FP._1 + FP._0_25;
+      var yieldNow = false;
+      var steerDir = FP._0;
+      var closestAhead = FP.MaxValue;
+
+      var others = f.Filter<Transform3D, Unit>();
+      while (others.NextUnsafe(out var otherEntity, out var otherTf, out var otherUnit)) {
+        if (otherEntity == entity || otherUnit->Health <= FP._0 || otherUnit->Garrison != EntityRef.None || otherUnit->Transport != EntityRef.None) {
+          continue;
+        }
+        var otherSpec = f.FindAsset(otherUnit->Spec);
+        var isPerson = !otherSpec.IsAir && !otherSpec.IsNaval && !otherSpec.IsVehicle
+          && (otherSpec.Size == UnitSize.Small || otherSpec.Size == UnitSize.Engineer);
+        if (!isPerson) continue;
+        // 아군/동맹 보행자 보호(적 보병과 교전 중일 때는 별도).
+        if (otherUnit->Owner != unit->Owner && DiplomacySystem.GetRelation(f, unit->Owner, otherUnit->Owner) != Relation.Allied) {
+          continue;
+        }
+        var rel = otherTf->Position - transform->Position;
+        rel.Y = FP._0;
+        var ahead = rel.X * fwd.X + rel.Z * fwd.Z;
+        if (ahead <= FP._0_25 || ahead > detectAhead) continue;
+        var lat = rel.X * right.X + rel.Z * right.Z;
+        if (FPMath.Abs(lat) > lateralHalf) continue;
+        if (ahead < closestAhead) {
+          closestAhead = ahead;
+          var personMoving = otherUnit->Order != UnitOrder.Stop && otherUnit->Order != UnitOrder.Hold;
+          if (personMoving && ahead < vehRadius + (FP)3) {
+            yieldNow = true;
+            steerDir = FP._0;
+          } else {
+            yieldNow = false;
+            steerDir = lat >= FP._0 ? -FP._1 : FP._1;
+          }
+        }
+      }
+
+      if (yieldNow) {
+        maxSpeed = FP._0;
+      } else if (steerDir != FP._0) {
+        var navMesh = f.Map.GetNavMesh(FactoryWarsUtil.Rules(f).NavMeshName);
+        var mask = *f.NavMeshRegionMask;
+        var step = maxSpeed * FP._0_75 * f.DeltaTime;
+        var candidate = transform->Position + right * (steerDir * step);
+        if (navMesh != null && navMesh.Contains(candidate, mask, true)) {
+          transform->Position = candidate;
+        }
+        maxSpeed = maxSpeed * FP._0_50;
+      }
     }
 
     /// <summary>붕괴 잔해 통행 규칙(Rubble Passage Rule): 보병은 통과·엄폐 가능하지만 대형 중전차(Large)는 붕괴 잔해 외곽으로 밀려나 진입 차단.</summary>

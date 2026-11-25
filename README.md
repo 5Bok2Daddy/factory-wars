@@ -7,6 +7,15 @@
 
 ---
 
+## `MicroBar` 애니메이션 체력바 전역 적용(지상군·전차·건물·고고도 폭격기 · 단일 `^` 보존) + `CS0619` 수정 + 보행자 앞 차량 양보·우회 회피 (2026-11-25 · 3/3 통과)
+
+| 전차 교전 `MicroBar` 지연 고스트바 감소 (GIF · 전후 비교) | 건물 · 기동업그레이드 보병(단일 `^` 보존) · 고고도 폭격기(25.5m) `MicroBar` | 보행자 앞 차량 우회 회피 (`minDist=4.24m`, GIF) |
+| --- | --- | --- |
+| [![MicroBar 전차 교전 GIF](Docs/status_images/MicroBarAndYield/01_microbar_tank_combat.gif)](Docs/status_images/MicroBarAndYield/01_microbar_tank_combat.gif) | [![건물 및 보병 MicroBar와 단일 셰브론](Docs/status_images/MicroBarAndYield/02_microbar_structure_and_soldier_chevron.png)](Docs/status_images/MicroBarAndYield/02_microbar_structure_and_soldier_chevron.png) | [![보행자 앞 차량 우회 회피 GIF](Docs/status_images/MicroBarAndYield/04_vehicle_avoid_person.gif)](Docs/status_images/MicroBarAndYield/04_vehicle_avoid_person.gif) |
+| [전후 비교](Docs/status_images/MicroBarAndYield/00_before_after_microbar.png) · [교전 GIF](Docs/status_images/MicroBarAndYield/01_microbar_tank_combat.gif) (`Delayed_SpriteMicroBar` SRP) | [건물·보병 원본](Docs/status_images/MicroBarAndYield/02_microbar_structure_and_soldier_chevron.png) · [폭격기 정렬 원본](Docs/status_images/MicroBarAndYield/03_microbar_bomber_elevated.png) | [차량 우회 GIF](Docs/status_images/MicroBarAndYield/04_vehicle_avoid_person.gif) · [정지화면](Docs/status_images/MicroBarAndYield/04_vehicle_avoid_person.png) (`CS0619` 0건) |
+
+---
+
 ## Priority 1·2 완료: 군용 철책·겹침 제거·공장형 채굴 건물(`SM_Bld_Warehouse_01`)·자동 `자원채취` 왕복 + 전차 피격/손상/파괴 GIF · 항만 파도 텍스처 · 궁극기 양방향 1기 상한 (2026-11-25 · 5/5 통과)
 
 | 공장형 채굴 건물·군용 철책(154개)·겹침 0 & 자동 `자원채취` 왕복 (GIF) | 실전 100% HP 전차 첫 명중 · 지속 손상 · 파괴 (GIF 3종) | 항만 파도 텍스처 (`WaterSurface_single.tif`) 적용 확인 |
