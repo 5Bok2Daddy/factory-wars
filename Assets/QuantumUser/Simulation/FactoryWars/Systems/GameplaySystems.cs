@@ -1312,6 +1312,10 @@ namespace Quantum.FactoryWars {
         if (spec.Ability == SpecialAbility.CarpetBomb) {
           TryCarpetBomb(f, weapon, unit, position);
         }
+        var grenadeUnlocked = TechSystem.HasSprintUpgrade(f, unit->Owner, spec);
+        if (grenadeUnlocked && unit->AbilityCooldown > FP._0) {
+          unit->AbilityCooldown = FPMath.Max(FP._0, unit->AbilityCooldown - f.DeltaTime);
+        }
 
         if (unit->TargetEntity != EntityRef.None && (IsValidTarget(f, weapon, unit->TargetEntity) == false || FactoryWarsUtil.IsVisibleTo(f, unit->Owner, unit->TargetEntity) == false)) {
           unit->TargetEntity = EntityRef.None;
@@ -1349,6 +1353,15 @@ namespace Quantum.FactoryWars {
             unit->TargetEntity = EntityRef.None;
           }
           continue;
+        }
+
+        // 업그레이드 해금 보병 수류탄 투척: 지상 표적 3~11m 거리 & 쿨다운(10초) 완료 시 결정론 포물선 수류탄 투척.
+        if (grenadeUnlocked && unit->AbilityCooldown <= FP._0 && distance >= (FP)9 && distance <= (FP)121) {
+          var targetIsAir = f.Unsafe.TryGetPointer<Unit>(unit->TargetEntity, out var tUnit) && f.FindAsset(tUnit->Spec).IsAir;
+          if (!targetIsAir) {
+            unit->AbilityCooldown = (FP)10;
+            MlrsSystem.LaunchInfantryGrenade(f, entity, unit->Owner, position, targetPosition);
+          }
         }
 
         Fire(f, entity, weapon, unit, unit->TargetEntity, position, targetPosition, range);

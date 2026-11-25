@@ -28,6 +28,7 @@ namespace FactoryWars.EditorTools {
       var worker = Controller(SyntyAssign.WorkerControllerPath, "Worker");
       var infantry = Controller(SyntyAssign.ControllerPath, "Infantry");
       PrepareAxe();
+      PrepareTacticalPack();
       foreach (var (entry, clip) in clips) {
         var model = entry.Role == "Infantry_Combat" ? infantry : worker;
         var machine = model.layers[0].stateMachine;
@@ -49,6 +50,13 @@ namespace FactoryWars.EditorTools {
       var path = Controllers + "/Axe.prefab";
       if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null) return;
       const string source = "Assets/ExternalAssets/Synty/PolygonGeneric/Prefabs/Weapons/SM_Gen_Wep_Axe_01.prefab";
+      if (!AssetDatabase.CopyAsset(source, path)) throw new InvalidOperationException($"Could not copy {source}");
+    }
+
+    static void PrepareTacticalPack() {
+      var path = Controllers + "/TacticalPack.prefab";
+      if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null) return;
+      const string source = "Assets/ExternalAssets/Synty/PolygonBattleRoyale/Prefabs/Characters/Attachments/SM_Chr_Attach_Bag_Lvl1.prefab";
       if (!AssetDatabase.CopyAsset(source, path)) throw new InvalidOperationException($"Could not copy {source}");
     }
 

@@ -114,6 +114,7 @@ namespace FactoryWars.View {
       public int UpgradeMark = 1;
       public bool IsFreeFaction;
       public GameObject UpgradeKit;
+      public readonly List<GameObject> UpgradeAttachments = new List<GameObject>(4);
       public TextMesh UpgradeChevron;
       public bool IsCarrier;
       public Transform SiloDoorL;
@@ -255,6 +256,9 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventCratePicked>(this, e => Fx.Burst(e.Position.ToUnityVector3(), new Color(1f, 0.85f, 0.3f), 1f));
       QuantumEvent.Subscribe<EventMlrsLaunched>(this, e => {
         var frame = e.Game.Frames.Verified;
+        if (_actors.TryGetValue(e.Battery, out var launcherAct) && launcherAct.View?.Animation != null) {
+          launcherAct.View.Animation.ThrowGrenade();
+        }
         var viewer = _controller != null ? _controller.Player : PlayerRef.None;
         if (!viewer.IsValid || viewer == e.Owner || (frame != null && FogSystem.IsVisible(frame, viewer, e.Origin))) {
           var position = _mlrsRockets.AtSurface(e.Origin.ToUnityVector3());
@@ -1441,12 +1445,14 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>Mk.1 -> Mk.2 -> Mk.3 시각 진화(절차적 장갑판·포신 보강·진영 발광 트림 + 은/금 셰브론 배지).</summary>
+    /// <summary>Mk.1 -> Mk.2 -> Mk.3 시각 진화. 보병은 승인된 Option A(Spine_03 밀착 저프로파일 전술 팩 + 진영 어깨 패치 + 선택 시 체력바 옆 단일 셰브론 ^).</summary>
     void UpdateUpgradeVisual(Frame frame, Actor actor, Unit* unit, UnitSpec spec) {
       if (spec.Size == UnitSize.Engineer || actor.IsCarrier) {
         return;
       }
       var mark = TechSystem.UnitMark(frame, unit->Owner, spec);
+      var infantry = spec.Size == UnitSize.Small && spec.IsVehicle == false && spec.IsAir == false && spec.IsNaval == false;
+      var sprintUnlocked = infantry && TechSystem.HasSprintUpgrade(frame, unit->Owner, spec);
       actor.IsFreeFaction = TechSystem.FactionIdOf(frame, unit->Owner) == "free_federation";
       if (mark != actor.UpgradeMark) {
         actor.UpgradeMark = mark;
@@ -1454,24 +1460,20 @@ namespace FactoryWars.View {
           Destroy(actor.UpgradeKit);
           actor.UpgradeKit = null;
         }
+        for (var i = 0; i < actor.UpgradeAttachments.Count; i++) {
+          if (actor.UpgradeAttachments[i] != null) Destroy(actor.UpgradeAttachments[i]);
+        }
+        actor.UpgradeAttachments.Clear();
         if (mark >= 2) {
-          var kit = new MeshKit();
-          var glow = actor.IsFreeFaction ? Swatch.GlowCyan : Swatch.GlowRed;
-          var infantry = spec.Size == UnitSize.Small && spec.IsVehicle == false && spec.IsAir == false && spec.IsNaval == false;
           if (infantry) {
-            // 보병 Mk.2: 강화 어깨·흉부 장갑판 / Mk.3: 중장갑 견갑 + 진영 발광 바이저·백팩 코어.
-            kit.Paint(Swatch.ArmorDark).Box(new Vector3(-0.24f, 1.32f, 0f), new Vector3(0.14f, 0.14f, 0.22f));
-            kit.Paint(Swatch.ArmorDark).Box(new Vector3(0.24f, 1.32f, 0f), new Vector3(0.14f, 0.14f, 0.22f));
-            kit.Paint(Swatch.MetalLight).Box(new Vector3(0f, 1.18f, 0.14f), new Vector3(0.3f, 0.26f, 0.08f));
-            if (mark >= 3) {
-              kit.Paint(glow).Box(new Vector3(0f, 1.56f, 0.13f), new Vector3(0.2f, 0.07f, 0.08f));
-              kit.Paint(Swatch.ArmorDark).Box(new Vector3(0f, 1.24f, -0.18f), new Vector3(0.28f, 0.34f, 0.14f));
-              kit.Paint(glow).Box(new Vector3(0f, 1.26f, -0.26f), new Vector3(0.18f, 0.16f, 0.05f));
-            }
+            // Option A (승인안): 밝은 직사각형 블록 제거 -> Spine_03 밀착 저프로파일 전술 팩(군복 톤 매칭) + 소형 진영색 어깨 패치.
+            AttachInfantryOptionAPack(actor, actor.IsFreeFaction);
           } else {
+            var kit = new MeshKit();
+            var glow = actor.IsFreeFaction ? Swatch.GlowCyan : Swatch.GlowRed;
             var s = spec.Size == UnitSize.Large ? 1.45f : spec.Size == UnitSize.Medium ? 1.05f : 0.72f;
             var y = spec.IsAir ? 0.25f : 0.52f * s;
-            // 기갑·차량·항공 Mk.2: 반응장갑 사이드 스커트 + 연장 포신 덮개.
+            // 기갑·차량·항공 Mk.2: 반응장갑 사이드 스커트 + 연장 포신 덮개(공유 로직 보존).
             kit.Paint(Swatch.ArmorDark).Chamfer(new Vector3(-0.98f * s, y, 0f), new Vector3(0.22f * s, 0.44f * s, 1.9f * s), 0.05f);
             kit.Paint(Swatch.ArmorDark).Chamfer(new Vector3(0.98f * s, y, 0f), new Vector3(0.22f * s, 0.44f * s, 1.9f * s), 0.05f);
             kit.Paint(Swatch.MetalLight).Box(new Vector3(0f, y + 0.42f * s, 0.95f * s), new Vector3(0.28f * s, 0.22f * s, 0.95f * s));
@@ -1483,16 +1485,18 @@ namespace FactoryWars.View {
               kit.Paint(Swatch.MetalLight).Cylinder(new Vector3(0.22f * s, y + 0.46f * s, 1.35f * s), 0.08f * s, 0.95f * s, 8);
               kit.Paint(glow).Box(new Vector3(0f, y + 0.56f * s, 1.1f * s), new Vector3(0.36f * s, 0.08f * s, 0.65f * s));
             }
+            var go = new GameObject($"UpgradeKit_Mk{mark}", typeof(MeshFilter), typeof(MeshRenderer));
+            go.transform.SetParent(actor.View.Model.transform, false);
+            go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh($"upgrade_mk{mark}_{spec.name}");
+            go.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
+            ArtLook.Apply(go, actor.Color, true);
+            actor.UpgradeKit = go;
           }
-          var go = new GameObject($"UpgradeKit_Mk{mark}", typeof(MeshFilter), typeof(MeshRenderer));
-          go.transform.SetParent(actor.View.Model.transform, false);
-          go.GetComponent<MeshFilter>().sharedMesh = kit.ToMesh($"upgrade_mk{mark}_{spec.name}");
-          go.GetComponent<MeshRenderer>().sharedMaterial = ArtLook.NeutralMaterial;
-          ArtLook.Apply(go, actor.Color, true);
-          actor.UpgradeKit = go;
         }
       }
-      if (mark <= 1) {
+      var showInfantryChevron = infantry && (sprintUnlocked || mark >= 2) && _marked.Contains(actor);
+      var showVehicleBadge = !infantry && mark >= 2;
+      if (!showInfantryChevron && !showVehicleBadge) {
         if (actor.UpgradeChevron != null && actor.UpgradeChevron.gameObject.activeSelf) {
           actor.UpgradeChevron.gameObject.SetActive(false);
         }
@@ -1505,19 +1509,88 @@ namespace FactoryWars.View {
         tm.anchor = TextAnchor.MiddleCenter;
         tm.alignment = TextAlignment.Center;
         tm.fontSize = 32;
-        tm.characterSize = 0.11f;
         tm.fontStyle = FontStyle.Bold;
         actor.UpgradeChevron = tm;
       }
-      actor.UpgradeChevron.text = mark >= 3 ? "^^ Mk.3" : "^ Mk.2";
-      actor.UpgradeChevron.color = mark >= 3 ? new Color(1f, 0.84f, 0.2f, 1f) : new Color(0.86f, 0.91f, 0.97f, 1f);
-      actor.UpgradeChevron.transform.localPosition = Vector3.up * (actor.View.Entry.BarHeight + (actor.VetRank > 0 ? 0.92f : 0.44f));
+      if (infantry) {
+        // 보병 기동 업그레이드: 상시 "Mk.2" 라벨 제거, 선택 시에만 체력바 옆 단일 소형 셰브론("^") 표시.
+        actor.UpgradeChevron.text = "^";
+        actor.UpgradeChevron.characterSize = 0.085f;
+        actor.UpgradeChevron.color = actor.IsFreeFaction ? new Color(0.42f, 0.86f, 1f, 1f) : new Color(1f, 0.72f, 0.36f, 1f);
+        var barY = actor.View.Bar != null ? actor.View.Bar.transform.localPosition.y : actor.View.Entry.BarHeight;
+        actor.UpgradeChevron.transform.localPosition = new Vector3(0.76f, barY, 0f);
+      } else {
+        actor.UpgradeChevron.text = mark >= 3 ? "^^ Mk.3" : "^ Mk.2";
+        actor.UpgradeChevron.characterSize = 0.11f;
+        actor.UpgradeChevron.color = mark >= 3 ? new Color(1f, 0.84f, 0.2f, 1f) : new Color(0.86f, 0.91f, 0.97f, 1f);
+        actor.UpgradeChevron.transform.localPosition = Vector3.up * (actor.View.Entry.BarHeight + (actor.VetRank > 0 ? 0.92f : 0.44f));
+      }
       if (actor.UpgradeChevron.gameObject.activeSelf == false) {
         actor.UpgradeChevron.gameObject.SetActive(true);
       }
       var cam = Camera.main;
       if (cam != null) {
         actor.UpgradeChevron.transform.rotation = cam.transform.rotation;
+      }
+    }
+
+    static Material _packMatFf, _packMatCf, _patchMatFf, _patchMatCf;
+
+    static Material MakeUniformMat(string name, Color color) {
+      var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+      var mat = new Material(shader) { name = name, hideFlags = HideFlags.HideAndDontSave };
+      if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+      if (mat.HasProperty("_Color")) mat.SetColor("_Color", color);
+      if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.18f);
+      return mat;
+    }
+
+    void AttachInfantryOptionAPack(Actor actor, bool isFreeFaction) {
+      var packPrefab = Resources.Load<GameObject>("FactoryWarsMixamo/TacticalPack");
+      var packMat = isFreeFaction
+        ? (_packMatFf != null ? _packMatFf : (_packMatFf = MakeUniformMat("TacticalPack_FF", new Color(0.28f, 0.33f, 0.24f, 1f))))
+        : (_packMatCf != null ? _packMatCf : (_packMatCf = MakeUniformMat("TacticalPack_CF", new Color(0.36f, 0.33f, 0.26f, 1f))));
+      var patchMat = isFreeFaction
+        ? (_patchMatFf != null ? _patchMatFf : (_patchMatFf = MakeUniformMat("ShoulderPatch_FF", new Color(0.18f, 0.52f, 0.88f, 1f))))
+        : (_patchMatCf != null ? _patchMatCf : (_patchMatCf = MakeUniformMat("ShoulderPatch_CF", new Color(0.78f, 0.26f, 0.20f, 1f))));
+
+      var members = new List<Transform>();
+      foreach (var anim in actor.View.Model.GetComponentsInChildren<Animator>(true)) members.Add(anim.transform);
+      if (members.Count == 0) members.Add(actor.View.Model.transform);
+
+      foreach (var member in members) {
+        var spine = RiflemanRig.Find(member, "Spine_03") ?? RiflemanRig.Find(member, "Spine_02") ?? member;
+        GameObject pack;
+        if (packPrefab != null) {
+          pack = Instantiate(packPrefab, spine, false);
+          pack.name = "OptionA_TacticalPack";
+          pack.transform.localPosition = new Vector3(0f, 0.03f, -0.15f);
+          pack.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+          pack.transform.localScale = Vector3.one * 0.66f;
+          foreach (var c in pack.GetComponentsInChildren<Collider>(true)) c.enabled = false;
+          foreach (var r in pack.GetComponentsInChildren<Renderer>(true)) r.sharedMaterial = packMat;
+        } else {
+          pack = GameObject.CreatePrimitive(PrimitiveType.Cube);
+          pack.name = "OptionA_TacticalPack";
+          pack.transform.SetParent(spine, false);
+          pack.transform.localPosition = new Vector3(0f, 0.03f, -0.14f);
+          pack.transform.localScale = new Vector3(0.24f, 0.30f, 0.11f);
+          Destroy(pack.GetComponent<Collider>());
+          pack.GetComponent<MeshRenderer>().sharedMaterial = packMat;
+        }
+        actor.UpgradeAttachments.Add(pack);
+        if (actor.UpgradeKit == null) actor.UpgradeKit = pack;
+
+        // 소형 진영색 어깨 패치(좌측 상완/어깨 밀착).
+        var upperArmL = RiflemanRig.Find(member, "Shoulder_L") ?? RiflemanRig.Find(member, "UpperArm_L") ?? spine;
+        var patch = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        patch.name = "OptionA_ShoulderPatch";
+        patch.transform.SetParent(upperArmL, false);
+        patch.transform.localPosition = upperArmL == spine ? new Vector3(-0.21f, 0.12f, 0.01f) : new Vector3(0f, 0.05f, -0.055f);
+        patch.transform.localScale = new Vector3(0.035f, 0.095f, 0.075f);
+        Destroy(patch.GetComponent<Collider>());
+        patch.GetComponent<MeshRenderer>().sharedMaterial = patchMat;
+        actor.UpgradeAttachments.Add(patch);
       }
     }
 

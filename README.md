@@ -7,6 +7,15 @@
 
 ---
 
+## 보병 기동 업그레이드 Option A (저프로파일 전술 팩 · 단일 셰브론 `^` · `기동 훈련 · 전력질주 해금` HUD) & 수류탄 투척 스킬 (2026-11-25 · 3/3 통과)
+
+| 실제 Unity 캡처: Option A 근접 클리어런스 (팩·어깨 패치·양손 파지·단일 `^`) | 실제 Unity 캡처: Idle · Walk · Sprint (RTS 줌) | 업그레이드 해금 수류탄 투척 & 폭발 모션 (GIF) |
+| --- | --- | --- |
+| [![Option A 근접 클리어런스](Docs/status_images/MobilityOptionA/optionA_closeup_pack_clearance.png)](Docs/status_images/MobilityOptionA/optionA_closeup_pack_clearance.png) | [![Option A Idle Walk Sprint](Docs/status_images/MobilityOptionA/optionA_actual_idle_walk_sprint.png)](Docs/status_images/MobilityOptionA/optionA_actual_idle_walk_sprint.png) | [![수류탄 투척 및 폭발 모션 GIF](Docs/status_images/MobilityOptionA/optionA_grenade_throw_motion.gif)](Docs/status_images/MobilityOptionA/optionA_grenade_throw_motion.gif) |
+| [근접 원본](Docs/status_images/MobilityOptionA/optionA_closeup_pack_clearance.png) · `Spine_03` 밀착 팩·진영 패치·상시 `Mk.2` 제거 | [3종 비교](Docs/status_images/MobilityOptionA/optionA_actual_idle_walk_sprint.png) · 선택 패널 `기동 훈련 · 전력질주 해금` + 단일 `^` | [수류탄 GIF](Docs/status_images/MobilityOptionA/optionA_grenade_throw_motion.gif) · [폭발 정지화면](Docs/status_images/MobilityOptionA/optionA_grenade_in_action.png) (`GrenadeThrow`, 44클립) |
+
+---
+
 ## 연속 이동·업그레이드 연동 질주(+25%) · 자원지 3인 작업자(`3/3` 배지) · 함정 조타수 · A2UI 대시보드 (2026-11-25 · 3/3 통과)
 
 | 업그레이드 전 보행 vs. 해금 후 질주 (`SprintForward`) | 자원지 3인 비겹침 작업자 & `3/3` 월드 배지 | 전함·초계정·상륙정 조타수 & 파티클 항적 |

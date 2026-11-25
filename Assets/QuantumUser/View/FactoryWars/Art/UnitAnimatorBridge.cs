@@ -78,6 +78,11 @@ namespace FactoryWars.View {
       if (State == UnitAnimState.Idle && !IsActing) Action("Hit", 0.4f);
     }
 
+    /// <summary>업그레이드 해금 수류탄 투척 모션 재생(Mixamo GrenadeThrow, X Bot 미사용).</summary>
+    public void ThrowGrenade() {
+      if (!Cover) Action("GrenadeThrow", 0.85f);
+    }
+
     /// <summary>모델에 Animator가 있거나 슬롯에 컨트롤러가 있으면 붙인다. 아니면 null.</summary>
     public static UnitAnimatorBridge Attach(GameObject model, VisualSlot slot, RuntimeAnimatorController overrideController = null) {
       var animators = new List<Animator>(model.GetComponentsInChildren<Animator>(true));
@@ -156,8 +161,9 @@ namespace FactoryWars.View {
           } else if (effectiveState == UnitAnimState.Move) {
             var moveSpeed = Mathf.Max(_smoothedSpeed, speed);
             if (SprintUnlocked) {
-              pose = CombatAlert ? "RifleRun" : "SprintForward";
-              clipSpeed = Mathf.Clamp(moveSpeed / 4.2f, 0.95f, 1.55f);
+              // 승인된 Option A 질주: 전방 약경사 + 상체 밀착 양손 소총 파지(RifleRun)로 전환·정지 시 클리핑 0 보장.
+              pose = "RifleRun";
+              clipSpeed = Mathf.Clamp(moveSpeed / 3.6f, 1.08f, 1.55f);
             } else if (CombatAlert) {
               pose = moveSpeed >= 3.2f ? "RifleRun" : "RifleWalk";
               clipSpeed = Mathf.Clamp(moveSpeed / 3.6f, 0.8f, 1.45f);

@@ -1693,8 +1693,14 @@ namespace FactoryWars.View {
           }
         }
       }
+      if (TechSystem.HasSprintUpgrade(frame, unit.Owner, spec)) {
+        var cd = unit.AbilityCooldown > FP._0 ? $" (수류탄 {Mathf.CeilToInt(unit.AbilityCooldown.AsFloat)}초)" : " · 수류탄 준비";
+        lines += $"\n기동 훈련 · 전력질주 해금{cd}";
+      }
       _cardDetail.text = lines;
     }
+
+    public string CardDetailText => _cardDetail != null ? _cardDetail.text : "";
 
     void CardBuilding(Frame frame, PlayerState* state, EntityRef entity) {
       var building = frame.Get<Building>(entity);

@@ -166,6 +166,32 @@ namespace Quantum.FactoryWars {
       }
     }
 
+    /// <summary>보병 기동/전술 업그레이드 해금 수류탄 투척(결정론 FP 포물선 궤적·광역 피해·폭발 VFX 연동).</summary>
+    public static void LaunchInfantryGrenade(Frame f, EntityRef thrower, PlayerRef owner, FPVector3 position, FPVector3 target) {
+      var delta = target - position;
+      delta.Y = FP._0;
+      var heading = delta.SqrMagnitude > FP._0_01 ? delta.Normalized : FPVector3.Forward;
+      var origin = position + FPVector3.Up * (FP._1 + FP._0_50) + heading * FP._0_50;
+      var speed = (FP)11;
+      var arc = (FP)3 + FP._0_25;
+      var flightFrames = Frames(f, (target - origin).Magnitude / speed);
+      var grenade = f.Create();
+      f.Add(grenade, new MlrsRocket {
+        Owner = owner,
+        Origin = origin,
+        Target = target,
+        Arc = arc,
+        LaunchFrame = f.Number,
+        ImpactFrame = f.Number + flightFrames,
+        BlastRadius = (FP)3 + FP._0_25,
+        Damage = (FP)48,
+        EdgeDamage = (FP)20,
+      });
+      var pitch = (FP)42 * FP.Deg2Rad;
+      var direction = heading * FPMath.Cos(pitch) + FPVector3.Up * FPMath.Sin(pitch);
+      f.Events.MlrsLaunched(thrower, owner, origin, direction);
+    }
+
     public static FPVector3 PositionAt(in MlrsRocket rocket, int frame) {
       var progress = FPMath.Clamp01((FP)(frame - rocket.LaunchFrame) / (rocket.ImpactFrame - rocket.LaunchFrame));
       return rocket.Origin + (rocket.Target - rocket.Origin) * progress

@@ -1016,5 +1016,108 @@ namespace FactoryWars.Tests {
     static unsafe void AssignGarrison(Frame f, EntityRef unitEntity, EntityRef buildingEntity) {
       if (f.Unsafe.TryGetPointer<Unit>(unitEntity, out var u)) u->Garrison = buildingEntity;
     }
+
+    [UnityTest, Explicit, Timeout(1200000)]
+    public IEnumerator OptionA_TacticalPack_UI_AndGrenadeSkill_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "MobilityOptionA"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 6101, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      var bv = Battle();
+      var hud = UnityEngine.Object.FindFirstObjectByType<MatchHud>();
+
+      // 1. Baseline Walk (before upgrade) at matched RTS zoom
+      var squad = SpawnUnitByName(Verified, 0, "ff_ranger_squad", new FPVector3(-18, 0, -64));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { squad }, Target = new FPVector3(4, 0, -64) });
+      rts.Height = 16f;
+      rts.MoveTo(new Vector2(-12f, -64f));
+      rts.Apply();
+      yield return WaitFrames(24);
+      CaptureCameraPng(camera, Path.Combine(dir, "optionA_walk_rts.png"), 1920, 1080);
+
+      // 2. Unlock Option A Mobility + Grenade Upgrade -> verify Spine_03 tactical pack, shoulder patch, NO floating Mk.2 when unselected!
+      UnlockSmallUpgrade(Verified, 0);
+      if (Game?.Frames?.Predicted != null) UnlockSmallUpgrade(Game.Frames.Predicted, 0);
+      var curPos = Verified.Get<Transform3D>(squad).Position;
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { squad }, Target = curPos });
+      yield return WaitFrames(12);
+
+      Assert.IsTrue(bv.Actors.TryGetValue(squad, out var act), "Upgraded infantry actor found");
+      Assert.IsTrue(act.UpgradeAttachments.Any(g => g != null && g.name == "OptionA_TacticalPack"), "Option A Spine_03 TacticalPack attached");
+      Assert.IsTrue(act.UpgradeAttachments.Any(g => g != null && g.name == "OptionA_ShoulderPatch"), "Option A ShoulderPatch attached");
+      Assert.IsNull(act.View.Model.transform.Find("UpgradeKit_Mk2"), "Old bright rectangular UpgradeKit_Mk2 removed");
+      Assert.IsTrue(act.UpgradeChevron == null || !act.UpgradeChevron.gameObject.activeSelf, "No persistent floating Mk.2 label when unselected");
+
+      var idlePos = Verified.Get<Transform3D>(squad).Position;
+      rts.Height = 16f;
+      rts.MoveTo(new Vector2(idlePos.X.AsFloat, idlePos.Z.AsFloat));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "optionA_idle_rts.png"), 1920, 1080);
+
+      // Select unit -> verify single small chevron "^" beside health bar AND "기동 훈련 · 전력질주 해금" in selection panel!
+      Controller().Input.Selection.Units.Clear();
+      Controller().Input.Selection.Units.Add(squad);
+      yield return WaitFrames(10);
+      Assert.IsNotNull(act.UpgradeChevron, "Selected upgraded infantry creates single chevron");
+      Assert.IsTrue(act.UpgradeChevron.gameObject.activeSelf, "Single chevron visible while selected");
+      Assert.AreEqual("^", act.UpgradeChevron.text, "Chevron displays single '^' (no Mk.2 text)");
+      Assert.IsTrue(hud.CardDetailText.Contains("기동 훈련 · 전력질주 해금"), $"Selection HUD shows '기동 훈련 · 전력질주 해금' (actual: {hud.CardDetailText})");
+
+      // Sprint capture at matched RTS zoom + close-up pack/rifle clearance capture!
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { squad }, Target = new FPVector3(18, 0, -64) });
+      var sawRifleRun = false;
+      for (var i = 0; i < 6; i++) {
+        yield return WaitFrames(8);
+        var p = Verified.Get<Transform3D>(squad).Position;
+        rts.MoveTo(new Vector2(p.X.AsFloat, p.Z.AsFloat));
+        rts.Apply();
+        if (act.View?.Animation?.ActiveMixamoPose == "RifleRun") sawRifleRun = true;
+      }
+      Assert.IsTrue(sawRifleRun, "Option A sprint uses controlled forward-lean RifleRun");
+      CaptureCameraPng(camera, Path.Combine(dir, "optionA_sprint_rts.png"), 1920, 1080);
+
+      // Close-up clearance capture (pack flush on Spine_03, shoulder patch, two-hand rifle carry)
+      rts.Height = 9.5f;
+      var cp = Verified.Get<Transform3D>(squad).Position;
+      rts.MoveTo(new Vector2(cp.X.AsFloat, cp.Z.AsFloat));
+      rts.Apply();
+      yield return WaitFrames(4);
+      CaptureCameraPng(camera, Path.Combine(dir, "optionA_closeup_pack_clearance.png"), 1920, 1080);
+
+      // 3. Upgrade-Unlocked Hand Grenade Skill (Mixamo GrenadeThrow + Parabolic Arc + War FX Explosion)
+      var enemy = SpawnUnitByName(Verified, 1, "cf_militia", cp + new FPVector3(7, 0, 0));
+      yield return Send(0, new AttackTargetCommand { Units = new[] { squad }, Target = enemy });
+      rts.Height = 20f;
+      rts.MoveTo(new Vector2(cp.X.AsFloat + 3.5f, cp.Z.AsFloat));
+      rts.Apply();
+
+      var grenadeLaunched = false;
+      var sawThrowAnim = false;
+      for (var f = 0; f < 10; f++) {
+        yield return WaitFrames(6);
+        var u = Verified.Get<Unit>(squad);
+        if (u.AbilityCooldown > FP._0) grenadeLaunched = true;
+        foreach (var _ in Verified.GetComponentIterator<MlrsRocket>()) grenadeLaunched = true;
+        if (act.View?.Animation?.ActiveMixamoPose == "GrenadeThrow") sawThrowAnim = true;
+        CaptureCameraPng(camera, Path.Combine(frames, $"grenade_{f:00}.png"), 960, 540);
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "optionA_grenade_in_action.png"), 1920, 1080);
+
+      Assert.IsTrue(grenadeLaunched, "Upgraded infantry launched deterministic parabolic hand grenade & started cooldown");
+      Debug.Log($"[OptionA_TacticalPack_UI_AndGrenadeSkill_VerifyAndCapture] PASS sawThrowAnim={sawThrowAnim} card='{hud.CardDetailText.Replace("\n", " | ")}'");
+    }
   }
 }
