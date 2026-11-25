@@ -200,12 +200,13 @@ MonoBehaviour:
   - Id: unit/ff_artillery_ship
     Category: 0
     Prefabs:
+    - {fileID: 4722902123866138676, guid: 19ab67d09cf39b14ea592947cde9a70d, type: 3}
     - {fileID: 7176913710027443536, guid: 948ab28a67fb8184b9325e8168151bda, type: 3}
-    Scale: 1.0209041
+    Scale: 0.2640989
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 5.092363, y: 4.713543, z: 13.713335}
+    Size: {x: 7.7998066, y: 8.3878, z: 75.7292}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -213,16 +214,15 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 1.5
     Lifetime: 2
-    RealWorld: 1
-    Notes: Kenney Watercraft cargo hull (CC0) + Synty Military launchers, bridge,
-      radar mast
+    RealWorld: 2
+    Notes: CC BY 4.0 gun warship (see Assets/ThirdParty/CREDITS.md), decimated +
+      flat palette, markings removed; full 20 m span
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
-    SpinParts:
-    - Radar:Y
+    SpinParts: []
     MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MuzzleOffset: {x: 0, y: 5.87146, z: 34.07814}
     MembersByQuality: 
     OwnerRing: 1
   - Id: unit/cf_engineer
@@ -413,8 +413,8 @@ MonoBehaviour:
     Prefabs:
     - {fileID: 4722902123866138676, guid: 19ab67d09cf39b14ea592947cde9a70d, type: 3}
     - {fileID: 9050344177256285189, guid: 1399938a73f66a142927bd28ed0c71f5, type: 3}
-    Scale: 1
-    AutoFit: 1
+    Scale: 0.2640989
+    AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
     Size: {x: 7.7998066, y: 8.3878, z: 75.7292}
@@ -427,7 +427,7 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 2
     Notes: CC BY 4.0 gun warship (see Assets/ThirdParty/CREDITS.md), decimated +
-      flat palette, markings removed
+      flat palette, markings removed; full 20 m span
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -1217,224 +1217,6 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 1.7049161, z: 2.1555355}
     MembersByQuality: 
     OwnerRing: 1
-  - Id: unit/pmc_operator_squad
-    Category: 0
-    Prefabs:
-    - {fileID: 5336377252740909723, guid: 814371c500c895a4abd752585cc39a36, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 2.0516062, y: 1.9209248, z: 0.53488874}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 39 PMC trooper (Synty BattleRoyale Mercenary, parts merged, PMC black
-      copy of its material), trader_guard animator
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
-    MembersByQuality: 010000000100000001000000
-    OwnerRing: 1
-  - Id: unit/pmc_marksman
-    Category: 0
-    Prefabs:
-    - {fileID: 280074479583373835, guid: c344f20ae6533ed43b33e0bd6d44b334, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 2.0516062, y: 1.9209248, z: 0.53488874}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 39 PMC trooper (Synty BattleRoyale Mercenary, parts merged, PMC black
-      copy of its material), trader_guard animator
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
-    MembersByQuality: 010000000100000001000000
-    OwnerRing: 1
-  - Id: unit/pmc_tank
-    Category: 0
-    Prefabs:
-    - {fileID: 8402514608613543937, guid: c0c4e07f6c0b0544d81f0a467d15915d, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 3.7754235, y: 4.329843, z: 9.977934}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 39 PMC camp model (CampKit.cs), PMC black copy of pack materials
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: unit/pmc_attack_heli
-    Category: 0
-    Prefabs:
-    - {fileID: 2188580896861997525, guid: d7df5685fe779a24f828c39e7999e0ec, type: 3}
-    - {fileID: 2188580896861997525, guid: d7df5685fe779a24f828c39e7999e0ec, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 11.1744, y: 5.4315, z: 16.059}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 2
-    Notes: CC BY 4.0 attack helicopter (see Assets/ThirdParty/CREDITS.md), decimated
-      + flat palette, renamed; 16 m real scale
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 3.8020499, z: 7.2265496}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/pmc_attack_drone
-    Category: 0
-    Prefabs:
-    - {fileID: 3849756881137006075, guid: 5ce7256081b0cf744b1cc0711a391590, type: 3}
-    - {fileID: 3849756881137006075, guid: 5ce7256081b0cf744b1cc0711a391590, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 0.90620035, y: 0.9062, z: 1.7604004}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 2
-    Notes: CC BY 4.0 loitering drone (see Assets/ThirdParty/CREDITS.md), decimated
-      + flat palette, renamed; 2.5 m
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0.63434, z: 0.7921802}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/pmc_armored_suv
-    Category: 0
-    Prefabs:
-    - {fileID: 6184442293050677931, guid: 3d0293bb285be4f459ca8e38e4f0450a, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 2.5054626, y: 2.4276817, z: 4.75737}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 1
-    Notes: Task 39 PMC camp model (CampKit.cs), PMC black copy of pack materials
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: unit/pmc_scout_heli
-    Category: 0
-    Prefabs:
-    - {fileID: 7285181232053374810, guid: ae386248ee49c8b4b8d2fb61bc677bc7, type: 3}
-    - {fileID: 7285181232053374810, guid: ae386248ee49c8b4b8d2fb61bc677bc7, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 2.5, y: 0.9336, z: 2.3698}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 2
-    Notes: CC BY 4.0 light helicopter (see Assets/ThirdParty/CREDITS.md), decimated
-      + flat palette, renamed; 8.5 m real scale
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0.65352, z: 1.0664101}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/merc_cargo_truck
-    Category: 0
-    Prefabs:
-    - {fileID: 2149576391970651060, guid: 3ae434eafd0c49e478e7964b2dbcbdc4, type: 3}
-    - {fileID: 8363428880468286555, guid: b6dc01a836541104d85e73dd3fae352c, type: 3}
-    Scale: 1
-    AutoFit: 1
-    YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 3.0022, y: 3.6112, z: 8.1732}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 2
-    RealWorld: 2
-    Notes: CC BY 4.0 military cargo truck (see Assets/ThirdParty/CREDITS.md), decimated
-      + flat palette, renamed; 7.5 m
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 2.5278401, z: 3.6779397}
-    MembersByQuality: 
-    OwnerRing: 1
   - Id: unit/logistics_truck
     Category: 0
     Prefabs:
@@ -2193,8 +1975,8 @@ MonoBehaviour:
     Prefabs:
     - {fileID: 3979188308498204579, guid: ab232347a0d7e5e4494f78a90ea75014, type: 3}
     - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
-    Scale: 1
-    AutoFit: 1
+    Scale: 0.9335725
+    AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
     Size: {x: 2.7850006, y: 0.2417, z: 1.7200006}
@@ -6984,8 +6766,8 @@ MonoBehaviour:
     Category: 0
     Prefabs:
     - {fileID: 3979188308498204579, guid: ab232347a0d7e5e4494f78a90ea75014, type: 3}
-    Scale: 1
-    AutoFit: 1
+    Scale: 0.9335725
+    AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
     Size: {x: 2.7850006, y: 0.2417, z: 1.7200006}
@@ -7337,6 +7119,636 @@ MonoBehaviour:
     Lifetime: 2
     RealWorld: 1
     Notes: Task 46 harbour / dock dressing (pack prefab, unchanged)
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: unit/ff_drone_operator
+    Category: 0
+    Prefabs:
+    - {fileID: 501873023450453244, guid: b43b6d045ccdca24d92b8e8e0924d275, type: 3}
+    Scale: 0.8
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0.0008060932, y: 0.09864581, z: 0.10052961}
+    Size: {x: 2.0539308, y: 1.9294397, z: 0.6890528}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 chr_soldier_1_alt1 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
+  - Id: unit/cf_drone_operator
+    Category: 0
+    Prefabs:
+    - {fileID: 494457211232935425, guid: 0492c8bcb064a8c45bf69d463aded583, type: 3}
+    Scale: 0.8
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0.0010967255, y: 0.09864581, z: 0.026458323}
+    Size: {x: 2.0516062, y: 1.9672933, z: 0.55002034}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 chr_soldier_2_alt1 / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
+  - Id: unit/ff_antidrone_gunner
+    Category: 0
+    Prefabs:
+    - {fileID: 6227393314711731993, guid: 77b6c28ddd8ff4b4d9a74b37a102f7f1, type: 3}
+    Scale: 0.8
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0.0008060932, y: 0.09864581, z: 0.046269536}
+    Size: {x: 2.0539308, y: 2.0384946, z: 0.64319766}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 chr_soldier_1_alt2 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
+  - Id: unit/cf_antidrone_gunner
+    Category: 0
+    Prefabs:
+    - {fileID: 6004486184649305211, guid: 13dfe548dec055144a944a797a76172d, type: 3}
+    Scale: 0.8
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0.0010967255, y: 0.09864581, z: 0.03402412}
+    Size: {x: 2.0516062, y: 1.9412531, z: 0.53488874}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 chr_soldier_2_alt2 / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
+  - Id: unit/ff_striker_ifv
+    Category: 0
+    Prefabs:
+    - {fileID: 7028798124793439179, guid: dfcc949dc869764448b98976f5125a89, type: 3}
+    Scale: 0.7874091
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 3.2934344, y: 2.9725466, z: 6.603936}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 tank_light / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    TurretPart: Turret
+    WreckPrefab: {fileID: 0}
+    BarrelPart: Barrel
+    SpinParts: []
+    MuzzlePart: Barrel
+    MuzzleOffset: {x: 0, y: 0.019771047, z: 2.2164953}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/cf_rampart_ifv
+    Category: 0
+    Prefabs:
+    - {fileID: 3016585311769010062, guid: e9fc862b3c9baf549b152465ef81655d, type: 3}
+    Scale: 0.7874091
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 3.2934344, y: 2.9725466, z: 6.603936}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 tank_light / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: Turret
+    WreckPrefab: {fileID: 0}
+    BarrelPart: Barrel
+    SpinParts: []
+    MuzzlePart: Barrel
+    MuzzleOffset: {x: 0, y: 0.019771047, z: 2.2164953}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/ff_vanguard_mrap
+    Category: 0
+    Prefabs:
+    - {fileID: 3227407399452836298, guid: c7cd5553a405faf4c82c0423c5322405, type: 3}
+    Scale: 0.8372152
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0, z: -0.037368774}
+    Size: {x: 3.3412054, y: 2.2348073, z: 5.255519}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 apc / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.564365, z: 2.3649836}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/cf_ironhide_mrap
+    Category: 0
+    Prefabs:
+    - {fileID: 695797729918709968, guid: 9066991037499e04aaa5c9585a8434ca, type: 3}
+    Scale: 0.8372152
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0, z: -0.037368774}
+    Size: {x: 3.3412054, y: 2.2348073, z: 5.255519}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 apc / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.564365, z: 2.3649836}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/ff_paladin_sph
+    Category: 0
+    Prefabs:
+    - {fileID: 7476421800226770378, guid: 50e857af9e0da7c4ba1467621ea54384, type: 3}
+    Scale: 0.58704585
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: 0.0011259317, z: -0.7694583}
+    Size: {x: 3.7796276, y: 2.9938588, z: 10.561356}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 tank_a / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    TurretPart: Turret
+    WreckPrefab: {fileID: 0}
+    BarrelPart: Barrel
+    SpinParts: []
+    MuzzlePart: Barrel
+    MuzzleOffset: {x: 0.00000009685755, y: 0.023358688, z: 4.2597957}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/cf_bastion_sph
+    Category: 0
+    Prefabs:
+    - {fileID: 2629403467891724122, guid: e0d39f758a29a334d980c85841eda709, type: 3}
+    Scale: 0.54843014
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: 0.0011259317, z: -1.5729933}
+    Size: {x: 4.330599, y: 2.7939706, z: 11.304995}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 tank_b / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: Turret
+    WreckPrefab: {fileID: 0}
+    BarrelPart: Barrel
+    SpinParts: []
+    MuzzlePart: Barrel
+    MuzzleOffset: {x: 0, y: 0.01242134, z: 6.103814}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/ff_aegis_ew
+    Category: 0
+    Prefabs:
+    - {fileID: 3075670829944391329, guid: 079eab8f2b1da6341a5ab19b63880013, type: 3}
+    Scale: 0.7571242
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0.15774262, y: -0, z: -0}
+    Size: {x: 3.6089196, y: 5.536131, z: 6.603936}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 radar_tank / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts:
+    - Radar_Base:Y
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.8752916, z: 2.9717712}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/cf_shroud_ew
+    Category: 0
+    Prefabs:
+    - {fileID: 1064082529979549672, guid: f05378d6dd7b39d4d9e7be279a358349, type: 3}
+    Scale: 0.7571242
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0.15774262, y: -0, z: -0}
+    Size: {x: 3.6089196, y: 5.536131, z: 6.603936}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 radar_tank / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts:
+    - Radar_Base:Y
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.8752916, z: 2.9717712}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/cf_field_recovery
+    Category: 0
+    Prefabs:
+    - {fileID: 695797729918709968, guid: 9066991037499e04aaa5c9585a8434ca, type: 3}
+    Scale: 0.95138085
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0, z: -0.037368774}
+    Size: {x: 3.3412054, y: 2.2348073, z: 5.255519}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 apc / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.564365, z: 2.3649836}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/ff_recon_drone
+    Category: 0
+    Prefabs:
+    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
+    Scale: 0.09273361
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
+    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts:
+    - Drone_Prop
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.6789272, z: 5.330518}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/cf_recon_drone
+    Category: 0
+    Prefabs:
+    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
+    Scale: 0.09273361
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
+    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts:
+    - Drone_Prop
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.6789272, z: 5.330518}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/ff_loiter_munition
+    Category: 0
+    Prefabs:
+    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
+    Scale: 0.10303734
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
+    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts:
+    - Drone_Prop
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.6789272, z: 5.330518}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/cf_loiter_munition
+    Category: 0
+    Prefabs:
+    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
+    Scale: 0.10303734
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
+    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts:
+    - Drone_Prop
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.6789272, z: 5.330518}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: fx/desert_outpost_1
+    Category: 6
+    Prefabs:
+    - {fileID: 1244221971934488, guid: 1948963e016d99b4392fc238f5ce5a96, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: SM_Prop_Fuel_Tank_01
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/desert_outpost_2
+    Category: 6
+    Prefabs:
+    - {fileID: 1880884265163912, guid: e7678ff8216ad9b4299e317bcc4eb772, type: 3}
+    Scale: 0.95
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: SM_Bld_Portable_Office_01
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/desert_outpost_3
+    Category: 6
+    Prefabs:
+    - {fileID: 1498406212196976, guid: df707e8e0e9303046af06d1d3b927883, type: 3}
+    Scale: 0.9
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: SM_Bld_Tent_Desert_01
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/waterfront_warehouse
+    Category: 6
+    Prefabs:
+    - {fileID: 1771269981955728, guid: f4bb022ab0d2a5c46b6af300deb95be5, type: 3}
+    Scale: 0.72
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: SM_Bld_Warehouse_01
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/waterfront_crane
+    Category: 6
+    Prefabs:
+    - {fileID: 1718362735809908, guid: 8b68a98b3c3a9b046b1a705f4349abb9, type: 3}
+    Scale: 0.36
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: SM_Bld_Crane_01
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/waterfront_container
+    Category: 6
+    Prefabs:
+    - {fileID: 1249707538929122, guid: 5be022cbfecfcf8478a5658a5142f700, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: SM_Prop_Shipping_Container_01
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: fx/waterfront_pipes
+    Category: 6
+    Prefabs:
+    - {fileID: 1956975090502586, guid: ad3e524ae128de348a2f6b7299d9b618, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 999
+    RealWorld: 0
+    Notes: SM_Prop_StorageShelf_Large_Pipe_01
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -10989,7 +11401,7 @@ MonoBehaviour:
     Category: 0
     Prefabs:
     - {fileID: 2188580896861997525, guid: d7df5685fe779a24f828c39e7999e0ec, type: 3}
-    - {fileID: 2188580896861997525, guid: d7df5685fe779a24f828c39e7999e0ec, type: 3}
+    - {fileID: 4307466239846680120, guid: 1f3c91964ce463142bb69a8c2ea361ad, type: 3}
     Scale: 0.996326
     AutoFit: 0
     YawOffset: 0
@@ -11017,9 +11429,117 @@ MonoBehaviour:
     Category: 0
     Prefabs:
     - {fileID: 3849756881137006075, guid: 5ce7256081b0cf744b1cc0711a391590, type: 3}
-    - {fileID: 3849756881137006075, guid: 5ce7256081b0cf744b1cc0711a391590, type: 3}
+    - {fileID: 3979188308498204579, guid: ab232347a0d7e5e4494f78a90ea75014, type: 3}
     Scale: 1.4201314
     AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 0.90620035, y: 0.9062, z: 1.7604004}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 2
+    Notes: CC BY 4.0 loitering drone (see Assets/ThirdParty/CREDITS.md), decimated
+      + flat palette, renamed; 2.5 m
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0.63434, z: 0.7921802}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/pmc_tank
+    Category: 5
+    Prefabs:
+    - {fileID: 8402514608613543937, guid: c0c4e07f6c0b0544d81f0a467d15915d, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 3.7754235, y: 4.329843, z: 9.977934}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp model (CampKit.cs), PMC black copy of pack materials
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: unit/pmc_armored_suv
+    Category: 5
+    Prefabs:
+    - {fileID: 6184442293050677931, guid: 3d0293bb285be4f459ca8e38e4f0450a, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2.5054626, y: 2.4276817, z: 4.75737}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC camp model (CampKit.cs), PMC black copy of pack materials
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0, z: 0}
+    MembersByQuality: 
+    OwnerRing: 0
+  - Id: unit/pmc_attack_heli
+    Category: 0
+    Prefabs:
+    - {fileID: 2188580896861997525, guid: d7df5685fe779a24f828c39e7999e0ec, type: 3}
+    - {fileID: 4307466239846680120, guid: 1f3c91964ce463142bb69a8c2ea361ad, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 11.1744, y: 5.4315, z: 16.059}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 2
+    Notes: CC BY 4.0 attack helicopter (see Assets/ThirdParty/CREDITS.md), decimated
+      + flat palette, renamed; 16 m real scale
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 3.8020499, z: 7.2265496}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/pmc_attack_drone
+    Category: 0
+    Prefabs:
+    - {fileID: 3849756881137006075, guid: 5ce7256081b0cf744b1cc0711a391590, type: 3}
+    - {fileID: 3979188308498204579, guid: ab232347a0d7e5e4494f78a90ea75014, type: 3}
+    Scale: 1
+    AutoFit: 1
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
     Size: {x: 0.90620035, y: 0.9062, z: 1.7604004}
@@ -11080,7 +11600,7 @@ MonoBehaviour:
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
-    Animator: {fileID: 0}
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
     DeathSeconds: 0
     Lifetime: 2
     RealWorld: 1
@@ -11107,7 +11627,34 @@ MonoBehaviour:
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
-    Animator: {fileID: 0}
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC trooper (Synty BattleRoyale Mercenary, parts merged, PMC black
+      copy of its material), trader_guard animator
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
+  - Id: unit/pmc_operator_squad
+    Category: 0
+    Prefabs:
+    - {fileID: 5336377252740909723, guid: 814371c500c895a4abd752585cc39a36, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2.0516062, y: 1.9209248, z: 0.53488874}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
     DeathSeconds: 0
     Lifetime: 2
     RealWorld: 1
@@ -11134,7 +11681,7 @@ MonoBehaviour:
     TeamMaterialToken: Team
     TeamMaterialSlots: 
     TeamTextures: []
-    Animator: {fileID: 0}
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
     DeathSeconds: 0
     Lifetime: 2
     RealWorld: 1
@@ -11148,10 +11695,91 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
     MembersByQuality: 010000000100000001000000
     OwnerRing: 1
-  - Id: camp/display_scoutheli
+  - Id: unit/pmc_marksman
+    Category: 0
+    Prefabs:
+    - {fileID: 280074479583373835, guid: c344f20ae6533ed43b33e0bd6d44b334, type: 3}
+    Scale: 1
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 2.0516062, y: 1.9209248, z: 0.53488874}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
+    DeathSeconds: 0
+    Lifetime: 2
+    RealWorld: 1
+    Notes: Task 39 PMC trooper (Synty BattleRoyale Mercenary, parts merged, PMC black
+      copy of its material), trader_guard animator
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
+    MembersByQuality: 010000000100000001000000
+    OwnerRing: 1
+  - Id: unit/merc_cargo_truck
+    Category: 0
+    Prefabs:
+    - {fileID: 2149576391970651060, guid: 3ae434eafd0c49e478e7964b2dbcbdc4, type: 3}
+    - {fileID: 8363428880468286555, guid: b6dc01a836541104d85e73dd3fae352c, type: 3}
+    Scale: 0.9176333
+    AutoFit: 0
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 3.0022, y: 3.6112, z: 8.1732}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 2
+    Notes: CC BY 4.0 military cargo truck (see Assets/ThirdParty/CREDITS.md), decimated
+      + flat palette, renamed; 7.5 m
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 2.5278401, z: 3.6779397}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: unit/pmc_scout_heli
     Category: 0
     Prefabs:
     - {fileID: 7285181232053374810, guid: ae386248ee49c8b4b8d2fb61bc677bc7, type: 3}
+    Scale: 1
+    AutoFit: 1
+    YawOffset: 0
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 2.5, y: 0.9336, z: 2.3698}
+    TeamColor: 0
+    TeamMaterialToken: Team
+    TeamMaterialSlots: 
+    TeamTextures: []
+    Animator: {fileID: 0}
+    DeathSeconds: 1.5
+    Lifetime: 2
+    RealWorld: 2
+    Notes: CC BY 4.0 light helicopter (see Assets/ThirdParty/CREDITS.md), decimated
+      + flat palette, renamed; 8.5 m real scale
+    TurretPart: 
+    WreckPrefab: {fileID: 0}
+    BarrelPart: 
+    SpinParts: []
+    MuzzlePart: 
+    MuzzleOffset: {x: 0, y: 0.65352, z: 1.0664101}
+    MembersByQuality: 
+    OwnerRing: 1
+  - Id: camp/display_scoutheli
+    Category: 0
+    Prefabs:
     - {fileID: 7285181232053374810, guid: ae386248ee49c8b4b8d2fb61bc677bc7, type: 3}
     Scale: 3.4
     AutoFit: 0
@@ -11176,634 +11804,4 @@ MonoBehaviour:
     MuzzleOffset: {x: 0, y: 0.65352, z: 1.0664101}
     MembersByQuality: 
     OwnerRing: 1
-  - Id: unit/ff_drone_operator
-    Category: 0
-    Prefabs:
-    - {fileID: 501873023450453244, guid: b43b6d045ccdca24d92b8e8e0924d275, type: 3}
-    Scale: 0.8
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0.0008060932, y: 0.09864581, z: 0.10052961}
-    Size: {x: 2.0539308, y: 1.9294397, z: 0.6890528}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 chr_soldier_1_alt1 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
-    MembersByQuality: 010000000100000001000000
-    OwnerRing: 1
-  - Id: unit/cf_drone_operator
-    Category: 0
-    Prefabs:
-    - {fileID: 494457211232935425, guid: 0492c8bcb064a8c45bf69d463aded583, type: 3}
-    Scale: 0.8
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0.0010967255, y: 0.09864581, z: 0.026458323}
-    Size: {x: 2.0516062, y: 1.9672933, z: 0.55002034}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 chr_soldier_2_alt1 / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
-    MembersByQuality: 010000000100000001000000
-    OwnerRing: 1
-  - Id: unit/ff_antidrone_gunner
-    Category: 0
-    Prefabs:
-    - {fileID: 6227393314711731993, guid: 77b6c28ddd8ff4b4d9a74b37a102f7f1, type: 3}
-    Scale: 0.8
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0.0008060932, y: 0.09864581, z: 0.046269536}
-    Size: {x: 2.0539308, y: 2.0384946, z: 0.64319766}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 chr_soldier_1_alt2 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
-    MembersByQuality: 010000000100000001000000
-    OwnerRing: 1
-  - Id: unit/cf_antidrone_gunner
-    Category: 0
-    Prefabs:
-    - {fileID: 6004486184649305211, guid: 13dfe548dec055144a944a797a76172d, type: 3}
-    Scale: 0.8
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0.0010967255, y: 0.09864581, z: 0.03402412}
-    Size: {x: 2.0516062, y: 1.9412531, z: 0.53488874}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 9100000, guid: 25da490adcaf30846a75b37a41238a8b, type: 2}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 chr_soldier_2_alt2 / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 1.2, z: 0.7}
-    MembersByQuality: 010000000100000001000000
-    OwnerRing: 1
-  - Id: unit/ff_striker_ifv
-    Category: 0
-    Prefabs:
-    - {fileID: 7028798124793439179, guid: dfcc949dc869764448b98976f5125a89, type: 3}
-    Scale: 0.7874091
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 3.2934344, y: 2.9725466, z: 6.603936}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 tank_light / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
-    TurretPart: Turret
-    WreckPrefab: {fileID: 0}
-    BarrelPart: Barrel
-    SpinParts: []
-    MuzzlePart: Barrel
-    MuzzleOffset: {x: 0, y: 0.019771047, z: 2.2164953}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/cf_rampart_ifv
-    Category: 0
-    Prefabs:
-    - {fileID: 3016585311769010062, guid: e9fc862b3c9baf549b152465ef81655d, type: 3}
-    Scale: 0.7874091
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 3.2934344, y: 2.9725466, z: 6.603936}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 tank_light / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
-    TurretPart: Turret
-    WreckPrefab: {fileID: 0}
-    BarrelPart: Barrel
-    SpinParts: []
-    MuzzlePart: Barrel
-    MuzzleOffset: {x: 0, y: 0.019771047, z: 2.2164953}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/ff_vanguard_mrap
-    Category: 0
-    Prefabs:
-    - {fileID: 3227407399452836298, guid: c7cd5553a405faf4c82c0423c5322405, type: 3}
-    Scale: 0.8372152
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: -0.037368774}
-    Size: {x: 3.3412054, y: 2.2348073, z: 5.255519}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 apc / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 1.564365, z: 2.3649836}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/cf_ironhide_mrap
-    Category: 0
-    Prefabs:
-    - {fileID: 695797729918709968, guid: 9066991037499e04aaa5c9585a8434ca, type: 3}
-    Scale: 0.8372152
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: -0.037368774}
-    Size: {x: 3.3412054, y: 2.2348073, z: 5.255519}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 apc / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 1.564365, z: 2.3649836}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/ff_paladin_sph
-    Category: 0
-    Prefabs:
-    - {fileID: 7476421800226770378, guid: 50e857af9e0da7c4ba1467621ea54384, type: 3}
-    Scale: 0.58704585
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: 0.0011259317, z: -0.7694583}
-    Size: {x: 3.7796276, y: 2.9938588, z: 10.561356}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 tank_a / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
-    TurretPart: Turret
-    WreckPrefab: {fileID: 0}
-    BarrelPart: Barrel
-    SpinParts: []
-    MuzzlePart: Barrel
-    MuzzleOffset: {x: 0.00000009685755, y: 0.023358688, z: 4.2597957}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/cf_bastion_sph
-    Category: 0
-    Prefabs:
-    - {fileID: 2629403467891724122, guid: e0d39f758a29a334d980c85841eda709, type: 3}
-    Scale: 0.54843014
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: 0.0011259317, z: -1.5729933}
-    Size: {x: 4.330599, y: 2.7939706, z: 11.304995}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 tank_b / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
-    TurretPart: Turret
-    WreckPrefab: {fileID: 0}
-    BarrelPart: Barrel
-    SpinParts: []
-    MuzzlePart: Barrel
-    MuzzleOffset: {x: 0, y: 0.01242134, z: 6.103814}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/ff_aegis_ew
-    Category: 0
-    Prefabs:
-    - {fileID: 3075670829944391329, guid: 079eab8f2b1da6341a5ab19b63880013, type: 3}
-    Scale: 0.7571242
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0.15774262, y: -0, z: -0}
-    Size: {x: 3.6089196, y: 5.536131, z: 6.603936}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 radar_tank / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts:
-    - Radar_Base:Y
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 3.8752916, z: 2.9717712}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/cf_shroud_ew
-    Category: 0
-    Prefabs:
-    - {fileID: 1064082529979549672, guid: f05378d6dd7b39d4d9e7be279a358349, type: 3}
-    Scale: 0.7571242
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0.15774262, y: -0, z: -0}
-    Size: {x: 3.6089196, y: 5.536131, z: 6.603936}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 radar_tank / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts:
-    - Radar_Base:Y
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 3.8752916, z: 2.9717712}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/cf_field_recovery
-    Category: 0
-    Prefabs:
-    - {fileID: 695797729918709968, guid: 9066991037499e04aaa5c9585a8434ca, type: 3}
-    Scale: 0.95138085
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: -0.037368774}
-    Size: {x: 3.3412054, y: 2.2348073, z: 5.255519}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 apc / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 1.564365, z: 2.3649836}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/ff_recon_drone
-    Category: 0
-    Prefabs:
-    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
-    Scale: 0.09273361
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
-    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts:
-    - Drone_Prop
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 2.6789272, z: 5.330518}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/cf_recon_drone
-    Category: 0
-    Prefabs:
-    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
-    Scale: 0.09273361
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
-    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts:
-    - Drone_Prop
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 2.6789272, z: 5.330518}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/ff_loiter_munition
-    Category: 0
-    Prefabs:
-    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
-    Scale: 0.10303734
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
-    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts:
-    - Drone_Prop
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 2.6789272, z: 5.330518}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: unit/cf_loiter_munition
-    Category: 0
-    Prefabs:
-    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
-    Scale: 0.10303734
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
-    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 0
-    Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts:
-    - Drone_Prop
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 2.6789272, z: 5.330518}
-    MembersByQuality: 
-    OwnerRing: 1
-  - Id: fx/desert_outpost_1
-    Category: 6
-    Prefabs:
-    - {fileID: 1244221971934488, guid: 1948963e016d99b4392fc238f5ce5a96, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 999
-    RealWorld: 0
-    Notes: SM_Prop_Fuel_Tank_01
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: fx/desert_outpost_2
-    Category: 6
-    Prefabs:
-    - {fileID: 1880884265163912, guid: e7678ff8216ad9b4299e317bcc4eb772, type: 3}
-    Scale: 0.95
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 999
-    RealWorld: 0
-    Notes: SM_Bld_Portable_Office_01
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: fx/desert_outpost_3
-    Category: 6
-    Prefabs:
-    - {fileID: 1498406212196976, guid: df707e8e0e9303046af06d1d3b927883, type: 3}
-    Scale: 0.9
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 999
-    RealWorld: 0
-    Notes: SM_Bld_Tent_Desert_01
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: fx/waterfront_warehouse
-    Category: 6
-    Prefabs:
-    - {fileID: 1771269981955728, guid: f4bb022ab0d2a5c46b6af300deb95be5, type: 3}
-    Scale: 0.72
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 999
-    RealWorld: 0
-    Notes: SM_Bld_Warehouse_01
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: fx/waterfront_crane
-    Category: 6
-    Prefabs:
-    - {fileID: 1718362735809908, guid: 8b68a98b3c3a9b046b1a705f4349abb9, type: 3}
-    Scale: 0.36
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 999
-    RealWorld: 0
-    Notes: SM_Bld_Crane_01
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: fx/waterfront_container
-    Category: 6
-    Prefabs:
-    - {fileID: 1249707538929122, guid: 5be022cbfecfcf8478a5658a5142f700, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 999
-    RealWorld: 0
-    Notes: SM_Prop_Shipping_Container_01
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
-  - Id: fx/waterfront_pipes
-    Category: 6
-    Prefabs:
-    - {fileID: 1956975090502586, guid: ad3e524ae128de348a2f6b7299d9b618, type: 3}
-    Scale: 1
-    AutoFit: 0
-    YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
-    TeamColor: 0
-    TeamMaterialToken: Team
-    TeamMaterialSlots: 
-    TeamTextures: []
-    Animator: {fileID: 0}
-    DeathSeconds: 1.5
-    Lifetime: 999
-    RealWorld: 0
-    Notes: SM_Prop_StorageShelf_Large_Pipe_01
-    TurretPart: 
-    WreckPrefab: {fileID: 0}
-    BarrelPart: 
-    SpinParts: []
-    MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 0, z: 0}
-    MembersByQuality: 
-    OwnerRing: 0
   Enabled: 1

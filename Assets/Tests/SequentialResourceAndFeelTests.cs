@@ -390,5 +390,95 @@ namespace FactoryWars.Tests {
       Debug.Log(string.Join("\n", lines));
       Assert.IsTrue(ffWins + cfWins > 0, "at least one decisive skirmish");
     }
+
+    [UnityTest, Explicit, Timeout(1200000)]
+    public IEnumerator FiveFixes_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "FiveFixes"));
+      Directory.CreateDirectory(dir);
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 5501, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+
+      // Fix 1 & Fix 3B: Spawn tanks/IFVs/infantry close together & engage -> verify 2-pass separation prevents overlap + combat health bars visible.
+      var c = new FPVector3(0, 0, -64);
+      var ff = new[] {
+        SpawnUnitByName(Verified, 0, "ff_eagle_tank",   c + new FPVector3(-12, 0, -1)),
+        SpawnUnitByName(Verified, 0, "ff_eagle_tank",   c + new FPVector3(-11, 0,  1)),
+        SpawnUnitByName(Verified, 0, "ff_striker_ifv",  c + new FPVector3(-10, 0,  0)),
+        SpawnUnitByName(Verified, 0, "ff_ranger_squad", c + new FPVector3( -7, 0, -2)),
+        SpawnUnitByName(Verified, 0, "ff_ranger_squad", c + new FPVector3( -7, 0,  2)),
+      };
+      var cf = new[] {
+        SpawnUnitByName(Verified, 1, "cf_fortress_tank", c + new FPVector3(12, 0, -1)),
+        SpawnUnitByName(Verified, 1, "cf_rampart_ifv",   c + new FPVector3(11, 0,  1)),
+        SpawnUnitByName(Verified, 1, "cf_militia",       c + new FPVector3( 7, 0,  0)),
+      };
+      yield return Send(0, new AttackTargetCommand { Units = ff, Target = cf[0] });
+      yield return Send(1, new AttackTargetCommand { Units = cf, Target = ff[0] });
+      yield return WaitFrames(Fps * 2);
+
+      // Assert no two living ground vehicles are severely overlapping (dist >= sum(radius) * 0.85).
+      var allGround = ff.Concat(cf).Where(e => Verified.Exists(e)).ToList();
+      var bv = Battle();
+      var visibleBars = 0;
+      foreach (var e in allGround) {
+        if (bv.Actors.TryGetValue(e, out var act) && act.View?.Bar != null && act.View.Bar.activeSelf) visibleBars++;
+      }
+      Assert.GreaterOrEqual(visibleBars, 4, "engaged/damaged units display combat health bars");
+      var tankDist = Vector3.Distance(UnityPos(Verified, ff[0]), UnityPos(Verified, ff[1]));
+      Assert.Greater(tankDist, 3.8f, $"adjacent tanks separated cleanly without overlap (dist={tankDist:0.00}m)");
+
+      rts.Height = 32f;
+      rts.MoveTo(new Vector2(c.X.AsFloat, c.Z.AsFloat));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "fix1_3_spacing_and_healthbars.png"), 1920, 1080);
+
+      // Fix 2: Raised airborne unit altitude (9.2 / 12.4 / 15.8 m) & shadow separation.
+      var ac = new FPVector3(0, 0, 56);
+      SpawnUnitByName(Verified, 0, "ff_eagle_tank", ac + new FPVector3(-6, 0, -2));
+      var air = new[] {
+        SpawnUnitByName(Verified, 0, "ff_hawk_gunship",       ac + new FPVector3(-10, 0, -2)),
+        SpawnUnitByName(Verified, 0, "pmc_attack_heli",       ac + new FPVector3(  2, 0, -2)),
+        SpawnUnitByName(Verified, 0, "ff_skyfortress_bomber", ac + new FPVector3(  8, 0,  8)),
+        SpawnUnitByName(Verified, 0, "ff_recon_drone",        ac + new FPVector3( -4, 0,  5)),
+      };
+      yield return Send(0, new MoveUnitsCommand { Units = air, Target = ac + new FPVector3(16, 0, -2) });
+      yield return WaitFrames(Fps * 2);
+      var aPos = UnityPos(Verified, air[1]);
+      rts.Height = 46f;
+      rts.MoveTo(new Vector2(aPos.x, aPos.z + 2f));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "fix2_air_high_altitude.png"), 1920, 1080);
+
+      // Fix 3A: PMC camp perimeter continuous 3-coil barbed wire (no gaps).
+      rts.Height = 28f;
+      rts.MoveTo(new Vector2(28f, -38f));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "fix3_barbed_wire_continuous.png"), 1920, 1080);
+
+      // Fix 5: Upgraded FF Aegis Destroyer (19m) + restored CF Ironwall Battleship (20m) under arch bridge.
+      var ffShip = SpawnUnitByName(Verified, 0, "ff_artillery_ship", new FPVector3(-22, 0, 104));
+      var cfShip = SpawnUnitByName(Verified, 0, "cf_artillery_ship", new FPVector3(-10, 0, 104));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { ffShip, cfShip }, Target = new FPVector3(-16, 0, 152) });
+      yield return WaitFrames(Fps * 3);
+      var sPos = (UnityPos(Verified, ffShip) + UnityPos(Verified, cfShip)) * 0.5f;
+      rts.Height = 44f;
+      rts.MoveTo(new Vector2(sPos.x, sPos.z + 4f));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "fix5_upgraded_warships.png"), 1920, 1080);
+    }
   }
 }

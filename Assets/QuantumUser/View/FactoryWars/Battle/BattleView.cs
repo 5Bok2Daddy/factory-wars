@@ -71,6 +71,7 @@ namespace FactoryWars.View {
       public Transform PowerTurbine;
       public Material PowerBeaconMat;
       public Transform NavalWake;
+      public bool InCombat;
       public readonly List<(Transform Part, Vector3 Home, Vector3 Reach, float Speed)> Sliders = new List<(Transform, Vector3, Vector3, float)>();
       public readonly List<(Transform Part, Quaternion Home, float Swing, float Speed)> Swingers = new List<(Transform, Quaternion, float, float)>();
       public GameObject Scaffold;
@@ -1237,14 +1238,17 @@ namespace FactoryWars.View {
       var before = actor.Position;
       actor.Position += moved * (1f - Mathf.Exp(-VisualProfile.Current.FollowRate * dt));
       var assemblingCarrier = actor.IsCarrier && frame.Unsafe.TryGetPointer<Carrier>(entity, out var cPtr) && cPtr->Assembling;
-      var hover = (spec.IsAir && assemblingCarrier == false) ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.16f : 0f;
-      var navalBob = spec.IsNaval ? Mathf.Sin(Time.time * 1.45f + actor.Phase) * 0.10f - 0.10f : 0f;
+      var hover = (spec.IsAir && assemblingCarrier == false) ? Mathf.Sin(Time.time * 1.6f + actor.Phase) * 0.18f : 0f;
+      var navalBob = spec.IsNaval ? Mathf.Sin(Time.time * 1.45f + actor.Phase) * 0.08f + 0.06f : 0f;
       actor.View.transform.position = (spec.IsAir && assemblingCarrier == false) ? actor.Position : actor.Position + Vector3.up * TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z);
       if (spec.IsNaval) actor.View.transform.position = actor.Position + Vector3.up * (TerrainKit.WaterLevel + navalBob);
-      var baseAirAlt = spec.IsAir ? Mathf.Max(actor.View.Entry.Altitude, spec.Size == UnitSize.Large ? 9.5f : spec.Size == UnitSize.Medium ? 7.2f : 5.6f) : actor.View.Entry.Altitude;
-      var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(baseAirAlt, 10.5f) : baseAirAlt);
+      var baseAirAlt = spec.IsAir ? Mathf.Max(actor.View.Entry.Altitude, spec.Size == UnitSize.Large ? 15.8f : spec.Size == UnitSize.Medium ? 12.4f : 9.2f) : actor.View.Entry.Altitude;
+      var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(baseAirAlt, 16.8f) : baseAirAlt);
       actor.View.Turn.localPosition = Vector3.up * (altitude + hover);
       if (spec.IsNaval) UpdateNavalWake(actor, before, dt);
+      if (spec.IsAir && actor.View.Bar != null) {
+        actor.View.Bar.transform.localPosition = Vector3.up * (altitude + (actor.IsCarrier ? 3.6f : 2.4f));
+      }
       if (visible && assemblingCarrier == false) {
         if (spec.IsAir) {
           var rotor = spec.name.EndsWith("_gunship") || spec.name.EndsWith("_heli") || actor.IsCarrier;
@@ -1259,6 +1263,7 @@ namespace FactoryWars.View {
       }
 
       var hasTarget = TryTarget(frame, unit->TargetEntity, out var target, out var air);
+      actor.InCombat = hasTarget || (unit->LastFiredFrame > 0 && frame.Number - unit->LastFiredFrame < 150);
       Vector3 workTarget = default;
       var workingAtSite = frame.Unsafe.TryGetPointer<Worker>(entity, out var engineer)
         && TryEngineerWorkTarget(frame, transform3D->Position, engineer, out workTarget);
@@ -2150,7 +2155,7 @@ namespace FactoryWars.View {
       if (actor.PowerTurbine == null) {
         var root = new GameObject("PowerPlantDistribution").transform;
         root.SetParent(actor.View.transform, false);
-        var offset = new Vector3(actor.FootprintRadius * 0.65f, 0.05f, -actor.FootprintRadius * 0.78f);
+        var offset = new Vector3(actor.FootprintRadius * 0.96f, 0.05f, -actor.FootprintRadius * 0.68f);
         root.localPosition = offset;
 
         // Transformer bank + distribution busbars (no solid black, clean industrial steel + hazard accents).
@@ -2490,7 +2495,7 @@ namespace FactoryWars.View {
         } else if (frame.Unsafe.TryGetPointer<Building>(pair.Key, out var building)) {
           ratio = building->Health.AsFloat / Mathf.Max(1f, frame.FindAsset(building->Spec).MaxHealth.AsFloat);
         }
-        var show = ratio < 0.995f || _targeted.Contains(pair.Key) || (actor.TransportCapacity > 0 && TransportSystem.UsedSlots(frame, pair.Key) > 0);
+        var show = ratio < 0.995f || actor.InCombat || _targeted.Contains(pair.Key) || (actor.TransportCapacity > 0 && TransportSystem.UsedSlots(frame, pair.Key) > 0);
         if (actor.View.Bar.activeSelf != show) {
           actor.View.Bar.SetActive(show);
         }

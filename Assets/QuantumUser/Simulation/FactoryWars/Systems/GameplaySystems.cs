@@ -1580,6 +1580,9 @@ namespace Quantum.FactoryWars {
         if (unit->Garrison != EntityRef.None || unit->Transport != EntityRef.None || unit->Health <= FP._0) {
           continue;
         }
+        if (f.Unsafe.TryGetPointer<Worker>(entity, out var wk) && (wk->Task == WorkerTask.Build || wk->Task == WorkerTask.Repair)) {
+          continue;
+        }
         var spec = f.FindAsset(unit->Spec);
         if (spec.IsAir || spec.IsNaval || spec.Size < UnitSize.Large) {
           continue;
@@ -1619,16 +1622,19 @@ namespace Quantum.FactoryWars {
       return spec.IsVehicle ? (FP)14 / (FP)10 : (FP)65 / (FP)100;
     }
 
-    /// <summary>결정론적 반경 기반 안티-클럼핑: 두 유닛의 실제 ColliderRadius 합 + 0.5m 이내로 겹치면 부드럽게 분리한다.</summary>
+    /// <summary>결정론적 반경 기반 안티-클럼핑: 두 유닛의 ColliderRadius 합 + 여유(차량 1.0m, 보병 0.5m) 이내로 겹치면 2패스로 강하게 분리한다.</summary>
     static void SeparateUnits(Frame f) {
       var map = FactoryWarsUtil.MapInfo(f);
       var navMesh = f.Map.GetNavMesh(FactoryWarsUtil.Rules(f).NavMeshName);
       var mask = *f.NavMeshRegionMask;
-      var step = (FP)6 * f.DeltaTime;
+      var step = (FP)14 * f.DeltaTime;
       var list = new System.Collections.Generic.List<(EntityRef Entity, FPVector3 Pos, FP Radius)>(64);
       var filter = f.Filter<Transform3D, Unit>();
       while (filter.NextUnsafe(out var entity, out var transform, out var unit)) {
         if (unit->Garrison != EntityRef.None || unit->Transport != EntityRef.None || unit->Health <= FP._0) {
+          continue;
+        }
+        if (f.Unsafe.TryGetPointer<Worker>(entity, out var wk) && (wk->Task == WorkerTask.Build || wk->Task == WorkerTask.Repair)) {
           continue;
         }
         var spec = f.FindAsset(unit->Spec);
@@ -1638,43 +1644,51 @@ namespace Quantum.FactoryWars {
         list.Add((entity, transform->Position, UnitRadius(spec)));
       }
       var count = list.Count;
-      for (var i = 0; i < count; i++) {
-        var a = list[i];
-        var push = FPVector3.Zero;
-        for (var j = 0; j < count; j++) {
-          if (i == j) {
+      for (var pass = 0; pass < 2; pass++) {
+        for (var i = 0; i < count; i++) {
+          var a = list[i];
+          var push = FPVector3.Zero;
+          var maxOverlap = FP._0;
+          for (var j = 0; j < count; j++) {
+            if (i == j) {
+              continue;
+            }
+            var b = list[j];
+            var pad = (a.Radius >= FP._1_50 || b.Radius >= FP._1_50) ? FP._1 : FP._0_50;
+            var minDist = a.Radius + b.Radius + pad;
+            var dx = a.Pos.X - b.Pos.X;
+            var dz = a.Pos.Z - b.Pos.Z;
+            var distSqr = dx * dx + dz * dz;
+            var minSqr = minDist * minDist;
+            if (distSqr >= minSqr) {
+              continue;
+            }
+            if (distSqr <= FP._0_01) {
+              // 정확히 같은 좌표에 겹친 경우 엔티티별 고유 각도 기반 결정론적 방사형 분리 벡터.
+              var angle = FP.PiTimes2 * i / System.Math.Max(1, count);
+              push += new FPVector3(FPMath.Cos(angle), FP._0, FPMath.Sin(angle));
+              maxOverlap = FPMath.Max(maxOverlap, minDist * FP._0_50);
+            } else {
+              var dist = FPMath.Sqrt(distSqr);
+              var pen = minDist - dist;
+              maxOverlap = FPMath.Max(maxOverlap, pen * FP._0_50);
+              push += new FPVector3(dx / dist, FP._0, dz / dist) * (pen / minDist + FP._0_25);
+            }
+          }
+          if (push.X == FP._0 && push.Z == FP._0) {
             continue;
           }
-          var b = list[j];
-          var minDist = a.Radius + b.Radius + FP._0_50;
-          var dx = a.Pos.X - b.Pos.X;
-          var dz = a.Pos.Z - b.Pos.Z;
-          var distSqr = dx * dx + dz * dz;
-          var minSqr = minDist * minDist;
-          if (distSqr >= minSqr) {
-            continue;
+          var mag = FPMath.Sqrt(push.X * push.X + push.Z * push.Z);
+          var moveDist = FPMath.Min(FPMath.Max(step, maxOverlap), step * (FP)2);
+          var delta = mag > FP._0_01 ? push / mag * moveDist : FPVector3.Zero;
+          var next = new FPVector3(
+            FPMath.Clamp(a.Pos.X + delta.X, map.BoundsMin.X + FP._1, map.BoundsMax.X - FP._1),
+            a.Pos.Y,
+            FPMath.Clamp(a.Pos.Z + delta.Z, map.BoundsMin.Y + FP._1, map.BoundsMax.Y - FP._1));
+          if (navMesh == null || navMesh.Contains(next, mask, true)) {
+            f.Unsafe.GetPointer<Transform3D>(a.Entity)->Position = next;
+            list[i] = (a.Entity, next, a.Radius);
           }
-          if (distSqr <= FP._0_01) {
-            // 정확히 같은 좌표에 겹친 경우 엔티티별 고유 각도 기반 결정론적 방사형 분리 벡터.
-            var angle = FP.PiTimes2 * i / System.Math.Max(1, count);
-            push += new FPVector3(FPMath.Cos(angle), FP._0, FPMath.Sin(angle));
-          } else {
-            var dist = FPMath.Sqrt(distSqr);
-            var overlap = (minDist - dist) / minDist;
-            push += new FPVector3(dx / dist, FP._0, dz / dist) * overlap;
-          }
-        }
-        if (push.X == FP._0 && push.Z == FP._0) {
-          continue;
-        }
-        var mag = FPMath.Sqrt(push.X * push.X + push.Z * push.Z);
-        var delta = mag > FP._1 ? push / mag * step : push * step;
-        var next = new FPVector3(
-          FPMath.Clamp(a.Pos.X + delta.X, map.BoundsMin.X + FP._1, map.BoundsMax.X - FP._1),
-          a.Pos.Y,
-          FPMath.Clamp(a.Pos.Z + delta.Z, map.BoundsMin.Y + FP._1, map.BoundsMax.Y - FP._1));
-        if (navMesh == null || navMesh.Contains(next, mask, true)) {
-          f.Unsafe.GetPointer<Transform3D>(a.Entity)->Position = next;
         }
       }
     }

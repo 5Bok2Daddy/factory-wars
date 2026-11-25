@@ -33,8 +33,8 @@ namespace FactoryWars.EditorTools {
       },
       new Model {
         Folder = "CfIronwallBattleship", Name = "cf_ironwall_battleship", Span = 20f, Yaw = 180f,
-        Slots = new[] { "unit/cf_artillery_ship" },
-        Notes = "CC BY 4.0 gun warship (see Assets/ThirdParty/CREDITS.md), decimated + flat palette, markings removed",
+        Slots = new[] { "unit/cf_artillery_ship", "unit/ff_artillery_ship" },
+        Notes = "CC BY 4.0 gun warship (see Assets/ThirdParty/CREDITS.md), decimated + flat palette, markings removed; full 20 m span",
       },
       // Task 39 fix 3 (2026-11-23): PMC models from temp-assets/bridge (CC BY 4.0), real scale (infantry 1.8 m).
       new Model {
@@ -148,12 +148,12 @@ namespace FactoryWars.EditorTools {
         slot.Category = VisualCategory.Unit;
         slot.PivotOffset = pivot;
         slot.Size = size;
-        // Combat unit slots (unit/*) auto-fit to RTS UnitSpec size so PMC helicopters match FF/CF gunships;
-        // camp/display_* slots keep their 1:1 motor-pool display span inside the PMC camp.
-        var isCombatUnit = id.StartsWith("unit/");
-        slot.AutoFit = isCombatUnit;
+        // PMC combat helicopters/drones (unit/pmc_*) auto-fit to RTS UnitSpec size so they match FF/CF gunships;
+        // warships (cf/ff_artillery_ship) and camp/display_* slots preserve their explicit real-world Span (m).
+        var isPmcCombatUnit = id.StartsWith("unit/pmc_");
+        slot.AutoFit = isPmcCombatUnit;
         slot.YawOffset = 0f;
-        slot.Scale = isCombatUnit ? 1f : model.Span / Mathf.Max(0.01f, Mathf.Max(size.x, size.z));
+        slot.Scale = isPmcCombatUnit ? 1f : model.Span / Mathf.Max(0.01f, Mathf.Max(size.x, size.z));
         slot.TeamColor = TeamColorMode.None;
         slot.TeamTextures = new Texture2D[0];
         slot.SpinParts = new string[0];

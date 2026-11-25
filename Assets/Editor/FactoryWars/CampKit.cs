@@ -570,7 +570,8 @@ namespace FactoryWars.EditorTools {
             Box(p, u, across * (Stem / 2f), BaseHeight, Height);
           }
           if (low == false) {
-            foreach (var t in new[] { -2f, 2f }) BlockKit.Place(root, wire, line + along * t + Vector3.up * Height, horizontal ? 0f : 90f, 1f);
+            // 3 overlapping barbed-wire coils per 8 m edge (scale 1.0) so corners & joints connect cleanly with zero overhang.
+            foreach (var t in new[] { -2.2f, 0f, 2.2f }) BlockKit.Place(root, wire, line + along * t + Vector3.up * Height, horizontal ? 0f : 90f, 1.0f);
           }
           Placed["perimeter wall"] = (Placed.TryGetValue("perimeter wall", out var placed) ? placed : 0) + 1;
         }

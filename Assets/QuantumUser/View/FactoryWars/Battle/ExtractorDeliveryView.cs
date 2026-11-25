@@ -85,12 +85,12 @@ namespace FactoryWars.View {
         stageKit.Paint(Swatch.Hazard).Box(new Vector3(0f, 1.08f, 0f), new Vector3(1.62f, 0.09f, 1.42f));
         PlaceKit(Root.transform, "IntakeHopper", stageKit.ToMesh("IntakeHopper"), startLocal, localRot);
 
-        // Storage silo at belt discharge
+        // Storage silo positioned beside the extractor intake pad (clear of HQ walls/roof overhang).
         var siloKit = new MeshKit();
-        siloKit.Paint(Swatch.MetalLight).Cylinder(new Vector3(1.35f, 1.35f, 0.65f), 0.92f, 2.5f, 14);
-        siloKit.Paint(Swatch.Hazard).Cylinder(new Vector3(1.35f, 2.25f, 0.65f), 0.96f, 0.24f, 14);
-        siloKit.Paint(Swatch.MetalDark).Cylinder(new Vector3(1.35f, 2.68f, 0.65f), 0.65f, 0.28f, 14);
-        PlaceKit(Root.transform, "IronStorageSilo", siloKit.ToMesh("IronStorageSilo"), endLocal, localRot);
+        siloKit.Paint(Swatch.MetalLight).Cylinder(new Vector3(2.35f, 1.25f, 1.25f), 0.88f, 2.35f, 14);
+        siloKit.Paint(Swatch.Hazard).Cylinder(new Vector3(2.35f, 2.10f, 1.25f), 0.92f, 0.22f, 14);
+        siloKit.Paint(Swatch.MetalDark).Cylinder(new Vector3(2.35f, 2.52f, 1.25f), 0.62f, 0.26f, 14);
+        PlaceKit(Root.transform, "IronStorageSilo", siloKit.ToMesh("IronStorageSilo"), startLocal, localRot);
       } else {
         // Timber intake roller guide at belt start
         stageKit.Paint(Swatch.ArmorDark).Box(new Vector3(0f, 0.62f, 0f), new Vector3(1.55f, 0.36f, 0.85f));
@@ -113,7 +113,9 @@ namespace FactoryWars.View {
       beaconGo.name = "ExtractorStateBeacon";
       Object.Destroy(beaconGo.GetComponent<Collider>());
       beaconGo.transform.SetParent(Root.transform, false);
-      beaconGo.transform.localPosition = endLocal + localRot * new Vector3(1.35f, kind == ResourceKind.Iron ? 2.95f : 1.25f, 0.65f);
+      beaconGo.transform.localPosition = kind == ResourceKind.Iron
+        ? startLocal + localRot * new Vector3(2.35f, 2.78f, 1.25f)
+        : endLocal + localRot * new Vector3(1.30f, 1.25f, 0.65f);
       beaconGo.transform.localScale = new Vector3(0.38f, 0.14f, 0.38f);
       _statusBeacon = beaconGo.GetComponent<Renderer>();
       _statusMat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard")) {
