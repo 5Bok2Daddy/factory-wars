@@ -857,10 +857,13 @@ namespace FactoryWars.Tests {
       yield return WaitFrames(20);
       Assert.IsTrue(bv.Actors.TryGetValue(powerPlant, out var ppAct) && ppAct.ActivityCrew != null && ppAct.ActivityCrew.activeSelf,
         "PowerPlant spawns live Mixamo technician crew (Device/Inspect)");
-      rts.Height = 18f;
-      rts.MoveTo(new Vector2(-24f, -62f));
+      rts.Height = 16f;
+      rts.MoveTo(new Vector2(-26f, -66f));
       rts.Apply();
-      yield return WaitFrames(8);
+      for (var wf = 0; wf < 8; wf++) {
+        yield return WaitFrames(12);
+        CaptureCameraPng(camera, Path.Combine(frames, $"worker_motion_{wf:00}.png"), 960, 540);
+      }
       CaptureCameraPng(camera, Path.Combine(dir, "mixamo_resource_workers.png"), 1920, 1080);
 
       // 3. Vehicle, Aircraft & Naval Crew (Drive & Pilot) on clear open road.
@@ -882,6 +885,12 @@ namespace FactoryWars.Tests {
       rts.Apply();
       yield return WaitFrames(8);
       CaptureCameraPng(camera, Path.Combine(dir, "mixamo_vehicle_and_crew_poses.png"), 1920, 1080);
+
+      rts.Height = 20f;
+      rts.MoveTo(new Vector2(-19f, 118f));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "mixamo_naval_crew_poses.png"), 1920, 1080);
       Debug.Log("[Mixamo_InfantryWorkersAndCrew_VerifyAndCapture] PASS (42 Humanoid clips, Patrol->Combat, PowerPlant Crew, Drive/Pilot Crew)");
     }
   }

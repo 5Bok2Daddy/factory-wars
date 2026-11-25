@@ -2063,12 +2063,12 @@ namespace FactoryWars.View {
       string pose = null;
       Vector3 seat = Vector3.zero;
       float scale = 0.64f;
-      if (id == "cf_scout_bike") { pose = "Drive"; seat = new Vector3(0f, 0.72f, -0.15f); scale = 0.68f; }
-      else if (id == "ff_scout_buggy") { pose = "Drive"; seat = new Vector3(-0.22f, 0.42f, 0.05f); scale = 0.64f; }
-      else if (id == "ff_scout_boat") { pose = "Drive"; seat = new Vector3(0f, 0.62f, -0.55f); scale = 0.68f; }
-      else if (id == "ff_landing_craft") { pose = "Drive"; seat = new Vector3(0f, 1.05f, -1.65f); scale = 0.72f; }
+      if (id == "cf_scout_bike") { pose = "Drive"; seat = new Vector3(0f, 1.12f, -0.38f); scale = 0.92f; }
+      else if (id == "ff_scout_buggy") { pose = "Drive"; seat = new Vector3(-0.22f, 0.48f, 0.05f); scale = 0.72f; }
+      else if (id == "ff_scout_boat") { pose = "Drive"; seat = new Vector3(0f, 0.95f, -0.65f); scale = 0.85f; }
+      else if (id == "ff_landing_craft") { pose = "Drive"; seat = new Vector3(0f, 1.35f, -1.75f); scale = 0.85f; }
       else if (id == "ff_hawk_gunship" || id == "cf_gale_gunship" || id == "pmc_scout_heli" || id == "pmc_attack_heli") {
-        pose = "Pilot"; seat = new Vector3(0f, 0.55f, 0.85f); scale = 0.60f;
+        pose = "Pilot"; seat = new Vector3(0f, 0.75f, 1.05f); scale = 0.78f;
       }
       if (pose == null) return;
       if (!VisualCatalog.TryFilled(VisualCatalog.FxId("const_worker_0"), out var slot) || slot.Prefab == null) return;
@@ -2107,7 +2107,7 @@ namespace FactoryWars.View {
         foreach (var collider in crew.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
         crew.transform.localPosition = new Vector3(0.15f, 0f, -(actor.FootprintRadius + 0.95f));
         crew.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-        crew.transform.localScale = Vector3.one * 0.82f;
+        crew.transform.localScale = Vector3.one * 0.95f;
         actor.ActivityCrew = crew;
       }
       if (actor.ActivityCrew == null) return;
