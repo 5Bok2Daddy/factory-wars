@@ -258,14 +258,24 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventCratePicked>(this, e => Fx.Burst(e.Position.ToUnityVector3(), new Color(1f, 0.85f, 0.3f), 1f));
       QuantumEvent.Subscribe<EventMlrsLaunched>(this, e => {
         var frame = e.Game.Frames.Verified;
-        if (_actors.TryGetValue(e.Battery, out var launcherAct) && launcherAct.View?.Animation != null) {
+        var isInfantryGrenade = frame != null && frame.Exists(e.Battery)
+          && frame.Unsafe.TryGetPointer<Unit>(e.Battery, out var lu)
+          && !frame.FindAsset(lu->Spec).IsVehicle && !frame.FindAsset(lu->Spec).IsAir && !frame.FindAsset(lu->Spec).IsNaval
+          && frame.FindAsset(lu->Spec).Size == UnitSize.Small;
+        if (isInfantryGrenade && _actors.TryGetValue(e.Battery, out var launcherAct) && launcherAct.View?.Animation != null) {
           launcherAct.View.Animation.ThrowGrenade();
         }
         var viewer = _controller != null ? _controller.Player : PlayerRef.None;
         if (!viewer.IsValid || viewer == e.Owner || (frame != null && FogSystem.IsVisible(frame, viewer, e.Origin))) {
           var position = _mlrsRockets.AtSurface(e.Origin.ToUnityVector3());
-          Fx.MlrsExhaust(position, e.Direction.ToUnityVector3(), false);
-          _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.RocketFire, position));
+          if (isInfantryGrenade) {
+            // 보병 수류탄 투척: MLRS 로켓 배기/굉음 대신 손 투척 스파크 퍼프 + 경쾌한 투척 음향 재생.
+            Fx.Burst(position + Vector3.up * 1.15f, new Color(1f, 0.88f, 0.48f), 0.45f);
+            _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.Click, position));
+          } else {
+            Fx.MlrsExhaust(position, e.Direction.ToUnityVector3(), false);
+            _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.RocketFire, position));
+          }
         }
       });
       QuantumEvent.Subscribe<EventMlrsImpact>(this, e => {

@@ -1809,5 +1809,181 @@ namespace FactoryWars.Tests {
 
       Debug.Log($"[MicroBar_HealthBars_AndVehiclePedestrianYield] PASS combatFrames={combatFrameCount} bomberAlt={bAlt:F1}m minPersonDist={minPersonDist:F2}m maxLat={maxLateralOffset:F2}m finalX={finalTruckX:F1}");
     }
+
+    static void SetPlayerStockZero(Frame frame, PlayerRef player) {
+      var p = frame.Global->Players.GetPointer(player);
+      if (p == null) return;
+      p->Stock = default;
+    }
+
+    static void SetPlayerPopUsed(Frame frame, PlayerRef player, int used) {
+      var p = frame.Global->Players.GetPointer(player);
+      if (p == null) return;
+      p->PopulationUsed = (FP)used;
+    }
+
+    static int GetPlayerPopCap(Frame frame, PlayerRef player) {
+      var p = frame.Global->Players.GetPointer(player);
+      return p != null ? p->PopulationCap.AsInt : 0;
+    }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator Items7To10_GrenadeDecouple_MobilePmcShop8Slots_AndRangedStandoff_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "Items7To10"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 9501, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      GrantLargeStock(Verified, 0);
+      GrantLargeStock(Verified, 1);
+      if (Game.Frames.Predicted != null) {
+        GrantLargeStock(Game.Frames.Predicted, 0);
+        GrantLargeStock(Game.Frames.Predicted, 1);
+      }
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      var hud = Controller().Hud;
+      var bv = Battle();
+
+      // ===== Item 7: Decoupled Grenade Rules (fires independently of rifle cooldown & beyond rifle range 10.5m -> 11.4m) =====
+      UnlockSmallUpgrade(Verified, 0);
+      if (Game?.Frames?.Predicted != null) UnlockSmallUpgrade(Game.Frames.Predicted, 0);
+      var gSpot = new FPVector3(-12, 0, -56);
+      var thrower = SpawnUnitByName(Verified, 0, "ff_ranger_squad", gSpot);
+      var victim  = SpawnUnitByName(Verified, 1, "cf_militia",      gSpot + new FPVector3(FP.FromFloat_UNSAFE(11.4f), FP._0, FP._0));
+      yield return WaitFrames(4);
+      // Force standard rifle AttackCooldown to 5.0s so rifle CANNOT fire, proving grenade rule is 100% decoupled!
+      var tu = Verified.Get<Unit>(thrower);
+      tu.AttackCooldown = (FP)5;
+      tu.AbilityCooldown = FP._0;
+      tu.TargetEntity = victim;
+      Verified.Set(thrower, tu);
+      if (Game?.Frames?.Predicted != null && Game.Frames.Predicted.Exists(thrower)) Game.Frames.Predicted.Set(thrower, tu);
+
+      camera.aspect = 16f / 9f;
+      rts.Height = 24f;
+      rts.MoveTo(new Vector2(gSpot.X.AsFloat + 5.5f, gSpot.Z.AsFloat));
+      rts.Apply();
+
+      var decoupledGrenadeFired = false;
+      var sawThrowMotion = false;
+      for (var f = 0; f < 10; f++) {
+        yield return WaitFrames(5);
+        var cur = Verified.Get<Unit>(thrower);
+        if (cur.AbilityCooldown > FP._0) decoupledGrenadeFired = true;
+        if (bv.Actors.TryGetValue(thrower, out var tAct) && tAct.View?.Animation?.ActiveMixamoPose == "GrenadeThrow") sawThrowMotion = true;
+        CaptureCameraPng(camera, Path.Combine(frames, $"grenade_throw_{f:00}.png"), 960, 540);
+        if (f == 2) CaptureCameraPng(camera, Path.Combine(dir, "01_grenade_decoupled_throw.png"), 1920, 1080);
+      }
+      Assert.IsTrue(decoupledGrenadeFired, "Grenade threw independently even while rifle AttackCooldown=5s and target at 11.4m (> rifle range 10.5m)");
+
+      // ===== Item 9: Mobile HUD Inspection for PMC Shop 8 Slots (1600x720 20:9 phone viewport) =====
+      var traderEntity = EntityRef.None;
+      foreach (var p in Verified.GetComponentIterator<NpcTrader>()) {
+        traderEntity = p.Entity;
+        break;
+      }
+      Assert.AreNotEqual(EntityRef.None, traderEntity, "PMC Camp NpcTrader exists");
+      Controller().Input.Selection.Units.Clear();
+      Controller().Input.Selection.Building = traderEntity;
+      camera.aspect = 1600f / 720f;
+      rts.Height = 46f;
+      rts.MoveTo(new Vector2(0f, 0f));
+      rts.Apply();
+      yield return WaitFrames(8);
+
+      // (a) Insufficient resources visual distinction
+      SetPlayerStockZero(Verified, 0);
+      if (Game?.Frames?.Predicted != null) SetPlayerStockZero(Game.Frames.Predicted, 0);
+      yield return WaitFrames(6);
+      Assert.AreEqual(8, hud.Entries.Count, $"PMC Shop displays all 8 slots (actual {hud.Entries.Count})");
+      Assert.IsTrue(hud.Entries.All(e => !e.Enabled && e.Locked && e.Label.Contains("자원 부족")), "All 8 slots clearly show '자원 부족' when stock is 0");
+      CaptureCameraPng(camera, Path.Combine(dir, "02_mobile_pmc_shop_insufficient_res.png"), 1600, 720);
+
+      // (b) Population cap blocking & clear feedback (genuinely fill real simulation PopulationUsed >= PopulationCap!)
+      GrantLargeStock(Verified, 0);
+      if (Game?.Frames?.Predicted != null) GrantLargeStock(Game.Frames.Predicted, 0);
+      var popCap = Mathf.Max(10, GetPlayerPopCap(Verified, 0));
+      var popFillers = new List<EntityRef>();
+      for (var k = 0; k < (popCap / 4) + 3; k++) {
+        popFillers.Add(SpawnUnitByName(Verified, 0, "ff_bulwark_tank", new FPVector3(-180 + (k % 5) * 6, 0, -180 + (k / 5) * 6)));
+      }
+      yield return WaitFrames(8);
+      var popBlockedCount = hud.Entries.Count(e => !e.Enabled && e.Locked && e.Label.Contains("인구 상한"));
+      Assert.GreaterOrEqual(popBlockedCount, 6, $"PMC unit shop slots clearly block & label '인구 상한' at pop cap (blocked={popBlockedCount})");
+      CaptureCameraPng(camera, Path.Combine(dir, "03_mobile_pmc_shop_pop_cap.png"), 1600, 720);
+
+      // (c) Purchase success feedback & (d) 8th slot touchability/non-overlap check
+      foreach (var filler in popFillers) {
+        if (Verified.Exists(filler)) Verified.Destroy(filler);
+        if (Game?.Frames?.Predicted != null && Game.Frames.Predicted.Exists(filler)) Game.Frames.Predicted.Destroy(filler);
+      }
+      yield return WaitFrames(8);
+      Assert.IsTrue(hud.Entries[7].Enabled, "8th PMC shop slot is enabled and purchasable");
+      var slotRects = new List<Rect>();
+      for (var i = 0; i < 8; i++) {
+        var btnGo = GameObject.Find($"Context{i}");
+        Assert.IsNotNull(btnGo, $"PMC Shop button Context{i} exists");
+        Assert.IsTrue(btnGo.activeInHierarchy, $"PMC Shop button Context{i} is active");
+        var rt = btnGo.GetComponent<RectTransform>();
+        var corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+        var r = new Rect(corners[0].x, corners[0].y, corners[2].x - corners[0].x, corners[2].y - corners[0].y);
+        Assert.Greater(r.width, 30f, $"Slot {i} has touchable width ({r.width:F1})");
+        Assert.Greater(r.height, 30f, $"Slot {i} has touchable height ({r.height:F1})");
+        foreach (var prev in slotRects) {
+          Assert.IsFalse(prev.Overlaps(r), $"Slot {i} does not overlap previous slots");
+        }
+        slotRects.Add(r);
+      }
+      hud.Entries[7].Action?.Invoke();
+      yield return WaitFrames(6);
+      Assert.IsTrue(hud.AlertText.Contains("용병 구매 완료"), $"8th slot purchase shows clear success alert (actual: {hud.AlertText})");
+      CaptureCameraPng(camera, Path.Combine(dir, "04_mobile_pmc_shop_8slots_success.png"), 1600, 720);
+
+      // ===== Item 10: Ranged Unit Standoff Spacing Verification =====
+      Controller().Input.Selection.Building = EntityRef.None;
+      camera.aspect = 16f / 9f;
+      var sPos = new FPVector3(0, 0, -68);
+      var infA = SpawnUnitByName(Verified, 0, "ff_ranger_squad",  sPos + new FPVector3(-12, 0, -4));
+      var infB = SpawnUnitByName(Verified, 1, "cf_militia",       sPos + new FPVector3( 12, 0, -4));
+      var tnkA = SpawnUnitByName(Verified, 0, "ff_eagle_tank",    sPos + new FPVector3(-15, 0,  4));
+      var tnkB = SpawnUnitByName(Verified, 1, "cf_fortress_tank", sPos + new FPVector3( 15, 0,  4));
+      yield return WaitFrames(4);
+      yield return Send(0, new AttackTargetCommand { Units = new[] { infA }, Target = infB });
+      yield return Send(0, new AttackTargetCommand { Units = new[] { tnkA }, Target = tnkB });
+
+      rts.Height = 42f;
+      rts.MoveTo(new Vector2(sPos.X.AsFloat, sPos.Z.AsFloat));
+      rts.Apply();
+
+      var infEngageDist = 0f;
+      var tankEngageDist = 0f;
+      for (var step = 0; step < 30; step++) {
+        yield return WaitFrames(8);
+        if (Verified.Exists(infA) && Verified.Exists(infB) && Verified.Get<Unit>(infA).LastFiredFrame > 0 && infEngageDist == 0f) {
+          infEngageDist = Vector3.Distance(Verified.Get<Transform3D>(infA).Position.ToUnityVector3(), Verified.Get<Transform3D>(infB).Position.ToUnityVector3());
+        }
+        if (Verified.Exists(tnkA) && Verified.Exists(tnkB) && Verified.Get<Unit>(tnkA).LastFiredFrame > 0 && tankEngageDist == 0f) {
+          tankEngageDist = Vector3.Distance(Verified.Get<Transform3D>(tnkA).Position.ToUnityVector3(), Verified.Get<Transform3D>(tnkB).Position.ToUnityVector3());
+        }
+        if (infEngageDist > 0f && tankEngageDist > 0f) break;
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "05_ranged_standoff_spacing.png"), 1920, 1080);
+
+      Assert.GreaterOrEqual(infEngageDist, 9.0f, $"Rifleman engages at proper standoff >= 9.0m (actual {infEngageDist:F1}m)");
+      Assert.GreaterOrEqual(tankEngageDist, 13.5f, $"Main Battle Tank engages at proper standoff >= 13.5m (actual {tankEngageDist:F1}m)");
+      Assert.Greater(tankEngageDist, infEngageDist + 2.5f, $"Tank outranges infantry cleanly ({tankEngageDist:F1}m vs {infEngageDist:F1}m)");
+
+      Debug.Log($"[Items7To10_VerifyAndCapture] PASS grenadeDecoupled={decoupledGrenadeFired} throwMotion={sawThrowMotion} pmcSlots=8 popBlocked={popBlockedCount} infDist={infEngageDist:F1}m tankDist={tankEngageDist:F1}m");
+    }
   }
 }

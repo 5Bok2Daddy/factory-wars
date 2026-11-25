@@ -7,6 +7,15 @@
 
 ---
 
+## Items 7~10 완료: 수류탄 규칙/연출 분리 · Photon 실서버 동기화 통과 & 과거 실패 8종 재현 확인 · 모바일 PMC 상점 8슬롯(자원부족/인구상한/구매성공/8번 터치) · 원거리 24종 사거리 보정 (2026-11-25)
+
+| 수류탄 독립 투척 (소총 쿨다운·사거리 분리, GIF) | 모바일 PMC 상점 8슬롯 검증 (`1600×720` · 8번 슬롯 구매) | 원거리 유닛 교전 거리 보정 (보병 11.5m · 전차 15.9m) |
+| --- | --- | --- |
+| [![수류탄 독립 투척 GIF](Docs/status_images/Items7To10/01_grenade_decoupled_throw.gif)](Docs/status_images/Items7To10/01_grenade_decoupled_throw.gif) | [![모바일 PMC 상점 8슬롯](Docs/status_images/Items7To10/04_mobile_pmc_shop_8slots_success.png)](Docs/status_images/Items7To10/04_mobile_pmc_shop_8slots_success.png) | [![원거리 교전 거리 보정](Docs/status_images/Items7To10/05_ranged_standoff_spacing.png)](Docs/status_images/Items7To10/05_ranged_standoff_spacing.png) |
+| [수류탄 GIF](Docs/status_images/Items7To10/01_grenade_decoupled_throw.gif) · [투척 원본](Docs/status_images/Items7To10/01_grenade_decoupled_throw.png) (`GrenadeThrow` + 전용 음향/스파크) | [자원부족](Docs/status_images/Items7To10/02_mobile_pmc_shop_insufficient_res.png) · [인구상한](Docs/status_images/Items7To10/03_mobile_pmc_shop_pop_cap.png) · [구매성공](Docs/status_images/Items7To10/04_mobile_pmc_shop_8slots_success.png) | [원거리 교전 원본](Docs/status_images/Items7To10/05_ranged_standoff_spacing.png) · **Photon 실서버 `Online_Live_SessionChecksumsMatch` PASS** (디싱크 0) |
+
+---
+
 ## `MicroBar` 애니메이션 체력바 전역 적용(지상군·전차·건물·고고도 폭격기 · 단일 `^` 보존) + `CS0619` 수정 + 보행자 앞 차량 양보·우회 회피 (2026-11-25 · 3/3 통과)
 
 | 전차 교전 `MicroBar` 지연 고스트바 감소 (GIF · 전후 비교) | 건물 · 기동업그레이드 보병(단일 `^` 보존) · 고고도 폭격기(25.5m) `MicroBar` | 보행자 앞 차량 우회 회피 (`minDist=4.24m`, GIF) |

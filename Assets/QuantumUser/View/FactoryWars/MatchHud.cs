@@ -2000,13 +2000,33 @@ namespace FactoryWars.View {
         var left = trader.Stock[i];
         var ready = trader.ReadyFrames[index * MercenaryCamp.MaxOffers + i];
         var wait = Mathf.Max(0, ready - frame.Number) / Mathf.Max(1, frame.SessionConfig.UpdateFPS);
-        var ok = left > 0 && wait == 0 && stock.Covers(line.Cost);
+        var unitSpec = line.Unit.IsValid ? frame.FindAsset(line.Unit) : null;
+        var overPop = unitSpec != null && unitSpec.Population > FP._0 && state->PopulationUsed + unitSpec.Population > state->PopulationCap;
+        var canAfford = stock.Covers(line.Cost);
+        var ok = left > 0 && wait == 0 && canAfford && !overPop;
         var offer = MercenaryCamp.OfferShop + i;
+        var label = wait > 0 ? $"{line.Name}\n대기 {wait}초"
+          : left <= 0 ? $"{line.Name}\n품절 (0)"
+          : overPop ? $"{line.Name} ({left})\n인구 상한"
+          : !canAfford ? $"{line.Name} ({left})\n자원 부족"
+          : $"{line.Name} ({left})\n{Texts.Cost(line.Cost, stock)}";
+        var reason = left <= 0 ? "재고가 없습니다(공유 재고, 시간이 지나면 채워짐)"
+          : wait > 0 ? "다음 구매까지 기다리세요"
+          : overPop ? "인구 상한선 도달 — 막사/보급소를 늘리세요"
+          : "자원이 부족합니다";
+        var overlay = left <= 0 ? "pmc_state_sold_out"
+          : wait > 0 ? "pmc_state_cooldown"
+          : (overPop || !canAfford) ? "pmc_state_locked" : null;
+        var itemName = line.Name;
         Entries.Add(new ContextEntry {
-          Label = wait > 0 ? $"{line.Name}\n대기 {wait}초" : $"{line.Name} ({left})\n{Texts.Cost(line.Cost, stock)}", Icon = PmcIcon(frame, line),
-          Overlay = left <= 0 ? "pmc_state_sold_out" : wait > 0 ? "pmc_state_cooldown" : null,
-          Enabled = ok, Locked = ok == false, Reason = left <= 0 ? "재고가 없습니다(공유 재고, 시간이 지나면 채워짐)" : wait > 0 ? "다음 구매까지 기다리세요" : "자원이 부족합니다",
-          Detail = line.Unit.IsValid ? "정문에서 인도(내 부대)" : "자원 교환", Action = () => Controller.Send(new TradeCommand { Offer = offer }),
+          Label = label, Icon = PmcIcon(frame, line),
+          Overlay = overlay,
+          Enabled = ok, Locked = ok == false, Reason = reason,
+          Detail = line.Unit.IsValid ? "정문에서 인도(내 부대)" : "자원 교환",
+          Action = () => {
+            Controller.Send(new TradeCommand { Offer = offer });
+            ShowAlert($"용병 구매 완료: {itemName}");
+          },
         });
       }
       return "용병 거래소 — 합의됨(공격하면 합의 취소)";

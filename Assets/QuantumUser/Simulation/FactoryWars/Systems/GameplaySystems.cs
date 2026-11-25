@@ -1352,6 +1352,24 @@ namespace Quantum.FactoryWars {
         if (unit->TargetEntity == EntityRef.None && (unit->Order != UnitOrder.Move || spec.FireWhileMoving)) {
           unit->TargetEntity = FindTarget(f, weapon, position, spec.MinRange, range);
         }
+
+        // 업그레이드 해금 보병 수류탄 규칙(소총 사거리·소총 쿨다운과 완전히 분리 평가):
+        // 지상 표적이 수류탄 전용 사거리(3~12m) 내에 있고 수류탄 쿨다운(10초)이 준비되면 소총 쿨다운/사거리와 무관하게 독립 투척.
+        if (grenadeUnlocked && unit->AbilityCooldown <= FP._0) {
+          var grenadeTarget = unit->TargetEntity;
+          if (grenadeTarget == EntityRef.None && unit->Order != UnitOrder.Move) {
+            grenadeTarget = FindTarget(f, weapon, position, (FP)3, (FP)12);
+          }
+          if (grenadeTarget != EntityRef.None && f.Unsafe.TryGetPointer<Transform3D>(grenadeTarget, out var gt)) {
+            var targetIsAir = f.Unsafe.TryGetPointer<Unit>(grenadeTarget, out var tUnit) && f.FindAsset(tUnit->Spec).IsAir;
+            var gDist = FactoryWarsUtil.FlatDistanceSqr(gt->Position, position);
+            if (!targetIsAir && gDist >= (FP)9 && gDist <= (FP)144) {
+              unit->AbilityCooldown = (FP)10;
+              MlrsSystem.LaunchInfantryGrenade(f, entity, unit->Owner, position, gt->Position);
+            }
+          }
+        }
+
         if (unit->TargetEntity == EntityRef.None || unit->AttackCooldown > FP._0) {
           continue;
         }
@@ -1364,15 +1382,6 @@ namespace Quantum.FactoryWars {
             unit->TargetEntity = EntityRef.None;
           }
           continue;
-        }
-
-        // 업그레이드 해금 보병 수류탄 투척: 지상 표적 3~11m 거리 & 쿨다운(10초) 완료 시 결정론 포물선 수류탄 투척.
-        if (grenadeUnlocked && unit->AbilityCooldown <= FP._0 && distance >= (FP)9 && distance <= (FP)121) {
-          var targetIsAir = f.Unsafe.TryGetPointer<Unit>(unit->TargetEntity, out var tUnit) && f.FindAsset(tUnit->Spec).IsAir;
-          if (!targetIsAir) {
-            unit->AbilityCooldown = (FP)10;
-            MlrsSystem.LaunchInfantryGrenade(f, entity, unit->Owner, position, targetPosition);
-          }
         }
 
         Fire(f, entity, weapon, unit, unit->TargetEntity, position, targetPosition, range);

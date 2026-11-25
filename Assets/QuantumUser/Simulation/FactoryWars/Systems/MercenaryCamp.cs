@@ -175,6 +175,14 @@ namespace Quantum.FactoryWars {
         f.Events.ActionRejected(player, ActionKind.Produce, RejectReason.InsufficientResources, (int)lack);
         return true;
       }
+      if (line.Unit.IsValid) {
+        var unitSpec = f.FindAsset(line.Unit);
+        var popNeed = unitSpec.Population * line.Count;
+        if (popNeed > FP._0 && state->PopulationUsed + popNeed > state->PopulationCap) {
+          f.Events.ActionRejected(player, ActionKind.Produce, RejectReason.InsufficientResources, (int)MissingResource.Population);
+          return true;
+        }
+      }
       state->Stock -= line.Cost;
       state->Stock += line.Give;
       (*stock)--;

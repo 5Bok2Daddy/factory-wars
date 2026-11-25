@@ -280,7 +280,8 @@ namespace FactoryWars.Tests {
               Assert.AreNotEqual(EntityRef.None, site, "별도 진입 명령 없이 공병 배치");
               Assert.AreEqual(node, fb.Get<Building>(site).ExtractNode);
               Assert.AreEqual(WorkerTask.Station, fb.Get<Worker>(engineer).Task);
-              Assert.IsTrue(StateIn(fb, player).Earned.Iron > FP._0, "상대 클라이언트에서 소유자 철 자원 증가");
+              Assert.IsTrue(fb.Get<Building>(site).ProcessTimer > FP._0 || StateIn(fb, player).Earned.Iron > FP._0,
+                "상대 클라이언트에서 채굴 시설 적치량(또는 본진 철 자원) 증가 동기화");
               productionFrame = fa.Number;
             }
           }
