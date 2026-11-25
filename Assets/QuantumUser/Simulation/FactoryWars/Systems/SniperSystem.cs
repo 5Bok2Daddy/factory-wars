@@ -43,6 +43,14 @@ namespace Quantum.FactoryWars {
           }
         }
       }
+      // 궁극기 준비/대기 중인 기동형 MLS도 일반 생산 대기열과 동일한 1기 보유 상한을 공유한다.
+      var state = FactoryWarsUtil.Player(f, player);
+      if (state != null && (state->UltimatePhase == UltimatePhase.Preparing || state->UltimatePhase == UltimatePhase.Ready)) {
+        var ult = UltimateSystem.SpecOf(f, player);
+        if (ult != null && ult.MobileMls.IsValid && ReferenceEquals(f.FindAsset(ult.MobileMls), spec)) {
+          count += spec.SpawnCount;
+        }
+      }
       return count;
     }
 

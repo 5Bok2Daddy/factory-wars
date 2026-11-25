@@ -2421,12 +2421,12 @@ MonoBehaviour:
   - Id: building/ff_iron_extractor
     Category: 1
     Prefabs:
-    - {fileID: 5150837641073850366, guid: 230bd4ce560cdbf44bb4c1400f01a1cc, type: 3}
-    Scale: 0.29549846
-    AutoFit: 0
+    - {fileID: 1771269981955728, guid: f4bb022ab0d2a5c46b6af300deb95be5, type: 3}
+    Scale: 1
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0.000015258789, y: -0, z: 0.000020980835}
-    Size: {x: 33.841084, y: 10.97223, z: 33.841125}
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -2435,24 +2435,25 @@ MonoBehaviour:
     DeathSeconds: 0
     Lifetime: 2
     RealWorld: 1
-    Notes: "Synty \uD329 bld_gas_tower_1 / \uC0C9 \uBCC0\uD615 PolygonMilitary_02_A"
+    Notes: "Synty PolygonBattleRoyale SM_Bld_Warehouse_01 (\uACF5\uC7A5\uD615 \uCCA0
+      \uCC44\uAD74 \uC2DC\uC124 \uAD50\uCCB4)"
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
     SpinParts: []
     MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 8.777784, z: 0}
+    MuzzleOffset: {x: 0, y: 5.5, z: 0}
     MembersByQuality: 
     OwnerRing: 0
   - Id: building/cf_iron_extractor
     Category: 1
     Prefabs:
-    - {fileID: 828482953838239570, guid: 0090670e2b1c0884883885e4b98ae7b2, type: 3}
-    Scale: 0.29549846
-    AutoFit: 0
+    - {fileID: 1771269981955728, guid: f4bb022ab0d2a5c46b6af300deb95be5, type: 3}
+    Scale: 1
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0.000015258789, y: -0, z: 0.000020980835}
-    Size: {x: 33.841084, y: 10.97223, z: 33.841125}
+    PivotOffset: {x: 0, y: 0, z: 0}
+    Size: {x: 0, y: 0, z: 0}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -2461,13 +2462,14 @@ MonoBehaviour:
     DeathSeconds: 0
     Lifetime: 2
     RealWorld: 1
-    Notes: "Synty \uD329 bld_gas_tower_1 / \uC0C9 \uBCC0\uD615 PolygonMilitary_03_A"
+    Notes: "Synty PolygonBattleRoyale SM_Bld_Warehouse_01 (\uACF5\uC7A5\uD615 \uCCA0
+      \uCC44\uAD74 \uC2DC\uC124 \uAD50\uCCB4)"
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
     SpinParts: []
     MuzzlePart: 
-    MuzzleOffset: {x: 0, y: 8.777784, z: 0}
+    MuzzleOffset: {x: 0, y: 5.5, z: 0}
     MembersByQuality: 
     OwnerRing: 0
   - Id: building/ff_mlrs_battery
@@ -6797,7 +6799,7 @@ MonoBehaviour:
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 160, y: 23.751007, z: 160}
+    Size: {x: 160.44255, y: 23.903416, z: 160.44254}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -6901,7 +6903,7 @@ MonoBehaviour:
     AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 75, y: 0.9543916, z: 73.491135}
+    Size: {x: 78.39, y: 0.9543916, z: 77.6}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 

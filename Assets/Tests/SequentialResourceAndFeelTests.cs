@@ -1357,5 +1357,308 @@ namespace FactoryWars.Tests {
       Assert.Less(expDist, 1.5f, $"Bomber destruction explosion aligned to airborne bomber position (dist={expDist:F2}m, exp={bv.LastExplosionPosition}, bomber={bomberWorldPos})");
       Debug.Log($"[StockpileTruckPickup_DirectAirFlight_AndBomberAlignment] PASS stockpile={stockpileBefore} iron={ironBeforePickup}->{ironAfterPickup} delivery={truckAfter.DeliveryId} overH={crossedH} alt=({dAlt:F1}/{hAlt:F1}/{bAlt:F1}m) expDist={expDist:F2}m");
     }
+
+    static void GrantLargeStock(Frame frame, PlayerRef player) {
+      var p = frame.Global->Players.GetPointer(player);
+      if (p == null) return;
+      p->Stock.Iron = (FP)50000;
+      p->Stock.Wood = (FP)50000;
+      p->Stock.Steel = (FP)50000;
+      p->Stock.Power = (FP)50000;
+      p->Outage = false;
+    }
+
+    static UltimatePhase GetUltimatePhase(Frame frame, PlayerRef player) =>
+      frame.Global->Players.GetPointer(player)->UltimatePhase;
+
+    static void SetUltimatePhaseForTest(Frame frame, PlayerRef player, UltimatePhase phase, EntityRef site) {
+      var p = frame.Global->Players.GetPointer(player);
+      if (p != null) {
+        p->UltimatePhase = phase;
+        p->UltimateSite = site;
+        p->UltimateRemaining = phase == UltimatePhase.Preparing ? (FP)20 : FP._0;
+        p->UltimateTotal = (FP)20;
+      }
+    }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator Priority1And2_FactoryFence_TankHitGifs_HarborWave_AndUltimateCap_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "Priority1And2"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 8201, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      GrantLargeStock(Verified, 0);
+      GrantLargeStock(Verified, 1);
+      if (Game.Frames.Predicted != null) {
+        GrantLargeStock(Game.Frames.Predicted, 0);
+        GrantLargeStock(Game.Frames.Predicted, 1);
+      }
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      var bv = Battle();
+      var hud = Controller().Hud;
+      var map = FactoryWarsUtil.MapInfo(Verified);
+
+      // ===== Priority 1 (Items 1-3): Factory-style Iron Extractor + Clean Military Fencing (철책) + Zero Overlap + Full Auto Truck Cycle =====
+      var base0 = GameObject.Find("Base0");
+      Assert.IsNotNull(base0, "Base0 exists");
+      var permWall = base0.transform.Find("PerimeterWall");
+      Assert.IsNotNull(permWall, "Base0 PerimeterWall exists");
+      var fenceCount = 0;
+      var oldConcreteBarrierCount = 0;
+      for (var i = 0; i < permWall.childCount; i++) {
+        var cname = permWall.GetChild(i).name;
+        if (cname.StartsWith("Fence")) fenceCount++;
+        if (cname.StartsWith("Wall")) oldConcreteBarrierCount++;
+      }
+      Assert.Greater(fenceCount, 10, $"Base0 perimeter switched to military fencing (철책) (fences={fenceCount})");
+      Assert.AreEqual(0, oldConcreteBarrierCount, $"No legacy gapped concrete barriers remain on Base0 (oldWalls={oldConcreteBarrierCount})");
+
+      var hqEntity = EntityRef.None;
+      var hqPos = FPVector3.Zero;
+      foreach (var p in Verified.GetComponentIterator<Building>()) {
+        if (p.Component.Owner == 0 && Verified.FindAsset(p.Component.Spec).Role == BuildingRole.Headquarters) {
+          hqEntity = p.Entity;
+          hqPos = Verified.Get<Transform3D>(p.Entity).Position;
+          break;
+        }
+      }
+      var allIronNodes = new List<ResourceNode>();
+      foreach (var p in Verified.GetComponentIterator<ResourceNode>()) {
+        if (p.Component.Kind == ResourceKind.Iron) allIronNodes.Add(p.Component);
+      }
+      var nodePos = allIronNodes.OrderBy(n0 => FPVector3.DistanceSquared(n0.Shape.Center, hqPos)).First().Shape.Center;
+
+      // Verify zero active decorative prop in Base0 overlaps the iron production area (< 10.5m)
+      var overlappingProps = 0;
+      for (var i = 0; i < base0.transform.childCount; i++) {
+        var ch = base0.transform.GetChild(i);
+        if (!ch.gameObject.activeSelf || ch.name == "Paving" || ch.name == "PerimeterWall") continue;
+        var d2 = new Vector2(ch.position.x - nodePos.X.AsFloat, ch.position.z - nodePos.Z.AsFloat).sqrMagnitude;
+        if (d2 < 10.5f * 10.5f) overlappingProps++;
+      }
+      Assert.AreEqual(0, overlappingProps, "Zero decorative props overlapping iron factory area");
+
+      var eng0 = Engineers(0).FirstOrDefault();
+      if (eng0 == EntityRef.None) eng0 = SpawnUnitByName(Verified, 0, "ff_engineer", nodePos + new FPVector3(4, 0, 0));
+      yield return Build(0, "iron_extractor", nodePos, eng0);
+      yield return WaitFrames(10);
+      var extractorEntity = BuildingAt(nodePos);
+      Assert.AreNotEqual(EntityRef.None, extractorEntity, "Factory-style iron extractor built cleanly");
+
+      var extB = Verified.Get<Building>(extractorEntity);
+      extB.ConstructionRemaining = FP._0;
+      extB.ProcessTimer = FP.FromFloat_UNSAFE(110f);
+      Verified.Set(extractorEntity, extB);
+      if (Game.Frames.Predicted != null && Game.Frames.Predicted.Exists(extractorEntity)) Game.Frames.Predicted.Set(extractorEntity, extB);
+      var eng1 = SpawnUnitByName(Verified, 0, "ff_engineer", nodePos + new FPVector3(-4, 0, 0));
+      var eng2 = SpawnUnitByName(Verified, 0, "ff_engineer", nodePos + new FPVector3(0, 0, 4));
+      AssignGarrison(Verified, eng0, extractorEntity);
+      AssignGarrison(Verified, eng1, extractorEntity);
+      AssignGarrison(Verified, eng2, extractorEntity);
+      if (Game.Frames.Predicted != null) {
+        AssignGarrison(Game.Frames.Predicted, eng0, extractorEntity);
+        AssignGarrison(Game.Frames.Predicted, eng1, extractorEntity);
+        AssignGarrison(Game.Frames.Predicted, eng2, extractorEntity);
+      }
+      yield return WaitFrames(Fps * 2);
+
+      Assert.IsTrue(bv.Actors.TryGetValue(extractorEntity, out var extAct), "Extractor view created");
+      Assert.IsTrue(extAct.View.Slot != null && extAct.View.Slot.Prefab != null && extAct.View.Slot.Prefab.name.Contains("Warehouse"),
+        $"Circular gas tower replaced with factory-style warehouse building (actual: {extAct.View.Slot?.Prefab?.name})");
+      Assert.IsNull(extAct.ExtractorDelivery, "No conveyor belt attached to factory-style extractor");
+
+      // Full automatic logistics cycle via '자원채취' button (ToYard -> Loading -> ToDock -> Unloading -> HQ credit)
+      var truckStart = FPVector3.Lerp(hqPos, nodePos, FP.FromFloat_UNSAFE(0.45f));
+      var truck = SpawnUnitByName(Verified, 0, "merc_cargo_truck", truckStart);
+      yield return WaitFrames(8);
+      Controller().Input.Selection.Units.Clear();
+      Controller().Input.Selection.Units.Add(truck);
+      yield return WaitFrames(6);
+      var gatherBtn = hud.Entries.FirstOrDefault(e => e.Label == "자원채취");
+      Assert.AreEqual("자원채취", gatherBtn.Label, "HUD shows '자원채취' button for truck");
+      var ironBefore = PlayerIron(Verified, 0);
+      yield return Send(0, new GatherCommand { Units = new[] { truck }, Node = EntityRef.None });
+
+      rts.Height = 46f;
+      rts.MoveTo(new Vector2(nodePos.X.AsFloat + 2f, nodePos.Z.AsFloat + 2f));
+      rts.Apply();
+
+      var sawLoad = false;
+      var sawToDock = false;
+      var sawUnload = false;
+      var capFactory = false;
+      for (var step = 0; step < 52; step++) {
+        yield return WaitFrames(12);
+        var lt = Verified.Get<LogisticsTruck>(truck);
+        var tp = Verified.Get<Transform3D>(truck).Position.ToUnityVector3();
+        rts.MoveTo(new Vector2(tp.x, tp.z));
+        rts.Apply();
+        if (lt.State == LogisticsState.Loading) {
+          sawLoad = true;
+          if (!capFactory) {
+            capFactory = true;
+            rts.MoveTo(new Vector2(nodePos.X.AsFloat + 2f, nodePos.Z.AsFloat + 2f));
+            rts.Apply();
+            CaptureCameraPng(camera, Path.Combine(dir, "01_factory_fence_and_auto_truck.png"), 1920, 1080);
+          }
+        }
+        if (lt.State == LogisticsState.ToDock) sawToDock = true;
+        if (lt.State == LogisticsState.Unloading) sawUnload = true;
+        if (step < 18) CaptureCameraPng(camera, Path.Combine(frames, $"auto_truck_{step:00}.png"), 960, 540);
+        if (lt.DeliveryId >= 1) break;
+      }
+      Assert.IsTrue(sawLoad && sawToDock && sawUnload, $"Full automatic truck cycle executed (load={sawLoad}, toDock={sawToDock}, unload={sawUnload})");
+      var ironAfter = PlayerIron(Verified, 0);
+      Assert.Greater(ironAfter, ironBefore, $"HQ iron credited automatically on unload ({ironBefore} -> {ironAfter})");
+
+      // ===== Priority 2 (Item 4): Live Combat 100% HP Tank First Hit / Sustained Damage / Destruction GIFs =====
+      var battleSpot = new FPVector3(0, 0, -68);
+      var targetTank = SpawnUnitByName(Verified, 1, "cf_fortress_tank", battleSpot + new FPVector3(8, 0, 0));
+      var atkTank1   = SpawnUnitByName(Verified, 0, "ff_eagle_tank",    battleSpot + new FPVector3(-12, 0, -3));
+      var atkTank2   = SpawnUnitByName(Verified, 0, "ff_eagle_tank",    battleSpot + new FPVector3(-12, 0,  3));
+      var tankMaxHp = Verified.FindAsset(Verified.Get<Unit>(targetTank).Spec).MaxHealth;
+      Assert.AreEqual(tankMaxHp, Verified.Get<Unit>(targetTank).Health, "Target tank starts at 100% HP");
+
+      rts.Height = 36f;
+      rts.MoveTo(new Vector2(battleSpot.X.AsFloat + 2f, battleSpot.Z.AsFloat));
+      rts.Apply();
+      yield return Send(0, new AttackTargetCommand { Units = new[] { atkTank1, atkTank2 }, Target = targetTank });
+
+      var hitFrames = 0;
+      var dmgFrames = 0;
+      var dieFrames = 0;
+      var savedFirstHit = false;
+      var savedSustained = false;
+      var savedDestroyed = false;
+
+      for (var t = 0; t < 160; t++) {
+        yield return WaitFrames(4);
+        var alive = Verified.Exists(targetTank) && Verified.Get<Unit>(targetTank).Health > FP._0;
+        var ratio = alive ? (Verified.Get<Unit>(targetTank).Health / tankMaxHp).AsFloat : 0f;
+        if (alive && ratio < 0.999f && ratio >= 0.68f) {
+          if (hitFrames < 10) {
+            CaptureCameraPng(camera, Path.Combine(frames, $"tank_hit_{hitFrames:00}.png"), 960, 540);
+            if (!savedFirstHit && hitFrames == 1) {
+              savedFirstHit = true;
+              CaptureCameraPng(camera, Path.Combine(dir, "02_tank_first_hit.png"), 1920, 1080);
+            }
+            hitFrames++;
+          }
+        } else if (alive && ratio < 0.68f && ratio > 0.12f) {
+          if (dmgFrames < 10) {
+            CaptureCameraPng(camera, Path.Combine(frames, $"tank_dmg_{dmgFrames:00}.png"), 960, 540);
+            if (!savedSustained && dmgFrames == 3) {
+              savedSustained = true;
+              CaptureCameraPng(camera, Path.Combine(dir, "03_tank_sustained_damage.png"), 1920, 1080);
+            }
+            dmgFrames++;
+          }
+        } else if (!alive) {
+          if (dieFrames < 10) {
+            CaptureCameraPng(camera, Path.Combine(frames, $"tank_die_{dieFrames:00}.png"), 960, 540);
+            if (!savedDestroyed && dieFrames == 1) {
+              savedDestroyed = true;
+              CaptureCameraPng(camera, Path.Combine(dir, "04_tank_destruction.png"), 1920, 1080);
+            }
+            dieFrames++;
+          }
+          if (dieFrames >= 8) break;
+        }
+      }
+      Assert.IsTrue(savedFirstHit, "Captured 100% HP tank First Hit keyframe & GIF frames");
+      Assert.IsTrue(savedSustained, "Captured Sustained Damage keyframe & GIF frames");
+      Assert.IsTrue(savedDestroyed, "Captured Tank Destruction keyframe & GIF frames");
+
+      // ===== Priority 2 (Item 5): Harbor Wave Texture Verification & Waterfront Capture =====
+      var waveTex = Resources.Load<Texture2D>("WaterSurface_single");
+      Assert.IsNotNull(waveTex, "IgniteCoders WaterSurface_single wave texture loaded from Resources");
+      var waterMat = UrbanDecor.WaterMaterial();
+      Assert.IsNotNull(waterMat, "UrbanWater material exists");
+      Assert.AreEqual(waveTex, waterMat.GetTexture("_WaveTex"), "Harbor water material has WaterSurface_single applied to _WaveTex");
+
+      // Position camera over Map4P v4 harbor/canal water to visually verify wave texture
+      Vector3 harborWaterPos = new Vector3(-224f, 0f, 0f);
+      for (var r = 10; r < map.CellGridSize - 10; r++) {
+        for (var c = 10; c < map.CellGridSize - 10; c++) {
+          if (GridMapView.Cell(map, r, c) == 'W' && GridMapView.Cell(map, r, c + 1) == 'w') {
+            harborWaterPos = new Vector3(GridMapView.CellX(map, c), 0f, GridMapView.CellZ(map, r));
+            break;
+          }
+        }
+      }
+      rts.Height = 42f;
+      rts.MoveTo(new Vector2(harborWaterPos.x, harborWaterPos.z));
+      rts.Apply();
+      yield return WaitFrames(8);
+      CaptureCameraPng(camera, Path.Combine(dir, "05_harbor_wave_texture.png"), 1920, 1080);
+
+      // ===== Priority 2 (Item 6): Shared 1-Unit Ultimate Cap Across Both Orderings + Cancel & Destroy Rebuild =====
+      // Player 1 is CF (UltimateKind.StrategicMissile -> cf_longwall_mlrs, MaxOwned = 1)
+      var mlsSpec = Resources.Load<UnitSpec>("FactoryWars/cf_longwall_mlrs");
+      var heavySpec = Resources.Load<BuildingSpec>("FactoryWars/cf_heavy_works");
+      Assert.IsNotNull(mlsSpec, "cf_longwall_mlrs loaded");
+      Assert.AreEqual(1, mlsSpec.MaxOwned, "CF Mobile MLS MaxOwned == 1");
+      var p1HqPos = FPVector3.Zero;
+      foreach (var p in Verified.GetComponentIterator<Building>()) {
+        if (p.Component.Owner == 1 && Verified.FindAsset(p.Component.Spec).Role == BuildingRole.Headquarters) {
+          p1HqPos = Verified.Get<Transform3D>(p.Entity).Position;
+          break;
+        }
+      }
+      var cfHeavy = ProductionSystem.CreateFinishedBuilding(Verified, 1, heavySpec, p1HqPos + new FPVector3(-14, 0, 0));
+      yield return WaitFrames(4);
+
+      // Ordering 1: 궁극기 준비 (Preparing) -> 일반 생산 예약 (ProduceCommand) MUST be rejected!
+      SetUltimatePhaseForTest(Verified, 1, UltimatePhase.Preparing, cfHeavy);
+      Assert.AreEqual(1, SniperSystem.CountOwnedAndQueued(Verified, 1, mlsSpec), "Preparing ultimate counts toward shared 1-unit cap");
+      yield return Send(1, new ProduceCommand { Building = cfHeavy, Unit = mlsSpec, Count = 1, Cancel = false });
+      yield return WaitFrames(4);
+      Assert.AreEqual(0, Verified.Get<Building>(cfHeavy).QueueCount, "Ordering 1: Factory queue rejected while 궁극기 준비 active");
+
+      // Cancel 궁극기 준비 -> 일반 생산 예약 MUST succeed!
+      yield return Send(1, new CancelUltimateCommand());
+      yield return WaitFrames(4);
+      Assert.AreEqual(UltimatePhase.None, GetUltimatePhase(Verified, 1), "Ultimate cancelled -> None");
+      Assert.AreEqual(0, SniperSystem.CountOwnedAndQueued(Verified, 1, mlsSpec), "Cap cleared after canceling ultimate");
+
+      // Ordering 2: 일반 생산 예약 (ProduceCommand) -> 궁극기 준비 (UltimateSystem.Locks) MUST be blocked!
+      yield return Send(1, new ProduceCommand { Building = cfHeavy, Unit = mlsSpec, Count = 1, Cancel = false });
+      yield return WaitFrames(4);
+      Assert.AreEqual(1, Verified.Get<Building>(cfHeavy).QueueCount, "Factory queue accepted after ultimate cancel");
+      Assert.AreEqual(1, SniperSystem.CountOwnedAndQueued(Verified, 1, mlsSpec), "Queued MLS counts toward shared 1-unit cap");
+      Assert.IsTrue((UltimateSystem.Locks(Verified, 1) & UltimateLock.Busy) != 0, "Ordering 2: 궁극기 준비 blocked while factory queue holds MLS");
+
+      // Cancel factory queue -> cap cleared & rebuildable!
+      yield return Send(1, new ProduceCommand { Building = cfHeavy, Unit = mlsSpec, Count = 1, Cancel = true });
+      yield return WaitFrames(4);
+      Assert.AreEqual(0, Verified.Get<Building>(cfHeavy).QueueCount, "Factory queue cancelled cleanly");
+      Assert.AreEqual(0, SniperSystem.CountOwnedAndQueued(Verified, 1, mlsSpec), "Cap cleared after canceling factory queue");
+      Assert.IsTrue((UltimateSystem.Locks(Verified, 1) & UltimateLock.Busy) == 0, "Ultimate Busy lock cleared after factory cancel");
+
+      // Live unit -> cap=1 (blocked) -> destroy -> cap=0 (rebuildable!)
+      var liveMls = SpawnUnitByName(Verified, 1, "cf_longwall_mlrs", p1HqPos + new FPVector3(0, 0, -14));
+      yield return WaitFrames(4);
+      Assert.AreEqual(1, SniperSystem.CountOwnedAndQueued(Verified, 1, mlsSpec), "Live MLS counts as 1/1");
+      Assert.IsTrue((UltimateSystem.Locks(Verified, 1) & UltimateLock.Busy) != 0, "Ultimate blocked while live MLS exists");
+      Verified.Destroy(liveMls);
+      yield return WaitFrames(4);
+      Assert.AreEqual(0, SniperSystem.CountOwnedAndQueued(Verified, 1, mlsSpec), "Cap cleared after destroying live MLS");
+      yield return Send(1, new ProduceCommand { Building = cfHeavy, Unit = mlsSpec, Count = 1, Cancel = false });
+      yield return WaitFrames(4);
+      Assert.AreEqual(1, Verified.Get<Building>(cfHeavy).QueueCount, "MLS rebuildable immediately after destruction");
+
+      Debug.Log($"[Priority1And2_VerifyAndCapture] PASS fences={fenceCount} overlaps=0 factory={extAct.View.Slot.Prefab.name} iron={ironBefore}->{ironAfter} tankGifs=({hitFrames}/{dmgFrames}/{dieFrames}) waveTex={waveTex.name} ultCapBothOrderingsAndCancelDestroy=OK");
+    }
   }
 }

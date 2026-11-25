@@ -7,6 +7,15 @@
 
 ---
 
+## Priority 1·2 완료: 군용 철책·겹침 제거·공장형 채굴 건물(`SM_Bld_Warehouse_01`)·자동 `자원채취` 왕복 + 전차 피격/손상/파괴 GIF · 항만 파도 텍스처 · 궁극기 양방향 1기 상한 (2026-11-25 · 5/5 통과)
+
+| 공장형 채굴 건물·군용 철책(154개)·겹침 0 & 자동 `자원채취` 왕복 (GIF) | 실전 100% HP 전차 첫 명중 · 지속 손상 · 파괴 (GIF 3종) | 항만 파도 텍스처 (`WaterSurface_single.tif`) 적용 확인 |
+| --- | --- | --- |
+| [![공장형 채굴 건물 및 군용 철책](Docs/status_images/Priority1And2/01_factory_fence_and_auto_truck.png)](Docs/status_images/Priority1And2/01_factory_fence_and_auto_truck.png) | [![전차 첫 명중 GIF](Docs/status_images/Priority1And2/02_tank_first_hit.gif)](Docs/status_images/Priority1And2/02_tank_first_hit.gif) | [![항만 파도 텍스처 적용](Docs/status_images/Priority1And2/05_harbor_wave_texture.png)](Docs/status_images/Priority1And2/05_harbor_wave_texture.png) |
+| [전후 비교](Docs/status_images/Priority1And2/00_before_after_factory_and_fence.png) · [자동 왕복 GIF](Docs/status_images/Priority1And2/01_auto_truck_cycle.gif) (`SM_Bld_Warehouse_01`, `overlaps=0`) | [첫 명중 GIF](Docs/status_images/Priority1And2/02_tank_first_hit.gif) · [지속 손상 GIF](Docs/status_images/Priority1And2/03_tank_sustained_damage.gif) · [파괴 GIF](Docs/status_images/Priority1And2/04_tank_destruction.gif) | [항만 파도 원본](Docs/status_images/Priority1And2/05_harbor_wave_texture.png) · 궁극기 양방향 1기 상한 + 취소/파괴 후 재생산 **PASS** |
+
+---
+
 ## 자원지 적치 + 수송차량 `자원채취` 수거/납품 · 항공기 고층 건물 직선 통과 · 폭격기 전용 고도/스케일·체력바·공중 폭발 정렬 (2026-11-25 · 4/4 통과)
 
 | 적치 배지(`3/3 · 적치 113`) & 수송트럭 `자원채취` 적재 (컨베이어 제거) | 고층 `'H'` 건물 직선 상공 비행 (우회 없음·안전 고도) | 폭격기 전용 고도(25.6m)·스케일(1.35×)·체력바 & 공중 폭발 정렬 (`expDist=0.00m`) |

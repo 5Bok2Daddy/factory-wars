@@ -252,29 +252,31 @@ namespace FactoryWars.EditorTools {
           if (neighbour == 'P' || neighbour == 'E') continue;
           var x = FactoryWarsSetup.CellX(c) - cornerX;
           var z = FactoryWarsSetup.CellZ(r) - cornerZ;
-          var hash = (uint)((r * 73856093) ^ (c * 19349663) ^ d);
           var along = d < 2 ? Vector3.right : Vector3.forward;
           var inward = new Vector3(-dc, 0, dr);
-          var model = hash % 7 < 3 ? $"SM_Prop_Barrier_Tall_Group_0{1 + hash % 3}"
-            : hash % 7 < 6 ? $"SM_Prop_Barrier_Tall_0{1 + hash % 6}" : $"SM_Prop_Barrier_0{1 + hash % 3}";
-          var wall = Place(walls, $"{PM}Props/{model}.prefab", new Vector3(x, 0, z), d < 2 ? 0f : 90f, 1f, $"Wall{index++}");
-          if (wall == null) continue;
-          var dimensions = WorldBounds(wall).extents;
-          var depth = Vector3.Dot(dimensions, new Vector3(Mathf.Abs(inward.x), 0, Mathf.Abs(inward.z)));
-          var length = Vector3.Dot(dimensions, along);
-          if (length < depth) {
-            wall.transform.Rotate(0f, 90f, 0f);
-            (length, depth) = (depth, length);
-            var rotated = WorldBounds(wall).center;
-            wall.transform.position += new Vector3(x - rotated.x, 0, z - rotated.z);
+          // 콘크리트 방벽 대신 정렬된 군용 철책(SM_Prop_Fence_01/02)을 빈틈·도로 돌출 없이 8m 셀 경계 안쪽에 2분할 연속 배치한다.
+          for (var seg = 0; seg < 2; seg++) {
+            var model = (index + seg) % 2 == 0 ? "SM_Prop_Fence_01" : "SM_Prop_Fence_02";
+            var offsetAlong = (seg == 0 ? -2.0f : 2.0f);
+            var wall = Place(walls, $"{PM}Props/{model}.prefab", new Vector3(x, 0, z) + along * offsetAlong, d < 2 ? 0f : 90f, 1f, $"Fence{index++}");
+            if (wall == null) continue;
+            var dimensions = WorldBounds(wall).extents;
+            var depth = Vector3.Dot(dimensions, new Vector3(Mathf.Abs(inward.x), 0, Mathf.Abs(inward.z)));
+            var length = Vector3.Dot(dimensions, along);
+            if (length < depth) {
+              wall.transform.Rotate(0f, 90f, 0f);
+              (length, depth) = (depth, length);
+              var rotated = WorldBounds(wall).center;
+              wall.transform.position += new Vector3(x + along.x * offsetAlong - rotated.x, 0, z + along.z * offsetAlong - rotated.z);
+            }
+            // 2분할(각 4m)에 정확히 맞도록 길이 스케일 정렬, 도로 침범 방지를 위해 경계 안쪽 3.65m에 밀착.
+            var fullLen = Mathf.Max(0.5f, length * 2f);
+            var fitScale = Mathf.Clamp(3.96f / fullLen, 0.55f, 1.45f);
+            wall.transform.localScale *= fitScale;
+            wall.transform.position -= inward * (3.65f - Mathf.Min(depth * fitScale, 0.35f));
+            var bounds = WorldBounds(wall);
+            if (occupied.Any(b => b.Intersects(bounds))) Object.DestroyImmediate(wall);
           }
-          wall.transform.position -= inward * (3.85f - depth);
-          wall.transform.position += along * Mathf.Clamp(3.85f - length, 0f, 1.8f) * ((hash / 13 % 17 - 8f) / 8f);
-          var bounds = WorldBounds(wall);
-          var margin = bounds;
-          margin.Expand(0.14f);
-          if (length > 3.4f || depth > 2f || occupied.Any(b => b.Intersects(margin))) Object.DestroyImmediate(wall);
-          else occupied.Add(bounds);
         }
       }
       BasePaving(root, grid, cells, minC, maxR);

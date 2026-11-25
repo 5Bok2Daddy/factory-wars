@@ -124,6 +124,26 @@ namespace Quantum.FactoryWars {
 
     static void UpdatePlayerPickupTruck(Frame f, EntityRef entity, Transform3D* transform, Unit* unit, LogisticsTruck* truck) {
       if (unit->Health <= FP._0) return;
+      if (truck->State == LogisticsState.ToYard || truck->State == LogisticsState.ToDock) {
+        // 경로 도중 다른 유닛/장애물에 3초 이상 막히면 우회 접근 지점으로 자동 재명령해 정지 방지.
+        if (FactoryWarsUtil.FlatDistanceSqr(transform->Position, truck->LastPosition) < FP._0_25) {
+          truck->StuckTimer += f.DeltaTime;
+          if (truck->StuckTimer >= (FP)3) {
+            truck->StuckTimer = FP._0;
+            truck->Detour++;
+            var standOff = truck->State == LogisticsState.ToYard ? (FP)7 : (FP)9;
+            var angle = FP.PiTimes2 * (truck->Detour % 8) / 8;
+            var offset = new FPVector3(FPMath.Cos(angle), FP._0, FPMath.Sin(angle)) * standOff;
+            var goal = truck->Waypoint + offset;
+            var rules = FactoryWarsUtil.Rules(f);
+            var navGoal = FactoryWarsUtil.FindNavPointNear(f, rules.NavMeshName, goal, (FP)8, out var nav) ? nav : goal;
+            MovementSystem.Order(f, entity, unit, UnitOrder.Move, navGoal);
+          }
+        } else {
+          truck->LastPosition = transform->Position;
+          truck->StuckTimer = FP._0;
+        }
+      }
       if (truck->State == LogisticsState.ToYard) {
         var d2 = FactoryWarsUtil.FlatDistanceSqr(transform->Position, truck->Waypoint);
         if (d2 <= (FP)144 || unit->Order == UnitOrder.Stop) {

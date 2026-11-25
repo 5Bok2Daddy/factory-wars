@@ -367,6 +367,23 @@ namespace FactoryWars.View {
         block.name = $"Base{seat}";
         block.transform.localPosition = new Vector3(p.x, TieredTerrain.MainHeight, p.z);
         block.transform.localRotation = Quaternion.Euler(0f, -90f * seat, 0f);
+        // 자원 노드/채굴 공장 주변과 겹치는 장식 소품(컨테이너·안테나·발전기 등)을 자동 정리해 메시 겹침(클리핑)을 제거한다.
+        if (map.ResourceNodes != null && map.ResourceNodes.Length > 0) {
+          for (var i = 0; i < block.transform.childCount; i++) {
+            var child = block.transform.GetChild(i);
+            if (child.name == "Paving" || child.name == "PerimeterWall") continue;
+            var worldPos = child.position;
+            for (var nIdx = 0; nIdx < map.ResourceNodes.Length; nIdx++) {
+              var np = map.ResourceNodes[nIdx].Shape.Center.ToUnityVector3();
+              var dx = worldPos.x - np.x;
+              var dz = worldPos.z - np.z;
+              if (dx * dx + dz * dz < 11.0f * 11.0f) {
+                child.gameObject.SetActive(false);
+                break;
+              }
+            }
+          }
+        }
         PlacedBlocks.Add(block);
       }
     }

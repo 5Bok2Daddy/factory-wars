@@ -314,28 +314,39 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>전차·MLRS·포병·보병 피격: 중화기(size>=1.0)는 War FX WFX_ExplosiveSmokeGround/WFX_Explosion, 소총탄은 WFX_BImpact Dirt 재생.</summary>
+    /// <summary>전차·MLRS·포병·보병 피격: 정확한 피격 지점이 RTS 줌에서 또렷이 읽히고 차체를 가리지 않도록 섬광·먼지 크기/지속시간 보정.</summary>
     public void Impact(Vector3 position, float size, Vector3 incoming) {
       var normal = incoming.sqrMagnitude > 0.001f ? -incoming.normalized : Vector3.up;
       if (size >= 1.0f) {
         var key = size >= 1.5f ? "explosion" : "explosion_generic";
-        if (SpawnWarFx(key, position + Vector3.up * 0.12f, Quaternion.identity, Mathf.Clamp(size * 0.58f, 0.55f, 1.6f), 0.12f) != null) {
-          if (size >= 1.35f) Crater(position, size * 0.72f);
+        var wfxScale = size >= 1.5f ? Mathf.Clamp(size * 0.55f, 0.72f, 1.45f) : Mathf.Clamp(size * 0.38f, 0.36f, 0.68f);
+        var wfx = SpawnWarFx(key, position + Vector3.up * 0.25f, Quaternion.identity, wfxScale, 0.08f);
+        // 정확한 피격점 섬광·스파크·짧은 먼지 퍼프(차체 윤곽을 가리지 않음).
+        Emit(_flash, position + Vector3.up * 0.42f, Vector3.zero, Mathf.Clamp(size * 0.95f, 0.75f, 1.35f), 0.10f, FlashCore);
+        var sparkCount = Scaled(6);
+        for (var i = 0; i < sparkCount; i++) {
+          var v = (normal + Vector3.up * 0.55f + Random.insideUnitSphere * 0.55f) * Random.Range(3.5f, 7.5f);
+          Emit(_needle, position + Vector3.up * 0.35f, v, 0.035f, Random.Range(0.10f, 0.18f), Spark);
+        }
+        Emit(_smoke, position + Vector3.up * 0.25f, Vector3.up * 0.35f + normal * 0.25f, Mathf.Clamp(size * 0.42f, 0.38f, 0.65f), 0.45f, DustBrown);
+        if (wfx != null) {
+          if (size >= 1.45f) Crater(position, size * 0.65f);
           return;
         }
+        return;
       } else {
         var rot = Quaternion.LookRotation(normal);
-        if (SpawnWarFx("bullet_impact", position + Vector3.up * 0.25f, rot, Mathf.Clamp(size, 0.45f, 0.95f), 0.04f) != null) {
+        if (SpawnWarFx("bullet_impact", position + Vector3.up * 0.25f, rot, Mathf.Clamp(size * 0.85f, 0.42f, 0.82f), 0.04f) != null) {
           return;
         }
       }
-      Emit(_glow, position + Vector3.up * 0.3f, Vector3.zero, size * 1.2f, 0.07f, FlashCore);
-      var count = Scaled(3);
+      Emit(_glow, position + Vector3.up * 0.3f, Vector3.zero, size * 1.0f, 0.07f, FlashCore);
+      var count = Scaled(4);
       for (var i = 0; i < count; i++) {
-        var velocity = (normal + Vector3.up * 0.6f + Random.insideUnitSphere * 0.6f) * Random.Range(3f, 7f);
-        Emit(_needle, position, velocity, 0.03f, Random.Range(0.08f, 0.16f), Spark);
+        var velocity = (normal + Vector3.up * 0.6f + Random.insideUnitSphere * 0.55f) * Random.Range(3f, 6.5f);
+        Emit(_needle, position, velocity, 0.03f, Random.Range(0.08f, 0.15f), Spark);
       }
-      Emit(_smoke, position + Vector3.up * 0.2f, Vector3.up * 0.4f + normal * 0.3f, 0.5f * size, 0.6f, DustBrown);
+      Emit(_smoke, position + Vector3.up * 0.2f, Vector3.up * 0.35f + normal * 0.25f, 0.42f * size, 0.42f, DustBrown);
     }
 
     public void Impact(Vector3 position, float size) {
