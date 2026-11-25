@@ -33,6 +33,9 @@ namespace FactoryWars.View {
     public GameObject Bar;
     public Transform Fill;
     public MicroBar MicroBar;
+    SpriteRenderer _microHpBar;
+    SpriteRenderer _microBgBar;
+    bool _barFriendly = true;
     public bool HasMicroBar => MicroBar != null;
     float _lastHealth = 1f;
     static GameObject _microBarPrefab;
@@ -112,11 +115,17 @@ namespace FactoryWars.View {
         foreach (var r in view.Bar.GetComponentsInChildren<SpriteRenderer>(true)) {
           r.shadowCastingMode = ShadowCastingMode.Off;
           r.receiveShadows = false;
+          if (r.gameObject.name == "HP Bar") view._microHpBar = r;
+          else if (r.gameObject.name == "HP Background") {
+            view._microBgBar = r;
+            r.color = new Color(0.08f, 0.10f, 0.14f, 0.85f);
+          }
         }
         view.MicroBar = view.Bar.GetComponentInChildren<MicroBar>(true);
         if (view.MicroBar != null) {
           view.MicroBar.Initialize(1f);
         }
+        view.ApplyMicroBarColor(1f);
         view.Bar.SetActive(false);
       } else {
         view.Bar = Marker("Bar", view.transform, BarBackMesh());
@@ -310,6 +319,24 @@ namespace FactoryWars.View {
       }
     }
 
+    /// <summary>아군(에메랄드 그린→앰버→크림슨) / 적군(크림슨 레드) 피아 식별 체력바 톤 설정.</summary>
+    public void SetBarTeam(bool friendly) {
+      if (_barFriendly == friendly) return;
+      _barFriendly = friendly;
+      ApplyMicroBarColor(_lastHealth);
+    }
+
+    void ApplyMicroBarColor(float ratio) {
+      if (_microHpBar == null) return;
+      if (_barFriendly) {
+        _microHpBar.color = ratio > 0.52f
+          ? new Color(0.22f, 0.90f, 0.42f, 1f)
+          : ratio > 0.25f ? new Color(0.96f, 0.72f, 0.20f, 1f) : new Color(0.94f, 0.26f, 0.24f, 1f);
+      } else {
+        _microHpBar.color = new Color(0.96f, 0.24f, 0.24f, 1f);
+      }
+    }
+
     /// <summary>0~1. MicroBar 애니메이션 체력바(지연 고스트바 포함) 또는 폴백 Fill 갱신.</summary>
     public void SetHealth(float ratio) {
       var value = Mathf.Clamp01(ratio);
@@ -318,6 +345,7 @@ namespace FactoryWars.View {
           _lastHealth = value;
           MicroBar.UpdateBar(value);
         }
+        ApplyMicroBarColor(value);
         return;
       }
       if (Fill != null) {

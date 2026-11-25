@@ -1222,6 +1222,8 @@ namespace FactoryWars.View {
       }
       // 고지대 은폐: 적에게 숨은 유닛은 그리지 않고, 내 숨은 유닛은 점선 고리로 알린다.
       var viewer = _controller != null ? _controller.Player : PlayerRef.None;
+      var friendlyUnitBar = viewer.IsValid == false || unit->Owner == viewer || DiplomacySystem.GetRelation(frame, viewer, unit->Owner) == Relation.Allied;
+      actor.View.SetBarTeam(friendlyUnitBar);
       var visible = viewer.IsValid == false || FactoryWarsUtil.IsVisibleTo(frame, viewer, entity);
       actor.EngineerWasVisible = spec.Size == UnitSize.Engineer && visible;
       actor.ExtractorEntryTime = 0f;
@@ -2090,6 +2092,8 @@ namespace FactoryWars.View {
         UpdateActivityCrewMulti(actor, pCount, powerPose0, "Inspect", "Lever");
       }
       var bHpRatio = spec.MaxHealth > FP._0 ? (building->Health / spec.MaxHealth).AsFloat : 1f;
+      var friendlyBuildingBar = buildingViewer.IsValid == false || building->Owner == buildingViewer || DiplomacySystem.GetRelation(frame, buildingViewer, building->Owner) == Relation.Allied;
+      actor.View.SetBarTeam(friendlyBuildingBar);
       UpdateDamageFire(actor, bHpRatio, 1.4f);
       var operating = powered && (processing || producing || researching || ultimateBusy || overdriving || extracting || spec.Role == BuildingRole.PowerPlant);
       var busy = operating || (powered && (yard || spec.Role == BuildingRole.Headquarters));
