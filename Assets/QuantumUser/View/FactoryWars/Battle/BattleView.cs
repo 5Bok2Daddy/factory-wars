@@ -70,7 +70,8 @@ namespace FactoryWars.View {
       public float ExtractorRouteCheckAt;
       public Transform PowerTurbine;
       public Material PowerBeaconMat;
-      public Transform NavalWake;
+      public ParticlePackVfx.NavalWakeHandle NavalWake;
+      public ParticlePackVfx.DamageFireHandle DamageFire;
       public bool InCombat;
       public readonly List<(Transform Part, Vector3 Home, Vector3 Reach, float Speed)> Sliders = new List<(Transform, Vector3, Vector3, float)>();
       public readonly List<(Transform Part, Quaternion Home, float Swing, float Speed)> Swingers = new List<(Transform, Quaternion, float, float)>();
@@ -1245,7 +1246,11 @@ namespace FactoryWars.View {
       var baseAirAlt = spec.IsAir ? Mathf.Max(actor.View.Entry.Altitude, spec.Size == UnitSize.Large ? 15.8f : spec.Size == UnitSize.Medium ? 12.4f : 9.2f) : actor.View.Entry.Altitude;
       var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(baseAirAlt, 16.8f) : baseAirAlt);
       actor.View.Turn.localPosition = Vector3.up * (altitude + hover);
-      if (spec.IsNaval) UpdateNavalWake(actor, before, dt);
+      if (spec.IsNaval) UpdateNavalWake(actor, spec, before, dt);
+      if (spec.IsVehicle || spec.IsNaval || spec.IsAir || spec.Size == UnitSize.Medium || spec.Size == UnitSize.Large) {
+        var hpRatio = spec.MaxHealth > FP._0 ? (unit->Health / spec.MaxHealth).AsFloat : 1f;
+        UpdateDamageFire(actor, hpRatio, spec.IsNaval ? 1.5f : spec.Size == UnitSize.Large ? 1.25f : 0.9f);
+      }
       if (spec.IsAir && actor.View.Bar != null) {
         actor.View.Bar.transform.localPosition = Vector3.up * (altitude + (actor.IsCarrier ? 3.6f : 2.4f));
       }
@@ -1984,6 +1989,8 @@ namespace FactoryWars.View {
       if (spec.Role == BuildingRole.PowerPlant) {
         UpdatePowerPlantVisual(actor, powered, dt);
       }
+      var bHpRatio = spec.MaxHealth > FP._0 ? (building->Health / spec.MaxHealth).AsFloat : 1f;
+      UpdateDamageFire(actor, bHpRatio, 1.4f);
       var operating = powered && (processing || producing || researching || ultimateBusy || overdriving || extracting || spec.Role == BuildingRole.PowerPlant);
       var busy = operating || (powered && (yard || spec.Role == BuildingRole.Headquarters));
       Animate(actor, dt, powered, busy);
@@ -2204,45 +2211,21 @@ namespace FactoryWars.View {
       }
     }
 
-    void UpdateNavalWake(Actor actor, Vector3 before, float dt) {
+    void UpdateNavalWake(Actor actor, UnitSpec spec, Vector3 before, float dt) {
       if (actor.NavalWake == null) {
-        var root = new GameObject("NavalWaterlineWake").transform;
-        root.SetParent(actor.View.transform, false);
-        var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Transparent")) {
-          hideFlags = HideFlags.HideAndDontSave,
-          color = new Color(0.86f, 0.95f, 1.0f, 0.34f),
-        };
-        mat.SetFloat("_Surface", 1f); // Transparent
-        mat.SetFloat("_Blend", 0f);   // Alpha
-        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-        mat.SetInt("_ZWrite", 0);
-        mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-        mat.renderQueue = 3000;
-
-        // Sleek V-shaped angled foam wake arms fanning aft at +-16 deg from the stern (no boxy H crossbar).
-        for (var side = -1; side <= 1; side += 2) {
-          var arm = GameObject.CreatePrimitive(PrimitiveType.Quad);
-          arm.name = side < 0 ? "WakePort" : "WakeStarboard";
-          Destroy(arm.GetComponent<Collider>());
-          arm.transform.SetParent(root, false);
-          arm.transform.localPosition = new Vector3(side * 0.72f, 0.04f, -3.2f);
-          arm.transform.localRotation = Quaternion.Euler(90f, side * 16f, 0f);
-          arm.transform.localScale = new Vector3(0.28f, 4.2f, 1f);
-          arm.GetComponent<Renderer>().sharedMaterial = mat;
-        }
-        actor.NavalWake = root;
+        var hullHalfLen = spec.Size == UnitSize.Small ? 2.4f : 7.8f;
+        actor.NavalWake = new ParticlePackVfx.NavalWakeHandle(actor.View.transform, hullHalfLen);
       }
       var speed = dt > 0f ? (actor.Position - before).magnitude / dt : 0f;
-      var active = speed > 0.25f;
-      if (actor.NavalWake.gameObject.activeSelf != active) actor.NavalWake.gameObject.SetActive(active);
-      if (active) {
-        var wakeLen = Mathf.Lerp(0.45f, 1.20f, Mathf.Clamp01(speed / 5f));
-        var wakeWidth = Mathf.Lerp(0.70f, 1.05f, Mathf.Clamp01(speed / 5f));
-        actor.NavalWake.localPosition = new Vector3(0f, 0.14f, 0f);
-        actor.NavalWake.localRotation = Quaternion.Euler(0f, actor.HullYaw, 0f);
-        actor.NavalWake.localScale = new Vector3(wakeWidth, 1f, wakeLen);
+      actor.NavalWake.Update(speed, actor.HullYaw);
+    }
+
+    void UpdateDamageFire(Actor actor, float hpRatio, float scale) {
+      if (hpRatio >= 0.60f && actor.DamageFire == null) return;
+      if (actor.DamageFire == null) {
+        actor.DamageFire = new ParticlePackVfx.DamageFireHandle(actor.View.Turn != null ? actor.View.Turn : actor.View.transform, scale);
       }
+      actor.DamageFire.Update(hpRatio);
     }
 
     void SyncSynergyPipelines(Frame frame) {

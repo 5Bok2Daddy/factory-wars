@@ -480,5 +480,95 @@ namespace FactoryWars.Tests {
       yield return WaitFrames(6);
       CaptureCameraPng(camera, Path.Combine(dir, "fix5_upgraded_warships.png"), 1920, 1080);
     }
+
+    static void SetUnitHealthRatio(Frame frame, EntityRef entity, FP ratio) {
+      if (frame.Exists(entity) && frame.Unsafe.TryGetPointer<Unit>(entity, out var u)) {
+        var spec = frame.FindAsset(u->Spec);
+        u->Health = spec.MaxHealth * ratio;
+      }
+    }
+
+    [UnityTest, Explicit, Timeout(1200000)]
+    public IEnumerator ParticlePackVfx_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "ParticleVfx"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      // 1. Verify URP 17.0.4 shader + texture compatibility for all 6 ParticlePack materials (zero pink/error shaders).
+      foreach (var mat in new[] { ParticlePackVfx.FoamMat, ParticlePackVfx.RippleMat, ParticlePackVfx.SplashMat,
+                                  ParticlePackVfx.FireMat, ParticlePackVfx.SmokeMat, ParticlePackVfx.EmberMat }) {
+        Assert.IsNotNull(mat, "ParticlePack material created");
+        Assert.IsNotNull(mat.shader, $"shader valid on {mat.name}");
+        Assert.IsFalse(mat.shader.name.Contains("Error"), $"no pink/error shader on {mat.name}");
+        var tex = mat.HasProperty("_BaseMap") ? mat.GetTexture("_BaseMap") : mat.mainTexture;
+        Assert.IsNotNull(tex, $"ParticlePack texture loaded on {mat.name}");
+      }
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 5601, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+
+      // 2. Naval Water Splash, Ripples & Stern Foam Wake under North Arch Bridge (10 frames + hero PNG).
+      var ffShip = SpawnUnitByName(Verified, 0, "ff_artillery_ship", new FPVector3(-22, 0, 96));
+      var cfShip = SpawnUnitByName(Verified, 0, "cf_artillery_ship", new FPVector3(-10, 0, 96));
+      var boat   = SpawnUnitByName(Verified, 0, "ff_scout_boat",     new FPVector3(-16, 0, 110));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { ffShip, cfShip, boat }, Target = new FPVector3(-16, 0, 158) });
+      yield return WaitFrames(Fps * 2);
+
+      var bv = Battle();
+      Assert.IsTrue(bv.Actors.TryGetValue(cfShip, out var shipAct) && shipAct.NavalWake != null, "Naval particle wake created");
+      Assert.IsNull(shipAct.View.transform.Find("NavalWaterlineWake"), "Rigid V-bar wake geometry removed");
+      Assert.IsNotNull(shipAct.NavalWake.Root.Find("SternAnchor/SternFoamTrail"), "SternFoamTrail particle system active");
+      Assert.IsNotNull(shipAct.NavalWake.Root.Find("WaterlineRipples"), "WaterlineRipples particle system active");
+      Assert.IsNotNull(shipAct.NavalWake.Root.Find("BowAnchor/BowWaterSplash"), "BowWaterSplash particle system active");
+
+      rts.Height = 42f;
+      rts.MoveTo(new Vector2(-16f, 118f));
+      rts.Apply();
+      for (var f = 0; f < 10; f++) {
+        yield return WaitFrames(10);
+        CaptureCameraPng(camera, Path.Combine(frames, $"naval_vfx_{f:00}.png"), 960, 540);
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "vfx_naval_particle_wake.png"), 1920, 1080);
+
+      // 3. Fire, Smoke & Embers on Damaged/Burning Combat Units (10 frames + hero PNG).
+      var c = new FPVector3(0, 0, -64);
+      var ff1 = SpawnUnitByName(Verified, 0, "ff_eagle_tank",  c + new FPVector3(-11, 0, -3));
+      var ff2 = SpawnUnitByName(Verified, 0, "ff_striker_ifv", c + new FPVector3( -9, 0,  4));
+      var cf1 = SpawnUnitByName(Verified, 1, "cf_fortress_tank", c + new FPVector3(11, 0, -2));
+      var cf2 = SpawnUnitByName(Verified, 1, "cf_rampart_ifv",   c + new FPVector3( 9, 0,  4));
+      SetUnitHealthRatio(Verified, ff1, FP._0_25);
+      SetUnitHealthRatio(Verified, cf1, FP._0_20);
+      SetUnitHealthRatio(Verified, cf2, FP._0_50);
+      if (Game?.Frames?.Predicted != null) {
+        SetUnitHealthRatio(Game.Frames.Predicted, ff1, FP._0_25);
+        SetUnitHealthRatio(Game.Frames.Predicted, cf1, FP._0_20);
+        SetUnitHealthRatio(Game.Frames.Predicted, cf2, FP._0_50);
+      }
+      yield return Send(0, new AttackTargetCommand { Units = new[] { ff1, ff2 }, Target = cf1 });
+      yield return Send(1, new AttackTargetCommand { Units = new[] { cf1, cf2 }, Target = ff1 });
+      yield return WaitFrames(Fps);
+
+      Assert.IsTrue(bv.Actors.TryGetValue(ff1, out var dmgAct) && dmgAct.DamageFire != null && dmgAct.DamageFire.Root.gameObject.activeSelf,
+        "Damaged unit displays ParticlePack fire/smoke/embers VFX");
+
+      rts.Height = 30f;
+      rts.MoveTo(new Vector2(c.X.AsFloat, c.Z.AsFloat));
+      rts.Apply();
+      for (var f = 0; f < 10; f++) {
+        yield return WaitFrames(8);
+        CaptureCameraPng(camera, Path.Combine(frames, $"fire_vfx_{f:00}.png"), 960, 540);
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "vfx_combat_fire_smoke.png"), 1920, 1080);
+    }
   }
 }
