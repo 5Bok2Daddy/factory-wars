@@ -1,9 +1,18 @@
 # Factory Wars — Mobile RTS Dashboard
 
-> **기준 일자:** **2026-11-24 (KST)**
+> **기준 일자:** **2026-11-25 (KST)**
 > **대상 플랫폼:** Android Mobile RTS (Touch-Only UI, Photon Quantum 3 결정론 `FP` 시뮬레이션 — 금지어 **0건**)
 > **Git 저장소 루트:** `Game/` (`origin/main` → `https://github.com/5Bok2Daddy/factory-wars.git`)
-> **아트 파이프라인:** Synty POLYGON 및 War FX에 Desert World, Roadside Tales와 NatureForge 맵 에셋을 선별 적용.
+> **아트 파이프라인:** Synty POLYGON, War FX, Unity Particle Pack (URP 17.0.4) 및 선별 맵 에셋 적용.
+
+---
+
+## 공중 비행 VFX · 고도 상향 · 고층 빌딩 우회 & 해상/화염 VFX (2026-11-25 · 4/4 통과)
+
+| 공중 고도 상향 + 비행 VFX 전후 | 고층 빌딩 우회 모션 클립 (GIF) | 함선 파티클 항적 & 교전 화염 VFX |
+| --- | --- | --- |
+| [![공중 고도 및 비행 VFX 전후](Docs/status_images/AirVfx/air_altitude_vfx_before_after.png)](Docs/status_images/AirVfx/air_altitude_vfx_before_after.png) | [![공중 유닛 고층 빌딩 우회 모션](Docs/status_images/AirVfx/air_flight_avoidance_motion.gif)](Docs/status_images/AirVfx/air_flight_avoidance_motion.gif) | [![함선 포말·파문·물보라 항적](Docs/status_images/ParticleVfx/vfx_naval_particle_wake.gif)](Docs/status_images/ParticleVfx/vfx_naval_particle_wake.gif) |
+| [전후 비교](Docs/status_images/AirVfx/air_altitude_vfx_before_after.png) · [고고도 비행 VFX](Docs/status_images/AirVfx/air_high_altitude_and_vfx.png) (`11.5 / 15.0 / 19.0 / 20.5m`) | [우회 정지화면](Docs/status_images/AirVfx/air_building_avoidance.png) · 방벽/울타리/나무 통과 + 고층 빌딩(`H`) 결정론 `FP` 우회 | [함선 항적 원본](Docs/status_images/ParticleVfx/vfx_naval_particle_wake.png) · [교전 화염 GIF](Docs/status_images/ParticleVfx/vfx_combat_fire_smoke.gif) |
 
 ---
 

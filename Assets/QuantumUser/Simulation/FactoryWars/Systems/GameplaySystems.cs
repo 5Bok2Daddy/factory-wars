@@ -1815,10 +1815,132 @@ namespace Quantum.FactoryWars {
       return viaHigh <= viaLow ? 1 : -1;
     }
 
+    static FP AabbDistanceXZ(FPVector3 pos, FPVector3 center, FP half) {
+      var dx = FPMath.Max(FP._0, FPMath.Abs(pos.X - center.X) - half);
+      var dz = FPMath.Max(FP._0, FPMath.Abs(pos.Z - center.Z) - half);
+      if (dx > FP._0 || dz > FP._0) return new FPVector2(dx, dz).Magnitude;
+      return -FPMath.Min(half - FPMath.Abs(pos.X - center.X), half - FPMath.Abs(pos.Z - center.Z));
+    }
+
+    static FPVector3 PushOutsideAabbXZ(FPVector3 pos, FPVector3 center, FP half, FP clearance) {
+      var limit = half + clearance;
+      var rx = pos.X - center.X;
+      var rz = pos.Z - center.Z;
+      var penX = limit - FPMath.Abs(rx);
+      var penZ = limit - FPMath.Abs(rz);
+      if (penX <= FP._0 || penZ <= FP._0) return pos;
+      if (penX <= penZ) {
+        pos.X = center.X + (rx >= FP._0 ? limit : -limit);
+      } else {
+        pos.Z = center.Z + (rz >= FP._0 ? limit : -limit);
+      }
+      return pos;
+    }
+
+    static bool HasCellGrid(MapSpec map) =>
+      map != null && map.CellGridSize > 0 && map.CellGrid != null && map.CellGrid.Length == map.CellGridSize * map.CellGridSize;
+
+    static bool FindNearestAirBuilding(Frame f, MapSpec map, FPVector3 probe, FP clearance, out FPVector3 obstacleCenter, out FP obstacleDist) {
+      obstacleCenter = default;
+      obstacleDist = FP.MaxValue;
+      var found = false;
+
+      // 1. Standing CityBuildings (non-grid maps)
+      var buildings = map != null ? map.CityBuildings : null;
+      if (buildings != null) {
+        for (var i = 0; i < buildings.Length; i++) {
+          if (CitySystem.IsCollapsed(f, i)) continue;
+          var shape = buildings[i].Shape;
+          var d = shape.Distance(probe);
+          if (d < clearance && d < obstacleDist) {
+            obstacleDist = d;
+            obstacleCenter = shape.Center;
+            found = true;
+          }
+        }
+      }
+
+      // 2. Tall urban building cells ('H') on CellGrid maps (e.g. Map4P v4).
+      // Barriers, barbed wire, parks/trees ('K'), bridges ('G'), and low props are NOT 'H', so air units fly freely over them.
+      if (HasCellGrid(map)) {
+        var n = map.CellGridSize;
+        var cell = map.CellGridCell;
+        var halfCell = cell * FP._0_50;
+        var mapHalf = cell * n * FP._0_50;
+        var c0 = FPMath.FloorToInt((probe.X + mapHalf) / cell);
+        var r0 = FPMath.FloorToInt((mapHalf - probe.Z) / cell);
+        var rMin = r0 - 2 < 0 ? 0 : r0 - 2;
+        var rMax = r0 + 2 >= n ? n - 1 : r0 + 2;
+        var cMin = c0 - 2 < 0 ? 0 : c0 - 2;
+        var cMax = c0 + 2 >= n ? n - 1 : c0 + 2;
+        for (var r = rMin; r <= rMax; r++) {
+          for (var c = cMin; c <= cMax; c++) {
+            if (map.CellGrid[r * n + c] != (byte)'H') continue;
+            var center = new FPVector3(-mapHalf + cell * (c + FP._0_50), probe.Y, mapHalf - cell * (r + FP._0_50));
+            var d = AabbDistanceXZ(probe, center, halfCell);
+            if (d < clearance && d < obstacleDist) {
+              obstacleDist = d;
+              obstacleCenter = center;
+              found = true;
+            }
+          }
+        }
+      }
+
+      return found;
+    }
+
+    static FPVector3 ClampOutsideAirBuildings(Frame f, MapSpec map, FPVector3 pos, FP clearance) {
+      var buildings = map != null ? map.CityBuildings : null;
+      if (buildings != null) {
+        for (var i = 0; i < buildings.Length; i++) {
+          if (CitySystem.IsCollapsed(f, i)) continue;
+          var shape = buildings[i].Shape;
+          if (shape.Distance(pos) < clearance) {
+            var outside = shape.Approach(pos, clearance);
+            pos.X = outside.X;
+            pos.Z = outside.Z;
+          }
+        }
+      }
+      if (HasCellGrid(map)) {
+        var n = map.CellGridSize;
+        var cell = map.CellGridCell;
+        var halfCell = cell * FP._0_50;
+        var mapHalf = cell * n * FP._0_50;
+        for (var pass = 0; pass < 2; pass++) {
+          var c0 = FPMath.FloorToInt((pos.X + mapHalf) / cell);
+          var r0 = FPMath.FloorToInt((mapHalf - pos.Z) / cell);
+          var rMin = r0 - 1 < 0 ? 0 : r0 - 1;
+          var rMax = r0 + 1 >= n ? n - 1 : r0 + 1;
+          var cMin = c0 - 1 < 0 ? 0 : c0 - 1;
+          var cMax = c0 + 1 >= n ? n - 1 : c0 + 1;
+          for (var r = rMin; r <= rMax; r++) {
+            for (var c = cMin; c <= cMax; c++) {
+              if (map.CellGrid[r * n + c] != (byte)'H') continue;
+              var center = new FPVector3(-mapHalf + cell * (c + FP._0_50), pos.Y, mapHalf - cell * (r + FP._0_50));
+              if (AabbDistanceXZ(pos, center, halfCell) < clearance) {
+                pos = PushOutsideAabbXZ(pos, center, halfCell, clearance);
+              }
+            }
+          }
+        }
+      }
+      return pos;
+    }
+
     static void MoveAir(Frame f, EntityRef entity, Transform3D* transform, Unit* unit, UnitSpec spec, FPVector3 destination) {
       destination.Y = transform->Position.Y;
-      var delta = destination - transform->Position;
-      var step = spec.MoveSpeed * TechSystem.MoveSpeedMultiplier(f, unit->Owner, spec, transform->Position)
+      var map = FactoryWarsUtil.MapInfo(f);
+      var clearance = UnitRadius(spec) + FP._1;
+
+      // If destination lies inside a standing tall building, snap destination cleanly to its perimeter.
+      destination = ClampOutsideAirBuildings(f, map, destination, clearance);
+
+      var pos = transform->Position;
+      var delta = destination - pos;
+      delta.Y = FP._0;
+      var step = spec.MoveSpeed * TechSystem.MoveSpeedMultiplier(f, unit->Owner, spec, pos)
         * UltimateSystem.CarrierSpeedMultiplier(f, entity, unit) * f.DeltaTime;
       if (delta.SqrMagnitude <= step * step) {
         transform->Position = destination;
@@ -1833,7 +1955,71 @@ namespace Quantum.FactoryWars {
         }
         return;
       }
-      transform->Position += delta.Normalized * step;
+
+      var distToDest = delta.Magnitude;
+      var dir = delta / distToDest;
+      var steerDir = dir;
+
+      // Height-layered obstacle avoidance: air units fly freely over barriers, fences, trees, and low terrain,
+      // while actively steering around standing tall buildings ('H' cells / CityBuildings) so they never clip through meshes.
+      var lookAhead = FPMath.Min(distToDest, FPMath.Max(step * 8, clearance + FP._6));
+      var midProbe = pos + dir * (lookAhead * FP._0_50);
+      var farProbe = pos + dir * lookAhead;
+      FPVector3 blockerCenter = default;
+      FP closestDist = FP.MaxValue;
+      var hasBlocker = false;
+      if (FindNearestAirBuilding(f, map, pos, clearance, out var cNow, out var dNow)) {
+        blockerCenter = cNow; closestDist = dNow; hasBlocker = true;
+      } else if (FindNearestAirBuilding(f, map, midProbe, clearance, out var cMid, out var dMid)) {
+        blockerCenter = cMid; closestDist = dMid; hasBlocker = true;
+      } else if (FindNearestAirBuilding(f, map, farProbe, clearance, out var cFar, out var dFar)) {
+        blockerCenter = cFar; closestDist = dFar; hasBlocker = true;
+      }
+
+      if (hasBlocker) {
+        var away = pos - blockerCenter;
+        away.Y = FP._0;
+        var outward = away.SqrMagnitude > FP._0_01 ? away.Normalized : new FPVector3(-dir.Z, FP._0, dir.X);
+        var tanA = new FPVector3( outward.Z, FP._0, -outward.X);
+        var tanB = new FPVector3(-outward.Z, FP._0,  outward.X);
+        var dotA = FPVector3.Dot(tanA, dir);
+        var dotB = FPVector3.Dot(tanB, dir);
+        FPVector3 tangent;
+        if (FPMath.Abs(dotA - dotB) > FP._0_25) {
+          // Rounding a corner or angled approach: follow the wall tangent that makes forward progress toward destination.
+          tangent = dotA >= dotB ? tanA : tanB;
+        } else {
+          // Head-on approach to a flat wall: scan perpendicular to travel direction to pick the shorter open corner without ping-pong.
+          var perpLeft  = new FPVector3(-dir.Z, FP._0,  dir.X);
+          var perpRight = new FPVector3( dir.Z, FP._0, -dir.X);
+          var clearLeft = 6;
+          var clearRight = 6;
+          var scanOrigin = closestDist < clearance ? pos : farProbe;
+          for (var k = 1; k <= 5; k++) {
+            var distK = (FP)(k * 6);
+            if (clearLeft == 6 && !FindNearestAirBuilding(f, map, scanOrigin + perpLeft * distK, clearance, out _, out _)) {
+              clearLeft = k;
+            }
+            if (clearRight == 6 && !FindNearestAirBuilding(f, map, scanOrigin + perpRight * distK, clearance, out _, out _)) {
+              clearRight = k;
+            }
+          }
+          tangent = clearLeft <= clearRight ? perpLeft : perpRight;
+        }
+        var blended = closestDist < clearance
+          ? tangent * FP._0_75 + outward * FP._0_25
+          : dir * FP._0_25 + tangent * FP._0_75;
+        if (blended.SqrMagnitude > FP._0_01) {
+          steerDir = blended.Normalized;
+        }
+      }
+
+      var nextPos = pos + steerDir * step;
+      nextPos.Y = pos.Y;
+
+      // Hard perimeter safety guard: never allow an airborne unit center inside a standing tall building.
+      nextPos = ClampOutsideAirBuildings(f, map, nextPos, clearance);
+      transform->Position = nextPos;
     }
   }
 }

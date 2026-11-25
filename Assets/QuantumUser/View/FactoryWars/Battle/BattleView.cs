@@ -72,6 +72,7 @@ namespace FactoryWars.View {
       public Material PowerBeaconMat;
       public ParticlePackVfx.NavalWakeHandle NavalWake;
       public ParticlePackVfx.DamageFireHandle DamageFire;
+      public ParticlePackVfx.AirFlightHandle AirFlight;
       public bool InCombat;
       public readonly List<(Transform Part, Vector3 Home, Vector3 Reach, float Speed)> Sliders = new List<(Transform, Vector3, Vector3, float)>();
       public readonly List<(Transform Part, Quaternion Home, float Swing, float Speed)> Swingers = new List<(Transform, Quaternion, float, float)>();
@@ -1243,16 +1244,17 @@ namespace FactoryWars.View {
       var navalBob = spec.IsNaval ? Mathf.Sin(Time.time * 1.45f + actor.Phase) * 0.08f + 0.06f : 0f;
       actor.View.transform.position = (spec.IsAir && assemblingCarrier == false) ? actor.Position : actor.Position + Vector3.up * TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z);
       if (spec.IsNaval) actor.View.transform.position = actor.Position + Vector3.up * (TerrainKit.WaterLevel + navalBob);
-      var baseAirAlt = spec.IsAir ? Mathf.Max(actor.View.Entry.Altitude, spec.Size == UnitSize.Large ? 15.8f : spec.Size == UnitSize.Medium ? 12.4f : 9.2f) : actor.View.Entry.Altitude;
-      var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(baseAirAlt, 16.8f) : baseAirAlt);
+      var baseAirAlt = spec.IsAir ? Mathf.Max(actor.View.Entry.Altitude, spec.Size == UnitSize.Large ? 19.0f : spec.Size == UnitSize.Medium ? 15.0f : 11.5f) : actor.View.Entry.Altitude;
+      var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(baseAirAlt, 20.5f) : baseAirAlt);
       actor.View.Turn.localPosition = Vector3.up * (altitude + hover);
       if (spec.IsNaval) UpdateNavalWake(actor, spec, before, dt);
+      if (spec.IsAir) UpdateAirFlight(actor, spec, before, dt, assemblingCarrier == false);
       if (spec.IsVehicle || spec.IsNaval || spec.IsAir || spec.Size == UnitSize.Medium || spec.Size == UnitSize.Large) {
         var hpRatio = spec.MaxHealth > FP._0 ? (unit->Health / spec.MaxHealth).AsFloat : 1f;
         UpdateDamageFire(actor, hpRatio, spec.IsNaval ? 1.5f : spec.Size == UnitSize.Large ? 1.25f : 0.9f);
       }
       if (spec.IsAir && actor.View.Bar != null) {
-        actor.View.Bar.transform.localPosition = Vector3.up * (altitude + (actor.IsCarrier ? 3.6f : 2.4f));
+        actor.View.Bar.transform.localPosition = Vector3.up * (altitude + (actor.IsCarrier ? 3.8f : 2.6f));
       }
       if (visible && assemblingCarrier == false) {
         if (spec.IsAir) {
@@ -2218,6 +2220,22 @@ namespace FactoryWars.View {
       }
       var speed = dt > 0f ? (actor.Position - before).magnitude / dt : 0f;
       actor.NavalWake.Update(speed, actor.HullYaw);
+    }
+
+    void UpdateAirFlight(Actor actor, UnitSpec spec, Vector3 before, float dt, bool flying) {
+      if (actor.AirFlight == null) {
+        var name = spec.name ?? "";
+        var isRotor = name.EndsWith("_gunship") || name.EndsWith("_heli") || name.Contains("apache") || name.Contains("chopper") || actor.IsCarrier;
+        var scale = actor.IsCarrier ? 1.75f : spec.Size == UnitSize.Large ? 1.35f : spec.Size == UnitSize.Medium ? 1.0f : 0.68f;
+        actor.AirFlight = new ParticlePackVfx.AirFlightHandle(
+          actor.View.Turn != null ? actor.View.Turn : actor.View.transform,
+          actor.View.transform,
+          isRotor,
+          scale);
+      }
+      var speed = dt > 0f ? (actor.Position - before).magnitude / dt : 0f;
+      var groundY = World != null && World.Map != null ? TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z) : 0f;
+      actor.AirFlight.Update(speed, flying, groundY);
     }
 
     void UpdateDamageFire(Actor actor, float hpRatio, float scale) {

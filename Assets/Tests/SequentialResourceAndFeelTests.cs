@@ -570,5 +570,126 @@ namespace FactoryWars.Tests {
       }
       CaptureCameraPng(camera, Path.Combine(dir, "vfx_combat_fire_smoke.png"), 1920, 1080);
     }
+
+    [UnityTest, Explicit, Timeout(1200000)]
+    public IEnumerator AirFlight_AltitudeVfxAndBuildingAvoidance() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "AirVfx"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      // 1. Verify URP 17.0.4 shader + texture compatibility for AirFlightVfx materials (zero pink/error shaders).
+      foreach (var mat in new[] { ParticlePackVfx.JetGlowMat, ParticlePackVfx.ContrailMat, ParticlePackVfx.DownwashMat }) {
+        Assert.IsNotNull(mat, "Air VFX material created");
+        Assert.IsNotNull(mat.shader, $"shader valid on {mat.name}");
+        Assert.IsFalse(mat.shader.name.Contains("Error"), $"no pink/error shader on {mat.name}");
+        var tex = mat.HasProperty("_BaseMap") ? mat.GetTexture("_BaseMap") : mat.mainTexture;
+        Assert.IsNotNull(tex, $"ParticlePack texture loaded on {mat.name}");
+      }
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 5701, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      var bv = Battle();
+      var map = FactoryWarsUtil.MapInfo(Verified);
+
+      // 2. High-altitude flight VFX & flying freely over PMC barbed-wire fence/trees/barriers.
+      var heli   = SpawnUnitByName(Verified, 0, "ff_hawk_gunship",       new FPVector3(-24, 0, -28));
+      var drone  = SpawnUnitByName(Verified, 0, "ff_recon_drone",        new FPVector3(-12, 0, -32));
+      var bomber = SpawnUnitByName(Verified, 0, "ff_skyfortress_bomber", new FPVector3( -4, 0, -36));
+      // Order straight across the PMC perimeter fence, trees, and central road.
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { heli, drone, bomber }, Target = new FPVector3(16, 0, 26) });
+      yield return WaitFrames(Fps * 2);
+
+      Assert.IsTrue(bv.Actors.TryGetValue(heli, out var heliAct) && heliAct.AirFlight != null, "Helicopter AirFlightVfx created");
+      Assert.IsTrue(bv.Actors.TryGetValue(drone, out var droneAct) && droneAct.AirFlight != null, "Drone AirFlightVfx created");
+      Assert.IsTrue(bv.Actors.TryGetValue(bomber, out var bomberAct) && bomberAct.AirFlight != null, "Bomber AirFlightVfx created");
+
+      Assert.IsNotNull(heliAct.AirFlight.FlightRoot.Find("TurbineExhaustAnchor/TurbineExhaust"), "Heli TurbineExhaust active");
+      Assert.IsNotNull(heliAct.AirFlight.GroundRoot?.Find("GroundDownwashRing"), "Heli GroundDownwashRing active");
+      Assert.IsNotNull(bomberAct.AirFlight.FlightRoot.Find("ThrusterAnchor/ThrusterGlow"), "Bomber ThrusterGlow active");
+      Assert.IsNotNull(bomberAct.AirFlight.FlightRoot.Find("ContrailAnchor/FlightContrail"), "Bomber FlightContrail active");
+
+      var droneAlt  = droneAct.View.Turn.localPosition.y;
+      var heliAlt   = heliAct.View.Turn.localPosition.y;
+      var bomberAlt = bomberAct.View.Turn.localPosition.y;
+      Assert.GreaterOrEqual(droneAlt, 11.2f, $"Drone altitude raised >= 11.5m (actual {droneAlt:F2}m)");
+      Assert.GreaterOrEqual(heliAlt, 14.7f, $"Heli altitude raised >= 15.0m (actual {heliAlt:F2}m)");
+      Assert.GreaterOrEqual(bomberAlt, 18.7f, $"Bomber altitude raised >= 19.0m (actual {bomberAlt:F2}m)");
+
+      rts.Height = 52f;
+      rts.MoveTo(new Vector2(-4f, -4f));
+      rts.Apply();
+      yield return WaitFrames(15);
+      CaptureCameraPng(camera, Path.Combine(dir, "air_high_altitude_and_vfx.png"), 1920, 1080);
+
+      // Verify barrier/fence fly-over succeeded (units moved well past the Z=-18 PMC fence).
+      var heliPosAfterFence = Verified.Get<Transform3D>(heli).Position;
+      Assert.Greater(heliPosAfterFence.Z.AsFloat, -16f, $"Air unit flew freely over PMC barrier/fence (Z={heliPosAfterFence.Z.AsFloat:F1})");
+
+      // 3. Tall Building avoidance on Map4P v4 ('H' cells in CellGrid): pick a tall urban building facing an open main road ('R') with a clear corner.
+      Assert.IsTrue(GridMapView.Uses(map), "Map4P uses CellGrid");
+      var n = map.CellGridSize;
+      int bRow = -1, bCol = -1;
+      for (var r = 18; r <= 62 && bRow < 0; r++) {
+        for (var c = 18; c <= 62 && bRow < 0; c++) {
+          if (GridMapView.Cell(map, r, c) != 'H') continue;
+          // Open main road 'R' along west side (c-1) and open non-'H' corner to north or south + east exit
+          var westRoad = GridMapView.Cell(map, r, c - 1) == 'R' && GridMapView.Cell(map, r - 1, c - 1) == 'R' && GridMapView.Cell(map, r + 1, c - 1) == 'R';
+          var openCorner = (GridMapView.Cell(map, r - 1, c) != 'H' && GridMapView.Cell(map, r - 1, c + 1) != 'H')
+                        || (GridMapView.Cell(map, r + 1, c) != 'H' && GridMapView.Cell(map, r + 1, c + 1) != 'H');
+          var eastOpen = GridMapView.Cell(map, r, c + 2) != 'H' || GridMapView.Cell(map, r, c + 3) != 'H';
+          if (westRoad && openCorner && eastOpen) {
+            bRow = r;
+            bCol = c;
+          }
+        }
+      }
+      Assert.GreaterOrEqual(bRow, 0, "Found tall urban building ('H') facing a main road with clear corner on Map4P");
+      var bCenterX = GridMapView.CellX(map, bCol);
+      var bCenterZ = GridMapView.CellZ(map, bRow);
+      var startPos = new FPVector3(FP.FromFloat_UNSAFE(GridMapView.CellX(map, bCol - 1)), FP._0, FP.FromFloat_UNSAFE(bCenterZ));
+      var endPos   = new FPVector3(FP.FromFloat_UNSAFE(GridMapView.CellX(map, bCol + 3)), FP._0, FP.FromFloat_UNSAFE(bCenterZ));
+
+      var avoidHeli   = SpawnUnitByName(Verified, 0, "cf_gale_gunship",       startPos + new FPVector3(0, 0, -1));
+      var avoidBomber = SpawnUnitByName(Verified, 0, "ff_skyfortress_bomber", startPos + new FPVector3(0, 0,  2));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { avoidHeli, avoidBomber }, Target = endPos });
+
+      rts.Height = 60f;
+      rts.MoveTo(new Vector2(bCenterX + 4f, bCenterZ + 12f));
+      rts.Apply();
+
+      var cellSize = map.CellGridCell.AsFloat;
+      var mapHalf = n * cellSize * 0.5f;
+      var maxLateralDeflection = 0f;
+      for (var f = 0; f < 14; f++) {
+        yield return WaitFrames(22);
+        var pH = Verified.Get<Transform3D>(avoidHeli).Position;
+        var pB = Verified.Get<Transform3D>(avoidBomber).Position;
+        int rH = Mathf.FloorToInt((mapHalf - pH.Z.AsFloat) / cellSize);
+        int cH = Mathf.FloorToInt((pH.X.AsFloat + mapHalf) / cellSize);
+        int rB = Mathf.FloorToInt((mapHalf - pB.Z.AsFloat) / cellSize);
+        int cB = Mathf.FloorToInt((pB.X.AsFloat + mapHalf) / cellSize);
+        Assert.AreNotEqual('H', GridMapView.Cell(map, rH, cH), $"Helicopter steered around tall 'H' building without clipping (frame {f}, cell {rH},{cH})");
+        Assert.AreNotEqual('H', GridMapView.Cell(map, rB, cB), $"Bomber steered around tall 'H' building without clipping (frame {f}, cell {rB},{cB})");
+        maxLateralDeflection = Mathf.Max(maxLateralDeflection, Mathf.Abs(pH.Z.AsFloat - bCenterZ));
+        CaptureCameraPng(camera, Path.Combine(frames, $"air_avoid_{f:00}.png"), 960, 540);
+      }
+      CaptureCameraPng(camera, Path.Combine(dir, "air_building_avoidance.png"), 1920, 1080);
+
+      var finalHeliX = Verified.Get<Transform3D>(avoidHeli).Position.X.AsFloat;
+      Assert.Greater(maxLateralDeflection, 4f, $"Helicopter actively deflected around tall building (maxDeflect={maxLateralDeflection:F2}m)");
+      Assert.Greater(finalHeliX, startPos.X.AsFloat + 4f,
+        $"Helicopter actively steered past tall building (startX={startPos.X.AsFloat:F1}, endX={finalHeliX:F1}, maxDeflect={maxLateralDeflection:F2}m)");
+      Debug.Log($"[AirFlight_AltitudeVfxAndBuildingAvoidance] PASS alt=({droneAlt:F1}/{heliAlt:F1}/{bomberAlt:F1}m) cell=({bRow},{bCol}) maxDeflect={maxLateralDeflection:F2}m");
+    }
   }
 }

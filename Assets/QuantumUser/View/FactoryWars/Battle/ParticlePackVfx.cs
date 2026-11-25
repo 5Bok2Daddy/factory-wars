@@ -17,6 +17,9 @@ namespace FactoryWars.View {
     static Material _fireMat;
     static Material _smokeMat;
     static Material _emberMat;
+    static Material _jetGlowMat;
+    static Material _contrailMat;
+    static Material _downwashMat;
 
     static Material MakeMat(string texName, bool additive, Color tint) {
       var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit")
@@ -47,6 +50,9 @@ namespace FactoryWars.View {
     public static Material FireMat => _fireMat != null ? _fireMat : (_fireMat = MakeMat("Fireball", true, new Color(1f, 0.62f, 0.18f, 0.92f)));
     public static Material SmokeMat => _smokeMat != null ? _smokeMat : (_smokeMat = MakeMat("SmokePuff02", false, new Color(0.24f, 0.24f, 0.25f, 0.70f)));
     public static Material EmberMat => _emberMat != null ? _emberMat : (_emberMat = MakeMat("RoundSoftParticle", true, new Color(1f, 0.76f, 0.24f, 0.95f)));
+    public static Material JetGlowMat => _jetGlowMat != null ? _jetGlowMat : (_jetGlowMat = MakeMat("RoundSoftParticle", true, new Color(1f, 0.76f, 0.28f, 0.96f)));
+    public static Material ContrailMat => _contrailMat != null ? _contrailMat : (_contrailMat = MakeMat("SmokePuff02", false, new Color(0.93f, 0.96f, 1f, 0.62f)));
+    public static Material DownwashMat => _downwashMat != null ? _downwashMat : (_downwashMat = MakeMat("WaterMistSoftParticle", false, new Color(0.84f, 0.81f, 0.74f, 0.50f)));
 
     static Gradient AlphaFade(Color start, Color end) {
       var g = new Gradient();
@@ -258,6 +264,176 @@ namespace FactoryWars.View {
         se.rateOverTime = Mathf.Lerp(4f, 10f, severity);
         var ee = _embers.emission;
         ee.rateOverTime = Mathf.Lerp(4f, 12f, severity);
+      }
+    }
+
+    public sealed class AirFlightHandle {
+      public readonly Transform FlightRoot;
+      public readonly Transform GroundRoot;
+      readonly bool _isRotor;
+      readonly ParticleSystem _primary;
+      readonly ParticleSystem _secondary;
+      readonly ParticleSystem _downwash;
+      bool _active = true;
+
+      public AirFlightHandle(Transform airTurnParent, Transform groundRootParent, bool isRotor, float scale) {
+        _isRotor = isRotor;
+        FlightRoot = new GameObject("AirFlightVfx").transform;
+        FlightRoot.SetParent(airTurnParent, false);
+
+        if (isRotor) {
+          // 1. Helicopter turbine exhaust wisps (World space behind aft fuselage)
+          var exhaustAnchor = new GameObject("TurbineExhaustAnchor").transform;
+          exhaustAnchor.SetParent(FlightRoot, false);
+          exhaustAnchor.localPosition = new Vector3(0f, 0.35f * scale, -1.15f * scale);
+          _primary = AddPs(exhaustAnchor, "TurbineExhaust", ContrailMat, ParticleSystemRenderMode.Billboard);
+          var pm = _primary.main;
+          pm.simulationSpace = ParticleSystemSimulationSpace.World;
+          pm.startLifetime = new ParticleSystem.MinMaxCurve(0.65f, 1.15f);
+          pm.startSpeed = new ParticleSystem.MinMaxCurve(0.6f, 1.3f);
+          pm.startSize = new ParticleSystem.MinMaxCurve(0.65f * scale, 1.15f * scale);
+          pm.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+          pm.maxParticles = 32;
+          var psShape = _primary.shape;
+          psShape.shapeType = ParticleSystemShapeType.Cone;
+          psShape.angle = 16f;
+          psShape.radius = 0.25f * scale;
+          psShape.rotation = new Vector3(0f, 180f, 0f);
+          var pc = _primary.colorOverLifetime;
+          pc.enabled = true;
+          pc.color = AlphaFade(new Color(0.86f, 0.90f, 0.94f, 0.42f), new Color(0.76f, 0.80f, 0.86f, 0.08f));
+          var psz = _primary.sizeOverLifetime;
+          psz.enabled = true;
+          psz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 0.65f, 1f, 1.9f));
+
+          // 2. Subtle rotor wash ring shimmer at rotor plane
+          var rotorAnchor = new GameObject("RotorWashAnchor").transform;
+          rotorAnchor.SetParent(FlightRoot, false);
+          rotorAnchor.localPosition = new Vector3(0f, 1.05f * scale, 0f);
+          _secondary = AddPs(rotorAnchor, "RotorAirShimmer", DownwashMat, ParticleSystemRenderMode.HorizontalBillboard);
+          var sm = _secondary.main;
+          sm.simulationSpace = ParticleSystemSimulationSpace.Local;
+          sm.startLifetime = new ParticleSystem.MinMaxCurve(0.32f, 0.48f);
+          sm.startSpeed = 0f;
+          sm.startSize = new ParticleSystem.MinMaxCurve(2.8f * scale, 3.6f * scale);
+          sm.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+          sm.maxParticles = 10;
+          var sc = _secondary.colorOverLifetime;
+          sc.enabled = true;
+          sc.color = AlphaFade(new Color(0.92f, 0.96f, 1f, 0.24f), new Color(0.85f, 0.92f, 0.98f, 0.04f));
+
+          // 3. Ground downwash ring directly beneath the helicopter (visual altitude anchor)
+          GroundRoot = new GameObject("AirDownwashVfx").transform;
+          GroundRoot.SetParent(groundRootParent, false);
+          GroundRoot.localPosition = new Vector3(0f, 0.25f, 0f);
+          _downwash = AddPs(GroundRoot, "GroundDownwashRing", DownwashMat, ParticleSystemRenderMode.HorizontalBillboard);
+          var dm = _downwash.main;
+          dm.simulationSpace = ParticleSystemSimulationSpace.World;
+          dm.startLifetime = new ParticleSystem.MinMaxCurve(0.9f, 1.45f);
+          dm.startSpeed = new ParticleSystem.MinMaxCurve(1.4f, 2.5f);
+          dm.startSize = new ParticleSystem.MinMaxCurve(1.4f * scale, 2.3f * scale);
+          dm.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+          dm.maxParticles = 24;
+          var ds = _downwash.shape;
+          ds.shapeType = ParticleSystemShapeType.Circle;
+          ds.radius = 1.1f * scale;
+          ds.rotation = new Vector3(90f, 0f, 0f);
+          var dc = _downwash.colorOverLifetime;
+          dc.enabled = true;
+          dc.color = AlphaFade(new Color(0.84f, 0.80f, 0.72f, 0.34f), new Color(0.75f, 0.72f, 0.66f, 0.04f));
+          var dsz = _downwash.sizeOverLifetime;
+          dsz.enabled = true;
+          dsz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 0.75f, 1f, 2.15f));
+
+          _primary.Play();
+          _secondary.Play();
+          _downwash.Play();
+        } else {
+          // 1. Fixed-wing / Drone thruster exhaust glow (World space)
+          var nozzle = new GameObject("ThrusterAnchor").transform;
+          nozzle.SetParent(FlightRoot, false);
+          nozzle.localPosition = new Vector3(0f, 0.08f * scale, -1.25f * scale);
+          _primary = AddPs(nozzle, "ThrusterGlow", JetGlowMat, ParticleSystemRenderMode.Billboard);
+          var pm = _primary.main;
+          pm.simulationSpace = ParticleSystemSimulationSpace.World;
+          pm.startLifetime = new ParticleSystem.MinMaxCurve(0.24f, 0.42f);
+          pm.startSpeed = new ParticleSystem.MinMaxCurve(1.2f, 2.4f);
+          pm.startSize = new ParticleSystem.MinMaxCurve(0.55f * scale, 0.95f * scale);
+          pm.maxParticles = 32;
+          var psShape = _primary.shape;
+          psShape.shapeType = ParticleSystemShapeType.Cone;
+          psShape.angle = 10f;
+          psShape.radius = 0.14f * scale;
+          psShape.rotation = new Vector3(0f, 180f, 0f);
+          var pc = _primary.colorOverLifetime;
+          pc.enabled = true;
+          pc.color = AlphaFade(new Color(1f, 0.80f, 0.34f, 0.90f), new Color(1f, 0.42f, 0.10f, 0.10f));
+          var psz = _primary.sizeOverLifetime;
+          psz.enabled = true;
+          psz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 0.35f));
+
+          // 2. High-altitude contrail / exhaust stream (World space)
+          var trailAnchor = new GameObject("ContrailAnchor").transform;
+          trailAnchor.SetParent(FlightRoot, false);
+          trailAnchor.localPosition = new Vector3(0f, 0.10f * scale, -1.45f * scale);
+          _secondary = AddPs(trailAnchor, "FlightContrail", ContrailMat, ParticleSystemRenderMode.Billboard);
+          var sm = _secondary.main;
+          sm.simulationSpace = ParticleSystemSimulationSpace.World;
+          sm.startLifetime = new ParticleSystem.MinMaxCurve(1.4f, 2.2f);
+          sm.startSpeed = new ParticleSystem.MinMaxCurve(0.35f, 0.85f);
+          sm.startSize = new ParticleSystem.MinMaxCurve(0.95f * scale, 1.55f * scale);
+          sm.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+          sm.maxParticles = 64;
+          var ss = _secondary.shape;
+          ss.shapeType = ParticleSystemShapeType.Cone;
+          ss.angle = 12f;
+          ss.radius = 0.24f * scale;
+          ss.rotation = new Vector3(0f, 180f, 0f);
+          var sc = _secondary.colorOverLifetime;
+          sc.enabled = true;
+          sc.color = AlphaFade(new Color(0.95f, 0.98f, 1f, 0.68f), new Color(0.85f, 0.91f, 0.97f, 0.10f));
+          var ssz = _secondary.sizeOverLifetime;
+          ssz.enabled = true;
+          ssz.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 0.65f, 1f, 2.25f));
+
+          _primary.Play();
+          _secondary.Play();
+        }
+      }
+
+      public void Update(float speed, bool active, float groundSurfaceY) {
+        if (active != _active) {
+          _active = active;
+          FlightRoot.gameObject.SetActive(active);
+          if (GroundRoot != null) GroundRoot.gameObject.SetActive(active);
+          if (active) {
+            _primary.Play();
+            _secondary.Play();
+            if (_downwash != null) _downwash.Play();
+          } else {
+            _primary.Stop();
+            _secondary.Stop();
+            if (_downwash != null) _downwash.Stop();
+          }
+        }
+        if (!active) return;
+        var moveFactor = Mathf.Clamp01(speed / 5.5f);
+        if (_isRotor) {
+          var pe = _primary.emission;
+          pe.rateOverTime = Mathf.Lerp(5f, 16f, moveFactor);
+          var se = _secondary.emission;
+          se.rateOverTime = 8f;
+          if (_downwash != null && GroundRoot != null) {
+            GroundRoot.localPosition = new Vector3(0f, groundSurfaceY + 0.28f, 0f);
+            var de = _downwash.emission;
+            de.rateOverTime = Mathf.Lerp(8f, 14f, moveFactor);
+          }
+        } else {
+          var pe = _primary.emission;
+          pe.rateOverTime = Mathf.Lerp(10f, 26f, moveFactor);
+          var se = _secondary.emission;
+          se.rateOverTime = Mathf.Lerp(7f, 22f, moveFactor);
+        }
       }
     }
   }
