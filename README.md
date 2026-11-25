@@ -7,6 +7,15 @@
 
 ---
 
+## 자원지 적치 + 수송차량 `자원채취` 수거/납품 · 항공기 고층 건물 직선 통과 · 폭격기 전용 고도/스케일·체력바·공중 폭발 정렬 (2026-11-25 · 4/4 통과)
+
+| 적치 배지(`3/3 · 적치 113`) & 수송트럭 `자원채취` 적재 (컨베이어 제거) | 고층 `'H'` 건물 직선 상공 비행 (우회 없음·안전 고도) | 폭격기 전용 고도(25.6m)·스케일(1.35×)·체력바 & 공중 폭발 정렬 (`expDist=0.00m`) |
+| --- | --- | --- |
+| [![자원 적치 및 수송차량 적재](Docs/status_images/StockpileAirBomber/01_stockpile_and_truck_pickup.png)](Docs/status_images/StockpileAirBomber/01_stockpile_and_truck_pickup.png) | [![항공기 고층 건물 직선 비행](Docs/status_images/StockpileAirBomber/02_air_direct_over_buildings.png)](Docs/status_images/StockpileAirBomber/02_air_direct_over_buildings.png) | [![폭격기 고도 스케일 및 체력바](Docs/status_images/StockpileAirBomber/03_bomber_altitude_scale_and_bar.png)](Docs/status_images/StockpileAirBomber/03_bomber_altitude_scale_and_bar.png) |
+| [적재 원본](Docs/status_images/StockpileAirBomber/01_stockpile_and_truck_pickup.png) · [수거→사령부 납품 GIF](Docs/status_images/StockpileAirBomber/01_truck_pickup_delivery.gif) (Seat 0 철·목재 `BlockedLocation` 0건) | [고층 직선 통과 원본](Docs/status_images/StockpileAirBomber/02_air_direct_over_buildings.png) · `overH=True`, 수평 이탈 0 | [폭격기 체력바](Docs/status_images/StockpileAirBomber/03_bomber_altitude_scale_and_bar.png) · [공중 폭발 정렬](Docs/status_images/StockpileAirBomber/04_bomber_explosion_aligned.png) (`16.4/19.4/25.6m`, `expDist=0.00m`) |
+
+---
+
 ## 보병 기동 업그레이드 Option A (저프로파일 전술 팩 · 단일 셰브론 `^` · `기동 훈련 · 전력질주 해금` HUD) & 수류탄 투척 스킬 (2026-11-25 · 3/3 통과)
 
 | 실제 Unity 캡처: Option A 근접 클리어런스 (팩·어깨 패치·양손 파지·단일 `^`) | 실제 Unity 캡처: Idle · Walk · Sprint (RTS 줌) | 업그레이드 해금 수류탄 투척 & 폭발 모션 (GIF) |

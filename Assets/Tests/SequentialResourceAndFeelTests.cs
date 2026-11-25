@@ -571,7 +571,7 @@ namespace FactoryWars.Tests {
       CaptureCameraPng(camera, Path.Combine(dir, "vfx_combat_fire_smoke.png"), 1920, 1080);
     }
 
-    [UnityTest, Explicit, Timeout(1200000)]
+    [UnityTest, Timeout(1200000)]
     public IEnumerator AirFlight_AltitudeVfxAndBuildingAvoidance() {
       var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "AirVfx"));
       var frames = Path.Combine(dir, "frames");
@@ -621,9 +621,9 @@ namespace FactoryWars.Tests {
       var droneAlt  = droneAct.View.Turn.localPosition.y;
       var heliAlt   = heliAct.View.Turn.localPosition.y;
       var bomberAlt = bomberAct.View.Turn.localPosition.y;
-      Assert.GreaterOrEqual(droneAlt, 11.2f, $"Drone altitude raised >= 11.5m (actual {droneAlt:F2}m)");
-      Assert.GreaterOrEqual(heliAlt, 14.7f, $"Heli altitude raised >= 15.0m (actual {heliAlt:F2}m)");
-      Assert.GreaterOrEqual(bomberAlt, 18.7f, $"Bomber altitude raised >= 19.0m (actual {bomberAlt:F2}m)");
+      Assert.GreaterOrEqual(droneAlt, 16.0f, $"Drone altitude raised >= 16.5m (actual {droneAlt:F2}m)");
+      Assert.GreaterOrEqual(heliAlt, 19.0f, $"Heli altitude raised >= 19.5m (actual {heliAlt:F2}m)");
+      Assert.GreaterOrEqual(bomberAlt, 25.0f, $"Bomber dedicated altitude >= 25.5m (actual {bomberAlt:F2}m)");
 
       rts.Height = 52f;
       rts.MoveTo(new Vector2(-4f, -4f));
@@ -635,33 +635,30 @@ namespace FactoryWars.Tests {
       var heliPosAfterFence = Verified.Get<Transform3D>(heli).Position;
       Assert.Greater(heliPosAfterFence.Z.AsFloat, -16f, $"Air unit flew freely over PMC barrier/fence (Z={heliPosAfterFence.Z.AsFloat:F1})");
 
-      // 3. Tall Building avoidance on Map4P v4 ('H' cells in CellGrid): pick a tall urban building facing an open main road ('R') with a clear corner.
+      // 3. Direct flight over tall urban buildings ('H' cells in CellGrid) at safe rooftop clearance without horizontal deflection.
       Assert.IsTrue(GridMapView.Uses(map), "Map4P uses CellGrid");
       var n = map.CellGridSize;
       int bRow = -1, bCol = -1;
       for (var r = 18; r <= 62 && bRow < 0; r++) {
         for (var c = 18; c <= 62 && bRow < 0; c++) {
           if (GridMapView.Cell(map, r, c) != 'H') continue;
-          // Open main road 'R' along west side (c-1) and open non-'H' corner to north or south + east exit
-          var westRoad = GridMapView.Cell(map, r, c - 1) == 'R' && GridMapView.Cell(map, r - 1, c - 1) == 'R' && GridMapView.Cell(map, r + 1, c - 1) == 'R';
-          var openCorner = (GridMapView.Cell(map, r - 1, c) != 'H' && GridMapView.Cell(map, r - 1, c + 1) != 'H')
-                        || (GridMapView.Cell(map, r + 1, c) != 'H' && GridMapView.Cell(map, r + 1, c + 1) != 'H');
+          var westOpen = GridMapView.Cell(map, r, c - 1) != 'H';
           var eastOpen = GridMapView.Cell(map, r, c + 2) != 'H' || GridMapView.Cell(map, r, c + 3) != 'H';
-          if (westRoad && openCorner && eastOpen) {
+          if (westOpen && eastOpen) {
             bRow = r;
             bCol = c;
           }
         }
       }
-      Assert.GreaterOrEqual(bRow, 0, "Found tall urban building ('H') facing a main road with clear corner on Map4P");
+      Assert.GreaterOrEqual(bRow, 0, "Found tall urban building ('H') on Map4P");
       var bCenterX = GridMapView.CellX(map, bCol);
       var bCenterZ = GridMapView.CellZ(map, bRow);
       var startPos = new FPVector3(FP.FromFloat_UNSAFE(GridMapView.CellX(map, bCol - 1)), FP._0, FP.FromFloat_UNSAFE(bCenterZ));
       var endPos   = new FPVector3(FP.FromFloat_UNSAFE(GridMapView.CellX(map, bCol + 3)), FP._0, FP.FromFloat_UNSAFE(bCenterZ));
 
-      var avoidHeli   = SpawnUnitByName(Verified, 0, "cf_gale_gunship",       startPos + new FPVector3(0, 0, -1));
-      var avoidBomber = SpawnUnitByName(Verified, 0, "ff_skyfortress_bomber", startPos + new FPVector3(0, 0,  2));
-      yield return Send(0, new MoveUnitsCommand { Units = new[] { avoidHeli, avoidBomber }, Target = endPos });
+      var directHeli   = SpawnUnitByName(Verified, 0, "cf_gale_gunship",       startPos + new FPVector3(0, 0, -1));
+      var directBomber = SpawnUnitByName(Verified, 0, "ff_skyfortress_bomber", startPos + new FPVector3(0, 0,  2));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { directHeli, directBomber }, Target = endPos });
 
       rts.Height = 60f;
       rts.MoveTo(new Vector2(bCenterX + 4f, bCenterZ + 12f));
@@ -670,26 +667,29 @@ namespace FactoryWars.Tests {
       var cellSize = map.CellGridCell.AsFloat;
       var mapHalf = n * cellSize * 0.5f;
       var maxLateralDeflection = 0f;
+      var sawHeliOverH = false;
+      var sawBomberOverH = false;
       for (var f = 0; f < 14; f++) {
-        yield return WaitFrames(22);
-        var pH = Verified.Get<Transform3D>(avoidHeli).Position;
-        var pB = Verified.Get<Transform3D>(avoidBomber).Position;
+        yield return WaitFrames(14);
+        var pH = Verified.Get<Transform3D>(directHeli).Position;
+        var pB = Verified.Get<Transform3D>(directBomber).Position;
         int rH = Mathf.FloorToInt((mapHalf - pH.Z.AsFloat) / cellSize);
         int cH = Mathf.FloorToInt((pH.X.AsFloat + mapHalf) / cellSize);
         int rB = Mathf.FloorToInt((mapHalf - pB.Z.AsFloat) / cellSize);
         int cB = Mathf.FloorToInt((pB.X.AsFloat + mapHalf) / cellSize);
-        Assert.AreNotEqual('H', GridMapView.Cell(map, rH, cH), $"Helicopter steered around tall 'H' building without clipping (frame {f}, cell {rH},{cH})");
-        Assert.AreNotEqual('H', GridMapView.Cell(map, rB, cB), $"Bomber steered around tall 'H' building without clipping (frame {f}, cell {rB},{cB})");
+        if (GridMapView.Cell(map, rH, cH) == 'H') sawHeliOverH = true;
+        if (GridMapView.Cell(map, rB, cB) == 'H') sawBomberOverH = true;
         maxLateralDeflection = Mathf.Max(maxLateralDeflection, Mathf.Abs(pH.Z.AsFloat - bCenterZ));
-        CaptureCameraPng(camera, Path.Combine(frames, $"air_avoid_{f:00}.png"), 960, 540);
+        CaptureCameraPng(camera, Path.Combine(frames, $"air_direct_{f:00}.png"), 960, 540);
       }
       CaptureCameraPng(camera, Path.Combine(dir, "air_building_avoidance.png"), 1920, 1080);
 
-      var finalHeliX = Verified.Get<Transform3D>(avoidHeli).Position.X.AsFloat;
-      Assert.Greater(maxLateralDeflection, 4f, $"Helicopter actively deflected around tall building (maxDeflect={maxLateralDeflection:F2}m)");
-      Assert.Greater(finalHeliX, startPos.X.AsFloat + 4f,
-        $"Helicopter actively steered past tall building (startX={startPos.X.AsFloat:F1}, endX={finalHeliX:F1}, maxDeflect={maxLateralDeflection:F2}m)");
-      Debug.Log($"[AirFlight_AltitudeVfxAndBuildingAvoidance] PASS alt=({droneAlt:F1}/{heliAlt:F1}/{bomberAlt:F1}m) cell=({bRow},{bCol}) maxDeflect={maxLateralDeflection:F2}m");
+      var finalHeliX = Verified.Get<Transform3D>(directHeli).Position.X.AsFloat;
+      Assert.IsTrue(sawHeliOverH || sawBomberOverH, "Air units flew directly over tall 'H' building cells");
+      Assert.Less(maxLateralDeflection, 5.0f, $"Helicopter flew straight over tall building without lateral deflection (maxDeflect={maxLateralDeflection:F2}m)");
+      Assert.Greater(finalHeliX, bCenterX + 2f,
+        $"Helicopter crossed tall building cleanly toward destination (startX={startPos.X.AsFloat:F1}, endX={finalHeliX:F1}, maxDeflect={maxLateralDeflection:F2}m)");
+      Debug.Log($"[AirFlight_AltitudeVfxAndBuildingAvoidance] PASS alt=({droneAlt:F1}/{heliAlt:F1}/{bomberAlt:F1}m) cell=({bRow},{bCol}) overH=({sawHeliOverH}/{sawBomberOverH}) maxDeflect={maxLateralDeflection:F2}m");
     }
 
     [UnityTest, Explicit, Timeout(1200000)]
@@ -1118,6 +1118,244 @@ namespace FactoryWars.Tests {
 
       Assert.IsTrue(grenadeLaunched, "Upgraded infantry launched deterministic parabolic hand grenade & started cooldown");
       Debug.Log($"[OptionA_TacticalPack_UI_AndGrenadeSkill_VerifyAndCapture] PASS sawThrowAnim={sawThrowAnim} card='{hud.CardDetailText.Replace("\n", " | ")}'");
+    }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator StockpileTruckPickup_DirectAirFlight_AndBomberAlignment_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "StockpileAirBomber"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 7101, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      var bv = Battle();
+      var hud = Controller().Hud;
+      var map = FactoryWarsUtil.MapInfo(Verified);
+
+      // 1. Verify Seat 0 iron & timber nodes are unblocked (zero BlockedLocation!)
+      var ironSpec = Resources.Load<BuildingSpec>("FactoryWars/ff_iron_extractor");
+      var woodSpec = Resources.Load<BuildingSpec>("FactoryWars/ff_lumber_mill");
+      var hqEntity = EntityRef.None;
+      var hqPos = FPVector3.Zero;
+      foreach (var p in Verified.GetComponentIterator<Building>()) {
+        if (p.Component.Owner == 0 && Verified.FindAsset(p.Component.Spec).Role == BuildingRole.Headquarters) {
+          hqEntity = p.Entity;
+          hqPos = Verified.Get<Transform3D>(p.Entity).Position;
+          break;
+        }
+      }
+      Assert.AreNotEqual(EntityRef.None, hqEntity, "Seat 0 HQ exists");
+
+      var allIronNodes = new List<ResourceNode>();
+      var allWoodNodes = new List<ResourceNode>();
+      foreach (var p in Verified.GetComponentIterator<ResourceNode>()) {
+        if (p.Component.Kind == ResourceKind.Iron) allIronNodes.Add(p.Component);
+        else if (p.Component.Kind == ResourceKind.Wood) allWoodNodes.Add(p.Component);
+      }
+      var seat0IronNodes = allIronNodes.OrderBy(n0 => FPVector3.DistanceSquared(n0.Shape.Center, hqPos)).Take(4).ToList();
+      var seat0WoodNodes = allWoodNodes.OrderBy(n0 => FPVector3.DistanceSquared(n0.Shape.Center, hqPos)).Take(4).ToList();
+
+      Assert.GreaterOrEqual(seat0IronNodes.Count, 2, "Seat 0 has iron nodes");
+      Assert.GreaterOrEqual(seat0WoodNodes.Count, 2, "Seat 0 has timber nodes");
+      foreach (var node in seat0IronNodes) {
+        var ok = ProductionSystem.TryGetBuildPlacement(Verified, ironSpec, node.Shape.Center, 0, out _);
+        Assert.IsTrue(ok, $"Seat 0 Iron node at {node.Shape.Center} must not be blocked (reason={ProductionSystem.PlacementReason(Verified, ironSpec, node.Shape.Center, 0)})");
+      }
+      foreach (var node in seat0WoodNodes) {
+        var ok = ProductionSystem.TryGetBuildPlacement(Verified, woodSpec, node.Shape.Center, 0, out _);
+        Assert.IsTrue(ok, $"Seat 0 Timber node at {node.Shape.Center} must not be blocked (reason={ProductionSystem.PlacementReason(Verified, woodSpec, node.Shape.Center, 0)})");
+      }
+
+      // Build Iron Extractor on nearest Seat 0 iron node & staff it with 3 engineers.
+      var targetIronNode = seat0IronNodes[0];
+      var nodePos = targetIronNode.Shape.Center;
+      var eng0 = Engineers(0).FirstOrDefault();
+      if (eng0 == EntityRef.None) eng0 = SpawnUnitByName(Verified, 0, "cf_engineer", nodePos + new FPVector3(3, 0, 0));
+      yield return Build(0, "iron_extractor", nodePos, eng0);
+      yield return WaitFrames(10);
+      var extractorEntity = BuildingAt(nodePos);
+      Assert.AreNotEqual(EntityRef.None, extractorEntity, "Iron extractor placed on unblocked Seat 0 iron node");
+
+      // Complete extractor construction & staff with 3 workers directly for deterministic verification.
+      var extB = Verified.Get<Building>(extractorEntity);
+      extB.ConstructionRemaining = FP._0;
+      extB.ProcessTimer = FP.FromFloat_UNSAFE(95f); // Initial stockpiled iron at site
+      Verified.Set(extractorEntity, extB);
+      if (Game.Frames.Predicted != null && Game.Frames.Predicted.Exists(extractorEntity)) {
+        Game.Frames.Predicted.Set(extractorEntity, extB);
+      }
+      var eng1 = SpawnUnitByName(Verified, 0, "cf_engineer", nodePos + new FPVector3(-3, 0, 0));
+      var eng2 = SpawnUnitByName(Verified, 0, "cf_engineer", nodePos + new FPVector3(0, 0, 3));
+      AssignGarrison(Verified, eng0, extractorEntity);
+      AssignGarrison(Verified, eng1, extractorEntity);
+      AssignGarrison(Verified, eng2, extractorEntity);
+      if (Game.Frames.Predicted != null) {
+        AssignGarrison(Game.Frames.Predicted, eng0, extractorEntity);
+        AssignGarrison(Game.Frames.Predicted, eng1, extractorEntity);
+        AssignGarrison(Game.Frames.Predicted, eng2, extractorEntity);
+      }
+      yield return WaitFrames(Fps * 3);
+
+      var ironBeforePickup = PlayerIron(Verified, 0);
+      var stockpileBefore = Verified.Get<Building>(extractorEntity).ProcessTimer.AsInt;
+      Assert.Greater(stockpileBefore, 95, $"Extractor stockpiled harvested iron at site (stockpile={stockpileBefore})");
+      Assert.IsTrue(bv.Actors.TryGetValue(extractorEntity, out var extAct), "Extractor view exists");
+      Assert.IsNull(extAct.ExtractorDelivery, "Conveyor direct-supply coupling removed (ExtractorDelivery == null)");
+      Assert.IsTrue(extAct.WorkerCountBadge != null && extAct.WorkerCountBadge.text.Contains("적치"),
+        $"Extractor badge shows stockpile (actual: {extAct.WorkerCountBadge?.text})");
+
+      // Spawn Logistics Truck, select it, verify '자원채취' button appears in HUD, then execute GatherCommand (Node=None).
+      var truckStart = FPVector3.Lerp(hqPos, nodePos, FP.FromFloat_UNSAFE(0.45f));
+      var truck = SpawnUnitByName(Verified, 0, "merc_cargo_truck", truckStart);
+      yield return WaitFrames(8);
+      Controller().Input.Selection.Units.Clear();
+      Controller().Input.Selection.Units.Add(truck);
+      yield return WaitFrames(8);
+      Assert.IsTrue(hud.Entries.Any(e => e.Label == "자원채취"), "HUD shows '자원채취' command when logistics truck is selected");
+
+      yield return Send(0, new GatherCommand { Units = new[] { truck }, Node = EntityRef.None });
+      rts.Height = 46f;
+      var midPos = Vector3.Lerp(hqPos.ToUnityVector3(), nodePos.ToUnityVector3(), 0.55f);
+      rts.MoveTo(new Vector2(midPos.x, midPos.z));
+      rts.Apply();
+
+      var sawLoading = false;
+      var sawUnloading = false;
+      var capturedLoading = false;
+      for (var step = 0; step < 44; step++) {
+        yield return WaitFrames(15);
+        var lt = Verified.Get<LogisticsTruck>(truck);
+        var tp = Verified.Get<Transform3D>(truck).Position.ToUnityVector3();
+        rts.MoveTo(new Vector2(tp.x, tp.z));
+        rts.Apply();
+        if (lt.State == LogisticsState.Loading) {
+          sawLoading = true;
+          if (!capturedLoading) {
+            capturedLoading = true;
+            CaptureCameraPng(camera, Path.Combine(dir, "01_stockpile_and_truck_pickup.png"), 1920, 1080);
+          }
+        }
+        if (lt.State == LogisticsState.Unloading) sawUnloading = true;
+        if (step < 16) CaptureCameraPng(camera, Path.Combine(frames, $"truck_{step:00}.png"), 960, 540);
+        if (lt.DeliveryId >= 1) break;
+      }
+      if (!capturedLoading) CaptureCameraPng(camera, Path.Combine(dir, "01_stockpile_and_truck_pickup.png"), 1920, 1080);
+
+      var truckAfter = Verified.Get<LogisticsTruck>(truck);
+      var ironAfterPickup = PlayerIron(Verified, 0);
+      Assert.IsTrue(sawLoading, "Logistics truck entered Loading phase at nearest stockpiled extractor");
+      Assert.GreaterOrEqual(truckAfter.DeliveryId, 1, $"Logistics truck delivered stockpiled iron to HQ (DeliveryId={truckAfter.DeliveryId}, state={truckAfter.State})");
+      Assert.Greater(ironAfterPickup, ironBeforePickup, $"HQ Iron increased after truck delivery ({ironBeforePickup} -> {ironAfterPickup})");
+
+      // 2. Direct Air Flight over consecutive tall 'H' buildings on Map4P v4
+      var n = map.CellGridSize;
+      int bRow = -1, bCol = -1;
+      for (var r = 18; r <= 62 && bRow < 0; r++) {
+        for (var c = 18; c <= 62 && bRow < 0; c++) {
+          if (GridMapView.Cell(map, r, c) == 'H' && GridMapView.Cell(map, r, c + 1) == 'H'
+              && GridMapView.Cell(map, r, c - 1) != 'H' && GridMapView.Cell(map, r, c + 2) != 'H') {
+            bRow = r; bCol = c;
+          }
+        }
+      }
+      if (bRow < 0) {
+        for (var r = 18; r <= 62 && bRow < 0; r++) {
+          for (var c = 18; c <= 62 && bRow < 0; c++) {
+            if (GridMapView.Cell(map, r, c) == 'H' && GridMapView.Cell(map, r, c - 1) != 'H') { bRow = r; bCol = c; }
+          }
+        }
+      }
+      Assert.GreaterOrEqual(bRow, 0, "Found consecutive tall 'H' buildings on Map4P");
+      var bCenterX = GridMapView.CellX(map, bCol);
+      var bCenterZ = GridMapView.CellZ(map, bRow);
+      var startAir = new FPVector3(FP.FromFloat_UNSAFE(GridMapView.CellX(map, bCol - 1)), FP._0, FP.FromFloat_UNSAFE(bCenterZ));
+      var endAir   = new FPVector3(FP.FromFloat_UNSAFE(GridMapView.CellX(map, bCol + 3)), FP._0, FP.FromFloat_UNSAFE(bCenterZ));
+
+      var flyHeli   = SpawnUnitByName(Verified, 0, "cf_gale_gunship",       startAir + new FPVector3(0, 0, -2));
+      var flyBomber = SpawnUnitByName(Verified, 0, "ff_skyfortress_bomber", startAir + new FPVector3(0, 0,  2));
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { flyHeli, flyBomber }, Target = endAir });
+
+      rts.Height = 56f;
+      rts.MoveTo(new Vector2(bCenterX + 4f, bCenterZ));
+      rts.Apply();
+      var cellSize = map.CellGridCell.AsFloat;
+      var mapHalf = n * cellSize * 0.5f;
+      var crossedH = false;
+      var maxAirDeflect = 0f;
+      for (var f = 0; f < 10; f++) {
+        yield return WaitFrames(14);
+        var pH = Verified.Get<Transform3D>(flyHeli).Position;
+        var pB = Verified.Get<Transform3D>(flyBomber).Position;
+        int rH = Mathf.FloorToInt((mapHalf - pH.Z.AsFloat) / cellSize);
+        int cH = Mathf.FloorToInt((pH.X.AsFloat + mapHalf) / cellSize);
+        int rB = Mathf.FloorToInt((mapHalf - pB.Z.AsFloat) / cellSize);
+        int cB = Mathf.FloorToInt((pB.X.AsFloat + mapHalf) / cellSize);
+        if (GridMapView.Cell(map, rH, cH) == 'H' || GridMapView.Cell(map, rB, cB) == 'H') crossedH = true;
+        maxAirDeflect = Mathf.Max(maxAirDeflect, Mathf.Abs(pH.Z.AsFloat - (bCenterZ - 2f)));
+        if (f == 4) CaptureCameraPng(camera, Path.Combine(dir, "02_air_direct_over_buildings.png"), 1920, 1080);
+      }
+      Assert.IsTrue(crossedH, "Air units flew directly over tall 'H' buildings");
+      Assert.Less(maxAirDeflect, 5.0f, $"Direct flight without horizontal deflection (maxDeflect={maxAirDeflect:F2}m)");
+
+      // 3. Dedicated Bomber Altitude & Scale + Aligned Health Bar & Destruction Explosion
+      var showPos = new FPVector3(0, 0, -40);
+      var bUnit = SpawnUnitByName(Verified, 0, "ff_skyfortress_bomber", showPos);
+      var hUnit = SpawnUnitByName(Verified, 0, "ff_hawk_gunship",       showPos + new FPVector3(-12, 0, 4));
+      var dUnit = SpawnUnitByName(Verified, 0, "ff_recon_drone",        showPos + new FPVector3( 12, 0, 4));
+      yield return WaitFrames(15);
+
+      // Damage bomber to 65% HP so health bar is clearly visible above bomber at default gameplay zoom.
+      var bComp = Verified.Get<Unit>(bUnit);
+      bComp.Health = Verified.FindAsset(bComp.Spec).MaxHealth * FP.FromFloat_UNSAFE(0.65f);
+      Verified.Set(bUnit, bComp);
+      if (Game.Frames.Predicted != null && Game.Frames.Predicted.Exists(bUnit)) {
+        Game.Frames.Predicted.Set(bUnit, bComp);
+      }
+      yield return WaitFrames(8);
+
+      Assert.IsTrue(bv.Actors.TryGetValue(bUnit, out var bAct), "Bomber actor exists");
+      Assert.IsTrue(bv.Actors.TryGetValue(hUnit, out var hAct), "Heli actor exists");
+      Assert.IsTrue(bv.Actors.TryGetValue(dUnit, out var dAct), "Drone actor exists");
+
+      var bAlt = bAct.View.Turn.localPosition.y;
+      var hAlt = hAct.View.Turn.localPosition.y;
+      var dAlt = dAct.View.Turn.localPosition.y;
+      Assert.IsTrue(bAct.BomberScaled, "Dedicated bomber scale multiplier applied");
+      Assert.GreaterOrEqual(bAlt, 25.0f, $"Bomber dedicated altitude >= 25.5m (actual {bAlt:F2}m)");
+      Assert.Greater(bAlt, hAlt + 4.5f, $"Bomber flies clearly higher than heli ({bAlt:F1}m vs {hAlt:F1}m)");
+      Assert.Greater(hAlt, dAlt + 2.0f, $"Heli flies higher than drone ({hAlt:F1}m vs {dAlt:F1}m)");
+      Assert.IsNotNull(bAct.View.Bar, "Bomber health bar exists");
+      Assert.GreaterOrEqual(bAct.View.Bar.transform.localPosition.y, bAlt + 3.9f,
+        $"Bomber health bar aligned above bomber (barY={bAct.View.Bar.transform.localPosition.y:F2}, alt={bAlt:F2})");
+
+      rts.Height = 66f;
+      rts.MoveTo(new Vector2(showPos.X.AsFloat, showPos.Z.AsFloat + 16f));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "03_bomber_altitude_scale_and_bar.png"), 1920, 1080);
+
+      // Destroy bomber and verify explosion spawns at actual airborne Turn.position (NOT ground/low altitude)!
+      var bomberWorldPos = bAct.View.Turn.position;
+      Verified.Destroy(bUnit);
+      if (Game.Frames.Predicted != null && Game.Frames.Predicted.Exists(bUnit)) {
+        Game.Frames.Predicted.Destroy(bUnit);
+      }
+      yield return WaitFrames(2);
+      CaptureCameraPng(camera, Path.Combine(dir, "04_bomber_explosion_aligned.png"), 1920, 1080);
+
+      var expDist = Vector3.Distance(bv.LastExplosionPosition, bomberWorldPos);
+      Assert.Less(expDist, 1.5f, $"Bomber destruction explosion aligned to airborne bomber position (dist={expDist:F2}m, exp={bv.LastExplosionPosition}, bomber={bomberWorldPos})");
+      Debug.Log($"[StockpileTruckPickup_DirectAirFlight_AndBomberAlignment] PASS stockpile={stockpileBefore} iron={ironBeforePickup}->{ironAfterPickup} delivery={truckAfter.DeliveryId} overH={crossedH} alt=({dAlt:F1}/{hAlt:F1}/{bAlt:F1}m) expDist={expDist:F2}m");
     }
   }
 }

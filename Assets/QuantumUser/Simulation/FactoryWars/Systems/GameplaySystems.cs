@@ -287,9 +287,10 @@ namespace Quantum.FactoryWars {
       var navMesh = f.Map.GetNavMesh(rules.NavMeshName);
       var mask = NavMeshRegionMask.Default;
       if (extractNode != EntityRef.None) {
-        // 자원 노드 자체는 NavMesh 장애물이다. 공병이 작업 범위까지 도달할 수 있어야 한다.
+        // 자원 노드 자체(및 인접 숲/암석 군집)는 NavMesh 장애물이므로 공병이 인접 보행 지점까지 도달할 수 있으면 허용한다.
         var workRadius = FPMath.Max(radius, f.Get<ResourceNode>(extractNode).Shape.Reach);
-        if (FactoryWarsUtil.FindNavPointNear(f, rules.NavMeshName, position, workRadius + rules.WorkRange, out _) == false) {
+        var navSearch = FPMath.Max(workRadius + rules.WorkRange, (FP)16);
+        if (FactoryWarsUtil.FindNavPointNear(f, rules.NavMeshName, position, navSearch, out _) == false) {
           return false;
         }
       } else if (isShipyard) {
@@ -316,8 +317,9 @@ namespace Quantum.FactoryWars {
 
       var buildings = f.Filter<Transform3D, Building>();
       while (buildings.NextUnsafe(out _, out var transform, out var building)) {
+        var gap = extractNode != default ? FP._0 : rules.BuildingGap;
         if ((extractNode != default && building->ExtractNode == extractNode)
-            || GroundOccupancy.Overlaps(position, transform->Position, radius + f.FindAsset(building->Spec).FootprintRadius + rules.BuildingGap)) {
+            || GroundOccupancy.Overlaps(position, transform->Position, radius + f.FindAsset(building->Spec).FootprintRadius + gap)) {
           return false;
         }
       }
@@ -326,25 +328,30 @@ namespace Quantum.FactoryWars {
         if (AirfieldWorkSystem.IntersectsBuilding(airfield->Site, position, radius, rules.BuildingGap + rules.AirfieldWorkClearance)) return false;
       }
       // 고갈된 노드도 그대로 남아 있어 같은 검사를 받는다.
-      var nodes = f.Filter<ResourceNode>();
-      while (nodes.NextUnsafe(out var entity, out var node)) {
-        if (entity != extractNode && IsClear(node->Shape, position, radius, rules.ResourceBuildMargin) == false) {
-          return false;
+      // 단, 맵에 배치된 자원 노드 위(extractNode != None)에 채굴 시설을 짓는 경우 인접 노드/지형/금지구역 여백 때문에 BlockedLocation이 나지 않도록 허용한다.
+      if (extractNode == EntityRef.None) {
+        var nodes = f.Filter<ResourceNode>();
+        while (nodes.NextUnsafe(out var entity, out var node)) {
+          if (entity != extractNode && IsClear(node->Shape, position, radius, rules.ResourceBuildMargin) == false) {
+            return false;
+          }
         }
       }
       var touchesWater = false;
       var waterMargin = radius + rules.ShipyardWaterReach;
-      for (var i = 0; map.Terrain != null && i < map.Terrain.Length; i++) {
-        if (map.Terrain[i].Kind == TerrainKind.River) {
-          if (isShipyard) {
-            if (map.Terrain[i].Shape.Distance(position) <= waterMargin) {
-              touchesWater = true;
+      if (extractNode == EntityRef.None) {
+        for (var i = 0; map.Terrain != null && i < map.Terrain.Length; i++) {
+          if (map.Terrain[i].Kind == TerrainKind.River) {
+            if (isShipyard) {
+              if (map.Terrain[i].Shape.Distance(position) <= waterMargin) {
+                touchesWater = true;
+              }
+              continue;
             }
-            continue;
           }
-        }
-        if (IsClear(map.Terrain[i].Shape, position, radius, rules.TerrainBuildMargin) == false) {
-          return false;
+          if (IsClear(map.Terrain[i].Shape, position, radius, rules.TerrainBuildMargin) == false) {
+            return false;
+          }
         }
       }
       // Task 46: shipyards only inside MapSpec.ShipyardZones (own sector coast, canal banks) when the map defines zones.
@@ -364,9 +371,11 @@ namespace Quantum.FactoryWars {
           return false;
         }
       }
-      for (var i = 0; map.NoBuildZones != null && i < map.NoBuildZones.Length; i++) {
-        if (IsClear(map.NoBuildZones[i], position, radius, FP._0) == false) {
-          return false;
+      if (extractNode == EntityRef.None) {
+        for (var i = 0; map.NoBuildZones != null && i < map.NoBuildZones.Length; i++) {
+          if (IsClear(map.NoBuildZones[i], position, radius, FP._0) == false) {
+            return false;
+          }
         }
       }
       for (var i = 0; map.CityBuildings != null && i < map.CityBuildings.Length; i++) {
@@ -516,6 +525,10 @@ namespace Quantum.FactoryWars {
       return false;
     }
 
+    /// <summary>채굴 시설의 현재 적치량(컨베이어 직결 대신 트럭 수거 대기 적치량, ProcessTimer 슬롯 재사용).</summary>
+    public static FP ExtractorStockpile(Building* building) => building != null ? building->ProcessTimer : FP._0;
+    public static readonly FP MaxExtractorStockpile = (FP)300;
+
     static void UpdateExtractor(Frame f, EntityRef entity, Building* building) {
       if (building->Health <= FP._0 || building->ConstructionRemaining > FP._0
           || building->Paused != PauseReason.None || building->EmpUntilFrame > f.Number
@@ -529,22 +542,20 @@ namespace Quantum.FactoryWars {
       if (occupants == 0 || yields == null || occupants >= yields.Length || spec.ExtractIntervalSeconds <= FP._0) {
         return;
       }
+      if (building->ProcessTimer >= MaxExtractorStockpile) {
+        return;
+      }
       building->ExtractTimer += f.DeltaTime * SniperSystem.GatherMultiplier(f, building->ExtractNode);
-      while (building->ExtractTimer >= spec.ExtractIntervalSeconds && node->Remaining > FP._0) {
+      while (building->ExtractTimer >= spec.ExtractIntervalSeconds && node->Remaining > FP._0 && building->ProcessTimer < MaxExtractorStockpile) {
         building->ExtractTimer -= spec.ExtractIntervalSeconds;
-        var amount = FPMath.Min(node->Remaining, spec.ExtractAmountPerCycle * yields[occupants]);
+        var room = MaxExtractorStockpile - building->ProcessTimer;
+        var amount = FPMath.Min(room, FPMath.Min(node->Remaining, spec.ExtractAmountPerCycle * yields[occupants]));
         if (amount <= FP._0) {
           return;
         }
         node->Remaining -= amount;
-        var state = FactoryWarsUtil.Player(f, building->Owner);
-        if (node->Kind == ResourceKind.Wood) {
-          state->Stock.Wood += amount;
-          state->Earned.Wood += amount;
-        } else if (node->Kind == ResourceKind.Iron) {
-          state->Stock.Iron += amount;
-          state->Earned.Iron += amount;
-        }
+        // 컨베이어 직결 제거: 채굴된 자원은 채굴 시설 적치장(ProcessTimer)에 쌓이며, 물류 트럭 "자원채취" 명령으로 수거해 사령부에 납품한다.
+        building->ProcessTimer += amount;
       }
     }
 
@@ -1832,132 +1843,12 @@ namespace Quantum.FactoryWars {
       return viaHigh <= viaLow ? 1 : -1;
     }
 
-    static FP AabbDistanceXZ(FPVector3 pos, FPVector3 center, FP half) {
-      var dx = FPMath.Max(FP._0, FPMath.Abs(pos.X - center.X) - half);
-      var dz = FPMath.Max(FP._0, FPMath.Abs(pos.Z - center.Z) - half);
-      if (dx > FP._0 || dz > FP._0) return new FPVector2(dx, dz).Magnitude;
-      return -FPMath.Min(half - FPMath.Abs(pos.X - center.X), half - FPMath.Abs(pos.Z - center.Z));
-    }
-
-    static FPVector3 PushOutsideAabbXZ(FPVector3 pos, FPVector3 center, FP half, FP clearance) {
-      var limit = half + clearance;
-      var rx = pos.X - center.X;
-      var rz = pos.Z - center.Z;
-      var penX = limit - FPMath.Abs(rx);
-      var penZ = limit - FPMath.Abs(rz);
-      if (penX <= FP._0 || penZ <= FP._0) return pos;
-      if (penX <= penZ) {
-        pos.X = center.X + (rx >= FP._0 ? limit : -limit);
-      } else {
-        pos.Z = center.Z + (rz >= FP._0 ? limit : -limit);
-      }
-      return pos;
-    }
-
-    static bool HasCellGrid(MapSpec map) =>
-      map != null && map.CellGridSize > 0 && map.CellGrid != null && map.CellGrid.Length == map.CellGridSize * map.CellGridSize;
-
-    static bool FindNearestAirBuilding(Frame f, MapSpec map, FPVector3 probe, FP clearance, out FPVector3 obstacleCenter, out FP obstacleDist) {
-      obstacleCenter = default;
-      obstacleDist = FP.MaxValue;
-      var found = false;
-
-      // 1. Standing CityBuildings (non-grid maps)
-      var buildings = map != null ? map.CityBuildings : null;
-      if (buildings != null) {
-        for (var i = 0; i < buildings.Length; i++) {
-          if (CitySystem.IsCollapsed(f, i)) continue;
-          var shape = buildings[i].Shape;
-          var d = shape.Distance(probe);
-          if (d < clearance && d < obstacleDist) {
-            obstacleDist = d;
-            obstacleCenter = shape.Center;
-            found = true;
-          }
-        }
-      }
-
-      // 2. Tall urban building cells ('H') on CellGrid maps (e.g. Map4P v4).
-      // Barriers, barbed wire, parks/trees ('K'), bridges ('G'), and low props are NOT 'H', so air units fly freely over them.
-      if (HasCellGrid(map)) {
-        var n = map.CellGridSize;
-        var cell = map.CellGridCell;
-        var halfCell = cell * FP._0_50;
-        var mapHalf = cell * n * FP._0_50;
-        var c0 = FPMath.FloorToInt((probe.X + mapHalf) / cell);
-        var r0 = FPMath.FloorToInt((mapHalf - probe.Z) / cell);
-        var rMin = r0 - 2 < 0 ? 0 : r0 - 2;
-        var rMax = r0 + 2 >= n ? n - 1 : r0 + 2;
-        var cMin = c0 - 2 < 0 ? 0 : c0 - 2;
-        var cMax = c0 + 2 >= n ? n - 1 : c0 + 2;
-        for (var r = rMin; r <= rMax; r++) {
-          for (var c = cMin; c <= cMax; c++) {
-            if (map.CellGrid[r * n + c] != (byte)'H') continue;
-            var center = new FPVector3(-mapHalf + cell * (c + FP._0_50), probe.Y, mapHalf - cell * (r + FP._0_50));
-            var d = AabbDistanceXZ(probe, center, halfCell);
-            if (d < clearance && d < obstacleDist) {
-              obstacleDist = d;
-              obstacleCenter = center;
-              found = true;
-            }
-          }
-        }
-      }
-
-      return found;
-    }
-
-    static FPVector3 ClampOutsideAirBuildings(Frame f, MapSpec map, FPVector3 pos, FP clearance) {
-      var buildings = map != null ? map.CityBuildings : null;
-      if (buildings != null) {
-        for (var i = 0; i < buildings.Length; i++) {
-          if (CitySystem.IsCollapsed(f, i)) continue;
-          var shape = buildings[i].Shape;
-          if (shape.Distance(pos) < clearance) {
-            var outside = shape.Approach(pos, clearance);
-            pos.X = outside.X;
-            pos.Z = outside.Z;
-          }
-        }
-      }
-      if (HasCellGrid(map)) {
-        var n = map.CellGridSize;
-        var cell = map.CellGridCell;
-        var halfCell = cell * FP._0_50;
-        var mapHalf = cell * n * FP._0_50;
-        for (var pass = 0; pass < 2; pass++) {
-          var c0 = FPMath.FloorToInt((pos.X + mapHalf) / cell);
-          var r0 = FPMath.FloorToInt((mapHalf - pos.Z) / cell);
-          var rMin = r0 - 1 < 0 ? 0 : r0 - 1;
-          var rMax = r0 + 1 >= n ? n - 1 : r0 + 1;
-          var cMin = c0 - 1 < 0 ? 0 : c0 - 1;
-          var cMax = c0 + 1 >= n ? n - 1 : c0 + 1;
-          for (var r = rMin; r <= rMax; r++) {
-            for (var c = cMin; c <= cMax; c++) {
-              if (map.CellGrid[r * n + c] != (byte)'H') continue;
-              var center = new FPVector3(-mapHalf + cell * (c + FP._0_50), pos.Y, mapHalf - cell * (r + FP._0_50));
-              if (AabbDistanceXZ(pos, center, halfCell) < clearance) {
-                pos = PushOutsideAabbXZ(pos, center, halfCell, clearance);
-              }
-            }
-          }
-        }
-      }
-      return pos;
-    }
-
     static void MoveAir(Frame f, EntityRef entity, Transform3D* transform, Unit* unit, UnitSpec spec, FPVector3 destination) {
+      // 공중 유닛은 고층 도심 건물 상공을 포함한 모든 지형 위로 직선 비행해 목적지에 도달한다(지붕 상공 충분한 고도 여유 유지).
       destination.Y = transform->Position.Y;
-      var map = FactoryWarsUtil.MapInfo(f);
-      var clearance = UnitRadius(spec) + FP._1;
-
-      // If destination lies inside a standing tall building, snap destination cleanly to its perimeter.
-      destination = ClampOutsideAirBuildings(f, map, destination, clearance);
-
-      var pos = transform->Position;
-      var delta = destination - pos;
+      var delta = destination - transform->Position;
       delta.Y = FP._0;
-      var step = spec.MoveSpeed * TechSystem.MoveSpeedMultiplier(f, unit->Owner, spec, pos)
+      var step = spec.MoveSpeed * TechSystem.MoveSpeedMultiplier(f, unit->Owner, spec, transform->Position)
         * UltimateSystem.CarrierSpeedMultiplier(f, entity, unit) * f.DeltaTime;
       if (delta.SqrMagnitude <= step * step) {
         transform->Position = destination;
@@ -1972,71 +1863,7 @@ namespace Quantum.FactoryWars {
         }
         return;
       }
-
-      var distToDest = delta.Magnitude;
-      var dir = delta / distToDest;
-      var steerDir = dir;
-
-      // Height-layered obstacle avoidance: air units fly freely over barriers, fences, trees, and low terrain,
-      // while actively steering around standing tall buildings ('H' cells / CityBuildings) so they never clip through meshes.
-      var lookAhead = FPMath.Min(distToDest, FPMath.Max(step * 8, clearance + FP._6));
-      var midProbe = pos + dir * (lookAhead * FP._0_50);
-      var farProbe = pos + dir * lookAhead;
-      FPVector3 blockerCenter = default;
-      FP closestDist = FP.MaxValue;
-      var hasBlocker = false;
-      if (FindNearestAirBuilding(f, map, pos, clearance, out var cNow, out var dNow)) {
-        blockerCenter = cNow; closestDist = dNow; hasBlocker = true;
-      } else if (FindNearestAirBuilding(f, map, midProbe, clearance, out var cMid, out var dMid)) {
-        blockerCenter = cMid; closestDist = dMid; hasBlocker = true;
-      } else if (FindNearestAirBuilding(f, map, farProbe, clearance, out var cFar, out var dFar)) {
-        blockerCenter = cFar; closestDist = dFar; hasBlocker = true;
-      }
-
-      if (hasBlocker) {
-        var away = pos - blockerCenter;
-        away.Y = FP._0;
-        var outward = away.SqrMagnitude > FP._0_01 ? away.Normalized : new FPVector3(-dir.Z, FP._0, dir.X);
-        var tanA = new FPVector3( outward.Z, FP._0, -outward.X);
-        var tanB = new FPVector3(-outward.Z, FP._0,  outward.X);
-        var dotA = FPVector3.Dot(tanA, dir);
-        var dotB = FPVector3.Dot(tanB, dir);
-        FPVector3 tangent;
-        if (FPMath.Abs(dotA - dotB) > FP._0_25) {
-          // Rounding a corner or angled approach: follow the wall tangent that makes forward progress toward destination.
-          tangent = dotA >= dotB ? tanA : tanB;
-        } else {
-          // Head-on approach to a flat wall: scan perpendicular to travel direction to pick the shorter open corner without ping-pong.
-          var perpLeft  = new FPVector3(-dir.Z, FP._0,  dir.X);
-          var perpRight = new FPVector3( dir.Z, FP._0, -dir.X);
-          var clearLeft = 6;
-          var clearRight = 6;
-          var scanOrigin = closestDist < clearance ? pos : farProbe;
-          for (var k = 1; k <= 5; k++) {
-            var distK = (FP)(k * 6);
-            if (clearLeft == 6 && !FindNearestAirBuilding(f, map, scanOrigin + perpLeft * distK, clearance, out _, out _)) {
-              clearLeft = k;
-            }
-            if (clearRight == 6 && !FindNearestAirBuilding(f, map, scanOrigin + perpRight * distK, clearance, out _, out _)) {
-              clearRight = k;
-            }
-          }
-          tangent = clearLeft <= clearRight ? perpLeft : perpRight;
-        }
-        var blended = closestDist < clearance
-          ? tangent * FP._0_75 + outward * FP._0_25
-          : dir * FP._0_25 + tangent * FP._0_75;
-        if (blended.SqrMagnitude > FP._0_01) {
-          steerDir = blended.Normalized;
-        }
-      }
-
-      var nextPos = pos + steerDir * step;
-      nextPos.Y = pos.Y;
-
-      // Hard perimeter safety guard: never allow an airborne unit center inside a standing tall building.
-      nextPos = ClampOutsideAirBuildings(f, map, nextPos, clearance);
-      transform->Position = nextPos;
+      transform->Position += delta.Normalized * step;
     }
   }
 }

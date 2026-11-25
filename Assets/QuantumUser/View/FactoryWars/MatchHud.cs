@@ -1862,6 +1862,25 @@ namespace FactoryWars.View {
     void UnitCommandEntries(Frame frame) {
       var input = Controller.Input;
       var selectedUnits = input.Selection.Units.ToArray();
+      // 수송차량(물류 트럭/지상 수송 차량)이 선택되면 '자원채취' 버튼을 맨 앞에 배치해 가장 가까운 적치 자원지 수거 -> 사령부 납품을 실행한다.
+      var pickupTrucks = selectedUnits.Where(e => {
+        if (!frame.Exists(e) || !frame.Has<Unit>(e)) return false;
+        var s = frame.FindAsset(frame.Get<Unit>(e).Spec);
+        return !s.IsAir && !s.IsNaval && (s.name == "merc_cargo_truck" || s.name.Contains("truck") || s.TransportCapacity > 0 || frame.Has<LogisticsTruck>(e));
+      }).ToArray();
+      if (pickupTrucks.Length > 0) {
+        Entries.Add(new ContextEntry {
+          Label = "자원채취",
+          Icon = "ui_rally",
+          Enabled = true,
+          Highlight = true,
+          Detail = "가장 가까운 적치 자원지로 이동해 자원을 싣고 사령부로 운반합니다.",
+          Action = () => {
+            Controller.Send(new GatherCommand { Units = pickupTrucks, Node = EntityRef.None });
+            ShowAlert("수송차량 자원채취 출동!");
+          }
+        });
+      }
       // 선택한 수송 유닛이 있으면 우측 하단 엄지 바 맨 앞에 '하차 (전원)' 버튼을 배치한다.
       var transports = selectedUnits.Where(e => frame.Exists(e) && frame.Has<Unit>(e) && frame.FindAsset(frame.Get<Unit>(e).Spec).TransportCapacity > 0).ToArray();
       if (transports.Length > 0) {

@@ -17,6 +17,9 @@ namespace Quantum.FactoryWars {
   /// All numbers are LogisticsSpec data; the state is in LogisticsYard / LogisticsTruck components (rollback safe).
   /// </summary>
   public unsafe class LogisticsSystem : SystemMainThread {
+    /// <summary>플레이어 수동 "자원채취" 명령 물류 트럭 식별자(자동 외곽 야드 트럭 Site >= 0과 구분).</summary>
+    public const int PlayerPickupSite = -100;
+
     public static LogisticsSpec Spec(Frame f) {
       if (FactoryWarsUtil.MapInfo(f).LogisticsEconomy == false) return null;
       var rules = FactoryWarsUtil.Rules(f);
@@ -24,6 +27,14 @@ namespace Quantum.FactoryWars {
     }
 
     public override void Update(Frame f) {
+      // 플레이어 "자원채취" 수거 트럭은 맵의 LogisticsEconomy 여부와 무관하게 항상 갱신한다.
+      var pickupTrucks = f.Filter<Transform3D, Unit, LogisticsTruck>();
+      while (pickupTrucks.NextUnsafe(out var entity, out var transform, out var unit, out var truck)) {
+        if (truck->Site == PlayerPickupSite) {
+          UpdatePlayerPickupTruck(f, entity, transform, unit, truck);
+        }
+      }
+
       var spec = Spec(f);
       if (spec == null) return;
       EnsureYards(f);
@@ -36,7 +47,157 @@ namespace Quantum.FactoryWars {
       // Trucks whose yard lost them (aborted, owner changed) drive home and are removed there.
       var trucks = f.Filter<Transform3D, Unit, LogisticsTruck>();
       while (trucks.NextUnsafe(out var entity, out var transform, out var unit, out var truck)) {
-        if (truck->State == LogisticsState.Aborting) Abort(f, spec, entity, transform, unit, truck);
+        if (truck->Site != PlayerPickupSite && truck->State == LogisticsState.Aborting) Abort(f, spec, entity, transform, unit, truck);
+      }
+    }
+
+    /// <summary>가장 가까운 아군 적치 채굴 시설(ProcessTimer > 0)을 결정론적으로 찾는다.</summary>
+    public static EntityRef FindNearestStockpiledExtractor(Frame f, PlayerRef owner, FPVector3 from, out FPVector3 pos) {
+      pos = default;
+      var best = EntityRef.None;
+      var bestDist = FP.MaxValue;
+      var buildings = f.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out var entity, out var transform, out var building)) {
+        if (building->Owner != owner || building->Health <= FP._0 || building->ConstructionRemaining > FP._0
+            || building->ExtractNode == EntityRef.None || building->ProcessTimer <= FP._0) {
+          continue;
+        }
+        var d = FactoryWarsUtil.FlatDistanceSqr(from, transform->Position);
+        if (best == EntityRef.None || d < bestDist || (d == bestDist && entity.Index < best.Index)) {
+          best = entity;
+          bestDist = d;
+          pos = transform->Position;
+        }
+      }
+      return best;
+    }
+
+    static FPVector3 FindHqPosition(Frame f, PlayerRef owner) {
+      var buildings = f.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out _, out var transform, out var building)) {
+        if (building->Owner == owner && building->Health > FP._0 && f.FindAsset(building->Spec).Role == BuildingRole.Headquarters) {
+          return transform->Position;
+        }
+      }
+      return FactoryWarsUtil.StartPosition(f, owner);
+    }
+
+    static FPVector3 ApproachPoint(Frame f, FPVector3 target, FPVector3 from, FP standOff) {
+      var delta = from - target;
+      delta.Y = FP._0;
+      var dir = delta.SqrMagnitude > FP._0_01 ? delta.Normalized : new FPVector3(FP._1, FP._0, FP._0);
+      var goal = target + dir * standOff;
+      var rules = FactoryWarsUtil.Rules(f);
+      return FactoryWarsUtil.FindNavPointNear(f, rules.NavMeshName, goal, (FP)8, out var nav) ? nav : goal;
+    }
+
+    /// <summary>물류 트럭 "자원채취" 명령: 가장 가까운 적치 자원지로 이동→적재→사령부 납품.</summary>
+    public static void OrderResourcePickup(Frame f, PlayerRef player, EntityRef[] units) {
+      if (units == null || units.Length == 0) return;
+      var ordered = false;
+      for (var i = 0; i < units.Length; i++) {
+        var e = units[i];
+        if (!f.Exists(e) || !f.Unsafe.TryGetPointer<Unit>(e, out var unit) || !f.Unsafe.TryGetPointer<Transform3D>(e, out var transform)
+            || unit->Owner != player || unit->Health <= FP._0) {
+          continue;
+        }
+        var site = FindNearestStockpiledExtractor(f, player, transform->Position, out var sitePos);
+        if (site == EntityRef.None) {
+          continue;
+        }
+        if (!f.Has<LogisticsTruck>(e)) {
+          f.Add(e, new LogisticsTruck { Site = PlayerPickupSite, State = LogisticsState.ToYard });
+        }
+        var truck = f.Unsafe.GetPointer<LogisticsTruck>(e);
+        truck->Site = PlayerPickupSite;
+        truck->State = LogisticsState.ToYard;
+        truck->Waypoint = sitePos;
+        truck->Timer = FP._0;
+        var approach = ApproachPoint(f, sitePos, transform->Position, (FP)7);
+        MovementSystem.Order(f, e, unit, UnitOrder.Move, approach);
+        ordered = true;
+      }
+      if (!ordered) {
+        f.Events.ActionRejected(player, ActionKind.Gather, RejectReason.Invalid, 0);
+      }
+    }
+
+    static void UpdatePlayerPickupTruck(Frame f, EntityRef entity, Transform3D* transform, Unit* unit, LogisticsTruck* truck) {
+      if (unit->Health <= FP._0) return;
+      if (truck->State == LogisticsState.ToYard) {
+        var d2 = FactoryWarsUtil.FlatDistanceSqr(transform->Position, truck->Waypoint);
+        if (d2 <= (FP)144 || unit->Order == UnitOrder.Stop) {
+          if (d2 > (FP)196) {
+            // 목표까지 아직 멀면 재명령
+            var approach = ApproachPoint(f, truck->Waypoint, transform->Position, (FP)7);
+            MovementSystem.Order(f, entity, unit, UnitOrder.Move, approach);
+            return;
+          }
+          MovementSystem.Stop(f, entity, unit);
+          truck->State = LogisticsState.Loading;
+          truck->Timer = FP._2;
+          unit->RampOpenUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, FP._2);
+          f.Events.TransportRamp(entity, true);
+        }
+      } else if (truck->State == LogisticsState.Loading) {
+        truck->Timer -= f.DeltaTime;
+        if (truck->Timer > FP._0) return;
+        // 채굴 시설 적치장에서 최대 120 적재
+        var cap = (FP)120;
+        var buildings = f.Filter<Transform3D, Building>();
+        while (buildings.NextUnsafe(out _, out var bt, out var b)) {
+          if (b->Owner != unit->Owner || b->ExtractNode == EntityRef.None || b->ProcessTimer <= FP._0) continue;
+          if (FactoryWarsUtil.FlatDistanceSqr(bt->Position, truck->Waypoint) > (FP)36) continue;
+          var take = FPMath.Min(cap, b->ProcessTimer);
+          b->ProcessTimer -= take;
+          if (f.TryGet<ResourceNode>(b->ExtractNode, out var node) && node.Kind == ResourceKind.Wood) {
+            truck->Cargo.Wood += take;
+          } else {
+            truck->Cargo.Iron += take;
+          }
+          break;
+        }
+        var hqPos = FindHqPosition(f, unit->Owner);
+        truck->State = LogisticsState.ToDock;
+        truck->Waypoint = hqPos;
+        var approach = ApproachPoint(f, hqPos, transform->Position, (FP)9);
+        MovementSystem.Order(f, entity, unit, UnitOrder.Move, approach);
+      } else if (truck->State == LogisticsState.ToDock) {
+        var d2 = FactoryWarsUtil.FlatDistanceSqr(transform->Position, truck->Waypoint);
+        if (d2 <= (FP)225 || unit->Order == UnitOrder.Stop) {
+          if (d2 > (FP)289) {
+            var approach = ApproachPoint(f, truck->Waypoint, transform->Position, (FP)9);
+            MovementSystem.Order(f, entity, unit, UnitOrder.Move, approach);
+            return;
+          }
+          MovementSystem.Stop(f, entity, unit);
+          truck->State = LogisticsState.Unloading;
+          truck->Timer = FP._1 + FP._0_50;
+          unit->RampOpenUntilFrame = f.Number + FactoryWarsUtil.SecondsToFrames(f, FP._1 + FP._0_50);
+          f.Events.TransportRamp(entity, true);
+        }
+      } else if (truck->State == LogisticsState.Unloading) {
+        truck->Timer -= f.DeltaTime;
+        if (truck->Timer > FP._0) return;
+        var state = FactoryWarsUtil.Player(f, unit->Owner);
+        if (state != null && Total(truck->Cargo) > FP._0) {
+          state->Stock += truck->Cargo;
+          state->Earned += truck->Cargo;
+          truck->DeliveryId++;
+          truck->CreditedId = truck->DeliveryId;
+        }
+        truck->Cargo = default;
+        // 적치된 자원이 남아 있으면 자동으로 가장 가까운 다음 자원지로 순환, 없으면 정지.
+        var next = FindNearestStockpiledExtractor(f, unit->Owner, transform->Position, out var nextPos);
+        if (next != EntityRef.None) {
+          truck->State = LogisticsState.ToYard;
+          truck->Waypoint = nextPos;
+          var approach = ApproachPoint(f, nextPos, transform->Position, (FP)7);
+          MovementSystem.Order(f, entity, unit, UnitOrder.Move, approach);
+        } else {
+          truck->State = LogisticsState.WaitingRoute;
+          MovementSystem.Stop(f, entity, unit);
+        }
       }
     }
 
@@ -347,7 +508,7 @@ namespace Quantum.FactoryWars {
     public static void UpdateOrphans(Frame f, LogisticsSpec spec) {
       var trucks = f.Filter<Transform3D, Unit, LogisticsTruck>();
       while (trucks.NextUnsafe(out var entity, out var transform, out var unit, out var t)) {
-        if (t->Site >= 0 || t->State == LogisticsState.Aborting) continue;
+        if (t->Site >= 0 || t->Site == PlayerPickupSite || t->State == LogisticsState.Aborting) continue;
         var site = -1 - t->Site;
         var dock = DockOf(f, spec, unit->Owner, site);
         if (t->State == LogisticsState.ToDock) {

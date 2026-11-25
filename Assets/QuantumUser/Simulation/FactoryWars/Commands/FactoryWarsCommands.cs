@@ -371,6 +371,11 @@ namespace Quantum.FactoryWars {
     }
 
     public override void Execute(Frame f, PlayerRef player) {
+      // 물류 트럭 "자원채취" 버튼(Node == None): 가장 가까운 적치 자원지로 자동 이동→적재→사령부 납품.
+      if (Node == EntityRef.None) {
+        LogisticsSystem.OrderResourcePickup(f, player, Units);
+        return;
+      }
       if (f.Has<ResourceNode>(Node) == false) {
         f.Events.ActionRejected(player, ActionKind.Gather, RejectReason.Invalid, 0);
         return;

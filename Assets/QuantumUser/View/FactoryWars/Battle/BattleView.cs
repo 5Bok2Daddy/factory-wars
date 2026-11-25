@@ -117,6 +117,8 @@ namespace FactoryWars.View {
       public readonly List<GameObject> UpgradeAttachments = new List<GameObject>(4);
       public TextMesh UpgradeChevron;
       public bool IsCarrier;
+      public bool IsBomber;
+      public bool BomberScaled;
       public Transform SiloDoorL;
       public Transform SiloDoorR;
       public Transform SiloMissile;
@@ -484,9 +486,13 @@ namespace FactoryWars.View {
       UpdateSelection(frame);
     }
 
+    public Vector3 LastExplosionPosition { get; private set; }
+
     void Remove(EntityRef entity) {
       var actor = _actors[entity];
-      var center = actor.View.transform.position + Vector3.up * (actor.IsAir ? actor.View.Entry.Altitude : actor.Height * 0.4f);
+      var center = (actor.IsAir && actor.View.Turn != null)
+        ? actor.View.Turn.position
+        : actor.View.transform.position + Vector3.up * (actor.Height * 0.4f);
       if (actor.IsSortie) {
         // 작전기: 귀환은 조용히 사라지고, 격추면 SortieEnded 이벤트가 이미 폭발을 그렸다.
         Destroy(actor.View.gameObject);
@@ -503,7 +509,8 @@ namespace FactoryWars.View {
         _actors.Remove(entity);
         return;
       }
-      Fx.Explosion(center, actor.IsBuilding ? 2.2f : Mathf.Clamp(actor.Radius * 0.5f, 0.5f, 1.5f));
+      LastExplosionPosition = center;
+      Fx.Explosion(center, actor.IsBuilding ? 2.2f : actor.IsBomber ? 2.4f : Mathf.Clamp(actor.Radius * 0.5f, 0.5f, 1.5f));
       if (actor.IsBuilding) {
         // 파괴된 기지 건물은 사라지지 않고 영구 붕괴 콘크리트 잔해 더미 + 영구 그을음으로 남는다.
         Fx.PermanentRubble(actor.View.transform.position, Mathf.Max(2.8f, actor.Radius * 0.9f));
@@ -1234,8 +1241,15 @@ namespace FactoryWars.View {
       var navalBob = spec.IsNaval ? Mathf.Sin(Time.time * 1.45f + actor.Phase) * 0.08f + 0.06f : 0f;
       actor.View.transform.position = (spec.IsAir && assemblingCarrier == false) ? actor.Position : actor.Position + Vector3.up * TerrainKit.SurfaceHeight(World.Map, actor.Position.x, actor.Position.z);
       if (spec.IsNaval) actor.View.transform.position = actor.Position + Vector3.up * (TerrainKit.WaterLevel + navalBob);
-      var baseAirAlt = spec.IsAir ? Mathf.Max(actor.View.Entry.Altitude, spec.Size == UnitSize.Large ? 19.0f : spec.Size == UnitSize.Medium ? 15.0f : 11.5f) : actor.View.Entry.Altitude;
-      var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(baseAirAlt, 20.5f) : baseAirAlt);
+      actor.IsBomber = spec.name == "ff_skyfortress_bomber";
+      if (actor.IsBomber && actor.BomberScaled == false && actor.View.Model != null) {
+        actor.View.Model.transform.localScale *= 1.35f;
+        actor.BomberScaled = true;
+      }
+      var baseAirAlt = spec.IsAir
+        ? Mathf.Max(actor.View.Entry.Altitude, actor.IsBomber ? 25.5f : spec.Size == UnitSize.Large ? 22.0f : spec.Size == UnitSize.Medium ? 19.5f : 16.5f)
+        : actor.View.Entry.Altitude;
+      var altitude = assemblingCarrier ? 0.35f : (actor.IsCarrier ? Mathf.Max(baseAirAlt, 27.0f) : baseAirAlt);
       actor.View.Turn.localPosition = Vector3.up * (altitude + hover);
       if (spec.IsNaval) UpdateNavalWake(actor, spec, before, dt);
       if (spec.IsAir) UpdateAirFlight(actor, spec, before, dt, assemblingCarrier == false);
@@ -1244,7 +1258,7 @@ namespace FactoryWars.View {
         UpdateDamageFire(actor, hpRatio, spec.IsNaval ? 1.5f : spec.Size == UnitSize.Large ? 1.25f : 0.9f);
       }
       if (spec.IsAir && actor.View.Bar != null) {
-        actor.View.Bar.transform.localPosition = Vector3.up * (altitude + (actor.IsCarrier ? 3.8f : 2.6f));
+        actor.View.Bar.transform.localPosition = Vector3.up * (altitude + (actor.IsCarrier ? 4.4f : actor.IsBomber ? 4.2f : 2.8f));
       }
       if (visible && assemblingCarrier == false) {
         if (spec.IsAir) {
@@ -1256,7 +1270,7 @@ namespace FactoryWars.View {
         }
       }
       if (actor.IsCarrier && actor.View.Bar != null) {
-        actor.View.Bar.transform.localPosition = Vector3.up * (altitude + 3.6f);
+        actor.View.Bar.transform.localPosition = Vector3.up * (altitude + 4.4f);
       }
 
       var hasTarget = TryTarget(frame, unit->TargetEntity, out var target, out var air);
@@ -2042,7 +2056,8 @@ namespace FactoryWars.View {
           if (actor.PipRoot != null) actor.PipRoot.transform.localScale = Vector3.one * 1.65f;
         }
         UpdatePips(actor, staff, staff > 0 || _marked.Contains(actor), 0.65f);
-        UpdateWorkerCountBadge(actor, staff, cap, true);
+        var stockpile = ProductionSystem.ExtractorStockpile(building).AsInt;
+        UpdateWorkerCountBadge(actor, staff, cap, true, stockpile);
         var stage = (frame.Number / 50) % 5;
         var p0 = spec.RequiredNodeKind == ResourceKind.Wood ? "Chop" : "Dig";
         var p1 = spec.RequiredNodeKind == ResourceKind.Wood
@@ -2050,11 +2065,19 @@ namespace FactoryWars.View {
           : (stage % 2 == 0 ? "PickUp" : "HoldingWalk");
         var p2 = stage % 2 == 0 ? "PutDown" : "Inspect";
         UpdateActivityCrewMulti(actor, extracting ? Mathf.Clamp(staff, 1, 3) : 0, p0, p1, p2);
-        UpdateExtractorDelivery(frame, actor, building->Owner, spec.RequiredNodeKind, extracting, dt);
+        // 컨베이어 직결 제거: 자원은 채취 시설에 적치되며 수송차량 '자원채취'로 사령부까지 운반한다.
+        if (actor.ExtractorDelivery != null) {
+          Destroy(actor.ExtractorDelivery.Root);
+          actor.ExtractorDelivery = null;
+        }
       } else if (spec.RequiresResourceNode) {
         UpdatePips(actor, 0, false);
         UpdateWorkerCountBadge(actor, 0, Mathf.Max(1, spec.WorkerSlotCapacity), false);
         UpdateActivityCrewMulti(actor, 0, null, null, null);
+        if (actor.ExtractorDelivery != null) {
+          Destroy(actor.ExtractorDelivery.Root);
+          actor.ExtractorDelivery = null;
+        }
       }
       if (spec.Role == BuildingRole.PowerPlant) {
         UpdatePowerPlantVisual(actor, powered, dt);
@@ -2237,7 +2260,7 @@ namespace FactoryWars.View {
       }
     }
 
-    void UpdateWorkerCountBadge(Actor actor, int staff, int capacity, bool visible) {
+    void UpdateWorkerCountBadge(Actor actor, int staff, int capacity, bool visible, int stockpile = -1) {
       if (!visible && actor.WorkerCountRoot == null) return;
       if (actor.WorkerCountRoot == null) {
         var root = new GameObject("WorkerCountBadge");
@@ -2270,8 +2293,12 @@ namespace FactoryWars.View {
       actor.WorkerCountRoot.transform.localPosition = new Vector3(0f, 3.4f, -(actor.FootprintRadius + 0.35f));
       var cam = Camera.main;
       if (cam != null) actor.WorkerCountRoot.transform.rotation = cam.transform.rotation;
-      var label = $"{staff}/{capacity}";
-      if (actor.WorkerCountBadge.text != label) actor.WorkerCountBadge.text = label;
+      var label = stockpile > 0 ? $"{staff}/{capacity} · 적치 {stockpile}" : $"{staff}/{capacity}";
+      if (actor.WorkerCountBadge.text != label) {
+        actor.WorkerCountBadge.text = label;
+        var bgTf = actor.WorkerCountRoot.transform.Find("BadgeBg");
+        if (bgTf != null) bgTf.localScale = new Vector3(stockpile > 0 ? 5.6f : 2.35f, 1.05f, 1f);
+      }
       actor.WorkerCountBadge.color = staff >= capacity
         ? new Color(0.28f, 0.98f, 0.54f, 1f)
         : staff > 0 ? new Color(1f, 0.86f, 0.28f, 1f) : new Color(0.86f, 0.90f, 0.96f, 1f);
@@ -2685,16 +2712,17 @@ namespace FactoryWars.View {
       }
     }
 
-    /// <summary>수송 유닛 후면 램프 개폐 애니메이션 및 월드 공간 탑승 인원 핍([■][■][■][□]) 갱신.</summary>
+    /// <summary>수송 유닛·물류 트럭 후면 램프 개폐 애니메이션 및 월드 공간 탑승 인원 핍([■][■][■][□]) 갱신.</summary>
     void UpdateTransportVisual(Frame frame, Actor actor, EntityRef entity, Unit* unit, UnitSpec spec, float dt) {
-      if (spec.TransportCapacity <= 0) {
+      var isLogisticsTruck = frame.Has<LogisticsTruck>(entity) || spec.name == "merc_cargo_truck" || spec.name.Contains("truck");
+      if (spec.TransportCapacity <= 0 && isLogisticsTruck == false) {
         return;
       }
-      if (actor.TransportCapacity != spec.TransportCapacity) {
+      if (actor.CargoRamp == null) {
+        actor.CargoRamp = HeroVisuals.AttachTransportRamp(actor.View.Turn, spec.IsAir, spec.IsNaval, actor.Color);
+      }
+      if (spec.TransportCapacity > 0 && actor.TransportCapacity != spec.TransportCapacity) {
         actor.TransportCapacity = spec.TransportCapacity;
-        if (actor.CargoRamp == null) {
-          actor.CargoRamp = HeroVisuals.AttachTransportRamp(actor.View.Turn, spec.IsAir, spec.IsNaval, actor.Color);
-        }
         if (actor.PipRoot == null) {
           actor.PipRoot = HeroVisuals.CreatePassengerPips(actor.View, spec.TransportCapacity, out actor.PipRenderers);
         }
@@ -2705,8 +2733,10 @@ namespace FactoryWars.View {
         actor.RampAngle = Mathf.MoveTowards(actor.RampAngle, targetAngle, 260f * dt);
         actor.CargoRamp.localRotation = Quaternion.Euler(actor.RampAngle, 0f, 0f);
       }
-      var used = TransportSystem.UsedSlots(frame, entity);
-      UpdatePips(actor, used, used > 0 || _marked.Contains(actor));
+      if (spec.TransportCapacity > 0) {
+        var used = TransportSystem.UsedSlots(frame, entity);
+        UpdatePips(actor, used, used > 0 || _marked.Contains(actor));
+      }
     }
 
     static void UpdatePips(Actor actor, int used, bool visible, float heightOffset = -0.36f) {

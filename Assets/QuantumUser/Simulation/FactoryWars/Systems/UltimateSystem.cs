@@ -17,8 +17,10 @@ namespace Quantum.FactoryWars {
       return faction != null && faction.Ultimate.IsValid ? f.FindAsset(faction.Ultimate) : null;
     }
 
-    /// <summary>플레이어 명령을 받지 않고 스스로 움직이는 자율 유닛(항모 드론·오퍼레이터 드론·상륙정·물류 트럭).</summary>
-    public static bool IsAutonomous(Frame f, EntityRef entity) => f.Has<Drone>(entity) || f.Has<OperatorDrone>(entity) || f.Has<LandingCraft>(entity) || f.Has<LogisticsTruck>(entity);
+    /// <summary>플레이어 명령을 받지 않고 스스로 움직이는 자율 유닛(항모 드론·오퍼레이터 드론·상륙정·자동 물류 트럭). 단, 플레이어 수동 "자원채취" 트럭(Site == -100)은 명령 가능.</summary>
+    public static bool IsAutonomous(Frame f, EntityRef entity) =>
+      f.Has<Drone>(entity) || f.Has<OperatorDrone>(entity) || f.Has<LandingCraft>(entity)
+      || (f.Unsafe.TryGetPointer<LogisticsTruck>(entity, out var lt) && lt->Site != LogisticsSystem.PlayerPickupSite);
 
     /// <summary>궁극 전력에 속한 유닛(항모·드론·상륙정). 측정용 구분이다.</summary>
     public static bool IsUltimateUnit(Frame f, EntityRef entity) => f.Has<Carrier>(entity) || f.Has<Drone>(entity) || f.Has<LandingCraft>(entity);
