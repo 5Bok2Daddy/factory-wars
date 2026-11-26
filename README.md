@@ -7,6 +7,31 @@
 
 ---
 
+## 진영별(FF/CF) 본진·자원시설 공장 배치 점검 & 전 유닛 74종 생산타이머·크기(소/중/대)·상성·밸런스 조치 보고 (2026-11-26 · 5/5 통과 · 결정론 0건)
+
+> 상세 전수표(74종 전체 생산 타이머 · 크기 · 상성 · 비용/HP/DPS 효율): **[전 유닛 74종 생산타이머·크기·상성·밸런스 전체표 (Docs/UnitBalanceAndTimers.md)](Docs/UnitBalanceAndTimers.md)**
+
+### 1. 자유연방(FF) & 대륙연방(CF) 본진 공장 및 자원시설 채굴 공장 건설 모습
+
+| 자유연방(FF) 본진 공장 배치 전경 | 자유연방(FF) 자원시설 채굴 공장 (`3/3 · 적치 126`) | 외곽 확장 자원지 채굴 공장 (`3/3 · 적치 150`) |
+| --- | --- | --- |
+| [![FF 본진 공장 배치](Docs/status_images/FactionFactories/01_ff_base_factories.png)](Docs/status_images/FactionFactories/01_ff_base_factories.png) | [![FF 자원시설 채굴 공장](Docs/status_images/FactionFactories/02_ff_resource_factories.png)](Docs/status_images/FactionFactories/02_ff_resource_factories.png) | [![외곽 확장 자원지 채굴 공장](Docs/status_images/FactionFactories/05_expansion_resource_factory.png)](Docs/status_images/FactionFactories/05_expansion_resource_factory.png) |
+| [FF 본진 원본](Docs/status_images/FactionFactories/01_ff_base_factories.png) | [FF 자원시설 원본](Docs/status_images/FactionFactories/02_ff_resource_factories.png) | [확장 자원지 원본](Docs/status_images/FactionFactories/05_expansion_resource_factory.png) |
+
+| 대륙연방(CF) 본진 공장 배치 전경 | 대륙연방(CF) 자원시설 채굴 공장 | 실측 생산 타이머 & 밸런스 조치 요약 |
+| --- | --- | --- |
+| [![CF 본진 공장 배치](Docs/status_images/FactionFactories/03_cf_base_factories.png)](Docs/status_images/FactionFactories/03_cf_base_factories.png) | [![CF 자원시설 채굴 공장](Docs/status_images/FactionFactories/04_cf_resource_factories.png)](Docs/status_images/FactionFactories/04_cf_resource_factories.png) | **실전 시뮬레이션 타이머 검증:** FF 레인저 `6.0초 / 1.15(시너지) = 5.22초`, CF 민병대(2기) `12.0 × 0.75 / 1.15 = 7.83초`<br>**언밸런스 10종 조치:** `ff_hawk_gunship`, `ff_bulwark_tank`, `ff_eagle_tank`, `ff_skyfortress_bomber`, `ff/cf_artillery_ship`, `pmc_scout_heli`, `pmc_attack/strike_drone`, `pmc_armored_suv` 보정 완료 |
+| [CF 본진 원본](Docs/status_images/FactionFactories/03_cf_base_factories.png) | [CF 자원시설 원본](Docs/status_images/FactionFactories/04_cf_resource_factories.png) | [74종 전체표·상성표·타이머 계산식 보기](Docs/UnitBalanceAndTimers.md) |
+
+### 2. 육안 검수로 발견된 본진·자원시설 공장 배치 문제점 (5건)
+1. **중공업 기지(`ff_heavy_works`/`cf_heavy_works`) 외형 불량:** `old_factory.prefab` 지붕이 뚫린 폐허처럼 보여 100% 정상 건물로 보이지 않으며 본진 코너 펜스와 일부 겹침.
+2. **본진 내 비행장(`ff_airfield`/`cf_airfield`) 건설 공간 부족:** 본진에 기본 생산공장 배치 후 반경 56m 내 활주로(`AirfieldWorkSystem`) 확보가 불가해 건설 실패.
+3. **FF/CF 건물 외형 차별화 부재:** 두 진영의 본진 공장·제련소·자원 채굴 공장이 모두 동일한 청록색 문 창고(`SM_Bld_Warehouse_01`) 기반으로 시각적 구분이 거의 없음.
+4. **자원 노드 매몰 & 적군 채굴장 작업자 미표시:** 본진 자원시설 위 창고가 원석/목재 노드를 가리고, CF(Player 1) 채굴장에는 `3/3 · 적치` 배지와 외부 작업자 표시가 생략됨.
+5. **본진 공장 간격 겹침:** 3티어 사령부 외곽(헬리패드·방호벽)과 인접 병영/제련소 간격이 지나치게 가깝고, 노란 주차선 위에 건물이 얹힘.
+
+---
+
 ## 전체 맵(`Map4P v4` 640×640m 직상공·사선) & 24종 전 병과 유닛 이미지·사거리·모션 검수 갤러리 (2026-11-26 · 1/1 통과 · 결정론 0건)
 
 > 사령부(HQ)는 요청에 따라 현 상태로 유지하고, `mh6_little_bird` 캐노피 틴트 보정 · `old_factory` 중공업 공장 스케일 상향(`AutoFit=0, Scale=0.62`) 반영 후 전체 맵과 전 병과 대표 24종 유닛의 외형·교전 사거리·공격 모션을 일괄 캡처했습니다.

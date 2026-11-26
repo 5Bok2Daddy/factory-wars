@@ -2905,5 +2905,209 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(units.Length, count, "Captured all 24 review gallery unit frames");
       Debug.Log($"[ReviewGallery] PASS fullMap=2 units={count}");
     }
+
+    [UnityTest]
+    public IEnumerator FactionFactories_BaseAndResourceNodes_ProductionTimers_VerifyAndCapture() {
+      yield return StartMatch(Map4PScene, players: 2, startingTier: 3, stock: Stock(50000, 50000, 50000, 1000));
+      yield return WaitFrames(12);
+
+      var camera = Camera.main;
+      Assert.IsNotNull(camera, "Main camera exists");
+      var rts = camera.GetComponent<RtsCamera>();
+      Assert.IsNotNull(rts, "RtsCamera exists");
+      var dir = Path.Combine(Application.dataPath, "..", "Docs", "status_images", "FactionFactories");
+      Directory.CreateDirectory(dir);
+
+      var rolesToBuild = new[] {
+        BuildingRole.PowerPlant,
+        BuildingRole.Processor,
+        BuildingRole.Barracks,
+        BuildingRole.VehicleFactory,
+        BuildingRole.HeavyWorks,
+        BuildingRole.Airfield,
+        BuildingRole.ResearchLab,
+        BuildingRole.SupplyDepot,
+      };
+
+      var allIronNodes = new List<(EntityRef Ent, ResourceNode Node)>();
+      var allWoodNodes = new List<(EntityRef Ent, ResourceNode Node)>();
+      foreach (var p in Verified.GetComponentIterator<ResourceNode>()) {
+        if (p.Component.Kind == ResourceKind.Iron) allIronNodes.Add((p.Entity, p.Component));
+        else if (p.Component.Kind == ResourceKind.Wood) allWoodNodes.Add((p.Entity, p.Component));
+      }
+
+      EntityRef ffBarracks = EntityRef.None, cfBarracks = EntityRef.None, ffVehFac = EntityRef.None;
+      var placedCount = 0;
+
+      for (var pIdx = 0; pIdx < 2; pIdx++) {
+        var faction = FactionOf(pIdx);
+        var isCf = faction.name.Contains("continental");
+        var tag = isCf ? "cf" : "ff";
+        var hq = Headquarters(pIdx);
+        var hqPos = Verified.Get<Transform3D>(hq).Position;
+        var builtPositions = new List<Vector3> { hqPos.ToUnityVector3() };
+
+        // 1. Place core base factories around HQ using real CanPlace / TryGetBuildPlacement rules.
+        foreach (var role in rolesToBuild) {
+          BuildingSpec bSpec = null;
+          AssetRef<BuildingSpec> bRef = default;
+          foreach (var br in faction.Buildings) {
+            var s = Verified.FindAsset(br);
+            if (s != null && s.Role == role) { bSpec = s; bRef = br; break; }
+          }
+          if (bSpec == null) continue;
+
+          var placed = false;
+          for (var rad = 14; rad <= 56 && !placed; rad += 4) {
+            for (var deg = 0; deg < 360 && !placed; deg += 15) {
+              var a = deg * Mathf.Deg2Rad;
+              var cand = new FPVector3(
+                hqPos.X + FP.FromFloat_UNSAFE(Mathf.Cos(a) * rad),
+                FP._0,
+                hqPos.Z + FP.FromFloat_UNSAFE(Mathf.Sin(a) * rad));
+              if (!ProductionSystem.TryGetBuildPlacement(Verified, bSpec, cand, pIdx, out var aligned)) continue;
+              var ent = ProductionSystem.CreateFinishedBuilding(Verified, pIdx, bRef, aligned);
+              if (Game.Frames.Predicted != null) ProductionSystem.CreateFinishedBuilding(Game.Frames.Predicted, pIdx, bRef, aligned);
+              builtPositions.Add(aligned.ToUnityVector3());
+              placed = true;
+              placedCount++;
+              if (role == BuildingRole.Barracks) { if (isCf) cfBarracks = ent; else ffBarracks = ent; }
+              if (role == BuildingRole.VehicleFactory && !isCf) ffVehFac = ent;
+              Debug.Log($"[FactionFactories] {tag} placed {bSpec.name} at ({aligned.X.AsFloat:F1},{aligned.Z.AsFloat:F1})");
+            }
+          }
+          if (!placed) Debug.LogWarning($"[FactionFactories] {tag} COULD NOT PLACE {bSpec.name} near HQ ({hqPos.X.AsFloat:F1},{hqPos.Z.AsFloat:F1})");
+        }
+
+        // 2. Place Iron Extractor & Lumber Mill on nearest resource nodes + staff with 3 engineers each.
+        var nearIron = allIronNodes.OrderBy(n => FPVector3.DistanceSquared(n.Node.Shape.Center, hqPos)).FirstOrDefault();
+        var nearWood = allWoodNodes.OrderBy(n => FPVector3.DistanceSquared(n.Node.Shape.Center, hqPos)).FirstOrDefault();
+        var resCenters = new List<Vector3>();
+        var engName = isCf ? "cf_engineer" : "ff_engineer";
+
+        foreach (var item in new[] { (BuildingRole.IronExtractor, nearIron), (BuildingRole.LumberMill, nearWood) }) {
+          BuildingSpec rSpec = null;
+          AssetRef<BuildingSpec> rRef = default;
+          foreach (var br in faction.Buildings) {
+            var s = Verified.FindAsset(br);
+            if (s != null && s.Role == item.Item1) { rSpec = s; rRef = br; break; }
+          }
+          if (rSpec == null || item.Item2.Ent == EntityRef.None) continue;
+          var nPos = item.Item2.Node.Shape.Center;
+          var ok = ProductionSystem.TryGetBuildPlacement(Verified, rSpec, nPos, pIdx, out var aligned);
+          Debug.Log($"[FactionFactories] {tag} {rSpec.name} at ({nPos.X.AsFloat:F1},{nPos.Z.AsFloat:F1}) canPlace={ok} reason={ProductionSystem.PlacementReason(Verified, rSpec, nPos, pIdx)}");
+          if (ok) {
+            var ext = ProductionSystem.CreateFinishedBuilding(Verified, pIdx, rRef, aligned);
+            var eb = Verified.Get<Building>(ext); eb.ExtractNode = item.Item2.Ent; eb.ProcessTimer = (FP)120; Verified.Set(ext, eb);
+            if (Game.Frames.Predicted != null) {
+              var pExt = ProductionSystem.CreateFinishedBuilding(Game.Frames.Predicted, pIdx, rRef, aligned);
+              if (Game.Frames.Predicted.Exists(pExt)) { Game.Frames.Predicted.Set(pExt, eb); }
+            }
+            for (var w = 0; w < 3; w++) {
+              var eng = SpawnUnitByName(Verified, pIdx, engName, aligned + new FPVector3(w * 2 - 2, 0, 3));
+              AssignGarrison(Verified, eng, ext);
+              if (Game.Frames.Predicted != null) AssignGarrison(Game.Frames.Predicted, eng, ext);
+            }
+            resCenters.Add(aligned.ToUnityVector3());
+            placedCount++;
+          }
+        }
+
+        yield return WaitFrames(16);
+
+        // Capture base factories overview
+        var baseCenter = Vector3.zero;
+        foreach (var bp in builtPositions) baseCenter += bp;
+        baseCenter /= Mathf.Max(1, builtPositions.Count);
+        rts.Height = 62f;
+        rts.MoveTo(new Vector2(baseCenter.x, baseCenter.z));
+        rts.Apply();
+        yield return WaitFrames(6);
+        CaptureCameraPng(camera, Path.Combine(dir, isCf ? "03_cf_base_factories.png" : "01_ff_base_factories.png"), 1920, 1080);
+
+        // Capture resource extractors close-up
+        if (resCenters.Count > 0) {
+          var rc = resCenters[0];
+          if (resCenters.Count > 1 && Vector3.Distance(resCenters[0], resCenters[1]) < 46f) {
+            rc = (resCenters[0] + resCenters[1]) * 0.5f;
+            rts.Height = 44f;
+          } else {
+            rts.Height = 30f;
+          }
+          rts.MoveTo(new Vector2(rc.x, rc.z));
+          rts.Apply();
+          yield return WaitFrames(6);
+          CaptureCameraPng(camera, Path.Combine(dir, isCf ? "04_cf_resource_factories.png" : "02_ff_resource_factories.png"), 1920, 1080);
+        }
+      }
+
+      // 3. Also place an expansion/mid-map iron extractor outside base forecourt and capture it.
+      var p0Hq = Verified.Get<Transform3D>(Headquarters(0)).Position;
+      var expIron = allIronNodes
+        .OrderBy(n => FPVector3.DistanceSquared(n.Node.Shape.Center, p0Hq))
+        .Skip(2)
+        .FirstOrDefault();
+      if (expIron.Ent != EntityRef.None) {
+        var f0 = FactionOf(0);
+        var ironRef = f0.Buildings.First(br => Verified.FindAsset(br).Role == BuildingRole.IronExtractor);
+        var ironSpec = Verified.FindAsset(ironRef);
+        if (ProductionSystem.TryGetBuildPlacement(Verified, ironSpec, expIron.Node.Shape.Center, 0, out var expPos)) {
+          var ext = ProductionSystem.CreateFinishedBuilding(Verified, 0, ironRef, expPos);
+          var eb = Verified.Get<Building>(ext); eb.ExtractNode = expIron.Ent; eb.ProcessTimer = (FP)150; Verified.Set(ext, eb);
+          for (var w = 0; w < 3; w++) {
+            var eng = SpawnUnitByName(Verified, 0, "ff_engineer", expPos + new FPVector3(w * 2 - 2, 0, 3));
+            AssignGarrison(Verified, eng, ext);
+          }
+          yield return WaitFrames(10);
+          rts.Height = 32f;
+          rts.MoveTo(new Vector2(expPos.X.AsFloat, expPos.Z.AsFloat));
+          rts.Apply();
+          yield return WaitFrames(6);
+          CaptureCameraPng(camera, Path.Combine(dir, "05_expansion_resource_factory.png"), 1920, 1080);
+        }
+      }
+
+      // 4. Live simulation production timer check (FF small 6.0s vs CF small 9.0s with 0.75x multiplier).
+      Assert.AreNotEqual(EntityRef.None, ffBarracks, "FF Barracks built");
+      Assert.AreNotEqual(EntityRef.None, cfBarracks, "CF Barracks built");
+      var ffRangerRef = UnitRef(0, "ff_ranger_squad");
+      var cfMilitiaRef = UnitRef(1, "cf_militia");
+      var ffStartCount = UnitsProducedOf(Verified, 0);
+      var cfStartCount = UnitsProducedOf(Verified, 1);
+      var ffExpectedSec = ExpectedProdSeconds(Verified, 0, ffBarracks, ffRangerRef, out var ffSpeed);
+      var cfExpectedSec = ExpectedProdSeconds(Verified, 1, cfBarracks, cfMilitiaRef, out var cfSpeed);
+
+      var t0 = Verified.Number;
+      yield return Send(0, new ProduceCommand { Building = ffBarracks, Unit = ffRangerRef, Count = 1 });
+      var t1 = Verified.Number;
+      yield return Send(1, new ProduceCommand { Building = cfBarracks, Unit = cfMilitiaRef, Count = 1 });
+      int ffDoneFrame = -1, cfDoneFrame = -1;
+      for (var i = 0; i < 400 && (ffDoneFrame < 0 || cfDoneFrame < 0); i++) {
+        yield return WaitFrames(2);
+        if (ffDoneFrame < 0 && UnitsProducedOf(Verified, 0) > ffStartCount) ffDoneFrame = Verified.Number;
+        if (cfDoneFrame < 0 && UnitsProducedOf(Verified, 1) > cfStartCount) cfDoneFrame = Verified.Number;
+      }
+      var ffActualSec = (ffDoneFrame - t0) / (float)Fps;
+      var cfActualSec = (cfDoneFrame - t1) / (float)Fps;
+      Debug.Log($"[FactionFactories] TIMERS FF ranger: expected={ffExpectedSec:F2}s actual={ffActualSec:F2}s (speedMul={ffSpeed:F2}) | CF militia(x2): expected={cfExpectedSec:F2}s actual={cfActualSec:F2}s (speedMul={cfSpeed:F2})");
+      Assert.Greater(ffDoneFrame, t0, "FF ranger produced");
+      Assert.Greater(cfDoneFrame, t1, "CF militia produced");
+      Assert.AreEqual(ffExpectedSec, ffActualSec, 0.8f, "FF production timer matches formula");
+      Assert.AreEqual(cfExpectedSec, cfActualSec, 0.8f, "CF production timer matches formula");
+      Assert.GreaterOrEqual(placedCount, 12, $"Placed base+resource factories across both factions (count={placedCount})");
+      Debug.Log($"[FactionFactories] PASS placed={placedCount}");
+    }
+
+    static unsafe int UnitsProducedOf(Frame f, int player) {
+      return f.Global->Players.GetPointer(player)->UnitsProduced;
+    }
+
+    static unsafe float ExpectedProdSeconds(Frame f, int player, EntityRef building, AssetRef<UnitSpec> unitRef, out float speedMul) {
+      var st = f.Global->Players.GetPointer(player);
+      var b = f.Unsafe.GetPointer<Building>(building);
+      var u = f.FindAsset(unitRef);
+      speedMul = FactorySystem.ProductionSpeedMultiplier(f, building, b, st).AsFloat;
+      return ProductionSystem.UnitProductionSeconds(f, st, u).AsFloat / speedMul;
+    }
   }
 }

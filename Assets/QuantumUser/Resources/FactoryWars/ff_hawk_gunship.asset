@@ -23,20 +23,20 @@ MonoBehaviour:
   IsVehicle: 0
   Cost:
     Iron:
-      RawValue: 16384000
+      RawValue: 14417920
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 6553600
+      RawValue: 5570560
     Power:
       RawValue: 6553600
   BuildTimeSeconds:
-    RawValue: 2621440
+    RawValue: 2162688
   MaxHealth:
-    RawValue: 29491200
+    RawValue: 32112640
   Attack: 2
   Damage:
-    RawValue: 3604480
+    RawValue: 3932160
   Range:
     RawValue: 983040
   MinRange:

@@ -25,20 +25,20 @@ MonoBehaviour:
   IsVehicle: 0
   Cost:
     Iron:
-      RawValue: 16384000
+      RawValue: 9830400
     Wood:
       RawValue: 0
     Steel:
-      RawValue: 6553600
+      RawValue: 2949120
     Power:
       RawValue: 6553600
   BuildTimeSeconds:
-    RawValue: 2621440
+    RawValue: 1572864
   MaxHealth:
-    RawValue: 17694450
+    RawValue: 19005440
   Attack: 2
   Damage:
-    RawValue: 2162655
+    RawValue: 2359296
   Range:
     RawValue: 884736
   MinRange:
@@ -53,7 +53,7 @@ MonoBehaviour:
   ColliderRadius:
     RawValue: 117964
   Population:
-    RawValue: 196608
+    RawValue: 131072
   ModuleSlots: 2
   SpawnCount: 1
   Ability: 5
