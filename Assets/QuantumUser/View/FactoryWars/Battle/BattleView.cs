@@ -263,16 +263,22 @@ namespace FactoryWars.View {
           && !frame.FindAsset(lu->Spec).IsVehicle && !frame.FindAsset(lu->Spec).IsAir && !frame.FindAsset(lu->Spec).IsNaval
           && frame.FindAsset(lu->Spec).Size == UnitSize.Small;
         if (isInfantryGrenade && _actors.TryGetValue(e.Battery, out var launcherAct) && launcherAct.View?.Animation != null) {
-          // 유탄발사기(40mm 유탄): 손 투척 대신 견착 사격 반동 모션으로 전환.
+          // 유탄발사기(40mm 유탄): 발사 방향으로 부드럽게 정렬 후 견착 사격 반동 모션 재생.
+          var aim = e.Direction.ToUnityVector3();
+          aim.y = 0f;
+          if (aim.sqrMagnitude > 0.001f) {
+            var targetYaw = Mathf.Atan2(aim.x, aim.z) * Mathf.Rad2Deg;
+            launcherAct.HullYaw = Mathf.LerpAngle(launcherAct.HullYaw, targetYaw, 0.75f);
+          }
           launcherAct.View.Animation.Fire();
         }
         var viewer = _controller != null ? _controller.Player : PlayerRef.None;
         if (!viewer.IsValid || viewer == e.Owner || (frame != null && FogSystem.IsVisible(frame, viewer, e.Origin))) {
           var position = _mlrsRockets.AtSurface(e.Origin.ToUnityVector3());
           if (isInfantryGrenade) {
-            // 보병 유탄발사기: 총구 하부 유탄 발사 섬광 + 경쾌한 발사 음향(MLRS 로켓 배기/굉음과 명확히 구분).
-            Fx.MuzzleFlash(position, e.Direction.ToUnityVector3(), 0.72f);
-            Fx.Burst(position, new Color(1f, 0.85f, 0.42f), 0.32f);
+            // 보병 유탄발사기: 컴팩트 총구 하부 섬광 + 경쾌한 발사 음향.
+            Fx.MuzzleFlash(position, e.Direction.ToUnityVector3(), 0.48f);
+            Fx.Burst(position, new Color(1f, 0.85f, 0.42f), 0.22f);
             _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.SniperFire, position));
           } else {
             Fx.MlrsExhaust(position, e.Direction.ToUnityVector3(), false);
@@ -284,7 +290,12 @@ namespace FactoryWars.View {
         var frame = e.Game.Frames.Verified;
         var viewer = _controller != null ? _controller.Player : PlayerRef.None;
         if (!viewer.IsValid || (frame != null && FogSystem.IsVisible(frame, viewer, e.Position))) {
-          Fx.MlrsImpact(_mlrsRockets.AtSurface(e.Position.ToUnityVector3()), e.Radius.AsFloat);
+          var surfacePos = _mlrsRockets.AtSurface(e.Position.ToUnityVector3());
+          if (e.Radius.AsFloat <= 3.35f) {
+            Fx.GrenadeImpact(surfacePos, e.Radius.AsFloat);
+          } else {
+            Fx.MlrsImpact(surfacePos, e.Radius.AsFloat);
+          }
         }
       });
       QuantumEvent.Subscribe<EventTraderShot>(this, e => {

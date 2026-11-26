@@ -7,6 +7,15 @@
 
 ---
 
+## 건물 잔해·붕괴 비주얼 개선(어두운 원형 링 제거) · 건물 내구도 2.2배 상향 · 40mm 유탄 착탄 VFX 축소 및 발사 탄도 보정 완료 (2026-11-26 · 3/3 통과)
+
+| 건물 초반 2발 포격 생존 (`3600 → 3000 HP`) → 붕괴 후 자연스러운 콘크리트 잔해 | 40mm 유탄(`유탄`) 부드러운 발사·탄도 & 소형 전술 착탄 폭발 (GIF) | 40mm 유탄 착탄 피크 프레임(대형 화구·거대 연기 제거) |
+| --- | --- | --- |
+| [![자연스러운 건물 잔해](Docs/status_images/RuinAndGrenadePolish/03_building_natural_ruins_after.png)](Docs/status_images/RuinAndGrenadePolish/03_building_natural_ruins_after.png) | [![40mm 유탄 부드러운 발사 및 소형 착탄 GIF](Docs/status_images/RuinAndGrenadePolish/04_grenade_smooth_and_compact_impact.gif)](Docs/status_images/RuinAndGrenadePolish/04_grenade_smooth_and_compact_impact.gif) | [![40mm 유탄 소형 전술 착탄](Docs/status_images/RuinAndGrenadePolish/04_grenade_compact_impact.png)](Docs/status_images/RuinAndGrenadePolish/04_grenade_compact_impact.png) |
+| [붕괴 전](Docs/status_images/RuinAndGrenadePolish/01_building_intact_before.png) · [2발 생존](Docs/status_images/RuinAndGrenadePolish/02_building_survives_initial_hits.png) · [자연 잔해](Docs/status_images/RuinAndGrenadePolish/03_building_natural_ruins_after.png) (`BattleScars` 원형 암흑 링 제거) | [유탄 모션·착탄 GIF](Docs/status_images/RuinAndGrenadePolish/04_grenade_smooth_and_compact_impact.gif) (`speed=18`, `arc=1.6m`) | [소형 착탄 원본](Docs/status_images/RuinAndGrenadePolish/04_grenade_compact_impact.png) (`BattleFx.GrenadeImpact`) |
+
+---
+
 ## Task 44 (우선순위 GLB 8종 → 15슬롯 교체) & T45 확장 (`Map4P v4` 주요 교전 구역 20개 건물 붕괴·NavMesh 개방) 완료 (2026-11-26 · 4/4 통과)
 
 | Task 44 GLB 유닛(`military_truck`, `armored_troop_carrier`) 실인게임 적용 | T45 `Map4P v4` 교전 구역 건물 붕괴 전 → 후(잔해·먼지 VFX·NavMesh 개방) | `Map4P v4` 교전 구역 20개 파괴 가능 건물(진지 8개) 광역 뷰 |

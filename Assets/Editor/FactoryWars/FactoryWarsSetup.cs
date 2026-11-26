@@ -1476,12 +1476,12 @@ namespace FactoryWars.EditorTools {
       rules.FordSpeedMultiplier = N(0.75);
       rules.BaseAlertSeconds = 30;
       rules.CityKinds = new[] {
-        new CityKindSpec { Health = 1500, Height = 7 },
-        new CityKindSpec { Health = 3000, Height = 12 },
-        new CityKindSpec { Health = 5000, Height = 9 },
-        new CityKindSpec { Health = 3000, Height = 18 },
+        new CityKindSpec { Health = 3600, Height = 7 },
+        new CityKindSpec { Health = 6500, Height = 12 },
+        new CityKindSpec { Health = 10000, Height = 9 },
+        new CityKindSpec { Health = 6500, Height = 18 },
       };
-      rules.CityAreaMultiplier = N(1.5);
+      rules.CityAreaMultiplier = N(1.1);
       rules.GarrisonFlameMultiplier = 2;
       rules.RubbleSpeedMultiplier = N(0.7);
       rules.CollapseRadius = 6;

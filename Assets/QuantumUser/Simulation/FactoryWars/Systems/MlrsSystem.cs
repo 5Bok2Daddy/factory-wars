@@ -172,8 +172,8 @@ namespace Quantum.FactoryWars {
       delta.Y = FP._0;
       var heading = delta.SqrMagnitude > FP._0_01 ? delta.Normalized : FPVector3.Forward;
       var origin = position + FPVector3.Up * (FP._1 + FP._0_25) + heading * FP._0_75;
-      var speed = (FP)16;
-      var arc = (FP)2 + FP._0_25;
+      var speed = (FP)18;
+      var arc = FP._1 + FP._0_50 + FP._0_10;
       var flightFrames = Frames(f, (target - origin).Magnitude / speed);
       var grenade = f.Create();
       f.Add(grenade, new MlrsRocket {

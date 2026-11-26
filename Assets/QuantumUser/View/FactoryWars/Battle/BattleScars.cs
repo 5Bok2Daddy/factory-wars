@@ -74,17 +74,18 @@ namespace FactoryWars.View {
       QuantumEvent.Subscribe<EventCityBuildingDamaged>(this, e => {
         if (Take(e) && _map.CityBuildings != null && e.Index >= 0 && e.Index < _map.CityBuildings.Length) {
           var shape = _map.CityBuildings[e.Index].Shape;
-          Add(shape.Center.ToUnityVector3(), Mathf.Max(shape.HalfLength.AsFloat, shape.HalfWidth.AsFloat) + 3f, 0.15f * Mathf.Max(1, e.Stage));
+          Add(shape.Center.ToUnityVector3(), Mathf.Max(shape.HalfLength.AsFloat, shape.HalfWidth.AsFloat) + 0.8f, 0.08f * Mathf.Max(1, e.Stage));
         }
       });
       QuantumEvent.Subscribe<EventCityBuildingCollapsed>(this, e => {
         if (Take(e)) {
-          City(e.Index, 0.85f, 8f);
+          // 붕괴 흔적은 건물 부지 둘레에 자연스럽게 스며드는 은은한 먼지/그을음으로 제한(과도한 원형 갈색·암흑 링 방지).
+          City(e.Index, 0.24f, 1.4f);
         }
       });
       QuantumEvent.Subscribe<EventCityBuildingToppled>(this, e => {
         if (Take(e)) {
-          City(e.Index, 0.85f, 10f);
+          City(e.Index, 0.28f, 2.2f);
         }
       });
     }

@@ -200,23 +200,23 @@ MonoBehaviour:
     RawValue: 1966080
   CityKinds:
   - Health:
-      RawValue: 98304000
+      RawValue: 235929600
     Height:
       RawValue: 458752
   - Health:
-      RawValue: 196608000
+      RawValue: 425984000
     Height:
       RawValue: 786432
   - Health:
-      RawValue: 327680000
+      RawValue: 655360000
     Height:
       RawValue: 589824
   - Health:
-      RawValue: 196608000
+      RawValue: 425984000
     Height:
       RawValue: 1179648
   CityAreaMultiplier:
-    RawValue: 98304
+    RawValue: 72090
   GarrisonFlameMultiplier:
     RawValue: 131072
   RubbleSpeedMultiplier:

@@ -121,9 +121,9 @@ namespace FactoryWars.View {
         flight.Model.SetPositionAndRotation(position, rotation);
         if (count < MaxTrails && now >= flight.TrailAt) {
           if (isGrenade) {
-            // 40mm 유탄: 무거운 로켓 화염 대신 가벼운 연막/궤적 점만 남겨 유탄 탄도를 선명하게 표시.
-            flight.TrailAt = now + 0.09f / Mathf.Max(0.3f, GraphicsQuality.FxScale);
-            _fx.Burst(position - heading * 0.18f, new Color(0.86f, 0.84f, 0.78f, 0.7f), 0.16f);
+            // 40mm 유탄: 부드럽고 얇은 연기 궤적으로 탄도를 자연스럽게 표시.
+            flight.TrailAt = now + 0.055f / Mathf.Max(0.3f, GraphicsQuality.FxScale);
+            _fx.Burst(position - heading * 0.14f, new Color(0.88f, 0.86f, 0.80f, 0.55f), 0.10f);
           } else {
             flight.TrailAt = now + 0.075f / Mathf.Max(0.3f, GraphicsQuality.FxScale);
             _fx.MlrsExhaust(position - heading * 0.44f, heading, true);

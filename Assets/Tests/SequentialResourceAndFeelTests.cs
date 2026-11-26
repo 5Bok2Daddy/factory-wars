@@ -2332,7 +2332,7 @@ namespace FactoryWars.Tests {
       var syncSeed = 4455;
       QuantumRunner.ShutdownAll();
       yield return StartMatch(Map4PScene, 2, truce: 0, seed: syncSeed, startingTier: 3);
-      while (Verified.Number < 20) yield return null;
+      while (Verified.Number < 35) yield return null;
       var collapseTick = Verified.Number;
       var eA = CityAt(0);
       DamageCityBuildingSafe(Verified, eA, (FP)99999);
@@ -2346,9 +2346,11 @@ namespace FactoryWars.Tests {
       QuantumRunner.ShutdownAll();
       yield return StartMatch(Map4PScene, 2, truce: 0, seed: syncSeed, startingTier: 3);
       while (Verified.Number < collapseTick) yield return null;
+      Assert.AreEqual(collapseTick, Verified.Number, "Dual-client aligned to exact collapseTick");
       var eB = CityAt(0);
       DamageCityBuildingSafe(Verified, eB, (FP)99999);
       while (Verified.Number < checkTick) yield return null;
+      Assert.AreEqual(checkTick, Verified.Number, "Dual-client aligned to exact checkTick");
       var csB = Verified.CalculateChecksum();
       var colB = CitySystem.IsCollapsed(Verified, 0);
       Verified.Map.RegionMap.TryGetValue(FactoryWarsUtil.MapInfo(Verified).CityBuildings[0].Region, out var rB);
@@ -2359,6 +2361,104 @@ namespace FactoryWars.Tests {
       Assert.AreEqual(csA, csB, $"Map4P dual-client frame checksums identical after T45 collapse ({csA} == {csB})");
 
       Debug.Log($"[Task44GlbAndT45Map4P] PASS glbSlots={glbWired} map4pCities={map.CityBuildings.Length} garrisons={garrisons} movedX={movedX:F1} dualChecksum={csA}");
+    }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator RuinVisuals_BuildingDurability_AndGrenadeImpactPolish_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "RuinAndGrenadePolish"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 4601, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var rules = FactoryWarsUtil.Rules(Verified);
+      var map = FactoryWarsUtil.MapInfo(Verified);
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+
+      // 1. Building Durability: confirm upgraded CityKinds HP and that 2 heavy shell hits do NOT collapse the building!
+      Assert.GreaterOrEqual(rules.CityKinds[0].Health.AsFloat, 3500f, "Small building HP raised >= 3500");
+      Assert.GreaterOrEqual(rules.CityKinds[1].Health.AsFloat, 6000f, "Medium building HP raised >= 6000");
+      Assert.GreaterOrEqual(rules.CityKinds[2].Health.AsFloat, 9500f, "Large building HP raised >= 9500");
+
+      var c0 = CityAt(0);
+      Assert.AreNotEqual(EntityRef.None, c0, "Map4P City0 present");
+      var pos0 = map.CityBuildings[0].Shape.Center;
+      var startHp = Verified.Get<CityBuilding>(c0).Health.AsFloat;
+      Assert.AreEqual(rules.CityKinds[0].Health.AsFloat, startHp, "City0 starts at upgraded full HP");
+
+      rts.Height = 32f;
+      rts.MoveTo(new Vector2(pos0.X.AsFloat, pos0.Z.AsFloat));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "01_building_intact_before.png"), 1920, 1080);
+
+      // Simulate 2 tank shell hits (2 x 300 = 600 damage) -> must survive intact without collapsing!
+      DamageCityBuildingSafe(Verified, c0, (FP)300);
+      yield return WaitFrames(4);
+      DamageCityBuildingSafe(Verified, c0, (FP)300);
+      yield return WaitFrames(6);
+      Assert.IsFalse(CitySystem.IsCollapsed(Verified, 0), "Building survives initial 2 shell hits without collapsing");
+      var hpAfter2Hits = Verified.Get<CityBuilding>(c0).Health.AsFloat;
+      Assert.Greater(hpAfter2Hits, startHp * 0.75f, $"Building retains >75% HP after 2 hits ({hpAfter2Hits:F0}/{startHp:F0})");
+      CaptureCameraPng(camera, Path.Combine(dir, "02_building_survives_initial_hits.png"), 1920, 1080);
+
+      // Sustained barrage -> collapse into natural cohesive concrete ruins (NO dark crater ring!)
+      DamageCityBuildingSafe(Verified, c0, (FP)99999);
+      if (Game?.Frames?.Predicted != null && Game.Frames.Predicted.Exists(c0)) DamageCityBuildingSafe(Game.Frames.Predicted, c0, (FP)99999);
+      yield return WaitFrames(18);
+      Assert.IsTrue(CitySystem.IsCollapsed(Verified, 0), "Building collapses after sustained lethal barrage");
+      Assert.IsTrue(Verified.Map.RegionMap.TryGetValue(map.CityBuildings[0].Region, out var reg0));
+      Assert.IsTrue(IsNavRegionEnabled(Verified, reg0), "NavMesh region opens after collapse");
+      // Wait for initial collapse dust to settle so ruin foundation & Synty debris are clearly visible
+      yield return WaitFrames(Fps * 2);
+      CaptureCameraPng(camera, Path.Combine(dir, "03_building_natural_ruins_after.png"), 1920, 1080);
+
+      // 2. Toned-down 40mm Grenade Impact VFX & Smooth Firing Motion (clean intersection away from collapse site)
+      UnlockSmallUpgrade(Verified, 0);
+      if (Game?.Frames?.Predicted != null) UnlockSmallUpgrade(Game.Frames.Predicted, 0);
+      var shooterPos = new FPVector3(-64, 0, -64);
+      var targetPos  = new FPVector3(-54, 0, -64);
+      var shooter = SpawnUnitByName(Verified, 0, "ff_ranger_squad", shooterPos);
+      var target  = SpawnUnitByName(Verified, 1, "cf_militia", targetPos);
+      yield return WaitFrames(6);
+
+      rts.Height = 19f;
+      rts.MoveTo(new Vector2(-59f, -64f));
+      rts.Apply();
+      yield return WaitFrames(4);
+
+      var impacted = false;
+      var impactSub = QuantumEvent.Subscribe<EventMlrsImpact>(Battle(), _ => impacted = true);
+      MlrsSystem.LaunchInfantryGrenade(Verified, shooter, 0, shooterPos, targetPos);
+      if (Game?.Frames?.Predicted != null) MlrsSystem.LaunchInfantryGrenade(Game.Frames.Predicted, shooter, 0, shooterPos, targetPos);
+
+      var sawCompactGrenade = false;
+      var capturedImpact = false;
+      for (var i = 0; i < 14; i++) {
+        yield return WaitFrames(2);
+        foreach (var pair in Verified.GetComponentIterator<MlrsRocket>()) {
+          if (MlrsRocketView.IsGrenadeRound(pair.Component)) sawCompactGrenade = true;
+        }
+        CaptureCameraPng(camera, Path.Combine(frames, $"gl_polish_{i:00}.png"), 960, 540);
+        if (impacted && !capturedImpact) {
+          capturedImpact = true;
+          CaptureCameraPng(camera, Path.Combine(dir, "04_grenade_compact_impact.png"), 1920, 1080);
+        }
+      }
+      QuantumEvent.Unsubscribe(impactSub);
+      if (!capturedImpact) CaptureCameraPng(camera, Path.Combine(dir, "04_grenade_compact_impact.png"), 1920, 1080);
+      Assert.IsTrue(sawCompactGrenade, "40mm grenade round flew on smooth low-parabolic launcher arc");
+      Assert.IsTrue(impacted, "40mm grenade impacted target cleanly");
+      Debug.Log($"[RuinAndGrenadePolish] PASS startHp={startHp:F0} hpAfter2Hits={hpAfter2Hits:F0} navOpen=True glCompact={sawCompactGrenade} impacted={impacted}");
     }
   }
 }

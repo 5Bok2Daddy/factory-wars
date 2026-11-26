@@ -101,6 +101,43 @@ namespace FactoryWars.View {
       }
     }
 
+    /// <summary>40mm 유탄발사기 착탄 전용 소형 전술 폭발(대형 MLRS 폭격·거대 갈색 연기 링 제거, 컴팩트 섬광·파편·짧은 연기).</summary>
+    public void GrenadeImpact(Vector3 position, float radius) {
+      GameAudio.PlayAt(SoundEvent.Explosion, position);
+      Shake(0.035f);
+      var core = position + Vector3.up * 0.28f;
+      Emit(_flash, core, Vector3.zero, 1.55f, 0.16f, FlashCore);
+      for (var i = 0; i < 3; i++) {
+        var offset = new Vector3(Random.Range(-0.35f, 0.35f), Random.Range(0.05f, 0.35f), Random.Range(-0.35f, 0.35f));
+        Emit(_glow, core + offset, offset * 1.4f + Vector3.up * 0.9f, 1.05f, 0.24f, Flame);
+      }
+      for (var i = 0; i < 8; i++) {
+        var ang = i * (Mathf.PI * 2f / 8f) + Random.Range(-0.2f, 0.2f);
+        var vel = new Vector3(Mathf.Cos(ang) * Random.Range(2.2f, 4.2f), Random.Range(1.6f, 3.2f), Mathf.Sin(ang) * Random.Range(2.2f, 4.2f));
+        Emit(_needle, core, vel, 0.045f, 0.18f, Spark);
+      }
+      for (var i = 0; i < 4; i++) {
+        var drift = new Vector3(Random.Range(-0.45f, 0.45f), Random.Range(0.9f, 1.6f), Random.Range(-0.45f, 0.45f));
+        Emit(_smoke, core + Vector3.up * 0.15f, drift, Random.Range(0.65f, 0.95f), 0.58f, SmokeGray);
+      }
+    }
+
+    /// <summary>건물 붕괴 전용 국소 콘크리트 먼지·파편 버스트(바닥에 어두운 원형 크레이터·거대 갈색 링 없음).</summary>
+    public void CollapseBurst(Vector3 position, float size) {
+      GameAudio.PlayAt(SoundEvent.Explosion, position);
+      Shake(0.10f);
+      var dustCol = new Color(0.78f, 0.77f, 0.73f, 0.52f);
+      for (var i = 0; i < 8; i++) {
+        var ang = i * (Mathf.PI * 2f / 8f);
+        var dir = new Vector3(Mathf.Cos(ang), 0.35f, Mathf.Sin(ang));
+        Emit(_smoke, position + dir * 1.1f, dir * 1.2f + Vector3.up * 0.7f, Mathf.Clamp(size * 0.9f, 0.9f, 1.4f), 0.95f, dustCol);
+      }
+      for (var i = 0; i < 6; i++) {
+        var vel = new Vector3(Random.Range(-2.5f, 2.5f), Random.Range(1.8f, 3.6f), Random.Range(-2.5f, 2.5f));
+        Emit(_needle, position, vel, 0.05f, 0.25f, Spark);
+      }
+    }
+
     // 비행 중인 미사일: 2차 베지어(위로 솟는 조종점 + 옆 흔들림)를 따라 머리 불꽃과 연기를 뿌린다.
     class Flight {
       public Vector3 From, Control, To;

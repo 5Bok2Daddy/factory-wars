@@ -47,10 +47,11 @@ namespace FactoryWars.Tests {
       var stages = new List<int>();
       QuantumEvent.Subscribe<EventCityBuildingDamaged>(_listener, e => stages.Add(e.Stage));
       yield return WaitFrames(3 * Fps);
-      Assert.AreEqual(1500f, CityHealth(0), "자동 조준 대상이 아님");
+      var fullHp = FactoryWarsUtil.Rules(Verified).CityKinds[0].Health.AsFloat;
+      Assert.AreEqual(fullHp, CityHealth(0), "자동 조준 대상이 아님");
       yield return Send(0, new AttackTargetCommand { Units = UnitsNamed(0, "ff_eagle_tank").ToArray(), Target = CityAt(0) });
       Time.timeScale = 12f;
-      yield return WaitFor(() => CityHealth(0) < 1500f * 0.6f, 60f, "금 간 단계");
+      yield return WaitFor(() => CityHealth(0) < fullHp * 0.6f, 90f, "금 간 단계");
       Time.timeScale = TimeScale;
       Assert.Contains(1, stages, "단계 이벤트");
     }

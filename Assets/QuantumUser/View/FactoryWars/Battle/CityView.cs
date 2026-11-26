@@ -52,11 +52,12 @@ namespace FactoryWars.View {
       }
       var keep = block.Rubble == false || placement.Topples;
       block.Dressed.SetActive(keep);
-      block.Renderer.enabled = keep == false;
+      var hasSyntyRuins = block.Ruins != null && block.Ruins.transform.childCount > 0;
+      block.Renderer.enabled = keep == false && hasSyntyRuins == false;
       if (keep && placement.Topples == false) {
         block.Dressed.transform.localScale = new Vector3(block.BaseScale.x, block.BaseScale.y * (stage >= 2 ? 0.72f : 1f), block.BaseScale.z);
       }
-      DressingSpawn.Soot(block.Dressed, stage <= 0 ? 0f : stage == 1 ? 0.55f : 0.85f);
+      DressingSpawn.Soot(block.Dressed, stage <= 0 ? 0f : stage == 1 ? 0.35f : 0.62f);
     }
 
     readonly Transform _root;
@@ -142,12 +143,13 @@ namespace FactoryWars.View {
     static Mesh RubbleMesh() {
       if (_rubble == null) {
         var kit = new MeshKit();
-        kit.Paint(Swatch.Dirt).Box(new Vector3(0, 0.05f, 0), new Vector3(1.05f, 0.1f, 1.05f));
-        kit.ShadeFaces(91, Swatch.BoulderDark, Swatch.ConcreteDark, Swatch.Concrete);
-        for (var i = 0; i < 9; i++) {
-          var a = i * 2.4f;
-          var r = 0.12f + 0.3f * ((i * 37) % 10) / 10f;
-          kit.Rock(new Vector3(Mathf.Cos(a) * r, 0.1f, Mathf.Sin(a) * r), 0.12f + 0.06f * (i % 3), 0.14f, 200 + i);
+        kit.Paint(Swatch.Concrete).Box(new Vector3(0, 0.04f, 0), new Vector3(0.94f, 0.08f, 0.94f));
+        kit.Paint(Swatch.ConcreteDark).Box(new Vector3(0, 0.07f, 0), new Vector3(0.82f, 0.06f, 0.82f));
+        kit.ShadeFaces(91, Swatch.ConcreteDark, Swatch.Concrete, Swatch.Boulder);
+        for (var i = 0; i < 6; i++) {
+          var a = i * 1.05f + 0.35f;
+          var r = 0.14f + 0.22f * ((i * 29) % 10) / 10f;
+          kit.Box(new Vector3(Mathf.Cos(a) * r, 0.11f, Mathf.Sin(a) * r), new Vector3(0.18f, 0.12f, 0.14f));
         }
         kit.EndShade();
         _rubble = kit.ToMesh("city_rubble");
@@ -233,13 +235,23 @@ namespace FactoryWars.View {
       }
       var ruins = new GameObject("Ruins").transform;
       ruins.SetParent(root, false);
+      // 자연스러운 도심 콘크리트 기초 패드(어두운 원형 크레이터·갈색 흙판 대체) + Synty 폐허/잔해 군집.
+      var ruinPad = Item(ruins, "RuinFoundation", PadMesh(), false);
+      ruinPad.transform.localScale = new Vector3(shape.HalfLength.AsFloat * 1.88f, 0.7f, shape.HalfWidth.AsFloat * 1.88f);
+      var coreRuin = DressingSpawn.Place(DressKind.Ruin, ruins, new Vector3(0f, 0.06f, 0f), (index * 90f) % 360f, 7001 + index * 17);
+      if (coreRuin != null) {
+        coreRuin.name = "RuinCore";
+        coreRuin.transform.localScale *= Mathf.Clamp(Mathf.Min(length, width) / 8.5f, 0.72f, 1.15f);
+        DressingSpawn.Soot(coreRuin, 0.24f);
+      }
       for (var r = 0; r < 3; r++) {
-        var angle = (index * 1.9f + r * 2.1f) % (Mathf.PI * 2f);
-        var offset = new Vector3(Mathf.Cos(angle) * shape.HalfLength.AsFloat * 0.65f, 0.08f, Mathf.Sin(angle) * shape.HalfWidth.AsFloat * 0.65f);
-        var part = DressingSpawn.Place(r == 2 ? DressKind.Debris : DressKind.Ruin, ruins, offset, r * 90f + index * 23f, 7001 + index * 17 + r);
+        var angle = (index * 1.7f + r * 2.09f) % (Mathf.PI * 2f);
+        var offset = new Vector3(Mathf.Cos(angle) * shape.HalfLength.AsFloat * 0.44f, 0.06f, Mathf.Sin(angle) * shape.HalfWidth.AsFloat * 0.44f);
+        var part = DressingSpawn.Place(r == 0 ? DressKind.Ruin : DressKind.Debris, ruins, offset, r * 90f + index * 29f, 7051 + index * 19 + r);
         if (part != null) {
           part.name = "RuinPart";
-          DressingSpawn.Soot(part, 0.75f);
+          part.transform.localScale *= (r == 0 ? 0.78f : 0.85f);
+          DressingSpawn.Soot(part, 0.26f);
         }
       }
       block.Ruins = ruins.gameObject;
@@ -463,10 +475,16 @@ namespace FactoryWars.View {
 
     void Crumble(Block block, CityBuildingPlacement placement) {
       block.Rubble = true;
-      Fx?.Explosion(block.Root.transform.position + Vector3.up * 2f, 2.4f);
-      Fx?.GroundDust(block.Root.transform.position);
+      Fx?.CollapseBurst(block.Root.transform.position + Vector3.up * 1.3f, 1.35f);
       block.Filter.sharedMesh = RubbleMesh();
       block.Pivot.localRotation = Quaternion.identity;
+      // 붕괴 시 진지용 모래주머니·문 판자가 공중에 떠 남지 않도록 함께 숨긴다.
+      foreach (Transform child in block.Root.transform) {
+        if (child.name == "Sandbags") child.gameObject.SetActive(false);
+      }
+      foreach (Transform child in block.Pivot) {
+        if (child.name == "Board") child.gameObject.SetActive(false);
+      }
       ShowDressed(block, placement, 3);
       if (block.Marker != null) {
         block.Marker.SetActive(false);
