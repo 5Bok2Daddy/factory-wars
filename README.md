@@ -12,7 +12,7 @@
 | 전맵 자원 보급 사이클 (적치→트럭 수거→사령부 납품→재순환, GIF) | 사령부 납품 완료 플로팅 `+120 철` 피드백 (`stock 500→740`) | 사령부 Tier 1 · Tier 2 · Tier 3 외형 증설 비교 |
 | --- | --- | --- |
 | [![전맵 자원 보급 사이클 GIF](Docs/status_images/SupplyAndHqTiers/full_map_supply_cycle.gif)](Docs/status_images/SupplyAndHqTiers/full_map_supply_cycle.gif) | [![사령부 +120 철 플로팅 피드백](Docs/status_images/SupplyAndHqTiers/hq_delivery_gain_popup.png)](Docs/status_images/SupplyAndHqTiers/hq_delivery_gain_popup.png) | [![사령부 1~3티어 비교](Docs/status_images/SupplyAndHqTiers/hq_tiers_1_2_3_comparison.png)](Docs/status_images/SupplyAndHqTiers/hq_tiers_1_2_3_comparison.png) |
-| [보급 사이클 GIF](Docs/status_images/SupplyAndHqTiers/full_map_supply_cycle.gif) (18프레임) · 14종 유닛 공격 GIF (`Docs/status_images/UnitAttackGifs/`) | [사령부 납품 피드백 원본](Docs/status_images/SupplyAndHqTiers/hq_delivery_gain_popup.png) (`BattleView.SpawnHqResourceGainPopup`) | [T1](Docs/status_images/SupplyAndHqTiers/hq_tier_1.png) · [T2](Docs/status_images/SupplyAndHqTiers/hq_tier_2.png) · [T3](Docs/status_images/SupplyAndHqTiers/hq_tier_3.png) (`HeroVisuals.AttachHqTierUpgrade`) |
+| [보급 사이클 GIF](Docs/status_images/SupplyAndHqTiers/full_map_supply_cycle.gif) (18프레임) · 14종 유닛 공격 GIF (`Docs/status_images/UnitAttackGifs/`) | [사령부 납품 피드백 원본](Docs/status_images/SupplyAndHqTiers/hq_delivery_gain_popup.png) (`BattleView.SpawnHqResourceGainPopup`) | **승인 시안 적용:** [T1](Docs/status_images/SupplyAndHqTiers/hq_tier_1.png) · [T2](Docs/status_images/SupplyAndHqTiers/hq_tier_2.png) · [T3](Docs/status_images/SupplyAndHqTiers/hq_tier_3.png) (`HqTierKitTools` + `HeroVisuals`) |
 
 ---
 

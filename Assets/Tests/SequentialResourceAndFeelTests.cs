@@ -2580,8 +2580,8 @@ namespace FactoryWars.Tests {
           break;
         }
       }
-      rts.Height = 32f;
-      rts.MoveTo(new Vector2(hqPos.X.AsFloat, hqPos.Z.AsFloat));
+      rts.Height = 38f;
+      rts.MoveTo(new Vector2(hqPos.X.AsFloat, hqPos.Z.AsFloat + 1.5f));
       rts.Apply();
       yield return WaitFrames(8);
       CaptureCameraPng(camera, Path.Combine(dir, "hq_tier_1.png"), 1920, 1080);

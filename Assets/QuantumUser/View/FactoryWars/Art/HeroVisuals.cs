@@ -392,24 +392,39 @@ namespace FactoryWars.View {
       return root;
     }
 
-    /// <summary>사령부 티어(1→2→3) 증설 비주얼: Synty 군사 프리팹(레이더·방벽·보급품·감시탑·지휘 막사)을 건물 외곽 에이프런에 배치(지붕 관통 없음).</summary>
+    /// <summary>
+    /// 승인된 사령부(HQ) 1→2→3단계 컨셉 시안 증설 비주얼:
+    /// - Tier 1: 기본 야전 막사 본관(Barracks + 위장 텐트 + 모래주머니 + 보급품)
+    /// - Tier 2: 좌·우 작전통제실 윙(Drone Control Room) + 비상 발전기 + 회전 이동식 레이더 + 좌측 8륜 지휘 장갑차(GLB APC)
+    /// - Tier 3: 대형 관제탑(ControlTower) + 외곽 감시탑 + 강화 콘크리트 방벽 + 투광등 + 좌측 후방 헬리패드 & 지휘 헬기(GLB Little Bird)
+    /// </summary>
     public static GameObject AttachHqTierUpgrade(Transform model, int tier, float footprint, float modelHeight) {
       if (model == null || tier <= 1) return null;
       var root = new GameObject($"HqTierUpgrade_T{tier}");
       root.transform.SetParent(model.parent != null ? model.parent : model, false);
       root.transform.localPosition = Vector3.zero;
       root.transform.localRotation = Quaternion.identity;
-      var side = Mathf.Max(footprint * 1.48f, 6.4f);
-      var front = Mathf.Max(footprint * 1.32f, 5.6f);
-      // Tier 2: 우측 이동식 레이더 안테나 + 전면 방어 모래주머니 진지 + 좌측 보급 화물 더미.
-      MapPolishArt.Place("Radar", root.transform, new Vector3(side, 0f, 1.6f), Quaternion.Euler(0f, -35f, 0f), new Vector3(3.4f, 4.6f, 3.4f));
-      MapPolishArt.Place("Sandbags", root.transform, new Vector3(0f, 0f, -front), Quaternion.identity, new Vector3(6.8f, 1.25f, 1.35f));
-      MapPolishArt.Place("Crates", root.transform, new Vector3(-side, 0f, -2.0f), Quaternion.Euler(0f, 15f, 0f), new Vector3(2.4f, 1.8f, 2.4f));
+
+      // Tier 2 (Comms & Ops HQ): 좌·우 컨테이너 작전통제실 윙 + 비상 발전기 + 회전 레이더 + 좌측 지휘 장갑차(APC).
+      MapPolishArt.Place("HqControlRoom1", root.transform, new Vector3(-5.6f, 0f, 0.8f), Quaternion.Euler(0f, 90f, 0f), new Vector3(5.0f, 2.9f, 2.8f));
+      MapPolishArt.Place("HqControlRoom2", root.transform, new Vector3(5.6f, 0f, 0.8f), Quaternion.Euler(0f, -90f, 0f), new Vector3(5.0f, 2.9f, 2.8f));
+      MapPolishArt.Place("HqGenerator", root.transform, new Vector3(7.0f, 0f, -2.1f), Quaternion.Euler(0f, -90f, 0f), new Vector3(2.2f, 1.8f, 1.6f));
+      MapPolishArt.Place("Radar", root.transform, new Vector3(4.2f, 0f, -5.2f), Quaternion.Euler(0f, -32f, 0f), new Vector3(3.1f, 4.1f, 3.1f));
+      MapPolishArt.Place("HqCmdApc", root.transform, new Vector3(-5.0f, 0f, -5.1f), Quaternion.Euler(0f, 142f, 0f), new Vector3(2.5f, 2.6f, 5.6f));
+
       if (tier >= 3) {
-        // Tier 3: 좌측 후방 전략 감시탑 + 우측 전면 지휘 위장막 + 좌측 전면 서치라이트(고티어 전략 지휘부 실루엣).
-        MapPolishArt.Place("Tower", root.transform, new Vector3(-side - 0.3f, 0f, 3.2f), Quaternion.Euler(0f, 25f, 0f), new Vector3(3.2f, Mathf.Clamp(modelHeight + 3.2f, 7.6f, 9.8f), 3.2f));
-        MapPolishArt.Place("CamoYard", root.transform, new Vector3(side + 0.4f, 0f, -2.8f), Quaternion.Euler(0f, -90f, 0f), new Vector3(4.2f, 3.2f, 4.0f));
-        MapPolishArt.Place("Light", root.transform, new Vector3(-side + 0.8f, 0f, -front + 0.4f), Quaternion.Euler(0f, 140f, 0f), new Vector3(1.2f, 3.6f, 1.2f));
+        // Tier 3 (Strategic Command HQ): 후방 좌측 대형 관제탑 + 전방 좌측 감시탑 + 전방 우측 헬리패드 & 리틀버드 지휘 헬기 + 비왜곡 방호벽/투광등.
+        MapPolishArt.Place("HqControlTower", root.transform, new Vector3(6.6f, 0f, -6.4f), Quaternion.Euler(0f, 180f, 0f), new Vector3(4.2f, 10.2f, 4.2f));
+        MapPolishArt.Place("Tower", root.transform, new Vector3(7.4f, 0f, 5.8f), Quaternion.Euler(0f, -20f, 0f), new Vector3(2.8f, 6.2f, 2.8f));
+        MapPolishArt.Place("HqHelipad", root.transform, new Vector3(-5.0f, 0.04f, 6.2f), Quaternion.identity, new Vector3(6.6f, 0.14f, 6.6f));
+        MapPolishArt.Place("HqCmdHeli", root.transform, new Vector3(-5.0f, 0.16f, 6.2f), Quaternion.Euler(0f, 138f, 0f), new Vector3(5.2f, 2.1f, 5.0f));
+        // 왜곡 없는 1:1 비율 콘크리트 방호벽(Jersey) 좌·우·후면 정렬 배치.
+        MapPolishArt.Place("Jersey", root.transform, new Vector3(-9.2f, 0f, 1.0f), Quaternion.Euler(0f, 90f, 0f), new Vector3(3.4f, 1.5f, 1.1f));
+        MapPolishArt.Place("Jersey", root.transform, new Vector3(-9.2f, 0f, 4.8f), Quaternion.Euler(0f, 90f, 0f), new Vector3(3.4f, 1.5f, 1.1f));
+        MapPolishArt.Place("Jersey", root.transform, new Vector3(9.2f, 0f, 1.0f), Quaternion.Euler(0f, -90f, 0f), new Vector3(3.4f, 1.5f, 1.1f));
+        MapPolishArt.Place("Jersey", root.transform, new Vector3(9.2f, 0f, 4.8f), Quaternion.Euler(0f, -90f, 0f), new Vector3(3.4f, 1.5f, 1.1f));
+        MapPolishArt.Place("HqFloodlight", root.transform, new Vector3(-8.2f, 0f, 8.2f), Quaternion.Euler(0f, 135f, 0f), new Vector3(1.4f, 4.4f, 1.4f));
+        MapPolishArt.Place("HqFloodlight", root.transform, new Vector3(8.2f, 0f, 8.2f), Quaternion.Euler(0f, -135f, 0f), new Vector3(1.4f, 4.4f, 1.4f));
       }
       return root;
     }

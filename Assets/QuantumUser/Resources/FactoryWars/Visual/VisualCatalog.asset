@@ -441,10 +441,10 @@ MonoBehaviour:
     Prefabs:
     - {fileID: 6200461022738350318, guid: c269941d4078afb4c8c516a62369ceea, type: 3}
     Scale: 0.570736
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: 0.39999962}
-    Size: {x: 17.80955, y: 21.375908, z: 18.539818}
+    PivotOffset: {x: -0.6920829, y: -0, z: -0}
+    Size: {x: 11.54445, y: 4.728877, z: 12.28887}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -453,7 +453,8 @@ MonoBehaviour:
     DeathSeconds: 0
     Lifetime: 2
     RealWorld: 1
-    Notes: Synty Headquarters (BattleRoyale + Military + Construction)
+    Notes: Approved Tier 1 Field HQ (Barracks + Camo Tent + Sandbags + Crates; Tier
+      2/3 attached dynamically)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -468,10 +469,10 @@ MonoBehaviour:
     Prefabs:
     - {fileID: 6044656591333499088, guid: 47a1219831601a244817e5d16bedceea, type: 3}
     Scale: 0.570736
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: 0.39999962}
-    Size: {x: 17.80955, y: 21.375908, z: 18.539818}
+    PivotOffset: {x: -0.6920829, y: -0, z: -0}
+    Size: {x: 11.54445, y: 4.728877, z: 12.28887}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -480,7 +481,8 @@ MonoBehaviour:
     DeathSeconds: 0
     Lifetime: 2
     RealWorld: 1
-    Notes: Synty Headquarters (BattleRoyale + Military + Construction)
+    Notes: Approved Tier 1 Field HQ (Barracks + Camo Tent + Sandbags + Crates; Tier
+      2/3 attached dynamically)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
