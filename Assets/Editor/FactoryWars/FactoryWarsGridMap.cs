@@ -162,9 +162,47 @@ namespace FactoryWars.EditorTools {
       bool At(int r, int c, params char[] kinds) => r >= 0 && c >= 0 && r < GridCells && c < GridCells && kinds.Contains(g[r, c]);
       var terrain = new List<TerrainFeature>();
 
-      // 경계 + 도시 건물.
+      // T45 확장: Map4P v4 주요 교전 구역의 4방향 회전 대칭 도시 건물 5군집 × 4좌석 = 20개 파괴 가능 건물(NavMesh 개방 연동).
+      var destructibleH = new HashSet<(int, int)>();
+      var explicitCities = new List<CityBuildingPlacement>();
+      var t45Seeds = new (int R0, int C0, int R1, int C1, int Kind, bool Garrison)[] {
+        (49, 33, 49, 33, KindSmall, true),   // 중앙 PMC 외곽 링도로 근접 초소/진지
+        (51, 31, 51, 31, KindSmall, true),   // 대각 간선 교전 요충 진지
+        (53, 35, 54, 35, KindMedium, false), // 남/동/북/서 접근로 중형 건물
+        (57, 30, 58, 31, KindLarge, false),  // 중원 교차로 대형 블록
+        (48, 22, 49, 22, KindMedium, false), // 외곽 순환 교전 구역 중형 건물
+      };
+      for (var seat = 0; seat < 4; seat++) {
+        foreach (var seed in t45Seeds) {
+          var cells = new List<(int R, int C)>();
+          for (var r = seed.R0; r <= seed.R1; r++) {
+            for (var c = seed.C0; c <= seed.C1; c++) {
+              var turned = TurnCell(r, c, seat);
+              if (g[turned.R, turned.C] == 'H') {
+                cells.Add(turned);
+              }
+            }
+          }
+          if (cells.Count == 0) continue;
+          foreach (var cell in cells) destructibleH.Add(cell);
+          var r0 = cells.Min(x => x.R);
+          var r1 = cells.Max(x => x.R);
+          var c0 = cells.Min(x => x.C);
+          var c1 = cells.Max(x => x.C);
+          var idx = explicitCities.Count;
+          explicitCities.Add(new CityBuildingPlacement {
+            Shape = CellRect((r0, c0, r1, c1), 0.6f),
+            Kind = seed.Kind,
+            Garrison = seed.Garrison,
+            Region = $"City{idx}",
+            FallRegion = "",
+          });
+        }
+      }
+
+      // 경계 + 정적 도시 건물(T45 파괴 가능 건물 칸은 제외하여 City{i} NavMesh 영역으로 굽는다).
       terrain.AddRange(MergeCells((r, c) => g[r, c] == 'E').Select(cells => Feature(TerrainKind.Wall, CellRect(cells))));
-      terrain.AddRange(MergeCells((r, c) => g[r, c] == 'H').Select(cells => Feature(TerrainKind.Wall, CellRect(cells, 0.6f))));
+      terrain.AddRange(MergeCells((r, c) => g[r, c] == 'H' && destructibleH.Contains((r, c)) == false).Select(cells => Feature(TerrainKind.Wall, CellRect(cells, 0.6f))));
 
       // 본진: 네 모서리의 헬기장(p)에서 B·p·v로 이어진 칸.
       var corners = new[] { (GridCells - 8, 8), (GridCells - 8, GridCells - 9), (7, GridCells - 9), (7, 8) }; // 자리 0 남서, 1 남동, 2 북동, 3 북서
@@ -374,6 +412,7 @@ namespace FactoryWars.EditorTools {
         ShipyardZoneSeats = naval.ZoneSeats,
         ShipyardZoneSmallOnly = naval.ZoneSmall,
         Harbours = naval.Harbours,
+        ExplicitCityBuildings = explicitCities.ToArray(),
       };
     }
 

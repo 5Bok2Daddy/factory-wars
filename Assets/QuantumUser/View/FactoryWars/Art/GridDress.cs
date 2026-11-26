@@ -221,6 +221,25 @@ namespace FactoryWars.View {
       Vector3 Center(int r0, int c0, int h, int w) => new Vector3(GridMapView.CellX(map, c0 + (w - 1) / 2f), 0.02f, GridMapView.CellZ(map, r0 + (h - 1) / 2f));
       bool Free(int r, int c, char ch) => r >= 0 && c >= 0 && r < n && c < n && !covered[r, c] && GridMapView.Cell(map, r, c) == ch;
 
+      // T45 확장: MapSpec.CityBuildings에 등록된 파괴 가능 건물 칸은 CityView가 전담하므로 정적 GridDress에서 제외한다.
+      if (map.CityBuildings != null && map.CityBuildings.Length > 0) {
+        for (var r = 0; r < n; r++) {
+          for (var c = 0; c < n; c++) {
+            if (GridMapView.Cell(map, r, c) != 'H') continue;
+            var cellCenter = new Photon.Deterministic.FPVector3(
+              Photon.Deterministic.FP.FromFloat_UNSAFE(GridMapView.CellX(map, c)),
+              Photon.Deterministic.FP._0,
+              Photon.Deterministic.FP.FromFloat_UNSAFE(GridMapView.CellZ(map, r)));
+            for (var b = 0; b < map.CityBuildings.Length; b++) {
+              if (map.CityBuildings[b].Shape.Distance(cellCenter) <= Photon.Deterministic.FP._0) {
+                covered[r, c] = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
       // ---- 도시 건물(H): 2×2 → 가로 2 → 세로 2 → 1칸. 해시로 묶음 크기를 섞는다.
       for (var r = 0; r < n; r++) {
         for (var c = 0; c < n; c++) {

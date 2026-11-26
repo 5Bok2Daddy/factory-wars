@@ -120,12 +120,12 @@ MonoBehaviour:
   - Id: unit/ff_hawk_gunship
     Category: 0
     Prefabs:
-    - {fileID: 1122909871716784, guid: b108d85799ddb2148973fd94b0d538d6, type: 3}
+    - {fileID: 2032758757456418544, guid: 3357f609a8359b44db62ad06bb72244b, type: 3}
     Scale: 0.3750863
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: -0, y: -0.00000047683716, z: 1.7168303}
-    Size: {x: 13.629078, y: 4.4202275, z: 17.06274}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 9.747606, y: 4.733603, z: 14}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -133,8 +133,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 heli_a / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (apache_1.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -805,12 +805,12 @@ MonoBehaviour:
   - Id: building/ff_heavy_works
     Category: 1
     Prefabs:
-    - {fileID: 6219384175142781930, guid: 60a0c69ee4ac29241a8b8b3909ac690c, type: 3}
+    - {fileID: 2511330396004653271, guid: 6d38e4009350ed74796ec457ee51aaca, type: 3}
     Scale: 0.30339816
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: -0, y: 0.62191296, z: -0.0000038146973}
-    Size: {x: 30.633257, y: 15.565816, z: 36.25599}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 11.421524, y: 4.952018, z: 18}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -818,8 +818,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 1
-    Notes: Synty Heavy Works (Military + Construction Crane & Girders)
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (old_factory_free.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -1118,12 +1118,12 @@ MonoBehaviour:
   - Id: building/cf_heavy_works
     Category: 1
     Prefabs:
-    - {fileID: 5417260038981246024, guid: be66fcf501c68a24ab005e7b71d4152b, type: 3}
+    - {fileID: 2511330396004653271, guid: 6d38e4009350ed74796ec457ee51aaca, type: 3}
     Scale: 0.30339816
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: -0, y: 0.62191296, z: -0.0000038146973}
-    Size: {x: 30.633257, y: 15.565816, z: 36.25599}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 11.421524, y: 4.952018, z: 18}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -1131,8 +1131,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 1
-    Notes: Synty Heavy Works (Military + Construction Crane & Girders)
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (old_factory_free.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -1220,12 +1220,12 @@ MonoBehaviour:
   - Id: unit/logistics_truck
     Category: 0
     Prefabs:
-    - {fileID: 2955361136377676643, guid: 970dd4acf2c4c134f8219999c43bc462, type: 3}
+    - {fileID: 5625938314851790250, guid: 0915380347f7e9a4c933390e4460cf95, type: 3}
     Scale: 1.0906119
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: -0, y: -0.0033870935, z: -0.6808622}
-    Size: {x: 3.0521638, y: 3.38379, z: 6.876873}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 2.8591764, y: 3.4391656, z: 7.7999997}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -1233,9 +1233,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 1
-    Notes: Synty PolygonMilitary SM_Veh_Truck_01 + SM_Veh_Truck_01_Canopy (project
-      kit + Cargo crates); wreck SM_Veh_Truck_01_Destroyed + SM_Veh_Truck_01_Canopy_Destroyed
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (military_truck.glb)
     TurretPart: 
     WreckPrefab: {fileID: 6621951340863246435, guid: f4b3a6ad2ff4f214cab3281faf5df71f, type: 3}
     BarrelPart: 
@@ -1325,12 +1324,12 @@ MonoBehaviour:
   - Id: unit/cf_gale_gunship
     Category: 0
     Prefabs:
-    - {fileID: 7584921254609652674, guid: a75c0547adcad574fb80e5c9d656cd31, type: 3}
+    - {fileID: 6322026646368902333, guid: 36a09f2ec609b9949a80e89bbde82b6f, type: 3}
     Scale: 0.61700416
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0.01392293, y: 0.012161255, z: 1.0140619}
-    Size: {x: 7.935976, y: 3.078089, z: 10.372702}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 9, y: 3.3609743, z: 8.531094}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -1338,8 +1337,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 heli_b / \uC0C9 \uBCC0\uD615 Helicopters_01_C"
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (mh-6_little_bird_low_poly.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -2525,12 +2524,12 @@ MonoBehaviour:
   - Id: unit/cf_apc_transport
     Category: 0
     Prefabs:
-    - {fileID: 695797729918709968, guid: 9066991037499e04aaa5c9585a8434ca, type: 3}
+    - {fileID: 8469139368674420241, guid: c2485b21889df5e41913562002d688e5, type: 3}
     Scale: 0.95138085
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: -0, y: -0, z: -0.037368774}
-    Size: {x: 3.3412054, y: 2.2348073, z: 5.255519}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 2.9072518, y: 3.4993017, z: 7.2}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -2538,8 +2537,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 apc / \uC0C9 \uBCC0\uD615 Land_Vehicles_05"
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (armored_troop_carrier.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -2998,16 +2997,12 @@ MonoBehaviour:
   - Id: dress/CityMedium
     Category: 3
     Prefabs:
-    - {fileID: 126382, guid: e390f42c7625c914e9082218b571c91a, type: 3}
-    - {fileID: 151176, guid: c498c5a0f7820b142b3b929366f2cf35, type: 3}
-    - {fileID: 198584, guid: f9c5e344bb1131f4f83e34b3f8cae927, type: 3}
-    - {fileID: 143728, guid: ea45161d31d19c540af5f5091648f652, type: 3}
-    - {fileID: 115170, guid: 6c5d6f00dd2f1d34e8b206b956e60329, type: 3}
+    - {fileID: 2440596854322291965, guid: 8b745514610b24c4280ee194ac64febf, type: 3}
     Scale: 1.25
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 9.274871, y: 14, z: 5.7079773}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -3015,8 +3010,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 1.5
     Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 CityMedium"
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (building_no_6_form_tokyo_otemachi_building_pack.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -3056,13 +3051,12 @@ MonoBehaviour:
   - Id: dress/CityTower
     Category: 3
     Prefabs:
-    - {fileID: 103440, guid: 4486deaa4d569bc4bb8e381c100ed2b0, type: 3}
-    - {fileID: 144178, guid: 62cc7a41de7e4c847869440070e2f6df, type: 3}
+    - {fileID: 7167042353185370489, guid: be3b3bd5ea6d449419fdfc4170bb1ea8, type: 3}
     Scale: 1.25
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 0, y: 0, z: 0}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 14.401967, y: 18, z: 17.271109}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -3070,8 +3064,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 1.5
     Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 \uC2DC\uAC00\uC9C0 CityTower"
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (large_low_poly_building.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -7236,12 +7230,12 @@ MonoBehaviour:
   - Id: unit/ff_striker_ifv
     Category: 0
     Prefabs:
-    - {fileID: 7028798124793439179, guid: dfcc949dc869764448b98976f5125a89, type: 3}
+    - {fileID: 8469139368674420241, guid: c2485b21889df5e41913562002d688e5, type: 3}
     Scale: 0.7874091
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 3.2934344, y: 2.9725466, z: 6.603936}
+    Size: {x: 2.9072518, y: 3.4993017, z: 7.2}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -7249,8 +7243,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 tank_light / \uC0C9 \uBCC0\uD615 Land_Vehicles_04"
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (armored_troop_carrier.glb)
     TurretPart: Turret
     WreckPrefab: {fileID: 0}
     BarrelPart: Barrel
@@ -7526,12 +7520,12 @@ MonoBehaviour:
   - Id: unit/ff_loiter_munition
     Category: 0
     Prefabs:
-    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
+    - {fileID: 2733535945221339, guid: f071e626e6044db42900a2999c5464d6, type: 3}
     Scale: 0.10303734
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
-    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 3.1999998, y: 1.6483428, z: 1.6483431}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -7539,8 +7533,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (zala_lancet.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -7553,12 +7547,12 @@ MonoBehaviour:
   - Id: unit/cf_loiter_munition
     Category: 0
     Prefabs:
-    - {fileID: 1936028223067146, guid: e7a1b80b0c1acd9478899577752e2f0f, type: 3}
+    - {fileID: 2733535945221339, guid: f071e626e6044db42900a2999c5464d6, type: 3}
     Scale: 0.10303734
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: -0, y: 1.9999069, z: -0.30237913}
-    Size: {x: 19.410439, y: 3.8270388, z: 11.845595}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 3.1999998, y: 1.6483428, z: 1.6483431}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -7566,8 +7560,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 0
     Lifetime: 2
-    RealWorld: 1
-    Notes: "Synty \uD329 drone / \uC0C9 \uBCC0\uD615 \uAE30\uBCF8"
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (zala_lancet.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -11510,13 +11504,12 @@ MonoBehaviour:
   - Id: unit/pmc_attack_heli
     Category: 0
     Prefabs:
-    - {fileID: 2188580896861997525, guid: d7df5685fe779a24f828c39e7999e0ec, type: 3}
-    - {fileID: 4307466239846680120, guid: 1f3c91964ce463142bb69a8c2ea361ad, type: 3}
+    - {fileID: 2032758757456418544, guid: 3357f609a8359b44db62ad06bb72244b, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 11.1744, y: 5.4315, z: 16.059}
+    Size: {x: 9.747606, y: 4.733603, z: 14}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -11525,8 +11518,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 2
-    Notes: CC BY 4.0 attack helicopter (see Assets/ThirdParty/CREDITS.md), decimated
-      + flat palette, renamed; 16 m real scale
+    Notes: Task 44 GLB Batch 1 (apache_1.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -11566,12 +11558,12 @@ MonoBehaviour:
   - Id: unit/pmc_strike_drone
     Category: 5
     Prefabs:
-    - {fileID: 9001594016411026524, guid: 2395b3b9405497a48ba561e66d5da168, type: 3}
+    - {fileID: 2733535945221339, guid: f071e626e6044db42900a2999c5464d6, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
-    PivotOffset: {x: 0, y: 0, z: 0}
-    Size: {x: 2, y: 2, z: 2}
+    PivotOffset: {x: -0, y: -0, z: -0}
+    Size: {x: 3.1999998, y: 1.6483428, z: 1.6483431}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -11579,8 +11571,8 @@ MonoBehaviour:
     Animator: {fileID: 0}
     DeathSeconds: 1.5
     Lifetime: 2
-    RealWorld: 1
-    Notes: Task 39 PMC camp model (CampKit.cs), PMC black copy of pack materials
+    RealWorld: 2
+    Notes: Task 44 GLB Batch 1 (zala_lancet.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -11727,13 +11719,12 @@ MonoBehaviour:
   - Id: unit/merc_cargo_truck
     Category: 0
     Prefabs:
-    - {fileID: 2149576391970651060, guid: 3ae434eafd0c49e478e7964b2dbcbdc4, type: 3}
-    - {fileID: 8363428880468286555, guid: b6dc01a836541104d85e73dd3fae352c, type: 3}
+    - {fileID: 5625938314851790250, guid: 0915380347f7e9a4c933390e4460cf95, type: 3}
     Scale: 0.9176333
-    AutoFit: 0
+    AutoFit: 1
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 3.0022, y: 3.6112, z: 8.1732}
+    Size: {x: 2.8591764, y: 3.4391656, z: 7.7999997}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -11742,8 +11733,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 2
-    Notes: CC BY 4.0 military cargo truck (see Assets/ThirdParty/CREDITS.md), decimated
-      + flat palette, renamed; 7.5 m
+    Notes: Task 44 GLB Batch 1 (military_truck.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 
@@ -11755,12 +11745,12 @@ MonoBehaviour:
   - Id: unit/pmc_scout_heli
     Category: 0
     Prefabs:
-    - {fileID: 7285181232053374810, guid: ae386248ee49c8b4b8d2fb61bc677bc7, type: 3}
+    - {fileID: 6322026646368902333, guid: 36a09f2ec609b9949a80e89bbde82b6f, type: 3}
     Scale: 1
     AutoFit: 1
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
-    Size: {x: 2.5, y: 0.9336, z: 2.3698}
+    Size: {x: 9, y: 3.3609743, z: 8.531094}
     TeamColor: 0
     TeamMaterialToken: Team
     TeamMaterialSlots: 
@@ -11769,8 +11759,7 @@ MonoBehaviour:
     DeathSeconds: 1.5
     Lifetime: 2
     RealWorld: 2
-    Notes: CC BY 4.0 light helicopter (see Assets/ThirdParty/CREDITS.md), decimated
-      + flat palette, renamed; 8.5 m real scale
+    Notes: Task 44 GLB Batch 1 (mh-6_little_bird_low_poly.glb)
     TurretPart: 
     WreckPrefab: {fileID: 0}
     BarrelPart: 

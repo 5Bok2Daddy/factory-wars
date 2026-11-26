@@ -1,9 +1,18 @@
 # Factory Wars — Mobile RTS Dashboard
 
-> **기준 일자:** **2026-11-25 (KST)**
+> **기준 일자:** **2026-11-26 (KST)**
 > **대상 플랫폼:** Android Mobile RTS (Touch-Only UI, Photon Quantum 3 결정론 `FP` 시뮬레이션 — 금지어 **0건**)
 > **Git 저장소 루트:** `Game/` (`origin/main` → `https://github.com/5Bok2Daddy/factory-wars.git`)
-> **아트 파이프라인:** Synty POLYGON, War FX, Unity Particle Pack (URP 17.0.4) 및 선별 맵 에셋 적용.
+> **아트 파이프라인:** Synty POLYGON, Task 44 선별 GLB Batch 1(URP Lit), War FX, Unity Particle Pack (URP 17.0.4).
+
+---
+
+## Task 44 (우선순위 GLB 8종 → 15슬롯 교체) & T45 확장 (`Map4P v4` 주요 교전 구역 20개 건물 붕괴·NavMesh 개방) 완료 (2026-11-26 · 4/4 통과)
+
+| Task 44 GLB 유닛(`military_truck`, `armored_troop_carrier`) 실인게임 적용 | T45 `Map4P v4` 교전 구역 건물 붕괴 전 → 후(잔해·먼지 VFX·NavMesh 개방) | `Map4P v4` 교전 구역 20개 파괴 가능 건물(진지 8개) 광역 뷰 |
+| --- | --- | --- |
+| [![Task 44 GLB 유닛 적용](Docs/status_images/Task44_T45/01_task44_glb_units_showcase.png)](Docs/status_images/Task44_T45/01_task44_glb_units_showcase.png) | [![T45 Map4P 붕괴 및 NavMesh 개방](Docs/status_images/Task44_T45/04_t45_map4p_collapse_navmesh_open.png)](Docs/status_images/Task44_T45/04_t45_map4p_collapse_navmesh_open.png) | [![T45 Map4P 광역 구도](Docs/status_images/Task44_T45/05_t45_map4p_overview_symmetry.png)](Docs/status_images/Task44_T45/05_t45_map4p_overview_symmetry.png) |
+| [GLB 유닛 원본](Docs/status_images/Task44_T45/01_task44_glb_units_showcase.png) · [GLB 중공업·도심 건물](Docs/status_images/Task44_T45/02_task44_glb_factory_and_city.png) (`glbSlots=15`, 비검정 URP Lit) | [붕괴 전](Docs/status_images/Task44_T45/03_t45_map4p_combat_zone_before.png) → [붕괴 후 NavMesh 개방](Docs/status_images/Task44_T45/04_t45_map4p_collapse_navmesh_open.png) (`movedX=-52.6`) | [광역 뷰 원본](Docs/status_images/Task44_T45/05_t45_map4p_overview_symmetry.png) · 듀얼 체크섬 `2638219931405779341` 100% 일치 |
 
 ---
 

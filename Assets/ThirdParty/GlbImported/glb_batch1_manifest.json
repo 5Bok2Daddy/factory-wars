@@ -1,0 +1,141 @@
+{
+  "batch": 1,
+  "count": 8,
+  "items": [
+    {
+      "key": "apache_1",
+      "source_glb": "apache_1.glb",
+      "obj_asset": "Assets/ThirdParty/GlbImported/apache_1/apache_1.obj",
+      "prefab_asset": "Assets/ThirdParty/GlbImported/Prefabs/apache_1.prefab",
+      "verts": 5001,
+      "faces": 3808,
+      "extents": [
+        9.748,
+        4.734,
+        14.0
+      ],
+      "slots": [
+        "unit/ff_hawk_gunship",
+        "unit/pmc_attack_heli"
+      ]
+    },
+    {
+      "key": "mh6_little_bird",
+      "source_glb": "mh-6_little_bird_low_poly.glb",
+      "obj_asset": "Assets/ThirdParty/GlbImported/mh6_little_bird/mh6_little_bird.obj",
+      "prefab_asset": "Assets/ThirdParty/GlbImported/Prefabs/mh6_little_bird.prefab",
+      "verts": 11546,
+      "faces": 9776,
+      "extents": [
+        9.0,
+        3.361,
+        8.531
+      ],
+      "slots": [
+        "unit/pmc_scout_heli",
+        "unit/cf_gale_gunship"
+      ]
+    },
+    {
+      "key": "zala_lancet",
+      "source_glb": "zala_lancet.glb",
+      "obj_asset": "Assets/ThirdParty/GlbImported/zala_lancet/zala_lancet.obj",
+      "prefab_asset": "Assets/ThirdParty/GlbImported/Prefabs/zala_lancet.prefab",
+      "verts": 10889,
+      "faces": 15964,
+      "extents": [
+        3.2,
+        1.648,
+        1.648
+      ],
+      "slots": [
+        "unit/pmc_strike_drone",
+        "unit/ff_loiter_munition",
+        "unit/cf_loiter_munition"
+      ]
+    },
+    {
+      "key": "military_truck",
+      "source_glb": "military_truck.glb",
+      "obj_asset": "Assets/ThirdParty/GlbImported/military_truck/military_truck.obj",
+      "prefab_asset": "Assets/ThirdParty/GlbImported/Prefabs/military_truck.prefab",
+      "verts": 13798,
+      "faces": 9686,
+      "extents": [
+        2.859,
+        3.439,
+        7.8
+      ],
+      "slots": [
+        "unit/logistics_truck",
+        "unit/merc_cargo_truck"
+      ]
+    },
+    {
+      "key": "armored_troop_carrier",
+      "source_glb": "armored_troop_carrier.glb",
+      "obj_asset": "Assets/ThirdParty/GlbImported/armored_troop_carrier/armored_troop_carrier.obj",
+      "prefab_asset": "Assets/ThirdParty/GlbImported/Prefabs/armored_troop_carrier.prefab",
+      "verts": 56145,
+      "faces": 37830,
+      "extents": [
+        2.907,
+        3.499,
+        7.2
+      ],
+      "slots": [
+        "unit/cf_apc_transport",
+        "unit/ff_striker_ifv"
+      ]
+    },
+    {
+      "key": "large_low_poly_building",
+      "source_glb": "large_low_poly_building.glb",
+      "obj_asset": "Assets/ThirdParty/GlbImported/large_low_poly_building/large_low_poly_building.obj",
+      "prefab_asset": "Assets/ThirdParty/GlbImported/Prefabs/large_low_poly_building.prefab",
+      "verts": 4202,
+      "faces": 2614,
+      "extents": [
+        14.402,
+        18.0,
+        17.271
+      ],
+      "slots": [
+        "dress/CityTower"
+      ]
+    },
+    {
+      "key": "tokyo_otemachi_bldg",
+      "source_glb": "building_no_6_form_tokyo_otemachi_building_pack.glb",
+      "obj_asset": "Assets/ThirdParty/GlbImported/tokyo_otemachi_bldg/tokyo_otemachi_bldg.obj",
+      "prefab_asset": "Assets/ThirdParty/GlbImported/Prefabs/tokyo_otemachi_bldg.prefab",
+      "verts": 10350,
+      "faces": 9436,
+      "extents": [
+        9.275,
+        14.0,
+        5.708
+      ],
+      "slots": [
+        "dress/CityMedium"
+      ]
+    },
+    {
+      "key": "old_factory",
+      "source_glb": "old_factory_free.glb",
+      "obj_asset": "Assets/ThirdParty/GlbImported/old_factory/old_factory.obj",
+      "prefab_asset": "Assets/ThirdParty/GlbImported/Prefabs/old_factory.prefab",
+      "verts": 190159,
+      "faces": 113697,
+      "extents": [
+        11.422,
+        4.952,
+        18.0
+      ],
+      "slots": [
+        "building/ff_heavy_works",
+        "building/cf_heavy_works"
+      ]
+    }
+  ]
+}

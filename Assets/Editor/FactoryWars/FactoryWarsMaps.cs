@@ -88,6 +88,7 @@ namespace FactoryWars.EditorTools {
       /// 칸 지도 맵(FactoryWarsGridMap.cs): 모든 모양이 이미 맵 전체 좌표다. 회전 복제(Orbit)를 하지 않고,
       /// 자리별 물건은 아래 명시 배열(Starts·SeatBaseAreas·Crates·AllExpansions·AllCaptureSites)과 자리 순서 TruceGates를 그대로 쓴다.
       /// </summary>
+      public CityBuildingPlacement[] ExplicitCityBuildings;
       public bool Explicit;
       public FPVector3[] Starts;
       public MapShape[] SeatBaseAreas;

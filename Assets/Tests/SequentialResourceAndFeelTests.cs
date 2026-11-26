@@ -2205,5 +2205,160 @@ namespace FactoryWars.Tests {
 
       Debug.Log($"[T45_CollapseAndDualSync] PASS collapsedIdx={cityIdx} walkedX={walkedX:F1} navOpen={regA} dualChecksum={checksumA}");
     }
+
+    static unsafe bool IsNavRegionEnabled(Frame f, int region) => f.NavMeshRegionMask->IsRegionEnabled(region);
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator Task44GlbAndT45Map4P_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "Task44_T45"));
+      Directory.CreateDirectory(dir);
+
+      // 1. Verify Task 44 GLB Batch 1 slots in VisualCatalog
+      var catalog = VisualCatalog.Current;
+      Assert.IsNotNull(catalog, "VisualCatalog loaded");
+      var expectedSlots = new[] {
+        "unit/ff_hawk_gunship", "unit/pmc_attack_heli",
+        "unit/pmc_scout_heli", "unit/cf_gale_gunship",
+        "unit/pmc_strike_drone", "unit/ff_loiter_munition", "unit/cf_loiter_munition",
+        "unit/logistics_truck", "unit/merc_cargo_truck",
+        "unit/cf_apc_transport", "unit/ff_striker_ifv",
+        "dress/CityTower", "dress/CityMedium",
+        "building/ff_heavy_works", "building/cf_heavy_works",
+      };
+      var glbWired = 0;
+      foreach (var sid in expectedSlots) {
+        Assert.IsTrue(VisualCatalog.TryFilled(sid, out var slot), $"Task 44 slot filled: {sid}");
+        if (slot.Notes != null && slot.Notes.Contains("Task 44 GLB")) glbWired++;
+      }
+      Assert.AreEqual(expectedSlots.Length, glbWired, $"All {expectedSlots.Length} Task 44 GLB Batch 1 slots wired");
+
+      // 2. Load Map4P v4 and verify T45 expanded 20 combat-zone CityBuildings (5 per quadrant x 4 seats)
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 4445, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var map = FactoryWarsUtil.MapInfo(Verified);
+      Assert.IsNotNull(map.CityBuildings, "Map4P CityBuildings initialized");
+      Assert.AreEqual(20, map.CityBuildings.Length, "Map4P v4 has 20 T45 destructible combat-zone buildings (5 x 4 seats)");
+      var garrisons = map.CityBuildings.Count(c => c.Garrison);
+      Assert.AreEqual(8, garrisons, "Map4P v4 has 8 T45 tactical garrison buildings (2 x 4 seats)");
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+
+      // 3. Spawn Task 44 GLB showcase units & factory in clear SW combat corridor near (-60, -84)
+      var heli1 = SpawnUnitByName(Verified, 0, "ff_hawk_gunship",  new FPVector3(-64, 0, -64));
+      var heli2 = SpawnUnitByName(Verified, 0, "pmc_scout_heli",   new FPVector3(-56, 0, -64));
+      var drone = SpawnUnitByName(Verified, 0, "pmc_strike_drone", new FPVector3(-60, 0, -60));
+      var truck = SpawnUnitByName(Verified, 0, "logistics_truck",  new FPVector3(-64, 0, -72));
+      var apc   = SpawnUnitByName(Verified, 0, "cf_apc_transport", new FPVector3(-56, 0, -72));
+      var hwSpec = Resources.Load<BuildingSpec>("FactoryWars/ff_heavy_works");
+      Assert.IsNotNull(hwSpec, "ff_heavy_works spec loaded");
+      var heavyWorks = ProductionSystem.CreateFinishedBuilding(Verified, 0, hwSpec, new FPVector3(-82, 0, -82));
+      yield return WaitFrames(15);
+
+      rts.Height = 24f;
+      rts.MoveTo(new Vector2(-60f, -68f));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "01_task44_glb_units_showcase.png"), 1920, 1080);
+
+      rts.Height = 32f;
+      rts.MoveTo(new Vector2(-78f, -84f));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "02_task44_glb_factory_and_city.png"), 1920, 1080);
+
+      // 4. Verify T45 combat-zone building collapse & NavMesh opening directly on Map4P v4!
+      var c0 = CityAt(0);
+      var c1 = CityAt(1);
+      Assert.AreNotEqual(EntityRef.None, c0, "Map4P CityBuilding 0 spawned");
+      Assert.AreNotEqual(EntityRef.None, c1, "Map4P CityBuilding 1 spawned");
+      var pos0 = map.CityBuildings[0].Shape.Center;
+      var pos1 = map.CityBuildings[1].Shape.Center;
+
+      rts.Height = 42f;
+      rts.MoveTo(new Vector2(pos0.X.AsFloat, pos0.Z.AsFloat));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "03_t45_map4p_combat_zone_before.png"), 1920, 1080);
+
+      Assert.IsFalse(CitySystem.IsCollapsed(Verified, 0), "Map4P City0 starts intact");
+      Assert.IsTrue(Verified.Map.RegionMap.TryGetValue(map.CityBuildings[0].Region, out var reg0), "Map4P NavMesh has City0 region");
+      Assert.IsFalse(IsNavRegionEnabled(Verified, reg0), "Map4P City0 NavMesh region is CLOSED before collapse");
+
+      // Collapse City0 & City1!
+      DamageCityBuildingSafe(Verified, c0, (FP)99999);
+      DamageCityBuildingSafe(Verified, c1, (FP)99999);
+      if (Game?.Frames?.Predicted != null) {
+        if (Game.Frames.Predicted.Exists(c0)) DamageCityBuildingSafe(Game.Frames.Predicted, c0, (FP)99999);
+        if (Game.Frames.Predicted.Exists(c1)) DamageCityBuildingSafe(Game.Frames.Predicted, c1, (FP)99999);
+      }
+      yield return WaitFrames(10);
+
+      Assert.IsTrue(CitySystem.IsCollapsed(Verified, 0), "Map4P City0 collapsed");
+      Assert.IsTrue(CitySystem.IsCollapsed(Verified, 1), "Map4P City1 collapsed");
+      Assert.IsTrue(IsNavRegionEnabled(Verified, reg0), "Map4P City0 NavMesh region OPENED after collapse");
+
+      // Walk an infantry squad right across collapsed City0 footprint on Map4P v4!
+      var startPt = pos0 + new FPVector3(-9, 0, 0);
+      var goalPt  = pos0 + new FPVector3( 9, 0, 0);
+      var squad = SpawnUnitByName(Verified, 0, "ff_ranger_squad", startPt);
+      yield return WaitFrames(4);
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { squad }, Target = goalPt });
+      yield return WaitFrames(Fps * 2);
+      var movedX = Verified.Get<Transform3D>(squad).Position.X.AsFloat;
+      Assert.Greater(movedX, startPt.X.AsFloat + 2f, $"Infantry advances across collapsed Map4P City0 footprint (movedX={movedX:F1})");
+
+      rts.Height = 36f;
+      rts.MoveTo(new Vector2(pos0.X.AsFloat, pos0.Z.AsFloat));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "04_t45_map4p_collapse_navmesh_open.png"), 1920, 1080);
+
+      rts.Height = 72f;
+      rts.MoveTo(new Vector2((pos0.X.AsFloat + pos1.X.AsFloat) * 0.5f, (pos0.Z.AsFloat + pos1.Z.AsFloat) * 0.5f));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "05_t45_map4p_overview_symmetry.png"), 1920, 1080);
+
+      // 5. Dual-Client Deterministic Sync on Map4P v4 T45 Collapse
+      var syncSeed = 4455;
+      QuantumRunner.ShutdownAll();
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: syncSeed, startingTier: 3);
+      while (Verified.Number < 20) yield return null;
+      var collapseTick = Verified.Number;
+      var eA = CityAt(0);
+      DamageCityBuildingSafe(Verified, eA, (FP)99999);
+      while (Verified.Number < collapseTick + 20) yield return null;
+      var checkTick = Verified.Number;
+      var csA = Verified.CalculateChecksum();
+      var colA = CitySystem.IsCollapsed(Verified, 0);
+      Verified.Map.RegionMap.TryGetValue(FactoryWarsUtil.MapInfo(Verified).CityBuildings[0].Region, out var rA);
+      var openA = IsNavRegionEnabled(Verified, rA);
+
+      QuantumRunner.ShutdownAll();
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: syncSeed, startingTier: 3);
+      while (Verified.Number < collapseTick) yield return null;
+      var eB = CityAt(0);
+      DamageCityBuildingSafe(Verified, eB, (FP)99999);
+      while (Verified.Number < checkTick) yield return null;
+      var csB = Verified.CalculateChecksum();
+      var colB = CitySystem.IsCollapsed(Verified, 0);
+      Verified.Map.RegionMap.TryGetValue(FactoryWarsUtil.MapInfo(Verified).CityBuildings[0].Region, out var rB);
+      var openB = IsNavRegionEnabled(Verified, rB);
+
+      Assert.AreEqual(colA, colB, "Map4P dual-client T45 collapse state identical");
+      Assert.AreEqual(openA, openB, "Map4P dual-client T45 NavMesh region opening identical");
+      Assert.AreEqual(csA, csB, $"Map4P dual-client frame checksums identical after T45 collapse ({csA} == {csB})");
+
+      Debug.Log($"[Task44GlbAndT45Map4P] PASS glbSlots={glbWired} map4pCities={map.CityBuildings.Length} garrisons={garrisons} movedX={movedX:F1} dualChecksum={csA}");
+    }
   }
 }
