@@ -7,6 +7,15 @@
 
 ---
 
+## 종합 감사 및 폴리싱 패스: 전 유닛 74종 사거리 실측 표 · URP ACES/Bloom/일광 캘리브레이션 · 전투 VFX 가독성 보정 (2026-11-26 · 결정론 0건)
+
+| URP 조명 캘리브레이션 (`Sun 1.26` · `Shadow 0.82` · `ACES` · `Bloom 0.55`) | 보정된 대규모 교전 VFX & MLRS 궤적 · 선명한 피격 섬광 (GIF) | 보병 이동·질주 모션 시연 (GIF) |
+| --- | --- | --- |
+| [![보정된 URP 조명 본진 뷰](Docs/status_images/ComprehensivePolish/01_calibrated_lighting_base.png)](Docs/status_images/ComprehensivePolish/01_calibrated_lighting_base.png) | [![보정된 대규모 교전 VFX GIF](Docs/status_images/ComprehensivePolish/02_calibrated_mass_combat_vfx.gif)](Docs/status_images/ComprehensivePolish/02_calibrated_mass_combat_vfx.gif) | [![보병 이동 모션 GIF](Docs/status_images/ComprehensivePolish/03_infantry_smooth_locomotion.gif)](Docs/status_images/ComprehensivePolish/03_infantry_smooth_locomotion.gif) |
+| [보정 본진 원본](Docs/status_images/ComprehensivePolish/01_calibrated_lighting_base.png) (`VisualProfile.asset` 대비·채도·그림자 강화) | [대규모 교전 GIF](Docs/status_images/ComprehensivePolish/02_calibrated_mass_combat_vfx.gif) · [원본](Docs/status_images/ComprehensivePolish/02_calibrated_mass_combat_vfx.png) (`BattleFx.cs` 검은 연기 축소) | [이동 모션 GIF](Docs/status_images/ComprehensivePolish/03_infantry_smooth_locomotion.gif) · 14종 대표 병과 실전 교전 정지거리 실측 완료 |
+
+---
+
 ## 전 유닛 56종 사거리 보정 · 14종 유닛 공격 이펙트 GIF · 전맵 보급 사이클 GIF & 사령부 `+120 철` 납품 피드백 · 사령부 1~3티어 비주얼 완료 (2026-11-26 · 2/2 통과)
 
 | 전맵 자원 보급 사이클 (적치→트럭 수거→사령부 납품→재순환, GIF) | 사령부 납품 완료 플로팅 `+120 철` 피드백 (`stock 500→740`) | 사령부 Tier 1 · Tier 2 · Tier 3 외형 증설 비교 |

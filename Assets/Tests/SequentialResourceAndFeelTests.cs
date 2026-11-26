@@ -2669,5 +2669,129 @@ namespace FactoryWars.Tests {
         }
       }
     }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator ComprehensivePolish_RangeLightingVfxAndMotion_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "ComprehensivePolish"));
+      var combatFrames = Path.Combine(dir, "frames_combat");
+      var sprintFrames = Path.Combine(dir, "frames_sprint");
+      Directory.CreateDirectory(combatFrames);
+      Directory.CreateDirectory(sprintFrames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 4801, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+
+      // 1. Live actual engagement stopping distance measurement across 14 key unit archetypes!
+      var probeUnits = new (string Unit, string Target, FPVector3 Start, FPVector3 TargetPos)[] {
+        ("ff_ranger_squad",       "cf_militia",          new FPVector3(-84, 0, -64), new FPVector3(-52, 0, -64)),
+        ("cf_flame_squad",        "ff_ranger_squad",     new FPVector3(-76, 0, -64), new FPVector3(-52, 0, -64)),
+        ("ff_at_rocket",          "cf_dragonscale_tank", new FPVector3(-84, 0, -64), new FPVector3(-52, 0, -64)),
+        ("ff_striker_ifv",        "cf_militia",          new FPVector3(-84, 0, -64), new FPVector3(-52, 0, -64)),
+        ("ff_eagle_tank",         "cf_dragonscale_tank", new FPVector3(-84, 0, -64), new FPVector3(-52, 0, -64)),
+        ("ff_bulwark_tank",       "cf_fortress_tank",    new FPVector3(-86, 0, -64), new FPVector3(-52, 0, -64)),
+        ("cf_longwall_mlrs",      "ff_eagle_tank",       new FPVector3(-88, 0, -64), new FPVector3(-52, 0, -64)),
+        ("ff_paladin_sph",        "cf_dragonscale_tank", new FPVector3(-88, 0, -64), new FPVector3(-52, 0, -64)),
+        ("ff_hawk_gunship",       "cf_dragonscale_tank", new FPVector3(-84, 0, -64), new FPVector3(-52, 0, -64)),
+        ("ff_sniper",             "cf_militia",          new FPVector3(-88, 0, -64), new FPVector3(-52, 0, -64)),
+        ("ff_artillery_ship",     "cf_scout_boat",       new FPVector3(-16, 0,  96), new FPVector3(-16, 0, 134)),
+        ("pmc_operator_squad",    "cf_militia",          new FPVector3(-84, 0, -64), new FPVector3(-52, 0, -64)),
+        ("pmc_tank",              "cf_dragonscale_tank", new FPVector3(-84, 0, -64), new FPVector3(-52, 0, -64)),
+        ("pmc_attack_heli",       "cf_dragonscale_tank", new FPVector3(-84, 0, -64), new FPVector3(-52, 0, -64)),
+      };
+
+      Time.timeScale = 6f;
+      foreach (var p in probeUnits) {
+        var atk = SpawnUnitByName(Verified, 0, p.Unit, p.Start);
+        var tgt = SpawnUnitByName(Verified, 1, p.Target, p.TargetPos);
+        if (Verified.Exists(tgt)) {
+          var tu = Verified.Get<Unit>(tgt); tu.Health = (FP)8000; tu.Order = UnitOrder.Hold; Verified.Set(tgt, tu);
+        }
+        var spec = Resources.Load<UnitSpec>($"FactoryWars/{p.Unit}");
+        yield return Send(0, new AttackTargetCommand { Units = new[] { atk }, Target = tgt });
+        var measured = -1f;
+        for (var step = 0; step < 30; step++) {
+          yield return WaitFrames(8);
+          if (!Verified.Exists(atk) || !Verified.Exists(tgt)) break;
+          var u = Verified.Get<Unit>(atk);
+          if (u.LastFiredFrame > 0) {
+            var ap = Verified.Get<Transform3D>(atk).Position;
+            var tp = Verified.Get<Transform3D>(tgt).Position;
+            measured = Vector2.Distance(new Vector2(ap.X.AsFloat, ap.Z.AsFloat), new Vector2(tp.X.AsFloat, tp.Z.AsFloat));
+            break;
+          }
+        }
+        Debug.Log($"[RANGE-MEASURE] {p.Unit,-22} spec={spec.Range.AsFloat:F1}m actual={measured:F1}m cells={spec.Range.AsFloat / 8f:F2}");
+        if (Verified.Exists(atk)) Verified.Destroy(atk);
+        if (Verified.Exists(tgt)) Verified.Destroy(tgt);
+        yield return WaitFrames(2);
+      }
+      Time.timeScale = 1f;
+
+      // 2. Calibrated URP Lighting & Base Closeup Capture
+      var hqPos = FactoryWarsUtil.StartPosition(Verified, 0);
+      rts.Height = 36f;
+      rts.MoveTo(new Vector2(hqPos.X.AsFloat, hqPos.Z.AsFloat));
+      rts.Apply();
+      yield return WaitFrames(8);
+      CaptureCameraPng(camera, Path.Combine(dir, "01_calibrated_lighting_base.png"), 1920, 1080);
+
+      // 3. Calibrated Mass Combat VFX Capture + GIF (tanks, infantry, MLRS arcing trails, readable impacts, compact grenade)
+      UnlockSmallUpgrade(Verified, 0);
+      if (Game?.Frames?.Predicted != null) UnlockSmallUpgrade(Game.Frames.Predicted, 0);
+      var t1 = SpawnUnitByName(Verified, 0, "ff_eagle_tank",    new FPVector3(-72, 0, -62));
+      var t2 = SpawnUnitByName(Verified, 0, "ff_bulwark_tank",  new FPVector3(-72, 0, -66));
+      var r1 = SpawnUnitByName(Verified, 0, "ff_ranger_squad",  new FPVector3(-68, 0, -64));
+      var m1 = SpawnUnitByName(Verified, 0, "cf_longwall_mlrs", new FPVector3(-78, 0, -64));
+      var e1 = SpawnUnitByName(Verified, 1, "cf_dragonscale_tank", new FPVector3(-54, 0, -62));
+      var e2 = SpawnUnitByName(Verified, 1, "cf_fortress_tank",    new FPVector3(-54, 0, -66));
+      var e3 = SpawnUnitByName(Verified, 1, "cf_militia",          new FPVector3(-56, 0, -64));
+      foreach (var ee in new[] { e1, e2, e3 }) {
+        var eu = Verified.Get<Unit>(ee); eu.Health = (FP)4000; Verified.Set(ee, eu);
+      }
+      yield return WaitFrames(3);
+      yield return Send(0, new AttackTargetCommand { Units = new[] { t1, t2, r1, m1 }, Target = e1 });
+      yield return Send(1, new AttackTargetCommand { Units = new[] { e1, e2, e3 }, Target = t1 });
+      MlrsSystem.LaunchInfantryGrenade(Verified, r1, 0, new FPVector3(-68, 0, -64), new FPVector3(-56, 0, -64));
+
+      rts.Height = 30f;
+      rts.MoveTo(new Vector2(-63f, -64f));
+      rts.Apply();
+      for (var i = 0; i < 12; i++) {
+        yield return WaitFrames(3);
+        CaptureCameraPng(camera, Path.Combine(combatFrames, $"c_{i:00}.png"), 960, 540);
+        if (i == 5) CaptureCameraPng(camera, Path.Combine(dir, "02_calibrated_mass_combat_vfx.png"), 1920, 1080);
+      }
+      foreach (var u in new[] { t1, t2, r1, m1, e1, e2, e3 }) if (Verified.Exists(u)) Verified.Destroy(u);
+      yield return WaitFrames(4);
+
+      // 4. Smooth Infantry Locomotion GIF (Idle -> Sprint on clear central road)
+      var runner = SpawnUnitByName(Verified, 0, "ff_ranger_squad", new FPVector3(-22, 0, -64));
+      yield return WaitFrames(4);
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { runner }, Target = new FPVector3(24, 0, -64) });
+      rts.Height = 16f;
+      var sawSprintPose = false;
+      for (var i = 0; i < 10; i++) {
+        yield return WaitFrames(4);
+        if (Verified.Exists(runner)) {
+          var rp = Verified.Get<Transform3D>(runner).Position;
+          rts.MoveTo(new Vector2(rp.X.AsFloat, rp.Z.AsFloat));
+          rts.Apply();
+          if (Battle().Actors.TryGetValue(runner, out var ra) && ra.View?.Animation?.ActiveMixamoPose == "SprintForward") sawSprintPose = true;
+        }
+        CaptureCameraPng(camera, Path.Combine(sprintFrames, $"s_{i:00}.png"), 960, 540);
+      }
+      Assert.IsTrue(sawSprintPose, "Upgraded infantry transitions smoothly into SprintForward");
+      Debug.Log($"[ComprehensivePolish] PASS lighting=ACES+Bloom+Sun1.26 sprintPose={sawSprintPose}");
+    }
   }
 }

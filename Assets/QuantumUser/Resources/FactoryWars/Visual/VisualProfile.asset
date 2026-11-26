@@ -28,22 +28,22 @@ MonoBehaviour:
   BuildingBody: 0.78
   PlateScale: 1.05
   PlateHeight: 0.15
-  SunColor: {r: 1, g: 0.98039216, b: 0.93333334, a: 1}
-  SunIntensity: 0.86
-  SunElevation: 54
+  SunColor: {r: 1, g: 0.955, b: 0.865, a: 1}
+  SunIntensity: 1.26
+  SunElevation: 48
   SunAzimuth: -35
-  AmbientSky: {r: 0.55, g: 0.58, b: 0.66, a: 1}
-  AmbientEquator: {r: 0.42, g: 0.44, b: 0.48, a: 1}
-  AmbientGround: {r: 0.33, g: 0.32, b: 0.32, a: 1}
-  ShadowStrength: 0.64
+  AmbientSky: {r: 0.48, g: 0.56, b: 0.68, a: 1}
+  AmbientEquator: {r: 0.36, g: 0.39, b: 0.43, a: 1}
+  AmbientGround: {r: 0.22, g: 0.21, b: 0.2, a: 1}
+  ShadowStrength: 0.82
   BiomeLightingWeight: 0.48
   SurfaceRelief: 0.24
-  Tone: 0
-  BloomIntensity: 0
-  BloomThreshold: 1.2
-  BloomScatter: 0.6
-  Saturation: 0.08
-  Contrast: 2
+  Tone: 1
+  BloomIntensity: 0.55
+  BloomThreshold: 1.05
+  BloomScatter: 0.64
+  Saturation: 10
+  Contrast: 11
   Vignette: 0
   Ssao: 1
   SsaoIntensity: 0.8

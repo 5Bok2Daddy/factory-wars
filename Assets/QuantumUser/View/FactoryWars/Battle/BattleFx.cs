@@ -63,14 +63,14 @@ namespace FactoryWars.View {
       Emit(_glow, position, -direction * 5f, trail ? 0.65f : 1.6f, 0.2f, Missile);
       var puffs = trail ? 1 : Scaled(5);
       for (var i = 0; i < puffs; ++i) {
-        Emit(_smoke, position - direction * (i * 0.22f), -direction * (trail ? 0.4f : 2.9f) + Vector3.up,
-          trail ? 0.55f : 1.2f, 1.1f, SmokeGray);
+        Emit(_smoke, position - direction * (i * 0.22f), -direction * (trail ? 0.35f : 2.9f) + Vector3.up * 0.8f,
+          trail ? 0.74f : 1.25f, 1.35f, SmokeGray);
       }
     }
 
     public void MlrsImpact(Vector3 position, float radius) {
       GameAudio.PlayAt(SoundEvent.Explosion, position);
-      Shake(0.24f);
+      Shake(0.18f);
       var now = Time.time;
       PooledImpact item = null;
       foreach (var entry in _mlrsImpacts) {
@@ -87,14 +87,16 @@ namespace FactoryWars.View {
         }
         var rootTransform = item.Root.transform;
         rootTransform.SetPositionAndRotation(position + Vector3.up * 0.12f, Quaternion.identity);
-        rootTransform.localScale = item.Scale * (scale * Mathf.Clamp(radius * 0.58f, 0.8f, 2.4f));
+        // 과도한 검은 연기가 피격 지점을 가리지 않도록 착탄 스케일을 선명한 범위로 조정하고 스파크/섬광 대비를 강조.
+        rootTransform.localScale = item.Scale * (scale * Mathf.Clamp(radius * 0.34f, 0.55f, 1.35f));
         item.Root.SetActive(true);
         foreach (var particles in item.Systems) {
           particles.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
           particles.Simulate(0.18f, false, true);
           particles.Play(false);
         }
-        item.Until = now + Mathf.Max(0.25f, lifetime);
+        item.Until = now + Mathf.Max(0.25f, Mathf.Min(lifetime, 1.6f));
+        Emit(_flash, position + Vector3.up * 0.45f, Vector3.zero, Mathf.Clamp(radius * 0.55f, 1.4f, 3.0f), 0.18f, FlashCore);
       } else {
         Emit(_flash, position + Vector3.up, Vector3.zero, radius * 1.2f, 0.30f, FlashCore);
         Emit(_smoke, position + Vector3.up, Vector3.up * 2f, radius, 1.8f, SmokeBillow);
@@ -587,9 +589,10 @@ namespace FactoryWars.View {
       if (size >= 2f) {
         Shake(size * 0.12f);
       }
-      // Jean Moreno War FX(WFXMR_ExplosiveSmokeGround / WFXMR_Explosion Small) 직접 재생.
-      var wfx = SpawnWarFx(size >= 1.1f ? "explosion" : "explosion_small", position + Vector3.up * 0.15f, Quaternion.identity, Mathf.Clamp(size * 0.72f, 0.55f, 2.6f), 0.15f);
+      // Jean Moreno War FX(WFXMR_ExplosiveSmokeGround / WFXMR_Explosion Small) 직접 재생(과도한 검은 연기 억제).
+      var wfx = SpawnWarFx(size >= 1.1f ? "explosion" : "explosion_small", position + Vector3.up * 0.15f, Quaternion.identity, Mathf.Clamp(size * 0.52f, 0.45f, 1.65f), 0.15f);
       if (wfx != null) {
+        Emit(_flash, position + Vector3.up * 0.4f, Vector3.zero, Mathf.Clamp(size * 1.1f, 0.9f, 2.4f), 0.16f, FlashCore);
         if (size < 1.2f) Crater(position, size * 0.7f);
         return;
       }
