@@ -276,22 +276,36 @@ namespace FactoryWars.View {
               break;
             }
             case 'w': {
-              kit.Poly(outline, slab, Stone * (.97f + h % 5 * .012f));
+              // T43 항만 호안 마감: 해양 슬레이트 포장 + 직각 계단 모서리 경사 코핑(chamfer) + 안전선/배수 홈(수로 폭·교량 통과 높이 보존).
+              var harborTone = Color.Lerp(Stone, new Color(.56f, .60f, .62f), 0.35f) * (.97f + h % 5 * .012f);
+              kit.Poly(outline, slab, harborTone);
               for (var k = 1; k < 8; k++) kit.Strip(new Vector2(x0 + k, z0 + .2f), new Vector2(x0 + k, z1 - .2f), .05f, slab + .004f, Joint);
-              // 물 쪽 갓돌.
-              if (Cell(r, c - 1) == 'W') kit.Rect(x0, z0, x0 + .5f, z1, slab + .01f, Coping);
-              if (Cell(r, c + 1) == 'W') kit.Rect(x1 - .5f, z0, x1, z1, slab + .01f, Coping);
-              if (Cell(r - 1, c) == 'W') kit.Rect(x0, z1 - .5f, x1, z1, slab + .011f, Coping);
-              if (Cell(r + 1, c) == 'W') kit.Rect(x0, z0, x1, z0 + .5f, slab + .011f, Coping);
+              var wL = Cell(r, c - 1) == 'W';
+              var wR = Cell(r, c + 1) == 'W';
+              var wT = Cell(r - 1, c) == 'W';
+              var wB = Cell(r + 1, c) == 'W';
+              // 물 쪽 갓돌 + 항만 안전선(노란 경계 띠) + 직각 모서리 대각 경사 코핑.
+              if (wL) { kit.Rect(x0, z0, x0 + .55f, z1, slab + .012f, Coping); kit.Strip(new Vector2(x0 + .82f, z0 + .3f), new Vector2(x0 + .82f, z1 - .3f), .12f, slab + .013f, Yellow); }
+              if (wR) { kit.Rect(x1 - .55f, z0, x1, z1, slab + .012f, Coping); kit.Strip(new Vector2(x1 - .82f, z0 + .3f), new Vector2(x1 - .82f, z1 - .3f), .12f, slab + .013f, Yellow); }
+              if (wT) { kit.Rect(x0, z1 - .55f, x1, z1, slab + .013f, Coping); kit.Strip(new Vector2(x0 + .3f, z1 - .82f), new Vector2(x1 - .3f, z1 - .82f), .12f, slab + .014f, Yellow); }
+              if (wB) { kit.Rect(x0, z0, x1, z0 + .55f, slab + .013f, Coping); kit.Strip(new Vector2(x0 + .3f, z0 + .82f), new Vector2(x1 - .3f, z0 + .82f), .12f, slab + .014f, Yellow); }
+              // 호안 직각 모서리(두 면이 물에 닿는 코너)에 대각 코핑 보강으로 8m 직각 계단 완화.
+              if (wL && wT) kit.Poly(new[] { new Vector2(x0, z1), new Vector2(x0 + 2.2f, z1), new Vector2(x0, z1 - 2.2f) }, slab + .016f, Coping);
+              if (wR && wT) kit.Poly(new[] { new Vector2(x1, z1), new Vector2(x1, z1 - 2.2f), new Vector2(x1 - 2.2f, z1) }, slab + .016f, Coping);
+              if (wL && wB) kit.Poly(new[] { new Vector2(x0, z0), new Vector2(x0, z0 + 2.2f), new Vector2(x0 + 2.2f, z0) }, slab + .016f, Coping);
+              if (wR && wB) kit.Poly(new[] { new Vector2(x1, z0), new Vector2(x1 - 2.2f, z0), new Vector2(x1, z0 + 2.2f) }, slab + .016f, Coping);
               break;
             }
             case 'C': {
-              // 요새 바닥은 칸 타일(0.03m) 위, 십자 도로(요새 장식 0.048m~)보다 아래에 칠한다.
+              // T43 PMC 외곽 넓은 포장 정리: 콘크리트 블록 확장 이음줄 + 전술 경계선 + 코너 해칭으로 단조로운 회색 면 분할(NavMesh/건설 공간 무손상).
               kit.Poly(outline, .036f, Compound * (.97f + h % 5 * .01f));
               kit.Strip(new Vector2(x0, z0 + .04f), new Vector2(x0 + size, z0 + .04f), .07f, .039f, Joint);
               kit.Strip(new Vector2(x0 + .04f, z0), new Vector2(x0 + .04f, z1), .07f, .039f, Joint);
-              if (h % 5 == 0) Blob(kit, new Vector2(cx + .6f, cz - .8f), 1.1f, .040f, Stain, h);
-              if (h % 9 == 4) for (var k = 0; k < 4; k++) kit.Strip(new Vector2(x0 + 1.4f + k * 1.5f, z1 - 1.2f), new Vector2(x0 + 2.0f + k * 1.5f, z1 - .6f), .3f, .041f, Hazard);
+              kit.Strip(new Vector2(cx, z0 + .2f), new Vector2(cx, z1 - .2f), .045f, .0395f, Joint);
+              kit.Strip(new Vector2(x0 + .2f, cz), new Vector2(x1 - .2f, cz), .045f, .0395f, Joint);
+              if (h % 4 == 0) Blob(kit, new Vector2(cx + .6f, cz - .8f), 1.1f, .040f, Stain, h);
+              if (h % 6 == 2) for (var k = 0; k < 4; k++) kit.Strip(new Vector2(x0 + 1.4f + k * 1.5f, z1 - 1.2f), new Vector2(x0 + 2.0f + k * 1.5f, z1 - .6f), .26f, .041f, Hazard);
+              else if (h % 6 == 4) kit.Strip(new Vector2(x0 + .7f, cz), new Vector2(x1 - .7f, cz), .12f, .041f, Yellow);
               break;
             }
           }

@@ -263,15 +263,17 @@ namespace FactoryWars.View {
           && !frame.FindAsset(lu->Spec).IsVehicle && !frame.FindAsset(lu->Spec).IsAir && !frame.FindAsset(lu->Spec).IsNaval
           && frame.FindAsset(lu->Spec).Size == UnitSize.Small;
         if (isInfantryGrenade && _actors.TryGetValue(e.Battery, out var launcherAct) && launcherAct.View?.Animation != null) {
-          launcherAct.View.Animation.ThrowGrenade();
+          // 유탄발사기(40mm 유탄): 손 투척 대신 견착 사격 반동 모션으로 전환.
+          launcherAct.View.Animation.Fire();
         }
         var viewer = _controller != null ? _controller.Player : PlayerRef.None;
         if (!viewer.IsValid || viewer == e.Owner || (frame != null && FogSystem.IsVisible(frame, viewer, e.Origin))) {
           var position = _mlrsRockets.AtSurface(e.Origin.ToUnityVector3());
           if (isInfantryGrenade) {
-            // 보병 수류탄 투척: MLRS 로켓 배기/굉음 대신 손 투척 스파크 퍼프 + 경쾌한 투척 음향 재생.
-            Fx.Burst(position + Vector3.up * 1.15f, new Color(1f, 0.88f, 0.48f), 0.45f);
-            _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.Click, position));
+            // 보병 유탄발사기: 총구 하부 유탄 발사 섬광 + 경쾌한 발사 음향(MLRS 로켓 배기/굉음과 명확히 구분).
+            Fx.MuzzleFlash(position, e.Direction.ToUnityVector3(), 0.72f);
+            Fx.Burst(position, new Color(1f, 0.85f, 0.42f), 0.32f);
+            _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.SniperFire, position));
           } else {
             Fx.MlrsExhaust(position, e.Direction.ToUnityVector3(), false);
             _audio.NoteCombat(GameAudio.PlayAt(SoundEvent.RocketFire, position));

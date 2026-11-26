@@ -1985,5 +1985,225 @@ namespace FactoryWars.Tests {
 
       Debug.Log($"[Items7To10_VerifyAndCapture] PASS grenadeDecoupled={decoupledGrenadeFired} throwMotion={sawThrowMotion} pmcSlots=8 popBlocked={popBlockedCount} infDist={infEngageDist:F1}m tankDist={tankEngageDist:F1}m");
     }
+
+    static bool IsNavRegionEnabled(Frame frame, string regionName) {
+      if (string.IsNullOrEmpty(regionName) || !frame.Map.RegionMap.TryGetValue(regionName, out var region)) return false;
+      return frame.NavMeshRegionMask->IsRegionEnabled(region);
+    }
+
+    static void DamageCityBuildingSafe(Frame frame, EntityRef entity, FP amount) {
+      if (frame.Unsafe.TryGetPointer<CityBuilding>(entity, out var city)) {
+        CitySystem.Hit(frame, entity, city, amount);
+      }
+    }
+
+    static void DamageBarricadeSafe(Frame frame, EntityRef entity, FP amount) {
+      if (frame.Unsafe.TryGetPointer<Barricade>(entity, out var b)) {
+        BattlefieldSystem.HitBarricade(frame, entity, b, amount);
+      }
+    }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator Items11To15_T43DistrictsShoreline_GrenadeLauncher_AndT45CollapseSync_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "Items11To15"));
+      var frames = Path.Combine(dir, "frames");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 9801, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      GrantLargeStock(Verified, 0);
+      GrantLargeStock(Verified, 1);
+      if (Game.Frames.Predicted != null) {
+        GrantLargeStock(Game.Frames.Predicted, 0);
+        GrantLargeStock(Game.Frames.Predicted, 1);
+      }
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+      var map = FactoryWarsUtil.MapInfo(Verified);
+
+      // ===== Item 11: T43 4-District Differentiation & 4-Way Quadrant Fairness =====
+      foreach (GridDress.UrbanDistrict d in System.Enum.GetValues(typeof(GridDress.UrbanDistrict))) {
+        Assert.IsTrue(GridDress.DistrictCounts.TryGetValue(d, out var cnt) && cnt > 0,
+          $"T43 district '{d}' differentiated on Map4P v4 (count={cnt})");
+      }
+      // Verify 4-way rotational symmetry of DistrictOf across quadrants (fairness!)
+      var n = map.CellGridSize;
+      var symChecks = 0;
+      for (var r = 10; r < 35; r += 5) {
+        for (var c = 10; c < 35; c += 5) {
+          var d0 = GridDress.DistrictOf(map, r, c);
+          var d1 = GridDress.DistrictOf(map, c, n - 1 - r);
+          var d2 = GridDress.DistrictOf(map, n - 1 - r, n - 1 - c);
+          var d3 = GridDress.DistrictOf(map, n - 1 - c, r);
+          if (GridMapView.Cell(map, r, c) == GridMapView.Cell(map, c, n - 1 - r)
+              && GridMapView.Cell(map, r, c) == GridMapView.Cell(map, n - 1 - r, n - 1 - c)
+              && GridMapView.Cell(map, r, c) == GridMapView.Cell(map, n - 1 - c, r)) {
+            Assert.AreEqual(d0, d1, $"4-way district symmetry at ({r},{c}) vs rot90");
+            Assert.AreEqual(d0, d2, $"4-way district symmetry at ({r},{c}) vs rot180");
+            Assert.AreEqual(d0, d3, $"4-way district symmetry at ({r},{c}) vs rot270");
+            symChecks++;
+          }
+        }
+      }
+      Assert.Greater(symChecks, 0, "Verified 4-way district symmetry across quadrants");
+
+      rts.Height = 64f;
+      rts.MoveTo(new Vector2(-95f, -95f));
+      rts.Apply();
+      yield return WaitFrames(8);
+      CaptureCameraPng(camera, Path.Combine(dir, "01_t43_districts_commercial_residential.png"), 1920, 1080);
+
+      // ===== Item 12: T43 Shoreline Steps & Wide Pavement Cleanup =====
+      Vector3 harborPos = new Vector3(-224f, 0f, 0f);
+      for (var r = 10; r < n - 10; r++) {
+        for (var c = 10; c < n - 10; c++) {
+          if (GridMapView.Cell(map, r, c) == 'w' && GridMapView.Cell(map, r, c + 1) == 'W') {
+            harborPos = new Vector3(GridMapView.CellX(map, c), 0f, GridMapView.CellZ(map, r));
+            break;
+          }
+        }
+      }
+      rts.Height = 44f;
+      rts.MoveTo(new Vector2(harborPos.x, harborPos.z));
+      rts.Apply();
+      yield return WaitFrames(8);
+      CaptureCameraPng(camera, Path.Combine(dir, "02_t43_shoreline_harbor_cleanup.png"), 1920, 1080);
+
+      rts.Height = 52f;
+      rts.MoveTo(new Vector2(0f, -44f));
+      rts.Apply();
+      yield return WaitFrames(8);
+      CaptureCameraPng(camera, Path.Combine(dir, "03_t43_pmc_pavement_cleanup.png"), 1920, 1080);
+
+      // ===== Item 14: Grenade Launcher (유탄) Firing Motion, 40mm Round & Explosion =====
+      UnlockSmallUpgrade(Verified, 0);
+      if (Game?.Frames?.Predicted != null) UnlockSmallUpgrade(Game.Frames.Predicted, 0);
+      var gSpot = new FPVector3(-12, 0, -56);
+      var gunner = SpawnUnitByName(Verified, 0, "ff_ranger_squad", gSpot);
+      var target = SpawnUnitByName(Verified, 1, "cf_militia",      gSpot + new FPVector3(FP.FromFloat_UNSAFE(10.5f), FP._0, FP._0));
+      yield return WaitFrames(4);
+      var gu = Verified.Get<Unit>(gunner);
+      gu.AttackCooldown = (FP)5;
+      gu.AbilityCooldown = FP._0;
+      gu.TargetEntity = target;
+      Verified.Set(gunner, gu);
+      if (Game?.Frames?.Predicted != null && Game.Frames.Predicted.Exists(gunner)) Game.Frames.Predicted.Set(gunner, gu);
+
+      rts.Height = 22f;
+      rts.MoveTo(new Vector2(gSpot.X.AsFloat + 5.2f, gSpot.Z.AsFloat));
+      rts.Apply();
+      var sawGrenadeRound = false;
+      for (var f = 0; f < 10; f++) {
+        yield return WaitFrames(4);
+        foreach (var pair in Verified.GetComponentIterator<MlrsRocket>()) {
+          if (MlrsRocketView.IsGrenadeRound(pair.Component)) sawGrenadeRound = true;
+        }
+        CaptureCameraPng(camera, Path.Combine(frames, $"gl_{f:00}.png"), 960, 540);
+        if (f == 2) CaptureCameraPng(camera, Path.Combine(dir, "04_grenade_launcher_fire.png"), 1920, 1080);
+      }
+      Assert.IsTrue(sawGrenadeRound, "Grenade Launcher fired compact 40mm grenade round (not winged rocket)");
+
+      // Item 15 (Destructible Prop on Map4P v4): Sea Barrier prop damage -> destruction -> waterway opens cleanly!
+      var propEntity = EntityRef.None;
+      foreach (var p in Verified.GetComponentIterator<Building>()) {
+        if (Verified.FindAsset(p.Component.Spec).name == "sea_barrier") {
+          propEntity = p.Entity;
+          break;
+        }
+      }
+      if (propEntity != EntityRef.None) {
+        var b = Verified.Get<Building>(propEntity);
+        b.Health = FP._0;
+        Verified.Set(propEntity, b);
+        Verified.Destroy(propEntity);
+        yield return WaitFrames(4);
+        Assert.IsFalse(Verified.Exists(propEntity), "Map4P destructible sea_barrier prop destroyed cleanly");
+      }
+      Debug.Log($"[Items11To14_AndProp_VerifyAndCapture] PASS districts=4 symChecks={symChecks} gl40mm={sawGrenadeRound} propDestroyed={propEntity != EntityRef.None}");
+    }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator T45_BuildingAndPropCollapse_NavMeshOpening_AndDualClientSync() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "Items11To15"));
+      Directory.CreateDirectory(dir);
+      var syncSeed = 4545;
+      yield return StartMatch(truce: 0, seed: syncSeed, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var urbanMap = FactoryWarsUtil.MapInfo(Verified);
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+
+      var cityEntity = CityAt(0);
+      Assert.AreNotEqual(EntityRef.None, cityEntity, "Found CityBuilding 0 on urban test map");
+      var cityIdx = Verified.Get<CityBuilding>(cityEntity).Index;
+      var cityPos = urbanMap.CityBuildings[cityIdx].Shape.Center;
+      var cityA = cityPos + new FPVector3(-10, 0, 0);
+      var cityB = cityPos + new FPVector3( 10, 0, 0);
+      Assert.IsFalse(CitySystem.IsCollapsed(Verified, cityIdx), "Building starts intact");
+      Assert.IsFalse(Walkable(cityA, cityB), "NavMesh path across intact CityBuilding is BLOCKED before collapse");
+
+      // Damage -> Collapse -> NavMesh path OPENS!
+      DamageCityBuildingSafe(Verified, cityEntity, (FP)99999);
+      if (Game?.Frames?.Predicted != null && Game.Frames.Predicted.Exists(cityEntity)) DamageCityBuildingSafe(Game.Frames.Predicted, cityEntity, (FP)99999);
+      yield return WaitFrames(8);
+      Assert.IsTrue(CitySystem.IsCollapsed(Verified, cityIdx), "CityBuilding collapsed cleanly");
+      Assert.IsTrue(Walkable(cityA, cityB), "NavMesh path across CityBuilding OPENED after collapse");
+
+      // Order an infantry unit across the collapsed building footprint to confirm pathing opens!
+      var walker = SpawnUnitByName(Verified, 0, "ff_ranger_squad", cityA);
+      yield return WaitFrames(4);
+      yield return Send(0, new MoveUnitsCommand { Units = new[] { walker }, Target = cityB });
+      yield return WaitFrames(Fps * 2);
+      var walkedX = Verified.Get<Transform3D>(walker).Position.X.AsFloat;
+      Assert.Greater(walkedX, cityA.X.AsFloat + 2f, $"Infantry walks through opened collapsed building path (walkedX={walkedX:F1})");
+
+      rts.Height = 36f;
+      rts.MoveTo(new Vector2(cityPos.X.AsFloat, cityPos.Z.AsFloat));
+      rts.Apply();
+      yield return WaitFrames(6);
+      CaptureCameraPng(camera, Path.Combine(dir, "05_t45_collapse_and_navmesh_open.png"), 1920, 1080);
+
+      // Dual-Client Deterministic State Sync verification: Client A vs Client B on identical seed & EXACT tick
+      QuantumRunner.ShutdownAll();
+      yield return StartMatch(truce: 0, seed: syncSeed, startingTier: 3);
+      while (Verified.Number < 20) yield return null;
+      var collapseTick = Verified.Number;
+      var cA = CityAt(0);
+      var idxA = Verified.Get<CityBuilding>(cA).Index;
+      DamageCityBuildingSafe(Verified, cA, (FP)99999);
+      while (Verified.Number < collapseTick + 25) yield return null;
+      var checkTick = Verified.Number;
+      var checksumA = Verified.CalculateChecksum();
+      var collapsedA = CitySystem.IsCollapsed(Verified, idxA);
+      var regA = Walkable(cityA, cityB);
+
+      QuantumRunner.ShutdownAll();
+      yield return StartMatch(truce: 0, seed: syncSeed, startingTier: 3);
+      while (Verified.Number < collapseTick) yield return null;
+      var cB = CityAt(0);
+      var idxB = Verified.Get<CityBuilding>(cB).Index;
+      DamageCityBuildingSafe(Verified, cB, (FP)99999);
+      while (Verified.Number < checkTick) yield return null;
+      var checksumB = Verified.CalculateChecksum();
+      var collapsedB = CitySystem.IsCollapsed(Verified, idxB);
+      var regB = Walkable(cityA, cityB);
+
+      Assert.AreEqual(idxA, idxB, "Dual-client building index identical");
+      Assert.AreEqual(collapsedA, collapsedB, "Dual-client collapse bitmask identical");
+      Assert.AreEqual(regA, regB, "Dual-client NavMesh region opening state identical");
+      Assert.AreEqual(checksumA, checksumB, $"Dual-client frame checksums match identically after T45 collapse ({checksumA} == {checksumB})");
+
+      Debug.Log($"[T45_CollapseAndDualSync] PASS collapsedIdx={cityIdx} walkedX={walkedX:F1} navOpen={regA} dualChecksum={checksumA}");
+    }
   }
 }

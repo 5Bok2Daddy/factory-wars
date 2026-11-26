@@ -7,6 +7,15 @@
 
 ---
 
+## Items 11~15 완료: T43 4지구 차별화·호안 경사 코핑/포장 정리 · GLB 전수 감사 · 40mm 유탄발사기(`유탄`) 교체 · T45 건물+소품 붕괴/NavMesh 개방 및 듀얼 클라이언트 체크섬 동기화 (2026-11-26 · 4/4 통과)
+
+| T43 4지구 차별화(상업·주거·산업·항만) & 호안 경사 코핑·안전선 | 40mm 유탄발사기(`유탄`) 견착 발사 & 탄도 (GIF) | T45 건물 붕괴 → NavMesh 개방 보병 통과 & 듀얼 체크섬 일치 |
+| --- | --- | --- |
+| [![T43 4지구 차별화](Docs/status_images/Items11To15/01_t43_districts_commercial_residential.png)](Docs/status_images/Items11To15/01_t43_districts_commercial_residential.png) | [![40mm 유탄발사기 발사 GIF](Docs/status_images/Items11To15/04_grenade_launcher_fire.gif)](Docs/status_images/Items11To15/04_grenade_launcher_fire.gif) | [![T45 건물 붕괴 및 NavMesh 개방 통과](Docs/status_images/Items11To15/05_t45_collapse_and_navmesh_open.png)](Docs/status_images/Items11To15/05_t45_collapse_and_navmesh_open.png) |
+| [상업·주거](Docs/status_images/Items11To15/01_t43_districts_commercial_residential.png) · [호안 마감](Docs/status_images/Items11To15/02_t43_shoreline_harbor_cleanup.png) · [PMC 포장](Docs/status_images/Items11To15/03_t43_pmc_pavement_cleanup.png) (`symChecks=18`) | [유탄 GIF](Docs/status_images/Items11To15/04_grenade_launcher_fire.gif) · [발사 원본](Docs/status_images/Items11To15/04_grenade_launcher_fire.png) (`GrenadeMesh` 40mm) | [붕괴·NavMesh 개방 원본](Docs/status_images/Items11To15/05_t45_collapse_and_navmesh_open.png) · GLB 감사 완료(임포트 0 / 스테이징 48종) |
+
+---
+
 ## Items 7~10 완료: 수류탄 규칙/연출 분리 · Photon 실서버 동기화 통과 & 과거 실패 8종 재현 확인 · 모바일 PMC 상점 8슬롯(자원부족/인구상한/구매성공/8번 터치) · 원거리 24종 사거리 보정 (2026-11-25)
 
 | 수류탄 독립 투척 (소총 쿨다운·사거리 분리, GIF) | 모바일 PMC 상점 8슬롯 검증 (`1600×720` · 8번 슬롯 구매) | 원거리 유닛 교전 거리 보정 (보병 11.5m · 전차 15.9m) |

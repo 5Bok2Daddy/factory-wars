@@ -14,8 +14,86 @@ namespace FactoryWars.View {
     public const string Prefix = "dress4p/";
     static readonly Dictionary<string, List<VisualSlot>> Kinds = new Dictionary<string, List<VisualSlot>>();
 
+    /// <summary>T43 도시 4지구 구분(4사분면 회전 대칭 유지: 상업·주거·산업·항만).</summary>
+    public enum UrbanDistrict { Commercial, Residential, Industrial, Harbor }
+
     /// <summary>배치 기록(검사·캡처용): 블록 이름 = 종류_변형@행,열.</summary>
     public static readonly List<GameObject> Placed = new List<GameObject>();
+    /// <summary>T43 지구별 배치 집계(4사분면 대칭·공정성 검증용).</summary>
+    public static readonly Dictionary<UrbanDistrict, int> DistrictCounts = new Dictionary<UrbanDistrict, int>();
+    static readonly Dictionary<UrbanDistrict, Mesh> LandmarkMeshes = new Dictionary<UrbanDistrict, Mesh>();
+
+    /// <summary>Map4P v4(80×80) 4사분면 회전 대칭을 보존하는 결정론적 지구 판별.</summary>
+    public static UrbanDistrict DistrictOf(MapSpec map, int r, int c) {
+      var ch = GridMapView.Cell(map, r, c);
+      if (ch == 'w' || ch == 'W') return UrbanDistrict.Harbor;
+      for (var dr = -2; dr <= 2; dr++) {
+        for (var dc = -2; dc <= 2; dc++) {
+          if (GridMapView.Cell(map, r + dr, c + dc) == 'W') return UrbanDistrict.Harbor;
+        }
+      }
+      if (ch == 'Y' || ch == 'X' || ch == 'M') return UrbanDistrict.Industrial;
+      var half = (map.CellGridSize - 1) * 0.5f;
+      var manhattan = Mathf.Abs(r - half) + Mathf.Abs(c - half);
+      if (manhattan < 30f) return UrbanDistrict.Commercial;
+      if (manhattan >= 42f) return UrbanDistrict.Industrial;
+      return UrbanDistrict.Residential;
+    }
+
+    static Mesh LandmarkMesh(UrbanDistrict district) {
+      if (LandmarkMeshes.TryGetValue(district, out var cached) && cached != null) return cached;
+      var k = new MeshKit();
+      switch (district) {
+        case UrbanDistrict.Commercial:
+          // 상업지구: 옥상 유리 펜트하우스 + 청록 스카이 사인 프레임.
+          k.Paint(Swatch.MetalLight).Box(new Vector3(0f, 0.7f, 0f), new Vector3(3.4f, 1.4f, 2.4f));
+          k.Paint(Swatch.Glass).Box(new Vector3(0f, 1.0f, 0f), new Vector3(3.55f, 0.55f, 2.55f));
+          k.Paint(Swatch.Hazard).Box(new Vector3(0f, 1.55f, 0f), new Vector3(2.8f, 0.25f, 0.3f));
+          break;
+        case UrbanDistrict.Residential:
+          // 주거지구: 따뜻한 테라코타 박공 지붕 캡 + 옥상 화단.
+          k.Paint(Swatch.Earth).Box(new Vector3(0f, 0.45f, 0f), new Vector3(3.8f, 0.9f, 3.0f));
+          k.Paint(Swatch.LeafLight).Box(new Vector3(-1.1f, 1.05f, 0.6f), new Vector3(1.1f, 0.35f, 0.9f));
+          k.Paint(Swatch.LeafLight).Box(new Vector3( 1.1f, 1.05f, -0.6f), new Vector3(1.1f, 0.35f, 0.9f));
+          break;
+        case UrbanDistrict.Industrial:
+          // 산업지구: 쌍 굴뚝 덕트 + 안전 갠트리 빔.
+          k.Paint(Swatch.MetalDark).Cylinder(new Vector3(-1.1f, 0f, 0f), 0.42f, 2.6f, 8);
+          k.Paint(Swatch.MetalDark).Cylinder(new Vector3( 1.1f, 0f, 0f), 0.42f, 2.6f, 8);
+          k.Paint(Swatch.Hazard).Box(new Vector3(0f, 1.85f, 0f), new Vector3(2.7f, 0.28f, 0.38f));
+          break;
+        default:
+          // 항만지구: 해양 슬레이트 관제 비콘 + 쌍 계선주(볼라드).
+          k.Paint(Swatch.MetalLight).Cylinder(new Vector3(0f, 0f, 0f), 0.22f, 2.2f, 8);
+          k.Paint(Swatch.Hazard).Cylinder(new Vector3(0f, 1.9f, 0f), 0.32f, 0.35f, 8);
+          k.Paint(Swatch.ConcreteDark).Cylinder(new Vector3(-1.4f, 0f, 0f), 0.26f, 0.7f, 8);
+          k.Paint(Swatch.ConcreteDark).Cylinder(new Vector3( 1.4f, 0f, 0f), 0.26f, 0.7f, 8);
+          break;
+      }
+      cached = k.ToMesh($"T43_Landmark_{district}");
+      LandmarkMeshes[district] = cached;
+      return cached;
+    }
+
+    static void AttachDistrictLandmark(Transform parent, MapSpec map, GameObject block, int r, int c, int rows, int cols, float yaw) {
+      if (block == null) return;
+      var district = DistrictOf(map, r, c);
+      DistrictCounts[district] = DistrictCounts.TryGetValue(district, out var cur) ? cur + 1 : 1;
+      // 랜드마크는 2×2 또는 2×1 주요 블록과 항만 부두에만 절제 배치해 과밀 방지.
+      if (rows == 1 && cols == 1 && district != UrbanDistrict.Harbor) return;
+      var b = new Bounds(block.transform.position, Vector3.zero);
+      foreach (var rend in block.GetComponentsInChildren<Renderer>(true)) b.Encapsulate(rend.bounds);
+      var roofY = district == UrbanDistrict.Harbor ? 0.08f : Mathf.Clamp(b.max.y, 4.5f, 16.0f);
+      var go = new GameObject($"DistrictLandmark_{district}@{r},{c}", typeof(MeshFilter), typeof(MeshRenderer));
+      go.transform.SetParent(parent, false);
+      go.transform.position = new Vector3(block.transform.position.x, roofY, block.transform.position.z);
+      go.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+      go.GetComponent<MeshFilter>().sharedMesh = LandmarkMesh(district);
+      var mr = go.GetComponent<MeshRenderer>();
+      mr.sharedMaterial = ArtLook.NeutralMaterial;
+      mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      go.isStatic = true;
+    }
 
     static void LoadKinds() {
       Kinds.Clear();
@@ -103,6 +181,7 @@ namespace FactoryWars.View {
 
     public static void Build(Transform root, MapSpec map) {
       Placed.Clear();
+      DistrictCounts.Clear();
       LoadKinds();
       if (!Kinds.ContainsKey("H1")) return;
       var n = map.CellGridSize;
@@ -169,7 +248,8 @@ namespace FactoryWars.View {
           }
           // 동·서향 건물은 카메라 쪽 옆면을 꾸민 변형으로(민벽 금지).
           if ((dir == 1 || dir == 3) && Kinds.ContainsKey(kind + (dir == 1 ? "S" : "T"))) kind += dir == 1 ? "S" : "T";
-          Put(parent, kind, Pick(kind, r, c, rows, cols, 2), Center(r, c, rows, cols), yaw, $"{r},{c}");
+          var placedBlock = Put(parent, kind, Pick(kind, r, c, rows, cols, 2), Center(r, c, rows, cols), yaw, $"{r},{c}");
+          AttachDistrictLandmark(parent, map, placedBlock, r, c, rows, cols, yaw);
         }
       }
 
@@ -199,7 +279,10 @@ namespace FactoryWars.View {
             }
             case 'w': {
               var dir = GridMapView.Cell(map, r + 1, c) == 'W' ? 0 : GridMapView.Cell(map, r, c + 1) == 'W' ? 1 : GridMapView.Cell(map, r - 1, c) == 'W' ? 2 : GridMapView.Cell(map, r, c - 1) == 'W' ? 3 : -1;
-              if (dir >= 0) Put(parent, "Q", Pick("Q", r, c, 1, 1, 10), at, Yaw(dir), $"{r},{c}");
+              if (dir >= 0) {
+                var qItem = Put(parent, "Q", Pick("Q", r, c, 1, 1, 10), at, Yaw(dir), $"{r},{c}");
+                if (Hash(r, c, 31) % 3 == 0) AttachDistrictLandmark(parent, map, qItem, r, c, 1, 1, Yaw(dir));
+              }
               break;
             }
             case 'M': {

@@ -44,6 +44,8 @@ namespace FactoryWars.View {
     const int MaxTrails = 12;
     sealed class Flight {
       public Transform Model;
+      public MeshFilter Filter;
+      public bool IsGrenade;
       public float TrailAt;
       public int Stamp;
     }
@@ -54,9 +56,14 @@ namespace FactoryWars.View {
     readonly MapSpec _map;
     readonly BattleFx _fx;
     static Mesh _mesh;
+    static Mesh _grenadeMesh;
     int _stamp;
     int _frame;
     float _newFrameAt;
+
+    public static bool IsGrenadeRound(in MlrsRocket rocket) =>
+      rocket.BlastRadius <= (Photon.Deterministic.FP)3 + Photon.Deterministic.FP._0_33
+      && rocket.Arc <= (Photon.Deterministic.FP)2 + Photon.Deterministic.FP._0_50;
 
     public MlrsRocketView(Transform parent, MapSpec map, BattleFx fx) {
       _parent = parent;
@@ -95,6 +102,7 @@ namespace FactoryWars.View {
           var viewport = camera.WorldToViewportPoint(position);
           if (viewport.z < 0f || viewport.x < -0.06f || viewport.x > 1.06f || viewport.y < -0.06f || viewport.y > 1.06f) continue;
         }
+        var isGrenade = IsGrenadeRound(rocket);
         if (!_active.TryGetValue(pair.Entity, out var flight)) {
           if (_active.Count >= MaxModels) continue;
           flight = _pool.Count > 0 ? _pool.Pop() : CreateFlight();
@@ -102,14 +110,24 @@ namespace FactoryWars.View {
           flight.Model.gameObject.SetActive(true);
           flight.TrailAt = now;
         }
+        if (flight.IsGrenade != isGrenade) {
+          flight.IsGrenade = isGrenade;
+          flight.Filter.sharedMesh = isGrenade ? GrenadeMesh() : _mesh;
+        }
         flight.Stamp = _stamp;
         if (after == before) after = MlrsSystem.PositionAt(rocket, frame.Number + 1).ToUnityVector3();
         var heading = (after - before).normalized;
         var rotation = heading.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(heading) : flight.Model.rotation;
         flight.Model.SetPositionAndRotation(position, rotation);
         if (count < MaxTrails && now >= flight.TrailAt) {
-          flight.TrailAt = now + 0.075f / Mathf.Max(0.3f, GraphicsQuality.FxScale);
-          _fx.MlrsExhaust(position - heading * 0.44f, heading, true);
+          if (isGrenade) {
+            // 40mm 유탄: 무거운 로켓 화염 대신 가벼운 연막/궤적 점만 남겨 유탄 탄도를 선명하게 표시.
+            flight.TrailAt = now + 0.09f / Mathf.Max(0.3f, GraphicsQuality.FxScale);
+            _fx.Burst(position - heading * 0.18f, new Color(0.86f, 0.84f, 0.78f, 0.7f), 0.16f);
+          } else {
+            flight.TrailAt = now + 0.075f / Mathf.Max(0.3f, GraphicsQuality.FxScale);
+            _fx.MlrsExhaust(position - heading * 0.44f, heading, true);
+          }
         }
         if (++count >= MaxModels) break;
       }
@@ -141,11 +159,27 @@ namespace FactoryWars.View {
       }
       var root = new GameObject("MLRS Rocket", typeof(MeshFilter), typeof(MeshRenderer));
       root.transform.SetParent(_parent, false);
-      root.GetComponent<MeshFilter>().sharedMesh = _mesh;
+      var mf = root.GetComponent<MeshFilter>();
+      mf.sharedMesh = _mesh;
       var renderer = root.GetComponent<MeshRenderer>();
       renderer.sharedMaterial = ArtLook.NeutralMaterial;
       renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      return new Flight { Model = root.transform };
+      return new Flight { Model = root.transform, Filter = mf, IsGrenade = false };
+    }
+
+    /// <summary>40mm 유탄발사기 탄두 메시(날개 없는 콤팩트 황동 탄피 + 올리브 탄두).</summary>
+    static Mesh GrenadeMesh() {
+      if (_grenadeMesh == null) {
+        var k = new MeshKit();
+        k.Push(new Vector3(0f, 0f, -0.18f), new Vector3(90f, 0f, 0f));
+        k.Paint(Swatch.Hazard);
+        k.Cylinder(Vector3.zero, 0.11f, 0.14f, 8);
+        k.Paint(Swatch.Olive);
+        k.Lathe(Vector3.zero, new[] { new Vector2(0.11f, 0.14f), new Vector2(0.09f, 0.28f), new Vector2(0.03f, 0.36f) }, 8);
+        k.Pop();
+        _grenadeMesh = k.ToMesh("GrenadeLauncher 40mm");
+      }
+      return _grenadeMesh;
     }
   }
 }
