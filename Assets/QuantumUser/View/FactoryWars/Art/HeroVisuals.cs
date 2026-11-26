@@ -392,6 +392,28 @@ namespace FactoryWars.View {
       return root;
     }
 
+    /// <summary>사령부 티어(1→2→3) 증설 비주얼: Synty 군사 프리팹(레이더·방벽·보급품·감시탑·지휘 막사)을 건물 외곽 에이프런에 배치(지붕 관통 없음).</summary>
+    public static GameObject AttachHqTierUpgrade(Transform model, int tier, float footprint, float modelHeight) {
+      if (model == null || tier <= 1) return null;
+      var root = new GameObject($"HqTierUpgrade_T{tier}");
+      root.transform.SetParent(model.parent != null ? model.parent : model, false);
+      root.transform.localPosition = Vector3.zero;
+      root.transform.localRotation = Quaternion.identity;
+      var side = Mathf.Max(footprint * 1.48f, 6.4f);
+      var front = Mathf.Max(footprint * 1.32f, 5.6f);
+      // Tier 2: 우측 이동식 레이더 안테나 + 전면 방어 모래주머니 진지 + 좌측 보급 화물 더미.
+      MapPolishArt.Place("Radar", root.transform, new Vector3(side, 0f, 1.6f), Quaternion.Euler(0f, -35f, 0f), new Vector3(3.4f, 4.6f, 3.4f));
+      MapPolishArt.Place("Sandbags", root.transform, new Vector3(0f, 0f, -front), Quaternion.identity, new Vector3(6.8f, 1.25f, 1.35f));
+      MapPolishArt.Place("Crates", root.transform, new Vector3(-side, 0f, -2.0f), Quaternion.Euler(0f, 15f, 0f), new Vector3(2.4f, 1.8f, 2.4f));
+      if (tier >= 3) {
+        // Tier 3: 좌측 후방 전략 감시탑 + 우측 전면 지휘 위장막 + 좌측 전면 서치라이트(고티어 전략 지휘부 실루엣).
+        MapPolishArt.Place("Tower", root.transform, new Vector3(-side - 0.3f, 0f, 3.2f), Quaternion.Euler(0f, 25f, 0f), new Vector3(3.2f, Mathf.Clamp(modelHeight + 3.2f, 7.6f, 9.8f), 3.2f));
+        MapPolishArt.Place("CamoYard", root.transform, new Vector3(side + 0.4f, 0f, -2.8f), Quaternion.Euler(0f, -90f, 0f), new Vector3(4.2f, 3.2f, 4.0f));
+        MapPolishArt.Place("Light", root.transform, new Vector3(-side + 0.8f, 0f, -front + 0.4f), Quaternion.Euler(0f, 140f, 0f), new Vector3(1.2f, 3.6f, 1.2f));
+      }
+      return root;
+    }
+
     static void AddFactorySection(Transform parent, string id, string fallback, string name, Vector3 position, Vector2 size) {
       var fitted = VisualCatalog.TryFilled(VisualCatalog.FxId(id), out var slot);
       if (fitted == false && VisualCatalog.TryFilled(VisualCatalog.FxId(fallback), out slot) == false) return;

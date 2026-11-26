@@ -40,7 +40,7 @@ MonoBehaviour:
   Damage:
     RawValue: 5570560
   Range:
-    RawValue: 1376256
+    RawValue: 1441792
   MinRange:
     RawValue: 393216
   SplashRadius:

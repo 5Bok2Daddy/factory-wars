@@ -2460,5 +2460,214 @@ namespace FactoryWars.Tests {
       Assert.IsTrue(impacted, "40mm grenade impacted target cleanly");
       Debug.Log($"[RuinAndGrenadePolish] PASS startHp={startHp:F0} hpAfter2Hits={hpAfter2Hits:F0} navOpen=True glCompact={sawCompactGrenade} impacted={impacted}");
     }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator RangesAndUnitAttackGifs_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "UnitAttackGifs"));
+      Directory.CreateDirectory(dir);
+
+      // 1. Verify tuned attack ranges across key roles (no ranged unit fighting in melee-like <10m range)
+      void CheckRange(string name, float minRng) {
+        var s = Resources.Load<UnitSpec>($"FactoryWars/{name}");
+        Assert.IsNotNull(s, $"Loaded UnitSpec {name}");
+        Assert.GreaterOrEqual(s.Range.AsFloat, minRng - 0.01f, $"{name} range >= {minRng}m (actual={s.Range.AsFloat:F1}m)");
+      }
+      CheckRange("ff_ranger_squad", 11.5f);
+      CheckRange("cf_militia", 11.0f);
+      CheckRange("pmc_operator_squad", 11.5f);
+      CheckRange("pmc_armored_suv", 12.0f);
+      CheckRange("ff_striker_ifv", 14.0f);
+      CheckRange("ff_eagle_tank", 16.0f);
+      CheckRange("pmc_tank", 16.0f);
+      CheckRange("ff_bulwark_tank", 17.5f);
+      CheckRange("ff_hawk_gunship", 15.0f);
+      CheckRange("pmc_attack_heli", 15.0f);
+      CheckRange("cf_thunder_aa", 15.5f);
+      CheckRange("ff_scout_boat", 12.5f);
+      CheckRange("ff_mlrs_artillery", 20.0f);
+      CheckRange("ff_paladin_sph", 22.0f);
+      CheckRange("ff_sniper", 25.0f);
+      CheckRange("ff_artillery_ship", 26.0f);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 4701, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+
+      // 2. Capture per-unit attack effect frame sequences (14 representative units covering all classes)
+      var showcase = new (string Unit, string Target, FPVector3 From, FPVector3 To, float CamH)[] {
+        ("ff_ranger_squad",       "cf_militia",          new FPVector3(-64, 0, -64), new FPVector3(-54, 0, -64), 19f),
+        ("cf_flame_squad",        "ff_ranger_squad",     new FPVector3(-64, 0, -64), new FPVector3(-60, 0, -64), 17f),
+        ("ff_sniper",             "cf_militia",          new FPVector3(-68, 0, -64), new FPVector3(-48, 0, -64), 26f),
+        ("ff_at_rocket",          "cf_dragonscale_tank", new FPVector3(-66, 0, -64), new FPVector3(-54, 0, -64), 22f),
+        ("ff_striker_ifv",        "cf_militia",          new FPVector3(-66, 0, -64), new FPVector3(-54, 0, -64), 22f),
+        ("ff_eagle_tank",         "cf_dragonscale_tank", new FPVector3(-66, 0, -64), new FPVector3(-52, 0, -64), 24f),
+        ("ff_bulwark_tank",       "cf_fortress_tank",    new FPVector3(-66, 0, -64), new FPVector3(-51, 0, -64), 25f),
+        ("cf_longwall_mlrs",      "ff_eagle_tank",       new FPVector3(-68, 0, -64), new FPVector3(-50, 0, -64), 28f),
+        ("ff_paladin_sph",        "cf_dragonscale_tank", new FPVector3(-68, 0, -64), new FPVector3(-50, 0, -64), 28f),
+        ("ff_hawk_gunship",       "cf_dragonscale_tank", new FPVector3(-65, 0, -64), new FPVector3(-53, 0, -64), 28f),
+        ("ff_skyfortress_bomber", "cf_fortress_tank",    new FPVector3(-64, 0, -64), new FPVector3(-58, 0, -64), 38f),
+        ("ff_artillery_ship",     "cf_scout_boat",       new FPVector3(-16, 0, 110), new FPVector3(-16, 0, 130), 34f),
+        ("pmc_tank",              "cf_dragonscale_tank", new FPVector3(-66, 0, -64), new FPVector3(-52, 0, -64), 24f),
+        ("pmc_attack_heli",       "cf_dragonscale_tank", new FPVector3(-65, 0, -64), new FPVector3(-53, 0, -64), 28f),
+      };
+
+      var capturedUnits = 0;
+      foreach (var item in showcase) {
+        var fdir = Path.Combine(dir, "frames_" + item.Unit);
+        Directory.CreateDirectory(fdir);
+        var attacker = SpawnUnitByName(Verified, 0, item.Unit, item.From);
+        var dummy    = SpawnUnitByName(Verified, 1, item.Target, item.To);
+        // Keep dummy alive during showcase so multi-frame attack VFX is clearly captured
+        if (Verified.Exists(dummy)) {
+          var du = Verified.Get<Unit>(dummy);
+          du.Health = (FP)5000;
+          Verified.Set(dummy, du);
+        }
+        yield return WaitFrames(3);
+        yield return Send(0, new AttackTargetCommand { Units = new[] { attacker }, Target = dummy });
+
+        rts.Height = item.CamH;
+        rts.MoveTo(new Vector2((item.From.X.AsFloat + item.To.X.AsFloat) * 0.5f, (item.From.Z.AsFloat + item.To.Z.AsFloat) * 0.5f));
+        rts.Apply();
+
+        for (var i = 0; i < 8; i++) {
+          yield return WaitFrames(4);
+          CaptureCameraPng(camera, Path.Combine(fdir, $"f_{i:00}.png"), 720, 405);
+        }
+        capturedUnits++;
+
+        if (Verified.Exists(attacker)) Verified.Destroy(attacker);
+        if (Verified.Exists(dummy)) Verified.Destroy(dummy);
+        yield return WaitFrames(4);
+      }
+      Assert.AreEqual(showcase.Length, capturedUnits, "Captured all 14 unit attack GIF sequences");
+      Debug.Log($"[RangesAndUnitAttackGifs] PASS capturedUnits={capturedUnits}");
+    }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator FullMapSupplyCycleGif_AndHqTiers_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "SupplyAndHqTiers"));
+      var frames = Path.Combine(dir, "frames_supply");
+      Directory.CreateDirectory(frames);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 4702, startingTier: 1);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+      camera.aspect = 16f / 9f;
+
+      // 1. Capture Command HQ Tier 1 -> Tier 2 -> Tier 3 from IDENTICAL camera framing!
+      var hqPos = FactoryWarsUtil.StartPosition(Verified, 0);
+      foreach (var pair in Verified.GetComponentIterator<Building>()) {
+        if (pair.Component.Owner == 0 && Verified.FindAsset(pair.Component.Spec).Role == BuildingRole.Headquarters) {
+          hqPos = Verified.Get<Transform3D>(pair.Entity).Position;
+          break;
+        }
+      }
+      rts.Height = 32f;
+      rts.MoveTo(new Vector2(hqPos.X.AsFloat, hqPos.Z.AsFloat));
+      rts.Apply();
+      yield return WaitFrames(8);
+      CaptureCameraPng(camera, Path.Combine(dir, "hq_tier_1.png"), 1920, 1080);
+
+      SetPlayerTier(Verified, 0, 2);
+      if (Game?.Frames?.Predicted != null) SetPlayerTier(Game.Frames.Predicted, 0, 2);
+      yield return WaitFrames(18);
+      CaptureCameraPng(camera, Path.Combine(dir, "hq_tier_2.png"), 1920, 1080);
+
+      SetPlayerTier(Verified, 0, 3);
+      if (Game?.Frames?.Predicted != null) SetPlayerTier(Game.Frames.Predicted, 0, 3);
+      yield return WaitFrames(18);
+      CaptureCameraPng(camera, Path.Combine(dir, "hq_tier_3.png"), 1920, 1080);
+
+      // 2. Full-Map / Wide-Area Resource Supply Cycle GIF + HQ Delivery +amount Gain Popup!
+      var ironNode = EntityRef.None;
+      var nodePos = hqPos + new FPVector3(-24, 0, 18);
+      var bestD = FP.MaxValue;
+      foreach (var pair in Verified.GetComponentIterator<ResourceNode>()) {
+        if (pair.Component.Kind != ResourceKind.Iron) continue;
+        var np = pair.Component.Shape.Center;
+        var d = FactoryWarsUtil.FlatDistanceSqr(hqPos, np);
+        if (d < bestD) { bestD = d; ironNode = pair.Entity; nodePos = np; }
+      }
+      var extSpec = Resources.Load<BuildingSpec>("FactoryWars/ff_iron_extractor");
+      Assert.IsNotNull(extSpec, "ff_iron_extractor spec loaded");
+      var extractor = ProductionSystem.CreateFinishedBuilding(Verified, 0, extSpec, nodePos);
+      var extB = Verified.Get<Building>(extractor);
+      extB.ExtractNode = ironNode;
+      extB.ProcessTimer = (FP)240; // Stockpile ready for 2 full truckloads (120 x 2)
+      Verified.Set(extractor, extB);
+
+      var truck = SpawnUnitByName(Verified, 0, "logistics_truck", hqPos + new FPVector3(0, 0, 10));
+      yield return WaitFrames(4);
+      LogisticsSystem.OrderResourcePickup(Verified, 0, new[] { truck });
+      if (Game?.Frames?.Predicted != null) LogisticsSystem.OrderResourcePickup(Game.Frames.Predicted, 0, new[] { truck });
+
+      // Wide-area framing covering BOTH extractor stockpile and Command HQ!
+      var mid = new Vector2((hqPos.X.AsFloat + nodePos.X.AsFloat) * 0.5f, (hqPos.Z.AsFloat + nodePos.Z.AsFloat) * 0.5f);
+      rts.Height = 68f;
+      rts.MoveTo(mid);
+      rts.Apply();
+
+      var stockBefore = PlayerIronStock(Verified, 0);
+      var capturedPopup = false;
+      var frameIdx = 0;
+      Time.timeScale = 6f;
+      for (var i = 0; i < 45; i++) {
+        yield return WaitFrames(18);
+        if (i % 2 == 0 && frameIdx < 20) {
+          CaptureCameraPng(camera, Path.Combine(frames, $"supply_{frameIdx++:00}.png"), 960, 540);
+        }
+        if (!capturedPopup && Battle().HqGainPopupsShown > 0) {
+          capturedPopup = true;
+          Time.timeScale = 1f;
+          rts.Height = 30f;
+          rts.MoveTo(new Vector2(hqPos.X.AsFloat, hqPos.Z.AsFloat));
+          rts.Apply();
+          yield return WaitFrames(2);
+          CaptureCameraPng(camera, Path.Combine(dir, "hq_delivery_gain_popup.png"), 1920, 1080);
+          rts.Height = 68f;
+          rts.MoveTo(mid);
+          rts.Apply();
+          Time.timeScale = 6f;
+        }
+        if (capturedPopup && frameIdx >= 16) break;
+      }
+      Time.timeScale = 1f;
+
+      var stockAfter = PlayerIronStock(Verified, 0);
+      Assert.Greater(stockAfter, stockBefore + 50f, $"HQ iron stock increased after truck delivery ({stockBefore:F0} -> {stockAfter:F0})");
+      Assert.GreaterOrEqual(Battle().HqGainPopupsShown, 1, "HQ floating +amount gain popup displayed on delivery");
+      Assert.IsTrue(!string.IsNullOrEmpty(Battle().LastHqGainText) && Battle().LastHqGainText.Contains("+"), $"HQ gain label formatted ({Battle().LastHqGainText})");
+      Debug.Log($"[FullMapSupplyAndHqTiers] PASS stock={stockBefore:F0}->{stockAfter:F0} popups={Battle().HqGainPopupsShown} label='{Battle().LastHqGainText}'");
+    }
+
+    static unsafe float PlayerIronStock(Frame f, int player) => f.Global->Players[player].Stock.Iron.AsFloat;
+
+    static unsafe void SetPlayerTier(Frame f, int player, int tier) {
+      f.Global->Players[player].BaseTier = tier;
+      var buildings = f.Filter<Building>();
+      while (buildings.NextUnsafe(out _, out var b)) {
+        if (b->Owner == player && f.FindAsset(b->Spec).Role == BuildingRole.Headquarters) {
+          b->Tier = tier;
+        }
+      }
+    }
   }
 }

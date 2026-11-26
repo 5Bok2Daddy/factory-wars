@@ -201,10 +201,12 @@ namespace Quantum.FactoryWars {
         if (truck->Timer > FP._0) return;
         var state = FactoryWarsUtil.Player(f, unit->Owner);
         if (state != null && Total(truck->Cargo) > FP._0) {
-          state->Stock += truck->Cargo;
-          state->Earned += truck->Cargo;
+          var delivered = truck->Cargo;
+          state->Stock += delivered;
+          state->Earned += delivered;
           truck->DeliveryId++;
           truck->CreditedId = truck->DeliveryId;
+          f.Events.LogisticsNotice(unit->Owner, PlayerPickupSite, 1, delivered);
         }
         truck->Cargo = default;
         // 적치된 자원이 남아 있으면 자동으로 가장 가까운 다음 자원지로 순환, 없으면 정지.

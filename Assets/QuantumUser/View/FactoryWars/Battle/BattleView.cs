@@ -256,6 +256,14 @@ namespace FactoryWars.View {
         }
       });
       QuantumEvent.Subscribe<EventCratePicked>(this, e => Fx.Burst(e.Position.ToUnityVector3(), new Color(1f, 0.85f, 0.3f), 1f));
+      QuantumEvent.Subscribe<EventLogisticsNotice>(this, e => {
+        if (e.Kind != 1) return;
+        var frame = e.Game.Frames.Verified;
+        if (frame == null) return;
+        var viewer = _controller != null ? _controller.Player : PlayerRef.None;
+        if (viewer.IsValid && viewer != e.Player) return;
+        SpawnHqResourceGainPopup(frame, e.Player, e.Amount);
+      });
       QuantumEvent.Subscribe<EventMlrsLaunched>(this, e => {
         var frame = e.Game.Frames.Verified;
         var isInfantryGrenade = frame != null && frame.Exists(e.Battery)
@@ -473,6 +481,7 @@ namespace FactoryWars.View {
       // 기동형 MLS 전환에 따라 전략 미사일 발사/착탄 붉은 경고 링·레이저 표시를 비활성화한다.
       StrikeMarks = 0;
       UpdateSuperweaponVisuals(dt);
+      UpdateHqGainPopups(dt);
 
       _audio.Begin(Camera.main);
       _seen.Clear();
@@ -1860,6 +1869,81 @@ namespace FactoryWars.View {
 
     /// <summary>전진 사령부 수: 확장 사령부 표시를 단 건물 수(테스트용).</summary>
     public int ForwardHeadquarters { get; private set; }
+    public int HqGainPopupsShown { get; private set; }
+    public string LastHqGainText { get; private set; }
+
+    sealed class HqGainPopup {
+      public GameObject Root;
+      public TextMesh Text;
+      public float Age;
+      public float Duration;
+      public Vector3 StartPos;
+      public Color BaseColor;
+    }
+    readonly List<HqGainPopup> _hqPopups = new List<HqGainPopup>();
+
+    void SpawnHqResourceGainPopup(Frame frame, PlayerRef owner, ResourceCost amount) {
+      var iron = Mathf.RoundToInt(amount.Iron.AsFloat);
+      var wood = Mathf.RoundToInt(amount.Wood.AsFloat);
+      var steel = Mathf.RoundToInt(amount.Steel.AsFloat);
+      if (iron <= 0 && wood <= 0 && steel <= 0) return;
+
+      Vector3 hqPos = FactoryWarsUtil.StartPosition(frame, owner).ToUnityVector3();
+      var buildings = frame.Filter<Transform3D, Building>();
+      while (buildings.NextUnsafe(out _, out var bt, out var b)) {
+        if (b->Owner == owner && b->Health > FP._0 && frame.FindAsset(b->Spec).Role == BuildingRole.Headquarters) {
+          hqPos = bt->Position.ToUnityVector3();
+          break;
+        }
+      }
+      hqPos.y = TerrainKit.SurfaceHeight(World.Map, hqPos.x, hqPos.z);
+
+      var parts = new List<string>();
+      if (iron > 0) parts.Add($"+{iron} 철");
+      if (wood > 0) parts.Add($"+{wood} 목재");
+      if (steel > 0) parts.Add($"+{steel} 강철");
+      var label = string.Join("  ", parts);
+      LastHqGainText = label;
+      HqGainPopupsShown++;
+
+      var burstColor = iron >= wood ? new Color(1f, 0.86f, 0.28f) : new Color(0.58f, 0.92f, 0.42f);
+      Fx.Burst(hqPos + Vector3.up * 4.2f, burstColor, 1.55f);
+
+      var go = new GameObject($"HqGainPopup_{HqGainPopupsShown}");
+      go.transform.SetParent(_stage, false);
+      var startPos = hqPos + Vector3.up * 7.5f;
+      go.transform.position = startPos;
+      var tm = go.AddComponent<TextMesh>();
+      tm.text = label;
+      tm.fontSize = 42;
+      tm.characterSize = 0.24f;
+      tm.anchor = TextAnchor.MiddleCenter;
+      tm.alignment = TextAlignment.Center;
+      tm.fontStyle = FontStyle.Bold;
+      tm.color = burstColor;
+      _hqPopups.Add(new HqGainPopup { Root = go, Text = tm, Age = 0f, Duration = 2.6f, StartPos = startPos, BaseColor = burstColor });
+    }
+
+    void UpdateHqGainPopups(float dt) {
+      if (_hqPopups.Count == 0) return;
+      var cam = Camera.main;
+      for (var i = _hqPopups.Count - 1; i >= 0; i--) {
+        var p = _hqPopups[i];
+        p.Age += dt;
+        if (p.Age >= p.Duration || p.Root == null) {
+          if (p.Root != null) Destroy(p.Root);
+          _hqPopups.RemoveAt(i);
+          continue;
+        }
+        var t = p.Age / p.Duration;
+        p.Root.transform.position = p.StartPos + Vector3.up * (t * 4.8f);
+        if (cam != null) p.Root.transform.rotation = cam.transform.rotation;
+        var alpha = t < 0.7f ? 1f : Mathf.Clamp01((1f - t) / 0.3f);
+        var c = p.BaseColor;
+        c.a = alpha;
+        p.Text.color = c;
+      }
+    }
 
     /// <summary>
     /// 전진(확장) 사령부 표시: 일반 사령부·도시 건물과 한눈에 구분되도록 이동식 레이더·위성 안테나, 둘레 헤스코 방벽 고리,
@@ -2122,12 +2206,14 @@ namespace FactoryWars.View {
       var busy = operating || (powered && (yard || spec.Role == BuildingRole.Headquarters));
       Animate(actor, dt, powered, busy);
 
-      // 현재 공장 단계에 맞는 정비동과 굴뚝을 표시한다.
-      var fLevel = FactorySystem.LevelOf(building);
+      // 현재 공장/사령부 단계에 맞는 증설 구조물을 표시한다.
+      var fLevel = spec.Role == BuildingRole.Headquarters ? Mathf.Clamp(Mathf.Max(state->BaseTier, building->Tier), 1, 3) : FactorySystem.LevelOf(building);
       if (fLevel != actor.FactoryLevel) {
         actor.FactoryLevel = fLevel;
         if (actor.FactoryUpgradeGo != null) Destroy(actor.FactoryUpgradeGo);
-        actor.FactoryUpgradeGo = HeroVisuals.AttachFactoryUpgrade(actor.View.Model.transform, fLevel, actor.FootprintRadius, actor.Height);
+        actor.FactoryUpgradeGo = spec.Role == BuildingRole.Headquarters
+          ? HeroVisuals.AttachHqTierUpgrade(actor.View.Model.transform, fLevel, actor.FootprintRadius, actor.Height)
+          : HeroVisuals.AttachFactoryUpgrade(actor.View.Model.transform, fLevel, actor.FootprintRadius, actor.Height);
         if (actor.FactoryUpgradeGo != null) actor.FactoryUpgradeGo.transform.localScale = Vector3.one * 0.84f;
       }
       if (actor.FactoryUpgradeGo != null && actor.FactoryUpgradeGo.transform.localScale.x < 1f) {
