@@ -808,8 +808,8 @@ MonoBehaviour:
     Category: 1
     Prefabs:
     - {fileID: 2511330396004653271, guid: 6d38e4009350ed74796ec457ee51aaca, type: 3}
-    Scale: 0.30339816
-    AutoFit: 1
+    Scale: 0.62
+    AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
     Size: {x: 11.421524, y: 4.952018, z: 18}
@@ -1121,8 +1121,8 @@ MonoBehaviour:
     Category: 1
     Prefabs:
     - {fileID: 2511330396004653271, guid: 6d38e4009350ed74796ec457ee51aaca, type: 3}
-    Scale: 0.30339816
-    AutoFit: 1
+    Scale: 0.62
+    AutoFit: 0
     YawOffset: 0
     PivotOffset: {x: -0, y: -0, z: -0}
     Size: {x: 11.421524, y: 4.952018, z: 18}

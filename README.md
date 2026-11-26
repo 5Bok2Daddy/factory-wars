@@ -7,6 +7,31 @@
 
 ---
 
+## 전체 맵(`Map4P v4` 640×640m 직상공·사선) & 24종 전 병과 유닛 이미지·사거리·모션 검수 갤러리 (2026-11-26 · 1/1 통과 · 결정론 0건)
+
+> 사령부(HQ)는 요청에 따라 현 상태로 유지하고, `mh6_little_bird` 캐노피 틴트 보정 · `old_factory` 중공업 공장 스케일 상향(`AutoFit=0, Scale=0.62`) 반영 후 전체 맵과 전 병과 대표 24종 유닛의 외형·교전 사거리·공격 모션을 일괄 캡처했습니다.
+
+### 1. 전체 맵 (`Map4P v4` 640×640m · 80×80 셀 · 4인 대칭)
+
+| 전체 맵 직상공 (Top-Down `1600×1600` · 4기지·4지구·S수로·중앙 PMC 요새) | 전체 맵 광역 사선 (Oblique `1920×1080` · URP ACES+Bloom 조명) |
+| --- | --- |
+| [![Map4P v4 전체 맵 직상공](Docs/status_images/ReviewGallery/00_full_map4p_topdown.png)](Docs/status_images/ReviewGallery/00_full_map4p_topdown.png) | [![Map4P v4 전체 맵 사선](Docs/status_images/ReviewGallery/00_full_map4p_oblique.png)](Docs/status_images/ReviewGallery/00_full_map4p_oblique.png) |
+| [직상공 원본](Docs/status_images/ReviewGallery/00_full_map4p_topdown.png) | [광역 사선 원본](Docs/status_images/ReviewGallery/00_full_map4p_oblique.png) |
+
+### 2. 전 병과 대표 24종 유닛 이미지 · 실전 사거리 · 공격 모션 검수 시트 (클릭 시 원본 확대)
+
+| 시트 1: 보병 & 특수병과 8종 (`ranger`, `militia`, `flame`, `breacher`, `at_rocket`, `skyguard`, `sniper`, `engineer`) | 시트 2: 차량 · 전차 · 포병 8종 (`logistics_truck`, `buggy`, `mrap`, `ifv`, `eagle_tank`, `bulwark_tank`, `sph`, `mlrs`) | 시트 3: 항공 · 해군 · PMC 용병 8종 (`hawk`, `bomber`, `carrier`, `boat`, `artillery_ship`, `pmc_op`, `pmc_tank`, `pmc_heli`) |
+| --- | --- | --- |
+| [![보병 및 특수병과 8종 시트](Docs/status_images/ReviewGallery/sheet_01_infantry_specialists.png)](Docs/status_images/ReviewGallery/sheet_01_infantry_specialists.png) | [![차량 전차 포병 8종 시트](Docs/status_images/ReviewGallery/sheet_02_vehicles_tanks_artillery.png)](Docs/status_images/ReviewGallery/sheet_02_vehicles_tanks_artillery.png) | [![항공 해군 PMC 8종 시트](Docs/status_images/ReviewGallery/sheet_03_air_naval_pmc.png)](Docs/status_images/ReviewGallery/sheet_03_air_naval_pmc.png) |
+| [시트 1 원본](Docs/status_images/ReviewGallery/sheet_01_infantry_specialists.png) · [개별 24종 PNG 폴더](Docs/status_images/ReviewGallery/units/) | [시트 2 원본](Docs/status_images/ReviewGallery/sheet_02_vehicles_tanks_artillery.png) · [14종 공격 모션 GIF 폴더](Docs/status_images/UnitAttackGifs/) | [시트 3 원본](Docs/status_images/ReviewGallery/sheet_03_air_naval_pmc.png) · [보병 이동 GIF](Docs/status_images/ComprehensivePolish/03_infantry_smooth_locomotion.gif) |
+
+- **개별 24종 고해상도(`960×540`) 바로가기 (`Docs/status_images/ReviewGallery/units/`):**
+  - **보병/특수:** [`ff_ranger_squad`](Docs/status_images/ReviewGallery/units/ff_ranger_squad.png) · [`cf_militia`](Docs/status_images/ReviewGallery/units/cf_militia.png) · [`cf_flame_squad`](Docs/status_images/ReviewGallery/units/cf_flame_squad.png) · [`ff_breacher`](Docs/status_images/ReviewGallery/units/ff_breacher.png) · [`ff_at_rocket`](Docs/status_images/ReviewGallery/units/ff_at_rocket.png) · [`ff_skyguard_squad`](Docs/status_images/ReviewGallery/units/ff_skyguard_squad.png) · [`ff_sniper`](Docs/status_images/ReviewGallery/units/ff_sniper.png) · [`ff_engineer`](Docs/status_images/ReviewGallery/units/ff_engineer.png)
+  - **차량/전차/포병:** [`logistics_truck`](Docs/status_images/ReviewGallery/units/logistics_truck.png) · [`ff_scout_buggy`](Docs/status_images/ReviewGallery/units/ff_scout_buggy.png) · [`ff_vanguard_mrap`](Docs/status_images/ReviewGallery/units/ff_vanguard_mrap.png) · [`ff_striker_ifv`](Docs/status_images/ReviewGallery/units/ff_striker_ifv.png) · [`ff_eagle_tank`](Docs/status_images/ReviewGallery/units/ff_eagle_tank.png) · [`ff_bulwark_tank`](Docs/status_images/ReviewGallery/units/ff_bulwark_tank.png) · [`ff_paladin_sph`](Docs/status_images/ReviewGallery/units/ff_paladin_sph.png) · [`cf_longwall_mlrs`](Docs/status_images/ReviewGallery/units/cf_longwall_mlrs.png)
+  - **항공/해군/PMC:** [`ff_hawk_gunship`](Docs/status_images/ReviewGallery/units/ff_hawk_gunship.png) · [`ff_skyfortress_bomber`](Docs/status_images/ReviewGallery/units/ff_skyfortress_bomber.png) · [`ff_stormnest_carrier`](Docs/status_images/ReviewGallery/units/ff_stormnest_carrier.png) · [`ff_scout_boat`](Docs/status_images/ReviewGallery/units/ff_scout_boat.png) · [`ff_artillery_ship`](Docs/status_images/ReviewGallery/units/ff_artillery_ship.png) · [`pmc_operator_squad`](Docs/status_images/ReviewGallery/units/pmc_operator_squad.png) · [`pmc_tank`](Docs/status_images/ReviewGallery/units/pmc_tank.png) · [`pmc_scout_heli`](Docs/status_images/ReviewGallery/units/pmc_scout_heli.png)
+
+---
+
 ## 종합 감사 및 폴리싱 패스: 전 유닛 74종 사거리 실측 표 · URP ACES/Bloom/일광 캘리브레이션 · 전투 VFX 가독성 보정 (2026-11-26 · 결정론 0건)
 
 | URP 조명 캘리브레이션 (`Sun 1.26` · `Shadow 0.82` · `ACES` · `Bloom 0.55`) | 보정된 대규모 교전 VFX & MLRS 궤적 · 선명한 피격 섬광 (GIF) | 보병 이동·질주 모션 시연 (GIF) |

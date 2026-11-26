@@ -2793,5 +2793,117 @@ namespace FactoryWars.Tests {
       Assert.IsTrue(sawSprintPose, "Upgraded infantry transitions smoothly into SprintForward");
       Debug.Log($"[ComprehensivePolish] PASS lighting=ACES+Bloom+Sun1.26 sprintPose={sawSprintPose}");
     }
+
+    [UnityTest, Timeout(1200000)]
+    public IEnumerator ReviewGallery_FullMapAndAll24Units_VerifyAndCapture() {
+      var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Docs", "status_images", "ReviewGallery"));
+      var rawDir = Path.Combine(dir, "raw");
+      Directory.CreateDirectory(rawDir);
+
+      yield return StartMatch(Map4PScene, 2, truce: 0, seed: 4901, startingTier: 3);
+      yield return WaitForHud();
+      yield return WaitForBattle();
+      var doctrine = GameObject.Find("DoctrinePanel");
+      if (doctrine != null) doctrine.GetComponentsInChildren<UnityEngine.UI.Button>(true).First().onClick.Invoke();
+      GrantAgreement(0);
+      GrantAgreement(1);
+      Time.timeScale = 1f;
+
+      var camera = Camera.main;
+      var rts = Controller().Camera;
+
+      // 1. Full-Map Top-Down (640x640m Map4P v4) & Wide Oblique Overview
+      var savedPos = camera.transform.position;
+      var savedRot = camera.transform.rotation;
+      var savedFov = camera.fieldOfView;
+      var savedFar = camera.farClipPlane;
+      var savedAspect = camera.aspect;
+      rts.enabled = false;
+
+      // Top-down orthographic-style full 640x640m capture
+      camera.farClipPlane = 1600f;
+      camera.fieldOfView = 46f;
+      camera.aspect = 1f;
+      camera.transform.SetPositionAndRotation(new Vector3(0f, 780f, 0f), Quaternion.Euler(90f, 0f, 0f));
+      yield return WaitFrames(4);
+      CaptureCameraPng(camera, Path.Combine(dir, "00_full_map4p_topdown.png"), 1600, 1600);
+
+      // Wide oblique overview showing entire Map4P v4 with calibrated URP ACES+Bloom lighting
+      camera.aspect = 16f / 9f;
+      camera.fieldOfView = 42f;
+      camera.transform.SetPositionAndRotation(new Vector3(0f, 340f, -340f), Quaternion.Euler(46f, 0f, 0f));
+      yield return WaitFrames(4);
+      CaptureCameraPng(camera, Path.Combine(dir, "00_full_map4p_oblique.png"), 1920, 1080);
+
+      // Restore RTS camera
+      camera.fieldOfView = savedFov;
+      camera.farClipPlane = savedFar;
+      camera.aspect = 16f / 9f;
+      camera.transform.SetPositionAndRotation(savedPos, savedRot);
+      rts.enabled = true;
+
+      // 2. Capture 24 representative units in clear open road / canal showing model, standoff range, and live firing/motion!
+      // Open east-west road at z = -64, x = [-28 .. +12] has zero buildings blocking camera!
+      var units = new (string Id, string Target, FPVector3 From, FPVector3 To, float CamH, float CamZOffset)[] {
+        // Sheet 1: Infantry & Specialists
+        ("ff_ranger_squad",       "cf_militia",          new FPVector3(-18, 0, -64), new FPVector3( -7, 0, -64), 18f, 0f),
+        ("cf_militia",            "ff_ranger_squad",     new FPVector3(-18, 0, -64), new FPVector3( -7, 0, -64), 18f, 0f),
+        ("cf_flame_squad",        "ff_ranger_squad",     new FPVector3(-14, 0, -64), new FPVector3(-10, 0, -64), 16f, 0f),
+        ("ff_breacher",           "cf_militia",          new FPVector3(-15, 0, -64), new FPVector3(-10, 0, -64), 16f, 0f),
+        ("ff_at_rocket",          "cf_dragonscale_tank", new FPVector3(-20, 0, -64), new FPVector3( -6, 0, -64), 21f, 0f),
+        ("ff_skyguard_squad",     "cf_gale_gunship",     new FPVector3(-20, 0, -64), new FPVector3( -6, 0, -64), 26f, 0f),
+        ("ff_sniper",             "cf_militia",          new FPVector3(-16, 0, -64), new FPVector3(  2, 0, -64), 20f, 0f),
+        ("ff_engineer",           "",                    new FPVector3(-16, 0, -64), new FPVector3( -4, 0, -64), 16f, 0f),
+        // Sheet 2: Vehicles, Tanks & Artillery
+        ("logistics_truck",       "",                    new FPVector3(-16, 0, -64), new FPVector3(  0, 0, -64), 18f, 0f),
+        ("ff_scout_buggy",        "cf_militia",          new FPVector3(-18, 0, -64), new FPVector3( -6, 0, -64), 20f, 0f),
+        ("ff_vanguard_mrap",      "cf_militia",          new FPVector3(-18, 0, -64), new FPVector3( -6, 0, -64), 20f, 0f),
+        ("ff_striker_ifv",        "cf_militia",          new FPVector3(-20, 0, -64), new FPVector3( -6, 0, -64), 22f, 0f),
+        ("ff_eagle_tank",         "cf_dragonscale_tank", new FPVector3(-20, 0, -64), new FPVector3( -4, 0, -64), 24f, 0f),
+        ("ff_bulwark_tank",       "cf_fortress_tank",    new FPVector3(-21, 0, -64), new FPVector3( -3, 0, -64), 26f, 0f),
+        ("ff_paladin_sph",        "cf_dragonscale_tank", new FPVector3(-24, 0, -64), new FPVector3( -2, 0, -64), 28f, 0f),
+        ("cf_longwall_mlrs",      "ff_eagle_tank",       new FPVector3(-24, 0, -64), new FPVector3( -2, 0, -64), 28f, 0f),
+        // Sheet 3: Air, Naval & PMC
+        ("ff_hawk_gunship",       "cf_dragonscale_tank", new FPVector3(-20, 0, -64), new FPVector3( -5, 0, -64), 38f, 10f),
+        ("ff_skyfortress_bomber", "cf_fortress_tank",    new FPVector3(-18, 0, -64), new FPVector3(-10, 0, -64), 48f, 14f),
+        ("ff_stormnest_carrier",  "cf_dragonscale_tank", new FPVector3(-20, 0, -64), new FPVector3( -5, 0, -64), 46f, 14f),
+        ("ff_scout_boat",         "cf_scout_boat",       new FPVector3(-16, 0, 108), new FPVector3(-16, 0, 121), 24f, 0f),
+        ("ff_artillery_ship",     "cf_scout_boat",       new FPVector3(-16, 0, 102), new FPVector3(-16, 0, 128), 34f, 0f),
+        ("pmc_operator_squad",    "cf_militia",          new FPVector3(-18, 0, -64), new FPVector3( -7, 0, -64), 18f, 0f),
+        ("pmc_tank",              "cf_dragonscale_tank", new FPVector3(-20, 0, -64), new FPVector3( -4, 0, -64), 24f, 0f),
+        ("pmc_scout_heli",        "cf_dragonscale_tank", new FPVector3(-19, 0, -64), new FPVector3( -6, 0, -64), 36f, 10f),
+      };
+
+      var count = 0;
+      foreach (var u in units) {
+        var actor = SpawnUnitByName(Verified, 0, u.Id, u.From);
+        EntityRef dummy = EntityRef.None;
+        if (!string.IsNullOrEmpty(u.Target)) {
+          dummy = SpawnUnitByName(Verified, 1, u.Target, u.To);
+          if (Verified.Exists(dummy)) {
+            var du = Verified.Get<Unit>(dummy); du.Health = (FP)8000; du.Order = UnitOrder.Hold; Verified.Set(dummy, du);
+          }
+          yield return WaitFrames(2);
+          yield return Send(0, new AttackTargetCommand { Units = new[] { actor }, Target = dummy });
+        } else {
+          yield return WaitFrames(2);
+          yield return Send(0, new MoveUnitsCommand { Units = new[] { actor }, Target = u.To });
+        }
+        var midX = (u.From.X.AsFloat + u.To.X.AsFloat) * 0.5f;
+        var midZ = (u.From.Z.AsFloat + u.To.Z.AsFloat) * 0.5f + u.CamZOffset;
+        rts.Height = u.CamH;
+        rts.MoveTo(new Vector2(midX, midZ));
+        rts.Apply();
+        yield return WaitFrames(14);
+        CaptureCameraPng(camera, Path.Combine(rawDir, $"{u.Id}.png"), 960, 540);
+        count++;
+        if (Verified.Exists(actor)) Verified.Destroy(actor);
+        if (dummy != EntityRef.None && Verified.Exists(dummy)) Verified.Destroy(dummy);
+        yield return WaitFrames(3);
+      }
+
+      Assert.AreEqual(units.Length, count, "Captured all 24 review gallery unit frames");
+      Debug.Log($"[ReviewGallery] PASS fullMap=2 units={count}");
+    }
   }
 }
